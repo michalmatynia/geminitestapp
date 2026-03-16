@@ -2,6 +2,7 @@ import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/obs
 
 import { truncateString } from './log-redaction';
 import { isTransientError, withTransientRecovery } from './transient-recovery/with-recovery';
+import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -223,7 +224,10 @@ const loadDeadLetterStore = async (): Promise<DeadLetterStoreModule | null> => {
     return mod;
   } catch (error) {
     logClientError(error);
-    console.error('[system-logger] Failed to load dead-letter persistence module', error);
+    logger.error('[system-logger] Failed to load dead-letter persistence module', error, {
+      service: 'system-logger',
+      action: 'loadDeadLetterStore',
+    });
     return null;
   }
 };
@@ -279,7 +283,10 @@ const queueDeadLetterPersistence = (): void => {
         logClientError(error);
         centralLoggingRuntimeState.deadLetterPersistFailed += 1;
         centralLoggingRuntimeState.lastDeadLetterPersistFailedAt = new Date().toISOString();
-        console.error('[system-logger] Failed to persist dead-letter queue', error);
+        logger.error('[system-logger] Failed to persist dead-letter queue', error, {
+          service: 'system-logger',
+          action: 'persistDeadLetterQueue',
+        });
       }
     }
   })().finally(() => {
@@ -311,7 +318,10 @@ const ensureDeadLetterStoreHydrated = async (): Promise<void> => {
       }
     } catch (error) {
       logClientError(error);
-      console.error('[system-logger] Failed to hydrate dead-letter queue', error);
+      logger.error('[system-logger] Failed to hydrate dead-letter queue', error, {
+        service: 'system-logger',
+        action: 'hydrateDeadLetterQueue',
+      });
     } finally {
       deadLetterStoreHydrated = true;
       deadLetterStoreHydrationPromise = null;
@@ -457,7 +467,10 @@ export const forwardToCentralizedLogging = async (
     centralLoggingRuntimeState.failed += 1;
     centralLoggingRuntimeState.lastFailedAt = new Date().toISOString();
     enqueueCentralLogDeadLetter(payload, error, 1);
-    console.error('[system-logger] Failed to forward log to centralized sink', error);
+    logger.error('[system-logger] Failed to forward log to centralized sink', error, {
+      service: 'system-logger',
+      action: 'forwardToCentralizedLogging',
+    });
     return 'failed';
   }
 };

@@ -3,6 +3,7 @@
 import { Palette } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms';
 import type { ColorScheme } from '@/shared/contracts/cms-theme';
 import { Label, RadioGroup, RadioGroupItem, Button, SelectSimple } from '@/shared/ui';
@@ -35,6 +36,14 @@ import {
   Asset3DPickerField,
 } from './shared-fields';
 import { useThemeSettingsValue } from './ThemeSettingsContext';
+
+const buildSelectOptions = (
+  options?: SettingsFieldOption[]
+): Array<LabeledOptionDto<string>> =>
+  (options ?? []).map((option: SettingsFieldOption) => ({
+    label: option.label,
+    value: String(option.value),
+  }));
 
 
 function CompositeFieldProvider(props: {
@@ -95,6 +104,14 @@ export function SettingsFieldRenderer(props: {
       : [];
     return [...extraOptions, ...baseOptions];
   }, [field.options, theme.colorSchemes]);
+  const selectOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () => buildSelectOptions(field.options),
+    [field.options]
+  );
+  const colorSchemeSelectOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () => buildSelectOptions(colorSchemeOptions),
+    [colorSchemeOptions]
+  );
   const handleChange = useCallback(
     (newValue: unknown): void => {
       if (onChange) {
@@ -196,10 +213,7 @@ export function SettingsFieldRenderer(props: {
                   : ''
             }
             onValueChange={handleChange}
-            options={(field.options ?? []).map((option: SettingsFieldOption) => ({
-              label: option.label,
-              value: String(option.value),
-            }))}
+            options={selectOptions}
             disabled={isDisabled}
             ariaLabel={field.label}
             id={controlId}
@@ -336,10 +350,7 @@ export function SettingsFieldRenderer(props: {
             size='sm'
             value={(value as string) ?? 'scheme-1'}
             onValueChange={handleChange}
-            options={colorSchemeOptions.map((option: SettingsFieldOption) => ({
-              label: option.label,
-              value: String(option.value),
-            }))}
+            options={colorSchemeSelectOptions}
             disabled={isDisabled}
             ariaLabel={field.label}
             id={controlId}

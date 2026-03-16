@@ -98,6 +98,16 @@ export function PatternRuntimePanel(): React.JSX.Element {
     benchmarkLowConfidenceThresholdDraft,
     benchmarkSuggestionLimitDraft,
   } = useBenchmarkState();
+  const snapshotOptions = React.useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      availableSnapshots.length > 0
+        ? availableSnapshots.map((snapshot) => ({
+          value: snapshot.id,
+          label: `${snapshot.name} (${snapshot.ruleCount})`,
+        }))
+        : [{ value: '', label: 'No snapshots' }],
+    [availableSnapshots]
+  );
 
   React.useEffect(() => {
     const timer = window.setInterval(() => {
@@ -342,7 +352,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 runtimeRuleProfile: value as 'all' | 'pattern_pack' | 'learned_only',
               }));
             }}
-            options={[...RUNTIME_RULE_PROFILE_OPTIONS]}
+            options={RUNTIME_RULE_PROFILE_OPTIONS}
             ariaLabel='Runtime rule profile'
            title='Select option'/>
         </div>
@@ -560,14 +570,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             size='sm'
             value={selectedSnapshotId}
             onValueChange={setSelectedSnapshotId}
-            options={
-              availableSnapshots.length > 0
-                ? availableSnapshots.map((snapshot) => ({
-                  value: snapshot.id,
-                  label: `${snapshot.name} (${snapshot.ruleCount})`,
-                }))
-                : [{ value: '', label: 'No snapshots' }]
-            }
+            options={snapshotOptions}
             ariaLabel='Snapshot selection'
            title='Select option'/>
           <div className='flex items-center gap-2'>
@@ -648,7 +651,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                         value as PromptExploderLearnedTemplate['state']
                       );
                     }}
-                    options={[...TEMPLATE_STATE_OPTIONS]}
+                    options={TEMPLATE_STATE_OPTIONS}
                     ariaLabel='Template state'
                    title='Select option'/>
                   <Button

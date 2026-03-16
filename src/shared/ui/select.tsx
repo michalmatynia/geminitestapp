@@ -19,6 +19,11 @@ type NativeSelectContextValue = {
 };
 
 const NativeSelectContext = React.createContext<NativeSelectContextValue | null>(null);
+const EMPTY_NATIVE_OPTIONS: NativeOption[] = [];
+const EMPTY_NATIVE_SELECT_STATE: Pick<NativeSelectContextValue, 'options' | 'placeholder'> = {
+  options: EMPTY_NATIVE_OPTIONS,
+  placeholder: undefined,
+};
 
 export const shouldUseNativeSelectMode = (pathname: string | null | undefined): boolean =>
   Boolean(
@@ -105,8 +110,7 @@ const Select: React.FC<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Roo
   const useNativeSelect = useNativeSelectMode();
 
   const { options, placeholder } = React.useMemo(
-    () =>
-      useNativeSelect ? extractNativeOptions(children) : { options: [], placeholder: undefined },
+    () => (useNativeSelect ? extractNativeOptions(children) : EMPTY_NATIVE_SELECT_STATE),
     [children, useNativeSelect]
   );
 

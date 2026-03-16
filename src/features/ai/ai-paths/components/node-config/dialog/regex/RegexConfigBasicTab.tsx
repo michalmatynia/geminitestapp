@@ -2,10 +2,35 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RegexConfig } from '@/shared/lib/ai-paths';
 import { Button, FormField, Hint, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
 
 import { extractRegexLiteral, normalizeRegexFlags } from '../regex-node-config-preview';
+
+const REGEX_MODE_OPTIONS = [
+  { value: 'group', label: 'Group matches' },
+  { value: 'extract', label: 'Extract value' },
+  { value: 'extract_json', label: 'Extract JSON/object' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<NonNullable<RegexConfig['mode']>>>;
+
+const REGEX_MATCH_MODE_OPTIONS = [
+  { value: 'first', label: 'First match' },
+  { value: 'first_overall', label: 'First overall' },
+  { value: 'all', label: 'All matches' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<NonNullable<RegexConfig['matchMode']>>>;
+
+const REGEX_OUTPUT_MODE_OPTIONS = [
+  { value: 'object', label: 'Object (Record)' },
+  { value: 'array', label: 'Array (Groups list)' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<NonNullable<RegexConfig['outputMode']>>>;
+
+const JSON_INTEGRITY_POLICY_OPTIONS = [
+  { value: 'strict', label: 'Strict (no repair)' },
+  { value: 'repair', label: 'Repair malformed JSON' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<NonNullable<RegexConfig['jsonIntegrityPolicy']>>
+>;
 
 export type RegexConfigBasicTabProps = {
   regexConfig: RegexConfig;
@@ -139,11 +164,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             placeholder='Select mode'
             triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
-            options={[
-              { value: 'group', label: 'Group matches' },
-              { value: 'extract', label: 'Extract value' },
-              { value: 'extract_json', label: 'Extract JSON/object' },
-            ]}
+            options={REGEX_MODE_OPTIONS}
            title='Select mode'/>
         </div>
         <div>
@@ -158,11 +179,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             placeholder='Select mode'
             triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
-            options={[
-              { value: 'first', label: 'First match' },
-              { value: 'first_overall', label: 'First overall' },
-              { value: 'all', label: 'All matches' },
-            ]}
+            options={REGEX_MATCH_MODE_OPTIONS}
            title='Select mode'/>
           <p className='mt-1 text-[11px] text-gray-500'>
             First overall stops after the first match across all inputs.
@@ -180,10 +197,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
             placeholder='Select output'
             triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
-            options={[
-              { value: 'object', label: 'Object (Record)' },
-              { value: 'array', label: 'Array (Groups list)' },
-            ]}
+            options={REGEX_OUTPUT_MODE_OPTIONS}
            title='Select output'/>
         </div>
       </div>
@@ -202,10 +216,7 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
           placeholder='Select policy'
           triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white md:w-[280px]'
           contentClassName='border-border bg-gray-900'
-          options={[
-            { value: 'strict', label: 'Strict (no repair)' },
-            { value: 'repair', label: 'Repair malformed JSON' },
-          ]}
+          options={JSON_INTEGRITY_POLICY_OPTIONS}
          title='Select policy'/>
         <p className='mt-1 text-[11px] text-gray-500'>
           Applies in <span className='text-gray-300'>extract_json</span> mode.

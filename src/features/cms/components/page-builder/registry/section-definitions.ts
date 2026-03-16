@@ -13,6 +13,108 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
+const LEFT_CENTER_RIGHT_OPTIONS = [
+  { label: 'Left', value: 'left' },
+  { label: 'Center', value: 'center' },
+  { label: 'Right', value: 'right' },
+];
+
+const ROW_COLUMN_OPTIONS = [
+  { label: 'Row', value: 'row' },
+  { label: 'Column', value: 'column' },
+];
+
+const LINK_TARGET_OPTIONS = [
+  { label: 'Same tab', value: '_self' },
+  { label: 'New tab', value: '_blank' },
+];
+
+const FONT_STYLE_OPTIONS = [
+  { label: 'Normal', value: 'normal' },
+  { label: 'Italic', value: 'italic' },
+];
+
+const TEXT_DECORATION_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Underline', value: 'underline' },
+  { label: 'Line-through', value: 'line-through' },
+];
+
+const TEXT_TRANSFORM_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Uppercase', value: 'uppercase' },
+  { label: 'Lowercase', value: 'lowercase' },
+  { label: 'Capitalize', value: 'capitalize' },
+];
+
+const INHERIT_JUSTIFY_OPTIONS = [{ label: 'Inherit alignment', value: 'inherit' }, ...JUSTIFY_OPTIONS];
+
+const IMAGE_HEIGHT_OPTIONS = [
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+  { label: 'Adapt to image', value: 'adapt' },
+];
+
+const IMAGE_WIDTH_OPTIONS = [
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+const IMAGE_PLACEMENT_OPTIONS = [
+  { label: 'Image first', value: 'image-first' },
+  { label: 'Image second', value: 'image-second' },
+];
+
+const CONTENT_POSITION_OPTIONS = [
+  { label: 'Top', value: 'top' },
+  { label: 'Middle', value: 'middle' },
+  { label: 'Bottom', value: 'bottom' },
+];
+
+const CONTENT_LAYOUT_OPTIONS = [
+  { label: 'No overlap', value: 'no-overlap' },
+  { label: 'Overlap', value: 'overlap' },
+];
+
+const IMAGE_BEHAVIOR_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Ambient movement', value: 'ambient' },
+  { label: 'Zoom in on scroll', value: 'zoom-scroll' },
+];
+
+const GRID_GAP_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+const GRID_GAP_WITH_INHERIT_OPTIONS = [
+  { label: 'Inherit grid gap', value: 'inherit' },
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+const TESTIMONIALS_LAYOUT_OPTIONS = [
+  { label: 'Grid', value: 'grid' },
+  { label: 'Carousel', value: 'carousel' },
+];
+
+const VIDEO_ASPECT_RATIO_OPTIONS = [
+  { label: '16:9', value: '16:9' },
+  { label: '4:3', value: '4:3' },
+  { label: '1:1', value: '1:1' },
+];
+
+const VIDEO_AUTOPLAY_OPTIONS = [
+  { label: 'No', value: 'no' },
+  { label: 'Yes', value: 'yes' },
+];
+
 
 // ---------------------------------------------------------------------------
 // Section definitions
@@ -51,11 +153,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'contentAlignment',
         label: 'Content alignment',
         type: 'alignment',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: LEFT_CENTER_RIGHT_OPTIONS,
         defaultValue: 'center',
       },
       ...paddingFields(),
@@ -100,10 +198,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'layoutDirection',
         label: 'Layout direction',
         type: 'select',
-        options: [
-          { label: 'Row', value: 'row' },
-          { label: 'Column', value: 'column' },
-        ],
+        options: ROW_COLUMN_OPTIONS,
         defaultValue: 'row',
       },
       {
@@ -117,11 +212,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'contentAlignment',
         label: 'Content alignment',
         type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: LEFT_CENTER_RIGHT_OPTIONS,
         defaultValue: 'left',
       },
       { key: 'linkUrl', label: 'Block link', type: 'link', defaultValue: '' },
@@ -129,17 +220,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'linkTarget',
         label: 'Link target',
         type: 'select',
-        options: [
-          { label: 'Same tab', value: '_self' },
-          { label: 'New tab', value: '_blank' },
-        ],
+        options: LINK_TARGET_OPTIONS,
         defaultValue: '_self',
       },
       {
         key: 'justifyContent',
         label: 'Justify content',
         type: 'select',
-        options: [{ label: 'Inherit alignment', value: 'inherit' }, ...JUSTIFY_OPTIONS],
+        options: INHERIT_JUSTIFY_OPTIONS,
         defaultValue: 'inherit',
       },
       {
@@ -192,10 +280,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'fontStyle',
         label: 'Font style',
         type: 'select',
-        options: [
-          { label: 'Normal', value: 'normal' },
-          { label: 'Italic', value: 'italic' },
-        ],
+        options: FONT_STYLE_OPTIONS,
         defaultValue: 'normal',
       },
       { key: 'lineHeight', label: 'Line height', type: 'number', defaultValue: 0 },
@@ -205,23 +290,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'textDecoration',
         label: 'Text decoration',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Underline', value: 'underline' },
-          { label: 'Line-through', value: 'line-through' },
-        ],
+        options: TEXT_DECORATION_OPTIONS,
         defaultValue: 'none',
       },
       {
         key: 'textTransform',
         label: 'Text transform',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Uppercase', value: 'uppercase' },
-          { label: 'Lowercase', value: 'lowercase' },
-          { label: 'Capitalize', value: 'capitalize' },
-        ],
+        options: TEXT_TRANSFORM_OPTIONS,
         defaultValue: 'none',
       },
       { key: 'textAlign', label: 'Text align', type: 'alignment', defaultValue: 'left' },
@@ -301,65 +377,42 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'imageHeight',
         label: 'Image height',
         type: 'select',
-        options: [
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-          { label: 'Adapt to image', value: 'adapt' },
-        ],
+        options: IMAGE_HEIGHT_OPTIONS,
         defaultValue: 'medium',
       },
       {
         key: 'desktopImageWidth',
         label: 'Desktop image width',
         type: 'select',
-        options: [
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: IMAGE_WIDTH_OPTIONS,
         defaultValue: 'medium',
       },
       {
         key: 'desktopImagePlacement',
         label: 'Desktop image placement',
         type: 'radio',
-        options: [
-          { label: 'Image first', value: 'image-first' },
-          { label: 'Image second', value: 'image-second' },
-        ],
+        options: IMAGE_PLACEMENT_OPTIONS,
         defaultValue: 'image-first',
       },
       {
         key: 'desktopContentPosition',
         label: 'Desktop content position',
         type: 'select',
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Middle', value: 'middle' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
+        options: CONTENT_POSITION_OPTIONS,
         defaultValue: 'middle',
       },
       {
         key: 'desktopContentAlignment',
         label: 'Desktop content alignment',
         type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: LEFT_CENTER_RIGHT_OPTIONS,
         defaultValue: 'left',
       },
       {
         key: 'contentLayout',
         label: 'Content layout',
         type: 'radio',
-        options: [
-          { label: 'No overlap', value: 'no-overlap' },
-          { label: 'Overlap', value: 'overlap' },
-        ],
+        options: CONTENT_LAYOUT_OPTIONS,
         defaultValue: 'no-overlap',
       },
       colorSchemeField('colorScheme', 'Color scheme', 'scheme-3'),
@@ -368,11 +421,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'imageBehavior',
         label: 'Image behavior',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Ambient movement', value: 'ambient' },
-          { label: 'Zoom in on scroll', value: 'zoom-scroll' },
-        ],
+        options: IMAGE_BEHAVIOR_OPTIONS,
         defaultValue: 'none',
       },
       ...paddingFields(),
@@ -437,25 +486,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'gap',
         label: 'Gap',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: GRID_GAP_OPTIONS,
         defaultValue: 'medium',
       },
       {
         key: 'rowGap',
         label: 'Row gap',
         type: 'select',
-        options: [
-          { label: 'Inherit grid gap', value: 'inherit' },
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: GRID_GAP_WITH_INHERIT_OPTIONS,
         defaultValue: 'inherit',
       },
       { key: 'rowGapPx', label: 'Row gap (px)', type: 'number', defaultValue: 0 },
@@ -463,13 +501,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'columnGap',
         label: 'Column gap',
         type: 'select',
-        options: [
-          { label: 'Inherit grid gap', value: 'inherit' },
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: GRID_GAP_WITH_INHERIT_OPTIONS,
         defaultValue: 'inherit',
       },
       { key: 'columnGapPx', label: 'Column gap (px)', type: 'number', defaultValue: 0 },
@@ -506,12 +538,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'imageHeight',
         label: 'Image height',
         type: 'select',
-        options: [
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-          { label: 'Adapt to image', value: 'adapt' },
-        ],
+        options: IMAGE_HEIGHT_OPTIONS,
         defaultValue: 'large',
       },
       colorSchemeField('colorScheme', 'Color scheme'),
@@ -562,10 +589,7 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'layout',
         label: 'Layout',
         type: 'select',
-        options: [
-          { label: 'Grid', value: 'grid' },
-          { label: 'Carousel', value: 'carousel' },
-        ],
+        options: TESTIMONIALS_LAYOUT_OPTIONS,
         defaultValue: 'grid',
       },
       { key: 'columns', label: 'Columns', type: 'range', defaultValue: 3, min: 1, max: 4 },
@@ -594,21 +618,14 @@ export const SECTION_DEFINITIONS: Record<string, SectionDefinition> = {
         key: 'aspectRatio',
         label: 'Aspect ratio',
         type: 'select',
-        options: [
-          { label: '16:9', value: '16:9' },
-          { label: '4:3', value: '4:3' },
-          { label: '1:1', value: '1:1' },
-        ],
+        options: VIDEO_ASPECT_RATIO_OPTIONS,
         defaultValue: '16:9',
       },
       {
         key: 'autoplay',
         label: 'Autoplay',
         type: 'select',
-        options: [
-          { label: 'No', value: 'no' },
-          { label: 'Yes', value: 'yes' },
-        ],
+        options: VIDEO_AUTOPLAY_OPTIONS,
         defaultValue: 'no',
       },
       colorSchemeField('colorScheme', 'Color scheme'),

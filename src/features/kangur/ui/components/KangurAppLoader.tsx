@@ -7,11 +7,25 @@ import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 
 type KangurAppLoaderProps = {
   visible: boolean;
+  title?: string;
+  status?: string;
+  detail?: string;
+  srLabel?: string;
 };
 
-export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.Element {
+export function KangurAppLoader({
+  visible,
+  title,
+  status,
+  detail,
+  srLabel,
+}: KangurAppLoaderProps): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const [hasMounted, setHasMounted] = useState(false);
+  const copyTitle = title?.trim() || 'StudiQ';
+  const copyStatus = status?.trim() || 'Loading';
+  const copyDetail = detail?.trim() || null;
+  const screenReaderLabel = srLabel?.trim() || 'Ladowanie aplikacji StudiQ';
 
   useEffect(() => {
     setHasMounted(true);
@@ -115,14 +129,19 @@ export function KangurAppLoader({ visible }: KangurAppLoaderProps): React.JSX.El
               data-testid='kangur-app-loader-copy'
             >
               <div className='text-[11px] font-semibold uppercase tracking-[0.32em] [color:var(--kangur-nav-item-active-text)]'>
-                StudiQ
+                {copyTitle}
               </div>
               <div className='mt-1 text-sm font-medium tracking-[0.08em] [color:var(--kangur-page-muted-text)]'>
-                Loading
+                {copyStatus}
               </div>
+              {copyDetail ? (
+                <div className='mt-2 text-xs font-medium [color:var(--kangur-page-muted-text)]'>
+                  {copyDetail}
+                </div>
+              ) : null}
             </div>
           </motion.div>
-          <span className='sr-only'>Ladowanie aplikacji StudiQ</span>
+          <span className='sr-only'>{screenReaderLabel}</span>
         </motion.div>
       ) : null}
     </AnimatePresence>

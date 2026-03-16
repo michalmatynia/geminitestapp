@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
 import type { AiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import {
@@ -71,6 +72,10 @@ export function RunDetailDialog(): React.JSX.Element {
   const historyOptions = useMemo(
     () => buildHistoryNodeOptions(runDetailHistory, runNodes, runDetail?.run?.graph?.nodes ?? null),
     [runDetailHistory, runDetail?.run?.graph?.nodes, runNodes]
+  );
+  const historySelectOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () => historyOptions.map((opt) => ({ value: opt.id, label: opt.label })),
+    [historyOptions]
   );
 
   const selectedHistoryNodeId = runHistoryNodeId ?? historyOptions[0]?.id ?? null;
@@ -524,7 +529,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   size='sm'
                   value={selectedHistoryNodeId ?? ''}
                   onValueChange={onHistoryNodeSelect}
-                  options={historyOptions.map((opt) => ({ value: opt.id, label: opt.label }))}
+                  options={historySelectOptions}
                   placeholder='Select node'
                   ariaLabel='History node'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'

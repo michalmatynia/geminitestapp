@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { IdLabelOptionDto } from '@/shared/contracts/base';
+import type { IdLabelOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 import type { ParserSampleState } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
@@ -19,6 +19,27 @@ export interface ParserSampleSectionProps {
   handleDetectImages: () => void;
 }
 
+const SAMPLE_ENTITY_TYPE_OPTIONS = [
+  { value: 'product', label: 'Product' },
+  { value: 'note', label: 'Note' },
+  { value: 'custom', label: 'Custom' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'product' | 'note' | 'custom'>>;
+
+const SAMPLE_MAPPING_MODE_OPTIONS = [
+  { value: 'top', label: 'Top-level fields' },
+  { value: 'flatten', label: 'Flatten nested' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'top' | 'flatten'>>;
+
+const SAMPLE_DEPTH_OPTIONS = [1, 2, 3, 4].map((depth) => ({
+  value: String(depth),
+  label: `Depth ${depth}`,
+})) as ReadonlyArray<LabeledOptionDto<string>>;
+
+const SAMPLE_KEY_STYLE_OPTIONS = [
+  { value: 'path', label: 'Path keys' },
+  { value: 'leaf', label: 'Leaf keys' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'path' | 'leaf'>>;
+
 export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.Element {
   const {
     selectedNodeId,
@@ -32,6 +53,11 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
     applySampleMappings,
     handleDetectImages,
   } = props;
+  const simulationSelectOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      simulationOptions.map((opt) => ({ value: opt.id, label: opt.label })),
+    [simulationOptions]
+  );
 
   return (
     <FormField label='Sample JSON'>
@@ -48,11 +74,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
               },
             }))
           }
-          options={[
-            { value: 'product', label: 'Product' },
-            { value: 'note', label: 'Note' },
-            { value: 'custom', label: 'Custom' },
-          ]}
+          options={SAMPLE_ENTITY_TYPE_OPTIONS}
           placeholder='Entity type'
           variant='subtle'
          ariaLabel='Entity type' title='Entity type'/>
@@ -90,7 +112,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
                   },
                 }));
               }}
-              options={simulationOptions.map((opt) => ({ value: opt.id, label: opt.label }))}
+              options={simulationSelectOptions}
               placeholder='Use simulation ID'
               variant='subtle'
               triggerClassName='h-8 text-[10px]'
@@ -144,10 +166,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
               },
             }))
           }
-          options={[
-            { value: 'top', label: 'Top-level fields' },
-            { value: 'flatten', label: 'Flatten nested' },
-          ]}
+          options={SAMPLE_MAPPING_MODE_OPTIONS}
           className='w-[180px]'
          ariaLabel='Sample JSON' title='Sample JSON'/>
         <SelectSimple
@@ -162,7 +181,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
               },
             }))
           }
-          options={[1, 2, 3, 4].map((d) => ({ value: String(d), label: `Depth ${d}` }))}
+          options={SAMPLE_DEPTH_OPTIONS}
           className='w-[160px]'
          ariaLabel='Sample JSON' title='Sample JSON'/>
         <Button
@@ -197,10 +216,7 @@ export function ParserSampleSection(props: ParserSampleSectionProps): React.JSX.
                 },
               }))
             }
-            options={[
-              { value: 'path', label: 'Path keys' },
-              { value: 'leaf', label: 'Leaf keys' },
-            ]}
+            options={SAMPLE_KEY_STYLE_OPTIONS}
             className='w-[170px]'
            ariaLabel='Sample JSON' title='Sample JSON'/>
         )}

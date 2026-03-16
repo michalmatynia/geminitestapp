@@ -39,10 +39,7 @@ export function ActivityEditorCard(props: {
                 )
               );
             }}
-            options={KANGUR_LESSON_ACTIVITY_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
+            options={KANGUR_LESSON_ACTIVITY_OPTIONS}
             triggerClassName='h-9'
            ariaLabel='Activity Type' title='Activity Type'/>
         </FormField>

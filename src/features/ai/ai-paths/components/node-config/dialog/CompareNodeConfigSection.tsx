@@ -1,11 +1,12 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CompareConfig } from '@/shared/lib/ai-paths';
 import { Button, Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
-const operatorOptions = [
+const operatorOptions: Array<LabeledOptionDto<NonNullable<CompareConfig['operator']>>> = [
   { value: 'eq', label: 'Equals' },
   { value: 'neq', label: 'Not equals' },
   { value: 'gt', label: 'Greater than' },

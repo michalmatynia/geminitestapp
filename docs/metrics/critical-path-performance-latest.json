@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-16T10:48:51.644Z",
+  "generatedAt": "2026-03-16T11:23:58.933Z",
   "strictMode": false,
   "summary": {
     "total": 10,
@@ -383,7 +383,7 @@
     }
   ],
   "metrics": {
-    "generatedAt": "2026-03-16T10:48:51.637Z",
+    "generatedAt": "2026-03-16T11:23:58.926Z",
     "hotspots": {
       "topFilesByLines": [
         {
@@ -391,12 +391,12 @@
           "lines": 1795
         },
         {
-          "path": "src/features/kangur/ui/KangurLoginPage.tsx",
-          "lines": 1623
-        },
-        {
           "path": "src/features/kangur/observability/summary.ts",
           "lines": 1548
+        },
+        {
+          "path": "src/features/kangur/ui/KangurLoginPage.tsx",
+          "lines": 1514
         },
         {
           "path": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts",
@@ -472,7 +472,7 @@
         },
         {
           "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
-          "lines": 1024
+          "lines": 1033
         },
         {
           "path": "src/shared/contracts/kangur.ts",
@@ -559,6 +559,14 @@
           "lines": 38
         },
         {
+          "path": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
+          "lines": 29
+        },
+        {
+          "path": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
+          "lines": 29
+        },
+        {
           "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
           "lines": 25
         },
@@ -581,14 +589,6 @@
         {
           "path": "src/app/api/cms/pages/[id]/route.ts",
           "lines": 22
-        },
-        {
-          "path": "src/app/api/system/logs/route.ts",
-          "lines": 22
-        },
-        {
-          "path": "src/app/api/cms/slugs/[id]/route.ts",
-          "lines": 21
         }
       ]
     }

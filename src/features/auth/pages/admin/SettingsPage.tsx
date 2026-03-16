@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
 import { AUTH_SETTINGS_KEYS, type AuthRole } from '@/features/auth/utils/auth-management';
 import { type AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -84,11 +85,11 @@ export default function AuthSettingsPage(): React.JSX.Element {
   });
   const userSecurityQuery = useAuthUserSecurity(session?.user?.id);
 
-  const roleOptions = useMemo(
+  const roleOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () =>
       roles.map((role: AuthRole) => ({
-        id: role.id,
-        name: role.name,
+        value: role.id,
+        label: role.name,
       })),
     [roles]
   );
@@ -243,10 +244,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
               setDefaultDirty(true);
             }}
             disabled={authLoading}
-            options={roleOptions.map((role) => ({
-              value: role.id,
-              label: role.name,
-            }))}
+            options={roleOptions}
             placeholder='Select default role'
             triggerClassName='w-64 bg-gray-900 border text-white'
            ariaLabel='Select default role' title='Select default role'/>

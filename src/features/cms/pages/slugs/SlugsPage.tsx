@@ -13,6 +13,7 @@ import {
   useCreateSlug,
   useDeleteSlug,
 } from '@/features/cms/hooks/useCmsQueries';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -66,6 +67,15 @@ export default function SlugsPage(): React.JSX.Element {
   const deleteSlug = useDeleteSlug();
   const slugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
+  const domainSelectOptions = useMemo<Array<LabeledOptionWithDescriptionDto<string>>>(
+    () =>
+      domains.map((domain: CmsDomain) => ({
+        value: domain.id,
+        label: domain.domain,
+        description: hostDomainId === domain.id ? 'host' : undefined,
+      })),
+    [domains, hostDomainId]
+  );
 
   const filteredSlugs = useMemo((): Slug[] => {
     if (!search.trim()) return slugs;
@@ -209,11 +219,7 @@ export default function SlugsPage(): React.JSX.Element {
             <SelectSimple
               value={activeDomainId || ''}
               onValueChange={handleDomainChange}
-              options={domains.map((item: CmsDomain) => ({
-                value: item.id,
-                label: item.domain,
-                description: hostDomainId === item.id ? 'host' : undefined,
-              }))}
+              options={domainSelectOptions}
               placeholder='Select domain...'
               ariaLabel='Domain'
               className='w-[200px]'

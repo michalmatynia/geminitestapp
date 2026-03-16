@@ -32,6 +32,11 @@ type EnvironmentPresetOption = LabeledOptionDto<EnvironmentPreset>;
 type LightingPresetOption = LabeledOptionDto<LightingPreset> & { icon: React.ReactNode };
 type LuminanceOption = LabeledOptionDto<number>;
 
+const ORDERED_DITHERING_CUSTOM_OPTION: LabeledOptionDto<string> = {
+  value: 'custom',
+  label: 'Custom',
+};
+
 const environmentPresets: EnvironmentPresetOption[] = [
   { value: 'studio', label: 'Studio' },
   { value: 'sunset', label: 'Sunset' },
@@ -57,6 +62,20 @@ const orderedDitheringLuminanceOptions: LuminanceOption[] = [
   { value: 1, label: 'Rec. 601' },
   { value: 2, label: 'Rec. 709' },
   { value: 3, label: 'Max Channel' },
+];
+
+const orderedDitheringLuminanceSelectOptions: Array<LabeledOptionDto<string>> =
+  orderedDitheringLuminanceOptions.map((opt) => ({
+    value: String(opt.value),
+    label: opt.label,
+  }));
+
+const orderedDitheringPresetOptions: Array<LabeledOptionDto<string>> = [
+  ...Object.entries(orderedDitheringPresets).map(([key, preset]) => ({
+    value: key,
+    label: preset.label,
+  })),
+  ORDERED_DITHERING_CUSTOM_OPTION,
 ];
 
 export function Viewer3DSettingsPanel(): React.JSX.Element {
@@ -385,13 +404,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                           setOrderedDitheringPreset('custom');
                         }
                       }}
-                      options={[
-                        ...Object.entries(orderedDitheringPresets).map(([key, preset]) => ({
-                          value: key,
-                          label: preset.label,
-                        })),
-                        { value: 'custom', label: 'Custom' },
-                      ]}
+                      options={orderedDitheringPresetOptions}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
                      ariaLabel='Preset' title='Preset'/>
                   </FormField>
@@ -431,10 +444,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                         setOrderedDitheringLuminanceMethod(parseInt(v, 10));
                         setOrderedDitheringPreset('custom');
                       }}
-                      options={orderedDitheringLuminanceOptions.map((opt) => ({
-                        value: String(opt.value),
-                        label: opt.label,
-                      }))}
+                      options={orderedDitheringLuminanceSelectOptions}
                       triggerClassName='w-full bg-gray-800 border-gray-700 text-xs text-gray-200 h-8'
                      ariaLabel='Luminance' title='Luminance'/>
                   </FormField>

@@ -6,6 +6,11 @@ import {
   useNoteSettingsActions,
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
+import {
+  NOTE_SEARCH_SCOPE_OPTIONS,
+  NOTE_SORT_BY_OPTIONS,
+  NOTE_SORT_ORDER_OPTIONS,
+} from '@/features/notesapp/constants/note-settings-options';
 import type { NoteSettings } from '@/shared/contracts/notes';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
@@ -22,23 +27,6 @@ import {
   Card,
   FormActions,
 } from '@/shared/ui';
-
-const sortByOptions = [
-  { value: 'created', label: 'Created Date' },
-  { value: 'updated', label: 'Modified Date' },
-  { value: 'name', label: 'Name' },
-] as const;
-
-const sortOrderOptions = [
-  { value: 'desc', label: 'Descending (Newest/Z-A)' },
-  { value: 'asc', label: 'Ascending (Oldest/A-Z)' },
-] as const;
-
-const searchScopeOptions = [
-  { value: 'both', label: 'Title & Content' },
-  { value: 'title', label: 'Title Only' },
-  { value: 'content', label: 'Content Only' },
-] as const;
 
 const editorModeOptions = [
   {
@@ -102,7 +90,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
           >
             <SelectSimple
               size='sm'
-              options={[...sortByOptions]}
+              options={NOTE_SORT_BY_OPTIONS}
               value={settings.sortBy}
               onValueChange={(value: string): void =>
                 updateSettings({ sortBy: value as NoteSettings['sortBy'] })
@@ -117,7 +105,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
           >
             <SelectSimple
               size='sm'
-              options={[...sortOrderOptions]}
+              options={NOTE_SORT_ORDER_OPTIONS}
               value={settings.sortOrder}
               onValueChange={(value: string): void =>
                 updateSettings({
@@ -170,7 +158,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
           >
             <SelectSimple
               size='sm'
-              options={[...searchScopeOptions]}
+              options={NOTE_SEARCH_SCOPE_OPTIONS}
               value={settings.searchScope}
               onValueChange={(value: string): void =>
                 updateSettings({
@@ -285,7 +273,10 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
           <div className='grid grid-cols-2 gap-2 text-xs text-gray-500'>
             <span>Sort:</span>
             <span className='text-gray-300'>
-              {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
+              {
+                NOTE_SORT_BY_OPTIONS.find((o: { value: string }) => o.value === settings.sortBy)
+                  ?.label
+              } (
               {settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
             </span>
             <span>Timestamps:</span>
@@ -295,7 +286,9 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             <span>Search Scope:</span>
             <span className='text-gray-300'>
               {
-                searchScopeOptions.find((o: { value: string }) => o.value === settings.searchScope)
+                NOTE_SEARCH_SCOPE_OPTIONS.find(
+                  (o: { value: string }) => o.value === settings.searchScope
+                )
                   ?.label
               }
             </span>

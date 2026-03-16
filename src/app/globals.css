@@ -3301,6 +3301,15 @@
     gap: 2rem;
   }
 
+  .kangur-lesson-panel-gap {
+    --kangur-lesson-panel-gap: 1rem;
+    gap: var(--kangur-lesson-panel-gap);
+  }
+
+  .kangur-lesson-nav-offset {
+    margin-top: calc(var(--kangur-lesson-panel-gap, 1rem) * -0.5);
+  }
+
   .kangur-panel-shell.kangur-panel-gap,
   .kangur-panel-shell .kangur-panel-gap {
     gap: 1rem;
@@ -3309,6 +3318,15 @@
   @media (min-width: 640px) {
     .kangur-panel-gap {
       gap: 2.5rem;
+    }
+
+    .kangur-lesson-panel-gap {
+      --kangur-lesson-panel-gap: 1.25rem;
+      gap: var(--kangur-lesson-panel-gap);
+    }
+
+    .kangur-lesson-nav-offset {
+      margin-top: calc(var(--kangur-lesson-panel-gap, 1.25rem) * -0.5);
     }
 
     .kangur-panel-shell.kangur-panel-gap,

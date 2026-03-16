@@ -424,13 +424,22 @@ export function ThemePreviewPanel({
 
             {/* Nav bar */}
             <div style={navStyle}>
-              {['Kursy', 'Testy', 'Wyniki', 'Profil'].map((label, i) => (
-                <span key={label} style={i === 0 ? pillActive : i === 2 ? {
-                  ...pillBase,
-                  background: 'var(--kangur-nav-item-hover-background, transparent)',
-                  color: 'var(--kangur-nav-item-hover-text, var(--kangur-nav-item-text))',
-                  border: '1px solid var(--kangur-nav-item-hover-border, transparent)',
-                } : pillInactive}>
+              {['Kursy', 'Wyniki', 'Profil'].map((label, i) => (
+                <span
+                  key={label}
+                  style={
+                    i === 0
+                      ? pillActive
+                      : label === 'Wyniki'
+                        ? {
+                          ...pillBase,
+                          background: 'var(--kangur-nav-item-hover-background, transparent)',
+                          color: 'var(--kangur-nav-item-hover-text, var(--kangur-nav-item-text))',
+                          border: '1px solid var(--kangur-nav-item-hover-border, transparent)',
+                        }
+                        : pillInactive
+                  }
+                >
                   {label}
                 </span>
               ))}

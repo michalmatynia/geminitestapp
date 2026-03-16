@@ -20,6 +20,7 @@ import type {
   Catalog,
   ProductCategory,
 } from '@/shared/contracts/products';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   Button,
   EmptyState,
@@ -277,6 +278,14 @@ export function CategoriesSettings(): React.JSX.Element {
   const modalCatalog: Catalog | undefined = catalogs.find(
     (c: Catalog): boolean => c.id === modalCatalogId
   );
+  const catalogOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      catalogs.map((catalog: Catalog) => ({
+        value: catalog.id,
+        label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
+      })),
+    [catalogs]
+  );
 
   const findCategory = useCallback(
     (cats: ProductCategoryWithChildren[], id: string): ProductCategoryWithChildren | null => {
@@ -417,10 +426,7 @@ export function CategoriesSettings(): React.JSX.Element {
               size='sm'
               value={selectedCatalogId || ''}
               onValueChange={onCatalogChange}
-              options={catalogs.map((catalog: Catalog) => ({
-                value: catalog.id,
-                label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
-              }))}
+              options={catalogOptions}
               placeholder='Select a catalog...'
               ariaLabel='Catalog'
              title='Select a catalog...'/>

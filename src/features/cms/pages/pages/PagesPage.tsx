@@ -43,6 +43,9 @@ const STATUS_FILTERS: StatusFilterOption[] = [
   { label: 'Scheduled', value: 'scheduled' },
 ];
 
+const buildZoneSlugOptions = (zoneSlugs: string[]): Array<LabeledOptionDto<string>> =>
+  zoneSlugs.map((slug) => ({ value: slug, label: `/${slug}` }));
+
 export default function PagesPage(): React.ReactNode {
   const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const router = useRouter();
@@ -176,7 +179,7 @@ export default function PagesPage(): React.ReactNode {
                   onValueChange={(val) =>
                     setPreviewSelections((prev) => ({ ...prev, [page.id]: val }))
                   }
-                  options={zoneSlugs.map((s) => ({ value: s, label: `/${s}` }))}
+                  options={buildZoneSlugOptions(zoneSlugs)}
                   className='h-7 w-28 text-[10px]'
                  ariaLabel='Select option' title='Select option'/>
               ) : (

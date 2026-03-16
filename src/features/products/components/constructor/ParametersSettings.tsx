@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
@@ -204,6 +204,14 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
     (catalog: CatalogRecord): boolean => catalog.id === selectedCatalogId
   );
   const selectorNeedsOptions = SELECTOR_TYPES_REQUIRING_OPTIONS.has(formData.selectorType);
+  const catalogOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      catalogs.map((catalog: CatalogRecord) => ({
+        value: catalog.id,
+        label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
+      })),
+    [catalogs]
+  );
 
   return (
     <div className='space-y-5'>
@@ -217,10 +225,7 @@ export function ParametersSettings(props: ParametersSettingsProps): React.JSX.El
             size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
-            options={catalogs.map((catalog: CatalogRecord) => ({
-              value: catalog.id,
-              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
-            }))}
+            options={catalogOptions}
             placeholder='Select a catalog...'
             ariaLabel='Catalog'
            title='Select a catalog...'/>

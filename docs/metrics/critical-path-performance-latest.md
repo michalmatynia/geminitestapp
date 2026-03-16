@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-16T10:48:51.644Z
+Generated at: 2026-03-16T11:23:58.933Z
 
 ## Summary
 
@@ -87,8 +87,8 @@ Generated at: 2026-03-16T10:48:51.644Z
 | File | LOC |
 | --- | ---: |
 | `src/features/kangur/ui/pages/Duels.tsx` | 1795 |
-| `src/features/kangur/ui/KangurLoginPage.tsx` | 1623 |
 | `src/features/kangur/observability/summary.ts` | 1548 |
+| `src/features/kangur/ui/KangurLoginPage.tsx` | 1514 |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
 | `src/features/kangur/server/ai-tutor-adaptive.ts` | 1224 |

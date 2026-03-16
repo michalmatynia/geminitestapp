@@ -18,6 +18,31 @@ import { GenericPickerDropdown } from '@/shared/ui/templates/pickers/GenericPick
 import { TreeHeader } from '@/shared/ui/tree';
 import { TreeCaret } from '@/shared/ui/tree/TreeCaret';
 
+const SELECT_SIMPLE_STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Published' },
+];
+
+const GENERIC_PICKER_SECTIONS_OPTIONS = [
+  { key: 'hero', label: 'Hero' },
+  { key: 'grid', label: 'Grid' },
+  { key: 'faq', label: 'FAQ' },
+];
+
+const GENERIC_PICKER_SECTIONS_GROUP = [
+  {
+    label: 'Sections',
+    options: GENERIC_PICKER_SECTIONS_OPTIONS,
+  },
+];
+
+const GENERIC_PICKER_SECTIONS_GROUP_BASIC = [
+  {
+    label: 'Sections',
+    options: GENERIC_PICKER_SECTIONS_OPTIONS.slice(0, 2),
+  },
+];
+
 describe('shared accessibility primitives', () => {
   it('renders a skip-to-content link that targets the main content anchor', () => {
     render(<SkipToContentLink />);
@@ -149,15 +174,7 @@ describe('shared accessibility primitives', () => {
       <GenericPickerDropdown
         ariaLabel='Add block'
         selectedKey='hero'
-        groups={[
-          {
-            label: 'Sections',
-            options: [
-              { key: 'hero', label: 'Hero' },
-              { key: 'grid', label: 'Grid' },
-            ],
-          },
-        ]}
+        groups={GENERIC_PICKER_SECTIONS_GROUP_BASIC}
         onSelect={vi.fn()}
       />
     );
@@ -177,16 +194,7 @@ describe('shared accessibility primitives', () => {
     render(
       <GenericPickerDropdown
         ariaLabel='Add block'
-        groups={[
-          {
-            label: 'Sections',
-            options: [
-              { key: 'hero', label: 'Hero' },
-              { key: 'grid', label: 'Grid' },
-              { key: 'faq', label: 'FAQ' },
-            ],
-          },
-        ]}
+        groups={GENERIC_PICKER_SECTIONS_GROUP}
         onSelect={vi.fn()}
       />
     );
@@ -323,10 +331,7 @@ describe('shared accessibility primitives', () => {
       <SelectSimple
         value={undefined}
         onValueChange={vi.fn()}
-        options={[
-          { value: 'draft', label: 'Draft' },
-          { value: 'published', label: 'Published' },
-        ]}
+        options={SELECT_SIMPLE_STATUS_OPTIONS}
         placeholder='Publication status'
       />
     );

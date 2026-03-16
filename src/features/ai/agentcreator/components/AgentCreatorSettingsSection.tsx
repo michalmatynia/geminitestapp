@@ -1,7 +1,14 @@
 'use client';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Input, SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui';
+
+const AGENT_BROWSER_OPTIONS = [
+  { value: 'chromium', label: 'Chromium' },
+  { value: 'firefox', label: 'Firefox' },
+  { value: 'webkit', label: 'WebKit' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'chromium' | 'firefox' | 'webkit'>>;
 
 export function AgentCreatorSettingsSection(): React.ReactElement {
   const {
@@ -40,13 +47,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
                 size='sm'
                 value={agentBrowser}
                 onValueChange={setAgentBrowser}
-                options={[
-                  { value: 'chromium', label: 'Chromium' },
-
-                  { value: 'firefox', label: 'Firefox' },
-
-                  { value: 'webkit', label: 'WebKit' },
-                ]}
+                options={AGENT_BROWSER_OPTIONS}
                ariaLabel='Browser' title='Browser'/>
             </FormField>
 

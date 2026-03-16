@@ -11,6 +11,43 @@ import {
   sectionStyleFields,
 } from './shared-field-helpers';
 
+const ROW_DIRECTION_OPTIONS = [
+  { label: 'Horizontal (side by side)', value: 'horizontal' },
+  { label: 'Vertical (stacked)', value: 'vertical' },
+];
+
+const ROW_GAP_OPTIONS = [
+  { label: 'Inherit section gap', value: 'inherit' },
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+const COLUMN_GAP_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+];
+
+const HEIGHT_MODE_OPTIONS = [
+  { label: 'Inherit from blocks', value: 'inherit' },
+  { label: 'Fixed height', value: 'fixed' },
+];
+
+const TEXT_ALIGNMENT_OPTIONS = [
+  { label: 'Left', value: 'left' },
+  { label: 'Center', value: 'center' },
+  { label: 'Right', value: 'right' },
+];
+
+const VERTICAL_ALIGNMENT_OPTIONS = [
+  { label: 'Top', value: 'top' },
+  { label: 'Center', value: 'center' },
+  { label: 'Bottom', value: 'bottom' },
+];
+
 
 export const COLUMN_ALLOWED_BLOCK_TYPES = [
   'Heading',
@@ -107,23 +144,14 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'direction',
         label: 'Direction',
         type: 'select',
-        options: [
-          { label: 'Horizontal (side by side)', value: 'horizontal' },
-          { label: 'Vertical (stacked)', value: 'vertical' },
-        ],
+        options: ROW_DIRECTION_OPTIONS,
         defaultValue: 'horizontal',
       },
       {
         key: 'gap',
         label: 'Item gap',
         type: 'select',
-        options: [
-          { label: 'Inherit section gap', value: 'inherit' },
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: ROW_GAP_OPTIONS,
         defaultValue: 'inherit',
       },
       { key: 'gapPx', label: 'Custom gap (px)', type: 'number', defaultValue: 0 },
@@ -152,10 +180,7 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'heightMode',
         label: 'Row height',
         type: 'select',
-        options: [
-          { label: 'Inherit from blocks', value: 'inherit' },
-          { label: 'Fixed height', value: 'fixed' },
-        ],
+        options: HEIGHT_MODE_OPTIONS,
         defaultValue: 'inherit',
       },
       {
@@ -217,12 +242,7 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'gap',
         label: 'Content gap',
         type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
+        options: COLUMN_GAP_OPTIONS,
         defaultValue: 'medium',
       },
       { key: 'gapPx', label: 'Custom gap (px)', type: 'number', defaultValue: 0 },
@@ -236,10 +256,7 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'heightMode',
         label: 'Column height',
         type: 'select',
-        options: [
-          { label: 'Inherit from blocks', value: 'inherit' },
-          { label: 'Fixed height', value: 'fixed' },
-        ],
+        options: HEIGHT_MODE_OPTIONS,
         defaultValue: 'inherit',
       },
       {
@@ -268,11 +285,7 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'textAlign',
         label: 'Text alignment',
         type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
+        options: TEXT_ALIGNMENT_OPTIONS,
         defaultValue: 'left',
       },
       colorSchemeFieldWithNone('colorScheme', 'Color scheme', 'none'),
@@ -280,11 +293,7 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'verticalAlignment',
         label: 'Vertical alignment',
         type: 'select',
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Center', value: 'center' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
+        options: VERTICAL_ALIGNMENT_OPTIONS,
         defaultValue: 'top',
       },
       ...sectionStyleFields(),

@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useBaselinkerSettingsState } from '@/features/integrations/hooks/useBaselinkerSettingsState';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   Button,
   Input,
@@ -38,6 +39,17 @@ export function BaselinkerSettings(): React.JSX.Element {
     handleBaselinkerTest,
     isTesting,
   } = useBaselinkerSettingsState();
+  const connectionOptions = useMemo<Array<LabeledOptionWithDescriptionDto<string>>>(
+    () =>
+      connections.map((connection) => ({
+        value: connection.id,
+        label: connection.name,
+        description: connection.hasBaseApiToken
+          ? 'Base API token configured'
+          : 'Token not detected',
+      })),
+    [connections]
+  );
 
   const onSave = async (): Promise<void> => {
     try {
@@ -132,13 +144,7 @@ export function BaselinkerSettings(): React.JSX.Element {
                 onValueChange={(value: string): void => {
                   setDefaultOneClickConnectionId(value);
                 }}
-                options={connections.map((connection) => ({
-                  value: connection.id,
-                  label: connection.name,
-                  description: connection.hasBaseApiToken
-                    ? 'Base API token configured'
-                    : 'Token not detected',
-                }))}
+                options={connectionOptions}
                 placeholder='Select default connection...'
                 disabled={connections.length === 0}
                 size='sm'

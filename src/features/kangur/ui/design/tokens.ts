@@ -16,6 +16,7 @@ export const KANGUR_TOP_BAR_INNER_CLASSNAME =
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
   'kangur-page-container w-full';
 export const KANGUR_PANEL_GAP_CLASSNAME = 'kangur-panel-gap';
+export const KANGUR_LESSON_PANEL_GAP_CLASSNAME = 'kangur-lesson-panel-gap';
 
 export const KANGUR_PANEL_CLASSNAMES = {
   elevated: 'glass-panel kangur-panel-elevated',

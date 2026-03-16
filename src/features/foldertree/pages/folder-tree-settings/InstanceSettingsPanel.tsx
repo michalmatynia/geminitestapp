@@ -42,7 +42,23 @@ const SEARCH_FILTER_MODE_OPTIONS = [
   { value: 'filter_tree', label: 'Filter tree' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<'highlight' | 'filter_tree'>>;
 
-const folderTreeSelectionBehaviorOptions = folderTreeSelectionBehaviorValues.map((value) => ({
+const folderTreePlaceholderStyleOptions: Array<
+  LabeledOptionDto<FolderTreeProfileV2['placeholders']['style']>
+> = folderTreePlaceholderStyleValues.map((value) => ({
+  value,
+  label: toTitleLabel(value),
+}));
+
+const folderTreePlaceholderEmphasisOptions: Array<
+  LabeledOptionDto<FolderTreeProfileV2['placeholders']['emphasis']>
+> = folderTreePlaceholderEmphasisValues.map((value) => ({
+  value,
+  label: toTitleLabel(value),
+}));
+
+const folderTreeSelectionBehaviorOptions: Array<
+  LabeledOptionDto<FolderTreeProfileV2['interactions']['selectionBehavior']>
+> = folderTreeSelectionBehaviorValues.map((value) => ({
   value,
   label: value === 'click_away' ? 'Click Away Clears' : 'Re-click Clears (Sticky)',
 }));
@@ -118,10 +134,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           <SelectSimple
             size='sm'
             value={profile.placeholders.preset}
-            options={folderTreePlaceholderPresetOptions.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
+            options={folderTreePlaceholderPresetOptions}
             onValueChange={(value: string): void => {
               updateProfile(meta.id, (current) => ({
                 ...current,
@@ -138,10 +151,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           <SelectSimple
             size='sm'
             value={profile.placeholders.style}
-            options={folderTreePlaceholderStyleValues.map((value) => ({
-              value,
-              label: toTitleLabel(value),
-            }))}
+            options={folderTreePlaceholderStyleOptions}
             onValueChange={(value: string): void => {
               updateProfile(meta.id, (current) => ({
                 ...current,
@@ -158,10 +168,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
           <SelectSimple
             size='sm'
             value={profile.placeholders.emphasis}
-            options={folderTreePlaceholderEmphasisValues.map((value) => ({
-              value,
-              label: toTitleLabel(value),
-            }))}
+            options={folderTreePlaceholderEmphasisOptions}
             onValueChange={(value: string): void => {
               updateProfile(meta.id, (current) => ({
                 ...current,
@@ -608,7 +615,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
               <SelectSimple
                 size='sm'
                 value={searchConfig.filterMode}
-                options={[...SEARCH_FILTER_MODE_OPTIONS]}
+                options={SEARCH_FILTER_MODE_OPTIONS}
                 onValueChange={(value: string): void => {
                   updateProfile(meta.id, (current) => ({
                     ...current,

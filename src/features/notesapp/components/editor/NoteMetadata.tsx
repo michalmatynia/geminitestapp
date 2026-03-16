@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   useNoteEditorContext,
@@ -11,6 +11,7 @@ import {
   useNoteRelationsContext,
   useNoteTagsContext,
 } from '@/features/notesapp/context/NoteFormContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { TagRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import {
   Button,
@@ -69,6 +70,14 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
 
   const noteId = note?.id;
   const tagInputRef = React.useRef<HTMLInputElement>(null);
+  const folderOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      flatFolders.map((folder: { id: string; name: string; level: number }) => ({
+        value: folder.id,
+        label: `${'  '.repeat(folder.level)}${folder.name}`,
+      })),
+    [flatFolders]
+  );
 
   const relatedNoteStyle = {
     borderWidth: `${effectiveTheme.relatedNoteBorderWidth ?? 1}px`,
@@ -96,10 +105,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
         <SearchableSelect
           value={selectedFolderId}
           onChange={(value: string | null): void => setSelectedFolderId(value ?? '')}
-          options={flatFolders.map((folder: { id: string; name: string; level: number }) => ({
-            value: folder.id,
-            label: `${'  '.repeat(folder.level)}${folder.name}`,
-          }))}
+          options={folderOptions}
           placeholder='Select folder'
           emptyMessage='No folders found.'
         />

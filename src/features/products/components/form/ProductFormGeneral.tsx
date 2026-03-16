@@ -20,6 +20,7 @@ import {
   shouldLaunchPattern,
   sortValidatorPatterns,
 } from '@/features/products/validation-engine/core';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import {
@@ -43,6 +44,11 @@ import { cn } from '@/shared/utils';
 import { ValidatedField } from './ValidatedField';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const PRODUCT_IDENTIFIER_OPTIONS = [
+  { value: 'ean', label: 'EAN' },
+  { value: 'gtin', label: 'GTIN' },
+  { value: 'asin', label: 'ASIN' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'ean' | 'gtin' | 'asin'>>;
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -564,11 +570,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
                 setIdentifierType(value as 'ean' | 'gtin' | 'asin')
               }
               ariaLabel='Product identifier type'
-              options={[
-                { value: 'ean', label: 'EAN' },
-                { value: 'gtin', label: 'GTIN' },
-                { value: 'asin', label: 'ASIN' },
-              ]}
+              options={PRODUCT_IDENTIFIER_OPTIONS}
               className='w-[100px]'
              title='Product Identifier'/>
             <Input

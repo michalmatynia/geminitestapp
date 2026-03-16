@@ -7,7 +7,6 @@ import {
   LogIn,
   LogOut,
   Menu,
-  Star,
   Trophy,
   UserPlus,
   X,
@@ -19,7 +18,6 @@ import {
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
 import {
-  appendKangurUrlParams,
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
@@ -29,6 +27,7 @@ import {
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
@@ -258,17 +257,11 @@ export function KangurPrimaryNavigation({
   const duelsHref = createPageUrl('Duels', basePath);
   const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
   const profileHref = createPageUrl('LearnerProfile', basePath);
-  const kangurMathHref = appendKangurUrlParams(
-    homeHref,
-    { quickStart: 'kangur' },
-    basePath
-  );
   const transitionPhase = routeTransitionState?.transitionPhase ?? 'idle';
   const activeTransitionSourceId = routeTransitionState?.activeTransitionSourceId ?? null;
   const homeTransitionSourceId = 'kangur-primary-nav:home';
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
-  const kangurMathTransitionSourceId = 'kangur-primary-nav:kangur-math';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
   const closeMobileMenu = (): void => setIsMobileMenuOpen(false);
@@ -546,7 +539,7 @@ export function KangurPrimaryNavigation({
         >
           <KangurHomeLogo idPrefix='kangur-primary-nav-logo' />
         </span>
-        <span className='truncate'>Grajmy</span>
+          <span className='sr-only'>Strona główna</span>
       </>
     ),
     docId: 'top_nav_home',
@@ -582,27 +575,6 @@ export function KangurPrimaryNavigation({
     }),
     transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
     transitionSourceId: lessonsTransitionSourceId,
-  };
-  const kangurMathAction: KangurNavActionConfig = {
-    active: false,
-    className: mobileNavItemClassName,
-    content: (
-      <>
-        <Star className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Kangur Matematyczny</span>
-      </>
-    ),
-    docId: 'top_nav_kangur_math',
-    href: kangurMathHref,
-    targetPageKey: 'Game',
-    testId: 'kangur-primary-nav-kangur-math',
-    transitionActive: isTransitionSourceActive({
-      activeTransitionSourceId,
-      transitionPhase,
-      transitionSourceId: kangurMathTransitionSourceId,
-    }),
-    transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
-    transitionSourceId: kangurMathTransitionSourceId,
   };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
@@ -679,8 +651,9 @@ export function KangurPrimaryNavigation({
     onActionClick?: () => void;
     wrapperClassName?: string;
     inlineAppearanceWithTutor?: boolean;
+    leading?: React.ReactNode;
   }): React.ReactNode => {
-    const { onActionClick, wrapperClassName, inlineAppearanceWithTutor } = options ?? {};
+    const { onActionClick, wrapperClassName, inlineAppearanceWithTutor, leading } = options ?? {};
     const tutorInlineClassName = [tutorToggleActionConfig.className, 'max-sm:!w-auto']
       .filter(Boolean)
       .join(' ');
@@ -713,9 +686,9 @@ export function KangurPrimaryNavigation({
         }
         data-testid='kangur-primary-nav-primary-actions'
       >
+        {leading}
         {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
         {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
-        {renderNavAction(buildActionWithClose(kangurMathAction, onActionClick))}
         {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
         {tutorRow}
       </div>
@@ -775,23 +748,27 @@ export function KangurPrimaryNavigation({
 
   const mobileMenuLabel = isMobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu';
   const mobileMenuId = 'kangur-mobile-menu';
+  const mobileMenuCloseButton = (
+    <div className='flex w-full justify-end'>
+      <KangurPanelCloseButton aria-label='Zamknij menu' onClick={closeMobileMenu} variant='chat' />
+    </div>
+  );
   const mobileNav = (
-    <KangurTopNavGroup label={navigationLabel}>
-      <div className='flex w-full items-center justify-center'>
-        <KangurButton
-          aria-label={mobileMenuLabel}
-          aria-controls={mobileMenuId}
-          aria-expanded={isMobileMenuOpen}
-          data-testid='kangur-primary-nav-mobile-toggle'
-          onClick={toggleMobileMenu}
-          size='md'
-          type='button'
-          variant='navigation'
-        >
-          {isMobileMenuOpen ? <X className={ICON_CLASSNAME} /> : <Menu className={ICON_CLASSNAME} />}
-          <span className='sr-only'>{mobileMenuLabel}</span>
-        </KangurButton>
-      </div>
+    <KangurTopNavGroup label={navigationLabel} className='border-0 p-0'>
+      <KangurButton
+        aria-label={mobileMenuLabel}
+        aria-controls={mobileMenuId}
+        aria-expanded={isMobileMenuOpen}
+        className='glass-panel w-full justify-center rounded-[30px] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]'
+        data-testid='kangur-primary-nav-mobile-toggle'
+        onClick={toggleMobileMenu}
+        size='md'
+        type='button'
+        variant='navigation'
+      >
+        {isMobileMenuOpen ? <X className={ICON_CLASSNAME} /> : <Menu className={ICON_CLASSNAME} />}
+        <span className='sr-only'>{mobileMenuLabel}</span>
+      </KangurButton>
     </KangurTopNavGroup>
   );
   const desktopNav = (
@@ -823,26 +800,12 @@ export function KangurPrimaryNavigation({
         style={{ backgroundColor: kangurAppearance.tone.background, color: kangurAppearance.tone.text }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className='flex items-center justify-between'>
-          <div className='text-[11px] font-semibold uppercase tracking-[0.32em] [color:var(--kangur-page-muted-text)]'>
-            Menu
-          </div>
-          <KangurButton
-            aria-label='Zamknij menu'
-            onClick={closeMobileMenu}
-            size='md'
-            type='button'
-            variant='navigation'
-          >
-            <X className={ICON_CLASSNAME} />
-            <span className='sr-only'>Zamknij menu</span>
-          </KangurButton>
-        </div>
         <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
           {renderPrimaryActions({
             onActionClick: closeMobileMenu,
             wrapperClassName: 'flex w-full flex-col gap-2',
             inlineAppearanceWithTutor: true,
+            leading: mobileMenuCloseButton,
           })}
           {renderUtilityActions({
             onActionClick: closeMobileMenu,

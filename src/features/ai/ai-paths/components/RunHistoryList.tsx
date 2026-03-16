@@ -1,4 +1,6 @@
 import React from 'react';
+
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 import {
   Button,
@@ -75,6 +77,12 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
           runHistory,
           null,
           run.graph?.nodes ?? null
+        );
+        const runHistorySelectOptions: Array<LabeledOptionDto<string>> = runHistoryOptions.map(
+          (option: { id: string; label: string }) => ({
+            value: option.id,
+            label: option.label,
+          })
         );
         const isScheduledRun = run.triggerEvent === 'scheduled_run';
         const rawSelectedHistoryNodeId = runHistorySelection[run.id] ?? null;
@@ -263,12 +271,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                             [run.id]: value,
                           }))
                         }
-                        options={runHistoryOptions.map(
-                          (option: { id: string; label: string }) => ({
-                            value: option.id,
-                            label: option.label,
-                          })
-                        )}
+                        options={runHistorySelectOptions}
                         triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                         placeholder='Select node'
                         ariaLabel='Select node'

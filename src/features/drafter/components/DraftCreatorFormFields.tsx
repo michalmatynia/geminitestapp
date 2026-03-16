@@ -7,6 +7,7 @@ import { CategorySingleSelectField } from '@/features/products';
 import { ProducerMultiSelectField } from '@/features/products';
 import { ProductMetadataFieldProvider } from '@/features/products';
 import { TagMultiSelectField } from '@/features/products';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
@@ -52,6 +53,34 @@ const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
   'note-link': 'Note Link',
   validation: 'Validation',
 };
+
+const OPEN_PRODUCT_FORM_TAB_SELECT_OPTIONS: Array<LabeledOptionDto<ProductDraftOpenFormTab>> =
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS.map((value) => ({
+    value,
+    label: OPEN_PRODUCT_FORM_TAB_LABELS[value],
+  }));
+
+const ICON_COLOR_MODE_OPTIONS: Array<LabeledOptionDto<'theme' | 'custom'>> = [
+  { value: 'theme', label: 'Match Theme' },
+  { value: 'custom', label: 'Custom Color' },
+];
+
+const PRODUCT_IDENTIFIER_OPTIONS: Array<LabeledOptionDto<'ean' | 'gtin' | 'asin'>> = [
+  { value: 'ean', label: 'EAN' },
+  { value: 'gtin', label: 'GTIN' },
+  { value: 'asin', label: 'ASIN' },
+];
+
+const getParameterLabel = (parameter: ProductParameter): string =>
+  parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
+
+const buildParameterOptions = (
+  parameters: ProductParameter[]
+): Array<LabeledOptionDto<string>> =>
+  parameters.map((parameter) => ({
+    value: parameter.id,
+    label: getParameterLabel(parameter),
+  }));
 
 export function DraftCreatorDraftInfoSection(): React.JSX.Element {
   const {
@@ -106,10 +135,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
       >
         <SelectSimple
           size='sm'
-          options={PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS.map((value: ProductDraftOpenFormTab) => ({
-            value,
-            label: OPEN_PRODUCT_FORM_TAB_LABELS[value],
-          }))}
+          options={OPEN_PRODUCT_FORM_TAB_SELECT_OPTIONS}
           value={openProductFormTab}
           onValueChange={(value: string): void =>
             setOpenProductFormTab(value as ProductDraftOpenFormTab)
@@ -178,10 +204,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           <FormField label='Icon Color' id='iconColorMode'>
             <SelectSimple
               size='sm'
-              options={[
-                { value: 'theme', label: 'Match Theme' },
-                { value: 'custom', label: 'Custom Color' },
-              ]}
+              options={ICON_COLOR_MODE_OPTIONS}
               value={iconColorMode}
               onValueChange={(value: string): void =>
                 setIconColorMode(value === 'custom' ? 'custom' : 'theme')
@@ -273,11 +296,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             <div className='flex gap-2'>
               <SelectSimple
                 size='sm'
-                options={[
-                  { value: 'ean', label: 'EAN' },
-                  { value: 'gtin', label: 'GTIN' },
-                  { value: 'asin', label: 'ASIN' },
-                ]}
+                options={PRODUCT_IDENTIFIER_OPTIONS}
                 value={identifierType}
                 onValueChange={(value: string): void =>
                   setIdentifierType(value as 'ean' | 'gtin' | 'asin')
@@ -641,9 +660,6 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
     [parameterValues]
   );
 
-  const getParameterLabel = (parameter: ProductParameter): string =>
-    parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
-
   return (
     <FormSection
       title='Parameters'
@@ -694,10 +710,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 <div className='w-full md:w-64'>
                   <SelectSimple
                     size='sm'
-                    options={availableOptions.map((parameter: ProductParameter) => ({
-                      value: parameter.id,
-                      label: getParameterLabel(parameter),
-                    }))}
+                    options={buildParameterOptions(availableOptions)}
                     value={entry.parameterId}
                     onValueChange={(value: string): void => updateParameterId(index, value)}
                     placeholder='Select parameter'

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RegexConfig } from '@/shared/lib/ai-paths';
 import { Button, SelectSimple } from '@/shared/ui';
 
@@ -14,6 +15,11 @@ export type RegexAiProposalSectionProps = {
   onUseProposal: (proposal: { pattern: string; flags?: string; groupBy?: string }) => void;
   normalizedFlags: string;
 };
+
+const PROPOSAL_VARIANT_OPTIONS: Array<LabeledOptionDto<'manual' | 'ai'>> = [
+  { value: 'manual', label: 'Manual' },
+  { value: 'ai', label: 'AI Proposal' },
+];
 
 export function RegexAiProposalSection(
   props: RegexAiProposalSectionProps
@@ -46,10 +52,7 @@ export function RegexAiProposalSection(
             placeholder='Select variant'
             triggerClassName='h-8 w-[180px] border-border bg-card/70 text-xs text-white'
             contentClassName='border-border bg-gray-900'
-            options={[
-              { value: 'manual', label: 'Manual' },
-              { value: 'ai', label: 'AI Proposal' },
-            ]}
+            options={PROPOSAL_VARIANT_OPTIONS}
            title='Select variant'/>
           <div className='text-[11px] text-gray-500'>Switch between manual and AI proposal.</div>
         </div>

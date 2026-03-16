@@ -7,7 +7,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect, type MultiSelectOption } from './multi-select';
 
 export interface SearchableSelectProps {
-  options: MultiSelectOption[];
+  options: ReadonlyArray<MultiSelectOption>;
   value: string | null | undefined;
   onChange: (value: string | null) => void;
   placeholder?: string;
@@ -20,7 +20,7 @@ export interface SearchableSelectProps {
 }
 
 type SearchableSelectRuntimeValue = {
-  options: MultiSelectOption[];
+  options: ReadonlyArray<MultiSelectOption>;
   selected: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;

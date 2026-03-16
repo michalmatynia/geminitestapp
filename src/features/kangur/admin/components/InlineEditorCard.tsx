@@ -96,10 +96,7 @@ export function InlineEditorCard(props: {
                 if (nextValue !== 'left' && nextValue !== 'center' && nextValue !== 'right') return;
                 onChange({ ...block, align: nextValue });
               }}
-              options={ALIGNMENT_OPTIONS.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
+              options={ALIGNMENT_OPTIONS}
               triggerClassName='h-9'
              ariaLabel='Alignment' title='Alignment'/>
           </FormField>
@@ -147,10 +144,7 @@ export function InlineEditorCard(props: {
                     return;
                   onChange({ ...block, align: nextValue });
                 }}
-                options={ALIGNMENT_OPTIONS.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
+                options={ALIGNMENT_OPTIONS}
                 triggerClassName='h-9'
                ariaLabel='Alignment' title='Alignment'/>
             </FormField>
@@ -177,10 +171,7 @@ export function InlineEditorCard(props: {
                     return;
                   onChange({ ...block, fit: nextValue });
                 }}
-                options={MEDIA_FIT_OPTIONS.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
+                options={MEDIA_FIT_OPTIONS}
                 triggerClassName='h-9'
                ariaLabel='Fit' title='Fit'/>
             </FormField>
@@ -271,10 +262,7 @@ export function InlineEditorCard(props: {
                     return;
                   onChange({ ...block, align: nextValue });
                 }}
-                options={ALIGNMENT_OPTIONS.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
+                options={ALIGNMENT_OPTIONS}
                 triggerClassName='h-9'
                ariaLabel='Alignment' title='Alignment'/>
             </FormField>
@@ -288,10 +276,7 @@ export function InlineEditorCard(props: {
                     return;
                   onChange({ ...block, fit: nextValue });
                 }}
-                options={MEDIA_FIT_OPTIONS.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
+                options={MEDIA_FIT_OPTIONS}
                 triggerClassName='h-9'
                ariaLabel='Fit' title='Fit'/>
             </FormField>

@@ -12,6 +12,47 @@ import {
   useAiPathSelection,
 } from '../../AiPathConfigContext';
 
+const POLL_MODE_OPTIONS = [
+  { value: 'job', label: 'AI Job' },
+  { value: 'database', label: 'Database Query' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'job' | 'database'>>;
+
+const POLL_PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'mongodb', label: 'MongoDB' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'auto' | 'mongodb'>>;
+
+const POLL_COLLECTION_OPTIONS: Array<LabeledOptionDto<string>> = [
+  ...DB_COLLECTION_OPTIONS,
+  { value: 'custom', label: 'Custom' },
+];
+
+const POLL_QUERY_MODE_OPTIONS = [
+  { value: 'preset', label: 'Preset' },
+  { value: 'custom', label: 'Custom' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<DbQueryConfig['mode']>>;
+
+const POLL_ID_TYPE_OPTIONS = [
+  { value: 'string', label: 'String' },
+  { value: 'objectId', label: 'ObjectId' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<DbQueryConfig['idType']>>;
+
+const POLL_PRESET_OPTIONS = [
+  { value: 'by_id', label: 'By _id' },
+  { value: 'by_productId', label: 'By productId' },
+  { value: 'by_entityId', label: 'By entityId' },
+  { value: 'by_field', label: 'By custom field' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<DbQueryConfig['preset']>>;
+
+const POLL_SUCCESS_OPERATOR_OPTIONS = [
+  { value: 'truthy', label: 'Truthy' },
+  { value: 'equals', label: 'Equals' },
+  { value: 'notEquals', label: 'Not equals' },
+  { value: 'contains', label: 'Contains' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'truthy' | 'equals' | 'contains' | 'notEquals'>
+>;
+
 export function PollNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   const { edges } = useAiPathGraph();
@@ -114,10 +155,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as 'job' | 'database' })
           }
-          options={[
-            { value: 'job', label: 'AI Job' },
-            { value: 'database', label: 'Database Query' },
-          ]}
+          options={POLL_MODE_OPTIONS}
           placeholder='Select mode'
          ariaLabel='Select mode' title='Select mode'/>
       </FormField>
@@ -172,10 +210,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-                options={[
-                  { value: 'auto', label: 'Auto' },
-                  { value: 'mongodb', label: 'MongoDB' },
-                ]}
+                options={POLL_PROVIDER_OPTIONS}
                 placeholder='Select provider'
                ariaLabel='Select provider' title='Select provider'/>
             </FormField>
@@ -192,13 +227,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-                options={[
-                  ...DB_COLLECTION_OPTIONS.map((option: LabeledOptionDto<string>) => ({
-                    value: option.value,
-                    label: option.label,
-                  })),
-                  { value: 'custom', label: 'Custom' },
-                ]}
+                options={POLL_COLLECTION_OPTIONS}
                 placeholder='Select collection'
                ariaLabel='Select collection' title='Select collection'/>
             </FormField>
@@ -245,10 +274,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-                options={[
-                  { value: 'preset', label: 'Preset' },
-                  { value: 'custom', label: 'Custom' },
-                ]}
+                options={POLL_QUERY_MODE_OPTIONS}
                 placeholder='Select mode'
                ariaLabel='Select mode' title='Select mode'/>
             </FormField>
@@ -265,10 +291,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     },
                   })
                 }
-                options={[
-                  { value: 'string', label: 'String' },
-                  { value: 'objectId', label: 'ObjectId' },
-                ]}
+                options={POLL_ID_TYPE_OPTIONS}
                 placeholder='Select ID type'
                ariaLabel='Select ID type' title='Select ID type'/>
             </FormField>
@@ -288,12 +311,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                       },
                     })
                   }
-                  options={[
-                    { value: 'by_id', label: 'By _id' },
-                    { value: 'by_productId', label: 'By productId' },
-                    { value: 'by_entityId', label: 'By entityId' },
-                    { value: 'by_field', label: 'By custom field' },
-                  ]}
+                  options={POLL_PRESET_OPTIONS}
                   placeholder='Select preset'
                  ariaLabel='Select preset' title='Select preset'/>
               </FormField>
@@ -428,12 +446,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     successOperator: value as 'truthy' | 'equals' | 'contains' | 'notEquals',
                   })
                 }
-                options={[
-                  { value: 'truthy', label: 'Truthy' },
-                  { value: 'equals', label: 'Equals' },
-                  { value: 'notEquals', label: 'Not equals' },
-                  { value: 'contains', label: 'Contains' },
-                ]}
+                options={POLL_SUCCESS_OPERATOR_OPTIONS}
                 placeholder='Select operator'
                ariaLabel='Select operator' title='Select operator'/>
             </FormField>

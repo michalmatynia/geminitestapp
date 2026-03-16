@@ -50,7 +50,7 @@ export type ConstantConfigDto = z.infer<typeof constantConfigSchema>;
 export type ConstantConfig = ConstantConfigDto;
 
 export const mathConfigSchema = z.object({
-  operation: z.enum(['add', 'subtract', 'multiply', 'divide']).optional(),
+  operation: z.enum(['add', 'subtract', 'multiply', 'divide', 'round', 'ceil', 'floor']).optional(),
   value: z.number().optional(),
   operand: z.number().optional(),
 });

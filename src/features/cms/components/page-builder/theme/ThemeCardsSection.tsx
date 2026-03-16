@@ -8,6 +8,31 @@ import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuil
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 import { useThemeSettingsValue } from '../ThemeSettingsContext';
 
+const CARD_STYLE_OPTIONS = [
+  { label: 'Standard', value: 'standard' },
+  { label: 'Card', value: 'card' },
+] as const;
+
+const CARD_IMAGE_RATIO_OPTIONS = [
+  { label: '1:1 Square', value: '1:1' },
+  { label: '3:4 Portrait', value: '3:4' },
+  { label: '4:3 Landscape', value: '4:3' },
+  { label: '16:9 Wide', value: '16:9' },
+] as const;
+
+const CARD_TEXT_ALIGNMENT_OPTIONS = [
+  { label: 'Left', value: 'left' },
+  { label: 'Center', value: 'center' },
+  { label: 'Right', value: 'right' },
+] as const;
+
+const CARD_SHADOW_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+] as const;
+
 export function ThemeProductCardsSection(): React.JSX.Element {
   const theme = useThemeSettingsValue();
 
@@ -16,21 +41,13 @@ export function ThemeProductCardsSection(): React.JSX.Element {
       key: 'cardStyle',
       label: 'Style',
       type: 'select',
-      options: [
-        { label: 'Standard', value: 'standard' },
-        { label: 'Card', value: 'card' },
-      ],
+      options: CARD_STYLE_OPTIONS,
     },
     {
       key: 'cardImageRatio',
       label: 'Image ratio',
       type: 'select',
-      options: [
-        { label: '1:1 Square', value: '1:1' },
-        { label: '3:4 Portrait', value: '3:4' },
-        { label: '4:3 Landscape', value: '4:3' },
-        { label: '16:9 Wide', value: '16:9' },
-      ],
+      options: CARD_IMAGE_RATIO_OPTIONS,
     },
     {
       key: 'cardImagePadding',
@@ -44,11 +61,7 @@ export function ThemeProductCardsSection(): React.JSX.Element {
       key: 'cardTextAlignment',
       label: 'Text alignment',
       type: 'select',
-      options: [
-        { label: 'Left', value: 'left' },
-        { label: 'Center', value: 'center' },
-        { label: 'Right', value: 'right' },
-      ],
+      options: CARD_TEXT_ALIGNMENT_OPTIONS,
     },
     {
       key: 'cardColorScheme',
@@ -65,23 +78,13 @@ export function ThemeProductCardsSection(): React.JSX.Element {
       key: 'cardShadow',
       label: 'Shadow',
       type: 'select',
-      options: [
-        { label: 'None', value: 'none' },
-        { label: 'Small', value: 'small' },
-        { label: 'Medium', value: 'medium' },
-        { label: 'Large', value: 'large' },
-      ],
+      options: CARD_SHADOW_OPTIONS,
     },
     {
       key: 'cardHoverShadow',
       label: 'Hover shadow',
       type: 'select',
-      options: [
-        { label: 'None', value: 'none' },
-        { label: 'Small', value: 'small' },
-        { label: 'Medium', value: 'medium' },
-        { label: 'Large', value: 'large' },
-      ],
+      options: CARD_SHADOW_OPTIONS,
     },
     { key: 'showBadge', label: 'Show badge', type: 'checkbox' },
     { key: 'showQuickAdd', label: 'Show quick-add button', type: 'checkbox' },
@@ -147,21 +150,13 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
       key: 'collectionStyle',
       label: 'Style',
       type: 'select',
-      options: [
-        { label: 'Standard', value: 'standard' },
-        { label: 'Card', value: 'card' },
-      ],
+      options: CARD_STYLE_OPTIONS,
     },
     {
       key: 'collectionRatio',
       label: 'Image ratio',
       type: 'select',
-      options: [
-        { label: '1:1 Square', value: '1:1' },
-        { label: '3:4 Portrait', value: '3:4' },
-        { label: '4:3 Landscape', value: '4:3' },
-        { label: '16:9 Wide', value: '16:9' },
-      ],
+      options: CARD_IMAGE_RATIO_OPTIONS,
     },
     {
       key: 'collectionImagePadding',
@@ -175,11 +170,7 @@ export function ThemeCollectionCardsSection(): React.JSX.Element {
       key: 'collectionTextAlign',
       label: 'Text alignment',
       type: 'select',
-      options: [
-        { label: 'Left', value: 'left' },
-        { label: 'Center', value: 'center' },
-        { label: 'Right', value: 'right' },
-      ],
+      options: CARD_TEXT_ALIGNMENT_OPTIONS,
     },
     {
       key: 'collectionColorScheme',
@@ -269,21 +260,13 @@ export function ThemeBlogCardsSection(): React.JSX.Element {
       key: 'blogStyle',
       label: 'Style',
       type: 'select',
-      options: [
-        { label: 'Standard', value: 'standard' },
-        { label: 'Card', value: 'card' },
-      ],
+      options: CARD_STYLE_OPTIONS,
     },
     {
       key: 'blogRatio',
       label: 'Image ratio',
       type: 'select',
-      options: [
-        { label: '1:1 Square', value: '1:1' },
-        { label: '3:4 Portrait', value: '3:4' },
-        { label: '4:3 Landscape', value: '4:3' },
-        { label: '16:9 Wide', value: '16:9' },
-      ],
+      options: CARD_IMAGE_RATIO_OPTIONS,
     },
     {
       key: 'blogImagePadding',
@@ -297,11 +280,7 @@ export function ThemeBlogCardsSection(): React.JSX.Element {
       key: 'blogTextAlignment',
       label: 'Text alignment',
       type: 'select',
-      options: [
-        { label: 'Left', value: 'left' },
-        { label: 'Center', value: 'center' },
-        { label: 'Right', value: 'right' },
-      ],
+      options: CARD_TEXT_ALIGNMENT_OPTIONS,
     },
     {
       key: 'blogColorScheme',

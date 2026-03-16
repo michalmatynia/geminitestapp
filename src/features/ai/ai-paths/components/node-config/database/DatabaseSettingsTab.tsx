@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -16,6 +16,25 @@ import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigCon
 
 const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';
 
+const WRITE_MODE_OPTIONS = [
+  { value: 'replace', label: 'Replace' },
+  { value: 'append', label: 'Append' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'replace' | 'append'>>;
+
+const UPDATE_PAYLOAD_MODE_OPTIONS = [
+  { value: 'custom', label: 'Custom Template' },
+  { value: 'mapping', label: 'Field Mapping' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'custom' | 'mapping'>>;
+
+const WRITE_OUTCOME_POLICY_OPTIONS = [
+  { value: 'fail', label: 'Fail run when 0 records affected' },
+  { value: 'warn', label: 'Warn only when 0 records affected' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'fail' | 'warn'>>;
+
+const DB_COLLECTION_SELECT_OPTIONS = DB_COLLECTION_OPTIONS.filter(
+  (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
+);
+
 const normalizeParameterInferenceTargetPath = (value: unknown): string | undefined => {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -28,6 +47,22 @@ const normalizeParameterInferenceTargetPath = (value: unknown): string | undefin
 export function DatabaseSettingsTab(): React.JSX.Element | null {
   const { availablePorts, bundleKeys, mappings, uniqueTargetPathOptions, operation } =
     useDatabaseConstructorStateContext();
+  const availablePortOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      availablePorts.map((port: string) => ({
+        value: port,
+        label: formatPortLabel(port),
+      })),
+    [availablePorts]
+  );
+  const bundleKeyOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      Array.from(bundleKeys).map((key: string) => ({
+        value: key,
+        label: formatPortLabel(key),
+      })),
+    [bundleKeys]
+  );
   const { updateMapping, removeMapping, addMapping, mapInputsToTargets } =
     useDatabaseConstructorActionsContext();
   const { selectedNode } = useAiPathSelection();
@@ -82,10 +117,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 },
               })
             }
-            options={[
-              { value: 'replace', label: 'Replace' },
-              { value: 'append', label: 'Append' },
-            ]}
+            options={WRITE_MODE_OPTIONS}
            ariaLabel='Write Mode' title='Write Mode'/>
         </FormField>
       )}
@@ -108,10 +140,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   },
                 })
               }
-              options={[
-                { value: 'custom', label: 'Custom Template' },
-                { value: 'mapping', label: 'Field Mapping' },
-              ]}
+              options={UPDATE_PAYLOAD_MODE_OPTIONS}
              ariaLabel='Update Payload Mode' title='Update Payload Mode'/>
           </FormField>
 
@@ -156,10 +185,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                           updateMapping(index, { sourcePort: value })
                         }
                         ariaLabel='Source port'
-                        options={availablePorts.map((port: string) => ({
-                          value: port,
-                          label: formatPortLabel(port),
-                        }))}
+                        options={availablePortOptions}
                         placeholder='Source port'
                        title='Source port'/>
                       <Input
@@ -209,12 +235,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   database: { ...databaseConfig, entityType: value },
                 })
               }
-              options={DB_COLLECTION_OPTIONS.filter(
-                (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
-              ).map((option: LabeledOptionDto<string>) => ({
-                value: option.value,
-                label: option.label,
-              }))}
+              options={DB_COLLECTION_SELECT_OPTIONS}
               placeholder='Collection type'
              ariaLabel='Collection type' title='Collection type'/>
           </FormField>
@@ -232,10 +253,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   database: { ...databaseConfig, writeSource: value },
                 })
               }
-              options={availablePorts.map((port: string) => ({
-                value: port,
-                label: formatPortLabel(port),
-              }))}
+              options={availablePortOptions}
               placeholder='Select payload input'
              ariaLabel='Select payload input' title='Select payload input'/>
           </FormField>
@@ -272,10 +290,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                       },
                     })
                   }
-                  options={Array.from(bundleKeys).map((key: string) => ({
-                    value: key,
-                    label: formatPortLabel(key),
-                  }))}
+                  options={bundleKeyOptions}
                   placeholder='Pick bundle key'
                  ariaLabel='Pick bundle key' title='Pick bundle key'/>
               )}
@@ -295,12 +310,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 database: { ...databaseConfig, entityType: value },
               })
             }
-            options={DB_COLLECTION_OPTIONS.filter(
-              (opt: LabeledOptionDto<string>): boolean => opt.value !== 'custom'
-            ).map((option: LabeledOptionDto<string>) => ({
-              value: option.value,
-              label: option.label,
-            }))}
+            options={DB_COLLECTION_SELECT_OPTIONS}
             placeholder='Collection type'
            ariaLabel='Collection type' title='Collection type'/>
         </FormField>
@@ -325,10 +335,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 },
               })
             }
-            options={[
-              { value: 'fail', label: 'Fail run when 0 records affected' },
-              { value: 'warn', label: 'Warn only when 0 records affected' },
-            ]}
+            options={WRITE_OUTCOME_POLICY_OPTIONS}
            ariaLabel='Write Outcome Policy' title='Write Outcome Policy'/>
         </FormField>
       )}
@@ -380,10 +387,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   variant='subtle'
                   value={guard.definitionsPort ?? 'result'}
                   onValueChange={(value: string): void => updateGuard({ definitionsPort: value })}
-                  options={availablePorts.map((port: string) => ({
-                    value: port,
-                    label: formatPortLabel(port),
-                  }))}
+                  options={availablePortOptions}
                   placeholder='Select port'
                  ariaLabel='Select port' title='Select port'/>
               </FormField>

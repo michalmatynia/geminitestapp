@@ -75,6 +75,8 @@ const { Context: SelectSimpleRuntimeContext, useStrictContext: useSelectSimpleRu
     displayName: 'SelectSimpleRuntimeContext',
   });
 
+const toOptionArray = <T,>(option: T): T[] => [option];
+
 function SelectSimpleControl(): React.JSX.Element {
   const runtime = useSelectSimpleRuntime();
   const allowFallbackLabel = !runtime.id;
@@ -196,7 +198,7 @@ export function SelectSimple({
       groups.push({
         key: groupKey,
         label: trimmedGroup || null,
-        options: [option],
+        options: toOptionArray(option),
       });
     });
     const hasVisibleGroupLabels = groups.some((group) => group.label !== null);

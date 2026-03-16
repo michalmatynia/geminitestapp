@@ -12,7 +12,7 @@ export interface SegmentedControlOption<T extends string> {
 }
 
 export interface SegmentedControlProps<T extends string> {
-  options: SegmentedControlOption<T>[];
+  options: ReadonlyArray<SegmentedControlOption<T>>;
   value: T;
   onChange: (value: T) => void;
   className?: string;

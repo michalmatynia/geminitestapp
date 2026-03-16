@@ -86,7 +86,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
             onValueChange={(val) => {
               updateCollectionRoute(row.original.name, val);
             }}
-            options={[...COLLECTION_PROVIDER_OPTIONS]}
+            options={COLLECTION_PROVIDER_OPTIONS}
             className='h-7 w-28 text-[10px]'
            ariaLabel='Select option' title='Select option'/>
         ),

@@ -125,16 +125,6 @@ export const KANGUR_TOOLTIP_CATALOG: KangurTooltipDocEntry[] = [
     uiTargets: ['top-nav.lessons'],
   },
   {
-    id: 'top_nav_tests',
-    title: 'Tests Navigation',
-    summary: 'Opens the Kangur test-suite area for published practice and exam sets.',
-    section: 'Top Navigation',
-    aliases: ['testy', 'tests'],
-    docPath: '/docs/kangur/tests-and-exams.md',
-    tags: ['kangur', 'navigation', 'tests'],
-    uiTargets: ['top-nav.tests'],
-  },
-  {
     id: 'top_nav_profile',
     title: 'Profile Navigation',
     summary: 'Opens learner profile actions and status links for the current Kangur account.',

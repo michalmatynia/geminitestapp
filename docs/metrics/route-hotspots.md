@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-16T10:48:49.394Z
+Generated at: 2026-03-16T11:23:56.716Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -28,14 +28,14 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/agent/resources/route.ts` | 59 |
 | `src/app/api/agent/approval-gates/route.ts` | 50 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
+| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 29 |
+| `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 29 |
 | `src/app/api/v2/metadata/[type]/[id]/route.ts` | 25 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
 | `src/app/api/drafts/[id]/route.ts` | 23 |
 | `src/app/api/ai/schema/[entity]/route.ts` | 22 |
 | `src/app/api/assets3d/[id]/route.ts` | 22 |
 | `src/app/api/cms/pages/[id]/route.ts` | 22 |
-| `src/app/api/system/logs/route.ts` | 22 |
-| `src/app/api/cms/slugs/[id]/route.ts` | 21 |
 
 ## Top App Pages by LOC
 

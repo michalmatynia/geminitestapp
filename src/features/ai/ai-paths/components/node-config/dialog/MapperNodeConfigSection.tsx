@@ -1,5 +1,6 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import {
   createParserMappings,
@@ -14,6 +15,11 @@ import {
   useAiPathRuntime,
   useAiPathSelection,
 } from '../../AiPathConfigContext';
+
+const JSON_INTEGRITY_POLICY_OPTIONS: Array<LabeledOptionDto<'strict' | 'repair'>> = [
+  { value: 'strict', label: 'Strict (no repair)' },
+  { value: 'repair', label: 'Repair malformed JSON' },
+];
 
 type MapperSources = {
   context: unknown;
@@ -169,10 +175,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
             });
           }}
           placeholder='Select policy'
-          options={[
-            { value: 'strict', label: 'Strict (no repair)' },
-            { value: 'repair', label: 'Repair malformed JSON' },
-          ]}
+          options={JSON_INTEGRITY_POLICY_OPTIONS}
          ariaLabel='Select policy' title='Select policy'/>
       </FormField>
 

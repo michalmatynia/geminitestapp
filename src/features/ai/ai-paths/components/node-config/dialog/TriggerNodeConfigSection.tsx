@@ -3,6 +3,7 @@
 import { type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -43,10 +44,10 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
   const triggerButtonsQuery = useTriggerButtonsQuery();
   const selectedTriggerEvent = selectedNode?.config?.trigger?.event?.trim() ?? '';
 
-  const triggerEventOptions = useMemo(() => {
-    const byId = new Map<string, { id: string; label: string }>();
+  const triggerEventOptions = useMemo<Array<LabeledOptionDto<string>>>(() => {
+    const byId = new Map<string, LabeledOptionDto<string>>();
     TRIGGER_EVENTS.forEach((event: { id: string; label: string }) => {
-      byId.set(event.id, event);
+      byId.set(event.id, { value: event.id, label: event.label });
     });
     (triggerButtonsQuery.data ?? []).forEach((button: AiTriggerButtonRecord) => {
       if (!button?.id) return;
@@ -54,7 +55,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
         return;
       }
       if (byId.has(button.id)) return;
-      byId.set(button.id, { id: button.id, label: button.name });
+      byId.set(button.id, { value: button.id, label: button.name });
     });
     return Array.from(byId.values());
   }, [selectedTriggerEvent, triggerButtonsQuery.data]);
@@ -84,10 +85,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-          options={triggerEventOptions.map((event: { id: string; label: string }) => ({
-            value: event.id,
-            label: event.label,
-          }))}
+          options={triggerEventOptions}
           placeholder='Select action'
          ariaLabel='Select action' title='Select action'/>
       </FormField>

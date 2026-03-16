@@ -120,7 +120,7 @@ export function SegmentDetailEditor(): React.JSX.Element {
                 type: val as PromptExploderSegmentType,
               }));
             }}
-            options={[...SEGMENT_TYPE_OPTIONS]}
+            options={SEGMENT_TYPE_OPTIONS}
            ariaLabel='Type' title='Type'/>
         </FormField>
         <FormField label='Include In Output'>

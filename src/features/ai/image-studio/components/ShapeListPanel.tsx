@@ -30,6 +30,16 @@ const ROLE_OPTIONS: Array<LabeledOptionDto<VectorShapeRole>> = [
   { value: 'custom', label: 'Custom' },
 ];
 
+const ROLE_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '',
+  label: 'Role',
+};
+
+const ROLE_SELECT_OPTIONS: Array<LabeledOptionDto<string>> = [
+  ROLE_PLACEHOLDER_OPTION,
+  ...ROLE_OPTIONS,
+];
+
 const SHAPE_COLOR_MAP: Record<string, string> = {
   polygon: 'rgb(56, 189, 248)',
   lasso: 'rgb(56, 189, 248)',
@@ -202,13 +212,7 @@ export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.El
                     }
                     handleUpdateShape(shape.id, { role: nextValue });
                   }}
-                  options={[
-                    { value: '', label: 'Role' },
-                    ...ROLE_OPTIONS.map((option) => ({
-                      value: option.value,
-                      label: option.label,
-                    })),
-                  ]}
+                  options={ROLE_SELECT_OPTIONS}
                  ariaLabel='Select option' title='Select option'/>
               </div>
             )}

@@ -3,6 +3,7 @@
 import { keepPreviousData } from '@tanstack/react-query';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 import { dbApi } from '@/shared/lib/ai-paths/api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -11,6 +12,21 @@ import { Button, Label, SelectSimple, SearchInput, Pagination, Card, Hint } from
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../AiPathConfigContext';
+
+const SCHEMA_PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto (Primary DB)' },
+  { value: 'mongodb', label: 'MongoDB' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'auto' | 'mongodb'>>;
+
+const COLLECTION_MODE_OPTIONS = [
+  { value: 'all', label: 'All Collections' },
+  { value: 'selected', label: 'Selected Collections Only' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'all' | 'selected'>>;
+
+const OUTPUT_FORMAT_OPTIONS = [
+  { value: 'text', label: 'Text (Human Readable)' },
+  { value: 'json', label: 'JSON (Structured)' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'text' | 'json'>>;
 
 const isCollectionSchema = (value: unknown): value is CollectionSchema =>
   isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
@@ -189,6 +205,24 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     () => (schemaCollections.length > 0 ? ['mongodb'] : []),
     [schemaCollections]
   );
+  const browseProviderOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      availableProviders.map((provider) => ({
+        value: provider,
+        label: provider,
+      })),
+    [availableProviders]
+  );
+  const browseCollectionOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      schemaCollections
+        .filter((collection) => (browseProvider ? collection.provider === browseProvider : true))
+        .map((coll) => ({
+          value: coll.name,
+          label: coll.name + (showProviderLabel && coll.provider ? ` (${coll.provider})` : ''),
+        })),
+    [browseProvider, schemaCollections, showProviderLabel]
+  );
 
   React.useEffect((): void => {
     if (schemaConfig.provider === 'mongodb') {
@@ -254,10 +288,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   updateSchemaConfig({ provider: value as 'auto' | 'mongodb' })
                 }
                 ariaLabel='Schema provider'
-                options={[
-                  { value: 'auto', label: 'Auto (Primary DB)' },
-                  { value: 'mongodb', label: 'MongoDB' },
-                ]}
+                options={SCHEMA_PROVIDER_OPTIONS}
                 triggerClassName='mt-2 border-border bg-card/70'
                title='Select option'/>
             </div>
@@ -271,10 +302,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   updateSchemaConfig({ mode: value as 'all' | 'selected' })
                 }
                 ariaLabel='Collection mode'
-                options={[
-                  { value: 'all', label: 'All Collections' },
-                  { value: 'selected', label: 'Selected Collections Only' },
-                ]}
+                options={COLLECTION_MODE_OPTIONS}
                 triggerClassName='mt-2 border-border bg-card/70'
                title='Select option'/>
             </div>
@@ -366,10 +394,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   updateSchemaConfig({ formatAs: value as 'json' | 'text' })
                 }
                 ariaLabel='Output format'
-                options={[
-                  { value: 'text', label: 'Text (Human Readable)' },
-                  { value: 'json', label: 'JSON (Structured)' },
-                ]}
+                options={OUTPUT_FORMAT_OPTIONS}
                 triggerClassName='mt-2 border-border bg-card/70'
                title='Select option'/>
             </div>
@@ -435,10 +460,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                           setBrowseProvider((value as 'mongodb') || null);
                         }}
                         ariaLabel='Browse provider'
-                        options={availableProviders.map((provider) => ({
-                          value: provider,
-                          label: provider,
-                        }))}
+                        options={browseProviderOptions}
                         triggerClassName='border-border bg-card/70'
                         placeholder='Select provider'
                        title='Select provider'/>
@@ -454,16 +476,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         setExpandedDocId(null);
                       }}
                       ariaLabel='Browse collection'
-                      options={schemaCollections
-                        .filter((collection) =>
-                          browseProvider ? collection.provider === browseProvider : true
-                        )
-                        .map((coll) => ({
-                          value: coll.name,
-                          label:
-                            coll.name +
-                            (showProviderLabel && coll.provider ? ` (${coll.provider})` : ''),
-                        }))}
+                      options={browseCollectionOptions}
                       triggerClassName='flex-1 border-border bg-card/70'
                       placeholder='Select collection to browse'
                      title='Select collection to browse'/>

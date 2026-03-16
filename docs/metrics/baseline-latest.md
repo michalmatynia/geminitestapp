@@ -8,24 +8,24 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-16T10:48:47.121Z
+Generated at: 2026-03-16T11:23:53.756Z
 
 ## Snapshot
 
-- Source files: 6309
-- Source lines: 1017552
+- Source files: 6311
+- Source lines: 1017605
 - use client files: 1595
 - Files >= 1000 LOC: 25
 - Files >= 1500 LOC: 3
 - Largest file: `src/features/kangur/ui/pages/Duels.tsx` (1795 LOC)
-- API routes: 277
+- API routes: 279
 - API delegated server routes: 0
 - API routes without apiHandler/delegation: 155
-- API explicit cache policy coverage: 122/277 (44.0%)
+- API explicit cache policy coverage: 124/279 (44.4%)
 - Cross-feature dependency pairs: 25
 - Shared -> features imports: 30
 - setInterval occurrences: 26
-- Prop-drilling chains (depth >= 3): 10
+- Prop-drilling chains (depth >= 3): 11
 - Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
@@ -44,9 +44,9 @@ Generated at: 2026-03-16T10:48:47.121Z
 | `src/app/api/agent/resources/route.ts` | 59 |
 | `src/app/api/agent/approval-gates/route.ts` | 50 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
+| `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 29 |
+| `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 29 |
 | `src/app/api/v2/metadata/[type]/[id]/route.ts` | 25 |
-| `src/app/api/auth/users/[id]/route.ts` | 23 |
-| `src/app/api/drafts/[id]/route.ts` | 23 |
 
 ## Top Cross-Feature Dependencies
 
@@ -73,8 +73,8 @@ Generated at: 2026-03-16T10:48:47.121Z
 | File | LOC |
 | --- | ---: |
 | `src/features/kangur/ui/pages/Duels.tsx` | 1795 |
-| `src/features/kangur/ui/KangurLoginPage.tsx` | 1623 |
 | `src/features/kangur/observability/summary.ts` | 1548 |
+| `src/features/kangur/ui/KangurLoginPage.tsx` | 1514 |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
 | `src/features/kangur/server/ai-tutor-adaptive.ts` | 1224 |

@@ -4,7 +4,7 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import {
   CMS_MENU_SETTINGS_KEY,
@@ -44,9 +44,9 @@ const MENU_SECTIONS = [
   'Animations',
 ];
 
-const COLOR_SCHEME_FALLBACK = [
+const COLOR_SCHEME_FALLBACK: ReadonlyArray<LabeledOptionDto<string>> = [
   { label: 'Custom colors', value: 'custom' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+];
 
 const FONT_FAMILY_OPTIONS = [
   { label: 'Inter', value: 'Inter, sans-serif' },
@@ -79,6 +79,72 @@ const FONT_WEIGHT_OPTIONS = [
   { label: '900 – Black', value: '900' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
+const MENU_PLACEMENT_OPTIONS = [
+  { label: 'Top', value: 'top' },
+  { label: 'Left', value: 'left' },
+  { label: 'Right', value: 'right' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const MENU_LAYOUT_OPTIONS = [
+  { label: 'Horizontal', value: 'horizontal' },
+  { label: 'Vertical', value: 'vertical' },
+  { label: 'Centered', value: 'centered' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const MENU_ALIGNMENT_OPTIONS = [
+  { label: 'Left', value: 'left' },
+  { label: 'Center', value: 'center' },
+  { label: 'Right', value: 'right' },
+  { label: 'Space between', value: 'space-between' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const TEXT_TRANSFORM_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Uppercase', value: 'uppercase' },
+  { label: 'Capitalize', value: 'capitalize' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const MOBILE_BREAKPOINT_OPTIONS = [
+  { label: '768px (Tablet)', value: '768' },
+  { label: '1024px (Small desktop)', value: '1024' },
+  { label: '1280px (Large desktop)', value: '1280' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const MOBILE_ANIMATION_OPTIONS = [
+  { label: 'Slide left', value: 'slide-left' },
+  { label: 'Slide right', value: 'slide-right' },
+  { label: 'Slide down', value: 'slide-down' },
+  { label: 'Fade', value: 'fade' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const DROPDOWN_SHADOW_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Small', value: 'small' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Large', value: 'large' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const POSITION_MODE_OPTIONS = [
+  { label: 'Glued to top', value: 'sticky' },
+  { label: 'Top of page', value: 'static' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const ACTIVE_STYLE_OPTIONS = [
+  { label: 'Underline', value: 'underline' },
+  { label: 'Bold', value: 'bold' },
+  { label: 'Background', value: 'background' },
+  { label: 'Border bottom', value: 'border-bottom' },
+  { label: 'None', value: 'none' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
+const HOVER_STYLE_OPTIONS = [
+  { label: 'Underline', value: 'underline' },
+  { label: 'Color shift', value: 'color-shift' },
+  { label: 'Background', value: 'background' },
+  { label: 'Scale', value: 'scale' },
+  { label: 'None', value: 'none' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
 // ---------------------------------------------------------------------------
 // Panel
 // ---------------------------------------------------------------------------
@@ -105,6 +171,19 @@ export function MenuSettingsPanel({
     if (!zoningEnabled) return 'default';
     return userMenuScopeId ?? initialMenuScopeId;
   }, [initialMenuScopeId, userMenuScopeId, zoningEnabled]);
+  const menuScopeOptions = useMemo<Array<LabeledOptionWithDescriptionDto<string>>>(() => {
+    const options: Array<LabeledOptionWithDescriptionDto<string>> = [
+      { value: 'default', label: 'Default scope' },
+    ];
+    domains.forEach((domain: CmsDomain) => {
+      options.push({
+        value: domain.id,
+        label: domain.domain,
+        description: domain.id === activeDomainId ? 'active' : undefined,
+      });
+    });
+    return options;
+  }, [activeDomainId, domains]);
 
   const menuKey = useMemo((): string => {
     if (!zoningEnabled) return CMS_MENU_SETTINGS_KEY;
@@ -202,11 +281,7 @@ export function MenuSettingsPanel({
               key: 'menuPlacement',
               label: 'Menu position',
               type: 'select',
-              options: [
-                { label: 'Top', value: 'top' },
-                { label: 'Left', value: 'left' },
-                { label: 'Right', value: 'right' },
-              ],
+              options: MENU_PLACEMENT_OPTIONS,
             },
             { key: 'collapsible', label: 'Collapsible menu', type: 'checkbox' },
             ...(settings.collapsible
@@ -250,22 +325,13 @@ export function MenuSettingsPanel({
               key: 'layoutStyle',
               label: 'Layout style',
               type: 'select',
-              options: [
-                { label: 'Horizontal', value: 'horizontal' },
-                { label: 'Vertical', value: 'vertical' },
-                { label: 'Centered', value: 'centered' },
-              ],
+              options: MENU_LAYOUT_OPTIONS,
             },
             {
               key: 'alignment',
               label: 'Alignment',
               type: 'select',
-              options: [
-                { label: 'Left', value: 'left' },
-                { label: 'Center', value: 'center' },
-                { label: 'Right', value: 'right' },
-                { label: 'Space between', value: 'space-between' },
-              ],
+              options: MENU_ALIGNMENT_OPTIONS,
             },
             {
               key: 'maxWidth',
@@ -330,11 +396,7 @@ export function MenuSettingsPanel({
               key: 'textTransform',
               label: 'Text transform',
               type: 'select',
-              options: [
-                { label: 'None', value: 'none' },
-                { label: 'Uppercase', value: 'uppercase' },
-                { label: 'Capitalize', value: 'capitalize' },
-              ],
+              options: TEXT_TRANSFORM_OPTIONS,
             },
           ];
 
@@ -406,22 +468,13 @@ export function MenuSettingsPanel({
               key: 'mobileBreakpoint',
               label: 'Breakpoint',
               type: 'select',
-              options: [
-                { label: '768px (Tablet)', value: '768' },
-                { label: '1024px (Small desktop)', value: '1024' },
-                { label: '1280px (Large desktop)', value: '1280' },
-              ],
+              options: MOBILE_BREAKPOINT_OPTIONS,
             },
             {
               key: 'mobileAnimation',
               label: 'Animation',
               type: 'select',
-              options: [
-                { label: 'Slide left', value: 'slide-left' },
-                { label: 'Slide right', value: 'slide-right' },
-                { label: 'Slide down', value: 'slide-down' },
-                { label: 'Fade', value: 'fade' },
-              ],
+              options: MOBILE_ANIMATION_OPTIONS,
             },
             { key: 'hamburgerColor', label: 'Hamburger color', type: 'color' },
             { key: 'mobileOverlay', label: 'Show overlay', type: 'checkbox' },
@@ -443,12 +496,7 @@ export function MenuSettingsPanel({
               key: 'dropdownShadow',
               label: 'Shadow',
               type: 'select',
-              options: [
-                { label: 'None', value: 'none' },
-                { label: 'Small', value: 'small' },
-                { label: 'Medium', value: 'medium' },
-                { label: 'Large', value: 'large' },
-              ],
+              options: DROPDOWN_SHADOW_OPTIONS,
             },
             {
               key: 'dropdownMinWidth',
@@ -470,10 +518,7 @@ export function MenuSettingsPanel({
               key: 'positionMode',
               label: 'Menu position',
               type: 'select',
-              options: [
-                { label: 'Glued to top', value: 'sticky' },
-                { label: 'Top of page', value: 'static' },
-              ],
+              options: POSITION_MODE_OPTIONS,
             },
             ...(isSticky
               ? ([
@@ -515,13 +560,7 @@ export function MenuSettingsPanel({
               key: 'activeStyle',
               label: 'Style',
               type: 'select',
-              options: [
-                { label: 'Underline', value: 'underline' },
-                { label: 'Bold', value: 'bold' },
-                { label: 'Background', value: 'background' },
-                { label: 'Border bottom', value: 'border-bottom' },
-                { label: 'None', value: 'none' },
-              ],
+              options: ACTIVE_STYLE_OPTIONS,
             },
             { key: 'activeColor', label: 'Active color', type: 'color' },
           ];
@@ -532,13 +571,7 @@ export function MenuSettingsPanel({
               key: 'hoverStyle',
               label: 'Style',
               type: 'select',
-              options: [
-                { label: 'Underline', value: 'underline' },
-                { label: 'Color shift', value: 'color-shift' },
-                { label: 'Background', value: 'background' },
-                { label: 'Scale', value: 'scale' },
-                { label: 'None', value: 'none' },
-              ],
+              options: HOVER_STYLE_OPTIONS,
             },
             { key: 'hoverColor', label: 'Hover color', type: 'color' },
             {
@@ -709,14 +742,7 @@ export function MenuSettingsPanel({
                   onValueChange={(value: string): void => {
                     setUserMenuScopeId(value);
                   }}
-                  options={[
-                    { value: 'default', label: 'Default scope' },
-                    ...domains.map((domain: CmsDomain) => ({
-                      value: domain.id,
-                      label: domain.domain,
-                      description: domain.id === activeDomainId ? 'active' : undefined,
-                    })),
-                  ]}
+                  options={menuScopeOptions}
                   placeholder='Select zone'
                   ariaLabel='Menu scope'
                   triggerClassName='h-8 text-xs'

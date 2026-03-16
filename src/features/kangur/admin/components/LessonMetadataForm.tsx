@@ -79,10 +79,7 @@ export function LessonMetadataForm(props: {
                   if (value !== 'component' && value !== 'document') return;
                   setFormData((current) => ({ ...current, contentMode: value }));
                 }}
-                options={LESSON_CONTENT_MODE_OPTIONS.map((opt) => ({
-                  value: opt.value,
-                  label: opt.label,
-                }))}
+                options={LESSON_CONTENT_MODE_OPTIONS}
                 triggerClassName='h-10'
                ariaLabel='Rendering Mode' title='Rendering Mode'/>
             </FormField>

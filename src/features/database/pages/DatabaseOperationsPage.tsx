@@ -43,7 +43,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
             size='sm'
             value={dbType}
             onValueChange={(value: string): void => setDbType(value as DatabaseType)}
-            options={[...DB_TYPE_OPTIONS]}
+            options={DB_TYPE_OPTIONS}
             triggerClassName='h-8 text-xs w-[120px]'
            ariaLabel='Select option' title='Select option'/>
           <Button asChild variant='outline' size='sm'>

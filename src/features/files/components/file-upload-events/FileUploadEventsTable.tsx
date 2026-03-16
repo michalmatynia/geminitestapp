@@ -4,10 +4,17 @@ import React, { useMemo } from 'react';
 
 import { StandardDataTablePanel, PanelPagination, RefreshButton, FilterPanel } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import { useFileUploadEventsPanelContext } from './context/FileUploadEventsPanelContext';
 import { useFileUploadEventsContext } from '../../contexts/FileUploadEventsContext';
 import { useFileUploadEventsTableProps } from '../../hooks/useFileUploadEventsTableProps';
+
+const FILE_UPLOAD_STATUS_OPTIONS: Array<LabeledOptionDto<'all' | 'success' | 'error'>> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'success', label: 'Success' },
+  { value: 'error', label: 'Error' },
+];
 
 export function FileUploadEventsTable(): React.JSX.Element {
   const tableProps = useFileUploadEventsTableProps();
@@ -41,11 +48,7 @@ export function FileUploadEventsTable(): React.JSX.Element {
         key: 'status',
         label: 'Status',
         type: 'select',
-        options: [
-          { value: 'all', label: 'All statuses' },
-          { value: 'success', label: 'Success' },
-          { value: 'error', label: 'Error' },
-        ],
+        options: FILE_UPLOAD_STATUS_OPTIONS,
       },
       { key: 'category', label: 'Category', type: 'text', placeholder: 'studio, cms, products…' },
       { key: 'projectId', label: 'Project ID', type: 'text', placeholder: 'project id…' },

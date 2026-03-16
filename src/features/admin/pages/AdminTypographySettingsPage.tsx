@@ -8,6 +8,7 @@ import {
   getAppFontSet,
   type AppFontSetId,
 } from '@/shared/constants/typography';
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   AdminSettingsPageLayout,
@@ -21,6 +22,14 @@ import {
   useToast,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+const APP_FONT_SET_OPTIONS: Array<LabeledOptionWithDescriptionDto<AppFontSetId>> = APP_FONT_SETS.map(
+  (set: { id: AppFontSetId; name: string; description: string }) => ({
+    value: set.id,
+    label: set.name,
+    description: set.description,
+  })
+);
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -85,13 +94,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
                 size='sm'
                 value={selected}
                 onValueChange={(val: string) => setSelected(val as AppFontSetId)}
-                options={APP_FONT_SETS.map(
-                  (set: { id: AppFontSetId; name: string; description: string }) => ({
-                    value: set.id,
-                    label: set.name,
-                    description: set.description,
-                  })
-                )}
+                options={APP_FONT_SET_OPTIONS}
                 placeholder='Select a font set'
                ariaLabel='Select a font set' title='Select a font set'/>
             </FormField>

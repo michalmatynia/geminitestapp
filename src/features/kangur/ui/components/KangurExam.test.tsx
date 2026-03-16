@@ -49,11 +49,10 @@ describe('KangurExam', () => {
       'soft-card',
       'border'
     );
-    expect(screen.getByText('1/1')).toHaveClass('[color:var(--kangur-page-muted-text)]');
+    expect(screen.getByTestId('kangur-exam-progress-pill')).toHaveTextContent('1/1');
     expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
-    expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute('aria-valuenow', '0');
-    expect(screen.getByTestId('kangur-exam-progress-bar')).toHaveAttribute(
-      'aria-valuetext',
+    expect(screen.getByTestId('kangur-exam-progress-pill')).toHaveAttribute(
+      'aria-label',
       'Pytanie 1 z 1'
     );
     expect(screen.getByTestId('kangur-exam-question-point-chip')).toHaveClass(

@@ -108,7 +108,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                       : '',
                 }));
               }}
-              options={[...TEMPLATE_MERGE_MODE_OPTIONS]}
+              options={TEMPLATE_MERGE_MODE_OPTIONS}
              ariaLabel='Select option' title='Select option'/>
           </div>
           {approvalDraft.templateMergeMode === 'target' ? (
@@ -255,7 +255,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                       : previous.templateMergeMode,
                 }));
               }}
-              options={[...SEGMENT_TYPE_OPTIONS]}
+              options={SEGMENT_TYPE_OPTIONS}
              ariaLabel='Select option' title='Select option'/>
           </div>
           <div className='space-y-1'>

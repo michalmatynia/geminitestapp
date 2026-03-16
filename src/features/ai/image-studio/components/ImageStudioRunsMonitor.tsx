@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { useImageStudioRuns } from '@/features/ai/ai-paths/hooks/useImageStudioRuns';
+import { IMAGE_STUDIO_RUN_STATUS_OPTIONS } from '@/features/ai/image-studio/utils/run-status-options';
 import type { FilterField } from '@/shared/contracts/ui';
 import {
   Card,
@@ -130,13 +131,7 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
       key: 'status',
       label: 'Status',
       type: 'select',
-      options: [
-        { value: 'all', label: 'All' },
-        { value: 'queued', label: 'Queued' },
-        { value: 'running', label: 'Running' },
-        { value: 'completed', label: 'Completed' },
-        { value: 'failed', label: 'Failed' },
-      ],
+      options: IMAGE_STUDIO_RUN_STATUS_OPTIONS,
     },
   ];
 

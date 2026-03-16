@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   Button,
@@ -38,6 +39,21 @@ import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCas
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+const NO_PARENT_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: '(No parent)',
+};
+
+const NO_TAG_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: '(No tag)',
+};
+
+const NO_CATEGORY_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: '(No category)',
+};
 
 
 export function CaseTreeRenderer({
@@ -139,6 +155,12 @@ export function CaseTreeRenderer({
           ? caseIdentifierById.get(file.caseIdentifierId)
           : null;
         const category = file.categoryId ? caseCategoryById.get(file.categoryId) : null;
+        const parentCaseSelectOptions = [
+          NO_PARENT_OPTION,
+          ...parentCaseOptions.filter((option) => option.value !== file.id),
+        ];
+        const tagSelectOptions = [NO_TAG_OPTION, ...caseResolverTagOptions];
+        const categorySelectOptions = [NO_CATEGORY_OPTION, ...caseResolverCategoryOptions];
 
         return (
           <div key={file.id} className='relative'>
@@ -178,10 +200,7 @@ export function CaseTreeRenderer({
                         onValueChange={(val) =>
                           setEditingCaseParentId(val === '__none__' ? null : val)
                         }
-                        options={[
-                          { value: '__none__', label: '(No parent)' },
-                          ...parentCaseOptions.filter((o) => o.value !== file.id),
-                        ]}
+                        options={parentCaseSelectOptions}
                         triggerClassName='bg-black/40'
                        ariaLabel='Parent Case' title='Parent Case'/>
                     </FormField>
@@ -192,10 +211,7 @@ export function CaseTreeRenderer({
                         onValueChange={(val) =>
                           setEditingCaseTagId(val === '__none__' ? null : val)
                         }
-                        options={[
-                          { value: '__none__', label: '(No tag)' },
-                          ...caseResolverTagOptions,
-                        ]}
+                        options={tagSelectOptions}
                         triggerClassName='bg-black/40'
                        ariaLabel='Tag' title='Tag'/>
                     </FormField>
@@ -206,10 +222,7 @@ export function CaseTreeRenderer({
                         onValueChange={(val) =>
                           setEditingCaseCategoryId(val === '__none__' ? null : val)
                         }
-                        options={[
-                          { value: '__none__', label: '(No category)' },
-                          ...caseResolverCategoryOptions,
-                        ]}
+                        options={categorySelectOptions}
                         triggerClassName='bg-black/40'
                        ariaLabel='Category' title='Category'/>
                     </FormField>

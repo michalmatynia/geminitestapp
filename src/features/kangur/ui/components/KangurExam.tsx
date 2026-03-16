@@ -34,7 +34,6 @@ import {
   KangurButton,
   KangurInfoCard,
   KangurInlineFallback,
-  KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
@@ -77,6 +76,9 @@ type ExamNavigationProps = {
   onPrev: () => void;
   onNext: () => void;
   ariaLabel?: string;
+  progressLabel?: string;
+  progressAriaLabel?: string;
+  progressTestId?: string;
 };
 
 const ILLUSTRATIONS: Record<string, IllustrationComponent | undefined> = {
@@ -130,39 +132,57 @@ function ExamNavigation({
   onPrev,
   onNext,
   ariaLabel = 'Nawigacja w teście Kangur',
+  progressLabel,
+  progressAriaLabel,
+  progressTestId,
 }: ExamNavigationProps): React.JSX.Element {
   const buttonClassName =
     'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35';
 
   return (
-    <nav className='flex w-full items-center justify-center gap-2' aria-label={ariaLabel}>
-      <KangurButton
-        onClick={prevDisabled ? undefined : onPrev}
-        disabled={prevDisabled}
-        className={buttonClassName}
-        size='sm'
-        type='button'
-        variant='surface'
-        aria-label={prevLabel}
-        title={prevLabel}
-      >
-        <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-        <span className='sr-only'>{prevLabel}</span>
-      </KangurButton>
-      <KangurButton
-        onClick={nextDisabled ? undefined : onNext}
-        disabled={nextDisabled}
-        className={buttonClassName}
-        size='sm'
-        type='button'
-        variant='surface'
-        aria-label={nextLabel}
-        title={nextLabel}
-      >
-        <span className='sr-only'>{nextLabel}</span>
-        <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-      </KangurButton>
-    </nav>
+    <div className='grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2'>
+      <div />
+      <nav className='flex items-center justify-center gap-2' aria-label={ariaLabel}>
+        <KangurButton
+          onClick={prevDisabled ? undefined : onPrev}
+          disabled={prevDisabled}
+          className={buttonClassName}
+          size='sm'
+          type='button'
+          variant='surface'
+          aria-label={prevLabel}
+          title={prevLabel}
+        >
+          <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+          <span className='sr-only'>{prevLabel}</span>
+        </KangurButton>
+        <KangurButton
+          onClick={nextDisabled ? undefined : onNext}
+          disabled={nextDisabled}
+          className={buttonClassName}
+          size='sm'
+          type='button'
+          variant='surface'
+          aria-label={nextLabel}
+          title={nextLabel}
+        >
+          <span className='sr-only'>{nextLabel}</span>
+          <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+        </KangurButton>
+      </nav>
+      <div className='flex justify-end' aria-live='polite' aria-atomic='true'>
+        {progressLabel ? (
+          <KangurStatusChip
+            accent='amber'
+            data-testid={progressTestId}
+            aria-label={progressAriaLabel ?? progressLabel}
+            size='sm'
+          >
+            {progressLabel}
+          </KangurStatusChip>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -182,7 +202,6 @@ function ExamQuestion({
   const Illustration = ILLUSTRATIONS[q.id];
   const pointLabel = POINT_LABELS[q.id];
   const questionNumber = qIndex + 1;
-  const progressValue = (qIndex / total) * 100;
   const progressValueText = `Pytanie ${questionNumber} z ${total}`;
   const headingId = useId();
   const descriptionId = useId();
@@ -227,21 +246,10 @@ function ExamQuestion({
         nextLabel={nextLabel}
         onPrev={onPrev}
         onNext={onNext}
+        progressLabel={`${questionNumber}/${total}`}
+        progressAriaLabel={progressValueText}
+        progressTestId='kangur-exam-progress-pill'
       />
-      <div aria-live='polite' aria-atomic='true' className='flex items-center gap-2'>
-        <KangurProgressBar
-          accent='amber'
-          aria-label='Postęp w teście Kangur'
-          aria-valuetext={progressValueText}
-          className='flex-1'
-          data-testid='kangur-exam-progress-bar'
-          size='sm'
-          value={progressValue}
-        />
-        <span className='break-words text-xs font-bold [color:var(--kangur-page-muted-text)]'>
-          {questionNumber}/{total}
-        </span>
-      </div>
 
       <KangurInfoCard
         className='flex flex-col kangur-panel-gap rounded-[24px]'
@@ -386,6 +394,8 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           nextLabel='Następne pytanie w podglądzie'
           onPrev={handleReviewPreviousQuestion}
           onNext={handleReviewNextQuestion}
+          progressLabel={`${reviewing + 1}/${reviewQuestionCount}`}
+          progressAriaLabel={`Pytanie ${reviewing + 1} z ${reviewQuestionCount}`}
         />
         <div className='flex items-center justify-between'>
           <KangurButton

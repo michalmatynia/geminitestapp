@@ -55,26 +55,30 @@ const CLASSIFY_ITEMS: ClassifyItem[] = [
   { id: 'fish', label: '🐟', target: 'no' },
 ];
 
+const ANALOGY_ROUND_BIRD_OPTIONS = [
+  { id: 'swims', label: 'pływa' },
+  { id: 'runs', label: 'biega' },
+  { id: 'sleeps', label: 'śpi' },
+];
+
+const ANALOGY_ROUND_DAY_OPTIONS = [
+  { id: 'moon', label: 'księżyc' },
+  { id: 'rain', label: 'deszcz' },
+  { id: 'cloud', label: 'chmura' },
+];
+
 const ANALOGY_ROUNDS: AnalogyRound[] = [
   {
     id: 'bird',
     prompt: 'Ptak : lata = Ryba : ?',
-    options: [
-      { id: 'swims', label: 'pływa' },
-      { id: 'runs', label: 'biega' },
-      { id: 'sleeps', label: 'śpi' },
-    ],
+    options: ANALOGY_ROUND_BIRD_OPTIONS,
     correctId: 'swims',
     explanation: 'Ryby poruszają się w wodzie, więc „pływa” pasuje do relacji.',
   },
   {
     id: 'day',
     prompt: 'Dzień : słońce = Noc : ?',
-    options: [
-      { id: 'moon', label: 'księżyc' },
-      { id: 'rain', label: 'deszcz' },
-      { id: 'cloud', label: 'chmura' },
-    ],
+    options: ANALOGY_ROUND_DAY_OPTIONS,
     correctId: 'moon',
     explanation: 'W nocy kojarzymy światło z księżycem.',
   },

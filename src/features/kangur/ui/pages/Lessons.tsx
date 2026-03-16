@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   appendKangurUrlParams,
@@ -39,7 +39,10 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_LESSON_PANEL_GAP_CLASSNAME,
+  KANGUR_PANEL_GAP_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -66,6 +69,7 @@ const LESSONS_CARD_TRANSITION = {
 const LESSONS_CARD_STAGGER_DELAY = 0.06;
 const LESSONS_ROUTE_ACKNOWLEDGE_MS = 110;
 const ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES = 18;
+const LESSON_NAV_ANCHOR_ID = 'kangur-lesson-navigation';
 
 const LessonLoadingFallback = (): React.JSX.Element => (
   <LessonLoadingFallbackCard />
@@ -599,7 +603,7 @@ export default function Lessons() {
   useEffect(() => {
     setIsActiveLessonComponentReady(false);
   }, [activeLesson?.id]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!activeLesson) {
       return;
     }
@@ -607,15 +611,7 @@ export default function Lessons() {
     let frameId: number | null = null;
     let remainingFrames = ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES;
 
-    const scrollHeaderIntoView = (): void => {
-      const navigation = activeLessonNavigationRef.current;
-      const header = activeLessonHeaderRef.current;
-      const target = navigation ?? header;
-      if (!target) {
-        frameId = null;
-        return;
-      }
-
+    const resolveTopOffset = (): number => {
       const styles = window.getComputedStyle(document.documentElement);
       let topBarHeight =
         Number.parseFloat(styles.getPropertyValue('--kangur-top-bar-height')) || 0;
@@ -625,19 +621,37 @@ export default function Lessons() {
           topBarHeight = topBar.getBoundingClientRect().height;
         }
       }
-      const pagePaddingTop =
-        Number.parseFloat(styles.getPropertyValue('--kangur-page-padding-top')) || 0;
-      const extraOffset = pagePaddingTop > 0 ? Math.min(24, pagePaddingTop) : 16;
-      const desiredOffset = topBarHeight + extraOffset;
-      const delta = target.getBoundingClientRect().top - desiredOffset;
+      return topBarHeight;
+    };
 
-      if (Math.abs(delta) <= 8) {
+    const scrollToTarget = (): boolean => {
+      const navigation = activeLessonNavigationRef.current;
+      const header = activeLessonHeaderRef.current;
+      const target = navigation ?? header;
+      if (!target) {
+        return false;
+      }
+
+      const desiredOffset = resolveTopOffset();
+      const delta = target.getBoundingClientRect().top - desiredOffset;
+      const nextTop = Math.max(0, window.scrollY + delta);
+
+      if (Math.abs(delta) <= 4) {
+        window.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
+        return true;
+      }
+
+      window.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
+
+      return Math.abs(delta) <= 8;
+    };
+
+    const scrollNavigationIntoView = (): void => {
+      const didScroll = scrollToTarget();
+      if (didScroll) {
         frameId = null;
         return;
       }
-
-      const nextTop = Math.max(0, window.scrollY + delta);
-      window.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
 
       remainingFrames -= 1;
       if (remainingFrames <= 0) {
@@ -645,16 +659,39 @@ export default function Lessons() {
         return;
       }
 
-      frameId = window.requestAnimationFrame(scrollHeaderIntoView);
+      frameId = window.requestAnimationFrame(scrollNavigationIntoView);
     };
 
-    frameId = window.requestAnimationFrame(scrollHeaderIntoView);
+    if (!scrollToTarget()) {
+      frameId = window.requestAnimationFrame(scrollNavigationIntoView);
+    }
 
     return () => {
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId);
       }
     };
+  }, [activeLesson?.id]);
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const targetHash = `#${LESSON_NAV_ANCHOR_ID}`;
+    if (activeLesson) {
+      if (url.hash === targetHash) {
+        return;
+      }
+      url.hash = LESSON_NAV_ANCHOR_ID;
+      window.history.replaceState(window.history.state, '', url.toString());
+      return;
+    }
+
+    if (url.hash === targetHash) {
+      url.hash = '';
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
   }, [activeLesson?.id]);
   useKangurTutorAnchor({
     id: 'kangur-lessons-list-intro',
@@ -849,7 +886,7 @@ export default function Lessons() {
                 className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
                 data-testid={isDeferredContentReady ? 'lessons-list-transition' : 'lessons-shell-transition'}
               >
-                <div ref={lessonListIntroRef} className='w-full'>
+                <div ref={lessonListIntroRef} id='kangur-lessons-intro' className='w-full'>
                   <KangurPageIntroCard
                     description={lessonListIntroDescription}
                     headingAs='h1'
@@ -871,12 +908,13 @@ export default function Lessons() {
                     ref={orderedLessons.length === 0 ? undefined : lessonLibraryRef}
                     key='list-content'
                     {...lessonContentReadyMotionProps}
-                    className='flex w-full flex-col kangur-panel-gap'
+                    className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
+                    id={orderedLessons.length === 0 ? undefined : 'kangur-lessons-library'}
                     role='list'
                     aria-label='Lista lekcji'
                   >
                     {orderedLessons.length === 0 ? (
-                      <div ref={lessonListEmptyStateRef}>
+                      <div ref={lessonListEmptyStateRef} id='kangur-lessons-empty'>
                         <KangurEmptyState
                           accent='indigo'
                           className='w-full'
@@ -934,9 +972,9 @@ export default function Lessons() {
               <motion.div
                 key={activeLesson.id}
                 {...lessonActiveMotionProps}
-                className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+                className={`w-full flex flex-col items-center ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
                 data-testid='lessons-active-transition'
-              >
+                >
                 <KangurLessonNavigationProvider
                   onBack={() => handleSelectLesson(null)}
                   secretLessonPill={{
@@ -944,7 +982,11 @@ export default function Lessons() {
                     onOpen: handleOpenSecretLesson,
                   }}
                 >
-                  <div ref={activeLessonHeaderRef} className='w-full max-w-5xl'>
+                  <div
+                    ref={activeLessonHeaderRef}
+                    id='kangur-lesson-header'
+                    className='w-full max-w-5xl'
+                  >
                     <KangurActiveLessonHeader
                       lesson={activeLesson}
                       lessonDocument={activeLessonDocument}
@@ -971,20 +1013,30 @@ export default function Lessons() {
                       onBack={(): void => handleSelectLesson(null)}
                       titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
                     />
-                    <div ref={activeLessonNavigationRef} className='mt-3 w-full'>
-                      <KangurLessonNavigationWidget
-                        nextLesson={next}
-                        onSelectLesson={handleSelectLesson}
-                        prevLesson={prev}
-                      />
-                    </div>
+                  </div>
+                  <div
+                    ref={activeLessonNavigationRef}
+                    id={LESSON_NAV_ANCHOR_ID}
+                    className='w-full max-w-5xl kangur-lesson-nav-offset'
+                  >
+                    <KangurLessonNavigationWidget
+                      align='start'
+                      nextLesson={next}
+                      onSelectLesson={handleSelectLesson}
+                      prevLesson={prev}
+                    />
                   </div>
                   <div
                     ref={activeLessonContentRef}
-                    className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+                    id='kangur-lesson-content'
+                    className={`w-full flex flex-col items-center ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
                   >
                     {isSecretLessonHostActive ? (
-                      <div ref={activeLessonSecretPanelRef} className='w-full flex justify-center'>
+                      <div
+                        ref={activeLessonSecretPanelRef}
+                        id='kangur-lesson-secret'
+                        className='w-full flex justify-center'
+                      >
                         <KangurGlassPanel
                           className='flex w-full max-w-3xl flex-col items-center kangur-panel-gap text-center'
                           data-testid='lessons-secret-panel'
@@ -1035,11 +1087,15 @@ export default function Lessons() {
                           title={activeLessonDocumentContent?.title ?? 'Materiał lekcji'}
                           tone='accent'
                         />
-                        <KangurLessonDocumentRenderer document={activeLessonDocument} />
-                      </div>
-                    ) : activeLesson?.contentMode === 'document' &&
+                      <KangurLessonDocumentRenderer document={activeLessonDocument} />
+                    </div>
+                  ) : activeLesson?.contentMode === 'document' &&
                       !hasActiveLessonDocumentContent ? (
-                        <div ref={activeLessonEmptyDocumentRef} className='w-full flex justify-center'>
+                        <div
+                          ref={activeLessonEmptyDocumentRef}
+                          id='kangur-lesson-empty-document'
+                          className='w-full flex justify-center'
+                        >
                           <KangurSummaryPanel
                             accent='amber'
                             align='center'

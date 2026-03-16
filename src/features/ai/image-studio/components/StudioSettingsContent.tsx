@@ -3,11 +3,29 @@
 import { RefreshCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { Button, Input, Label, SectionHeader, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+const PROMPT_EXTRACTION_MODE_OPTIONS = [
+  { value: 'programmatic', label: 'Programmatic' },
+  { value: 'gpt', label: 'GPT (AI)' },
+  { value: 'hybrid', label: 'Hybrid (Auto Fallback)' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'programmatic' | 'gpt' | 'hybrid'>>;
+
+const UI_EXTRACTOR_MODE_OPTIONS = [
+  { value: 'heuristic', label: 'Heuristic' },
+  { value: 'ai', label: 'AI' },
+  { value: 'both', label: 'Both' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'heuristic' | 'ai' | 'both'>>;
+
+const OPENAI_API_OPTIONS = [
+  { value: 'images', label: 'Images' },
+  { value: 'responses', label: 'Responses' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'images' | 'responses'>>;
 
 
 export function StudioSettingsContent(): React.JSX.Element {
@@ -117,11 +135,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
-                options={[
-                  { value: 'programmatic', label: 'Programmatic' },
-                  { value: 'gpt', label: 'GPT (AI)' },
-                  { value: 'hybrid', label: 'Hybrid (Auto Fallback)' },
-                ]}
+                options={PROMPT_EXTRACTION_MODE_OPTIONS}
                 size='sm'
                 ariaLabel='Prompt extraction mode'
                title='Select option'/>
@@ -213,11 +227,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
-                options={[
-                  { value: 'heuristic', label: 'Heuristic' },
-                  { value: 'ai', label: 'AI' },
-                  { value: 'both', label: 'Both' },
-                ]}
+                options={UI_EXTRACTOR_MODE_OPTIONS}
                 size='sm'
                 ariaLabel='UI extractor mode'
                title='Select option'/>
@@ -255,10 +265,7 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
-                options={[
-                  { value: 'images', label: 'Images' },
-                  { value: 'responses', label: 'Responses' },
-                ]}
+                options={OPENAI_API_OPTIONS}
                 size='sm'
                 ariaLabel='OpenAI API mode'
                title='Select option'/>

@@ -1,5 +1,6 @@
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
@@ -162,6 +163,14 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
     detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
   )?.history;
   const historyOptions = buildHistoryNodeOptions(history, nodes, detailRun.graph?.nodes ?? null);
+  const historySelectOptions = React.useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      historyOptions.map((option: HistoryOption) => ({
+        value: option.id,
+        label: option.label,
+      })),
+    [historyOptions]
+  );
 
   const selectedHistoryNodeId = React.useMemo(() => {
     if (!historyOptions.length) return null;
@@ -431,10 +440,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
                         size='sm'
                         value={selectedHistoryNodeId || ''}
                         onValueChange={onSelectHistoryNode}
-                        options={historyOptions.map((option: HistoryOption) => ({
-                          value: option.id,
-                          label: option.label,
-                        }))}
+                        options={historySelectOptions}
                         placeholder='Select node'
                         triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                        ariaLabel='Select node' title='Select node'/>

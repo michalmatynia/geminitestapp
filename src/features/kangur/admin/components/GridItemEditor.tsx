@@ -94,10 +94,7 @@ export function GridItemEditor(props: {
                 block: convertKangurLessonInlineBlockType(item.block, nextValue),
               });
             }}
-            options={INLINE_BLOCK_TYPE_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
+            options={INLINE_BLOCK_TYPE_OPTIONS}
             triggerClassName='h-9'
             ariaLabel={`Grid item ${index + 1} type`}
            title='Item Type'/>

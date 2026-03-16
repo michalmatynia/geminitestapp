@@ -2,11 +2,17 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
 import { SelectSimple, ValidatorFormatterToggle } from '@/features/products/ui';
+
+const VALIDATION_DENY_BEHAVIOR_OPTIONS = [
+  { value: 'mute_session', label: 'Stop For This Session' },
+  { value: 'ask_again', label: 'Ask Again Next Validation' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'mute_session' | 'ask_again'>>;
 
 export function ProductFormValidationTab(): React.JSX.Element {
   const { validatorEnabled, formatterEnabled, validationDenyBehavior, validationInstanceScope } =
@@ -38,10 +44,7 @@ export function ProductFormValidationTab(): React.JSX.Element {
           onValueChange={(value: string): void =>
             setValidationDenyBehavior(value === 'ask_again' ? 'ask_again' : 'mute_session')
           }
-          options={[
-            { value: 'mute_session', label: 'Stop For This Session' },
-            { value: 'ask_again', label: 'Ask Again Next Validation' },
-          ]}
+          options={VALIDATION_DENY_BEHAVIOR_OPTIONS}
           ariaLabel='Validation deny behavior'
          title='Select option'/>
         <p className='text-[11px] text-gray-400'>

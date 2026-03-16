@@ -26,7 +26,9 @@ import { usePickerSearch } from './usePickerSearch';
  *
  * <GenericGridPicker
  *   items={items}
- *   onSelect={(item) => console.log(item)}
+ *   onSelect={(item) => {
+ *     // handle selection
+ *   }}
  *   renderItem={(item, selected) => (
  *     <div className={selected ? 'bg-blue-500' : ''}>
  *       {item.label}

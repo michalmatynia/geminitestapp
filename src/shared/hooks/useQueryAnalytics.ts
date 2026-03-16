@@ -3,6 +3,7 @@
 import { useQueryClient, type Query } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface QueryMetrics {
@@ -299,7 +300,12 @@ export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
       errorQueries,
     };
     if (process.env['NODE_ENV'] === 'development' && QUERY_PERF_REPORT_TO_CONSOLE) {
-      console.info('[query-performance]', report);
+      void logSystemEvent({
+        level: 'info',
+        source: 'query-performance',
+        message: 'Query performance report',
+        context: report,
+      });
     }
     if (!QUERY_PERF_REPORT_TO_SERVER) return;
 

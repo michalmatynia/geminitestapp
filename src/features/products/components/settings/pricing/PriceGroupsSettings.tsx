@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { PriceGroup } from '@/shared/contracts/products';
 import { Badge, Button, FormSection, SelectSimple, SimpleSettingsList } from '@/shared/ui';
 
@@ -16,6 +17,14 @@ export function PriceGroupsSettings(): React.JSX.Element {
     onEditPriceGroup,
     onDeletePriceGroup,
   } = useProductSettingsPriceGroupsContext();
+  const defaultGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      priceGroups.map((group: PriceGroup) => ({
+        value: group.id,
+        label: `${group.name} (${group.groupId})`,
+      })),
+    [priceGroups]
+  );
 
   return (
     <div className='space-y-4'>
@@ -74,10 +83,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
             value={defaultGroupId}
             onValueChange={onDefaultGroupChange}
             disabled={priceGroups.length === 0 || defaultGroupSaving}
-            options={priceGroups.map((group: PriceGroup) => ({
-              value: group.id,
-              label: `${group.name} (${group.groupId})`,
-            }))}
+            options={defaultGroupOptions}
             placeholder='Select default price group'
             ariaLabel='Default price group'
            title='Select default price group'/>

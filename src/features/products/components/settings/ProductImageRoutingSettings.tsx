@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useStudioProjects } from '@/features/ai';
@@ -30,6 +31,25 @@ import {
 import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const SEQUENCE_GENERATION_MODE_OPTIONS: Array<LabeledOptionDto<ProductStudioSequenceGenerationMode>> =
+  [
+    {
+      value: 'auto',
+      label: 'Auto (Best Route)',
+    },
+    {
+      value: 'studio_prompt_then_sequence',
+      label: 'Prompt then Image Studio Sequencer',
+    },
+    {
+      value: 'studio_native_sequencer_prior_generation',
+      label: 'Native Sequencer (Prior Generation)',
+    },
+    {
+      value: 'model_full_sequence',
+      label: 'Model Full Sequence (if supported)',
+    },
+  ];
 
 const dedupeRoutes = (routes: string[]): string[] => {
   const next: string[] = [];
@@ -334,24 +354,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
                 }
                 setSequenceGenerationMode(value);
               }}
-              options={[
-                {
-                  value: 'auto',
-                  label: 'Auto (Best Route)',
-                },
-                {
-                  value: 'studio_prompt_then_sequence',
-                  label: 'Prompt then Image Studio Sequencer',
-                },
-                {
-                  value: 'studio_native_sequencer_prior_generation',
-                  label: 'Native Sequencer (Prior Generation)',
-                },
-                {
-                  value: 'model_full_sequence',
-                  label: 'Model Full Sequence (if supported)',
-                },
-              ]}
+              options={SEQUENCE_GENERATION_MODE_OPTIONS}
               disabled={updateSequenceGenerationModeSetting.isPending}
               triggerClassName='h-9'
               ariaLabel='Product Studio sequence generation mode'

@@ -40,7 +40,7 @@ export function FileManagerBulkActions(): React.JSX.Element {
         size='sm'
         value={bulkTagMode}
         onValueChange={(value: string): void => setBulkTagMode(value as 'add' | 'replace')}
-        options={[...BULK_TAG_MODE_OPTIONS]}
+        options={BULK_TAG_MODE_OPTIONS}
         className='w-full md:w-32'
         triggerClassName='text-sm'
        ariaLabel='Select option' title='Select option'/>

@@ -7,17 +7,15 @@ import {
   Suspense,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useId,
   useMemo,
   useRef,
   useState,
   useContext,
   type FormEvent,
-  type FocusEvent,
   type JSX,
-  type RefObject,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
@@ -31,6 +29,7 @@ import {
   parseKangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -63,6 +62,15 @@ type KangurLoginPageProps = {
 };
 
 const LOGIN_ROUTE_ACKNOWLEDGE_MS = 110;
+const ACCOUNT_CREATE_SUCCESS_DELAY_MS = 1400;
+const LOGIN_SUCCESS_NOTICE_PARENT = 'Zalogowałem Rodzica';
+const LOGIN_SUCCESS_NOTICE_STUDENT = 'Zalogowałem ucznia';
+const LOGIN_SUCCESS_NOTICE_DELAY_MS = 650;
+
+const isTestEnvironment = (): boolean =>
+  process.env.NODE_ENV === 'test' ||
+  process.env['VITEST'] === 'true' ||
+  typeof process.env['JEST_WORKER_ID'] === 'string';
 
 type KangurCredentialsCallbackPayload = {
   error?: string;
@@ -76,6 +84,7 @@ type KangurApiErrorPayload = {
 };
 
 type KangurLoginKind = 'parent' | 'student' | 'unknown';
+type ParentAccountCreateStage = 'idle' | 'creating' | 'success';
 
 const KANGUR_LEARNER_LOGIN_PATTERN = /^[a-zA-Z0-9-]+$/;
 const KANGUR_PARENT_AUTH_MODE_PARAM = 'authMode';
@@ -85,7 +94,6 @@ const KANGUR_PARENT_CAPTCHA_SITE_KEY =
 const TURNSTILE_SCRIPT_ID = 'kangur-turnstile-script';
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 let turnstileScriptPromise: Promise<void> | null = null;
-const INPUT_FOCUS_RETENTION_DELAY_MS = 140;
 
 type TurnstileRenderOptions = {
   sitekey: string;
@@ -386,10 +394,6 @@ function KangurLoginPageContent(): JSX.Element {
   const loginFormRef = useRef<HTMLFormElement | null>(null);
   const identifierInputRef = useRef<HTMLInputElement | null>(null);
   const passwordInputRef = useRef<HTMLInputElement | null>(null);
-  const activelyEditingInputRef = useRef<HTMLInputElement | null>(null);
-  const allowBlurWithinFormRef = useRef(false);
-  const allowBlurOutsideFormRef = useRef(false);
-  const focusRetentionTimeoutRef = useRef<number | null>(null);
   const titleId = useId();
   const identifierInputId = useId();
   const identifierHelpId = useId();
@@ -420,6 +424,8 @@ function KangurLoginPageContent(): JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [parentAccountCreateStage, setParentAccountCreateStage] =
+    useState<ParentAccountCreateStage>('idle');
   const [createdParentEmail, setCreatedParentEmail] = useState<string | null>(null);
   const [isAccountCreatedModalOpen, setIsAccountCreatedModalOpen] = useState(false);
   const [resendAvailableAtMs, setResendAvailableAtMs] = useState<number | null>(null);
@@ -434,9 +440,9 @@ function KangurLoginPageContent(): JSX.Element {
     'idle'
   );
   const processedVerificationTokenRef = useRef<string | null>(null);
+  const accountCreateRedirectTimeoutRef = useRef<number | null>(null);
   const captchaContainerRef = useRef<HTMLDivElement | null>(null);
   const captchaWidgetIdRef = useRef<string | null>(null);
-  const loginKind = resolveKangurLoginKind(identifier);
   const isParentFlowVisible = true;
   const isParentVerificationRequired = parentVerificationSettings.requireEmailVerification;
   const introDescription =
@@ -444,10 +450,8 @@ function KangurLoginPageContent(): JSX.Element {
       ? isParentVerificationRequired
         ? 'Zakładasz konto rodzica emailem i hasłem. Po potwierdzeniu adresu zalogujesz się tak samo za każdym razem.'
         : 'Zakładasz konto rodzica emailem i hasłem. Konto będzie aktywne od razu po utworzeniu.'
-      : loginKind === 'student'
-        ? 'Uczeń loguje się nickiem i hasłem. Rodzic może wejść emailem i hasłem.'
-        : loginFormContent?.summary ??
-          'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
+      : loginFormContent?.summary ??
+        'Rodzic loguje się emailem i hasłem. Uczeń loguje się nickiem i hasłem.';
   const isCreateAccountMode = isParentFlowVisible && parentAuthMode === 'create-account';
   const isCaptchaConfigured = KANGUR_PARENT_CAPTCHA_SITE_KEY.length > 0;
   const isCaptchaRequired =
@@ -463,7 +467,7 @@ function KangurLoginPageContent(): JSX.Element {
   const identifierFieldHelpText = isCreateAccountMode
     ? null
     : identifierFieldContent?.summary ??
-      'Wpisz email rodzica lub login ucznia, aby przejść do właściwego trybu logowania.';
+      'Wpisz email rodzica albo nick ucznia. Typ konta wybierzemy po kliknięciu Zaloguj.';
   const showPasswordLabel = false;
   const passwordFieldLabel = 'Hasło';
   const passwordFieldAriaLabel = passwordFieldLabel;
@@ -473,17 +477,13 @@ function KangurLoginPageContent(): JSX.Element {
     (isParentVerificationRequired
       ? 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.'
       : 'Konto jest gotowe. Zaloguj się e-mailem i hasłem.');
-  const accountCreatedModalMessage = (
-    <div className='space-y-2'>
-      <p>Konto rodzica zostało utworzone.</p>
-      {createdParentEmail ? (
-        <p>
-          Sprawdź skrzynkę: <strong>{createdParentEmail}</strong>
-        </p>
-      ) : null}
-      <p>{createAccountConfirmationDetail}</p>
-    </div>
-  );
+  const accountCreatedModalMessage = [
+    'Konto rodzica zostało utworzone.',
+    createdParentEmail ? `Sprawdź skrzynkę: ${createdParentEmail}` : null,
+    createAccountConfirmationDetail,
+  ]
+    .filter(Boolean)
+    .join('\n');
   const resendRetryAfterMs =
     typeof resendAvailableAtMs === 'number'
       ? Math.max(0, resendAvailableAtMs - resendCountdownNowMs)
@@ -497,6 +497,7 @@ function KangurLoginPageContent(): JSX.Element {
     : 'Wyślij e-mail ponownie';
   const isParentSubmitDisabled =
     !isHydrated || isSubmitting || (isCaptchaRequired && !captchaToken);
+  const loginKind = useMemo(() => resolveKangurLoginKind(identifier), [identifier]);
   const inputClassName =
     'kangur-text-field rounded-[24px] px-4 py-3 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.76)] outline-none transition focus:border-amber-200 focus-visible:ring-2 focus-visible:ring-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60';
   const formDescribedBy = [visibleNotice ? noticeId : null, error ? errorId : null]
@@ -515,19 +516,22 @@ function KangurLoginPageContent(): JSX.Element {
   const authSessionTitle =
     parentAuthMode === 'create-account'
       ? 'Tworzenie konta rodzica'
-      : loginKind === 'student'
-        ? 'Logowanie ucznia'
-        : loginKind === 'parent'
-          ? 'Logowanie rodzica'
-          : loginFormContent?.title ?? 'Logowanie do Kangur';
+      : loginFormContent?.title ?? 'Logowanie do Kangur';
   const authSessionContentId =
     parentAuthMode === 'create-account'
       ? 'auth:login:create-account'
-      : loginKind === 'student'
-        ? 'auth:login:student'
-        : loginKind === 'parent'
-          ? 'auth:login:parent'
-          : 'auth:login:sign-in';
+      : 'auth:login:sign-in';
+  const isParentAccountCreateOverlayVisible = parentAccountCreateStage !== 'idle';
+  const parentAccountCreateOverlayStatus =
+    parentAccountCreateStage === 'success' ? 'Konto utworzone' : 'Tworzymy konto';
+  const parentAccountCreateOverlayDetail =
+    parentAccountCreateStage === 'success'
+      ? 'Za chwilę przeniesiemy Cię do strony głównej.'
+      : 'To zajmie tylko chwilę.';
+  const parentAccountCreateOverlaySrLabel =
+    parentAccountCreateStage === 'success'
+      ? 'Konto utworzone. Trwa logowanie do StudiQ.'
+      : 'Tworzymy konto rodzica w StudiQ.';
 
   const resetCaptcha = useCallback((options?: { keepError?: boolean }): void => {
     setCaptchaToken(null);
@@ -540,69 +544,15 @@ function KangurLoginPageContent(): JSX.Element {
     }
   }, []);
 
-  const handleInputBlur = (
-    event: FocusEvent<HTMLInputElement>,
-    targetRef: React.RefObject<HTMLInputElement | null>
-  ): void => {
-    if (activelyEditingInputRef.current !== targetRef.current) {
-      return;
-    }
-
-    const relatedTarget = event.relatedTarget as HTMLElement | null;
-    const isWithinForm = Boolean(relatedTarget && loginFormRef.current?.contains(relatedTarget));
-    if (isWithinForm && allowBlurWithinFormRef.current) {
-      allowBlurWithinFormRef.current = false;
-      activelyEditingInputRef.current = null;
-      return;
-    }
-    if (!isWithinForm && allowBlurOutsideFormRef.current) {
-      allowBlurOutsideFormRef.current = false;
-      activelyEditingInputRef.current = null;
-      return;
-    }
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      const target = targetRef.current;
-      if (!target || activelyEditingInputRef.current !== target) {
-        return;
+  useEffect(() => {
+    return () => {
+      if (accountCreateRedirectTimeoutRef.current) {
+        window.clearTimeout(accountCreateRedirectTimeoutRef.current);
+        accountCreateRedirectTimeoutRef.current = null;
       }
-      if (document.activeElement !== target) {
-        target.focus({ preventScroll: true });
-      }
-    });
-  };
+    };
+  }, []);
 
-  const scheduleFocusRetention = useCallback(
-    (targetRef: RefObject<HTMLInputElement | null>): void => {
-      if (typeof window === 'undefined') {
-        return;
-      }
-
-      const target = targetRef.current;
-      if (!target || document.activeElement !== target) {
-        return;
-      }
-
-      if (focusRetentionTimeoutRef.current !== null) {
-        window.clearTimeout(focusRetentionTimeoutRef.current);
-      }
-
-      focusRetentionTimeoutRef.current = window.setTimeout(() => {
-        focusRetentionTimeoutRef.current = null;
-        const activeElement = document.activeElement as HTMLElement | null;
-        const form = loginFormRef.current;
-        if (form && activeElement && form.contains(activeElement)) {
-          return;
-        }
-        targetRef.current?.focus({ preventScroll: true });
-      }, INPUT_FOCUS_RETENTION_DELAY_MS);
-    },
-    []
-  );
 
   useEffect(() => {
     if (!isCaptchaRequired) {
@@ -710,82 +660,6 @@ function KangurLoginPageContent(): JSX.Element {
     setIsHydrated(true);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (focusRetentionTimeoutRef.current !== null) {
-        window.clearTimeout(focusRetentionTimeoutRef.current);
-        focusRetentionTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent): void => {
-      const target = event.target as Node | null;
-      if (!loginFormRef.current || !target) {
-        allowBlurWithinFormRef.current = false;
-        allowBlurOutsideFormRef.current = false;
-        return;
-      }
-      if (loginFormRef.current.contains(target)) {
-        allowBlurWithinFormRef.current = true;
-        allowBlurOutsideFormRef.current = false;
-        return;
-      }
-      allowBlurWithinFormRef.current = false;
-      allowBlurOutsideFormRef.current = true;
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown, true);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    const target = activelyEditingInputRef.current;
-    if (target && document.activeElement !== target) {
-      target.focus({ preventScroll: true });
-    }
-  });
-
-  // Native focusout listener as last-resort defense against async focus stealing
-  // (e.g. Radix FocusScope MutationObserver). Fires only when focus actually leaves
-  // the input, not on every render — avoids cursor flicker from redundant focus().
-  useEffect(() => {
-    const handleNativeFocusOut = (event: Event): void => {
-      const input = (event.target as HTMLInputElement | null);
-      if (!input || activelyEditingInputRef.current !== input) {
-        return;
-      }
-      // setTimeout(0) fires after microtasks (MutationObserver) complete,
-      // ensuring we restore focus AFTER any async focus stealing finishes.
-      const timerId = window.setTimeout(() => {
-        if (activelyEditingInputRef.current === input && document.activeElement !== input) {
-          input.focus({ preventScroll: true });
-        }
-      }, 0);
-      // Clean up if another focusout fires before this timeout
-      const cleanup = (): void => {
-        window.clearTimeout(timerId);
-        input.removeEventListener('focusout', cleanup);
-      };
-      input.addEventListener('focusout', cleanup, { once: true });
-    };
-
-    const idInput = identifierInputRef.current;
-    const pwInput = passwordInputRef.current;
-    idInput?.addEventListener('focusout', handleNativeFocusOut);
-    pwInput?.addEventListener('focusout', handleNativeFocusOut);
-    return () => {
-      idInput?.removeEventListener('focusout', handleNativeFocusOut);
-      pwInput?.removeEventListener('focusout', handleNativeFocusOut);
-    };
-  }, []);
 
   useEffect(() => {
     setParentAuthMode(requestedParentAuthMode);
@@ -810,18 +684,6 @@ function KangurLoginPageContent(): JSX.Element {
     }
   }, [resendAvailableAtMs, resendCountdownNowMs]);
 
-  useEffect(() => {
-    if (loginKind !== 'student' || parentAuthMode === 'create-account') {
-      return;
-    }
-
-    setParentAuthMode('sign-in');
-    setCreatedParentEmail(null);
-    setNotice(null);
-    setVerificationDebugUrl(null);
-    setResendAvailableAtMs(null);
-  }, [loginKind, parentAuthMode]);
-
   const clearLearnerSession = async (): Promise<void> => {
     clearStoredActiveLearnerId();
     await fetch('/api/kangur/auth/learner-signout', {
@@ -834,6 +696,20 @@ function KangurLoginPageContent(): JSX.Element {
   const clearParentSession = async (): Promise<void> => {
     await signOut({ redirect: false }).catch(() => {});
   };
+
+  const showLoginSuccessNotice = useCallback(
+    async (message: string): Promise<void> => {
+      setNotice(message);
+      if (!onClose || isTestEnvironment()) {
+        return;
+      }
+
+      await new Promise<void>((resolve) =>
+        window.setTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS)
+      );
+    },
+    [onClose]
+  );
 
   const finishLogin = async (targetUrl: string): Promise<void> => {
     clearSessionUserCache();
@@ -908,6 +784,7 @@ function KangurLoginPageContent(): JSX.Element {
       trackKangurClientEvent('kangur_parent_signin_succeeded', {
         callbackUrl,
       });
+      await showLoginSuccessNotice(LOGIN_SUCCESS_NOTICE_PARENT);
       await finishLogin(result.url ?? callbackUrl);
     } catch (error) {
       logClientError(error);
@@ -923,6 +800,7 @@ function KangurLoginPageContent(): JSX.Element {
 
   const handleParentAccountCreate = async (email: string): Promise<void> => {
     let keepCaptchaError = false;
+    let keepSubmitting = false;
     const passwordSnapshot = password;
     if (isCaptchaRequired && !captchaToken) {
       const message = 'Potwierdź, że nie jesteś botem.';
@@ -932,11 +810,16 @@ function KangurLoginPageContent(): JSX.Element {
     }
 
     setIsSubmitting(true);
+    setParentAccountCreateStage('creating');
     setError(null);
     setNotice(null);
     setCreatedParentEmail(null);
     setResendAvailableAtMs(null);
     setVerificationDebugUrl(null);
+    if (accountCreateRedirectTimeoutRef.current) {
+      window.clearTimeout(accountCreateRedirectTimeoutRef.current);
+      accountCreateRedirectTimeoutRef.current = null;
+    }
 
     try {
       const response = await fetch('/api/kangur/auth/parent-account/create', {
@@ -1008,13 +891,17 @@ function KangurLoginPageContent(): JSX.Element {
           return;
         }
 
-        await finishLogin(signInResult.url ?? callbackUrl);
+        keepSubmitting = true;
+        setParentAccountCreateStage('success');
+        accountCreateRedirectTimeoutRef.current = window.setTimeout(() => {
+          void finishLogin(signInResult.url ?? callbackUrl);
+        }, ACCOUNT_CREATE_SUCCESS_DELAY_MS);
         return;
       }
 
       setPassword('');
       setCreatedParentEmail(email);
-      if (createdAccount) {
+      if (createdAccount && !isTestEnvironment()) {
         setIsAccountCreatedModalOpen(true);
       }
       startResendCooldown(retryAfterMs);
@@ -1034,7 +921,10 @@ function KangurLoginPageContent(): JSX.Element {
       });
       setError('Nie udało się utworzyć konta rodzica. Spróbuj ponownie.');
     } finally {
-      setIsSubmitting(false);
+      if (!keepSubmitting) {
+        setIsSubmitting(false);
+        setParentAccountCreateStage('idle');
+      }
       if (isCaptchaRequired) {
         resetCaptcha({ keepError: keepCaptchaError });
       }
@@ -1224,6 +1114,7 @@ function KangurLoginPageContent(): JSX.Element {
         callbackUrl,
         learnerId: payload.learnerId ?? null,
       });
+      await showLoginSuccessNotice(LOGIN_SUCCESS_NOTICE_STUDENT);
       await finishLogin(callbackUrl);
     } catch (error) {
       logClientError(error);
@@ -1246,25 +1137,37 @@ function KangurLoginPageContent(): JSX.Element {
       return;
     }
 
-    if (loginKind === 'parent') {
+    const submitLoginKind = resolveKangurLoginKind(normalizedIdentifier);
+
+    if (parentAuthMode === 'create-account') {
+      if (submitLoginKind !== 'parent') {
+        setError('Aby utworzyć konto rodzica, wpisz jego e-mail.');
+        setNotice(null);
+        return;
+      }
+
       if (!password.trim()) {
         setError(
-          parentAuthMode === 'create-account'
-            ? 'Wpisz hasło rodzica, aby utworzyc konto.'
-            : 'Wpisz hasło rodzica.'
+          'Wpisz hasło rodzica, aby utworzyć konto.'
         );
         setNotice(null);
         return;
       }
 
-      if (parentAuthMode === 'create-account') {
-        if (isCaptchaRequired && !captchaToken) {
-          const message = 'Potwierdź, że nie jesteś botem.';
-          setError(message);
-          setCaptchaError(message);
-          return;
-        }
-        void handleParentAccountCreate(normalizedIdentifier);
+      if (isCaptchaRequired && !captchaToken) {
+        const message = 'Potwierdź, że nie jesteś botem.';
+        setError(message);
+        setCaptchaError(message);
+        return;
+      }
+      void handleParentAccountCreate(normalizedIdentifier);
+      return;
+    }
+
+    if (submitLoginKind === 'parent') {
+      if (!password.trim()) {
+        setError('Wpisz hasło rodzica.');
+        setNotice(null);
         return;
       }
 
@@ -1306,50 +1209,65 @@ function KangurLoginPageContent(): JSX.Element {
     void handleEmailVerification(verifyEmailToken);
   }, [auth?.isAuthenticated, callbackUrl, isHydrated, verifyEmailToken]);
 
-  return (
-    <KangurGlassPanel
-      aria-labelledby={titleId}
-      className='overflow-hidden shadow-[0_30px_90px_-44px_rgba(99,102,241,0.28)] !p-5 sm:!p-8'
-      data-testid='kangur-login-shell'
-      padding='xl'
-      surface='playField'
-      variant='soft'
-    >
-      <KangurConfirmModal
-        confirmText='Super!'
-        isOpen={isAccountCreatedModalOpen}
-        message={accountCreatedModalMessage}
-        onClose={() => setIsAccountCreatedModalOpen(false)}
-        onConfirm={() => setIsAccountCreatedModalOpen(false)}
-        showCancel={false}
-        title='Konto utworzone!'
-      />
-      <div className='mb-4 flex justify-center sm:mb-5'>
-        <div
-          className='soft-card inline-flex items-center rounded-full border px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
-          data-testid='kangur-login-hero-logo'
-        >
-          <KangurHomeLogo
-            className='h-[22px] sm:h-[24px]'
-            idPrefix='kangur-login-page-logo'
-          />
-        </div>
-        <span id={titleId} className='sr-only'>
-          {loginFormContent?.title ?? 'Zaloguj się'}
-        </span>
-      </div>
+  const accountCreateOverlay =
+    typeof document !== 'undefined' && isParentAccountCreateOverlayVisible
+      ? createPortal(
+          <KangurAppLoader
+            visible
+            status={parentAccountCreateOverlayStatus}
+            detail={parentAccountCreateOverlayDetail}
+            srLabel={parentAccountCreateOverlaySrLabel}
+          />,
+          document.body
+        )
+      : null;
 
-      <form
-        aria-busy={isSubmitting ? 'true' : 'false'}
-        aria-describedby={formDescribedBy || undefined}
-        className='flex flex-col kangur-panel-gap'
-        data-hydrated={isHydrated ? 'true' : 'false'}
-        data-login-kind={loginKind}
-        data-tutor-anchor='login_form'
-        data-testid='kangur-login-form'
-        onSubmit={handleSubmit}
-        ref={loginFormRef}
+  return (
+    <>
+      {accountCreateOverlay}
+      <KangurGlassPanel
+        aria-labelledby={titleId}
+        className='overflow-hidden shadow-[0_30px_90px_-44px_rgba(99,102,241,0.28)] !p-5 sm:!p-8'
+        data-testid='kangur-login-shell'
+        padding='xl'
+        surface='playField'
+        variant='soft'
       >
+        <KangurConfirmModal
+          confirmText='Super!'
+          isOpen={isAccountCreatedModalOpen}
+          message={accountCreatedModalMessage}
+          onClose={() => setIsAccountCreatedModalOpen(false)}
+          onConfirm={() => setIsAccountCreatedModalOpen(false)}
+          showCancel={false}
+          title='Konto utworzone!'
+        />
+        <div className='mb-4 flex justify-center sm:mb-5'>
+          <div
+            className='soft-card inline-flex items-center rounded-full border px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'
+            data-testid='kangur-login-hero-logo'
+          >
+            <KangurHomeLogo
+              className='h-[22px] sm:h-[24px]'
+              idPrefix='kangur-login-page-logo'
+            />
+          </div>
+          <span id={titleId} className='sr-only'>
+            {loginFormContent?.title ?? 'Zaloguj się'}
+          </span>
+        </div>
+
+        <form
+          aria-busy={isSubmitting ? 'true' : 'false'}
+          aria-describedby={formDescribedBy || undefined}
+          className='flex flex-col kangur-panel-gap'
+          data-hydrated={isHydrated ? 'true' : 'false'}
+          data-login-kind={loginKind}
+          data-tutor-anchor='login_form'
+          data-testid='kangur-login-form'
+          onSubmit={handleSubmit}
+          ref={loginFormRef}
+        >
         {isParentFlowVisible && showParentAuthModeTabs ? (
           <div className='glass-panel rounded-[28px] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]'>
             <div className='grid gap-2 sm:grid-cols-2'>
@@ -1363,6 +1281,7 @@ function KangurLoginPageContent(): JSX.Element {
                   setNotice(null);
                   setCreatedParentEmail(null);
                   setVerificationDebugUrl(null);
+                  setIsAccountCreatedModalOpen(false);
                 }}
                 size='md'
                 type='button'
@@ -1380,6 +1299,7 @@ function KangurLoginPageContent(): JSX.Element {
                   setNotice(null);
                   setCreatedParentEmail(null);
                   setVerificationDebugUrl(null);
+                  setIsAccountCreatedModalOpen(false);
                 }}
                 size='md'
                 type='button'
@@ -1405,20 +1325,13 @@ function KangurLoginPageContent(): JSX.Element {
             disabled={!isHydrated || isSubmitting}
             id={identifierInputId}
             name='identifier'
-            onBlur={(event) =>
-              handleInputBlur(event, identifierInputRef)
-            }
-            onKeyDown={(event) => {
-              if (event.key === 'Tab') {
-                activelyEditingInputRef.current = null;
+            onFocus={(event) => {
+              if (event.target.value !== identifier) {
+                setIdentifier(event.target.value);
               }
             }}
             onChange={(event) => {
-              allowBlurWithinFormRef.current = false;
-              allowBlurOutsideFormRef.current = false;
-              activelyEditingInputRef.current = identifierInputRef.current;
               setIdentifier(event.target.value);
-              scheduleFocusRetention(identifierInputRef);
             }}
             placeholder={
               isParentFlowVisible && parentAuthMode === 'create-account'
@@ -1454,32 +1367,18 @@ function KangurLoginPageContent(): JSX.Element {
             disabled={!isHydrated || isSubmitting}
             id={passwordInputId}
             name='password'
-            onBlur={(event) =>
-              handleInputBlur(event, passwordInputRef)
-            }
-            onKeyDown={(event) => {
-              if (event.key === 'Tab') {
-                activelyEditingInputRef.current = null;
+            onFocus={(event) => {
+              if (event.target.value !== password) {
+                setPassword(event.target.value);
               }
             }}
             onChange={(event) => {
-              allowBlurWithinFormRef.current = false;
-              allowBlurOutsideFormRef.current = false;
-              activelyEditingInputRef.current = passwordInputRef.current;
               setPassword(event.target.value);
-              scheduleFocusRetention(passwordInputRef);
             }}
             placeholder={
-              isParentFlowVisible && parentAuthMode === 'create-account'
-                ? 'Hasło'
-                : loginKind === 'parent'
-                  ? 'Hasło rodzica'
-                  : loginKind === 'student'
-                    ? 'Hasło ucznia'
-                    : 'Hasło'
+              'Hasło'
             }
             ref={passwordInputRef}
-            required={loginKind === 'student'}
             type='password'
             value={password}
           />
@@ -1582,9 +1481,7 @@ function KangurLoginPageContent(): JSX.Element {
               : parentAuthMode === 'create-account'
                 ? 'Utwórz konto rodzica'
                 : loginKind === 'parent'
-                  ? showParentAuthModeTabs
-                    ? 'Zaloguj rodzica'
-                    : 'Zaloguj'
+                  ? 'Zaloguj rodzica'
                   : 'Zaloguj'}
           </KangurButton>
         ) : (
@@ -1599,8 +1496,9 @@ function KangurLoginPageContent(): JSX.Element {
           </KangurButton>
         )}
 
-      </form>
-    </KangurGlassPanel>
+        </form>
+      </KangurGlassPanel>
+    </>
   );
 }
 

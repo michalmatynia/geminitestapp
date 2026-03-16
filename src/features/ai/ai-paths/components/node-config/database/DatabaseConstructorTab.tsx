@@ -12,6 +12,7 @@ import {
   UPDATE_OPERATOR_GROUPS,
   AGGREGATION_STAGE_SNIPPETS,
 } from '@/features/ai/ai-paths/config/query-presets';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { Button, Label, Textarea, SelectSimple, Input, Card } from '@/shared/ui';
 
@@ -99,6 +100,17 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     [fetchedDbSchema]
   );
   const isMultiSchema = schemaMatrix?.provider === 'multi';
+  const fetchedCollectionOptions = React.useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      fetchedCollections.map((collection) => ({
+        value: collection.name,
+        label: formatCollectionLabel(
+          collection,
+          Boolean(fetchedDbSchema?.provider === 'multi')
+        ),
+      })),
+    [fetchedCollections, fetchedDbSchema?.provider]
+  );
 
   const handleInsertPlaceholder = (placeholder: string, target: PlaceholderTarget): void => {
     if (target === 'aiPrompt') {
@@ -308,13 +320,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                       notify: false,
                     });
                   }}
-                  options={fetchedCollections.map((coll) => ({
-                    value: coll.name,
-                    label: formatCollectionLabel(
-                      coll,
-                      Boolean(fetchedDbSchema?.provider === 'multi')
-                    ),
-                  }))}
+                  options={fetchedCollectionOptions}
                   placeholder='Select collection'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                  ariaLabel='Select collection' title='Select collection'/>

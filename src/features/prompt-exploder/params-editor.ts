@@ -35,6 +35,39 @@ const PROMPT_EXPLODER_PARAM_UI_CONTROLS: PromptExploderParamUiControl[] = [
   'tuple2',
 ];
 
+const PROMPT_EXPLODER_PARAM_UI_RGB_OPTIONS: PromptExploderParamUiControl[] = ['auto', 'rgb', 'json'];
+const PROMPT_EXPLODER_PARAM_UI_TUPLE2_OPTIONS: PromptExploderParamUiControl[] = [
+  'auto',
+  'tuple2',
+  'json',
+];
+const PROMPT_EXPLODER_PARAM_UI_BOOLEAN_OPTIONS: PromptExploderParamUiControl[] = [
+  'auto',
+  'checkbox',
+  'buttons',
+  'json',
+];
+const PROMPT_EXPLODER_PARAM_UI_ENUM_OPTIONS: PromptExploderParamUiControl[] = [
+  'auto',
+  'select',
+  'buttons',
+  'text',
+  'json',
+];
+const PROMPT_EXPLODER_PARAM_UI_NUMBER_OPTIONS: PromptExploderParamUiControl[] = [
+  'auto',
+  'number',
+  'slider',
+  'json',
+];
+const PROMPT_EXPLODER_PARAM_UI_STRING_OPTIONS: PromptExploderParamUiControl[] = [
+  'auto',
+  'text',
+  'textarea',
+  'json',
+];
+const PROMPT_EXPLODER_PARAM_UI_FALLBACK_OPTIONS: PromptExploderParamUiControl[] = ['auto', 'json'];
+
 type ScanState = {
   inSingle: boolean;
   inDouble: boolean;
@@ -238,7 +271,7 @@ export function recommendPromptExploderParamUiControl(
     return {
       baseKind,
       recommended: 'rgb',
-      options: ['auto', 'rgb', 'json'],
+      options: PROMPT_EXPLODER_PARAM_UI_RGB_OPTIONS,
       confidence: 0.95,
       reason: null,
       canSlider: false,
@@ -249,7 +282,7 @@ export function recommendPromptExploderParamUiControl(
     return {
       baseKind,
       recommended: 'tuple2',
-      options: ['auto', 'tuple2', 'json'],
+      options: PROMPT_EXPLODER_PARAM_UI_TUPLE2_OPTIONS,
       confidence: 0.9,
       reason: null,
       canSlider: false,
@@ -260,7 +293,7 @@ export function recommendPromptExploderParamUiControl(
     return {
       baseKind,
       recommended: 'checkbox',
-      options: ['auto', 'checkbox', 'buttons', 'json'],
+      options: PROMPT_EXPLODER_PARAM_UI_BOOLEAN_OPTIONS,
       confidence: 1,
       reason: null,
       canSlider: false,
@@ -273,7 +306,7 @@ export function recommendPromptExploderParamUiControl(
     return {
       baseKind,
       recommended,
-      options: ['auto', 'select', 'buttons', 'text', 'json'],
+      options: PROMPT_EXPLODER_PARAM_UI_ENUM_OPTIONS,
       confidence: count > 0 ? 0.9 : 0.45,
       reason: count > 0 ? null : 'No enum options detected in hint comments.',
       canSlider: false,
@@ -284,7 +317,7 @@ export function recommendPromptExploderParamUiControl(
     return {
       baseKind,
       recommended: sliderOk ? 'slider' : 'number',
-      options: ['auto', 'number', 'slider', 'json'],
+      options: PROMPT_EXPLODER_PARAM_UI_NUMBER_OPTIONS,
       confidence: spec?.min !== undefined && spec?.max !== undefined ? 0.85 : 0.65,
       reason: sliderOk ? null : 'No numeric range detected, so slider may be less useful.',
       canSlider: sliderOk,
@@ -296,7 +329,7 @@ export function recommendPromptExploderParamUiControl(
     return {
       baseKind,
       recommended: multiline ? 'textarea' : 'text',
-      options: ['auto', 'text', 'textarea', 'json'],
+      options: PROMPT_EXPLODER_PARAM_UI_STRING_OPTIONS,
       confidence: 0.6,
       reason: null,
       canSlider: false,
@@ -306,7 +339,7 @@ export function recommendPromptExploderParamUiControl(
   return {
     baseKind,
     recommended: 'json',
-    options: ['auto', 'json'],
+    options: PROMPT_EXPLODER_PARAM_UI_FALLBACK_OPTIONS,
     confidence: 0.35,
     reason: 'Unrecognized structure; edit as JSON.',
     canSlider: false,

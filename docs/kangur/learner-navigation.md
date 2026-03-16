@@ -17,7 +17,6 @@ The Kangur shell exposes a small persistent navigation model:
 - `Lekcje`: opens the lesson library.
 - `Profil`: opens learner status and account actions.
 - `Rodzic`: opens the parent dashboard when the active account can manage learners.
-- `Testy`: opens the Kangur test-suite surface.
 
 These controls are intentionally repeated across learner routes so learners and parents can reorient without relying on browser navigation.
 

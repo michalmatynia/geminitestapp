@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Input, Textarea, Label, FormModal, SelectSimple } from '@/shared/ui';
 
 import { useCategoryFormContext } from './CategoryFormContext';
@@ -26,6 +27,26 @@ export function CategoryForm(): React.JSX.Element | null {
   const descriptionId = `category-description-${fieldId}`;
   const colorPickerId = `category-color-picker-${fieldId}`;
   const colorValueId = `category-color-value-${fieldId}`;
+  const catalogOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      catalogs.map((catalog) => ({
+        value: catalog.id,
+        label: catalog.name + (catalog.isDefault ? ' (Default)' : ''),
+      })),
+    [catalogs]
+  );
+  const parentSelectOptions = useMemo<Array<LabeledOptionDto<string>>>(() => {
+    const options: Array<LabeledOptionDto<string>> = [
+      { value: '__root__', label: 'No parent (root)' },
+    ];
+    parentOptions.forEach((option) => {
+      options.push({
+        value: option.id,
+        label: '|-- '.repeat(option.level) + option.name,
+      });
+    });
+    return options;
+  }, [parentOptions]);
   if (!open) return null;
 
   return (
@@ -85,10 +106,7 @@ export function CategoryForm(): React.JSX.Element | null {
                 }));
                 onCatalogChange(value);
               }}
-              options={catalogs.map((catalog) => ({
-                value: catalog.id,
-                label: catalog.name + (catalog.isDefault ? ' (Default)' : ''),
-              }))}
+              options={catalogOptions}
               placeholder='Select catalog'
               triggerClassName='w-full bg-gray-900 border-border text-white'
               ariaLabel='Catalog'
@@ -108,13 +126,7 @@ export function CategoryForm(): React.JSX.Element | null {
                 }))
               }
               disabled={loadingCategories}
-              options={[
-                { value: '__root__', label: 'No parent (root)' },
-                ...parentOptions.map((option) => ({
-                  value: option.id,
-                  label: '|-- '.repeat(option.level) + option.name,
-                })),
-              ]}
+              options={parentSelectOptions}
               placeholder='Select parent category'
               triggerClassName='w-full bg-gray-900 border-border text-white'
               ariaLabel='Parent category'

@@ -10,6 +10,12 @@ import { useOptionalCaseResolverPartyFieldRuntime } from './CaseResolverPartyFie
 
 type PartyKindFilter = 'all' | 'person' | 'organization';
 
+const PARTY_KIND_FILTER_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'person', label: 'Person', icon: User },
+  { value: 'organization', label: 'Org', icon: Building2 },
+] as const;
+
 interface CaseResolverPartySelectFieldProps {
   label: string;
   value: string;
@@ -64,11 +70,7 @@ export function CaseResolverPartySelectField(
           value={filter}
           ariaLabel='Filter party options'
           onChange={(v) => setFilter(v)}
-          options={[
-            { value: 'all', label: 'All' },
-            { value: 'person', label: 'Person', icon: User },
-            { value: 'organization', label: 'Org', icon: Building2 },
-          ]}
+          options={PARTY_KIND_FILTER_OPTIONS}
           className='bg-card/20 border-border/40'
         />
       </div>

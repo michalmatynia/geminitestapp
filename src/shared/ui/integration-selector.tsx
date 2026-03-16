@@ -1,5 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
+
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { IntegrationWithConnections } from '@/shared/contracts';
 
 import { Label } from './label';
@@ -29,6 +32,26 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
   } = props;
 
   const selectedIntegration = integrations.find((i) => i.id === selectedIntegrationId);
+  const integrationOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      integrations
+        .filter((integration) => Boolean(integration.id))
+        .map((integration) => ({
+          value: integration.id,
+          label: integration.name,
+        })),
+    [integrations]
+  );
+  const connectionOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () =>
+      (selectedIntegration?.connections ?? [])
+        .filter((connection) => Boolean(connection.id))
+        .map((connection) => ({
+          value: connection.id,
+          label: connection.name,
+        })),
+    [selectedIntegration]
+  );
 
   return (
     <div className={className}>
@@ -39,12 +62,7 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
           value={selectedIntegrationId}
           onValueChange={onIntegrationChange}
           disabled={disabled || loading}
-          options={integrations
-            .filter((integration) => !!integration.id)
-            .map((integration) => ({
-              value: integration.id,
-              label: integration.name,
-            }))}
+          options={integrationOptions}
           placeholder='Select an integration...'
          ariaLabel='Select an integration...' title='Select an integration...'/>
       </div>
@@ -59,12 +77,7 @@ export function IntegrationSelector(props: IntegrationSelectorProps) {
             value={selectedConnectionId}
             onValueChange={onConnectionChange}
             disabled={disabled || loading}
-            options={selectedIntegration.connections
-              .filter((connection) => !!connection.id)
-              .map((connection) => ({
-                value: connection.id,
-                label: connection.name,
-              }))}
+            options={connectionOptions}
             placeholder='Select an account...'
            ariaLabel='Select an account...' title='Select an account...'/>
         </div>

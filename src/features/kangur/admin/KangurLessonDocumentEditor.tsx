@@ -824,10 +824,7 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
                             convertKangurLessonRootBlockType(block, nextValue)
                           );
                         }}
-                        options={ROOT_BLOCK_TYPE_OPTIONS.map((option) => ({
-                          value: option.value,
-                          label: option.label,
-                        }))}
+                        options={ROOT_BLOCK_TYPE_OPTIONS}
                         triggerClassName='h-9'
                        ariaLabel='Block Type' title='Block Type'/>
                     </FormField>

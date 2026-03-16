@@ -1,9 +1,15 @@
 'use client';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { GateConfig } from '@/shared/lib/ai-paths';
 import { Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
+
+const GATE_MODE_OPTIONS = [
+  { value: 'block', label: 'Block on invalid' },
+  { value: 'pass', label: 'Pass-through' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<GateConfig['mode']>>;
 
 export function GateNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
@@ -31,10 +37,7 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-          options={[
-            { value: 'block', label: 'Block on invalid' },
-            { value: 'pass', label: 'Pass-through' },
-          ]}
+          options={GATE_MODE_OPTIONS}
           placeholder='Select mode'
          ariaLabel='Select mode' title='Select mode'/>
       </FormField>

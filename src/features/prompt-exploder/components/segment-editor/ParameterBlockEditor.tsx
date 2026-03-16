@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { PromptExploderParamEntry } from '@/shared/contracts/prompt-exploder';
 import { FormField, Label, SelectSimple, Textarea } from '@/shared/ui';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
@@ -17,6 +19,17 @@ import {
 } from '../../params-editor';
 
 import type { PromptExploderSegment } from '../../types';
+
+const buildSelectorOptions = (
+  entry: PromptExploderParamEntry
+): Array<LabeledOptionDto<string>> =>
+  entry.selectorOptions.map((option) => ({
+    value: option,
+    label:
+      option === 'auto'
+        ? `Auto (${promptExploderParamUiControlLabel(entry.recommendation.recommended)})`
+        : promptExploderParamUiControlLabel(option),
+  }));
 
 export function ParameterBlockEditor(): React.JSX.Element {
   const { selectedSegment, selectedParamEntriesState } = useDocumentState();
@@ -57,13 +70,7 @@ export function ParameterBlockEditor(): React.JSX.Element {
                         onValueChange={(next) =>
                           updateParameterSelector(selectedSegment.id, entry.path, next)
                         }
-                        options={entry.selectorOptions.map((c) => ({
-                          value: c,
-                          label:
-                            c === 'auto'
-                              ? `Auto (${promptExploderParamUiControlLabel(entry.recommendation.recommended)})`
-                              : promptExploderParamUiControlLabel(c),
-                        }))}
+                        options={buildSelectorOptions(entry)}
                        ariaLabel='Selector' title='Selector'/>
                     </FormField>
                     <FormField label='Value'>

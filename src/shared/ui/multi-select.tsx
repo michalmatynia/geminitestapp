@@ -22,7 +22,7 @@ export interface MultiSelectOption {
 }
 
 interface MultiSelectProps {
-  options: MultiSelectOption[];
+  options: ReadonlyArray<MultiSelectOption>;
   selected: string[];
   onChange: (values: string[]) => void;
   placeholder?: string | undefined;

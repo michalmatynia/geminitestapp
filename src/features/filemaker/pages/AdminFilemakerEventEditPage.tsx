@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -184,6 +185,21 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
     (): EditableAddress | null =>
       addresses.find((entry: EditableAddress): boolean => entry.isDefault) ?? null,
     [addresses]
+  );
+  const addressOptions = useMemo<Array<LabeledOptionWithDescriptionDto<string>>>(
+    () =>
+      addresses.map((address: EditableAddress) => ({
+        value: address.addressId,
+        label: address.isDefault ? `Default - ${address.addressId}` : address.addressId,
+        description: formatFilemakerAddress({
+          street: address.street,
+          streetNumber: address.streetNumber,
+          city: address.city,
+          postalCode: address.postalCode,
+          country: countryById.get(address.countryId)?.name ?? address.country,
+        }),
+      })),
+    [addresses, countryById]
   );
 
   const updateSelectedAddress = useCallback(
@@ -537,17 +553,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
               onValueChange={(value: string): void => {
                 setSelectedAddressId(value);
               }}
-              options={addresses.map((address: EditableAddress) => ({
-                value: address.addressId,
-                label: address.isDefault ? `Default - ${address.addressId}` : address.addressId,
-                description: formatFilemakerAddress({
-                  street: address.street,
-                  streetNumber: address.streetNumber,
-                  city: address.city,
-                  postalCode: address.postalCode,
-                  country: countryById.get(address.countryId)?.name ?? address.country,
-                }),
-              }))}
+              options={addressOptions}
               placeholder='Select address'
               size='sm'
              ariaLabel='Select address' title='Select address'/>

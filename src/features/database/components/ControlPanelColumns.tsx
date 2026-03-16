@@ -61,7 +61,7 @@ export function getControlPanelColumns(options: {
           onValueChange={(value): void => {
             options.onProviderChange(row.original.name, value as 'mongodb' | 'redis' | 'auto');
           }}
-          options={[...PROVIDER_OPTIONS]}
+          options={PROVIDER_OPTIONS}
           size='sm'
           className='w-32'
           triggerClassName='h-8'

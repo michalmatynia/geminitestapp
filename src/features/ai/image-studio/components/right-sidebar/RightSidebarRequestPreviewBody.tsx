@@ -1,9 +1,15 @@
 import Image from 'next/image';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { SelectSimple } from '@/shared/ui';
 
 import { useRightSidebarContext } from '../RightSidebarContext';
+
+const REQUEST_PREVIEW_MODE_OPTIONS = [
+  { value: 'without_sequence', label: 'Without Sequence' },
+  { value: 'with_sequence', label: 'With Sequence' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'without_sequence' | 'with_sequence'>>;
 
 export function RightSidebarRequestPreviewBody(): React.JSX.Element {
   const {
@@ -28,10 +34,7 @@ export function RightSidebarRequestPreviewBody(): React.JSX.Element {
           onValueChange={(value: string): void => {
             setRequestPreviewMode(value === 'with_sequence' ? 'with_sequence' : 'without_sequence');
           }}
-          options={[
-            { value: 'without_sequence', label: 'Without Sequence' },
-            { value: 'with_sequence', label: 'With Sequence' },
-          ]}
+          options={REQUEST_PREVIEW_MODE_OPTIONS}
           className='w-[240px]'
           triggerClassName='h-8 text-[11px]'
           ariaLabel='Preview Mode'

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormField, FormSection, SelectSimple, Textarea, ToggleRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -9,6 +10,12 @@ import {
   useImageStudioSettingsActions,
   useImageStudioSettingsState,
 } from '../../context/ImageStudioSettingsContext';
+
+const MODERATION_LEVEL_OPTIONS = [
+  { value: '__null__', label: 'Default' },
+  { value: 'auto', label: 'Auto' },
+  { value: 'low', label: 'Low' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'__null__' | 'auto' | 'low'>>;
 
 export function ValidationSettingsTab(): React.JSX.Element {
   const {
@@ -83,11 +90,7 @@ export function ValidationSettingsTab(): React.JSX.Element {
             <SelectSimple
               value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
               onValueChange={handleModerationChange}
-              options={[
-                { value: '__null__', label: 'Default' },
-                { value: 'auto', label: 'Auto' },
-                { value: 'low', label: 'Low' },
-              ]}
+              options={MODERATION_LEVEL_OPTIONS}
              ariaLabel='Moderation Level' title='Moderation Level'/>
           </FormField>
         </div>

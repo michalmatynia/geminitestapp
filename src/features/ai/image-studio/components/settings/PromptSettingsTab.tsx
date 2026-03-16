@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import React from 'react';
 
 import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/features/ai/image-studio/utils/studio-settings';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
   Button,
@@ -23,6 +24,12 @@ import {
   useImageStudioSettingsActions,
   useImageStudioSettingsState,
 } from '../../context/ImageStudioSettingsContext';
+
+const UI_EXTRACTOR_MODE_OPTIONS = [
+  { value: 'heuristic', label: 'Heuristic Only' },
+  { value: 'ai', label: 'AI Only' },
+  { value: 'both', label: 'Both (AI + Heuristic)' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'heuristic' | 'ai' | 'both'>>;
 
 export function PromptSettingsTab(): React.JSX.Element {
   const promptExtractModel = useBrainAssignment({
@@ -131,11 +138,7 @@ export function PromptSettingsTab(): React.JSX.Element {
               <SelectSimple
                 value={studioSettings.uiExtractor.mode}
                 onValueChange={handleUiExtractorModeChange}
-                options={[
-                  { value: 'heuristic', label: 'Heuristic Only' },
-                  { value: 'ai', label: 'AI Only' },
-                  { value: 'both', label: 'Both (AI + Heuristic)' },
-                ]}
+                options={UI_EXTRACTOR_MODE_OPTIONS}
                ariaLabel='Extractor Mode' title='Extractor Mode'/>
             </FormField>
             {(studioSettings.uiExtractor.mode === 'ai' ||

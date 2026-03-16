@@ -1,7 +1,16 @@
 import React from 'react';
 
 import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
-import { Button, CompactEmptyState, FormField, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
+import {
+  Button,
+  CompactEmptyState,
+  FormField,
+  Input,
+  Label,
+  SelectSimple,
+  ToggleRow,
+} from '@/shared/ui';
+import type { SelectSimpleOption } from '@/shared/ui/select-simple';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];
@@ -14,6 +23,23 @@ type RegexTemplatesTabContentProps = {
   regexTemplates: RegexTemplate[];
   settingsLoading: boolean;
 };
+
+const TEMPLATE_MODE_OPTIONS: SelectSimpleOption[] = [
+  { value: 'group', label: 'Group matches' },
+  { value: 'extract', label: 'Extract value' },
+  { value: 'extract_json', label: 'Extract JSON/object' },
+];
+
+const TEMPLATE_MATCH_MODE_OPTIONS: SelectSimpleOption[] = [
+  { value: 'first', label: 'First match' },
+  { value: 'first_overall', label: 'First overall' },
+  { value: 'all', label: 'All matches' },
+];
+
+const TEMPLATE_OUTPUT_MODE_OPTIONS: SelectSimpleOption[] = [
+  { value: 'object', label: 'Object (Record)' },
+  { value: 'array', label: 'Array (Groups list)' },
+];
 
 export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): React.JSX.Element {
   const {
@@ -126,11 +152,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       placeholder='Select mode'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
                       contentClassName='border-border bg-gray-900'
-                      options={[
-                        { value: 'group', label: 'Group matches' },
-                        { value: 'extract', label: 'Extract value' },
-                        { value: 'extract_json', label: 'Extract JSON/object' },
-                      ]}
+                      options={TEMPLATE_MODE_OPTIONS}
                      ariaLabel='Select mode' title='Select mode'/>
                   </FormField>
                   <FormField label='Match Mode'>
@@ -145,11 +167,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       placeholder='Select mode'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
                       contentClassName='border-border bg-gray-900'
-                      options={[
-                        { value: 'first', label: 'First match' },
-                        { value: 'first_overall', label: 'First overall' },
-                        { value: 'all', label: 'All matches' },
-                      ]}
+                      options={TEMPLATE_MATCH_MODE_OPTIONS}
                      ariaLabel='Select mode' title='Select mode'/>
                   </FormField>
                   <FormField label='Output Mode'>
@@ -164,10 +182,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       placeholder='Select output'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
                       contentClassName='border-border bg-gray-900'
-                      options={[
-                        { value: 'object', label: 'Object (Record)' },
-                        { value: 'array', label: 'Array (Groups list)' },
-                      ]}
+                      options={TEMPLATE_OUTPUT_MODE_OPTIONS}
                      ariaLabel='Select output' title='Select output'/>
                   </FormField>
                 </div>
@@ -314,11 +329,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       placeholder='Select mode'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
                       contentClassName='border-border bg-gray-900'
-                      options={[
-                        { value: 'group', label: 'Group matches' },
-                        { value: 'extract', label: 'Extract value' },
-                        { value: 'extract_json', label: 'Extract JSON/object' },
-                      ]}
+                      options={TEMPLATE_MODE_OPTIONS}
                      ariaLabel='Select mode' title='Select mode'/>
                   </FormField>
                   <FormField label='Match Mode'>
@@ -333,11 +344,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       placeholder='Select mode'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
                       contentClassName='border-border bg-gray-900'
-                      options={[
-                        { value: 'first', label: 'First match' },
-                        { value: 'first_overall', label: 'First overall' },
-                        { value: 'all', label: 'All matches' },
-                      ]}
+                      options={TEMPLATE_MATCH_MODE_OPTIONS}
                      ariaLabel='Select mode' title='Select mode'/>
                   </FormField>
                   <FormField label='Output Mode'>
@@ -352,10 +359,7 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
                       placeholder='Select output'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
                       contentClassName='border-border bg-gray-900'
-                      options={[
-                        { value: 'object', label: 'Object (Record)' },
-                        { value: 'array', label: 'Array (Groups list)' },
-                      ]}
+                      options={TEMPLATE_OUTPUT_MODE_OPTIONS}
                      ariaLabel='Select output' title='Select output'/>
                   </FormField>
                 </div>

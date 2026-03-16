@@ -17,6 +17,7 @@ import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,
 } from '@/shared/contracts/product-sync';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   ProductSyncAppField,
   ProductSyncDirection,
@@ -65,6 +66,11 @@ type ProductSyncDraftDefaults = {
 };
 
 const EMPTY_PROFILES: ProductSyncProfile[] = [];
+
+const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Select connection...',
+};
 
 const makeRuleId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -169,6 +175,32 @@ export function ProductSyncSettings(): React.JSX.Element {
     });
     return baseIntegration?.connections ?? [];
   }, [integrationsQuery.data]);
+  const baseConnectionOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      BASE_CONNECTION_PLACEHOLDER_OPTION,
+      ...baseConnections.map((connection) => ({
+        value: connection.id,
+        label: connection.name,
+      })),
+    ],
+    [baseConnections]
+  );
+  const appFieldOptions = useMemo(
+    (): Array<LabeledOptionDto<ProductSyncAppField>> =>
+      PRODUCT_SYNC_APP_FIELDS.map((field: ProductSyncAppField) => ({
+        value: field,
+        label: appFieldLabel(field),
+      })),
+    []
+  );
+  const directionOptions = useMemo(
+    (): Array<LabeledOptionDto<ProductSyncDirection>> =>
+      PRODUCT_SYNC_DIRECTION_OPTIONS.map((direction: ProductSyncDirection) => ({
+        value: direction,
+        label: directionLabel(direction),
+      })),
+    []
+  );
 
   const preferredConnectionId = useMemo(() => {
     const preferredConnection = (defaultExportConnectionQuery.data?.connectionId ?? '').trim();
@@ -478,13 +510,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                       connectionId: value === '__none__' ? '' : value,
                     }))
                   }
-                  options={[
-                    { value: '__none__', label: 'Select connection...' },
-                    ...baseConnections.map((connection) => ({
-                      value: connection.id,
-                      label: connection.name,
-                    })),
-                  ]}
+                  options={baseConnectionOptions}
                   triggerClassName='w-full'
                  ariaLabel='Base Connection' title='Base Connection'/>
                 <div className='mt-2'>
@@ -651,10 +677,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                 onValueChange={(value: string): void =>
                   updateRule(rule.id, { appField: value as ProductSyncAppField })
                 }
-                options={PRODUCT_SYNC_APP_FIELDS.map((field: ProductSyncAppField) => ({
-                  value: field,
-                  label: appFieldLabel(field),
-                }))}
+                options={appFieldOptions}
                 triggerClassName='w-full'
                ariaLabel='Select option' title='Select option'/>
 
@@ -675,10 +698,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                 onValueChange={(value: string): void =>
                   updateRule(rule.id, { direction: value as ProductSyncDirection })
                 }
-                options={PRODUCT_SYNC_DIRECTION_OPTIONS.map((direction: ProductSyncDirection) => ({
-                  value: direction,
-                  label: directionLabel(direction),
-                }))}
+                options={directionOptions}
                 triggerClassName='w-full'
                ariaLabel='Select option' title='Select option'/>
 

@@ -30,6 +30,17 @@ const FILE_TYPE_OPTIONS: Array<LabeledOptionDto<DocumentRelationFileTypeFilter>>
   { value: 'scanfile', label: 'Scans' },
 ];
 
+const DOCUMENT_SEARCH_SCOPE_OPTIONS = [
+  { value: 'case_scope', label: 'Current Case' },
+  { value: 'all_cases', label: 'All Cases' },
+] as const;
+
+const RESULT_HEIGHT_OPTIONS = [
+  { value: 'compact', label: '', icon: AlignJustify, ariaLabel: 'Compact view' },
+  { value: 'normal', label: '', icon: List, ariaLabel: 'Comfortable view' },
+  { value: 'expanded', label: '', icon: ListPlus, ariaLabel: 'Expanded view' },
+] as const;
+
 export function ScopeBar(): React.JSX.Element {
   const { showFileTypeFilter, showSortControl } = useDocumentRelationSearchUiContext();
   const {
@@ -51,10 +62,7 @@ export function ScopeBar(): React.JSX.Element {
   return (
     <div className='flex flex-wrap items-center gap-2 border-b border-border/60 bg-card/30 px-3 py-2'>
       <SegmentedControl
-        options={[
-          { value: 'case_scope', label: 'Current Case' },
-          { value: 'all_cases', label: 'All Cases' },
-        ]}
+        options={DOCUMENT_SEARCH_SCOPE_OPTIONS}
         value={documentSearchScope}
         onChange={setDocumentSearchScope}
         ariaLabel='Document search scope'
@@ -105,11 +113,7 @@ export function ScopeBar(): React.JSX.Element {
 
       <SegmentedControl
         size='xs'
-        options={[
-          { value: 'compact', label: '', icon: AlignJustify, ariaLabel: 'Compact view' },
-          { value: 'normal', label: '', icon: List, ariaLabel: 'Comfortable view' },
-          { value: 'expanded', label: '', icon: ListPlus, ariaLabel: 'Expanded view' },
-        ]}
+        options={RESULT_HEIGHT_OPTIONS}
         value={resultHeight}
         onChange={(v) => setResultHeight(v)}
         activeClassName='text-cyan-300'

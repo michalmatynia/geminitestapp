@@ -150,6 +150,14 @@ export const FONT_WEIGHT_OPTIONS = [
   { value: '800', label: 'Extrabold (800)' },
 ] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
+export const FONT_FAMILY_OPTIONS = [
+  { value: 'inherit', label: 'Inherit' },
+  { value: 'Geist', label: 'Geist (Sans)' },
+  { value: 'GeistMono', label: 'Geist Mono' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'system-ui', label: 'System UI' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+
 export const SHADOW_SIZE_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'small', label: 'Small' },
@@ -369,25 +377,13 @@ export const THEME_SECTIONS: Array<{
         key: 'headingFont',
         label: 'Heading Font',
         type: 'select',
-        options: [
-          { value: 'inherit', label: 'Inherit' },
-          { value: 'Geist', label: 'Geist (Sans)' },
-          { value: 'GeistMono', label: 'Geist Mono' },
-          { value: 'Inter', label: 'Inter' },
-          { value: 'system-ui', label: 'System UI' },
-        ],
+        options: FONT_FAMILY_OPTIONS,
       },
       {
         key: 'bodyFont',
         label: 'Body Font',
         type: 'select',
-        options: [
-          { value: 'inherit', label: 'Inherit' },
-          { value: 'Geist', label: 'Geist (Sans)' },
-          { value: 'GeistMono', label: 'Geist Mono' },
-          { value: 'Inter', label: 'Inter' },
-          { value: 'system-ui', label: 'System UI' },
-        ],
+        options: FONT_FAMILY_OPTIONS,
       },
       {
         key: 'baseSize',

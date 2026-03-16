@@ -84,10 +84,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
                         value === 'none' ? null : (value as PromptExploderRuleSegmentType),
                     });
                   }}
-                  options={SEGMENT_TYPE_OPTIONS.map((option) => ({
-                    value: option.value,
-                    label: option.label,
-                  }))}
+                  options={SEGMENT_TYPE_OPTIONS}
                   ariaLabel='Type hint'
                  title='Select option'/>
               </div>

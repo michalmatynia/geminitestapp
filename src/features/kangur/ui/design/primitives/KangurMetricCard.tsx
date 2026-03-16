@@ -43,6 +43,7 @@ export function KangurMetricCard({
         kangurInfoCardVariants({ tone: metricTone, padding: metricPadding }),
         metricTone === 'accent' &&
           cn(KANGUR_ACCENT_STYLES[metricAccent].activeCard, KANGUR_ACCENT_STYLES[metricAccent].activeText),
+        'kangur-panel-shell',
         'space-y-1.5',
         centered && 'text-center',
         metricCardClassName

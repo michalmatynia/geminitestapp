@@ -8,6 +8,7 @@ import {
   useUserPreferences,
   useUpdateUserPreferences,
 } from '@/features/products/hooks/useUserPreferences';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductListPreferences } from '@/shared/contracts/products';
 import {
@@ -36,12 +37,54 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   appliedAdvancedFilterPresetId: null,
 };
 
+const NAME_LOCALE_OPTIONS = [
+  { value: 'name_en', label: 'English' },
+  { value: 'name_pl', label: 'Polish' },
+  { value: 'name_de', label: 'German' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'name_en' | 'name_pl' | 'name_de'>>;
+
+const ALL_CATALOGS_OPTION: LabeledOptionDto<string> = {
+  value: 'all',
+  label: 'All Catalogs',
+};
+
+const THUMBNAIL_SOURCE_OPTIONS = [
+  { value: 'file', label: 'File Uploads' },
+  { value: 'link', label: 'URL Links' },
+  { value: 'base64', label: 'Base64' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'file' | 'link' | 'base64'>>;
+
+const PAGE_SIZE_OPTIONS = ['10', '25', '50', '100', '200'].map((size: string) => ({
+  value: size,
+  label: size,
+})) as ReadonlyArray<LabeledOptionDto<string>>;
+
+const FILTER_VISIBILITY_OPTIONS = [
+  { value: 'shown', label: 'Show Filters' },
+  { value: 'hidden', label: 'Hide Filters' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'shown' | 'hidden'>>;
+
+const TRIGGER_RUN_FEEDBACK_OPTIONS = [
+  { value: 'shown', label: 'Show Pills' },
+  { value: 'hidden', label: 'Hide Pills' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'shown' | 'hidden'>>;
+
 export function ProductPreferencesPage(): React.JSX.Element {
   const { toast } = useToast();
   const router = useRouter();
   const { preferences: savedPreferences, loading: prefsLoading } = useUserPreferences();
   const catalogsQuery = useCatalogs();
   const catalogs = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
+  const catalogOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      ALL_CATALOGS_OPTION,
+      ...catalogs.map((catalog: Catalog) => ({
+        value: catalog.id,
+        label: catalog.name,
+      })),
+    ],
+    [catalogs]
+  );
 
   const [preferences, setPreferences] = useState<ProductListPreferences>(DEFAULT_PREFERENCES);
   const updateMutation = useUpdateUserPreferences();
@@ -121,11 +164,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     nameLocale: value as 'name_en' | 'name_pl' | 'name_de',
                   }))
                 }
-                options={[
-                  { value: 'name_en', label: 'English' },
-                  { value: 'name_pl', label: 'Polish' },
-                  { value: 'name_de', label: 'German' },
-                ]}
+                options={[...NAME_LOCALE_OPTIONS]}
                ariaLabel='Product Name Language' title='Product Name Language'/>
             </FormField>
 
@@ -143,13 +182,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     catalogFilter: value,
                   }))
                 }
-                options={[
-                  { value: 'all', label: 'All Catalogs' },
-                  ...catalogs.map((catalog: Catalog) => ({
-                    value: catalog.id,
-                    label: catalog.name,
-                  })),
-                ]}
+                options={catalogOptions}
                ariaLabel='Default Catalog Filter' title='Default Catalog Filter'/>
             </FormField>
 
@@ -185,11 +218,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     thumbnailSource: value as 'file' | 'link' | 'base64',
                   }))
                 }
-                options={[
-                  { value: 'file', label: 'File Uploads' },
-                  { value: 'link', label: 'URL Links' },
-                  { value: 'base64', label: 'Base64' },
-                ]}
+                options={[...THUMBNAIL_SOURCE_OPTIONS]}
                ariaLabel='Thumbnail Source' title='Thumbnail Source'/>
             </FormField>
 
@@ -207,10 +236,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     pageSize: parseInt(value, 10),
                   }))
                 }
-                options={['10', '25', '50', '100', '200'].map((size: string) => ({
-                  value: size,
-                  label: size,
-                }))}
+                options={[...PAGE_SIZE_OPTIONS]}
                ariaLabel='Products Per Page' title='Products Per Page'/>
             </FormField>
 
@@ -228,10 +254,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     filtersCollapsedByDefault: value === 'hidden',
                   }))
                 }
-                options={[
-                  { value: 'shown', label: 'Show Filters' },
-                  { value: 'hidden', label: 'Hide Filters' },
-                ]}
+                options={[...FILTER_VISIBILITY_OPTIONS]}
                ariaLabel='Filters Button Default' title='Filters Button Default'/>
             </FormField>
 
@@ -248,10 +271,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     showTriggerRunFeedback: value === 'shown',
                   }))
                 }
-                options={[
-                  { value: 'shown', label: 'Show Pills' },
-                  { value: 'hidden', label: 'Hide Pills' },
-                ]}
+                options={[...TRIGGER_RUN_FEEDBACK_OPTIONS]}
                ariaLabel='Trigger Run Feedback Pills' title='Trigger Run Feedback Pills'/>
             </FormField>
           </div>

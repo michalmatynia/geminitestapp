@@ -9,6 +9,7 @@ type KangurConfirmModalProps = {
   message: React.ReactNode;
   onClose: () => void;
   onConfirm: () => void;
+  showCancel?: boolean;
   title: string;
 };
 
@@ -19,6 +20,7 @@ export function KangurConfirmModal({
   message,
   onClose,
   onConfirm,
+  showCancel = true,
   title,
 }: KangurConfirmModalProps): React.JSX.Element {
   const handleOpenChange = (open: boolean): void => {
@@ -52,11 +54,13 @@ export function KangurConfirmModal({
           <div className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2'>
             <div className='flex w-full gap-2'>
               <div className='flex-1' />
-              <AlertDialog.Cancel asChild>
-                <KangurButton onClick={handleCancel} type='button' variant='secondary'>
-                  {cancelText}
-                </KangurButton>
-              </AlertDialog.Cancel>
+              {showCancel ? (
+                <AlertDialog.Cancel asChild>
+                  <KangurButton onClick={handleCancel} type='button' variant='secondary'>
+                    {cancelText}
+                  </KangurButton>
+                </AlertDialog.Cancel>
+              ) : null}
               <AlertDialog.Action asChild>
                 <KangurButton onClick={handleConfirm} type='button' variant='primary'>
                   {confirmText}

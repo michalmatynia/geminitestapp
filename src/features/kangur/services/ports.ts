@@ -19,6 +19,7 @@ import type {
 import type {
   KangurDuelAnswerInput as KangurDuelAnswerInputContract,
   KangurDuelCreateInput as KangurDuelCreateInputContract,
+  KangurDuelHeartbeatInput as KangurDuelHeartbeatInputContract,
   KangurDuelJoinInput as KangurDuelJoinInputContract,
   KangurDuelLobbyResponse as KangurDuelLobbyResponseContract,
   KangurDuelOpponentsResponse as KangurDuelOpponentsResponseContract,
@@ -52,6 +53,7 @@ export type KangurScoreRecord = KangurScore;
 export type KangurDuelCreateInput = KangurDuelCreateInputContract;
 export type KangurDuelJoinInput = KangurDuelJoinInputContract;
 export type KangurDuelAnswerInput = KangurDuelAnswerInputContract;
+export type KangurDuelHeartbeatInput = KangurDuelHeartbeatInputContract;
 export type KangurDuelLeaveInput = KangurDuelLeaveInputContract;
 export type KangurDuelStateResponse = KangurDuelStateResponseContract;
 export type KangurDuelLobbyResponse = KangurDuelLobbyResponseContract;
@@ -126,6 +128,10 @@ export interface KangurDuelsPort {
   join: (input: KangurDuelJoinInput) => Promise<KangurDuelStateResponse>;
   state: (
     sessionId: string,
+    options?: { signal?: AbortSignal }
+  ) => Promise<KangurDuelStateResponse>;
+  heartbeat: (
+    input: KangurDuelHeartbeatInput,
     options?: { signal?: AbortSignal }
   ) => Promise<KangurDuelStateResponse>;
   lobby: (options?: { limit?: number; signal?: AbortSignal }) => Promise<KangurDuelLobbyResponse>;

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { CaseResolverPartySelectField } from '@/features/case-resolver/components/page/CaseResolverPartySelectField';
 import { CaseResolverPartyFieldRuntimeProvider } from '@/features/case-resolver/components/page/CaseResolverPartyFieldRuntimeContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 vi.mock('@/shared/ui', () => ({
   SelectSimple: ({
@@ -68,7 +69,7 @@ const PARTY_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'person:1', label: 'Alice' },
   { value: 'organization:1', label: 'Acme Org' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 describe('CaseResolverPartySelectField', () => {
   it('supports the shared party-field runtime path when explicit options are omitted', () => {

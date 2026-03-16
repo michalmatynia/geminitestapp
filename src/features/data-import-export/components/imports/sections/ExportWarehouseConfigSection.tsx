@@ -6,8 +6,14 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { WarehouseOption } from '@/shared/contracts/integrations';
 import { Label, SelectSimple, Checkbox } from '@/shared/ui';
+
+const EXPORT_WAREHOUSE_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '__none__',
+  label: 'Skip stock export',
+};
 
 export function ExportWarehouseConfigSection(): React.JSX.Element {
   const { warehouses: warehouseOptions, allWarehouses, warehouses } = useImportExportData();
@@ -22,6 +28,20 @@ export function ExportWarehouseConfigSection(): React.JSX.Element {
 
   const exportStockFallbackLoaded = true;
   const inventoryWarehouseIds = new Set(warehouses.map((w: WarehouseOption) => w.id));
+  const warehouseSelectOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      EXPORT_WAREHOUSE_PLACEHOLDER_OPTION,
+      ...warehouseOptions.map((warehouse: WarehouseOption) => ({
+        value: warehouse.id,
+        label: `${warehouse.name} (${warehouse.id})${
+          showAllWarehouses && !inventoryWarehouseIds.has(warehouse.id)
+            ? ' (not in inventory)'
+            : ''
+        }`,
+      })),
+    ],
+    [inventoryWarehouseIds, showAllWarehouses, warehouseOptions]
+  );
 
   return (
     <div>
@@ -32,13 +52,7 @@ export function ExportWarehouseConfigSection(): React.JSX.Element {
           value={exportWarehouseId || '__none__'}
           onValueChange={(v: string): void => setExportWarehouseId(v === '__none__' ? '' : v)}
           disabled={warehouseOptions.length === 0}
-          options={[
-            { value: '__none__', label: 'Skip stock export' },
-            ...warehouseOptions.map((warehouse: WarehouseOption) => ({
-              value: warehouse.id,
-              label: `${warehouse.name} (${warehouse.id})${showAllWarehouses && !inventoryWarehouseIds.has(warehouse.id) ? ' (not in inventory)' : ''}`,
-            })),
-          ]}
+          options={warehouseSelectOptions}
           placeholder={
             warehouseOptions.length === 0 ? 'Load warehouses first' : 'Skip stock export'
           }

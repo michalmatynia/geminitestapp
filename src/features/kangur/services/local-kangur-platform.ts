@@ -41,6 +41,7 @@ import {
 } from './local-kangur-platform-auth';
 import {
   createDuelViaApi,
+  heartbeatDuelViaApi,
   joinDuelViaApi,
   leaveDuelViaApi,
   requestDuelLobbyFromApi,
@@ -368,6 +369,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
       create: async (input) => createDuelViaApi(input),
       join: async (input) => joinDuelViaApi(input),
       state: async (sessionId, options) => requestDuelStateFromApi(sessionId, options),
+      heartbeat: async (input, options) => heartbeatDuelViaApi(input, options),
       lobby: async (options) => requestDuelLobbyFromApi(options),
       recentOpponents: async (options) => requestDuelOpponentsFromApi(options),
       search: async (query, options) => requestDuelSearchFromApi(query, options),

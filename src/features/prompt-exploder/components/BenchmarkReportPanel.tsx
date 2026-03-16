@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   Button,
   FormSection,
@@ -21,6 +22,23 @@ import {
 import { useBenchmarkState, useBenchmarkActions } from '../context/hooks/useBenchmark';
 import { useSettingsState } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
+
+type BenchmarkSuiteOption = 'default' | 'extended' | 'custom';
+
+const BENCHMARK_SUITE_OPTIONS = [
+  {
+    value: 'default',
+    label: `Default (${DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES.length} cases)`,
+  },
+  {
+    value: 'extended',
+    label: `Extended (${EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES.length} cases)`,
+  },
+  {
+    value: 'custom',
+    label: 'Custom (JSON)',
+  },
+] as const satisfies ReadonlyArray<LabeledOptionDto<BenchmarkSuiteOption>>;
 
 export function BenchmarkReportPanel(): React.JSX.Element {
   const { isBusy } = useSettingsState();
@@ -79,20 +97,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               onValueChange={(value: string) => {
                 setBenchmarkSuiteDraft(value as 'default' | 'extended' | 'custom');
               }}
-              options={[
-                {
-                  value: 'default',
-                  label: `Default (${DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES.length} cases)`,
-                },
-                {
-                  value: 'extended',
-                  label: `Extended (${EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES.length} cases)`,
-                },
-                {
-                  value: 'custom',
-                  label: 'Custom (JSON)',
-                },
-              ]}
+              options={[...BENCHMARK_SUITE_OPTIONS]}
              ariaLabel='Benchmark Suite' title='Benchmark Suite'/>
           </FormField>
           <FormField label='Low-Confidence Threshold' id='low-confidence-threshold'>

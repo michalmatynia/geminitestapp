@@ -26,9 +26,7 @@ import {
 const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running', 'blocked_on_lease', 'handoff_ready', 'paused'] as const;
 
 export const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
-  try {
-    await removePathRunQueueEntries([runId]);
-  } catch (error) {
+  void Promise.resolve(removePathRunQueueEntries([runId])).catch((error) => {
     void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning(`Non-critical queue cleanup failure for run ${runId}`, {
       service: 'ai-paths-service',
@@ -36,7 +34,7 @@ export const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
       runId,
       error,
     });
-  }
+  });
 };
 
 export const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<void> => {
@@ -48,9 +46,7 @@ export const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<voi
     )
   );
   if (uniqueRunIds.length === 0) return;
-  try {
-    await removePathRunQueueEntries(uniqueRunIds);
-  } catch (error) {
+  void Promise.resolve(removePathRunQueueEntries(uniqueRunIds)).catch((error) => {
     void ErrorSystem.captureException(error);
     void ErrorSystem.logWarning('Non-critical queue cleanup failure for bulk run deletion', {
       service: 'ai-paths-service',
@@ -58,7 +54,7 @@ export const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<voi
       runCount: uniqueRunIds.length,
       error,
     });
-  }
+  });
 };
 
 export const resumePathRun = async (

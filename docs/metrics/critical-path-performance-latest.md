@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-16T09:59:16.558Z
+Generated at: 2026-03-16T10:48:51.644Z
 
 ## Summary
 
@@ -86,9 +86,9 @@ Generated at: 2026-03-16T09:59:16.558Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/pages/Duels.tsx` | 1626 |
-| `src/features/kangur/ui/KangurLoginPage.tsx` | 1558 |
-| `src/features/kangur/observability/summary.ts` | 1539 |
+| `src/features/kangur/ui/pages/Duels.tsx` | 1795 |
+| `src/features/kangur/ui/KangurLoginPage.tsx` | 1623 |
+| `src/features/kangur/observability/summary.ts` | 1548 |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
 | `src/features/kangur/server/ai-tutor-adaptive.ts` | 1224 |
@@ -101,7 +101,7 @@ Generated at: 2026-03-16T09:59:16.558Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/kangur/[[...path]]/route.ts` | 864 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 874 |
 | `src/app/api/v2/products/[[...path]]/route.ts` | 357 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 275 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 254 |

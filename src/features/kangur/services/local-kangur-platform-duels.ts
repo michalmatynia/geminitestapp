@@ -1,6 +1,7 @@
 import type {
   KangurDuelAnswerInput,
   KangurDuelCreateInput,
+  KangurDuelHeartbeatInput,
   KangurDuelJoinInput,
   KangurDuelLobbyResponse,
   KangurDuelOpponentsResponse,
@@ -22,6 +23,7 @@ import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/i
 import {
   KANGUR_DUELS_ANSWER_ENDPOINT,
   KANGUR_DUELS_CREATE_ENDPOINT,
+  KANGUR_DUELS_HEARTBEAT_ENDPOINT,
   KANGUR_DUELS_JOIN_ENDPOINT,
   KANGUR_DUELS_LEAVE_ENDPOINT,
   KANGUR_DUELS_LOBBY_ENDPOINT,
@@ -373,6 +375,53 @@ export const joinDuelViaApi = async (
       endpoint: KANGUR_DUELS_JOIN_ENDPOINT,
       sessionId: input.sessionId ?? null,
       mode: input.mode ?? null,
+      ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
+    });
+    throw error;
+  }
+};
+
+export const heartbeatDuelViaApi = async (
+  input: KangurDuelHeartbeatInput,
+  options?: { signal?: AbortSignal }
+): Promise<KangurDuelStateResponse> => {
+  try {
+    const response = await fetch(KANGUR_DUELS_HEARTBEAT_ENDPOINT, {
+      method: 'POST',
+      headers: createActorAwareHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'same-origin',
+      body: JSON.stringify(input),
+      signal: options?.signal,
+    });
+
+    if (!response.ok) {
+      const requestError = new Error(
+        `Kangur duel heartbeat request failed with ${response.status}`
+      ) as Error & { status: number };
+      requestError.status = response.status;
+      throw requestError;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const parsed = kangurDuelStateResponseSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new Error('Kangur duel heartbeat payload validation failed.');
+    }
+
+    return parsed.data;
+  } catch (error: unknown) {
+    if (isAbortLikeError(error, options?.signal)) {
+      throw error;
+    }
+    logClientError(error);
+    if (isKangurAuthStatusError(error)) {
+      throw error;
+    }
+    logKangurClientError(error, {
+      source: 'kangur.local-platform',
+      action: 'duels.heartbeat',
+      method: 'POST',
+      endpoint: KANGUR_DUELS_HEARTBEAT_ENDPOINT,
       ...(isKangurStatusError(error) ? { statusCode: error.status } : {}),
     });
     throw error;

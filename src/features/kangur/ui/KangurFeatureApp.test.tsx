@@ -122,7 +122,6 @@ vi.mock('@/features/kangur/config/pages', () => ({
     ParentDashboard: () => (
       <div data-testid='kangur-page-parent-dashboard'>ParentDashboard</div>
     ),
-    Tests: () => <div data-testid='kangur-page-tests'>Tests</div>,
   },
 }));
 
@@ -254,10 +253,10 @@ describe('KangurFeatureApp', () => {
       isRouteRevealing: false,
       transitionPhase: 'pending',
       activeTransitionSourceId: null,
-      activeTransitionPageKey: 'Tests',
-      activeTransitionRequestedHref: '/kangur/tests',
-      activeTransitionSkeletonVariant: 'tests',
-      pendingPageKey: 'Tests',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: 'Lessons',
       startRouteTransition: vi.fn(),
       markRouteTransitionReady: vi.fn(),
     });
@@ -269,7 +268,7 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Tests:tests'
+      'Lessons:lessons-library'
     );
 
     routeTransitionStateMock.mockReturnValue({
@@ -279,9 +278,9 @@ describe('KangurFeatureApp', () => {
       isRouteRevealing: true,
       transitionPhase: 'revealing',
       activeTransitionSourceId: null,
-      activeTransitionPageKey: 'Tests',
-      activeTransitionRequestedHref: '/kangur/tests',
-      activeTransitionSkeletonVariant: 'tests',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/kangur/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
       pendingPageKey: null,
       startRouteTransition: vi.fn(),
       markRouteTransitionReady: vi.fn(),
@@ -292,7 +291,7 @@ describe('KangurFeatureApp', () => {
     });
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
-      'Tests:tests'
+      'Lessons:lessons-library'
     );
   });
 

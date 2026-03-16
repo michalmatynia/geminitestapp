@@ -6,15 +6,31 @@ import {
   useIntegrationsData,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { Button, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 
+const CUSTOM_PERSONA_OPTION: LabeledOptionDto<string> = {
+  value: 'custom',
+  label: 'Custom',
+};
+
 export function PlaywrightTabContent(): React.JSX.Element {
   const { playwrightPersonas, playwrightPersonasLoading } = useIntegrationsData();
   const { playwrightPersonaId } = useIntegrationsForm();
   const { handleSelectPlaywrightPersona } = useIntegrationsActions();
+  const personaOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      CUSTOM_PERSONA_OPTION,
+      ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
+        value: persona.id,
+        label: persona.name,
+      })),
+    ],
+    [playwrightPersonas]
+  );
 
   const selectedPersona =
     playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??
@@ -47,13 +63,7 @@ export function PlaywrightTabContent(): React.JSX.Element {
                 onValueChange={(value: string): void => {
                   void handleSelectPlaywrightPersona(value === 'custom' ? null : value);
                 }}
-                options={[
-                  { value: 'custom', label: 'Custom' },
-                  ...playwrightPersonas.map((persona: PlaywrightPersona) => ({
-                    value: persona.id,
-                    label: persona.name,
-                  })),
-                ]}
+                options={personaOptions}
                 placeholder='Select persona'
                 variant='subtle'
                 size='sm'

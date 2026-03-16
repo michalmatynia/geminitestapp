@@ -1,6 +1,8 @@
 import 'server-only';
 
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { z } from 'zod';
 
@@ -45,68 +47,75 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const REPO_ROOT_URL = new URL('../../../../../../', import.meta.url);
 
+const resolveDocsFilePath = (repoRelativePath: string): string => {
+  if (REPO_ROOT_URL.protocol === 'file:') {
+    return fileURLToPath(new URL(repoRelativePath, REPO_ROOT_URL));
+  }
+  return path.resolve(process.cwd(), repoRelativePath);
+};
+
 const normalizeRepoRelativePath = (candidate: string): string =>
   candidate
     .trim()
     .replace(/\\/g, '/')
     .replace(/^\.\/+/, '');
 
-const DOCS_SOURCE_URLS = new Map<string, URL>([
+const DOCS_SOURCE_FILES = new Map<string, string>([
   [
     normalizeRepoRelativePath(DOCS_MANIFEST_PATH),
-    new URL('docs/ai-paths/node-validator-central-manifest.json', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-central-manifest.json'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-core-patterns.md'),
-    new URL('docs/ai-paths/node-validator-core-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-core-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-simulation-patterns.md'),
-    new URL('docs/ai-paths/node-validator-simulation-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-simulation-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-database-patterns.md'),
-    new URL('docs/ai-paths/node-validator-database-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-database-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-runtime-patterns.md'),
-    new URL('docs/ai-paths/node-validator-runtime-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-runtime-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-wiring-patterns.md'),
-    new URL('docs/ai-paths/node-validator-wiring-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-wiring-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-advanced-patterns.md'),
-    new URL('docs/ai-paths/node-validator-advanced-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-advanced-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-semantic-grammar-patterns.md'),
-    new URL('docs/ai-paths/node-validator-semantic-grammar-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-semantic-grammar-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-node-code-parser-patterns.md'),
-    new URL('docs/ai-paths/node-validator-node-code-parser-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-node-code-parser-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-node-path-code-parser-patterns.md'),
-    new URL('docs/ai-paths/node-validator-node-path-code-parser-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-node-path-code-parser-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-central-patterns.md'),
-    new URL('docs/ai-paths/node-validator-central-patterns.md', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-central-patterns.md'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/semantic-grammar/nodes/index.json'),
-    new URL('docs/ai-paths/semantic-grammar/nodes/index.json', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/semantic-grammar/nodes/index.json'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/tooltip-catalog.json'),
-    new URL('docs/ai-paths/tooltip-catalog.json', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/tooltip-catalog.json'),
   ],
   [
     normalizeRepoRelativePath('docs/ai-paths/node-validator-coverage-matrix.csv'),
-    new URL('docs/ai-paths/node-validator-coverage-matrix.csv', REPO_ROOT_URL),
+    resolveDocsFilePath('docs/ai-paths/node-validator-coverage-matrix.csv'),
   ],
 ]);
 
@@ -116,11 +125,11 @@ const readDocsSourceText = async (candidate: string): Promise<string> => {
   const normalized = normalizeRepoRelativePath(candidate);
   const cached = DOCS_CONTENT_CACHE.get(normalized);
   if (cached) return cached;
-  const sourceUrl = DOCS_SOURCE_URLS.get(normalized);
-  if (!sourceUrl) {
+  const sourcePath = DOCS_SOURCE_FILES.get(normalized);
+  if (!sourcePath) {
     throw new Error(`Path "${candidate}" is not in the static docs allowlist.`);
   }
-  const content = await readFile(sourceUrl, 'utf8');
+  const content = await readFile(sourcePath, 'utf8');
   DOCS_CONTENT_CACHE.set(normalized, content);
   return content;
 };

@@ -9,6 +9,7 @@ import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImportListItem } from '@/shared/contracts/integrations';
 import type { FilterField } from '@/shared/contracts/ui';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
@@ -24,6 +25,18 @@ import {
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef } from '@tanstack/react-table';
+
+const IMPORT_LIST_MODE_OPTIONS = [
+  { value: 'all', label: 'All products' },
+  { value: 'unique', label: 'Unique only' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'all' | 'unique'>>;
+
+const IMPORT_LIST_PAGE_SIZE_OPTIONS = [
+  { value: '10', label: '10 / page' },
+  { value: '25', label: '25 / page' },
+  { value: '50', label: '50 / page' },
+  { value: '100', label: '100 / page' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export function ImportListPreviewSection(): React.JSX.Element {
   const { loadingImportList, importListStats, importList } = useImportExportData();
@@ -213,21 +226,13 @@ export function ImportListPreviewSection(): React.JSX.Element {
       key: 'mode',
       label: 'Mode',
       type: 'select',
-      options: [
-        { value: 'all', label: 'All products' },
-        { value: 'unique', label: 'Unique only' },
-      ],
+      options: [...IMPORT_LIST_MODE_OPTIONS],
     },
     {
       key: 'pageSize',
       label: 'Page Size',
       type: 'select',
-      options: [
-        { value: '10', label: '10 / page' },
-        { value: '25', label: '25 / page' },
-        { value: '50', label: '50 / page' },
-        { value: '100', label: '100 / page' },
-      ],
+      options: [...IMPORT_LIST_PAGE_SIZE_OPTIONS],
     },
   ];
 

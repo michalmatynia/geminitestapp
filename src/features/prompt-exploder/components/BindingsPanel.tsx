@@ -3,6 +3,7 @@
 import { Link2, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, FormSection, Input, SelectSimple } from '@/shared/ui';
 
 import { useBindingsState, useBindingsActions } from '../context/hooks/useBindings';
@@ -14,6 +15,12 @@ import type {
   PromptExploderBindingType,
   PromptExploderSubsection,
 } from '../types';
+
+const BINDING_TYPE_OPTIONS = [
+  { value: 'depends_on', label: 'Depends On' },
+  { value: 'references', label: 'References' },
+  { value: 'uses_param', label: 'Uses Param' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<PromptExploderBindingType>>;
 
 export function BindingsPanel(): React.JSX.Element {
   const { documentState, segmentOptions, segmentById } = useDocumentState();
@@ -58,11 +65,7 @@ export function BindingsPanel(): React.JSX.Element {
                       type: value as PromptExploderBindingType,
                     }));
                   }}
-                  options={[
-                    { value: 'depends_on', label: 'Depends On' },
-                    { value: 'references', label: 'References' },
-                    { value: 'uses_param', label: 'Uses Param' },
-                  ]}
+                  options={[...BINDING_TYPE_OPTIONS]}
                  ariaLabel='Select option' title='Select option'/>
                 <SelectSimple
                   size='sm'

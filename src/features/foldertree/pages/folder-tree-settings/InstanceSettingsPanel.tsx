@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { IconSelector } from '@/shared/lib/icons';
 import {
   Checkbox,
@@ -35,6 +36,11 @@ import {
   toTitleLabel,
   TREE_ICON_ITEMS,
 } from './utils';
+
+const SEARCH_FILTER_MODE_OPTIONS = [
+  { value: 'highlight', label: 'Highlight matches' },
+  { value: 'filter_tree', label: 'Filter tree' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'highlight' | 'filter_tree'>>;
 
 const folderTreeSelectionBehaviorOptions = folderTreeSelectionBehaviorValues.map((value) => ({
   value,
@@ -602,10 +608,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
               <SelectSimple
                 size='sm'
                 value={searchConfig.filterMode}
-                options={[
-                  { value: 'highlight', label: 'Highlight matches' },
-                  { value: 'filter_tree', label: 'Filter tree' },
-                ]}
+                options={[...SEARCH_FILTER_MODE_OPTIONS]}
                 onValueChange={(value: string): void => {
                   updateProfile(meta.id, (current) => ({
                     ...current,

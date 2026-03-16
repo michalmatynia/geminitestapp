@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PromptExploderRuleSegmentType,
   PromptExploderCaptureApplyTo,
@@ -12,6 +13,25 @@ import { cn } from '@/shared/utils';
 
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { PROMPT_EXPLODER_SEGMENT_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
+
+const SEGMENT_TYPE_OVERRIDE_OPTIONS: Array<
+  LabeledOptionDto<PromptExploderRuleSegmentType | 'none'>
+> = [{ value: 'none', label: 'No type override' }, ...PROMPT_EXPLODER_SEGMENT_OPTIONS];
+
+const CAPTURE_APPLY_TO_OPTIONS: Array<LabeledOptionDto<PromptExploderCaptureApplyTo>> = [
+  { value: 'segment', label: 'Whole segment' },
+  { value: 'line', label: 'Each line' },
+];
+
+const CAPTURE_NORMALIZE_OPTIONS: Array<LabeledOptionDto<PromptExploderCaptureNormalize>> = [
+  { value: 'trim', label: 'Trim' },
+  { value: 'lower', label: 'Lower' },
+  { value: 'upper', label: 'Upper' },
+  { value: 'country', label: 'Country Name' },
+  { value: 'day', label: 'Day' },
+  { value: 'month', label: 'Month' },
+  { value: 'year', label: 'Year' },
+];
 
 export function RuleItemExploderSettings(): React.JSX.Element | null {
   const { rule, patchRule } = useRuleItemContext();
@@ -69,10 +89,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderSegmentType: value as PromptExploderRuleSegmentType,
             });
           }}
-          options={[
-            { value: 'none', label: 'No type override' },
-            ...PROMPT_EXPLODER_SEGMENT_OPTIONS,
-          ]}
+          options={SEGMENT_TYPE_OVERRIDE_OPTIONS}
          ariaLabel='Exploder Segment Type Hint' title='Exploder Segment Type Hint'/>
       </FormField>
       <FormField label='Exploder Priority'>
@@ -174,10 +191,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderCaptureApplyTo: value === 'line' ? 'line' : 'segment',
             });
           }}
-          options={[
-            { value: 'segment', label: 'Whole segment' },
-            { value: 'line', label: 'Each line' },
-          ]}
+          options={CAPTURE_APPLY_TO_OPTIONS}
          ariaLabel='Capture Apply To' title='Capture Apply To'/>
       </FormField>
       <FormField label='Capture Normalize'>
@@ -200,15 +214,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               promptExploderCaptureNormalize: value,
             });
           }}
-          options={[
-            { value: 'trim', label: 'Trim' },
-            { value: 'lower', label: 'Lower' },
-            { value: 'upper', label: 'Upper' },
-            { value: 'country', label: 'Country Name' },
-            { value: 'day', label: 'Day' },
-            { value: 'month', label: 'Month' },
-            { value: 'year', label: 'Year' },
-          ]}
+          options={CAPTURE_NORMALIZE_OPTIONS}
          ariaLabel='Capture Normalize' title='Capture Normalize'/>
       </FormField>
       <FormField label='Capture Overwrite'>

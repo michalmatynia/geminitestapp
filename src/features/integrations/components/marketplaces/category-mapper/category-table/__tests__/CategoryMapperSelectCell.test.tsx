@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CategoryMapperSelectCell } from '../CategoryMapperSelectCell';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 const OPTIONS = [
   { value: 'cat-1', label: 'Root / Child A' },
   { value: 'cat-2', label: 'Root / Child B' },
-];
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 describe('CategoryMapperSelectCell', () => {
   it('renders selected internal category label', () => {

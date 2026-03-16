@@ -11,6 +11,7 @@ import {
 } from '@kangur/core';
 import { useEffect, useMemo, useState } from 'react';
 
+import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
@@ -18,9 +19,15 @@ import { isKangurAuthStatusError } from '@/features/kangur/services/status-error
 
 const kangurPlatform = getKangurPlatform();
 
-export type KangurLeaderboardUserFilter = SharedKangurLeaderboardUserFilter;
-export type KangurLeaderboardUserFilterIcon =
-  SharedKangurLeaderboardUserFilterIcon;
+export type KangurLeaderboardUserFilter = 'all' | 'registered' | 'anonymous';
+export type KangurLeaderboardUserFilterIcon = 'ghost' | 'user' | null;
+
+type KangurLeaderboardOperationLabel = {
+  emoji: string;
+  label: string;
+};
+
+type KangurLeaderboardOperationOption = IdLabelOptionDto & { emoji: string };
 
 export type KangurLeaderboardFilterItem = {
   displayLabel: string;
@@ -94,7 +101,7 @@ const OPERATION_OPTIONS: KangurLeaderboardOperationOption[] = Object.entries(OPE
   })
 );
 
-const USER_OPTIONS: KangurLeaderboardUserOption[] = [
+const USER_OPTIONS: Array<IdLabelOptionDto<KangurLeaderboardUserFilter> & { icon: KangurLeaderboardUserFilterIcon }> = [
   { id: 'all', label: 'Wszyscy', icon: null },
   { id: 'registered', label: 'Zalogowani', icon: 'user' },
   { id: 'anonymous', label: 'Anonimowi', icon: 'ghost' },

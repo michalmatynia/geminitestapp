@@ -57,6 +57,7 @@ import {
 const kangurPlatform = getKangurPlatform();
 const DUEL_POLL_INTERVAL_MS = 2500;
 const DUEL_POLL_MAX_INTERVAL_MS = 20_000;
+const DUEL_HEARTBEAT_INTERVAL_MS = 20_000;
 const LOBBY_POLL_INTERVAL_MS = 5000;
 const LOBBY_POLL_MAX_INTERVAL_MS = 30_000;
 const LOBBY_FRESH_WINDOW_MS = 15_000;
@@ -64,6 +65,8 @@ const LOBBY_RELATIVE_TIME_TICK_MS = 10_000;
 const DUEL_TIMEOUT_CHOICE = '__timeout__';
 const DUEL_SEARCH_DEBOUNCE_MS = 300;
 const MOTION_PANEL_CLASSNAME =
+  'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:ease-out';
+const MOTION_ENTRY_CLASSNAME =
   'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:ease-out';
 
 
@@ -109,6 +112,8 @@ function DuelsContent(): React.JSX.Element {
   const lobbyPollingRef = useRef(false);
   const duelAbortRef = useRef<AbortController | null>(null);
   const lobbyAbortRef = useRef<AbortController | null>(null);
+  const duelHeartbeatRef = useRef(false);
+  const duelHeartbeatAbortRef = useRef<AbortController | null>(null);
   const opponentsAbortRef = useRef<AbortController | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
   const searchDebounceRef = useRef<number | null>(null);
@@ -1063,6 +1068,65 @@ function DuelsContent(): React.JSX.Element {
       duelPollingRef.current = false;
     };
   }, [duelPollIntervalMs, isOnline, isPageActive, sessionId, sessionStatus]);
+
+  useEffect(() => {
+    if (!sessionId) {
+      duelHeartbeatAbortRef.current?.abort();
+      duelHeartbeatAbortRef.current = null;
+      duelHeartbeatRef.current = false;
+      return;
+    }
+    if (!['waiting', 'ready', 'in_progress'].includes(sessionStatus ?? '')) {
+      duelHeartbeatAbortRef.current?.abort();
+      duelHeartbeatAbortRef.current = null;
+      duelHeartbeatRef.current = false;
+      return;
+    }
+    if (!isPageActive || !isOnline || typeof window === 'undefined') {
+      duelHeartbeatAbortRef.current?.abort();
+      duelHeartbeatAbortRef.current = null;
+      duelHeartbeatRef.current = false;
+      return;
+    }
+
+    const sendHeartbeat = async (): Promise<void> => {
+      if (duelHeartbeatRef.current) {
+        return;
+      }
+      duelHeartbeatAbortRef.current?.abort();
+      const controller = new AbortController();
+      duelHeartbeatAbortRef.current = controller;
+      duelHeartbeatRef.current = true;
+      try {
+        await kangurPlatform.duels.heartbeat(
+          { sessionId, clientTimestamp: new Date().toISOString() },
+          { signal: controller.signal }
+        );
+      } catch (err: unknown) {
+        if (isAbortLikeError(err, controller.signal)) {
+          return;
+        }
+        logClientError(err);
+      } finally {
+        if (duelHeartbeatAbortRef.current === controller) {
+          duelHeartbeatAbortRef.current = null;
+          duelHeartbeatRef.current = false;
+        }
+      }
+    };
+
+    void sendHeartbeat();
+    const intervalId = window.setInterval(() => {
+      void sendHeartbeat();
+    }, DUEL_HEARTBEAT_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+      duelHeartbeatAbortRef.current?.abort();
+      duelHeartbeatAbortRef.current = null;
+      duelHeartbeatRef.current = false;
+    };
+  }, [isOnline, isPageActive, sessionId, sessionStatus]);
 
   return (
     <KangurPageShell id='kangur-duels-page' skipLinkTargetId='kangur-duels-main'>

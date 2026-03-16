@@ -2,12 +2,19 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { UnifiedCollection } from '@/shared/contracts/database';
 import { StatusBadge, DataTableSortableHeader, SelectSimple } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
 export type UnifiedCollectionRow = UnifiedCollection;
+
+const PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'mongodb', label: 'MongoDB' },
+  { value: 'redis', label: 'Redis' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'auto' | 'mongodb' | 'redis'>>;
 
 const ProviderBadge = ({
   exists,
@@ -54,11 +61,7 @@ export function getControlPanelColumns(options: {
           onValueChange={(value): void => {
             options.onProviderChange(row.original.name, value as 'mongodb' | 'redis' | 'auto');
           }}
-          options={[
-            { value: 'auto', label: 'Auto' },
-            { value: 'mongodb', label: 'MongoDB' },
-            { value: 'redis', label: 'Redis' },
-          ]}
+          options={[...PROVIDER_OPTIONS]}
           size='sm'
           className='w-32'
           triggerClassName='h-8'

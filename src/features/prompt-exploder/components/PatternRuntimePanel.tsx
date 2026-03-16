@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getPromptValidationObservabilitySnapshot } from '@/shared/lib/prompt-core/runtime-observability';
 import {
   Button,
@@ -30,6 +31,21 @@ import {
 
 import type { LearningDraft } from '../context/settings/SettingsDraftsContext';
 import type { PromptExploderLearnedTemplate } from '../types';
+
+const RUNTIME_RULE_PROFILE_OPTIONS = [
+  { value: 'all', label: 'All Rules' },
+  { value: 'pattern_pack', label: 'Pattern Pack Only' },
+  { value: 'learned_only', label: 'Learned Rules Only' },
+] as const satisfies ReadonlyArray<
+  LabeledOptionDto<'all' | 'pattern_pack' | 'learned_only'>
+>;
+
+const TEMPLATE_STATE_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'candidate', label: 'Candidate' },
+  { value: 'active', label: 'Active' },
+  { value: 'disabled', label: 'Disabled' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<PromptExploderLearnedTemplate['state']>>;
 
 const looksLikeCaseResolverPrompt = (value: string): boolean => {
   const text = value.trim();
@@ -311,10 +327,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 runtimeValidationRuleStack: value,
               }));
             }}
-            options={validationStackOptions.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
+            options={validationStackOptions}
             ariaLabel='Validation stack'
            title='Select option'/>{' '}
         </div>
@@ -329,11 +342,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 runtimeRuleProfile: value as 'all' | 'pattern_pack' | 'learned_only',
               }));
             }}
-            options={[
-              { value: 'all', label: 'All Rules' },
-              { value: 'pattern_pack', label: 'Pattern Pack Only' },
-              { value: 'learned_only', label: 'Learned Rules Only' },
-            ]}
+            options={[...RUNTIME_RULE_PROFILE_OPTIONS]}
             ariaLabel='Runtime rule profile'
            title='Select option'/>
         </div>
@@ -639,12 +648,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                         value as PromptExploderLearnedTemplate['state']
                       );
                     }}
-                    options={[
-                      { value: 'draft', label: 'Draft' },
-                      { value: 'candidate', label: 'Candidate' },
-                      { value: 'active', label: 'Active' },
-                      { value: 'disabled', label: 'Disabled' },
-                    ]}
+                    options={[...TEMPLATE_STATE_OPTIONS]}
                     ariaLabel='Template state'
                    title='Select option'/>
                   <Button

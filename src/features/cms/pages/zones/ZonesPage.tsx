@@ -9,6 +9,7 @@ import {
   useDeleteCmsDomain,
   useUpdateCmsDomain,
 } from '@/features/cms/hooks/useCmsQueries';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import {
   AdminCmsPageLayout,
@@ -30,6 +31,11 @@ import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/
 
 import type { ColumnDef } from '@tanstack/react-table';
 
+const ALIAS_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: 'none',
+  label: 'Keep Independent',
+};
+
 export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
   const createDomain = useCreateCmsDomain();
@@ -38,6 +44,18 @@ export default function ZonesPage(): React.JSX.Element {
   const { toast } = useToast();
 
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
+  const buildAliasOptions = React.useCallback(
+    (currentId: string): Array<LabeledOptionDto<string>> => [
+      ALIAS_PLACEHOLDER_OPTION,
+      ...domains
+        .filter((domain) => domain.id !== currentId)
+        .map((domain) => ({
+          value: domain.id,
+          label: `Alias of ${domain.domain}`,
+        })),
+    ],
+    [domains]
+  );
   const [domain, setDomain] = useState('');
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
@@ -174,12 +192,7 @@ export default function ZonesPage(): React.JSX.Element {
               onValueChange={(val) => {
                 void handleAliasChange(row.original.id, val);
               }}
-              options={[
-                { value: 'none', label: 'Keep Independent' },
-                ...domains
-                  .filter((d) => d.id !== row.original.id)
-                  .map((d) => ({ value: d.id, label: `Alias of ${d.domain}` })),
-              ]}
+              options={buildAliasOptions(row.original.id)}
               ariaLabel={`Alias configuration for ${row.original.domain ?? 'zone'}`}
               className='h-7 w-44 text-[10px]'
              title='Select option'/>
@@ -205,7 +218,7 @@ export default function ZonesPage(): React.JSX.Element {
         ),
       },
     ],
-    [domains, handleAliasChange]
+    [buildAliasOptions, handleAliasChange]
   );
 
   return (

@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
 
 import { useDocumentState } from '../context/hooks/useDocument';
@@ -23,6 +24,11 @@ import type {
   PromptExploderLogicalCondition,
   PromptExploderLogicalOperator,
 } from '../types';
+
+const BOOLEAN_OPTIONS = [
+  { value: 'true', label: 'true' },
+  { value: 'false', label: 'false' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<'true' | 'false'>>;
 
 function normalizeLogicalConditionList(
   item: PromptExploderListItem,
@@ -277,17 +283,14 @@ export function SegmentEditorListItemLogicalEditor(args: {
                     value={comparatorValue}
                     ariaLabel='Comparator'
                     onValueChange={(next: string) => {
-                      if (!isLogicalComparator(next)) return;
-                      updateCondition(conditionIndex, {
-                        comparator: next,
-                        value:
-                          next === 'truthy' || next === 'falsy' ? null : (condition.value ?? null),
-                      });
-                    }}
-                    options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
-                      value: option.value,
-                      label: option.label,
-                    }))}
+                    if (!isLogicalComparator(next)) return;
+                    updateCondition(conditionIndex, {
+                      comparator: next,
+                      value:
+                        next === 'truthy' || next === 'falsy' ? null : (condition.value ?? null),
+                    });
+                  }}
+                    options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS}
                    title='Select option'/>
                 </div>
 
@@ -304,10 +307,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
                             value: next === 'true',
                           });
                         }}
-                        options={[
-                          { value: 'true', label: 'true' },
-                          { value: 'false', label: 'false' },
-                        ]}
+                        options={[...BOOLEAN_OPTIONS]}
                        title='Select option'/>
                     ) : selectedParamEntry?.spec?.kind === 'enum' &&
                       selectedParamEntry.spec.enumOptions ? (

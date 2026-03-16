@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { GenericMapperExternalCell } from './GenericMapperExternalCell';
@@ -14,6 +15,10 @@ import { StandardDataTablePanel } from '../StandardDataTablePanel';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
+const UNMAPPED_EXTERNAL_OPTION: LabeledOptionDto<string> = {
+  value: '__unmapped__',
+  label: '— Not mapped —',
+};
 
 export type { PendingExternalMappingsState };
 
@@ -101,9 +106,9 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
     [internalItems, getInternalLabel]
   );
 
-  const externalOptions = useMemo(
+  const externalOptions = useMemo<Array<LabeledOptionDto<string>>>(
     () => [
-      { value: '__unmapped__', label: '— Not mapped —' },
+      UNMAPPED_EXTERNAL_OPTION,
       ...externalItems.map((item: TExternal) => ({
         value: getExternalId(item),
         label: getExternalLabel(item),

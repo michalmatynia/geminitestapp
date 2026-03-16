@@ -31,6 +31,7 @@ import {
   parseKangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
@@ -420,6 +421,7 @@ function KangurLoginPageContent(): JSX.Element {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdParentEmail, setCreatedParentEmail] = useState<string | null>(null);
+  const [isAccountCreatedModalOpen, setIsAccountCreatedModalOpen] = useState(false);
   const [resendAvailableAtMs, setResendAvailableAtMs] = useState<number | null>(null);
   const [parentAuthMode, setParentAuthMode] = useState<KangurAuthMode>(
     requestedParentAuthMode
@@ -471,6 +473,17 @@ function KangurLoginPageContent(): JSX.Element {
     (isParentVerificationRequired
       ? 'Kliknij link potwierdzający w e-mailu. Potem zalogujesz się tym samym e-mailem i hasłem.'
       : 'Konto jest gotowe. Zaloguj się e-mailem i hasłem.');
+  const accountCreatedModalMessage = (
+    <div className='space-y-2'>
+      <p>Konto rodzica zostało utworzone.</p>
+      {createdParentEmail ? (
+        <p>
+          Sprawdź skrzynkę: <strong>{createdParentEmail}</strong>
+        </p>
+      ) : null}
+      <p>{createAccountConfirmationDetail}</p>
+    </div>
+  );
   const resendRetryAfterMs =
     typeof resendAvailableAtMs === 'number'
       ? Math.max(0, resendAvailableAtMs - resendCountdownNowMs)
@@ -735,21 +748,44 @@ function KangurLoginPageContent(): JSX.Element {
 
   useLayoutEffect(() => {
     const target = activelyEditingInputRef.current;
-    if (!target) {
-      return;
-    }
-    if (document.activeElement !== target) {
+    if (target && document.activeElement !== target) {
       target.focus({ preventScroll: true });
     }
-    // Radix FocusScope uses a MutationObserver (microtask) that can steal focus
-    // AFTER this layout effect runs. Schedule an async check to reclaim it.
-    const frameId = requestAnimationFrame(() => {
-      if (activelyEditingInputRef.current === target && document.activeElement !== target) {
-        target.focus({ preventScroll: true });
-      }
-    });
-    return () => cancelAnimationFrame(frameId);
   });
+
+  // Native focusout listener as last-resort defense against async focus stealing
+  // (e.g. Radix FocusScope MutationObserver). Fires only when focus actually leaves
+  // the input, not on every render — avoids cursor flicker from redundant focus().
+  useEffect(() => {
+    const handleNativeFocusOut = (event: Event): void => {
+      const input = (event.target as HTMLInputElement | null);
+      if (!input || activelyEditingInputRef.current !== input) {
+        return;
+      }
+      // setTimeout(0) fires after microtasks (MutationObserver) complete,
+      // ensuring we restore focus AFTER any async focus stealing finishes.
+      const timerId = window.setTimeout(() => {
+        if (activelyEditingInputRef.current === input && document.activeElement !== input) {
+          input.focus({ preventScroll: true });
+        }
+      }, 0);
+      // Clean up if another focusout fires before this timeout
+      const cleanup = (): void => {
+        window.clearTimeout(timerId);
+        input.removeEventListener('focusout', cleanup);
+      };
+      input.addEventListener('focusout', cleanup, { once: true });
+    };
+
+    const idInput = identifierInputRef.current;
+    const pwInput = passwordInputRef.current;
+    idInput?.addEventListener('focusout', handleNativeFocusOut);
+    pwInput?.addEventListener('focusout', handleNativeFocusOut);
+    return () => {
+      idInput?.removeEventListener('focusout', handleNativeFocusOut);
+      pwInput?.removeEventListener('focusout', handleNativeFocusOut);
+    };
+  }, []);
 
   useEffect(() => {
     setParentAuthMode(requestedParentAuthMode);
@@ -951,9 +987,10 @@ function KangurLoginPageContent(): JSX.Element {
       const debugVerificationUrl = payload?.debug?.verificationUrl?.trim();
       const retryAfterMs = resolveParentVerificationRetryAfterMs(payload?.retryAfterMs);
       const emailVerified = payload?.emailVerified === true;
+      const createdAccount = payload?.created === true;
       trackKangurClientEvent('kangur_parent_account_created', {
         callbackUrl,
-        created: payload?.created === true,
+        created: createdAccount,
         emailVerified,
         hasPassword: payload?.hasPassword === true,
       });
@@ -977,6 +1014,9 @@ function KangurLoginPageContent(): JSX.Element {
 
       setPassword('');
       setCreatedParentEmail(email);
+      if (createdAccount) {
+        setIsAccountCreatedModalOpen(true);
+      }
       startResendCooldown(retryAfterMs);
       setVerificationDebugUrl(
         debugVerificationUrl && debugVerificationUrl.length > 0 ? debugVerificationUrl : null
@@ -1275,6 +1315,15 @@ function KangurLoginPageContent(): JSX.Element {
       surface='playField'
       variant='soft'
     >
+      <KangurConfirmModal
+        confirmText='Super!'
+        isOpen={isAccountCreatedModalOpen}
+        message={accountCreatedModalMessage}
+        onClose={() => setIsAccountCreatedModalOpen(false)}
+        onConfirm={() => setIsAccountCreatedModalOpen(false)}
+        showCancel={false}
+        title='Konto utworzone!'
+      />
       <div className='mb-4 flex justify-center sm:mb-5'>
         <div
           className='soft-card inline-flex items-center rounded-full border px-4 py-2 text-sm font-black tracking-[-0.03em] text-indigo-700 shadow-[0_18px_38px_-30px_rgba(99,102,241,0.28)]'

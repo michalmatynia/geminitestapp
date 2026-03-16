@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 import {
@@ -28,6 +29,11 @@ import {
   useRestoreJsonBackupMutation,
   useJsonBackups,
 } from '../hooks/useDatabaseQueries';
+
+const JSON_BACKUP_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
+  value: '',
+  label: '-- Select --',
+};
 
 export default function DatabaseControlPanelPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -135,6 +141,13 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
   );
 
   const jsonBackups = jsonBackupsQuery.data?.backups ?? [];
+  const jsonBackupOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      JSON_BACKUP_PLACEHOLDER_OPTION,
+      ...jsonBackups.map((name: string) => ({ value: name, label: name })),
+    ],
+    [jsonBackups]
+  );
 
   return (
     <AdminDatabasePageLayout
@@ -199,10 +212,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
                 size='sm'
                 value={selectedJsonBackup}
                 onValueChange={setSelectedJsonBackup}
-                options={[
-                  { value: '', label: '-- Select --' },
-                  ...jsonBackups.map((name: string) => ({ value: name, label: name })),
-                ]}
+                options={jsonBackupOptions}
                 triggerClassName='w-[200px]'
                ariaLabel='Select backup to restore' title='Select backup to restore'/>
             </FormField>

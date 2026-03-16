@@ -1,3 +1,6 @@
+import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { ExportParameterDoc } from '@/shared/contracts/integrations';
+
 export const PRODUCT_FIELDS = [
   { value: 'sku', label: 'SKU' },
   { value: 'baseProductId', label: 'Base Product ID' },
@@ -49,7 +52,7 @@ export const PRODUCT_FIELDS = [
   { value: 'image_slots_all', label: 'Image Slots (All)' },
   { value: 'image_links_all', label: 'Image Links (All)' },
   { value: 'images_all', label: 'Images (All: slots + links)' },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 export const PRODUCT_PARAMETER_TARGET_PREFIX = 'parameter:' as const;
 export const PRODUCT_PARAMETER_TARGET_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>`;
@@ -66,8 +69,6 @@ export const ALL_IMAGE_KEYS = [
   'image_links_all',
   'images_all',
 ];
-
-import type { ExportParameterDoc } from '@/shared/contracts/integrations';
 
 export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
   { key: 'sku', description: 'Unique product SKU/code.' },

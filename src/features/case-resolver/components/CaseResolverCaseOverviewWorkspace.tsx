@@ -3,6 +3,7 @@
 import { Network } from 'lucide-react';
 import React from 'react';
 
+import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   Badge,
   Button,
@@ -31,7 +32,7 @@ const CASE_STATUS_OPTIONS = [
     label: 'Completed',
     description: 'Case has been completed.',
   },
-] as const;
+] as const satisfies ReadonlyArray<LabeledOptionWithDescriptionDto<string>>;
 
 export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   const {

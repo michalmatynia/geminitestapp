@@ -3,11 +3,11 @@
 import {
   BookOpen,
   BrainCircuit,
-  ClipboardList,
   LayoutGrid,
   LogIn,
   LogOut,
   Menu,
+  Star,
   Trophy,
   UserPlus,
   X,
@@ -19,6 +19,7 @@ import {
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
 import {
+  appendKangurUrlParams,
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
@@ -47,7 +48,6 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 type KangurPrimaryNavigationPage =
   | 'Game'
   | 'Lessons'
-  | 'Tests'
   | 'LearnerProfile'
   | 'ParentDashboard'
   | 'Duels';
@@ -255,16 +255,20 @@ export function KangurPrimaryNavigation({
   const hasGuestPlayerName = (guestPlayerName?.trim() ?? '').length > 0;
   const homeHref = getKangurHomeHref(basePath);
   const lessonsHref = createPageUrl('Lessons', basePath);
-  const testsHref = createPageUrl('Tests', basePath);
   const duelsHref = createPageUrl('Duels', basePath);
   const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
   const profileHref = createPageUrl('LearnerProfile', basePath);
+  const kangurMathHref = appendKangurUrlParams(
+    homeHref,
+    { quickStart: 'kangur' },
+    basePath
+  );
   const transitionPhase = routeTransitionState?.transitionPhase ?? 'idle';
   const activeTransitionSourceId = routeTransitionState?.activeTransitionSourceId ?? null;
   const homeTransitionSourceId = 'kangur-primary-nav:home';
   const lessonsTransitionSourceId = 'kangur-primary-nav:lessons';
-  const testsTransitionSourceId = 'kangur-primary-nav:tests';
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
+  const kangurMathTransitionSourceId = 'kangur-primary-nav:kangur-math';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
   const closeMobileMenu = (): void => setIsMobileMenuOpen(false);
@@ -542,7 +546,7 @@ export function KangurPrimaryNavigation({
         >
           <KangurHomeLogo idPrefix='kangur-primary-nav-logo' />
         </span>
-          <span className='sr-only'>Strona główna</span>
+        <span className='truncate'>Grajmy</span>
       </>
     ),
     docId: 'top_nav_home',
@@ -579,26 +583,26 @@ export function KangurPrimaryNavigation({
     transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
     transitionSourceId: lessonsTransitionSourceId,
   };
-  const testsAction: KangurNavActionConfig = {
-    active: currentPage === 'Tests',
+  const kangurMathAction: KangurNavActionConfig = {
+    active: false,
     className: mobileNavItemClassName,
     content: (
       <>
-        <ClipboardList className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Testy</span>
+        <Star className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>Kangur Matematyczny</span>
       </>
     ),
-    docId: 'top_nav_tests',
-    href: testsHref,
-    targetPageKey: 'Tests',
-    testId: 'kangur-primary-nav-tests',
+    docId: 'top_nav_kangur_math',
+    href: kangurMathHref,
+    targetPageKey: 'Game',
+    testId: 'kangur-primary-nav-kangur-math',
     transitionActive: isTransitionSourceActive({
       activeTransitionSourceId,
       transitionPhase,
-      transitionSourceId: testsTransitionSourceId,
+      transitionSourceId: kangurMathTransitionSourceId,
     }),
     transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
-    transitionSourceId: testsTransitionSourceId,
+    transitionSourceId: kangurMathTransitionSourceId,
   };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
@@ -711,7 +715,7 @@ export function KangurPrimaryNavigation({
       >
         {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
         {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
-        {renderNavAction(buildActionWithClose(testsAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(kangurMathAction, onActionClick))}
         {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
         {tutorRow}
       </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PromptValidationChainMode,
   PromptValidationLaunchScopeBehavior,
@@ -13,6 +14,18 @@ import { cn } from '@/shared/utils';
 
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { LAUNCH_OPERATORS, SCOPE_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
+
+const CHAIN_MODE_OPTIONS: Array<LabeledOptionDto<PromptValidationChainMode>> = [
+  { value: 'continue', label: 'Continue' },
+  { value: 'stop_on_match', label: 'Stop On Match' },
+  { value: 'stop_on_replace', label: 'Stop On Replace' },
+];
+
+const LAUNCH_SCOPE_BEHAVIOR_OPTIONS: Array<LabeledOptionDto<PromptValidationLaunchScopeBehavior>> =
+  [
+    { value: 'gate', label: 'Gate outside scope' },
+    { value: 'bypass', label: 'Bypass outside scope' },
+  ];
 
 export function RuleItemExecutionSettings(): React.JSX.Element | null {
   const { rule, patchRule } = useRuleItemContext();
@@ -71,11 +84,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
                 value === 'stop_on_match' || value === 'stop_on_replace' ? value : 'continue',
             })
           }
-          options={[
-            { value: 'continue', label: 'Continue' },
-            { value: 'stop_on_match', label: 'Stop On Match' },
-            { value: 'stop_on_replace', label: 'Stop On Replace' },
-          ]}
+          options={CHAIN_MODE_OPTIONS}
          ariaLabel='Chain Mode' title='Chain Mode'/>
       </FormField>
       <FormField label='Max Executions'>
@@ -137,10 +146,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
                 launchScopeBehavior: value === 'bypass' ? 'bypass' : 'gate',
               });
             }}
-            options={[
-              { value: 'gate', label: 'Gate outside scope' },
-              { value: 'bypass', label: 'Bypass outside scope' },
-            ]}
+            options={LAUNCH_SCOPE_BEHAVIOR_OPTIONS}
            ariaLabel='Launch Scope Behavior' title='Launch Scope Behavior'/>
         </FormField>
         <FormField label='Launch Scopes' className='md:col-span-2'>

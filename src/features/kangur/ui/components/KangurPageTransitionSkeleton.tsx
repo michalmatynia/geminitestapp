@@ -11,8 +11,7 @@ type KangurSkeletonPageKey =
   | 'Game'
   | 'Lessons'
   | 'LearnerProfile'
-  | 'ParentDashboard'
-  | 'Tests';
+  | 'ParentDashboard';
 
 const SKELETON_TONE_BY_PAGE: Record<
   KangurSkeletonPageKey,
@@ -22,7 +21,6 @@ const SKELETON_TONE_BY_PAGE: Record<
   Lessons: 'learn',
   LearnerProfile: 'profile',
   ParentDashboard: 'dashboard',
-  Tests: 'learn',
 };
 
 const SkeletonBlock = ({
@@ -348,25 +346,6 @@ const ParentDashboardSkeleton = (): React.JSX.Element => (
   </div>
 );
 
-const TestsSkeleton = (): React.JSX.Element => (
-  <div className='flex w-full justify-center'>
-    <SkeletonPanel className='min-h-[440px] w-full max-w-3xl'>
-      <div className='space-y-4'>
-        <div className='flex flex-col items-center kangur-panel-gap text-center'>
-          <SkeletonChip className='h-8 w-36' />
-          <SkeletonLine className='h-10 w-64 max-w-full' />
-          <SkeletonLine className='w-full max-w-[420px]' />
-        </div>
-        <div className='space-y-3 pt-4'>
-          <SkeletonBlock className='h-24 rounded-[26px] bg-slate-200/76' />
-          <SkeletonBlock className='h-24 rounded-[26px] bg-slate-200/76' />
-          <SkeletonBlock className='h-24 rounded-[26px] bg-slate-200/76' />
-        </div>
-      </div>
-    </SkeletonPanel>
-  </div>
-);
-
 const resolveSkeletonPageKey = (
   variant: KangurRouteTransitionSkeletonVariant
 ): KangurSkeletonPageKey => {
@@ -378,8 +357,6 @@ const resolveSkeletonPageKey = (
       return 'LearnerProfile';
     case 'parent-dashboard':
       return 'ParentDashboard';
-    case 'tests':
-      return 'Tests';
     case 'game-home':
     case 'game-session':
     default:
@@ -401,8 +378,6 @@ const renderSkeletonVariant = (
       return <LearnerProfileSkeleton />;
     case 'parent-dashboard':
       return <ParentDashboardSkeleton />;
-    case 'tests':
-      return <TestsSkeleton />;
     case 'game-home':
     default:
       return <GameHomeSkeleton />;

@@ -3,6 +3,7 @@
 import { AlertTriangleIcon } from 'lucide-react';
 import Link from 'next/link';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
   AdminDatabasePageLayout,
@@ -22,6 +23,10 @@ import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider, useDatabaseConfig, useDatabaseData } from '../context/DatabaseContext';
 
+const DB_TYPE_OPTIONS = [
+  { value: 'mongodb', label: 'MongoDB' },
+] as const satisfies ReadonlyArray<LabeledOptionDto<DatabaseType>>;
+
 function DatabaseOperationsContent(): React.JSX.Element {
   const { dbType, setDbType } = useDatabaseConfig();
   const { tableDetails, isLoading: previewLoading } = useDatabaseData();
@@ -38,7 +43,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
             size='sm'
             value={dbType}
             onValueChange={(value: string): void => setDbType(value as DatabaseType)}
-            options={[{ value: 'mongodb', label: 'MongoDB' }]}
+            options={[...DB_TYPE_OPTIONS]}
             triggerClassName='h-8 text-xs w-[120px]'
            ariaLabel='Select option' title='Select option'/>
           <Button asChild variant='outline' size='sm'>

@@ -3,11 +3,17 @@
 import React from 'react';
 
 import { useListingBaseComSettings } from '@/features/integrations/context/ListingSettingsContext';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   BaseInventory,
   IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
 import { SelectSimple, FormField, Alert, ToggleRow } from '@/shared/ui';
+
+const NO_TEMPLATE_OPTION: LabeledOptionDto<string> = {
+  value: 'none',
+  label: 'No template',
+};
 
 export function BaseListingSettings(): React.JSX.Element {
   const {
@@ -21,6 +27,28 @@ export function BaseListingSettings(): React.JSX.Element {
     allowDuplicateSku,
     setAllowDuplicateSku,
   } = useListingBaseComSettings();
+  const inventoryOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      inventories
+        .filter((inventory: BaseInventory): boolean => !!inventory.id)
+        .map((inventory: BaseInventory) => ({
+          value: inventory.id,
+          label: inventory.name,
+        })),
+    [inventories]
+  );
+  const templateOptions = React.useMemo(
+    (): Array<LabeledOptionDto<string>> => [
+      NO_TEMPLATE_OPTION,
+      ...templates
+        .filter((template: Template): boolean => !!template.id)
+        .map((template: Template) => ({
+          value: template.id,
+          label: template.name,
+        })),
+    ],
+    [templates]
+  );
 
   return (
     <div className='space-y-4'>
@@ -32,12 +60,7 @@ export function BaseListingSettings(): React.JSX.Element {
           value={selectedInventoryId}
           onValueChange={setSelectedInventoryId}
           disabled={loadingInventories || inventories.length === 0}
-          options={inventories
-            .filter((inventory: BaseInventory): boolean => !!inventory.id)
-            .map((inventory: BaseInventory) => ({
-              value: inventory.id,
-              label: inventory.name,
-            }))}
+          options={inventoryOptions}
           placeholder='Select inventory...'
          ariaLabel='Select inventory...' title='Select inventory...'/>
         {inventories.length === 0 && !loadingInventories && (
@@ -55,15 +78,7 @@ export function BaseListingSettings(): React.JSX.Element {
         <SelectSimple
           value={selectedTemplateId}
           onValueChange={setSelectedTemplateId}
-          options={[
-            { value: 'none', label: 'No template' },
-            ...templates
-              .filter((template: Template): boolean => !!template.id)
-              .map((template: Template) => ({
-                value: template.id,
-                label: template.name,
-              })),
-          ]}
+          options={templateOptions}
           placeholder='No template (use defaults)'
          ariaLabel='No template (use defaults)' title='No template (use defaults)'/>
       </FormField>

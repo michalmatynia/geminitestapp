@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useRef } from 'react';
 
 import type { KangurAiTutorContextValue } from '@/features/kangur/ui/context/KangurAiTutorRuntime.shared';
@@ -274,6 +276,7 @@ export function useKangurAiTutorWidgetCoordinator({
     routingPageKey: routing?.pageKey,
     selectedText: activeSelectedText,
     sessionContext,
+    suppressFocus: loginModal.isOpen,
     setHighlightedText,
     tutorContent,
     tutorSessionKey,

@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BrainCircuit } from 'lucide-react';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';

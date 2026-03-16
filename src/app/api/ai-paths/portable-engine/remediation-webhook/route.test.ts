@@ -18,7 +18,7 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
 }));
 
 import { resetPortablePathAutoRemediationWebhookReplayGuard } from './handler';
-import { POST } from './route';
+import { POST } from './route-handler';
 
 const buildSignatureHeader = (timestamp: string, body: string, secret: string): string => {
   const digest = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');

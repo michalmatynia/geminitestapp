@@ -1,1 +1,1 @@
-export * from '@/features/kangur/shared/providers/SettingsStoreProvider';
+export * from '@/shared/providers/SettingsStoreProvider';

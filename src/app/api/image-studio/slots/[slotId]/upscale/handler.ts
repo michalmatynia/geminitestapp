@@ -39,11 +39,12 @@ import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/se
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { isAppError, notFoundError } from '@/shared/errors/app-error';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
+const uploadsRoot = path.join(studioRoot, 'upscale');
 const UPSCALE_PIPELINE_VERSION =
   process.env['IMAGE_STUDIO_UPSCALE_PIPELINE_VERSION']?.trim() || 'v2';
 const STRICT_SERVER_UPSCALE_ENABLED =

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
@@ -384,11 +386,10 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
 
 type QuizState = { selectedId: string | null; revealed: boolean };
 
-function KangurLessonQuizBlockView({
-  block: block,
-}: {
-  block: KangurLessonQuizBlock;
-}): React.JSX.Element {
+function KangurLessonQuizBlockView(
+  props: { block: KangurLessonQuizBlock }
+): React.JSX.Element {
+  const { block } = props;
   const [state, setState] = React.useState<QuizState>({ selectedId: null, revealed: false });
 
   const handleSelect = (choiceId: string): void => {

@@ -9,6 +9,7 @@ import { getImageFileRepository } from '@/features/files/server';
 import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -17,7 +18,7 @@ const payloadSchema = z.object({
   filename: z.string().trim().optional(),
 });
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'screenshots');
+const uploadsRoot = path.join(studioRoot, 'screenshots');
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);

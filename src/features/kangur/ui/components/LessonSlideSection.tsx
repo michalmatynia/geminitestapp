@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';

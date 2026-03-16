@@ -1,4 +1,3 @@
-import fs from 'fs/promises';
 import path from 'path';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
@@ -33,6 +32,8 @@ import type {
   CreateProduct as ProductCreateInput,
   UpdateProduct as ProductUpdateInput,
 } from '@/shared/contracts/products';
+import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
+import { productsRoot } from '@/shared/lib/files/server-constants';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
@@ -187,6 +188,7 @@ const classifyByErrorCode = (
 };
 
 const downloadImage = async (url: string, sku: string, index: number): Promise<{ id: string }> => {
+  const nodeFs = getFsPromises();
   const imageRepository = await getImageFileRepository();
   const response = await fetch(url);
   if (!response.ok) {
@@ -196,10 +198,10 @@ const downloadImage = async (url: string, sku: string, index: number): Promise<{
   const buffer = Buffer.from(await response.arrayBuffer());
   const folderName = sku ? sanitizeSku(sku) : 'temp';
   const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
-  const diskDir = path.join(process.cwd(), 'public', 'uploads', 'products', folderName);
+  const diskDir = path.join(productsRoot, folderName);
   const publicPath = `/uploads/products/${folderName}/${filename}`;
-  await fs.mkdir(diskDir, { recursive: true });
-  await fs.writeFile(path.join(diskDir, filename), buffer);
+  await nodeFs.mkdir(diskDir, { recursive: true });
+  await nodeFs.writeFile(joinRuntimePath(diskDir, filename), buffer);
 
   return imageRepository.createImageFile({
     filename,

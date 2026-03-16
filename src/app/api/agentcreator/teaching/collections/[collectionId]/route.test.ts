@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DELETE, PATCH } from './route';
+import { DELETE, PATCH } from './route-handler';
 
 describe('agentcreator teaching collection route module', () => {
   it('exports the supported route handlers', () => {

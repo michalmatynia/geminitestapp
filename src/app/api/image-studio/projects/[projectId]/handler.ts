@@ -1,4 +1,3 @@
-import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,12 +11,15 @@ import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getFsPromises } from '@/shared/lib/files/runtime-fs';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
+const projectsRoot = studioRoot;
 const projectsRootResolved = path.resolve(projectsRoot);
+const nodeFs = getFsPromises();
 const patchProjectSchema = z
   .object({
     projectId: z.string().trim().min(1).max(120).optional(),
@@ -181,7 +183,7 @@ const resolveProjectSummaryFromDirectory = async (
   const projectDir = resolveProjectDir(projectId);
   if (!projectDir) return null;
 
-  const dirStats = await fs.stat(projectDir).catch(() => null);
+  const dirStats = await nodeFs.stat(projectDir).catch(() => null);
   if (!dirStats?.isDirectory()) return null;
 
   const createdMs =
@@ -194,7 +196,7 @@ const resolveProjectSummaryFromDirectory = async (
   const fallbackUpdatedAt = new Date(updatedMs).toISOString();
 
   const metadataPath = path.join(projectDir, PROJECT_METADATA_FILENAME);
-  const metadataRaw = await fs.readFile(metadataPath, 'utf8').catch(() => null);
+  const metadataRaw = await nodeFs.readFile(metadataPath, 'utf8').catch(() => null);
   if (!metadataRaw) {
     return {
       createdAt: fallbackCreatedAt,
@@ -264,9 +266,9 @@ const upsertProjectSummary = async (
         ? options.canvasHeightPx
         : (existing?.canvasHeightPx ?? null),
   };
-  await fs.mkdir(projectDir, { recursive: true });
+  await nodeFs.mkdir(projectDir, { recursive: true });
   const metadataPath = path.join(projectDir, PROJECT_METADATA_FILENAME);
-  await fs.writeFile(metadataPath, JSON.stringify(summary, null, 2), 'utf8');
+  await nodeFs.writeFile(metadataPath, JSON.stringify(summary, null, 2), 'utf8');
   return summary;
 };
 
@@ -444,29 +446,29 @@ async function ensureProjectDirectoryRename(
 
   const existingSourceDirs: string[] = [];
   for (const sourceDir of sourceDirs) {
-    const stats = await fs.stat(sourceDir).catch(() => null);
+    const stats = await nodeFs.stat(sourceDir).catch(() => null);
     if (stats?.isDirectory()) {
       existingSourceDirs.push(sourceDir);
     }
   }
 
-  const targetExists = Boolean((await fs.stat(toDir).catch(() => null))?.isDirectory());
+  const targetExists = Boolean((await nodeFs.stat(toDir).catch(() => null))?.isDirectory());
   if (targetExists && existingSourceDirs.length > 0) {
     throw badRequestError('Target project id already exists.');
   }
 
   if (existingSourceDirs.length > 0) {
-    await fs.rename(existingSourceDirs[0]!, toDir);
+    await nodeFs.rename(existingSourceDirs[0]!, toDir);
     for (let index = 1; index < existingSourceDirs.length; index += 1) {
       const extraDir = existingSourceDirs[index];
       if (!extraDir) continue;
-      await fs.rm(extraDir, { recursive: true, force: true });
+      await nodeFs.rm(extraDir, { recursive: true, force: true });
     }
     return { movedDirectory: true, createdDirectory: false };
   }
 
   if (!targetExists) {
-    await fs.mkdir(toDir, { recursive: true });
+    await nodeFs.mkdir(toDir, { recursive: true });
     return { movedDirectory: false, createdDirectory: true };
   }
 
@@ -516,9 +518,9 @@ export async function deleteImageStudioProjectHandler(
   for (const candidate of candidates) {
     const projectDir = resolveProjectDir(candidate);
     if (!projectDir) continue;
-    const projectDirStats = await fs.stat(projectDir).catch(() => null);
+    const projectDirStats = await nodeFs.stat(projectDir).catch(() => null);
     if (!projectDirStats?.isDirectory()) continue;
-    await fs.rm(projectDir, { recursive: true, force: true });
+    await nodeFs.rm(projectDir, { recursive: true, force: true });
     stats.directoriesDeleted += 1;
   }
 
@@ -564,7 +566,7 @@ export async function patchImageStudioProjectHandler(
         (async (): Promise<boolean> => {
           const dir = resolveProjectDir(projectId);
           if (!dir) return false;
-          const stats = await fs.stat(dir).catch(() => null);
+          const stats = await nodeFs.stat(dir).catch(() => null);
           return Boolean(stats?.isDirectory());
         })(),
       ]);
@@ -634,7 +636,7 @@ export async function patchImageStudioProjectHandler(
     throw badRequestError('Invalid target project id.');
   }
   const [targetDirExists, targetHasData] = await Promise.all([
-    fs
+    nodeFs
       .stat(targetDir)
       .then((stats) => stats.isDirectory())
       .catch(() => false),

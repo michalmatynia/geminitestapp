@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 
 import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurGameSetupMomentumCard';

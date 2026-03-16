@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';

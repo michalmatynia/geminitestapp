@@ -1,3 +1,5 @@
+'use client';
+
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';

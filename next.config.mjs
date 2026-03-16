@@ -60,8 +60,6 @@ const nextConfig = {
   // Skip TypeScript type-checking during `next build` — already enforced in CI.
   // Saves ~5-10 minutes on a 5926-file project.
   typescript: { ignoreBuildErrors: true },
-  // Skip ESLint during build — already enforced in CI/editor.
-  eslint: { ignoreDuringBuilds: true },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

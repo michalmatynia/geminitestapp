@@ -1,3 +1,5 @@
+'use client';
+
 import { ArrowLeft } from 'lucide-react';
 import { createContext, useContext, useEffect, useId } from 'react';
 

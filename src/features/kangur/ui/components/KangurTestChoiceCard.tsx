@@ -1,3 +1,5 @@
+'use client';
+
 import React, { type ReactNode } from 'react';
 
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';

@@ -1,5 +1,3 @@
-import fs from 'fs/promises';
-
 import mime from 'mime-types';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -12,6 +10,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -20,6 +19,7 @@ export const querySchema = z.object({
 });
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const nodeFs = getFsPromises();
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const fileId = query.fileId;
 
@@ -45,7 +45,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
   if (localPath) {
     try {
-      const fileBuffer = await fs.readFile(localPath);
+      const fileBuffer = await nodeFs.readFile(localPath);
       const mimeType = mime.lookup(localPath) || 'application/octet-stream';
 
       return new NextResponse(fileBuffer, {

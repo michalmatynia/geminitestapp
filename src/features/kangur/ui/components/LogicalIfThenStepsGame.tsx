@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';

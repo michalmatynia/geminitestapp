@@ -61,6 +61,50 @@ const createAnalyticsSnapshot = (overrides?: {
     knowledgeGraphCoverageRatePercent: number | null;
     knowledgeGraphVectorAssistRatePercent: number | null;
   };
+  duelsLobby: {
+    totals: {
+      viewed: number;
+      refreshClicked: number;
+      filterChanged: number;
+      sortChanged: number;
+      joinClicked: number;
+      createClicked: number;
+      loginClicked: number;
+    };
+    byUser: {
+      guest: {
+        viewed: number;
+        refreshClicked: number;
+        filterChanged: number;
+        sortChanged: number;
+        joinClicked: number;
+        createClicked: number;
+        loginClicked: number;
+      };
+      authenticated: {
+        viewed: number;
+        refreshClicked: number;
+        filterChanged: number;
+        sortChanged: number;
+        joinClicked: number;
+        createClicked: number;
+        loginClicked: number;
+      };
+    };
+    byFilterMode: {
+      all: number;
+      challenge: number;
+      quick_match: number;
+    };
+    bySort: {
+      recent: number;
+      time_fast: number;
+      time_slow: number;
+      questions_low: number;
+      questions_high: number;
+    };
+    loginBySource: Record<string, number>;
+  };
   recent: never[];
 } => {
   const messageSucceededCount = overrides?.aiTutor?.messageSucceededCount ?? 0;
@@ -153,6 +197,50 @@ const createAnalyticsSnapshot = (overrides?: {
               ).toFixed(1)
             )
           : null),
+    },
+    duelsLobby: {
+      totals: {
+        viewed: 0,
+        refreshClicked: 0,
+        filterChanged: 0,
+        sortChanged: 0,
+        joinClicked: 0,
+        createClicked: 0,
+        loginClicked: 0,
+      },
+      byUser: {
+        guest: {
+          viewed: 0,
+          refreshClicked: 0,
+          filterChanged: 0,
+          sortChanged: 0,
+          joinClicked: 0,
+          createClicked: 0,
+          loginClicked: 0,
+        },
+        authenticated: {
+          viewed: 0,
+          refreshClicked: 0,
+          filterChanged: 0,
+          sortChanged: 0,
+          joinClicked: 0,
+          createClicked: 0,
+          loginClicked: 0,
+        },
+      },
+      byFilterMode: {
+        all: 0,
+        challenge: 0,
+        quick_match: 0,
+      },
+      bySort: {
+        recent: 0,
+        time_fast: 0,
+        time_slow: 0,
+        questions_low: 0,
+        questions_high: 0,
+      },
+      loginBySource: {},
     },
     recent: [],
   };

@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PUT } from '@/app/api/v2/products/validator-patterns/[id]/route';
-import { POST } from '@/app/api/v2/products/validator-patterns/route';
+import { PUT } from '@/app/api/v2/products/validator-patterns/[id]/route-handler';
+import { POST } from '@/app/api/v2/products/validator-patterns/route-handler';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 const repositoryMock = vi.hoisted(() => ({

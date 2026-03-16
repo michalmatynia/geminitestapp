@@ -19,7 +19,7 @@ vi.mock('@/features/products/server', async (importOriginal) => {
   };
 });
 
-import { GET, POST } from '@/app/api/v2/products/tags/route';
+import { GET, POST } from '@/app/api/v2/products/tags/route-handler';
 
 describe('Product Tags API', () => {
   beforeEach(() => {

@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useMemo, useState } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';

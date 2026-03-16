@@ -1,3 +1,5 @@
+'use client';
+
 import { useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';

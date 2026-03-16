@@ -1,3 +1,5 @@
+'use client';
+
 import { useRef } from 'react';
 
 import { QuestionCard } from '@/features/kangur/ui/components/game';

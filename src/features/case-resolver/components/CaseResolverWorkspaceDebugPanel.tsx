@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { useInterval } from '@/shared/hooks/use-interval';
 import { Card } from '@/shared/ui';
 
 import { readCaseResolverWorkspaceObservabilitySnapshot } from '../workspace-observability';
@@ -21,21 +22,23 @@ export function CaseResolverWorkspaceDebugPanel({
   const snapshot = React.useMemo(() => readCaseResolverWorkspaceObservabilitySnapshot(), [events]);
   const conflictRatePercent = (snapshot.conflictRate * 100).toFixed(1);
   const successRatePercent = (snapshot.saveSuccessRate * 100).toFixed(1);
+  const sync = React.useCallback((): void => {
+    setEvents(readCaseResolverWorkspaceDebugEvents());
+  }, []);
 
   React.useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
     const eventName = getCaseResolverWorkspaceDebugEventName();
-    const sync = (): void => {
-      setEvents(readCaseResolverWorkspaceDebugEvents());
-    };
     sync();
-    const intervalId = window.setInterval(sync, 2000);
     window.addEventListener(eventName, sync);
     return (): void => {
-      window.clearInterval(intervalId);
       window.removeEventListener(eventName, sync);
     };
-  }, [enabled]);
+  }, [enabled, sync]);
+
+  useInterval(() => {
+    sync();
+  }, enabled ? 2000 : null);
 
   if (!enabled) return null;
 

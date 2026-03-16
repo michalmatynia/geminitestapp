@@ -1,17 +1,18 @@
-import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getImageFileRepository } from '@/features/files/server';
+import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { getFsPromises } from '@/shared/lib/files/runtime-fs';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
+const projectsRoot = studioRoot;
+const nodeFs = getFsPromises();
 
 const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
@@ -58,10 +59,12 @@ function normalizePublicPath(filepath: string | null | undefined): string | null
 function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
   const normalized = normalizePublicPath(filepath);
   if (!normalized?.startsWith('/uploads/')) return null;
-  const resolved = path.resolve(process.cwd(), 'public', normalized.replace(/^\/+/, ''));
-  const uploadsResolved = path.resolve(uploadsRoot);
-  if (!resolved.startsWith(`${uploadsResolved}${path.sep}`)) return null;
-  return resolved;
+  try {
+    return getDiskPathFromPublicPath(normalized);
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return null;
+  }
 }
 
 const moveSchema = z.object({
@@ -122,22 +125,22 @@ export async function POST_handler(
   if (!sourceDiskPath) {
     throw notFoundError('Source file not found');
   }
-  const sourceStat = await fs.stat(sourceDiskPath).catch(() => null);
+  const sourceStat = await nodeFs.stat(sourceDiskPath).catch(() => null);
   if (!sourceStat?.isFile()) {
     throw notFoundError('Source file not found');
   }
 
-  await fs.mkdir(targetDiskDir, { recursive: true });
+  await nodeFs.mkdir(targetDiskDir, { recursive: true });
   let filename = path.basename(normalizedSource);
   const targetDiskPath = path.join(targetDiskDir, filename);
-  const exists = await fs.stat(targetDiskPath).catch(() => null);
+  const exists = await nodeFs.stat(targetDiskPath).catch(() => null);
   if (exists) {
     filename = `${Date.now()}-${filename}`;
   }
   const finalDiskPath = path.join(targetDiskDir, filename);
   const finalPublicPath = `${targetPublicDir}/${filename}`.replace(/\\/g, '/');
 
-  await fs.rename(sourceDiskPath, finalDiskPath);
+  await nodeFs.rename(sourceDiskPath, finalDiskPath);
 
   if (repoRecord) {
     const repo = await getImageFileRepository();

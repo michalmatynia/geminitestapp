@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 

@@ -400,11 +400,15 @@ const dispatchTutorVisibilityChange = (hidden: boolean): void => {
 
 export const loadPersistedTutorVisibilityHidden = (): boolean => {
   const state = loadPersistedTutorWidgetState();
-  if (!state || typeof state.hidden !== 'boolean') {
+  if (!state) {
     return true;
   }
 
-  return state.hidden;
+  if (typeof state.hidden === 'boolean') {
+    return state.hidden;
+  }
+
+  return false;
 };
 
 export const persistTutorVisibilityHidden = (hidden: boolean): boolean => {

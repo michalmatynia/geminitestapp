@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, useCallback } from 'react';
 import { useToast } from '@/features/kangur/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';

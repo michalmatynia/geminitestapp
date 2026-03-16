@@ -1,8 +1,7 @@
-import path from 'path';
-
 import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 
-export const STUDIO_UPLOADS_ROOT = path.join(process.cwd(), 'public', 'uploads', 'studio');
+export const STUDIO_UPLOADS_ROOT = studioRoot;
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GET, POST } from './route';
+import { GET, POST } from './route-handler';
 
 describe('integration product listings route module', () => {
   it('exports the supported route handlers', () => {

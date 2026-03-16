@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, type KeyboardEvent } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';

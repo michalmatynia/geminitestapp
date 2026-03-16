@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GET, PUT } from './route';
+import { GET, PUT } from './route-handler';
 
 describe('product validator-settings route module', () => {
   it('exports the supported route handlers', () => {

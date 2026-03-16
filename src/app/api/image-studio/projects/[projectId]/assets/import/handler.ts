@@ -1,5 +1,4 @@
 import { randomUUID } from 'crypto';
-import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,11 +12,12 @@ import {
   externalServiceError,
   payloadTooLargeError,
 } from '@/shared/errors/app-error';
+import { studioRoot, uploadsRoot } from '@/shared/lib/files/server-constants';
+import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
+const projectsRoot = studioRoot;
 const MAX_REMOTE_IMPORT_BYTES = 15 * 1024 * 1024;
 const REMOTE_FETCH_TIMEOUT_MS = 15_000;
 
@@ -61,9 +61,11 @@ function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
     normalized = `/${normalized}`;
   }
   if (!normalized.startsWith('/uploads/')) return null;
-  const resolved = path.resolve(process.cwd(), 'public', normalized.replace(/^\/+/, ''));
+  const resolved = path.resolve(uploadsRoot, normalized.replace(/^\/uploads\/+/, ''));
   const uploadsResolved = path.resolve(uploadsRoot);
-  if (!resolved.startsWith(`${uploadsResolved}${path.sep}`)) return null;
+  if (!resolved.startsWith(`${uploadsResolved}${path.sep}`) && resolved !== uploadsResolved) {
+    return null;
+  }
   return resolved;
 }
 
@@ -166,6 +168,7 @@ export async function POST_handler(
   _ctx: ApiHandlerContext,
   params: { projectId: string }
 ): Promise<Response> {
+  const nodeFs = getFsPromises();
   const projectId = sanitizeProjectId(params.projectId);
   if (!projectId) throw badRequestError('Project id is required');
 
@@ -185,7 +188,7 @@ export async function POST_handler(
     ? `/uploads/studio/${projectId}/${safeFolder}`
     : `/uploads/studio/${projectId}`;
 
-  await fs.mkdir(diskDir, { recursive: true });
+  await nodeFs.mkdir(diskDir, { recursive: true });
 
   const ids = parsed.data.files.map((item) => item.id).filter(Boolean) as string[];
   let sourceById = new Map<string, ImageFileRecord>();
@@ -225,8 +228,8 @@ export async function POST_handler(
       const baseName = sourceRecord?.filename || item.filename || 'base64-image';
       const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
       const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
-      const destDiskPath = path.join(diskDir, filename);
-      await fs.writeFile(destDiskPath, parsedData.buffer);
+      const destDiskPath = joinRuntimePath(diskDir, filename);
+      await nodeFs.writeFile(destDiskPath, parsedData.buffer);
 
       const recordInput = {
         filename,
@@ -272,7 +275,7 @@ export async function POST_handler(
         const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
         const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
         const destDiskPath = path.join(diskDir, filename);
-        await fs.writeFile(destDiskPath, remote.buffer);
+        await nodeFs.writeFile(destDiskPath, remote.buffer);
 
         const recordInput = {
           filename,
@@ -325,7 +328,7 @@ export async function POST_handler(
       continue;
     }
 
-    const stats = await fs.stat(diskSource).catch(() => null);
+    const stats = await nodeFs.stat(diskSource).catch(() => null);
     if (!stats?.isFile()) {
       failures.push({ filepath: rawSource, error: 'File not found on disk' });
       continue;
@@ -335,8 +338,8 @@ export async function POST_handler(
     const safeName = sanitizeFilename(sourceName);
     const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
 
-    const destDiskPath = path.join(diskDir, filename);
-    await fs.copyFile(diskSource, destDiskPath);
+    const destDiskPath = joinRuntimePath(diskDir, filename);
+    await nodeFs.copyFile(diskSource, destDiskPath);
 
     const recordInput = {
       filename,

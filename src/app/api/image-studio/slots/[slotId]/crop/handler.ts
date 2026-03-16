@@ -31,11 +31,12 @@ import type { UploadedClientCropImage } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
+const uploadsRoot = path.join(studioRoot, 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const CROP_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CROP_PIPELINE_VERSION']?.trim() || 'v2';
 const STRICT_SERVER_CROP_ENABLED =

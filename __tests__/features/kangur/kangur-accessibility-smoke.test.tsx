@@ -110,6 +110,19 @@ vi.mock('@/features/kangur/ui/components/KangurLearnerAssignmentsPanel', () => (
   default: () => <div data-testid='kangur-learner-assignments-panel' />,
 }));
 
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => ({
+    get: vi.fn(),
+    getBoolean: vi.fn(() => false),
+    getNumber: vi.fn(),
+    map: new Map(),
+    isLoading: false,
+    isFetching: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
 import Game from '@/features/kangur/ui/pages/Game';
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 

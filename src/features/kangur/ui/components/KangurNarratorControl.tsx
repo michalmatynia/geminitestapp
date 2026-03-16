@@ -1,3 +1,5 @@
+'use client';
+
 import { Loader2, Pause, Play, Volume2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

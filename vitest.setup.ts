@@ -652,12 +652,16 @@ vi.mock('@/shared/lib/api/api-handler', () => {
 
 // Polyfill fetch to handle relative URLs in tests
 const originalFetch = global.fetch;
-global.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
-  if (typeof input === 'string' && input.startsWith('/')) {
-    input = `http://localhost${input}`;
-  }
-  return originalFetch(input, init);
-};
+const createRelativeFetch = (fetchImpl: typeof global.fetch) =>
+  function (input: RequestInfo | URL, init?: RequestInit) {
+    if (typeof input === 'string' && input.startsWith('/')) {
+      input = `http://localhost${input}`;
+    }
+    return fetchImpl(input, init);
+  };
+const relativeFetch = createRelativeFetch(originalFetch);
+let mswRelativeFetch = relativeFetch;
+global.fetch = relativeFetch;
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -871,6 +875,10 @@ beforeAll(() => {
   server.listen({
     onUnhandledRequest: 'bypass',
   });
+  mswRelativeFetch = global.fetch;
+  if (typeof window !== 'undefined') {
+    window.fetch = global.fetch;
+  }
 });
 
 afterEach(async () => {
@@ -928,6 +936,13 @@ afterEach(async () => {
     __resetQueuedProductOpsState?.();
   } catch {
     // ignore cleanup for non-browser test environments
+  }
+
+  if (global.fetch !== mswRelativeFetch) {
+    global.fetch = mswRelativeFetch;
+  }
+  if (typeof window !== 'undefined' && window.fetch !== global.fetch) {
+    window.fetch = global.fetch;
   }
 
   // Avoid leaking fake timers between tests.

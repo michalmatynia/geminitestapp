@@ -1,3 +1,5 @@
+'use client';
+
 import { useId } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';

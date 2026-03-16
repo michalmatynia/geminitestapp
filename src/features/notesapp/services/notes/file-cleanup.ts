@@ -7,11 +7,9 @@ import {
   deleteFileFromStorage,
   getPublicPathFromStoredPath,
 } from '@/shared/lib/files/services/image-file-service';
+import { notesRoot } from '@/shared/lib/files/server-constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
-const notesRoot = path.join(uploadsRoot, 'notes');
 
 export async function cleanupNoteFile(noteId: string, filepath: string): Promise<void> {
   try {

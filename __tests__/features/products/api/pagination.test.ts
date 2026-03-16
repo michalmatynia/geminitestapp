@@ -32,8 +32,8 @@ vi.mock('@/features/products/server', async (importOriginal) => {
   };
 });
 
-import { GET as GET_COUNT } from '@/app/api/v2/products/count/route';
-import { GET as GET_LIST } from '@/app/api/v2/products/route';
+import { GET as GET_COUNT } from '@/app/api/v2/products/count/route-handler';
+import { GET as GET_LIST } from '@/app/api/v2/products/route-handler';
 
 describe('Products API pagination and count routes', () => {
   beforeEach(() => {

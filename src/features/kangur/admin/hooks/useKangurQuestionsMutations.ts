@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useState } from 'react';
 
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';

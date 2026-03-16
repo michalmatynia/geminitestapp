@@ -1,3 +1,5 @@
+'use client';
+
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';

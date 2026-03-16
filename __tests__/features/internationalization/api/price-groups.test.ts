@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET, POST } from '@/app/api/v2/products/metadata/[type]/route';
+import { GET, POST } from '@/app/api/v2/products/metadata/[type]/route-handler';
 
 const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),

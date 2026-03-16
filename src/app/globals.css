@@ -2132,15 +2132,15 @@
     );
     --home-action-label-start-active: var(
       --kangur-home-action-lessons-label-start-active,
-      var(--kangur-home-action-lessons-label-start, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-mid-active: var(
       --kangur-home-action-lessons-label-mid-active,
-      var(--kangur-home-action-lessons-label-mid, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-end-active: var(
       --kangur-home-action-lessons-label-end-active,
-      var(--kangur-home-action-lessons-label-end, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-lessons-accent-shadow-rgb, 118, 131, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-lessons-underlay-shadow-rgb, 106, 120, 232);
@@ -2182,15 +2182,15 @@
     );
     --home-action-label-start-active: var(
       --kangur-home-action-play-label-start-active,
-      var(--kangur-home-action-play-label-start, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-mid-active: var(
       --kangur-home-action-play-label-mid-active,
-      var(--kangur-home-action-play-label-mid, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-end-active: var(
       --kangur-home-action-play-label-end-active,
-      var(--kangur-home-action-play-label-end, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-play-accent-shadow-rgb, 126, 100, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-play-underlay-shadow-rgb, 117, 96, 255);
@@ -2232,15 +2232,15 @@
     );
     --home-action-label-start-active: var(
       --kangur-home-action-training-label-start-active,
-      var(--kangur-home-action-training-label-start, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-mid-active: var(
       --kangur-home-action-training-label-mid-active,
-      var(--kangur-home-action-training-label-mid, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-end-active: var(
       --kangur-home-action-training-label-end-active,
-      var(--kangur-home-action-training-label-end, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-training-accent-shadow-rgb, 87, 162, 255);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-training-underlay-shadow-rgb, 78, 145, 236);
@@ -2282,15 +2282,15 @@
     );
     --home-action-label-start-active: var(
       --kangur-home-action-kangur-label-start-active,
-      var(--kangur-home-action-kangur-label-start, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-mid-active: var(
       --kangur-home-action-kangur-label-mid-active,
-      var(--kangur-home-action-kangur-label-mid, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-label-end-active: var(
       --kangur-home-action-kangur-label-end-active,
-      var(--kangur-home-action-kangur-label-end, var(--home-action-active-text-color))
+      var(--home-action-active-text-color)
     );
     --home-action-accent-shadow-rgb: var(--kangur-home-action-kangur-accent-shadow-rgb, 238, 140, 91);
     --home-action-underlay-shadow-rgb: var(--kangur-home-action-kangur-underlay-shadow-rgb, 221, 129, 86);
@@ -2313,6 +2313,16 @@
       var(--kangur-home-action-kangur-underlay-tint-mid, rgba(241, 148, 96, 0.42)) 52%,
       var(--kangur-home-action-kangur-underlay-tint-end, rgba(194, 131, 255, 0.64)) 100%
     );
+  }
+
+  [data-kangur-appearance-mode='dawn'] .home-action-featured-shell[data-home-action='lessons'],
+  [data-kangur-appearance-mode='dawn'] .home-action-featured-shell[data-home-action='play'],
+  [data-kangur-appearance-mode='dawn'] .home-action-featured-shell[data-home-action='training'],
+  [data-kangur-appearance-mode='dawn'] .home-action-featured-shell[data-home-action='duels'],
+  [data-kangur-appearance-mode='dawn'] .home-action-featured-shell[data-home-action='kangur'] {
+    --home-action-label-start-active: var(--home-action-active-text-color);
+    --home-action-label-mid-active: var(--home-action-active-text-color);
+    --home-action-label-end-active: var(--home-action-active-text-color);
   }
 
   :is([data-kangur-appearance-mode='dark'], [data-kangur-appearance-mode='sunset'])

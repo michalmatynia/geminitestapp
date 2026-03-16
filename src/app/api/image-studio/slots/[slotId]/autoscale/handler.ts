@@ -32,6 +32,7 @@ import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/se
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
+import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 
@@ -46,7 +47,7 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'autoscale');
+const uploadsRoot = path.join(studioRoot, 'autoscale');
 const AUTOSCALE_PIPELINE_VERSION =
   process.env['IMAGE_STUDIO_AUTOSCALER_PIPELINE_VERSION']?.trim() || 'v1';
 const STRICT_SERVER_AUTOSCALER_ENABLED =
@@ -244,23 +245,26 @@ export async function postAutoScaleSlotHandler(
         guessExtension(processed.outputMime)
     );
 
-    const segment = sanitizeSegment(payload.mode);
-    const subDir = path.join(sourceSlot.projectId, segment);
-    const diskDir = path.join(uploadsRoot, subDir);
+    const safeProjectId = sanitizeSegment(sourceSlot.projectId);
+    const safeSourceSlotId = sanitizeSegment(sourceSlot.id);
+    const modeTag = sanitizeSegment(payload.mode);
+    const diskDir = path.join(uploadsRoot, safeProjectId, safeSourceSlotId);
     await fs.mkdir(diskDir, { recursive: true });
 
-    const diskPath = path.join(diskDir, `${Date.now()}_${filename}`);
+    const storedFilename = `${Date.now()}_${filename}`;
+    const diskPath = path.join(diskDir, storedFilename);
+    const publicPath = `/uploads/studio/autoscale/${safeProjectId}/${safeSourceSlotId}/${storedFilename}`;
     await fs.writeFile(diskPath, processed.outputBuffer);
 
     const repo = await getImageFileRepository();
     const imageFile = await repo.createImageFile({
       filename,
-      filepath: path.relative(path.join(process.cwd(), 'public'), diskPath),
+      filepath: publicPath,
       mimetype: processed.outputMime,
       size: processed.outputBuffer.length,
       width: processed.outputWidth,
       height: processed.outputHeight,
-      tags: ['autoscale', segment],
+      tags: ['autoscale', modeTag],
     });
 
     const targetSlots = await createImageStudioSlots(sourceSlot.projectId, [

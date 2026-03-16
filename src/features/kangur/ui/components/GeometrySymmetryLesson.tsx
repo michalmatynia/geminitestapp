@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';

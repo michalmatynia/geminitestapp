@@ -424,8 +424,8 @@ export function apiHandler(
 export function apiHandlerWithParams<P extends Record<string, string | string[]>>(
   handler: ApiRouteHandlerWithParams<P>,
   options: ApiHandlerOptions
-): (request: NextRequest, context: { params: Promise<P> }) => Promise<Response> {
-  return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
+): (request: NextRequest, context: { params: P | Promise<P> }) => Promise<Response> {
+  return async (request: NextRequest, routeContext: { params: P | Promise<P> }) => {
     if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
       throw methodNotAllowedError(`Method ${request.method} not allowed`, {
         allowedMethods: options.allowedMethods,

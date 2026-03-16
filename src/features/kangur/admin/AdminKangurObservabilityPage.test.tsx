@@ -358,7 +358,16 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
     sessions: 5,
     topPaths: [{ path: '/kangur', count: 4 }],
     topEventNames: [{ name: 'kangur_game_completed', count: 3 }],
-    importantEvents: [{ name: 'kangur_progress_sync_failed', count: 4 }],
+    importantEvents: [
+      { name: 'kangur_progress_sync_failed', count: 4 },
+      { name: 'kangur_duels_lobby_viewed', count: 12 },
+      { name: 'kangur_duels_lobby_refresh_clicked', count: 5 },
+      { name: 'kangur_duels_lobby_filter_changed', count: 4 },
+      { name: 'kangur_duels_lobby_sort_changed', count: 3 },
+      { name: 'kangur_duels_lobby_join_clicked', count: 2 },
+      { name: 'kangur_duels_lobby_create_clicked', count: 1 },
+      { name: 'kangur_duels_lobby_login_clicked', count: 6 },
+    ],
     aiTutor: {
       messageSucceededCount: 6,
       pageContentAnswerCount: 2,
@@ -382,6 +391,54 @@ const createSummary = (range: '24h' | '7d' | '30d' = '24h') => ({
       bridgeCompletionRatePercent: 33.3,
       knowledgeGraphCoverageRatePercent: 66.7,
       knowledgeGraphVectorAssistRatePercent: 100,
+    },
+    duelsLobby: {
+      totals: {
+        viewed: 12,
+        refreshClicked: 5,
+        filterChanged: 4,
+        sortChanged: 3,
+        joinClicked: 2,
+        createClicked: 1,
+        loginClicked: 6,
+      },
+      byUser: {
+        guest: {
+          viewed: 7,
+          refreshClicked: 3,
+          filterChanged: 2,
+          sortChanged: 1,
+          joinClicked: 0,
+          createClicked: 0,
+          loginClicked: 6,
+        },
+        authenticated: {
+          viewed: 5,
+          refreshClicked: 2,
+          filterChanged: 2,
+          sortChanged: 2,
+          joinClicked: 2,
+          createClicked: 1,
+          loginClicked: 0,
+        },
+      },
+      byFilterMode: {
+        all: 2,
+        challenge: 2,
+        quick_match: 0,
+      },
+      bySort: {
+        recent: 2,
+        time_fast: 1,
+        time_slow: 0,
+        questions_low: 0,
+        questions_high: 0,
+      },
+      loginBySource: {
+        banner: 2,
+        join: 3,
+        invite_join: 1,
+      },
     },
     recent: [
       {
@@ -600,6 +657,26 @@ describe('AdminKangurObservabilityPage', () => {
     expect(screen.getByText('Progress sync failures detected.')).toBeInTheDocument();
     expect(screen.getByText('Kangur TTS fallback used.')).toBeInTheDocument();
     expect(screen.getByText('TTS Generation Failures')).toBeInTheDocument();
+    expect(screen.getByText('Lobby Analytics')).toBeInTheDocument();
+    expect(screen.getByText('Lobby Views')).toBeInTheDocument();
+    expect(screen.getByText('Refresh Clicks')).toBeInTheDocument();
+    expect(screen.getByText('Filter Changes')).toBeInTheDocument();
+    expect(screen.getByText('Sort Changes')).toBeInTheDocument();
+    expect(screen.getByText('Join Clicks')).toBeInTheDocument();
+    expect(screen.getByText('Create Clicks')).toBeInTheDocument();
+    expect(screen.getByText('Login CTA Clicks')).toBeInTheDocument();
+    expect(screen.getByText('Guest Activity')).toBeInTheDocument();
+    expect(screen.getByText('Logged-in Activity')).toBeInTheDocument();
+    expect(screen.getByText('Filter Distribution')).toBeInTheDocument();
+    expect(screen.getByText('Sort Distribution')).toBeInTheDocument();
+    expect(screen.getByText('Login CTA Sources')).toBeInTheDocument();
+    expect(screen.getByText('Conversion Rates')).toBeInTheDocument();
+    expect(screen.getByText(/Guest Login Rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/Guest Join Rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/Auth Join Rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/Auth Create Rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/Overall Join Rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/Overall Create Rate/i)).toBeInTheDocument();
     expect(screen.getByText('AI Tutor Graph Coverage Rate')).toBeInTheDocument();
     expect(screen.getByText('AI Tutor Direct Answer Rate')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Graph Freshness')).toBeInTheDocument();

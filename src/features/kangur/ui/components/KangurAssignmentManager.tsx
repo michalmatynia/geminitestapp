@@ -1,3 +1,5 @@
+'use client';
+
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Clock } from 'lucide-react';
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';

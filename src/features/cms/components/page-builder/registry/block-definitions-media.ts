@@ -6,10 +6,13 @@ import {
   DEFAULT_APP_EMBED_ID,
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
 } from '@/shared/lib/app-embeds';
-import { KANGUR_WIDGET_OPTIONS } from '@/shared/lib/kangur-cms-adapter';
+import { KANGUR_WIDGET_OPTIONS } from '@/features/kangur/cms-builder/project-contracts';
 
 import { colorSchemeField, paddingFields } from './shared-field-helpers';
 
+const resolvedKangurWidgetOptions = Array.isArray(KANGUR_WIDGET_OPTIONS)
+  ? KANGUR_WIDGET_OPTIONS
+  : [];
 
 export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
   ImageElement: {
@@ -739,7 +742,7 @@ export const mediaBlockDefinitions: Record<string, BlockDefinition> = {
         key: 'widgetId',
         label: 'Widget',
         type: 'select',
-        options: [...KANGUR_WIDGET_OPTIONS],
+        options: resolvedKangurWidgetOptions,
         defaultValue: 'game-screen',
       },
       { key: 'title', label: 'Title override', type: 'text', defaultValue: '' },

@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import path from 'path';
+import path from 'node:path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -18,6 +18,7 @@ import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
@@ -36,9 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     | undefined;
   const settings = parsePersistedImageStudioSettings(settingsRaw);
 
-  const publicRoot = path.join(process.cwd(), 'public');
-  const normalized = parsed.data.imagePath.replace(/^\/+/, '');
-  const diskPath = path.resolve(publicRoot, normalized);
+  const diskPath = getDiskPathFromPublicPath(parsed.data.imagePath);
   const buffer = await fs.readFile(diskPath);
   const base64 = buffer.toString('base64');
   const ext = path.extname(diskPath).toLowerCase() === '.jpg' ? 'jpeg' : 'png';

@@ -1,1 +1,1 @@
-export * from '@/features/kangur/shared/ui';
+export * from '@/shared/ui';

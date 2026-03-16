@@ -11,6 +11,7 @@ import type {
   KangurAnalyticsCount,
   KangurAnalyticsEventType,
   KangurAnalyticsSnapshot,
+  KangurDuelLobbyAnalyticsSnapshot,
   KangurKnowledgeGraphStatusSnapshot,
   KangurObservabilityAlert,
   KangurObservabilityRange,
@@ -50,6 +51,13 @@ const KANGUR_ANALYTICS_EVENT_NAMES = [
   'kangur_api_write_succeeded',
   'kangur_api_write_failed',
   'kangur_api_read_failed',
+  'kangur_duels_lobby_viewed',
+  'kangur_duels_lobby_refresh_clicked',
+  'kangur_duels_lobby_filter_changed',
+  'kangur_duels_lobby_sort_changed',
+  'kangur_duels_lobby_join_clicked',
+  'kangur_duels_lobby_create_clicked',
+  'kangur_duels_lobby_login_clicked',
   'kangur_ai_tutor_opened',
   'kangur_ai_tutor_closed',
   'kangur_ai_tutor_selection_cta_shown',
@@ -67,6 +75,15 @@ const KANGUR_ANALYTICS_EVENT_NAMES = [
   'kangur_ai_tutor_message_succeeded',
   'kangur_ai_tutor_message_failed',
   'kangur_ai_tutor_quota_exhausted',
+] as const;
+const KANGUR_DUELS_LOBBY_EVENT_NAMES = [
+  'kangur_duels_lobby_viewed',
+  'kangur_duels_lobby_refresh_clicked',
+  'kangur_duels_lobby_filter_changed',
+  'kangur_duels_lobby_sort_changed',
+  'kangur_duels_lobby_join_clicked',
+  'kangur_duels_lobby_create_clicked',
+  'kangur_duels_lobby_login_clicked',
 ] as const;
 const SYSTEM_LOGS_COLLECTION_NAME = 'system_logs';
 const KANGUR_ROUTE_DEFINITIONS = {
@@ -107,6 +124,104 @@ type KangurKnowledgeGraphFreshnessSnapshot = {
   lagMs: number | null;
   staleSources: KangurKnowledgeGraphFreshnessSource[];
 };
+type DuelLobbyMetricKey =
+  | 'viewed'
+  | 'refreshClicked'
+  | 'filterChanged'
+  | 'sortChanged'
+  | 'joinClicked'
+  | 'createClicked'
+  | 'loginClicked';
+type LobbyMetricRecord = Record<DuelLobbyMetricKey, number>;
+
+const createLobbyCounts = (): LobbyMetricRecord => ({
+  viewed: 0,
+  refreshClicked: 0,
+  filterChanged: 0,
+  sortChanged: 0,
+  joinClicked: 0,
+  createClicked: 0,
+  loginClicked: 0,
+});
+
+const createLobbyAnalyticsSnapshot = (): KangurDuelLobbyAnalyticsSnapshot => ({
+  totals: createLobbyCounts(),
+  byUser: {
+    guest: createLobbyCounts(),
+    authenticated: createLobbyCounts(),
+  },
+  byFilterMode: {
+    all: 0,
+    challenge: 0,
+    quick_match: 0,
+  },
+  bySort: {
+    recent: 0,
+    time_fast: 0,
+    time_slow: 0,
+    questions_low: 0,
+    questions_high: 0,
+  },
+  loginBySource: {},
+});
+
+const LOBBY_EVENT_KEY_MAP: Record<string, DuelLobbyMetricKey> = {
+  kangur_duels_lobby_viewed: 'viewed',
+  kangur_duels_lobby_refresh_clicked: 'refreshClicked',
+  kangur_duels_lobby_filter_changed: 'filterChanged',
+  kangur_duels_lobby_sort_changed: 'sortChanged',
+  kangur_duels_lobby_join_clicked: 'joinClicked',
+  kangur_duels_lobby_create_clicked: 'createClicked',
+  kangur_duels_lobby_login_clicked: 'loginClicked',
+};
+
+const summarizeKangurDuelLobbyAnalytics = (
+  events: Array<Pick<AnalyticsEventMongoDoc, 'name' | 'meta'>>
+): KangurDuelLobbyAnalyticsSnapshot => {
+  const snapshot = createLobbyAnalyticsSnapshot();
+
+  events.forEach((event) => {
+    const name = event.name;
+    if (!name) return;
+    const key = LOBBY_EVENT_KEY_MAP[name];
+    if (!key) return;
+
+    snapshot.totals[key] += 1;
+    const meta = event.meta ?? null;
+    const isGuest = meta?.['isGuest'] === true;
+    const userBucket = isGuest ? 'guest' : 'authenticated';
+    snapshot.byUser[userBucket][key] += 1;
+
+    if (name === 'kangur_duels_lobby_filter_changed') {
+      const mode = typeof meta?.['modeFilter'] === 'string' ? meta['modeFilter'] : null;
+      if (mode === 'all' || mode === 'challenge' || mode === 'quick_match') {
+        snapshot.byFilterMode[mode] += 1;
+      }
+    }
+
+    if (name === 'kangur_duels_lobby_sort_changed') {
+      const sort = typeof meta?.['sort'] === 'string' ? meta['sort'] : null;
+      if (
+        sort === 'recent' ||
+        sort === 'time_fast' ||
+        sort === 'time_slow' ||
+        sort === 'questions_low' ||
+        sort === 'questions_high'
+      ) {
+        snapshot.bySort[sort] += 1;
+      }
+    }
+
+    if (name === 'kangur_duels_lobby_login_clicked') {
+      const source = typeof meta?.['source'] === 'string' ? meta['source'].trim() : '';
+      const keySource = source.length > 0 ? source : 'unknown';
+      snapshot.loginBySource[keySource] = (snapshot.loginBySource[keySource] ?? 0) + 1;
+    }
+  });
+
+  return snapshot;
+};
+
 const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
   totals: {
     events: 0,
@@ -144,6 +259,7 @@ const emptyAnalyticsSnapshot = (): KangurAnalyticsSnapshot => ({
     knowledgeGraphCoverageRatePercent: null,
     knowledgeGraphVectorAssistRatePercent: null,
   },
+  duelsLobby: createLobbyAnalyticsSnapshot(),
   recent: [],
 });
 const buildEmptyRouteHealth = (source: string): KangurRouteHealth => ({
@@ -614,6 +730,7 @@ const loadKangurAnalyticsSnapshot = async (
     topPathsResult,
     topEventNamesResult,
     aiTutorResult,
+    duelsLobbyResult,
     recentResult,
   ] = await Promise.all([
     collection
@@ -694,6 +811,23 @@ const loadKangurAnalyticsSnapshot = async (
       )
       .toArray(),
     collection
+      .find(
+        {
+          ...match,
+          type: 'event',
+          name: {
+            $in: [...KANGUR_DUELS_LOBBY_EVENT_NAMES],
+          },
+        },
+        {
+          projection: {
+            name: 1,
+            meta: 1,
+          },
+        }
+      )
+      .toArray(),
+    collection
       .find(match, {
         projection: {
           _id: 1,
@@ -728,6 +862,7 @@ const loadKangurAnalyticsSnapshot = async (
       count: topEventCountMap.get(name) ?? 0,
     })),
     aiTutor: summarizeKangurAiTutorAnalytics(aiTutorResult ?? []),
+    duelsLobby: summarizeKangurDuelLobbyAnalytics(duelsLobbyResult ?? []),
     recent: (recentResult ?? []).map(toRecentAnalyticsEvent),
   };
 };

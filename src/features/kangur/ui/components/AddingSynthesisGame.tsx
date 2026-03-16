@@ -1,3 +1,5 @@
+'use client';
+
 import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 

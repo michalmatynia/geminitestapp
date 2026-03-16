@@ -7,6 +7,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useId,
   useMemo,
   useRef,
@@ -14,6 +15,7 @@ import {
   useContext,
   type FormEvent,
   type JSX,
+  type MutableRefObject,
 } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
@@ -366,6 +368,9 @@ function KangurLoginPageContent(): JSX.Element {
   );
   const loginFormRef = useRef<HTMLFormElement | null>(null);
   const identifierInputRef = useRef<HTMLInputElement | null>(null);
+  const passwordInputRef = useRef<HTMLInputElement | null>(null);
+  const restoreIdentifierFocusRef = useRef(false);
+  const restorePasswordFocusRef = useRef(false);
   const titleId = useId();
   const identifierInputId = useId();
   const identifierHelpId = useId();
@@ -497,6 +502,39 @@ function KangurLoginPageContent(): JSX.Element {
     }
   }, []);
 
+  const markRestoreFocus = (target: HTMLInputElement | null, ref: MutableRefObject<boolean>): void => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    if (document.activeElement === target) {
+      ref.current = true;
+    }
+  };
+
+  const restoreFocusIfNeeded = (
+    target: HTMLInputElement | null,
+    ref: MutableRefObject<boolean>
+  ): void => {
+    if (!ref.current) {
+      return;
+    }
+
+    ref.current = false;
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    if (activeElement && activeElement !== target && loginFormRef.current?.contains(activeElement)) {
+      return;
+    }
+
+    if (target && activeElement !== target) {
+      target.focus({ preventScroll: true });
+    }
+  };
+
   useEffect(() => {
     if (!isCaptchaRequired) {
       if (typeof window !== 'undefined' && window.turnstile && captchaWidgetIdRef.current) {
@@ -602,6 +640,14 @@ function KangurLoginPageContent(): JSX.Element {
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  useLayoutEffect(() => {
+    restoreFocusIfNeeded(identifierInputRef.current, restoreIdentifierFocusRef);
+  }, [identifier]);
+
+  useLayoutEffect(() => {
+    restoreFocusIfNeeded(passwordInputRef.current, restorePasswordFocusRef);
+  }, [password]);
 
   useEffect(() => {
     setParentAuthMode(requestedParentAuthMode);
@@ -1181,7 +1227,10 @@ function KangurLoginPageContent(): JSX.Element {
             disabled={!isHydrated || isSubmitting}
             id={identifierInputId}
             name='identifier'
-            onChange={(event) => setIdentifier(event.target.value)}
+            onChange={(event) => {
+              markRestoreFocus(identifierInputRef.current, restoreIdentifierFocusRef);
+              setIdentifier(event.target.value);
+            }}
             placeholder={
               isParentFlowVisible && parentAuthMode === 'create-account'
                 ? 'rodzic@example.com'
@@ -1216,7 +1265,10 @@ function KangurLoginPageContent(): JSX.Element {
             disabled={!isHydrated || isSubmitting}
             id={passwordInputId}
             name='password'
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              markRestoreFocus(passwordInputRef.current, restorePasswordFocusRef);
+              setPassword(event.target.value);
+            }}
             placeholder={
               isParentFlowVisible && parentAuthMode === 'create-account'
                 ? 'Hasło'
@@ -1226,6 +1278,7 @@ function KangurLoginPageContent(): JSX.Element {
                     ? 'Hasło ucznia'
                     : 'Hasło'
             }
+            ref={passwordInputRef}
             required={loginKind === 'student'}
             type='password'
             value={password}

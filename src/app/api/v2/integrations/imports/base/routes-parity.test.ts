@@ -22,18 +22,18 @@ const legacyRootImportActionPattern = /action\s*:\s*['"]import['"]/;
 const legacyPasswordTokenFallbackPattern =
   /(?:resolvedBaseConnection|connection)\.password|source:\s*['"]password['"]/;
 const expectedV2RoutePaths = [
-  'route.ts',
-  'parameters/route.ts',
-  'sample-product/route.ts',
-  '[setting]/route.ts',
-  'runs/route.ts',
-  'runs/[runId]/route.ts',
-  'runs/[runId]/resume/route.ts',
-  'runs/[runId]/cancel/route.ts',
-  'runs/[runId]/report/route.ts',
+  'route-handler.ts',
+  'parameters/route-handler.ts',
+  'sample-product/route-handler.ts',
+  '[setting]/route-handler.ts',
+  'runs/route-handler.ts',
+  'runs/[runId]/route-handler.ts',
+  'runs/[runId]/resume/route-handler.ts',
+  'runs/[runId]/cancel/route-handler.ts',
+  'runs/[runId]/report/route-handler.ts',
 ] as const;
 
-const collectRouteFiles = (baseDir: string): string[] => {
+const collectRouteFiles = (baseDir: string, fileName = 'route.ts'): string[] => {
   if (!existsSync(baseDir)) return [];
 
   const walk = (dir: string): string[] => {
@@ -46,7 +46,7 @@ const collectRouteFiles = (baseDir: string): string[] => {
         files.push(...walk(absolute));
         return;
       }
-      if (entry.isFile() && entry.name === 'route.ts') {
+      if (entry.isFile() && entry.name === fileName) {
         files.push(path.relative(baseDir, absolute));
       }
     });
@@ -84,8 +84,8 @@ const collectSourceFiles = (baseDir: string): string[] => {
 };
 
 describe('v2 integrations imports/base route migration', () => {
-  it('keeps expected /api/v2/integrations/imports/base route.ts files present', () => {
-    const v2Routes = new Set(collectRouteFiles(v2Root));
+  it('keeps expected /api/v2/integrations/imports/base route-handler files present', () => {
+    const v2Routes = new Set(collectRouteFiles(v2Root, 'route-handler.ts'));
     const missing = expectedV2RoutePaths.filter((relativeRoute) => !v2Routes.has(relativeRoute));
     expect(missing).toEqual([]);
   });
@@ -95,8 +95,8 @@ describe('v2 integrations imports/base route migration', () => {
     expect(legacyRoutes).toEqual([]);
   });
 
-  it('keeps v2 route.ts files independent from legacy api namespace imports', () => {
-    const v2Routes = collectRouteFiles(v2Root);
+  it('keeps v2 route-handler files independent from legacy api namespace imports', () => {
+    const v2Routes = collectRouteFiles(v2Root, 'route-handler.ts');
     const offenders = v2Routes.filter((relativeRoute) =>
       readFileSync(path.join(v2Root, relativeRoute), 'utf8').includes(legacyApiImportToken)
     );

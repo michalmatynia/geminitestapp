@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-16T05:09:47.350Z
+Generated at: 2026-03-16T06:17:40.710Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,26 +16,26 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/kangur/auth/[[...path]]/route.ts` | 163 |
-| `src/app/api/kangur/learners/[[...id]]/route.ts` | 159 |
-| `src/app/api/kangur/ai-tutor/[[...action]]/route.ts` | 154 |
-| `src/app/api/kangur/assignments/[[...id]]/route.ts` | 125 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 864 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 370 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 275 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 254 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 232 |
+| `src/app/api/databases/[[...path]]/route.ts` | 189 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 187 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 148 |
 | `src/app/api/agent/leases/route.ts` | 122 |
-| `src/app/api/kangur/duels/[action]/route.ts` | 97 |
-| `src/app/api/kangur/learner-activity/[[...action]]/route.ts` | 95 |
-| `src/app/api/kangur/tts/[[...action]]/route.ts` | 94 |
-| `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 83 |
-| `src/app/api/kangur/knowledge-graph/[action]/route.ts` | 70 |
-| `src/app/api/kangur/number-balance/[action]/route.ts` | 64 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 | `src/app/api/agent/approval-gates/route.ts` | 50 |
-| `src/app/api/v2/products/[id]/route.ts` | 42 |
-| `src/app/api/v2/products/[id]/studio/[action]/route.ts` | 40 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
-| `src/app/api/v2/products/metadata/[type]/[id]/route.ts` | 35 |
-| `src/app/api/v2/products/metadata/[type]/route.ts` | 32 |
-| `src/app/api/v2/products/sync/profiles/[id]/route.ts` | 30 |
-| `src/app/api/v2/products/categories/[id]/route.ts` | 28 |
+| `src/app/api/v2/metadata/[type]/[id]/route.ts` | 25 |
+| `src/app/api/auth/users/[id]/route.ts` | 23 |
+| `src/app/api/drafts/[id]/route.ts` | 23 |
+| `src/app/api/ai/schema/[entity]/route.ts` | 22 |
+| `src/app/api/assets3d/[id]/route.ts` | 22 |
+| `src/app/api/cms/pages/[id]/route.ts` | 22 |
+| `src/app/api/system/logs/route.ts` | 22 |
+| `src/app/api/cms/slugs/[id]/route.ts` | 21 |
 
 ## Top App Pages by LOC
 
@@ -64,13 +64,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/kangur/auth/[[...path]]/route.ts`
-- `src/app/api/kangur/learners/[[...id]]/route.ts`
-- `src/app/api/kangur/ai-tutor/[[...action]]/route.ts`
-- `src/app/api/kangur/assignments/[[...id]]/route.ts`
+- `src/app/api/kangur/[[...path]]/route.ts`
+- `src/app/api/v2/products/[[...path]]/route.ts`
+- `src/app/api/v2/integrations/[[...path]]/route.ts`
+- `src/app/api/image-studio/[[...path]]/route.ts`
+- `src/app/api/ai-paths/[[...path]]/route.ts`
+- `src/app/api/databases/[[...path]]/route.ts`
+- `src/app/api/agentcreator/[[...path]]/route.ts`
+- `src/app/api/chatbot/[[...path]]/route.ts`
 - `src/app/api/agent/leases/route.ts`
-- `src/app/api/kangur/duels/[action]/route.ts`
-- `src/app/api/kangur/learner-activity/[[...action]]/route.ts`
-- `src/app/api/kangur/tts/[[...action]]/route.ts`
-- `src/app/api/chatbot/agent/[runId]/[action]/route.ts`
-- `src/app/api/kangur/knowledge-graph/[action]/route.ts`
+- `src/app/api/agent/resources/route.ts`

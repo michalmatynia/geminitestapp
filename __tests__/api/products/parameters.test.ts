@@ -23,7 +23,7 @@ vi.mock('@/features/products/server', async (importOriginal) => {
   };
 });
 
-import { GET } from '@/app/api/v2/products/parameters/route';
+import { GET } from '@/app/api/v2/products/parameters/route-handler';
 
 describe('Product Parameters API', () => {
   beforeEach(() => {

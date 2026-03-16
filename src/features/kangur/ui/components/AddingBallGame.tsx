@@ -1,3 +1,5 @@
+'use client';
+
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRef, useState } from 'react';

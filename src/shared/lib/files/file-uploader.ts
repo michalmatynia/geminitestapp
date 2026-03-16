@@ -63,6 +63,15 @@ export function getDiskPathFromPublicPath(publicPath: string): string {
   if (!normalized) {
     throw new Error('Security Error: Invalid file path.');
   }
+  if (normalized.startsWith('/uploads/')) {
+    const cleaned = normalized.replace(/^\/uploads\/+/, '');
+    const resolved = path.resolve(uploadsRoot, cleaned);
+    if (!resolved.startsWith(uploadsRoot + path.sep) && resolved !== uploadsRoot) {
+      throw new Error('Security Error: Invalid path traversal attempt detected.');
+    }
+    return resolved;
+  }
+
   const cleaned = normalized.replace(/^\/+/, '');
   const resolved = path.resolve(publicRoot, cleaned);
 

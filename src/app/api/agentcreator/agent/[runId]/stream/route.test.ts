@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GET } from './route';
+import { GET } from './route-handler';
 
 describe('agentcreator agent run stream route module', () => {
   it('exports the supported route handlers', () => {

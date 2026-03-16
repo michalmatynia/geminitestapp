@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useMemo, useRef } from 'react';
 
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
@@ -36,6 +38,7 @@ import type {
   KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
 import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
 const QUICK_PRACTICE_OPTIONS = [
   {
@@ -323,7 +326,7 @@ const getQuestRecommendation = (
 const getWeakestLessonRecommendation = (
   progress: KangurProgressState
 ): KangurOperationSelectorRecommendation | null => {
-  const weakestLesson = Object.entries(progress.lessonMastery)
+  const weakestLesson = Object.entries(progress.lessonMastery ?? {})
     .filter(([, entry]) => entry.attempts > 0 && entry.masteryPercent < 80)
     .sort((left, right) => left[1].masteryPercent - right[1].masteryPercent)[0];
 
@@ -451,12 +454,31 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     setScreen,
   } = useKangurGameRuntime();
   const trainingSectionRef = useRef<HTMLElement | null>(null);
-  const dailyQuest = useMemo(() => getCurrentKangurDailyQuest(progress), [progress]);
-  const recommendation = useMemo(
-    () => getOperationSelectorRecommendation(progress, dailyQuest),
-    [dailyQuest, progress]
+  const normalizedProgress = useMemo(() => {
+    const defaults = createDefaultKangurProgressState();
+    return {
+      ...defaults,
+      ...progress,
+      badges: progress.badges ?? defaults.badges,
+      operationsPlayed: progress.operationsPlayed ?? defaults.operationsPlayed,
+      lessonMastery: progress.lessonMastery ?? defaults.lessonMastery,
+      openedTasks: progress.openedTasks ?? defaults.openedTasks,
+      lessonPanelProgress: progress.lessonPanelProgress ?? defaults.lessonPanelProgress,
+      activityStats: progress.activityStats ?? defaults.activityStats,
+    };
+  }, [progress]);
+  const dailyQuest = useMemo(
+    () => getCurrentKangurDailyQuest(normalizedProgress),
+    [normalizedProgress]
   );
-  const suggestedTraining = useMemo(() => getRecommendedTrainingSetup(progress), [progress]);
+  const recommendation = useMemo(
+    () => getOperationSelectorRecommendation(normalizedProgress, dailyQuest),
+    [dailyQuest, normalizedProgress]
+  );
+  const suggestedTraining = useMemo(
+    () => getRecommendedTrainingSetup(normalizedProgress),
+    [normalizedProgress]
+  );
   const mixedPracticeAssignment =
     practiceAssignmentsByOperation.mixed ??
     (activePracticeAssignment?.target.operation === 'mixed' ? activePracticeAssignment : null);
@@ -464,10 +486,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     activePracticeAssignment && activePracticeAssignment.target.operation !== 'mixed'
       ? activePracticeAssignment
       : null;
-
-  if (screen !== 'operation' && screen !== 'training') {
-    return null;
-  }
+  const shouldRender = screen === 'operation' || screen === 'training';
 
   useEffect(() => {
     if (screen !== 'training') {
@@ -476,6 +495,10 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
 
     trainingSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }, [screen]);
+
+  if (!shouldRender) {
+    return null;
+  }
 
   const handleRecommendationSelect = (): void => {
     if (!recommendation) {
@@ -682,7 +705,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             />
           </div>
         ) : null}
-        <KangurGameSetupMomentumCard mode='training' progress={progress} />
+        <KangurGameSetupMomentumCard mode='training' progress={normalizedProgress} />
         <TrainingSetup
           onStart={(selection) =>
             handleStartTraining(selection, {

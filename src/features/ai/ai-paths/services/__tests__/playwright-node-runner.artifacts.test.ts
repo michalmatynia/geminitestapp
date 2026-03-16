@@ -1,11 +1,12 @@
 import { promises as fs } from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { readPlaywrightNodeArtifact } from '@/features/ai/ai-paths/services/playwright-node-runner';
 
-const RUN_ROOT_DIR = path.join(process.cwd(), 'tmp', 'ai-paths-playwright-runs');
+const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
 
 const createRunFixture = async (input: {
   runId: string;

@@ -1,3 +1,5 @@
+"use client";
+
 import { render } from '@testing-library/react';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { vi } from 'vitest';

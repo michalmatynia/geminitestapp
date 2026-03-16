@@ -1,3 +1,5 @@
+'use client';
+
 import { Pen, X } from 'lucide-react';
 import { useCallback } from 'react';
 

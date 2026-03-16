@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useLayoutEffect, type MutableRefObject, type RefObject } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';

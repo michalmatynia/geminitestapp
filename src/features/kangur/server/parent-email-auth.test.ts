@@ -437,12 +437,15 @@ describe('parent email auth service', () => {
       callbackUrl: '/kangur/lessons',
       emailVerified: true,
     });
-    expect(createAuthUserWithEmailMock).toHaveBeenCalledWith({
-      email: 'parent@example.com',
-      name: 'Parent',
-      passwordHash: 'hashed-password',
-      emailVerified: expect.any(Date),
-    });
+    expect(createAuthUserWithEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'parent@example.com',
+        name: 'Parent',
+        passwordHash: 'hashed-password',
+        emailVerified: expect.any(Date),
+        duplicateErrorMessage: expect.any(String),
+      })
+    );
     expect(markAuthUserEmailVerifiedMock).not.toHaveBeenCalled();
   });
 
@@ -659,6 +662,35 @@ describe('parent email auth service', () => {
     });
     expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
     expect(sendAuthEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces special character requirements for parent account passwords', async () => {
+    findAuthUserByEmailMock.mockResolvedValue(null);
+    findActiveEmailVerificationChallengeByEmailMock.mockResolvedValue(null);
+    validatePasswordStrengthMock.mockReturnValue({
+      ok: false,
+      errors: [
+        'Password must be at least 8 characters.',
+        'Password must include at least one uppercase letter.',
+        'Password must include at least one symbol.',
+      ],
+    });
+
+    await expect(
+      createKangurParentAccount({
+        email: 'weak@example.com',
+        password: 'weak',
+        callbackUrl: '/kangur',
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining('znak specjalny'),
+      meta: expect.objectContaining({
+        issues: expect.arrayContaining([
+          'Hasło musi zawierać co najmniej jeden znak specjalny.',
+        ]),
+      }),
+    });
+    expect(createEmailVerificationChallengeMock).not.toHaveBeenCalled();
   });
 
   it('stores a password for a legacy parent account without one', async () => {

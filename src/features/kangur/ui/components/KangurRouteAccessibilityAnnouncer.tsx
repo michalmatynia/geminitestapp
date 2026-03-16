@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 const KANGUR_PAGE_ACCESSIBILITY_LABELS: Record<string, string> = {
@@ -29,12 +29,23 @@ const focusKangurMainRegion = (): void => {
     return;
   }
 
-  try {
-    mainRegion.focus({ preventScroll: true });
-  } catch (error) {
-    logClientError(error);
-    mainRegion.focus();
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur-route-accessibility-announcer',
+      action: 'focus-main-region',
+      description: 'Move focus to the main region after navigation.',
+    },
+    () => {
+      mainRegion.focus({ preventScroll: true });
+      return true;
+    },
+    {
+      fallback: () => {
+        mainRegion.focus();
+        return false;
+      },
+    }
+  );
 };
 
 const resolveAnnouncementLabel = (pageKey: string | null | undefined): string =>

@@ -14,6 +14,10 @@ const { useOptionalKangurRouteTransitionStateMock } = vi.hoisted(() => ({
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
 }));
 
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
@@ -42,12 +46,21 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionState: () => useOptionalKangurRouteTransitionStateMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 import { KangurGameHomeActionsWidget } from './KangurGameHomeActionsWidget';
 
 describe('KangurGameHomeActionsWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
   });
 
   it('does not show the observability action on the Kangur admin home surface', () => {
@@ -114,6 +127,25 @@ describe('KangurGameHomeActionsWidget', () => {
       '/kangur/duels'
     );
     expect(screen.getByRole('button', { name: /kangur matematyczny/i })).toBeEnabled();
+  });
+
+  it('hides the kangur math contest action when English is selected', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.queryByRole('button', { name: /kangur matematyczny/i })).toBeNull();
   });
 
   it('stacks the front-page actions into a single mobile column', () => {

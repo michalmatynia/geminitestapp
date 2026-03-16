@@ -4,70 +4,10 @@ import { randomUUID } from 'crypto';
 
 import { NextResponse } from 'next/server';
 
-import type { SystemLogLevelDto } from '@/shared/contracts/observability';
 import { validationError } from '@/shared/errors/app-error';
-import { resolveError } from '@/shared/errors/resolve-error';
-import { logger } from '@/shared/utils/logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { reportError } from '@/shared/utils/observability/report-error';
 
-
-// Local type definitions to avoid importing from features layer
-type LogSystemEventParams = {
-  level: SystemLogLevelDto | string;
-  message: string;
-  source: string;
-  service?: string;
-  error?: unknown;
-  request?: Request;
-  requestId?: string;
-  traceId?: string;
-  correlationId?: string;
-  statusCode?: number;
-  context?: Record<string, unknown>;
-};
-
-type ErrorFingerprintParams = {
-  message: string;
-  source: string;
-  request?: Request;
-  statusCode: number;
-  error: unknown;
-};
-
-// Stub implementations to avoid features layer dependency
-const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
-  try {
-    // Dynamically import to avoid circular dependency (shared -> features -> shared)
-    const mod = (await import('@/shared/lib/observability/system-logger')) as {
-      logSystemEvent: (input: LogSystemEventParams) => Promise<void>;
-      getErrorFingerprint: (input: ErrorFingerprintParams) => string;
-    };
-
-    await mod.logSystemEvent(params);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    logger.error('Failed to log system event via observability feature', error, {
-      service: 'api.error-handler',
-      context: params,
-    });
-  }
-};
-
-const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
-  try {
-    const mod = (await import('@/shared/lib/observability/system-logger')) as {
-      getErrorFingerprint: (input: ErrorFingerprintParams) => string;
-    };
-    return mod.getErrorFingerprint(params);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    logger.error('Failed to get error fingerprint via observability feature', error, {
-      service: 'api.error-handler',
-      context: params,
-    });
-    return `${params.source}-${params.statusCode}-${Date.now()}`;
-  }
-};
 
 type ApiErrorOptions = {
   request?: Request | undefined;
@@ -156,10 +96,6 @@ export const createErrorResponse = async (
   error: unknown,
   options?: ApiErrorOptions
 ): Promise<NextResponse> => {
-  const resolved = resolveError(error, {
-    ...(options?.fallbackMessage ? { fallbackMessage: options.fallbackMessage } : {}),
-  });
-
   const requestId =
     options?.requestId ?? getRequestHeader(options?.request, 'x-request-id') ?? randomUUID();
   const traceId = options?.traceId ?? getRequestHeader(options?.request, 'x-trace-id') ?? randomUUID();
@@ -168,50 +104,27 @@ export const createErrorResponse = async (
     getRequestHeader(options?.request, 'x-correlation-id') ??
     requestId;
   const service = options?.service ?? resolveServiceFromSource(options?.source);
-
-  const fingerprint = await getErrorFingerprint({
-    message: resolved.message,
-    source: options?.source ?? 'api',
-    ...(options?.request ? { request: options.request } : {}),
-    statusCode: resolved.httpStatus,
-    error,
-  });
-
-  // Determine log level based on error type
-  const level = resolved.critical ? 'error' : resolved.expected ? 'warn' : 'error';
   const requestDiagnostics = extractRequestDiagnostics(options?.request);
-
-  // Log the error
-  void logSystemEvent({
-    level,
-    message: resolved.message,
+  const { resolved, userMessage, fingerprint } = await reportError({
+    error,
     source: options?.source ?? 'api',
     service,
-    error,
     ...(options?.request ? { request: options.request } : {}),
     requestId,
     traceId,
     correlationId,
-    statusCode: resolved.httpStatus,
+    fallbackMessage: options?.fallbackMessage,
     context: {
-      errorId: resolved.errorId,
-      code: resolved.code,
-      category: resolved.category,
-      critical: resolved.critical,
-      retryable: resolved.retryable,
-      expected: resolved.expected,
       service,
       traceId,
       correlationId,
       ...requestDiagnostics,
-      ...(resolved.retryAfterMs ? { retryAfterMs: resolved.retryAfterMs } : {}),
-      ...(resolved.meta ? { meta: resolved.meta } : {}),
     },
   });
 
   // Build response payload
   const payload: Record<string, unknown> = {
-    error: resolved.message,
+    error: userMessage,
     code: resolved.code,
     errorId: resolved.errorId,
     category: resolved.category,
@@ -247,7 +160,9 @@ export const createErrorResponse = async (
   response.headers.set('x-trace-id', traceId);
   response.headers.set('x-correlation-id', correlationId);
   response.headers.set('x-error-id', resolved.errorId);
-  response.headers.set('x-error-fingerprint', fingerprint);
+  if (fingerprint) {
+    response.headers.set('x-error-fingerprint', fingerprint);
+  }
   if (!response.headers.has('Cache-Control')) {
     response.headers.set('Cache-Control', 'no-store');
   }

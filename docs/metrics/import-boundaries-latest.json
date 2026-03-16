@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-12T15:47:19.934Z",
+  "generatedAt": "2026-03-16T18:13:34.633Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 4677,
+    "fileCount": 5153,
     "featureCount": 10,
     "circularDependencyCount": 0
   },
@@ -21,8 +21,6 @@
     ],
     "ai": [
       "foldertree",
-      "observability",
-      "products",
       "viewer3d"
     ],
     "case-resolver": [
@@ -36,7 +34,6 @@
       "admin",
       "foldertree",
       "gsap",
-      "products",
       "viewer3d"
     ],
     "drafter": [
@@ -56,6 +53,7 @@
       "foldertree"
     ],
     "products": [
+      "ai",
       "foldertree",
       "internationalization"
     ],
@@ -66,5 +64,5 @@
   "circularDependencies": [],
   "issues": [],
   "rules": [],
-  "durationMs": 990
+  "durationMs": 306
 }

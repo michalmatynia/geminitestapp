@@ -43,6 +43,7 @@ const createScoreRow = () => ({
   player_name: 'Ada',
   score: 9,
   operation: 'addition',
+  subject: 'maths',
   total_questions: 10,
   correct_answers: 9,
   time_taken: 33,
@@ -109,6 +110,7 @@ describe('kangur scores handler', () => {
       filters: {
         player_name: 'Ada',
         operation: 'addition',
+        subject: undefined,
         created_by: 'teacher@example.com',
         learner_id: undefined,
       },
@@ -131,6 +133,7 @@ describe('kangur scores handler', () => {
       filters: {
         player_name: undefined,
         operation: undefined,
+        subject: undefined,
         created_by: undefined,
       },
     });
@@ -165,6 +168,7 @@ describe('kangur scores handler', () => {
       time_taken: 33,
       xp_earned: 41,
       client_mutation_id: 'guest-score:1',
+      subject: 'maths',
       created_by: 'teacher@example.com',
       learner_id: 'learner-1',
       owner_user_id: 'parent-1',

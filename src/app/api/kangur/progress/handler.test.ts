@@ -101,17 +101,22 @@ describe('kangur progress handler', () => {
       gamesPlayed: 7,
       badges: ['first_game'],
     });
-    getProgressMock.mockResolvedValueOnce(createDefaultKangurProgressState());
-    getProgressMock.mockResolvedValue(progress);
+    getProgressMock
+      .mockResolvedValueOnce(createDefaultKangurProgressState())
+      .mockResolvedValueOnce(createDefaultKangurProgressState())
+      .mockResolvedValueOnce(createDefaultKangurProgressState())
+      .mockResolvedValueOnce(progress);
 
     const response = await getKangurProgressHandler(
       new NextRequest('http://localhost/api/kangur/progress'),
       createRequestContext()
     );
 
-    expect(getProgressMock).toHaveBeenNthCalledWith(1, 'learner-1');
-    expect(getProgressMock).toHaveBeenNthCalledWith(2, 'ada@example.com');
-    expect(saveProgressMock).toHaveBeenCalledWith('learner-1', progress);
+    expect(getProgressMock).toHaveBeenNthCalledWith(1, 'learner-1::maths');
+    expect(getProgressMock).toHaveBeenNthCalledWith(2, 'ada@example.com::maths');
+    expect(getProgressMock).toHaveBeenNthCalledWith(3, 'learner-1');
+    expect(getProgressMock).toHaveBeenNthCalledWith(4, 'ada@example.com');
+    expect(saveProgressMock).toHaveBeenCalledWith('learner-1::maths', progress);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(progress);
   });
@@ -130,7 +135,7 @@ describe('kangur progress handler', () => {
       createRequestContext()
     );
 
-    expect(saveProgressMock).toHaveBeenCalledWith('learner-1', progress);
+    expect(saveProgressMock).toHaveBeenCalledWith('learner-1::maths', progress);
     expect(logKangurServerEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'kangur.progress.update',
@@ -138,6 +143,7 @@ describe('kangur progress handler', () => {
         context: expect.objectContaining({
           totalXp: 320,
           gamesPlayed: 11,
+          subject: 'maths',
         }),
       })
     );

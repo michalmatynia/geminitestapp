@@ -13,7 +13,7 @@ import {
   useOptionalKangurRouteTransitionState,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 type KangurRouteNavigationOptions = {
@@ -49,12 +49,16 @@ const normalizeManagedPathname = (pathname: string | null | undefined): string |
 };
 
 const getManagedPathnameFromHref = (href: string): string | null => {
-  try {
-    return normalizeManagedPathname(new URL(href, 'https://kangur.local').pathname);
-  } catch (error) {
-    logClientError(error);
-    return normalizeManagedPathname(href);
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'parse-managed-path',
+      description: 'Parses managed Kangur hrefs into normalized pathnames.',
+      context: { href },
+    },
+    () => normalizeManagedPathname(new URL(href, 'https://kangur.local').pathname),
+    { fallback: normalizeManagedPathname(href) }
+  );
 };
 
 const getSlugFromPathname = (
@@ -95,24 +99,30 @@ const resolveManagedPageKeyFromHref = (href: string, basePath: string): string |
     return null;
   }
 
-  try {
-    const parsed = new URL(href, 'https://kangur.local');
-    const normalizedBasePath = normalizeKangurBasePath(basePath);
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'resolve-page-key',
+      description: 'Resolves the Kangur page key from a managed href.',
+      context: { href, basePath },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const normalizedBasePath = normalizeKangurBasePath(basePath);
 
-    if (
-      normalizedBasePath !== '/' &&
-      parsed.pathname !== normalizedBasePath &&
-      !parsed.pathname.startsWith(`${normalizedBasePath}/`)
-    ) {
-      return null;
-    }
+      if (
+        normalizedBasePath !== '/' &&
+        parsed.pathname !== normalizedBasePath &&
+        !parsed.pathname.startsWith(`${normalizedBasePath}/`)
+      ) {
+        return null;
+      }
 
-    const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
-    return resolveKangurPageKeyFromSlug(slug[0] ?? null);
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
+      return resolveKangurPageKeyFromSlug(slug[0] ?? null);
+    },
+    { fallback: null }
+  );
 };
 
 export function useKangurRouteNavigator(): {

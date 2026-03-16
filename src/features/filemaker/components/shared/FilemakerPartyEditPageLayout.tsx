@@ -24,12 +24,12 @@ export function FilemakerPartyEditPageLayout(
 
   if (!itemName) {
     return (
-      <div className='container mx-auto py-8 text-center text-gray-500'>{notFoundMessage}</div>
+      <div className='page-section-compact text-center text-gray-500'>{notFoundMessage}</div>
     );
   }
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='page-section-compact space-y-6'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <AdminFilemakerBreadcrumbs parent={parent} current={itemName} />
       </div>

@@ -6,7 +6,7 @@ import { FileUploadEventsPanel } from '../components/FileUploadEventsPanel';
 
 export default function FileUploadEventsPage(): React.JSX.Element {
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <SectionHeader
         title='File Upload Events'
         description='Audit uploads and failures across the platform.'

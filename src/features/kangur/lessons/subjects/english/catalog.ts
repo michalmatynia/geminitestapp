@@ -1,0 +1,77 @@
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonTemplate } from '@/features/kangur/lessons/lesson-types';
+
+export const ENGLISH_LESSON_COMPONENT_ORDER = [
+  'english_basics',
+  'english_parts_of_speech',
+  'english_sentence_structure',
+  'english_subject_verb_agreement',
+  'english_articles',
+  'english_prepositions_time_place',
+] as const satisfies readonly KangurLessonComponentId[];
+
+type EnglishLessonComponentId = (typeof ENGLISH_LESSON_COMPONENT_ORDER)[number];
+
+export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLessonTemplate> = {
+  english_basics: {
+    componentId: 'english_basics',
+    subject: 'english',
+    label: 'English Basics Lesson',
+    title: 'Angielski: podstawy',
+    description: 'Powitania i pierwsze zdania',
+    emoji: '🗣️',
+    color: 'kangur-gradient-accent-emerald',
+    activeBg: 'bg-emerald-500',
+  },
+  english_parts_of_speech: {
+    componentId: 'english_parts_of_speech',
+    subject: 'english',
+    label: 'English Pronouns Lesson',
+    title: 'English: Pronouns',
+    description: 'Zaimki osobowe i dzierżawcze na przykładach z matematyki dla nastolatków',
+    emoji: '📝',
+    color: 'kangur-gradient-accent-sky',
+    activeBg: 'bg-sky-500',
+  },
+  english_sentence_structure: {
+    componentId: 'english_sentence_structure',
+    subject: 'english',
+    label: 'English Sentence Structure Lesson',
+    title: 'Angielski: składnia zdania',
+    description: 'Szyk zdania, pytania i łączenie myśli',
+    emoji: '🧩',
+    color: 'kangur-gradient-accent-violet',
+    activeBg: 'bg-violet-500',
+  },
+  english_subject_verb_agreement: {
+    componentId: 'english_subject_verb_agreement',
+    subject: 'english',
+    label: 'English Agreement Lesson',
+    title: 'Angielski: subject-verb agreement',
+    description:
+      'Zgodność podmiotu i czasownika w Present Simple oraz najczęstsze pułapki',
+    emoji: '⚖️',
+    color: 'kangur-gradient-accent-teal',
+    activeBg: 'bg-teal-500',
+  },
+  english_articles: {
+    componentId: 'english_articles',
+    subject: 'english',
+    label: 'English Articles Lesson',
+    title: 'English: Articles',
+    description: 'A, an, the i brak przedimka w języku angielskim',
+    emoji: '📚',
+    color: 'kangur-gradient-accent-amber',
+    activeBg: 'bg-amber-500',
+  },
+  english_prepositions_time_place: {
+    componentId: 'english_prepositions_time_place',
+    subject: 'english',
+    label: 'English Prepositions Lesson',
+    title: 'English: Prepositions',
+    description: 'Przyimki czasu i miejsca w praktyce nastolatków',
+    emoji: '🧭',
+    color: 'kangur-gradient-accent-rose',
+    activeBg: 'bg-rose-500',
+  },
+};

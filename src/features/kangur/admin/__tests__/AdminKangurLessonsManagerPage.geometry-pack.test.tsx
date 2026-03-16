@@ -7,18 +7,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mutateAsyncMock,
+  updateLessonDocumentsMock,
   toastMock,
-  settingsStoreMock,
+  lessonsState,
+  lessonDocumentsState,
   searchStateMock,
   useMasterFolderTreeShellMock,
   folderTreeViewportMock,
   folderTreeSearchBarMock,
 } = vi.hoisted(() => ({
   mutateAsyncMock: vi.fn(),
+  updateLessonDocumentsMock: vi.fn(),
   toastMock: vi.fn(),
-  settingsStoreMock: {
-    get: vi.fn(),
-    isLoading: false,
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  lessonDocumentsState: {
+    value: {} as Record<string, unknown>,
   },
   searchStateMock: {
     isActive: false,
@@ -47,15 +52,25 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
   };
 });
 
-vi.mock('@/shared/hooks/use-settings', () => ({
-  useUpdateSetting: () => ({
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
+  useKangurLessonDocuments: () => ({
+    data: lessonDocumentsState.value,
+    isLoading: false,
+    error: null,
+  }),
+  useUpdateKangurLessons: () => ({
     mutateAsync: mutateAsyncMock,
     isPending: false,
   }),
-}));
-
-vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
-  useSettingsStore: () => settingsStoreMock,
+  useUpdateKangurLessonDocuments: () => ({
+    mutateAsync: updateLessonDocumentsMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
@@ -113,8 +128,6 @@ vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
 }));
 
 import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
-import { KANGUR_LESSONS_SETTING_KEY } from '@/features/kangur/settings';
-
 const TREE_MODE_STORAGE_KEY = 'kangur_lessons_manager_tree_mode_v1';
 
 const baseLessons = [
@@ -168,12 +181,14 @@ vi.mock('@/features/kangur/settings', async (importOriginal) => {
 describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
+    updateLessonDocumentsMock.mockReset();
     toastMock.mockReset();
-    settingsStoreMock.get.mockReset();
     useMasterFolderTreeShellMock.mockReset();
     folderTreeViewportMock.mockReset();
     folderTreeSearchBarMock.mockReset();
     window.localStorage.clear();
+    lessonsState.value = [...baseLessons];
+    lessonDocumentsState.value = {};
 
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
@@ -201,7 +216,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   });
 
   it('adds missing geometry lessons in one action and persists updated settings', async () => {
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     mutateAsyncMock.mockResolvedValue(undefined);
 
     render(<AdminKangurLessonsManagerPage />);
@@ -210,10 +224,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
 
     await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
 
-    const firstCallArg = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
-    expect(firstCallArg.key).toBe(KANGUR_LESSONS_SETTING_KEY);
-
-    const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
+    const persistedLessons = mutateAsyncMock.mock.calls[0]?.[0] as Array<{ componentId: string }>;
     const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
 
     expect(persistedLessons).toHaveLength(geometryComponentIds.length + baseLessons.length);
@@ -237,7 +248,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
         enabled: true,
       })),
     ];
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(alreadyFull));
+    lessonsState.value = alreadyFull;
 
     render(<AdminKangurLessonsManagerPage />);
 
@@ -247,7 +258,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   });
 
   it('adds missing logical thinking lessons in one action and persists updated settings', async () => {
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     mutateAsyncMock.mockResolvedValue(undefined);
 
     render(<AdminKangurLessonsManagerPage />);
@@ -256,10 +266,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
 
     await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
 
-    const firstCallArg = mutateAsyncMock.mock.calls[0]?.[0] as { key: string; value: string };
-    expect(firstCallArg.key).toBe(KANGUR_LESSONS_SETTING_KEY);
-
-    const persistedLessons = JSON.parse(firstCallArg.value) as Array<{ componentId: string }>;
+    const persistedLessons = mutateAsyncMock.mock.calls[0]?.[0] as Array<{ componentId: string }>;
     const persistedComponentIds = persistedLessons.map((lesson) => lesson.componentId);
 
     expect(persistedLessons).toHaveLength(logicalComponentIds.length + baseLessons.length);
@@ -283,7 +290,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
         enabled: true,
       })),
     ];
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(alreadyFull));
+    lessonsState.value = alreadyFull;
 
     render(<AdminKangurLessonsManagerPage />);
 
@@ -293,7 +300,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   });
 
   it('switches to catalog mode and disables drag reorder in viewport', async () => {
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {
@@ -330,7 +336,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   });
 
   it('updates search placeholder when switching between ordered and catalog modes', async () => {
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {
@@ -359,7 +364,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   });
 
   it('persists selected tree mode in local storage', async () => {
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {
@@ -388,7 +392,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
 
   it('restores persisted catalog mode on initial render', () => {
     window.localStorage.setItem(TREE_MODE_STORAGE_KEY, 'catalog');
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {
@@ -419,7 +422,6 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   });
 
   it('keeps independent search query state for ordered and catalog modes', async () => {
-    settingsStoreMock.get.mockReturnValue(JSON.stringify(baseLessons));
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
         search: {

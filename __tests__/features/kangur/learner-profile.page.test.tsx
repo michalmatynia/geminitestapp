@@ -18,7 +18,9 @@ const {
   loadProgressMock,
   navigateToLoginMock,
   logoutMock,
+  checkAppStateMock,
   logKangurClientErrorMock,
+  useKangurSubjectFocusMock,
 } = vi.hoisted(() => ({
   useKangurProgressStateMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -27,8 +29,53 @@ const {
   loadProgressMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
+  checkAppStateMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
+
+type KangurClientErrorHandlingOptions<T> = {
+  fallback: T | (() => T);
+  onError?: (error: unknown) => void;
+  shouldReport?: (error: unknown) => boolean;
+  shouldRethrow?: (error: unknown) => boolean;
+};
+
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: KangurClientErrorHandlingOptions<T>
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: KangurClientErrorHandlingOptions<T>
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => ({ basePath: '/kangur' }),
@@ -38,10 +85,17 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+  useKangurAuthActions: () => ({
+    checkAppState: checkAppStateMock,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -81,8 +135,10 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: useKangurAssignmentsMock,
+vi.mock('@/features/kangur/observability/client', () => ({
+  logKangurClientError: logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -162,6 +218,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   player_name: 'Jan',
   score: 8,
   operation: 'addition',
+  subject: 'maths',
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,
@@ -192,8 +249,14 @@ describe('LearnerProfile page', () => {
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    checkAppStateMock.mockResolvedValue(undefined);
     useKangurLoginModalMock.mockReturnValue({
       openLoginModal: vi.fn(),
+    });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-jan',
     });
   });
 
@@ -219,8 +282,16 @@ describe('LearnerProfile page', () => {
     renderLearnerProfilePage();
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(2));
-    expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
-    expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { created_by: 'jan@example.com', subject: 'maths' },
+      '-created_date',
+      120
+    );
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { player_name: 'Jan', subject: 'maths' },
+      '-created_date',
+      120
+    );
 
     expect(screen.getByRole('tab', { name: /Profil ucznia/ })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-learner-profile-hero')).toBeInTheDocument();

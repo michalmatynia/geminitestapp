@@ -728,7 +728,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto max-w-6xl py-2'>
+    <div className='page-section-slim max-w-6xl'>
       <Card variant='subtle' padding='md' className='border-border/60 bg-card/40 space-y-4'>
         <div>
           <div className='text-lg text-gray-100'>Image Analysis</div>

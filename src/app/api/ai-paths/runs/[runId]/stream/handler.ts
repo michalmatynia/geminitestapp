@@ -11,6 +11,7 @@ import {
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
+import { safeSetInterval } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -355,7 +356,7 @@ export async function getAiPathRunStreamHandler(
         if (cancelled) return;
         controller.enqueue(encoder.encode(`: ${comment}\n\n`));
       };
-      const keepAliveTimer = setInterval(() => {
+      const keepAliveTimer = safeSetInterval(() => {
         sendComment('keepalive');
       }, STREAM_KEEPALIVE_INTERVAL_MS);
 

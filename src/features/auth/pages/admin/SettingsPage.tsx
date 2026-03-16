@@ -223,7 +223,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
+    <div className='page-section max-w-5xl space-y-6'>
       <PanelHeader
         title='Auth Settings'
         description='Authentication data source is managed globally.'

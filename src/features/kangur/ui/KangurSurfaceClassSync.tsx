@@ -2,11 +2,10 @@
 
 import { useEffect, type ReactNode } from 'react';
 
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
-import type { CmsStorefrontAppearanceMode } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { useOptionalCmsStorefrontAppearance, type CmsStorefrontAppearanceMode } from '@/features/cms/public';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
@@ -95,8 +94,16 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
   }
   const previousVars = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY];
   if (typeof previousVars === 'string' && previousVars.length > 0) {
-    try {
-      const parsed = JSON.parse(previousVars) as Record<string, string>;
+    const parsed = withKangurClientErrorSync(
+      {
+        source: 'kangur.surface',
+        action: 'restore-vars',
+        description: 'Restores Kangur surface CSS variables.',
+      },
+      () => JSON.parse(previousVars) as Record<string, string>,
+      { fallback: null }
+    );
+    if (parsed) {
       Object.entries(parsed).forEach(([key, value]) => {
         if (value.length > 0) {
           target.style.setProperty(key, value);
@@ -104,10 +111,6 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
           target.style.removeProperty(key);
         }
       });
-    } catch (error) {
-      logClientError(error);
-    
-      // Ignore malformed restore payloads and fall back to removing injected vars.
     }
   }
   const previousMode = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY];
@@ -150,15 +153,19 @@ const applyKangurSurfaceClassOverrides = (
 const restoreKangurSurfaceClassOverrides = (target: HTMLElement): void => {
   const stored = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY];
   if (typeof stored === 'string' && stored.length > 0) {
-    try {
-      const parsed = JSON.parse(stored) as string[];
+    const parsed = withKangurClientErrorSync(
+      {
+        source: 'kangur.surface',
+        action: 'restore-classes',
+        description: 'Restores Kangur surface class overrides.',
+      },
+      () => JSON.parse(stored) as string[],
+      { fallback: null }
+    );
+    if (parsed) {
       parsed.forEach((entry) => {
         target.classList.remove(entry);
       });
-    } catch (error) {
-      logClientError(error);
-    
-      // Ignore malformed restore payloads.
     }
   }
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY];

@@ -140,7 +140,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
 
   if (!draft) {
     return (
-      <div className='container mx-auto py-6'>
+      <div className='page-section-tight'>
         <SectionHeader
           eyebrow={<AdminAiEyebrow section='Case Resolver Capture' />}
           title='Case Resolver Capture'
@@ -151,7 +151,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto space-y-4 py-6'>
+    <div className='page-section-tight space-y-4'>
       <SectionHeader
         eyebrow={<AdminAiEyebrow section='Case Resolver Capture' />}
         title='Case Resolver Capture'

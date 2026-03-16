@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import { formatKangurAssignmentPriorityLabel } from '@/features/kangur/ui/services/delegated-assignments';
@@ -30,6 +31,7 @@ export type KangurOperationSelectorItem = {
   recommendedLabel: string;
   select: () => void;
   statusLabel: string;
+  subject: KangurLessonSubject;
 };
 
 type UseKangurOperationSelectorStateOptions = {
@@ -41,17 +43,21 @@ type UseKangurOperationSelectorStateOptions = {
 };
 
 const OPERATIONS: Array<
-  IdLabelOptionDto<KangurOperation> & { accent: KangurAccent; emoji: string }
+  IdLabelOptionDto<KangurOperation> & {
+    accent: KangurAccent;
+    emoji: string;
+    subject: KangurLessonSubject;
+  }
 > = [
-  { accent: 'emerald', id: 'addition', label: 'Dodawanie', emoji: '➕' },
-  { accent: 'sky', id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
-  { accent: 'violet', id: 'multiplication', label: 'Mnożenie', emoji: '✖️' },
-  { accent: 'amber', id: 'division', label: 'Dzielenie', emoji: '➗' },
-  { accent: 'teal', id: 'decimals', label: 'Ułamki', emoji: '🔢' },
-  { accent: 'amber', id: 'powers', label: 'Potęgi', emoji: '⚡' },
-  { accent: 'indigo', id: 'roots', label: 'Pierwiastki', emoji: '√' },
-  { accent: 'sky', id: 'clock', label: 'Zegar', emoji: '🕐' },
-  { accent: 'rose', id: 'mixed', label: 'Mieszane', emoji: '🎲' },
+  { accent: 'emerald', id: 'addition', label: 'Dodawanie', emoji: '➕', subject: 'maths' },
+  { accent: 'sky', id: 'subtraction', label: 'Odejmowanie', emoji: '➖', subject: 'maths' },
+  { accent: 'violet', id: 'multiplication', label: 'Mnożenie', emoji: '✖️', subject: 'maths' },
+  { accent: 'amber', id: 'division', label: 'Dzielenie', emoji: '➗', subject: 'maths' },
+  { accent: 'teal', id: 'decimals', label: 'Ułamki', emoji: '🔢', subject: 'maths' },
+  { accent: 'amber', id: 'powers', label: 'Potęgi', emoji: '⚡', subject: 'maths' },
+  { accent: 'indigo', id: 'roots', label: 'Pierwiastki', emoji: '√', subject: 'maths' },
+  { accent: 'sky', id: 'clock', label: 'Zegar', emoji: '🕐', subject: 'maths' },
+  { accent: 'rose', id: 'mixed', label: 'Mieszane', emoji: '🎲', subject: 'maths' },
 ];
 
 const PRIORITY_ORDER = {
@@ -145,6 +151,7 @@ export const useKangurOperationSelectorState = (
               onSelect?.(operation.id, difficulty);
             },
             statusLabel: priorityAssignment ? 'Zadanie od rodzica' : 'Trening swobodny',
+            subject: operation.subject,
           };
         }),
     [difficulty, onSelect, priorityAssignmentsByOperation, recommendedLabel, recommendedOperation]

@@ -7,14 +7,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   buildKangurAssignmentListItemsMock,
+  filterKangurAssignmentsBySubjectMock,
   selectKangurPriorityAssignmentsMock,
   useKangurAssignmentsMock,
   useKangurPageContentEntryMock,
+  useKangurSubjectFocusMock,
 } = vi.hoisted(() => ({
   buildKangurAssignmentListItemsMock: vi.fn(),
+  filterKangurAssignmentsBySubjectMock: vi.fn(),
   selectKangurPriorityAssignmentsMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
@@ -39,12 +43,17 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
   buildKangurAssignmentListItems: buildKangurAssignmentListItemsMock,
+  filterKangurAssignmentsBySubject: filterKangurAssignmentsBySubjectMock,
   selectKangurPriorityAssignments: selectKangurPriorityAssignmentsMock,
 }));
 
@@ -60,6 +69,11 @@ describe('KangurLearnerAssignmentsPanel', () => {
       isError: false,
       error: null,
     });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+    });
+    filterKangurAssignmentsBySubjectMock.mockImplementation((assignments) => assignments);
   });
 
   it('renders the themed learner assignments summary copy for loaded data', () => {

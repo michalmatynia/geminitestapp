@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-11T04:30:41.087Z
+Generated at: 2026-03-16T18:55:00.117Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 355
-- Method exports scanned: 507
+- Routes scanned: 289
+- Method exports scanned: 433
 - Errors: 0
 - Warnings: 0
 - CSRF exemptions: 47
@@ -40,6 +40,7 @@ No route policy issues detected.
 | auth/mfa/verify | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/mock-signin | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/register | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/roles | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/users/[id] | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/users/[id] | DELETE | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/users/[id]/security | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
@@ -78,7 +79,6 @@ No route policy issues detected.
 | v2/integrations/products/[id]/listings/[listingId] | PATCH | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings/[listingId]/sync-base-images | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 | v2/integrations/products/[id]/listings | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
-| v2/integrations | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
 
 ## Notes
 

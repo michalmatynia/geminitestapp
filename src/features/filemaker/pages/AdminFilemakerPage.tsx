@@ -19,7 +19,7 @@ function AdminFilemakerPageInner(): React.JSX.Element {
   const { router } = useAdminFilemakerPageStateContext();
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='page-section-compact space-y-6'>
       <PanelHeader
         title='Filemaker'
         description='Manage persons, organizations, events, and emails used in Case Resolver document addressing.'

@@ -21,9 +21,57 @@ const mockKangurRoutingState = {
   embedded: false,
 };
 
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: {
+    fallback: T | (() => T);
+    onError?: (error: unknown) => void;
+    shouldReport?: (error: unknown) => boolean;
+    shouldRethrow?: (error: unknown) => boolean;
+  }
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
 vi.mock('@/features/kangur/observability/client', () => ({
   setKangurClientObservabilityContext: setKangurClientObservabilityContextMock,
   clearKangurClientObservabilityContext: clearKangurClientObservabilityContextMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -91,7 +139,7 @@ describe('KangurFeaturePage', () => {
 
     expect(screen.getByTestId('kangur-feature-page-shell')).toHaveClass(
       'kangur-premium-bg',
-      'min-h-screen'
+      'min-h-[100dvh]'
     );
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Tests',

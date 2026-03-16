@@ -12,7 +12,10 @@ import {
   type ReactNode,
 } from 'react';
 
-import { logKangurClientError } from '@/features/kangur/observability/client';
+import {
+  withKangurClientError,
+  withKangurClientErrorSync,
+} from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
@@ -20,7 +23,6 @@ import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/r
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 type KangurAuthError = {
@@ -81,15 +83,22 @@ const appendAuthModeParam = (href: string, authMode?: KangurAuthMode): string =>
   if (!authMode) {
     return href;
   }
-  try {
-    const parsed = new URL(href, 'https://kangur.local');
-    parsed.searchParams.set('authMode', authMode);
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch (error) {
-    logClientError(error);
-    const joiner = href.includes('?') ? '&' : '?';
-    return `${href}${joiner}authMode=${encodeURIComponent(authMode)}`;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.auth',
+      action: 'append-auth-mode',
+      description: 'Adds auth mode to the Kangur login href.',
+      context: { authMode },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      parsed.searchParams.set('authMode', authMode);
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    },
+    {
+      fallback: `${href}${href.includes('?') ? '&' : '?'}authMode=${encodeURIComponent(authMode)}`,
+    }
+  );
 };
 
 export const KangurAuthProvider = ({ children }: { children: ReactNode }): React.JSX.Element => {
@@ -110,35 +119,42 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     const requestVersion = ++authRequestVersionRef.current;
     setAuthError(null);
     setIsLoadingAuth(true);
-
     try {
-      const currentUser = await kangurPlatform.auth.me();
-      if (authRequestVersionRef.current !== requestVersion) {
-        return;
-      }
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    } catch (error: unknown) {
-      logClientError(error);
-      if (authRequestVersionRef.current !== requestVersion) {
-        return;
-      }
-      setUser(null);
-      setIsAuthenticated(false);
+      const currentUser = await withKangurClientError(
+        {
+          source: 'kangur.auth',
+          action: 'check-app-state',
+          description: 'Fetches the current Kangur auth session.',
+          context: { stage: 'auth.me' },
+        },
+        async () => await kangurPlatform.auth.me(),
+        {
+          fallback: null,
+          onError: (error) => {
+            if (authRequestVersionRef.current !== requestVersion) {
+              return;
+            }
+            setUser(null);
+            setIsAuthenticated(false);
 
-      if (isKangurAuthStatusError(error)) {
-        // Anonymous mode is allowed; authentication is optional.
-        setAuthError(null);
-      } else {
-        logKangurClientError(error, {
-          source: 'KangurAuthContext',
-          action: 'checkAppState',
-          stage: 'auth.me',
-        });
-        setAuthError({
-          type: 'unknown',
-          message: resolveErrorMessage(error),
-        });
+            if (isKangurAuthStatusError(error)) {
+              // Anonymous mode is allowed; authentication is optional.
+              setAuthError(null);
+            } else {
+              setAuthError({
+                type: 'unknown',
+                message: resolveErrorMessage(error),
+              });
+            }
+          },
+        }
+      );
+      if (authRequestVersionRef.current !== requestVersion) {
+        return;
+      }
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
       }
     } finally {
       if (authRequestVersionRef.current === requestVersion) {
@@ -159,25 +175,32 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     setIsLoadingAuth(!shouldRedirect);
 
     void (async (): Promise<void> => {
-      try {
-        if (shouldRedirect) {
-          await kangurPlatform.auth.logout(window.location.href);
-          return;
-        }
-        await kangurPlatform.auth.logout();
-        router.refresh();
-        await checkAppState();
-      } catch (error: unknown) {
-        logClientError(error);
-        logKangurClientError(error, {
-          source: 'KangurAuthContext',
+      await withKangurClientError(
+        {
+          source: 'kangur.auth',
           action: 'logout',
-          shouldRedirect,
-        });
-        if (!shouldRedirect) {
+          description: 'Logs out the current Kangur session.',
+          context: { shouldRedirect },
+        },
+        async () => {
+          if (shouldRedirect) {
+            await kangurPlatform.auth.logout(window.location.href);
+            return true;
+          }
+          await kangurPlatform.auth.logout();
+          router.refresh();
           await checkAppState();
+          return true;
+        },
+        {
+          fallback: false,
+          onError: () => {
+            if (!shouldRedirect) {
+              void checkAppState();
+            }
+          },
         }
-      }
+      );
     })();
   }, [checkAppState, router]);
 

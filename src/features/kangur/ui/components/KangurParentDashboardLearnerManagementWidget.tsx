@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Eye, EyeOff } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
@@ -53,6 +53,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     'parent-dashboard-learner-management'
   );
   const [isCreatePasswordVisible, setIsCreatePasswordVisible] = useState(false);
+  const createPasswordInputId = useId();
   const [isEditLearnerModalOpen, setIsEditLearnerModalOpen] = useState(false);
   const [isProfileMetricsModalOpen, setIsProfileMetricsModalOpen] = useState(false);
   const [sessionHistory, setSessionHistory] = useState<KangurLearnerSessionHistory | null>(null);
@@ -374,7 +375,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
             <DialogPrimitive.Content
               className={cn(
                 'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
-                'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
+                'kangur-max-h-screen-2 -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
                 'outline-none'
               )}
               data-testid='parent-create-learner-modal'
@@ -474,6 +475,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       aria-label='Hasło'
                       title='Hasło'
                       className='pr-12'
+                      id={createPasswordInputId}
                     />
                     <button
                       type='button'
@@ -481,6 +483,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       aria-label={
                         isCreatePasswordVisible ? 'Ukryj hasło' : 'Pokaż hasło'
                       }
+                      aria-pressed={isCreatePasswordVisible}
+                      aria-controls={createPasswordInputId}
                       className={cn(
                         'absolute right-3 top-1/2 -translate-y-1/2 rounded-full',
                         'p-2 text-slate-500 transition hover:text-slate-700',
@@ -543,7 +547,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           <DialogPrimitive.Content
             className={cn(
               'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
-              'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
+              'kangur-max-h-screen-2 -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
               'outline-none'
             )}
             data-testid='parent-profile-metrics-modal'
@@ -768,7 +772,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           <DialogPrimitive.Content
             className={cn(
               'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
-              'max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
+              'kangur-max-h-screen-2 -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
               'outline-none'
             )}
             data-testid='parent-edit-learner-modal'

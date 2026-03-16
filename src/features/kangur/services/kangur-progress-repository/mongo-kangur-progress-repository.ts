@@ -26,6 +26,11 @@ type MongoProgressSettingDocument = {
 const toSettingKey = (userKey: string): string =>
   `${KANGUR_PROGRESS_SETTING_PREFIX}${encodeURIComponent(userKey.trim().toLowerCase())}`;
 
+const isSubjectProgressKey = (userKey: string): boolean => userKey.includes('::');
+
+const buildSubjectProgressKey = (userKey: string, subject: string): string =>
+  `${userKey}::${subject}`;
+
 const parseProgressValue = (value: string | undefined): KangurProgressState => {
   if (!value) {
     return createDefaultKangurProgressState();
@@ -42,7 +47,21 @@ const parseProgressValue = (value: string | undefined): KangurProgressState => {
 export const mongoKangurProgressRepository: KangurProgressRepository = {
   async getProgress(userKey: string): Promise<KangurProgressState> {
     const db = await getMongoDb();
-    const settingKey = toSettingKey(userKey);
+    const normalizedKey = userKey.trim().toLowerCase();
+
+    if (!isSubjectProgressKey(normalizedKey)) {
+      const subjectSettingKey = toSettingKey(buildSubjectProgressKey(normalizedKey, 'maths'));
+      const subjectRow = await db
+        .collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION)
+        .findOne({
+          $or: [{ key: subjectSettingKey }, { _id: subjectSettingKey }],
+        } as Filter<MongoProgressSettingDocument>);
+      if (subjectRow) {
+        return parseProgressValue(subjectRow.value);
+      }
+    }
+
+    const settingKey = toSettingKey(normalizedKey);
     const row = await db.collection<MongoProgressSettingDocument>(SETTINGS_COLLECTION).findOne({
       $or: [{ key: settingKey }, { _id: settingKey }],
     } as Filter<MongoProgressSettingDocument>);

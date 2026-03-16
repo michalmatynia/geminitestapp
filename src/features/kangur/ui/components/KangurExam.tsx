@@ -140,8 +140,8 @@ function ExamNavigation({
     'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35';
 
   return (
-    <div className='grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2'>
-      <div />
+    <div className='grid w-full gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
+      <div className='hidden sm:block' />
       <nav className='flex items-center justify-center gap-2' aria-label={ariaLabel}>
         <KangurButton
           onClick={prevDisabled ? undefined : onPrev}
@@ -170,7 +170,7 @@ function ExamNavigation({
           <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
         </KangurButton>
       </nav>
-      <div className='flex justify-end' aria-live='polite' aria-atomic='true'>
+      <div className='flex justify-center sm:justify-end' aria-live='polite' aria-atomic='true'>
         {progressLabel ? (
           <KangurStatusChip
             accent='amber'

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-11T04:30:50.519Z",
-  "durationMs": 2928,
+  "generatedAt": "2026-03-16T18:13:46.027Z",
+  "durationMs": 3632,
   "status": "passed",
   "summary": {
     "queueCount": 16,
@@ -172,10 +172,16 @@
       "repeatManaged": true,
       "explicitlyStarted": true,
       "ownerModules": [
-        "src/server/queues/product-ai.ts"
+        "src/server/queues/integrations.ts",
+        "src/server/queues/product-ai.ts",
+        "src/server/queues/product-sync.ts"
       ],
       "startExports": [
-        "startProductAiJobQueue"
+        "startProductAiJobQueue",
+        "startProductSyncBackfillQueue",
+        "startProductSyncSchedulerQueue",
+        "startTraderaListingQueue",
+        "startTraderaRelistSchedulerQueue"
       ]
     },
     {

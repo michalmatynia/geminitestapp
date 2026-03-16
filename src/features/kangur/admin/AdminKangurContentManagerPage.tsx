@@ -13,11 +13,7 @@ import {
 import React, { useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
-import {
-  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-  parseKangurLessonDocumentStore,
-} from '@/features/kangur/lesson-documents';
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   parseKangurTestQuestionStore,
@@ -81,14 +77,14 @@ const ACTIVE_WORKSPACE_COPY: Record<
 
 export function AdminKangurContentManagerPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
+  const lessonsQuery = useKangurLessons();
+  const lessonDocumentsQuery = useKangurLessonDocuments();
   const rawTestSuites = settingsStore.get(KANGUR_TEST_SUITES_SETTING_KEY);
   const rawQuestions = settingsStore.get(KANGUR_TEST_QUESTIONS_SETTING_KEY);
-  const lessons = React.useMemo(() => parseKangurLessons(rawLessons), [rawLessons]);
+  const lessons = React.useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const lessonDocuments = React.useMemo(
-    () => parseKangurLessonDocumentStore(rawLessonDocuments),
-    [rawLessonDocuments]
+    () => lessonDocumentsQuery.data ?? {},
+    [lessonDocumentsQuery.data]
   );
   const testSuites = React.useMemo(() => parseKangurTestSuites(rawTestSuites), [rawTestSuites]);
   const questionStore = React.useMemo(

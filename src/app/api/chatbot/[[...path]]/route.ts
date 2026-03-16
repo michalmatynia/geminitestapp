@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as chatbotIndex from '../route-handler';
 import * as agentIndex from '../agent/route-handler';
@@ -21,6 +23,7 @@ import * as settings from '../settings/route-handler';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Params = Record<string, string>;
+type RouteParams = { path?: string[] | string };
 type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
@@ -29,26 +32,36 @@ type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHa
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
-const notFound = (): Response => new Response('Not Found', { status: 404 });
-const methodNotAllowed = (allowed: HttpMethod[]): Response =>
-  new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: allowed.join(', ') },
-  });
+const notFound = async (request: NextRequest, source: string): Promise<Response> =>
+  createErrorResponse(notFoundError('Not Found'), { request, source });
+const methodNotAllowed = async (
+  request: NextRequest,
+  allowed: HttpMethod[],
+  source: string
+): Promise<Response> => {
+  const response = await createErrorResponse(methodNotAllowedError('Method not allowed', {
+    allowedMethods: allowed,
+  }), { request, source });
+  response.headers.set('Allow', allowed.join(', '));
+  return response;
+};
 
 const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = <P extends Params>(
+const dispatch = async <P extends Params>(
   module: RouteModule<P>,
   method: HttpMethod,
   request: NextRequest,
-  params?: P
+  params: P | undefined,
+  source: string
 ): Promise<Response> => {
   const handler = module[method];
   if (!handler) {
     const allowed = getAllowedMethods(module);
-    return Promise.resolve(allowed.length > 0 ? methodNotAllowed(allowed) : notFound());
+    return allowed.length > 0
+      ? methodNotAllowed(request, allowed, source)
+      : notFound(request, source);
   }
   return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
 };
@@ -68,80 +81,91 @@ const routeChatbot = (
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
+  const source = `chatbot.[[...path]].${method}`;
   if (segments.length === 0) {
-    return dispatch(chatbotIndex, method, request);
+    return dispatch(chatbotIndex, method, request, undefined, source);
   }
 
   const [first, second, third, fourth] = segments;
 
   if (first === 'agent') {
     if (segments.length === 1) {
-      return dispatch(agentIndex, method, request);
+      return dispatch(agentIndex, method, request, undefined, source);
     }
     if (second && third === 'assets' && fourth && segments.length === 4) {
-      return dispatch(agentRunAssets, method, request, { runId: second, file: fourth });
+      return dispatch(agentRunAssets, method, request, { runId: second, file: fourth }, source);
     }
     if (second && third && segments.length === 3) {
-      return dispatch(agentRunAction, method, request, { runId: second, action: third });
+      return dispatch(agentRunAction, method, request, { runId: second, action: third }, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(agentRun, method, request, { runId: second });
+      return dispatch(agentRun, method, request, { runId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'context' && segments.length === 1) {
-    return dispatch(context, method, request);
+    return dispatch(context, method, request, undefined, source);
   }
 
   if (first === 'jobs') {
     if (segments.length === 1) {
-      return dispatch(jobsIndex, method, request);
+      return dispatch(jobsIndex, method, request, undefined, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(jobById, method, request, { jobId: second });
+      return dispatch(jobById, method, request, { jobId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'memory' && segments.length === 1) {
-    return dispatch(memory, method, request);
+    return dispatch(memory, method, request, undefined, source);
   }
 
   if (first === 'sessions') {
     if (segments.length === 1) {
-      return dispatch(sessionsIndex, method, request);
+      return dispatch(sessionsIndex, method, request, undefined, source);
     }
     if (second && third === 'messages' && segments.length === 3) {
-      return dispatch(sessionMessages, method, request, { sessionId: second });
+      return dispatch(sessionMessages, method, request, { sessionId: second }, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(sessionById, method, request, { sessionId: second });
+      return dispatch(sessionById, method, request, { sessionId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'settings' && segments.length === 1) {
-    return dispatch(settings, method, request);
+    return dispatch(settings, method, request, undefined, source);
   }
 
-  return Promise.resolve(notFound());
+  return notFound(request, source);
 };
 
-const buildRouteHandler = (method: HttpMethod) =>
-  apiHandler(
-    async (request: NextRequest) => routeChatbot(method, request, getPathSegments(request)),
-    {
-      source: `chatbot.router.${method}`,
-      successLogging: 'off',
-      requireCsrf: false,
-      resolveSessionUser: false,
-      rateLimitKey: false,
-    }
-  );
+const ROUTER_OPTIONS = {
+  successLogging: 'off',
+  requireCsrf: false,
+  resolveSessionUser: false,
+  rateLimitKey: false,
+} as const;
 
-export const GET = buildRouteHandler('GET');
-export const POST = buildRouteHandler('POST');
-export const PUT = buildRouteHandler('PUT');
-export const PATCH = buildRouteHandler('PATCH');
-export const DELETE = buildRouteHandler('DELETE');
+export const GET = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) => routeChatbot('GET', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'chatbot.[[...path]].GET', requireAuth: true }
+);
+export const POST = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) => routeChatbot('POST', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'chatbot.[[...path]].POST', requireAuth: true }
+);
+export const PUT = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) => routeChatbot('PUT', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'chatbot.[[...path]].PUT', requireAuth: true }
+);
+export const PATCH = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) => routeChatbot('PATCH', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'chatbot.[[...path]].PATCH', requireAuth: true }
+);
+export const DELETE = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) => routeChatbot('DELETE', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'chatbot.[[...path]].DELETE', requireAuth: true }
+);

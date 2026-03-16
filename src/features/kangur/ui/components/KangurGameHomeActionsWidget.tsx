@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/features/kangur/shared/utils';
@@ -260,6 +261,7 @@ export function KangurGameHomeActionsWidget({
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
+  const { subject } = useKangurSubjectFocus();
 
   if (hideWhenScreenMismatch && screen !== 'home') {
     return null;
@@ -305,6 +307,8 @@ export function KangurGameHomeActionsWidget({
       disabled: !canStartFromHome,
     },
   ];
+  const visibleActions =
+    subject === 'english' ? actions.filter((action) => action.id !== 'kangur') : actions;
 
   return (
     <KangurGlassPanel
@@ -319,7 +323,7 @@ export function KangurGameHomeActionsWidget({
           Wybierz aktywność
         </h3>
         <div className='grid grid-cols-1 kangur-panel-gap' data-testid='kangur-home-actions-list'>
-          {actions.map((action, index) => (
+          {visibleActions.map((action, index) => (
             <KangurHomeActionCard
               key={action.id}
               action={action}

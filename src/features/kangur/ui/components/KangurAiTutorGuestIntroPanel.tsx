@@ -78,7 +78,7 @@ export function KangurAiTutorGuestIntroPanel({
         <KangurAiTutorWarmOverlayPanel
           tone='modal'
           padding='lg'
-          className='flex max-h-[calc(100vh-6rem)] flex-col kangur-panel-gap overflow-y-auto'
+          className='flex kangur-max-h-screen-6 flex-col kangur-panel-gap overflow-y-auto'
         >
           <div className='flex items-center justify-between kangur-panel-gap'>
             <KangurAiTutorChromeKicker>

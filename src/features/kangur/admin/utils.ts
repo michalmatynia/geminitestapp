@@ -2,13 +2,11 @@ import type { KangurLessonInlineBlock } from '@/features/kangur/shared/contracts
 import type {
   KangurLesson,
   KangurLessonComponentId,
+  KangurLessonDocumentStore,
   KangurLessonPage,
 } from '@/features/kangur/shared/contracts/kangur';
 
-import {
-  hasKangurLessonDocumentContent,
-  parseKangurLessonDocumentStore,
-} from '../lesson-documents';
+import { hasKangurLessonDocumentContent } from '../lesson-documents';
 import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
 
@@ -50,6 +48,9 @@ export const getLessonRecipeFamily = (
   ) {
     return 'geometry';
   }
+  if (componentId?.startsWith('english_')) {
+    return 'logic';
+  }
   return 'logic';
 };
 
@@ -59,6 +60,7 @@ export const clamp = (value: number, min: number, max: number): number =>
 export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
   componentId: lesson.componentId,
   contentMode: lesson.contentMode,
+  subject: lesson.subject,
   title: lesson.title,
   description: lesson.description,
   emoji: lesson.emoji,
@@ -91,7 +93,7 @@ export const readPersistedTreeMode = (): LessonTreeMode => {
 
 export const countLessonsRequiringLegacyImport = (
   lessons: readonly KangurLesson[],
-  lessonDocuments: ReturnType<typeof parseKangurLessonDocumentStore>
+  lessonDocuments: KangurLessonDocumentStore
 ): number =>
   lessons.filter(
     (lesson) =>

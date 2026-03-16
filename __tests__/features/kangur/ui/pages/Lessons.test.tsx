@@ -10,6 +10,8 @@ import { render } from '@/__tests__/test-utils';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const {
   settingsStoreMock,
+  lessonsState,
+  lessonDocumentsState,
   authState,
   assignmentsState,
   progressState,
@@ -18,6 +20,12 @@ const {
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
+  },
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  lessonDocumentsState: {
+    value: {} as Record<string, unknown>,
   },
   authState: {
     value: {
@@ -38,6 +46,10 @@ const {
   useKangurPageContentEntryMock: vi.fn(),
 }));
 
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
@@ -52,8 +64,18 @@ vi.mock('next/dynamic', async () => {
 
   return {
     default: () =>
-      function MockLegacyLesson({ onBack }: { onBack: () => void }): React.JSX.Element {
+      function MockLegacyLesson({
+        onBack,
+        onReady,
+      }: {
+        onBack?: () => void;
+        onReady?: () => void;
+      }): React.JSX.Element {
         const secretLessonPill = lessonNavigation.useKangurLessonSecretPill();
+
+        React.useEffect(() => {
+          onReady?.();
+        }, [onReady]);
 
         return (
           <div data-testid='legacy-lesson'>
@@ -63,9 +85,11 @@ vi.mock('next/dynamic', async () => {
                 Open secret lesson
               </button>
             ) : null}
-            <button type='button' onClick={onBack}>
-              Back
-            </button>
+            {onBack ? (
+              <button type='button' onClick={onBack}>
+                Back
+              </button>
+            ) : null}
           </div>
         );
       },
@@ -140,6 +164,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => authState.value,
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => ({ basePath: '/kangur' }),
   useOptionalKangurRouting: () => null,
@@ -153,6 +181,42 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
     refresh: vi.fn(),
     createAssignment: vi.fn(),
     updateAssignment: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (
+    options: { subject?: string; enabledOnly?: boolean; enabled?: boolean } = {}
+  ) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    const deduped = new Map<string, Record<string, unknown>>();
+    data.forEach((lesson) => {
+      const componentId = String(lesson.componentId ?? lesson.id ?? '');
+      if (!deduped.has(componentId)) {
+        deduped.set(componentId, lesson);
+      }
+    });
+    data = Array.from(deduped.values());
+    return {
+      data,
+      isLoading: false,
+      error: null,
+      refresh: vi.fn(),
+      refetch: vi.fn(),
+    };
+  },
+  useKangurLessonDocuments: () => ({
+    data: lessonDocumentsState.value,
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    refetch: vi.fn(),
   }),
 }));
 
@@ -187,8 +251,7 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
 }));
 
-import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/lesson-documents';
-import { KANGUR_HELP_SETTINGS_KEY, KANGUR_LESSONS_SETTING_KEY } from '@/features/kangur/settings';
+import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/settings';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
@@ -202,6 +265,7 @@ const renderLessonsPage = () =>
 const createLesson = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: 'kangur-lesson-clock',
   componentId: 'clock',
+  subject: 'maths',
   contentMode: 'component',
   title: 'Nauka zegara',
   description: 'Odczytuj godziny',
@@ -227,7 +291,7 @@ const createProgressState = (
   };
 };
 
-const setSettingsStore = ({
+const setLessonState = ({
   lessons,
   documents,
   helpSettings,
@@ -236,15 +300,9 @@ const setSettingsStore = ({
   documents?: Record<string, unknown>;
   helpSettings?: Record<string, unknown>;
 }): void => {
+  lessonsState.value = lessons;
+  lessonDocumentsState.value = documents ?? {};
   settingsStoreMock.get.mockImplementation((key: string) => {
-    if (key === KANGUR_LESSONS_SETTING_KEY) {
-      return JSON.stringify(lessons);
-    }
-
-    if (key === KANGUR_LESSON_DOCUMENTS_SETTING_KEY) {
-      return documents ? JSON.stringify(documents) : undefined;
-    }
-
     if (key === KANGUR_HELP_SETTINGS_KEY) {
       return helpSettings ? JSON.stringify(helpSettings) : undefined;
     }
@@ -263,12 +321,19 @@ describe('Lessons', () => {
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
     assignmentsState.value = [];
     progressState.value = createProgressState();
+    lessonsState.value = [];
+    lessonDocumentsState.value = {};
     authState.value = {
       user: null,
       canAccessParentAssignments: false,
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     };
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
     useKangurPageContentEntryMock.mockImplementation(() => ({
       entry: null,
       data: undefined,
@@ -279,7 +344,7 @@ describe('Lessons', () => {
   });
 
   it('renders stored document content when the lesson is explicitly in document mode', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'geometry-doc',
@@ -319,7 +384,7 @@ describe('Lessons', () => {
   });
 
   it('renders each lesson component only once when persisted settings contain duplicates', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'kangur-lesson-clock-primary',
@@ -351,7 +416,7 @@ describe('Lessons', () => {
   });
 
   it('keeps only the lesson navigation button at the bottom and constrains its width', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson(),
         createLesson({
@@ -385,7 +450,7 @@ describe('Lessons', () => {
   });
 
   it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson(),
         createLesson({
@@ -414,7 +479,7 @@ describe('Lessons', () => {
   });
 
   it('redirects the unlocked secret lesson pill to the final lesson in the queue', async () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson(),
         createLesson({
@@ -453,7 +518,7 @@ describe('Lessons', () => {
   });
 
   it('applies documentation-backed titles to lesson navigation controls when tooltips are enabled', async () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [createLesson()],
       helpSettings: {
         docsTooltips: {
@@ -487,7 +552,7 @@ describe('Lessons', () => {
   });
 
   it('uses app-router navigation when the fallback back action has no browser history entry', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [createLesson()],
     });
 
@@ -517,7 +582,7 @@ describe('Lessons', () => {
   });
 
   it('keeps using the legacy component renderer when the lesson stays in component mode', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'clock-component',
@@ -574,7 +639,7 @@ describe('Lessons', () => {
     });
 
     try {
-      setSettingsStore({
+      setLessonState({
         lessons: [
           createLesson(),
           createLesson({
@@ -603,7 +668,7 @@ describe('Lessons', () => {
   });
 
   it('returns from an active lesson to the lessons library via the shared header back button', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [createLesson()],
     });
 
@@ -617,7 +682,7 @@ describe('Lessons', () => {
   });
 
   it('uses the smoother motion preset for lessons list and active lesson transitions', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson(),
         createLesson({
@@ -663,7 +728,7 @@ describe('Lessons', () => {
   });
 
   it('shows the empty-document warning when a document-mode lesson has no saved content', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'doc-empty',
@@ -760,7 +825,7 @@ describe('Lessons', () => {
       },
     });
 
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'clock-doc',
@@ -855,7 +920,7 @@ describe('Lessons', () => {
       },
     ];
 
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'adding-completed',
@@ -911,7 +976,7 @@ describe('Lessons', () => {
       },
     ];
 
-    setSettingsStore({
+    setLessonState({
       lessons: [createLesson()],
     });
 
@@ -923,7 +988,7 @@ describe('Lessons', () => {
   });
 
   it('uses the shared empty-state surface when no lessons are enabled', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [createLesson({ enabled: false })],
     });
 
@@ -939,7 +1004,7 @@ describe('Lessons', () => {
   });
 
   it('uses Mongo-backed page-content copy for the lessons list intro and empty state when available', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [createLesson({ enabled: false })],
     });
     useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
@@ -1028,7 +1093,7 @@ describe('Lessons', () => {
         },
       },
     ];
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'clock-doc',
@@ -1147,7 +1212,7 @@ describe('Lessons', () => {
   });
 
   it('falls back to the selected lesson title and description when the active header copy is blank', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'clock-component',
@@ -1191,7 +1256,7 @@ describe('Lessons', () => {
   });
 
   it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson({
           id: 'doc-empty',
@@ -1247,7 +1312,7 @@ describe('Lessons', () => {
   });
 
   it('uses Mongo-backed page-content copy for the secret lesson panel when available', async () => {
-    setSettingsStore({
+    setLessonState({
       lessons: [
         createLesson(),
         createLesson({
@@ -1304,7 +1369,7 @@ describe('Lessons', () => {
   });
 });
 it('renders the lessons wordmark without a duplicate visible text heading', () => {
-  setSettingsStore({
+  setLessonState({
     lessons: [createLesson()],
   });
 

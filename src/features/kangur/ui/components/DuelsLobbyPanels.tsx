@@ -3,7 +3,12 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
-import type { KangurDuelLobbyEntry, KangurDuelMode } from '@/features/kangur/shared/contracts/kangur-duels';
+import type {
+  KangurDuelDifficulty,
+  KangurDuelLobbyEntry,
+  KangurDuelMode,
+  KangurDuelOperation,
+} from '@/features/kangur/shared/contracts/kangur-duels';
 import { cn } from '@/features/kangur/shared/utils';
 import {
   KangurButton,
@@ -18,6 +23,8 @@ import {
   LOBBY_MODE_LABELS,
   SESSION_STATUS_LABELS,
   formatDurationLabel,
+  formatDuelDifficultyLabel,
+  formatDuelOperationLabel,
   formatRelativeAge,
   resolveLobbyHostInitial,
   resolveSessionAccent,
@@ -29,6 +36,14 @@ type LobbySortValue =
   | 'time_slow'
   | 'questions_low'
   | 'questions_high';
+
+const DUEL_OPERATION_FILTER_OPTIONS: KangurDuelOperation[] = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+];
+const DUEL_DIFFICULTY_FILTER_OPTIONS: KangurDuelDifficulty[] = ['easy', 'medium', 'hard'];
 
 type DuelsLobbyPanelsProps = {
   inviteLobbyEntries: KangurDuelLobbyEntry[];
@@ -42,10 +57,15 @@ type DuelsLobbyPanelsProps = {
   lobbyLastUpdatedAt: string | null;
   relativeNow: number;
   lobbyRefreshSeconds: number;
+  lobbyStreamStatus: 'idle' | 'connecting' | 'connected' | 'fallback';
   loadLobby: (options?: { showLoading?: boolean }) => Promise<void>;
   isLobbyLoading: boolean;
   lobbyModeFilter: 'all' | KangurDuelMode;
   setLobbyModeFilter: Dispatch<SetStateAction<'all' | KangurDuelMode>>;
+  lobbyOperationFilter: 'all' | KangurDuelOperation;
+  setLobbyOperationFilter: Dispatch<SetStateAction<'all' | KangurDuelOperation>>;
+  lobbyDifficultyFilter: 'all' | KangurDuelDifficulty;
+  setLobbyDifficultyFilter: Dispatch<SetStateAction<'all' | KangurDuelDifficulty>>;
   lobbySort: LobbySortValue;
   setLobbySort: Dispatch<SetStateAction<LobbySortValue>>;
   publicLobbyEntries: KangurDuelLobbyEntry[];
@@ -79,10 +99,15 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
     lobbyLastUpdatedAt,
     relativeNow,
     lobbyRefreshSeconds,
+    lobbyStreamStatus,
     loadLobby,
     isLobbyLoading,
     lobbyModeFilter,
     setLobbyModeFilter,
+    lobbyOperationFilter,
+    setLobbyOperationFilter,
+    lobbyDifficultyFilter,
+    setLobbyDifficultyFilter,
     lobbySort,
     setLobbySort,
     publicLobbyEntries,
@@ -107,6 +132,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
   const showOfflineChip = !isOnline;
   const showStaleChip = isLobbyStale && !lobbyError && isPageActive && isOnline;
   const showErrorChip = Boolean(lobbyError) && !showOfflineChip;
+  const showLiveChip = lobbyStreamStatus === 'connected';
+  const showConnectingChip = lobbyStreamStatus === 'connecting';
   const lobbyEntryMotionClass =
     'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:ease-out';
   const lobbyEntryHoverClass =
@@ -152,6 +179,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               const estimatedDurationSec = entry.questionCount * entry.timePerQuestionSec;
               const isJoining = joiningSessionId === entry.sessionId && canJoinLobby;
               const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
+              const operationLabel = formatDuelOperationLabel(entry.operation);
+              const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);
               return (
                 <li key={entry.sessionId}>
                   <KangurInfoCard
@@ -166,7 +195,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     )}
                     style={{ animationDelay: `${index * 70}ms` }}
                     role='group'
-                    aria-label={`Prywatne zaproszenie od ${entry.host.displayName}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
+                    aria-label={`Prywatne zaproszenie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                   >
                     <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between kangur-panel-gap'>
                       <div className='flex items-center kangur-panel-gap'>
@@ -200,6 +229,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                           trackKangurClientEvent('kangur_duels_lobby_join_clicked', {
                             visibility: entry.visibility,
                             mode: entry.mode,
+                            operation: entry.operation,
+                            difficulty: entry.difficulty,
                             questionCount: entry.questionCount,
                             timePerQuestionSec: entry.timePerQuestionSec,
                             isGuest: false,
@@ -231,6 +262,17 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                       <KangurStatusChip accent={LOBBY_MODE_ACCENTS[entry.mode]} size='sm'>
                         {LOBBY_MODE_LABELS[entry.mode]}
                       </KangurStatusChip>
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {operationLabel}
+                      </KangurStatusChip>
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {difficultyLabel}
+                      </KangurStatusChip>
+                      {entry.series ? (
+                        <KangurStatusChip accent='slate' size='sm'>
+                          BO{entry.series.bestOf}
+                        </KangurStatusChip>
+                      ) : null}
                       <KangurStatusChip accent='indigo' size='sm'>
                         Prywatny
                       </KangurStatusChip>
@@ -287,6 +329,16 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 Problem z połączeniem
               </KangurStatusChip>
             ) : null}
+            {showConnectingChip ? (
+              <KangurStatusChip accent='slate' size='sm'>
+                Łączymy na żywo
+              </KangurStatusChip>
+            ) : null}
+            {showLiveChip ? (
+              <KangurStatusChip accent='emerald' size='sm'>
+                Na żywo
+              </KangurStatusChip>
+            ) : null}
             {showStaleChip ? (
               <KangurStatusChip accent='rose' size='sm'>
                 Dane mogą być nieaktualne
@@ -298,7 +350,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               </KangurStatusChip>
             ) : null}
             <KangurStatusChip accent='slate' size='sm'>
-              Auto co {lobbyRefreshSeconds}s
+              {showLiveChip ? `Awaryjnie co ${lobbyRefreshSeconds}s` : `Auto co ${lobbyRefreshSeconds}s`}
             </KangurStatusChip>
             <KangurButton
               onClick={() => {
@@ -349,7 +401,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           </KangurInfoCard>
         ) : null}
 
-        <div className='flex flex-col sm:flex-row sm:flex-wrap items-end kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3'>
+        <div className='flex flex-col items-stretch kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:flex-row sm:flex-wrap sm:items-end'>
           <div className='w-full sm:min-w-[180px] space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
               Tryb
@@ -360,6 +412,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 const nextValue = event.target.value as 'all' | KangurDuelMode;
                 trackKangurClientEvent('kangur_duels_lobby_filter_changed', {
                   modeFilter: nextValue,
+                  operationFilter: lobbyOperationFilter,
+                  difficultyFilter: lobbyDifficultyFilter,
                   isGuest,
                 });
                 setLobbyModeFilter(nextValue);
@@ -371,6 +425,62 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               <option value='all'>Wszystkie tryby</option>
               <option value='challenge'>Wyzwania</option>
               <option value='quick_match'>Szybkie pojedynki</option>
+            </KangurSelectField>
+          </div>
+          <div className='w-full sm:min-w-[200px] space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
+              Działanie
+            </div>
+            <KangurSelectField
+              value={lobbyOperationFilter}
+              onChange={(event) => {
+                const nextValue = event.target.value as 'all' | KangurDuelOperation;
+                trackKangurClientEvent('kangur_duels_lobby_filter_changed', {
+                  modeFilter: lobbyModeFilter,
+                  operationFilter: nextValue,
+                  difficultyFilter: lobbyDifficultyFilter,
+                  isGuest,
+                });
+                setLobbyOperationFilter(nextValue);
+              }}
+              aria-label='Filtruj lobby po działaniu'
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>Wszystkie działania</option>
+              {DUEL_OPERATION_FILTER_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {formatDuelOperationLabel(value)}
+                </option>
+              ))}
+            </KangurSelectField>
+          </div>
+          <div className='w-full sm:min-w-[180px] space-y-1'>
+            <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
+              Poziom
+            </div>
+            <KangurSelectField
+              value={lobbyDifficultyFilter}
+              onChange={(event) => {
+                const nextValue = event.target.value as 'all' | KangurDuelDifficulty;
+                trackKangurClientEvent('kangur_duels_lobby_filter_changed', {
+                  modeFilter: lobbyModeFilter,
+                  operationFilter: lobbyOperationFilter,
+                  difficultyFilter: nextValue,
+                  isGuest,
+                });
+                setLobbyDifficultyFilter(nextValue);
+              }}
+              aria-label='Filtruj lobby po poziomie'
+              size='sm'
+              accent='slate'
+            >
+              <option value='all'>Wszystkie poziomy</option>
+              {DUEL_DIFFICULTY_FILTER_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {formatDuelDifficultyLabel(value)}
+                </option>
+              ))}
             </KangurSelectField>
           </div>
           <div className='w-full sm:min-w-[200px] space-y-1'>
@@ -512,6 +622,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               <KangurButton
                 onClick={() => {
                   setLobbyModeFilter('all');
+                  setLobbyOperationFilter('all');
+                  setLobbyDifficultyFilter('all');
                   setLobbySort('recent');
                 }}
                 variant='ghost'
@@ -537,6 +649,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               const estimatedDurationSec = entry.questionCount * entry.timePerQuestionSec;
               const isJoining = joiningSessionId === entry.sessionId && canJoinLobby;
               const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
+              const operationLabel = formatDuelOperationLabel(entry.operation);
+              const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);
               return (
                 <li key={entry.sessionId}>
                   <KangurInfoCard
@@ -551,7 +665,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     )}
                     style={{ animationDelay: `${index * 70}ms` }}
                     role='group'
-                    aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
+                    aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                   >
                     <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between kangur-panel-gap'>
                       <div className='flex items-center kangur-panel-gap'>
@@ -585,6 +699,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                           trackKangurClientEvent('kangur_duels_lobby_join_clicked', {
                             visibility: entry.visibility,
                             mode: entry.mode,
+                            operation: entry.operation,
+                            difficulty: entry.difficulty,
                             questionCount: entry.questionCount,
                             timePerQuestionSec: entry.timePerQuestionSec,
                             isGuest: false,
@@ -616,6 +732,17 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                       <KangurStatusChip accent={LOBBY_MODE_ACCENTS[entry.mode]} size='sm'>
                         {LOBBY_MODE_LABELS[entry.mode]}
                       </KangurStatusChip>
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {operationLabel}
+                      </KangurStatusChip>
+                      <KangurStatusChip accent='slate' size='sm'>
+                        {difficultyLabel}
+                      </KangurStatusChip>
+                      {entry.series ? (
+                        <KangurStatusChip accent='slate' size='sm'>
+                          BO{entry.series.bestOf}
+                        </KangurStatusChip>
+                      ) : null}
                       <KangurStatusChip accent='slate' size='sm'>
                         Publiczny
                       </KangurStatusChip>

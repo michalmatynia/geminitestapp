@@ -38,6 +38,7 @@ export type TanstackFactoryDomain =
   | 'jobs'
   | 'observability'
   | 'chatbot'
+  | 'kangur'
   | 'agent_creator'
   | 'drafter'
   | 'files'

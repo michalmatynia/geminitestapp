@@ -3,14 +3,13 @@
 import { useEffect, type ReactNode } from 'react';
 
 import {
-  logKangurClientError,
   trackKangurClientEvent,
+  withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { syncGuestKangurScores } from '@/features/kangur/services/guest-kangur-scores';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -47,35 +46,41 @@ export function KangurScoreSyncProvider({
     let cancelled = false;
 
     const syncScores = async (): Promise<void> => {
-      try {
-        const result = await syncGuestKangurScores({
-          persistScore: (payload) => kangurPlatform.score.create(payload),
-        });
-        if (cancelled || result.syncedCount === 0) {
-          return;
-        }
+      const result = await withKangurClientError(
+        () => ({
+          source: 'kangur.score-sync',
+          action: 'sync-guest-scores',
+          description: 'Syncs guest Kangur scores to the authenticated account.',
+          context: { learnerKey },
+        }),
+        async () =>
+          await syncGuestKangurScores({
+            persistScore: (payload) => kangurPlatform.score.create(payload),
+          }),
+        {
+          fallback: null,
+          shouldReport: () => !cancelled,
+          onError: (error) => {
+            if (cancelled || isKangurAuthStatusError(error)) {
+              return;
+            }
 
-        trackKangurClientEvent('kangur_guest_scores_synced', {
-          learnerKey,
-          syncedCount: result.syncedCount,
-          remainingCount: result.remainingCount,
-        });
-      } catch (error: unknown) {
-        logClientError(error);
-        if (cancelled || isKangurAuthStatusError(error)) {
-          return;
+            trackKangurClientEvent('kangur_guest_scores_sync_failed', {
+              learnerKey,
+              errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            });
+          },
         }
-
-        trackKangurClientEvent('kangur_guest_scores_sync_failed', {
-          learnerKey,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        });
-        logKangurClientError(error, {
-          source: 'KangurScoreSyncProvider',
-          action: 'syncGuestScores',
-          learnerKey,
-        });
+      );
+      if (!result || cancelled || result.syncedCount === 0) {
+        return;
       }
+
+      trackKangurClientEvent('kangur_guest_scores_synced', {
+        learnerKey,
+        syncedCount: result.syncedCount,
+        remainingCount: result.remainingCount,
+      });
     };
 
     void syncScores();

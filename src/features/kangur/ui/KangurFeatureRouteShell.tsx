@@ -103,7 +103,7 @@ export function KangurFeatureRouteShell({
   return (
     <div
       className={cn(
-        'relative min-h-screen w-full kangur-premium-bg text-slate-800',
+        'relative min-h-screen min-h-[100svh] min-h-[100dvh] w-full kangur-premium-bg text-slate-800',
         routeShellClassOverride
       )}
       data-appearance-mode={appearanceMode}

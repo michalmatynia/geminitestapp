@@ -8,6 +8,7 @@ import {
   PageBuilderPageSkeleton,
   PageBuilderProvider,
   ThemeSettingsProvider,
+  type LeftPanelMode,
   usePageBuilder,
 } from '@/features/cms/public';
 import type { SectionInstance } from '@/shared/contracts/cms';
@@ -38,7 +39,6 @@ import {
   type KangurCmsProject,
   type KangurCmsScreenKey,
 } from './project';
-import type { LeftPanelMode } from '@/features/cms/components/page-builder/CmsBuilderLeftPanel';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
 

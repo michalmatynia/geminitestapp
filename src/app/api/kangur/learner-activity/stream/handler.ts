@@ -1,5 +1,6 @@
 import { Redis } from 'ioredis';
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 import {
   getKangurLearnerActivityRepository,
@@ -8,7 +9,8 @@ import {
 } from '@/features/kangur/server';
 import type { KangurLearnerProfile } from '@/features/kangur/services/ports';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
+import { forbiddenError, notFoundError, validationError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -16,6 +18,10 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const REDIS_CONNECT_TIMEOUT_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+
+const querySchema = z.object({
+  learnerId: optionalTrimmedQueryString(),
+});
 
 const buildSseFrame = (payload: unknown): string => `data: ${JSON.stringify(payload)}\n\n`;
 
@@ -72,7 +78,15 @@ export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const requestedLearnerId = new URL(req.url).searchParams.get('learnerId')?.trim() || null;
+  const parsedQuery = querySchema.safeParse(
+    Object.fromEntries(new URL(req.url).searchParams.entries())
+  );
+  if (!parsedQuery.success) {
+    throw validationError('Invalid query parameters', {
+      issues: parsedQuery.error.flatten(),
+    });
+  }
+  const requestedLearnerId = parsedQuery.data.learnerId ?? null;
   const actor = await resolveKangurActor(req);
   const activeLearner = resolveActiveLearner(actor, requestedLearnerId);
   const repository = await getKangurLearnerActivityRepository();

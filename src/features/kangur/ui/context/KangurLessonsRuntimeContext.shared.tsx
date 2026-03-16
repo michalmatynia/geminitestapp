@@ -1,6 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type {
@@ -8,120 +7,19 @@ import type {
   KangurLessonComponentId,
   KangurLessonDocument,
   KangurLessonDocumentStore,
+  KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 
-import type { ComponentType, JSX, RefObject } from 'react';
+import type { ComponentType, RefObject } from 'react';
 
-export type LessonProps = {
-  onBack?: () => void;
-};
+import {
+  FOCUS_TO_COMPONENT,
+  LESSON_COMPONENTS,
+  type LessonProps,
+} from '@/features/kangur/lessons/lesson-ui-registry';
+import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
 
-const LessonLoadingFallback = (): JSX.Element => (
-  <div className='glass-panel w-full rounded-3xl border border-indigo-200/70 p-6 text-center text-sm text-indigo-500 shadow-lg'>
-    Ladowanie lekcji...
-  </div>
-);
-
-const loadLessonComponent = (
-  loader: () => Promise<unknown>
-): ComponentType<LessonProps> =>
-  dynamic<LessonProps>(
-    async () => {
-      const module = (await loader()) as { default: ComponentType<LessonProps> };
-      return module.default;
-    },
-    {
-      ssr: false,
-      loading: LessonLoadingFallback,
-    }
-  );
-
-const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
-const CalendarLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/CalendarLesson')
-);
-const AddingLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/AddingLesson'));
-const SubtractingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/SubtractingLesson')
-);
-const MultiplicationLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/MultiplicationLesson')
-);
-const DivisionLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/DivisionLesson')
-);
-const GeometryBasicsLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryBasicsLesson')
-);
-const GeometryShapesLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryShapesLesson')
-);
-const GeometrySymmetryLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometrySymmetryLesson')
-);
-const GeometryPerimeterLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryPerimeterLesson')
-);
-const LogicalThinkingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalThinkingLesson')
-);
-const LogicalPatternsLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalPatternsLesson')
-);
-const LogicalClassificationLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalClassificationLesson')
-);
-const LogicalReasoningLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalReasoningLesson')
-);
-const LogicalAnalogiesLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/LogicalAnalogiesLesson')
-);
-
-export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
-  clock: ClockLesson,
-  calendar: CalendarLesson,
-  adding: AddingLesson,
-  subtracting: SubtractingLesson,
-  multiplication: MultiplicationLesson,
-  division: DivisionLesson,
-  geometry_basics: GeometryBasicsLesson,
-  geometry_shapes: GeometryShapesLesson,
-  geometry_symmetry: GeometrySymmetryLesson,
-  geometry_perimeter: GeometryPerimeterLesson,
-  logical_thinking: LogicalThinkingLesson,
-  logical_patterns: LogicalPatternsLesson,
-  logical_classification: LogicalClassificationLesson,
-  logical_reasoning: LogicalReasoningLesson,
-  logical_analogies: LogicalAnalogiesLesson,
-};
-
-const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
-  adding: 'adding',
-  addition: 'adding',
-  subtracting: 'subtracting',
-  subtraction: 'subtracting',
-  multiplication: 'multiplication',
-  division: 'division',
-  clock: 'clock',
-  calendar: 'calendar',
-  geometry: 'geometry_shapes',
-  geometry_basics: 'geometry_basics',
-  geometry_shapes: 'geometry_shapes',
-  geometry_symmetry: 'geometry_symmetry',
-  geometry_perimeter: 'geometry_perimeter',
-  logical_thinking: 'logical_thinking',
-  thinking: 'logical_thinking',
-  logical_patterns: 'logical_patterns',
-  patterns: 'logical_patterns',
-  logical_classification: 'logical_classification',
-  classification: 'logical_classification',
-  logical_reasoning: 'logical_reasoning',
-  reasoning: 'logical_reasoning',
-  logical_analogies: 'logical_analogies',
-  analogies: 'logical_analogies',
-  logic: 'logical_thinking',
-};
+export { LESSON_COMPONENTS };
 
 export const LESSON_ASSIGNMENT_PRIORITY_ORDER = {
   high: 0,
@@ -144,6 +42,33 @@ export const resolveFocusedLessonId = (
 
   const byTitle = lessons.find((lesson) => lesson.title.toLowerCase().includes(focusToken));
   return byTitle?.id ?? null;
+};
+
+export const resolveFocusedLessonComponentId = (
+  focusToken: string
+): KangurLessonComponentId | null => {
+  const normalizedToken = focusToken.trim().toLowerCase();
+  if (!normalizedToken) {
+    return null;
+  }
+
+  const mappedComponent = FOCUS_TO_COMPONENT[normalizedToken];
+  if (mappedComponent) {
+    return mappedComponent;
+  }
+
+  return normalizedToken in KANGUR_LESSON_LIBRARY
+    ? (normalizedToken as KangurLessonComponentId)
+    : null;
+};
+
+export const resolveFocusedLessonSubject = (focusToken: string): KangurLessonSubject | null => {
+  const componentId = resolveFocusedLessonComponentId(focusToken);
+  if (!componentId) {
+    return null;
+  }
+
+  return KANGUR_LESSON_LIBRARY[componentId]?.subject ?? null;
 };
 
 export const getLessonAssignmentTimestamp = (

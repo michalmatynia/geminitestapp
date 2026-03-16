@@ -1,5 +1,7 @@
 import type { Point2d } from '@/shared/contracts/geometry';
 
+import { loosenMax, loosenMin } from './drawing-leniency';
+
 export type SymmetryAxisOrientation = 'vertical' | 'horizontal';
 
 export type SymmetryAxis = {
@@ -29,16 +31,16 @@ export type SymmetryMirrorEvaluation = {
   message: string;
 };
 
-const MIN_POINTS = 12;
-const MIN_AXIS_LENGTH = 80;
-const MAX_AXIS_DEVIATION = 12;
-const MAX_AXIS_OFFSET = 16;
-const MAX_AXIS_CROSS_RANGE = 30;
-const MIRROR_DISTANCE_TOLERANCE = 6;
-const MIN_MIRROR_COVERAGE = 0.825;
-const MAX_MIRROR_AVG_DISTANCE = 7;
-const MAX_OFFSIDE_RATIO = 0.1;
-const MIN_MIRROR_LENGTH_RATIO = 0.85;
+const MIN_POINTS = loosenMin(12);
+const MIN_AXIS_LENGTH = loosenMin(80);
+const MAX_AXIS_DEVIATION = loosenMax(12);
+const MAX_AXIS_OFFSET = loosenMax(16);
+const MAX_AXIS_CROSS_RANGE = loosenMax(30);
+const MIRROR_DISTANCE_TOLERANCE = loosenMax(6);
+const MIN_MIRROR_COVERAGE = loosenMin(0.825);
+const MAX_MIRROR_AVG_DISTANCE = loosenMax(7);
+const MAX_OFFSIDE_RATIO = loosenMax(0.1);
+const MIN_MIRROR_LENGTH_RATIO = loosenMin(0.85);
 
 const distance = (a: Point2d, b: Point2d): number =>
   Math.hypot(a.x - b.x, a.y - b.y);
@@ -154,7 +156,7 @@ const isOnExpectedSide = (
   axis: SymmetryAxis,
   expectedSide: SymmetryExpectedSide
 ): boolean => {
-  const margin = 4;
+  const margin = loosenMin(4);
   if (axis.orientation === 'vertical') {
     if (expectedSide === 'left') return point.x < axis.position - margin;
     if (expectedSide === 'right') return point.x > axis.position + margin;

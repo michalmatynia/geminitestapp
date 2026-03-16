@@ -417,5 +417,5 @@ export function getSectionContainerClass(options?: {
     return `w-full ${padding}`;
   }
   const maxWidth = options?.maxWidthClass ? ` ${options.maxWidthClass}` : '';
-  return `container mx-auto${maxWidth} ${padding}`;
+  return `page-container${maxWidth} ${padding}`;
 }

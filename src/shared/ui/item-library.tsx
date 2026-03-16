@@ -134,7 +134,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
   };
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='page-section space-y-6'>
       <SectionHeader
         title={title}
         description={description}

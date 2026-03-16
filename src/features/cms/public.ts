@@ -10,9 +10,11 @@ export {
   resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from './components/frontend/CmsStorefrontAppearance';
+export type { CmsStorefrontAppearanceMode } from './components/frontend/CmsStorefrontAppearance';
 export { MediaStylesProvider } from './components/frontend/media-styles-context';
 export * from './components/frontend/theme-styles';
 export { CmsBuilderLeftPanel } from './components/page-builder/CmsBuilderLeftPanel';
+export type { LeftPanelMode } from './components/page-builder/CmsBuilderLeftPanel';
 export { ComponentSettingsPanel } from './components/page-builder/ComponentSettingsPanel';
 export { MediaLibraryPanel } from './components/page-builder/MediaLibraryPanel';
 export { PageBuilderPageSkeleton } from './components/page-builder/PageBuilderPageSkeleton';

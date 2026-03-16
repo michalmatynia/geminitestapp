@@ -1,5 +1,5 @@
 import { DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE } from '@/shared/contracts/app-embeds';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 export const KANGUR_BASE_PATH = '/kangur';
@@ -112,17 +112,23 @@ export const normalizeKangurHostPath = (value: string | null | undefined): strin
     return '/';
   }
 
-  try {
-    const parsed = new URL(
-      trimmed.startsWith('/') ? trimmed : `/${trimmed}`,
-      'https://kangur.local'
-    );
-    const normalizedPathname = normalizeKangurHostPathname(parsed.pathname);
-    return `${normalizedPathname}${parsed.search}${parsed.hash}`;
-  } catch (error) {
-    logClientError(error);
-    return normalizeKangurHostPathname(trimmed);
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'normalize-host-path',
+      description: 'Normalizes the Kangur host path input.',
+      context: { value: trimmed },
+    },
+    () => {
+      const parsed = new URL(
+        trimmed.startsWith('/') ? trimmed : `/${trimmed}`,
+        'https://kangur.local'
+      );
+      const normalizedPathname = normalizeKangurHostPathname(parsed.pathname);
+      return `${normalizedPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: normalizeKangurHostPathname(trimmed) }
+  );
 };
 
 export const buildKangurEmbeddedBasePath = (hostPath: string, scopeKey?: string | null): string => {
@@ -195,26 +201,35 @@ export const appendKangurUrlParams = (
   params: Record<string, string | number | boolean | null | undefined>,
   basePath?: string | null
 ): string => {
-  try {
-    const parsed = new URL(href, 'https://kangur.local');
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'append-params',
+      description: 'Appends Kangur query params to a href.',
+      context: {
+        href,
+        paramKeys: Object.keys(params),
+      },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
 
-    Object.entries(params).forEach(([key, value]) => {
-      const resolvedKey = isKangurInternalQueryParamKey(key)
-        ? getKangurInternalQueryParamName(key, basePath)
-        : key;
+      Object.entries(params).forEach(([key, value]) => {
+        const resolvedKey = isKangurInternalQueryParamKey(key)
+          ? getKangurInternalQueryParamName(key, basePath)
+          : key;
 
-      if (value === null || value === undefined || value === '') {
-        parsed.searchParams.delete(resolvedKey);
-        return;
-      }
-      parsed.searchParams.set(resolvedKey, String(value));
-    });
+        if (value === null || value === undefined || value === '') {
+          parsed.searchParams.delete(resolvedKey);
+          return;
+        }
+        parsed.searchParams.set(resolvedKey, String(value));
+      });
 
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch (error) {
-    logClientError(error);
-    return href;
-  }
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
 };
 
 export const normalizeKangurBasePath = (basePath: string | null | undefined): string => {
@@ -232,16 +247,22 @@ export const normalizeKangurBasePath = (basePath: string | null | undefined): st
     return KANGUR_BASE_PATH;
   }
 
-  try {
-    const parsed = new URL(
-      trimmed.startsWith('/') ? trimmed : `/${trimmed}`,
-      'https://kangur.local'
-    );
-    return normalizeKangurHostPathname(parsed.pathname);
-  } catch (error) {
-    logClientError(error);
-    return normalizeKangurHostPathname(trimmed);
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'normalize-base-path',
+      description: 'Normalizes the Kangur base path.',
+      context: { basePath: trimmed },
+    },
+    () => {
+      const parsed = new URL(
+        trimmed.startsWith('/') ? trimmed : `/${trimmed}`,
+        'https://kangur.local'
+      );
+      return normalizeKangurHostPathname(parsed.pathname);
+    },
+    { fallback: normalizeKangurHostPathname(trimmed) }
+  );
 };
 
 const joinKangurPath = (basePath: string, suffix: string): string => {
@@ -279,23 +300,32 @@ export const resolveKangurPublicBasePathFromHref = (
   href: string,
   currentOrigin: string
 ): string => {
-  try {
-    const parsed = new URL(href, currentOrigin);
-    if (parsed.origin !== currentOrigin) {
-      return KANGUR_BASE_PATH;
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'resolve-public-base',
+      description: 'Resolves the public Kangur base path from a href.',
+      context: { href },
+    },
+    () => {
+      const parsed = new URL(href, currentOrigin);
+      if (parsed.origin !== currentOrigin) {
+        return KANGUR_BASE_PATH;
+      }
+      const normalizedPathname = normalizeKangurHostPathname(parsed.pathname);
+      return normalizedPathname === KANGUR_BASE_PATH ||
+        normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
+        ? KANGUR_BASE_PATH
+        : '/';
+    },
+    {
+      fallback: href.startsWith(`${KANGUR_BASE_PATH}/`) || href === KANGUR_BASE_PATH
+        ? KANGUR_BASE_PATH
+        : href.startsWith('/')
+          ? '/'
+          : KANGUR_BASE_PATH,
     }
-    const normalizedPathname = normalizeKangurHostPathname(parsed.pathname);
-    return normalizedPathname === KANGUR_BASE_PATH ||
-      normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
-      ? KANGUR_BASE_PATH
-      : '/';
-  } catch (error) {
-    logClientError(error);
-    if (href.startsWith(`${KANGUR_BASE_PATH}/`) || href === KANGUR_BASE_PATH) {
-      return KANGUR_BASE_PATH;
-    }
-    return href.startsWith('/') ? '/' : KANGUR_BASE_PATH;
-  }
+  );
 };
 
 export const getKangurPageHref = (
@@ -400,14 +430,20 @@ export const getKangurLoginHref = (
   if (!callbackUrl) {
     return loginPath;
   }
-  try {
-    const parsed = new URL(loginPath, 'https://kangur.local');
-    parsed.searchParams.set('callbackUrl', callbackUrl);
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch (error) {
-    logClientError(error);
-    return loginPath;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'build-login-href',
+      description: 'Builds the Kangur login href with callback URL.',
+      context: { basePath },
+    },
+    () => {
+      const parsed = new URL(loginPath, 'https://kangur.local');
+      parsed.searchParams.set('callbackUrl', callbackUrl);
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: loginPath }
+  );
 };
 
 export const resolveKangurPageKeyFromSlug = (slug: string | null | undefined): string | null => {

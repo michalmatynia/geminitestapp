@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { kangurLessonImageBlockSchema } from '@/shared/contracts/kangur';
+import {
+  KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+  kangurLearnerCreateInputSchema,
+  kangurLearnerSignInInputSchema,
+  kangurLessonImageBlockSchema,
+} from '@/shared/contracts/kangur';
 
 describe('kangur contract runtime', () => {
   it('accepts empty and svg lesson image sources', () => {
@@ -37,5 +42,41 @@ describe('kangur contract runtime', () => {
         src: 'javascript:alert(1)',
       })
     ).toThrow(/svg/i);
+  });
+
+  it('accepts alphanumeric learner passwords with the minimum length', () => {
+    const payload = {
+      displayName: 'Ada',
+      loginName: 'ada01',
+      password: 'abc123',
+    };
+
+    expect(kangurLearnerCreateInputSchema.parse(payload).password).toBe('abc123');
+    expect(
+      kangurLearnerSignInInputSchema.parse({
+        loginName: 'ada01',
+        password: 'abc123',
+      }).password
+    ).toBe('abc123');
+  });
+
+  it('rejects learner passwords shorter than the minimum length', () => {
+    const shortPassword = 'a'.repeat(KANGUR_LEARNER_PASSWORD_MIN_LENGTH - 1);
+    expect(() =>
+      kangurLearnerSignInInputSchema.parse({
+        loginName: 'ada01',
+        password: shortPassword,
+      })
+    ).toThrow(/at least/i);
+  });
+
+  it('rejects learner passwords with non-alphanumeric characters', () => {
+    expect(() =>
+      kangurLearnerCreateInputSchema.parse({
+        displayName: 'Ada',
+        loginName: 'ada01',
+        password: 'abc123!',
+      })
+    ).toThrow(/letters and numbers/i);
   });
 });

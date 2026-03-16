@@ -13,7 +13,7 @@ import type {
   KangurAiTutorOnboardingRecord,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { TutorPanelPositionMode, TutorPanelSnapState } from './KangurAiTutorWidget.shared';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 type KangurAiTutorGuestIntroRecord = KangurAiTutorOnboardingRecord<KangurAiTutorGuestIntroStatus>;
@@ -110,18 +110,26 @@ const loadPersistedTutorWidgetState = (): KangurAiTutorWidgetStorageState | null
     return null;
   }
 
-  try {
-    const raw = window.sessionStorage.getItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-widget-storage',
+      action: 'load-widget-state',
+      description: 'Load tutor widget state from session storage.',
+      context: {
+        storageKey: KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+      },
+    },
+    () => {
+      const raw = window.sessionStorage.getItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
 
-    const parsed = JSON.parse(raw) as KangurAiTutorWidgetStorageState | null;
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      const parsed = JSON.parse(raw) as KangurAiTutorWidgetStorageState | null;
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    },
+    { fallback: null }
+  );
 };
 
 const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void => {
@@ -142,28 +150,39 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
     ...(typeof state.hidden === 'boolean' ? { hidden: state.hidden } : {}),
   };
 
-  try {
-    if (
-      !('lastSessionKey' in nextState) &&
-      !('pendingFollowUp' in nextState) &&
-      !('pendingNavigationTarget' in nextState) &&
-      !('avatarPosition' in nextState) &&
-      !('panelPosition' in nextState) &&
-      !('hidden' in nextState)
-    ) {
-      window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
-      return;
-    }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-widget-storage',
+      action: 'persist-widget-state',
+      description: 'Persist tutor widget state to session storage.',
+      context: {
+        storageKey: KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+      },
+    },
+    () => {
+      if (
+        !('lastSessionKey' in nextState) &&
+        !('pendingFollowUp' in nextState) &&
+        !('pendingNavigationTarget' in nextState) &&
+        !('avatarPosition' in nextState) &&
+        !('panelPosition' in nextState) &&
+        !('hidden' in nextState)
+      ) {
+        window.sessionStorage.removeItem(KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY);
+        return;
+      }
 
-    window.sessionStorage.setItem(
-      KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
-      JSON.stringify(nextState)
-    );
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage write failures so the widget remains functional without storage.
-  }
+      window.sessionStorage.setItem(
+        KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+        JSON.stringify(nextState)
+      );
+    },
+    {
+      fallback: () => {
+        // Ignore storage write failures so the widget remains functional without storage.
+      },
+    }
+  );
 };
 
 const isValidPendingFollowUpRecord = (
@@ -551,32 +570,40 @@ export const loadPersistedGuestIntroRecord = (): KangurAiTutorGuestIntroRecord |
     return null;
   }
 
-  try {
-    const raw = window.localStorage.getItem(KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-widget-storage',
+      action: 'load-guest-intro',
+      description: 'Load guest intro onboarding state from local storage.',
+      context: {
+        storageKey: KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
+      },
+    },
+    () => {
+      const raw = window.localStorage.getItem(KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
 
-    const parsed = JSON.parse(raw) as Partial<KangurAiTutorGuestIntroRecord> | null;
-    if (
-      parsed?.version !== 1 ||
-      (parsed?.status !== 'shown' &&
-        parsed?.status !== 'accepted' &&
-        parsed?.status !== 'dismissed') ||
-      typeof parsed?.updatedAt !== 'string'
-    ) {
-      return null;
-    }
+      const parsed = JSON.parse(raw) as Partial<KangurAiTutorGuestIntroRecord> | null;
+      if (
+        parsed?.version !== 1 ||
+        (parsed?.status !== 'shown' &&
+          parsed?.status !== 'accepted' &&
+          parsed?.status !== 'dismissed') ||
+        typeof parsed?.updatedAt !== 'string'
+      ) {
+        return null;
+      }
 
-    return {
-      status: parsed.status,
-      version: 1,
-      updatedAt: parsed.updatedAt,
-    };
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      return {
+        status: parsed.status,
+        version: 1,
+        updatedAt: parsed.updatedAt,
+      };
+    },
+    { fallback: null }
+  );
 };
 
 export const persistGuestIntroRecord = (
@@ -592,16 +619,27 @@ export const persistGuestIntroRecord = (
     updatedAt: new Date().toISOString(),
   };
 
-  try {
-    window.localStorage.setItem(
-      KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
-      JSON.stringify(nextRecord)
-    );
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage write failures so the widget stays non-blocking.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-widget-storage',
+      action: 'persist-guest-intro',
+      description: 'Persist guest intro onboarding state to local storage.',
+      context: {
+        storageKey: KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
+      },
+    },
+    () => {
+      window.localStorage.setItem(
+        KANGUR_AI_TUTOR_GUEST_INTRO_STORAGE_KEY,
+        JSON.stringify(nextRecord)
+      );
+    },
+    {
+      fallback: () => {
+        // Ignore storage write failures so the widget stays non-blocking.
+      },
+    }
+  );
 
   return nextRecord;
 };
@@ -611,32 +649,40 @@ export const loadPersistedHomeOnboardingRecord = (): KangurAiTutorHomeOnboarding
     return null;
   }
 
-  try {
-    const raw = window.localStorage.getItem(KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-widget-storage',
+      action: 'load-home-onboarding',
+      description: 'Load home onboarding state from local storage.',
+      context: {
+        storageKey: KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
+      },
+    },
+    () => {
+      const raw = window.localStorage.getItem(KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
 
-    const parsed = JSON.parse(raw) as Partial<KangurAiTutorHomeOnboardingRecord> | null;
-    if (
-      parsed?.version !== 1 ||
-      (parsed?.status !== 'shown' &&
-        parsed?.status !== 'completed' &&
-        parsed?.status !== 'dismissed') ||
-      typeof parsed?.updatedAt !== 'string'
-    ) {
-      return null;
-    }
+      const parsed = JSON.parse(raw) as Partial<KangurAiTutorHomeOnboardingRecord> | null;
+      if (
+        parsed?.version !== 1 ||
+        (parsed?.status !== 'shown' &&
+          parsed?.status !== 'completed' &&
+          parsed?.status !== 'dismissed') ||
+        typeof parsed?.updatedAt !== 'string'
+      ) {
+        return null;
+      }
 
-    return {
-      status: parsed.status,
-      version: 1,
-      updatedAt: parsed.updatedAt,
-    };
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      return {
+        status: parsed.status,
+        version: 1,
+        updatedAt: parsed.updatedAt,
+      };
+    },
+    { fallback: null }
+  );
 };
 
 export const persistHomeOnboardingRecord = (
@@ -652,16 +698,27 @@ export const persistHomeOnboardingRecord = (
     updatedAt: new Date().toISOString(),
   };
 
-  try {
-    window.localStorage.setItem(
-      KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
-      JSON.stringify(nextRecord)
-    );
-  } catch (error) {
-    logClientError(error);
-  
-    // Ignore storage write failures so the widget stays non-blocking.
-  }
+  withKangurClientErrorSync(
+    {
+      source: 'kangur-ai-tutor-widget-storage',
+      action: 'persist-home-onboarding',
+      description: 'Persist home onboarding state to local storage.',
+      context: {
+        storageKey: KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
+      },
+    },
+    () => {
+      window.localStorage.setItem(
+        KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
+        JSON.stringify(nextRecord)
+      );
+    },
+    {
+      fallback: () => {
+        // Ignore storage write failures so the widget stays non-blocking.
+      },
+    }
+  );
 
   return nextRecord;
 };

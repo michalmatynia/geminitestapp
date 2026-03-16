@@ -1,5 +1,14 @@
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
+import type {
+  KangurLearnerProfileSnapshot,
+  KangurLearnerRecommendation,
+  KangurLessonMasteryInsight,
+  KangurLessonMasteryInsights,
+  KangurOperationPerformance,
+  KangurRecentSession,
+  KangurWeeklyActivityPoint,
+} from '@/features/kangur/shared/contracts/kangur-profile';
 import {
   getCurrentLevel,
   getNextLevel,
@@ -9,10 +18,19 @@ import {
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
 import type {
-  KangurAssignmentPriority,
   KangurProgressState,
   KangurRouteAction,
 } from '@/features/kangur/shared/contracts/kangur';
+
+export type {
+  KangurLearnerProfileSnapshot,
+  KangurLearnerRecommendation,
+  KangurLessonMasteryInsight,
+  KangurLessonMasteryInsights,
+  KangurOperationPerformance,
+  KangurRecentSession,
+  KangurWeeklyActivityPoint,
+} from '@/features/kangur/shared/contracts/kangur-profile';
 
 const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   addition: { label: 'Dodawanie', emoji: '➕' },
@@ -27,6 +45,12 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   geometry: { label: 'Geometria', emoji: '🔷' },
   logical: { label: 'Logika', emoji: '🧩' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
+  english_basics: { label: 'Podstawy', emoji: '🗣️' },
+  english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
+  english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
+  english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
+  english_articles: { label: 'Przedimki', emoji: '📰' },
+  english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -86,6 +110,11 @@ const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
   logical_classification: 'logical',
   logical_reasoning: 'logical',
   logical_analogies: 'logical',
+  english_pronoun_remix: 'english_basics',
+  english_parts_of_speech_sort: 'english_parts_of_speech',
+  english_sentence_structure_quiz: 'english_sentence_structure',
+  english_subject_verb_agreement_quiz: 'english_subject_verb_agreement',
+  english_prepositions_quiz: 'english_prepositions_time_place',
 };
 
 const resolvePracticeDifficulty = (averageAccuracy: number): 'easy' | 'medium' | 'hard' => {
@@ -121,97 +150,6 @@ const buildPracticeRecommendationAction = (
       difficulty: resolvePracticeDifficulty(averageAccuracy),
     },
   };
-};
-
-export type KangurOperationPerformance = {
-  operation: string;
-  label: string;
-  emoji: string;
-  attempts: number;
-  averageAccuracy: number;
-  averageScore: number;
-  bestScore: number;
-  totalXpEarned: number;
-  averageXpPerSession: number;
-};
-
-export type KangurRecentSession = {
-  id: string;
-  operation: string;
-  operationLabel: string;
-  operationEmoji: string;
-  createdAt: string;
-  score: number;
-  totalQuestions: number;
-  accuracyPercent: number;
-  timeTakenSeconds: number;
-  xpEarned: number | null;
-};
-
-export type KangurWeeklyActivityPoint = {
-  dateKey: string;
-  label: string;
-  games: number;
-  averageAccuracy: number;
-};
-
-export type KangurLearnerRecommendation = {
-  id: string;
-  title: string;
-  description: string;
-  priority: KangurAssignmentPriority;
-  action: KangurRouteAction;
-};
-
-export type KangurLessonMasteryInsight = {
-  componentId: string;
-  title: string;
-  emoji: string;
-  masteryPercent: number;
-  attempts: number;
-  bestScorePercent: number;
-  lastScorePercent: number;
-  lastCompletedAt: string | null;
-};
-
-export type KangurLessonMasteryInsights = {
-  weakest: KangurLessonMasteryInsight[];
-  strongest: KangurLessonMasteryInsight[];
-  trackedLessons: number;
-  masteredLessons: number;
-  lessonsNeedingPractice: number;
-};
-
-export type KangurLearnerProfileSnapshot = {
-  totalXp: number;
-  gamesPlayed: number;
-  lessonsCompleted: number;
-  perfectGames: number;
-  totalBadges: number;
-  unlockedBadges: number;
-  unlockedBadgeIds: string[];
-  level: ReturnType<typeof getCurrentLevel>;
-  nextLevel: ReturnType<typeof getNextLevel>;
-  levelProgressPercent: number;
-  averageAccuracy: number;
-  bestAccuracy: number;
-  currentStreakDays: number;
-  longestStreakDays: number;
-  lastPlayedAt: string | null;
-  dailyGoalGames: number;
-  todayGames: number;
-  dailyGoalPercent: number;
-  todayXpEarned: number;
-  weeklyXpEarned: number;
-  averageXpPerSession: number;
-  recommendedSessionsCompleted: number;
-  recommendedSessionProgressPercent: number;
-  recommendedSessionSummary: string;
-  recommendedSessionNextBadgeName: string | null;
-  operationPerformance: KangurOperationPerformance[];
-  recentSessions: KangurRecentSession[];
-  weeklyActivity: KangurWeeklyActivityPoint[];
-  recommendations: KangurLearnerRecommendation[];
 };
 
 type BuildProfileSnapshotInput = {

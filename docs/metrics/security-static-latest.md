@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Static Security Review
 
-Generated at: 2026-03-11T04:30:43.808Z
+Generated at: 2026-03-16T18:13:39.387Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4612
+- Files scanned: 5153
 - Errors: 0
 - Warnings: 0
 - Info: 0

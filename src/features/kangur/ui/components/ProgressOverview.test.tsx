@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
+import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 let ProgressOverview: typeof import('@/features/kangur/ui/components/ProgressOverview').default;

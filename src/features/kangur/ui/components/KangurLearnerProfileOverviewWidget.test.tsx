@@ -11,13 +11,22 @@ import {
   getCurrentKangurDailyQuest,
 } from '@/features/kangur/ui/services/daily-quests';
 
-const { useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
+const {
+  useKangurLearnerProfileRuntimeMock,
+  useKangurPageContentEntryMock,
+  useKangurAuthActionsMock,
+} = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurAuthActionsMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
   useKangurLearnerProfileRuntime: useKangurLearnerProfileRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuthActions: useKangurAuthActionsMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -150,6 +159,9 @@ describe('KangurLearnerProfileOverviewWidget', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-10T09:00:00.000Z'));
     window.localStorage.clear();
+    useKangurAuthActionsMock.mockReturnValue({
+      checkAppState: vi.fn(),
+    });
     useKangurPageContentEntryMock.mockReturnValue({
       entry: null,
       data: undefined,

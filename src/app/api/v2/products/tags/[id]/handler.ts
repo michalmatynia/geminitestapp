@@ -5,7 +5,21 @@ import { getTagRepository } from '@/features/products/server';
 import { updateProductTagSchema } from '@/shared/contracts/products';
 export { updateProductTagSchema as productTagUpdateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { conflictError, notFoundError } from '@/shared/errors/app-error';
+import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
+
+const paramsSchema = z.object({
+  id: z.string().trim().min(1, 'Tag id is required'),
+});
+
+const parseTagId = (params: { id: string }): string => {
+  const parsed = paramsSchema.safeParse(params);
+  if (!parsed.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsed.error.flatten(),
+    });
+  }
+  return parsed.data.id;
+};
 
 /**
  * PUT /api/v2/products/tags/[id]
@@ -16,21 +30,22 @@ export async function PUT_handler(
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const tagId = parseTagId(params);
   const data = ctx.body as z.infer<typeof updateProductTagSchema>;
   const { name, catalogId } = data;
 
   const repository = await getTagRepository();
-  const current = await repository.getTagById(params.id);
+  const current = await repository.getTagById(tagId);
 
   if (!current) {
-    throw notFoundError('Tag not found', { tagId: params.id });
+    throw notFoundError('Tag not found', { tagId });
   }
 
   const nextCatalogId = catalogId ?? current.catalogId;
 
   if (name !== undefined) {
     const existing = await repository.findByName(nextCatalogId, name);
-    if (existing && existing.id !== params.id) {
+    if (existing && existing.id !== tagId) {
       throw conflictError('A tag with this name already exists in this catalog', {
         name,
         catalogId: nextCatalogId,
@@ -38,7 +53,7 @@ export async function PUT_handler(
     }
   }
 
-  const tag = await repository.updateTag(params.id, {
+  const tag = await repository.updateTag(tagId, {
     ...(name !== undefined && { name }),
     ...(data.color !== undefined && { color: data.color }),
   });
@@ -56,6 +71,7 @@ export async function DELETE_handler(
   params: { id: string }
 ): Promise<Response> {
   const repository = await getTagRepository();
-  await repository.deleteTag(params.id);
+  const tagId = parseTagId(params);
+  await repository.deleteTag(tagId);
   return NextResponse.json({ success: true });
 }

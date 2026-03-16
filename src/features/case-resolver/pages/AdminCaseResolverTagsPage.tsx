@@ -254,7 +254,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
           Add Tag
         </Button>
       }
-      containerClassName='container mx-auto py-8'
+      containerClassName='page-section-compact'
     >
 
       <FormSection title='Tags' className='p-4'>

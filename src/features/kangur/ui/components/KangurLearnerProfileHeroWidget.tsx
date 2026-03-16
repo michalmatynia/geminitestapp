@@ -1,14 +1,21 @@
 import { LogIn } from 'lucide-react';
 
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
+import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
-import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import {
+  getKangurLearnerProfileDisplayName,
+  useKangurLearnerProfileRuntime,
+} from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const { user, progress } = useKangurLearnerProfileRuntime();
   const { openLoginModal } = useKangurLoginModal();
+  const activeLearner = user?.activeLearner ?? null;
+  const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
+  const displayName = user ? getKangurLearnerProfileDisplayName(user) : null;
   const hasMeaningfulProgress =
     progress.totalXp > 0 ||
     progress.gamesPlayed > 0 ||
@@ -32,6 +39,29 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       testId='kangur-learner-profile-hero'
       title='Profil ucznia'
     >
+      {user ? (
+        <div className='mb-4 flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4'>
+          <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
+            {selectedAvatar ? (
+              <img
+                src={selectedAvatar.src}
+                alt={selectedAvatar.label}
+                className='h-full w-full object-cover'
+              />
+            ) : (
+              <div className='flex h-full w-full items-center justify-center text-xl font-black text-slate-400'>
+                ?
+              </div>
+            )}
+          </div>
+          <div className='text-center sm:text-left'>
+            <p className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
+              Avatar ucznia
+            </p>
+            <p className='text-lg font-bold text-slate-800'>{displayName}</p>
+          </div>
+        </div>
+      ) : null}
       <KangurHeroMilestoneSummary
         className='mb-3 w-full'
         dataTestIdPrefix='kangur-learner-profile-hero-milestone'

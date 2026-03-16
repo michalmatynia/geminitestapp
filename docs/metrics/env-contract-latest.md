@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Environment Contract Report
 
-Generated at: 2026-03-11T04:30:47.103Z
+Generated at: 2026-03-16T18:13:42.065Z
 
 ## Summary
 
@@ -20,7 +20,7 @@ Generated at: 2026-03-11T04:30:47.103Z
 ## Environment Snapshot
 
 - NODE_ENV: development
-- DATABASE_URL configured: true
+- DATABASE_URL configured: undefined
 - MONGODB_URI configured: true
 - APP_DB_PROVIDER: mongodb
 - REDIS_URL configured: true
@@ -39,5 +39,5 @@ No environment contract issues detected.
 
 ## Notes
 
-- This report validates runtime env combinations that are easy to misconfigure in this mixed Prisma/Mongo/Redis setup.
+- This report validates runtime env combinations in the MongoDB/Redis runtime setup.
 - Strict mode fails on error findings. Add --fail-on-warnings to promote warnings into a gate.

@@ -11,7 +11,7 @@ import {
 import { type RefObject, useMemo } from 'react';
 
 import { getKangurHomeHref, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -27,7 +27,6 @@ import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKa
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { buildKangurLearnerLiveState } from '@/features/kangur/ui/services/learner-live-state';
-import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
 const LEARNER_ACTIVITY_REFRESH_MS = 10_000;
@@ -63,9 +62,8 @@ export function KangurParentDashboardHeroWidget({
       learnerId: activeLearnerId,
       refreshIntervalMs: LEARNER_ACTIVITY_REFRESH_MS,
     });
-  const settingsStore = useSettingsStore();
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const lessons = useMemo(() => parseKangurLessons(rawLessons), [rawLessons]);
+  const lessonsQuery = useKangurLessons();
+  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const learnerLiveState = useMemo(
     () =>
       buildKangurLearnerLiveState({

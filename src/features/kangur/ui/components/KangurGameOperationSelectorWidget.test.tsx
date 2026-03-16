@@ -17,8 +17,39 @@ const {
   useKangurGameRuntimeMock: vi.fn(),
 }));
 
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
+const lessonsState = vi.hoisted(() => ({
+  value: [] as Array<Record<string, unknown>>,
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    return {
+      data,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(),
+      error: null,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
@@ -102,6 +133,49 @@ describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        title: 'Nauka zegara',
+        description: 'Odczytuj godziny',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 1000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-calendar',
+        componentId: 'calendar',
+        title: 'Nauka kalendarza',
+        description: 'Dni i miesiące',
+        emoji: '📅',
+        color: 'kangur-gradient-accent-emerald',
+        activeBg: 'bg-emerald-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        description: 'Rozpoznawaj figury',
+        emoji: '🔷',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000,
+        enabled: true,
+        subject: 'maths',
+      },
+    ];
   });
 
   it('recommends the quest-mapped operation and forwards it to the selector cards', () => {
@@ -353,5 +427,67 @@ describe('KangurGameOperationSelectorWidget', () => {
         }),
       })
     );
+  });
+
+  it('shows English quick practice cards when English lessons are available', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-english-sentence',
+        componentId: 'english_sentence_structure',
+        title: 'Składnia zdania',
+        description: 'Szyk zdania',
+        emoji: '🧩',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 1000,
+        enabled: true,
+        subject: 'english',
+      },
+      {
+        id: 'kangur-lesson-english-pos',
+        componentId: 'english_parts_of_speech',
+        title: 'Części mowy',
+        description: 'Zaimki i czasowniki',
+        emoji: '🔤',
+        color: 'kangur-gradient-accent-sky',
+        activeBg: 'bg-sky-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'english',
+      },
+    ];
+
+    const runtime = buildRuntime(buildProgress());
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(
+      screen.getByTestId('kangur-quick-practice-card-english_sentence_quiz')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-quick-practice-card-english_parts_of_speech_quiz')
+    ).toBeInTheDocument();
+  });
+
+  it('hides math-only sections when the subject is English', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    const runtime = buildRuntime(buildProgress());
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.queryByTestId('mock-operation-selector')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-game-training-top-section')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Szybkie ćwiczenia' })).toBeInTheDocument();
   });
 });

@@ -4,7 +4,7 @@ import {
   readKangurUrlParam,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 export type KangurRouteTransitionSkeletonVariant =
@@ -61,24 +61,30 @@ const resolvePageKeyFromHref = (href: string, basePath: string): string | null =
     return null;
   }
 
-  try {
-    const parsed = new URL(href, 'https://kangur.local');
-    const normalizedBasePath = normalizeKangurBasePath(basePath);
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.route-skeleton',
+      action: 'resolve-page-key',
+      description: 'Resolves the Kangur route skeleton page key from a href.',
+      context: { href, basePath },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const normalizedBasePath = normalizeKangurBasePath(basePath);
 
-    if (
-      normalizedBasePath !== '/' &&
-      parsed.pathname !== normalizedBasePath &&
-      !parsed.pathname.startsWith(`${normalizedBasePath}/`)
-    ) {
-      return null;
-    }
+      if (
+        normalizedBasePath !== '/' &&
+        parsed.pathname !== normalizedBasePath &&
+        !parsed.pathname.startsWith(`${normalizedBasePath}/`)
+      ) {
+        return null;
+      }
 
-    const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
-    return resolveKangurPageKeyFromSlug(slug[0] ?? null);
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+      const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
+      return resolveKangurPageKeyFromSlug(slug[0] ?? null);
+    },
+    { fallback: null }
+  );
 };
 
 export const resolveKangurRouteTransitionSkeletonVariant = ({
@@ -92,12 +98,16 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
 
   let searchParams: URLSearchParams | null = null;
   if (href && isManagedLocalHref(href)) {
-    try {
-      searchParams = new URL(href, 'https://kangur.local').searchParams;
-    } catch (error) {
-      logClientError(error);
-      searchParams = null;
-    }
+    searchParams = withKangurClientErrorSync(
+      {
+        source: 'kangur.route-skeleton',
+        action: 'parse-search-params',
+        description: 'Parses search params for route transition skeletons.',
+        context: { href },
+      },
+      () => new URL(href, 'https://kangur.local').searchParams,
+      { fallback: null }
+    );
   }
 
   switch (resolvedPageKey) {

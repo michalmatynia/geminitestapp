@@ -162,7 +162,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-10'>
+    <div className='page-section space-y-6'>
       <PanelHeader
         title='Chatbot Jobs'
         description='Monitor background processing of AI messages and sessions.'

@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as integrationsIndex from '../route-handler';
 import * as integrationsWithConnections from '../with-connections/route-handler';
@@ -46,6 +48,7 @@ import * as queuesTradera from '../queues/tradera/route-handler';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Params = Record<string, string>;
+type RouteParams = { path?: string[] | string };
 type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
@@ -54,26 +57,36 @@ type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHa
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
-const notFound = (): Response => new Response('Not Found', { status: 404 });
-const methodNotAllowed = (allowed: HttpMethod[]): Response =>
-  new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: allowed.join(', ') },
-  });
+const notFound = async (request: NextRequest, source: string): Promise<Response> =>
+  createErrorResponse(notFoundError('Not Found'), { request, source });
+const methodNotAllowed = async (
+  request: NextRequest,
+  allowed: HttpMethod[],
+  source: string
+): Promise<Response> => {
+  const response = await createErrorResponse(methodNotAllowedError('Method not allowed', {
+    allowedMethods: allowed,
+  }), { request, source });
+  response.headers.set('Allow', allowed.join(', '));
+  return response;
+};
 
 const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = <P extends Params>(
+const dispatch = async <P extends Params>(
   module: RouteModule<P>,
   method: HttpMethod,
   request: NextRequest,
-  params?: P
+  params: P | undefined,
+  source: string
 ): Promise<Response> => {
   const handler = module[method];
   if (!handler) {
     const allowed = getAllowedMethods(module);
-    return Promise.resolve(allowed.length > 0 ? methodNotAllowed(allowed) : notFound());
+    return allowed.length > 0
+      ? methodNotAllowed(request, allowed, source)
+      : notFound(request, source);
   }
   return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
 };
@@ -93,182 +106,219 @@ const routeIntegrations = (
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
+  const source = `v2.integrations.[[...path]].${method}`;
   if (segments.length === 0) {
-    return dispatch(integrationsIndex, method, request);
+    return dispatch(integrationsIndex, method, request, undefined, source);
   }
 
   const [first, second, third, fourth, fifth] = segments;
 
   if (first === 'with-connections' && segments.length === 1) {
-    return dispatch(integrationsWithConnections, method, request);
+    return dispatch(integrationsWithConnections, method, request, undefined, source);
   }
 
   if (first === 'connections') {
     if (second && segments.length === 2) {
-      return dispatch(connectionsById, method, request, { id: second });
+      return dispatch(connectionsById, method, request, { id: second }, source);
     }
     if (second && third === 'session' && segments.length === 3) {
-      return dispatch(connectionSession, method, request, { id: second });
+      return dispatch(connectionSession, method, request, { id: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'exports' && second === 'base' && third && segments.length === 3) {
-    return dispatch(exportsBaseSetting, method, request, { setting: third });
+    return dispatch(exportsBaseSetting, method, request, { setting: third }, source);
   }
 
   if (first === 'images' && second === 'sync-base' && third === 'all' && segments.length === 3) {
-    return dispatch(imagesSyncBaseAll, method, request);
+    return dispatch(imagesSyncBaseAll, method, request, undefined, source);
   }
 
   if (first === 'imports' && second === 'base') {
     if (!third && segments.length === 2) {
-      return dispatch(importsBase, method, request);
+      return dispatch(importsBase, method, request, undefined, source);
     }
     if (third === 'parameters' && segments.length === 3) {
-      return dispatch(importsBaseParameters, method, request);
+      return dispatch(importsBaseParameters, method, request, undefined, source);
     }
     if (third === 'runs') {
       if (!fourth && segments.length === 3) {
-        return dispatch(importsBaseRuns, method, request);
+        return dispatch(importsBaseRuns, method, request, undefined, source);
       }
       if (fourth && segments.length === 4) {
-        return dispatch(importsBaseRun, method, request, { runId: fourth });
+        return dispatch(importsBaseRun, method, request, { runId: fourth }, source);
       }
       if (fourth && fifth === 'cancel' && segments.length === 5) {
-        return dispatch(importsBaseRunCancel, method, request, { runId: fourth });
+        return dispatch(importsBaseRunCancel, method, request, { runId: fourth }, source);
       }
       if (fourth && fifth === 'report' && segments.length === 5) {
-        return dispatch(importsBaseRunReport, method, request, { runId: fourth });
+        return dispatch(importsBaseRunReport, method, request, { runId: fourth }, source);
       }
       if (fourth && fifth === 'resume' && segments.length === 5) {
-        return dispatch(importsBaseRunResume, method, request, { runId: fourth });
+        return dispatch(importsBaseRunResume, method, request, { runId: fourth }, source);
       }
-      return Promise.resolve(notFound());
+      return notFound(request, source);
     }
     if (third === 'sample-product' && segments.length === 3) {
-      return dispatch(importsBaseSample, method, request);
+      return dispatch(importsBaseSample, method, request, undefined, source);
     }
     if (third && segments.length === 3) {
-      return dispatch(importsBaseSetting, method, request, { setting: third });
+      return dispatch(importsBaseSetting, method, request, { setting: third }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'jobs' && segments.length === 1) {
-    return dispatch(integrationsJobs, method, request);
+    return dispatch(integrationsJobs, method, request, undefined, source);
   }
 
   if (first === 'product-listings' && segments.length === 1) {
-    return dispatch(productListings, method, request);
+    return dispatch(productListings, method, request, undefined, source);
   }
 
   if (first === 'products') {
     if (second && !third && segments.length === 2) {
-      return Promise.resolve(notFound());
+      return notFound(request, source);
     }
     if (second && third === 'base' && fourth === 'link-existing' && segments.length === 4) {
-      return dispatch(integrationProductLinkExisting, method, request, { id: second });
+      return dispatch(integrationProductLinkExisting, method, request, { id: second }, source);
     }
     if (second && third === 'base' && fourth === 'sku-check' && segments.length === 4) {
-      return dispatch(integrationProductSkuCheck, method, request, { id: second });
+      return dispatch(integrationProductSkuCheck, method, request, { id: second }, source);
     }
     if (second && third === 'export-to-base' && segments.length === 3) {
-      return dispatch(integrationProductExportToBase, method, request, { id: second });
+      return dispatch(integrationProductExportToBase, method, request, { id: second }, source);
     }
     if (second && third === 'listings' && !fourth && segments.length === 3) {
-      return dispatch(integrationProductsListings, method, request, { id: second });
+      return dispatch(integrationProductsListings, method, request, { id: second }, source);
     }
     if (second && third === 'listings' && fourth && segments.length >= 4) {
       const listingId = fourth;
       if (segments.length === 4) {
-        return dispatch(integrationProductListing, method, request, { id: second, listingId });
+        return dispatch(integrationProductListing, method, request, { id: second, listingId }, source);
       }
       const action = segments[4];
       if (action === 'delete-from-base' && segments.length === 5) {
-        return dispatch(integrationProductListingDelete, method, request, { id: second, listingId });
+        return dispatch(
+          integrationProductListingDelete,
+          method,
+          request,
+          { id: second, listingId },
+          source
+        );
       }
       if (action === 'purge' && segments.length === 5) {
-        return dispatch(integrationProductListingPurge, method, request, { id: second, listingId });
+        return dispatch(
+          integrationProductListingPurge,
+          method,
+          request,
+          { id: second, listingId },
+          source
+        );
       }
       if (action === 'relist' && segments.length === 5) {
-        return dispatch(integrationProductListingRelist, method, request, { id: second, listingId });
+        return dispatch(
+          integrationProductListingRelist,
+          method,
+          request,
+          { id: second, listingId },
+          source
+        );
       }
       if (action === 'sync-base-images' && segments.length === 5) {
-        return dispatch(integrationProductListingSyncImages, method, request, {
-          id: second,
-          listingId,
-        });
+        return dispatch(
+          integrationProductListingSyncImages,
+          method,
+          request,
+          { id: second, listingId },
+          source
+        );
       }
-      return Promise.resolve(notFound());
+      return notFound(request, source);
     }
   }
 
   if (first === 'queues' && second === 'tradera' && segments.length === 2) {
-    return dispatch(queuesTradera, method, request);
+    return dispatch(queuesTradera, method, request, undefined, source);
   }
 
   if (first && second === 'connections') {
     const integrationId = first;
     if (!third && segments.length === 2) {
-      return dispatch(integrationsConnections, method, request, { id: integrationId });
+      return dispatch(integrationsConnections, method, request, { id: integrationId }, source);
     }
     if (third) {
       const connectionId = third;
       if (fourth === 'test' && segments.length === 4) {
-        return dispatch(connectionTest, method, request, { id: integrationId, connectionId });
+        return dispatch(connectionTest, method, request, { id: integrationId, connectionId }, source);
       }
       if (fourth === 'allegro') {
         if (fifth === 'authorize' && segments.length === 5) {
-          return dispatch(allegroAuthorize, method, request, { id: integrationId, connectionId });
+          return dispatch(allegroAuthorize, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'callback' && segments.length === 5) {
-          return dispatch(allegroCallback, method, request, { id: integrationId, connectionId });
+          return dispatch(allegroCallback, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'disconnect' && segments.length === 5) {
-          return dispatch(allegroDisconnect, method, request, { id: integrationId, connectionId });
+          return dispatch(allegroDisconnect, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'request' && segments.length === 5) {
-          return dispatch(allegroRequest, method, request, { id: integrationId, connectionId });
+          return dispatch(allegroRequest, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'test' && segments.length === 5) {
-          return dispatch(allegroTest, method, request, { id: integrationId, connectionId });
+          return dispatch(allegroTest, method, request, { id: integrationId, connectionId }, source);
         }
       }
       if (fourth === 'base') {
         if (fifth === 'inventories' && segments.length === 5) {
-          return dispatch(baseInventories, method, request, { id: integrationId, connectionId });
+          return dispatch(baseInventories, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'products' && segments.length === 5) {
-          return dispatch(baseProducts, method, request, { id: integrationId, connectionId });
+          return dispatch(baseProducts, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'request' && segments.length === 5) {
-          return dispatch(baseRequest, method, request, { id: integrationId, connectionId });
+          return dispatch(baseRequest, method, request, { id: integrationId, connectionId }, source);
         }
         if (fifth === 'test' && segments.length === 5) {
-          return dispatch(baseTest, method, request, { id: integrationId, connectionId });
+          return dispatch(baseTest, method, request, { id: integrationId, connectionId }, source);
         }
       }
     }
   }
 
-  return Promise.resolve(notFound());
+  return notFound(request, source);
 };
 
-const buildRouteHandler = (method: HttpMethod) =>
-  apiHandler(
-    async (request: NextRequest) => routeIntegrations(method, request, getPathSegments(request)),
-    {
-      source: `v2.integrations.router.${method}`,
-      successLogging: 'off',
-      requireCsrf: false,
-      resolveSessionUser: false,
-      rateLimitKey: false,
-    }
-  );
+const ROUTER_OPTIONS = {
+  successLogging: 'off',
+  requireCsrf: false,
+  resolveSessionUser: false,
+  rateLimitKey: false,
+} as const;
 
-export const GET = buildRouteHandler('GET');
-export const POST = buildRouteHandler('POST');
-export const PUT = buildRouteHandler('PUT');
-export const PATCH = buildRouteHandler('PATCH');
-export const DELETE = buildRouteHandler('DELETE');
+export const GET = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeIntegrations('GET', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'v2.integrations.[[...path]].GET', requireAuth: true }
+);
+export const POST = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeIntegrations('POST', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'v2.integrations.[[...path]].POST', requireAuth: true }
+);
+export const PUT = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeIntegrations('PUT', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'v2.integrations.[[...path]].PUT', requireAuth: true }
+);
+export const PATCH = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeIntegrations('PATCH', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'v2.integrations.[[...path]].PATCH', requireAuth: true }
+);
+export const DELETE = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeIntegrations('DELETE', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'v2.integrations.[[...path]].DELETE', requireAuth: true }
+);

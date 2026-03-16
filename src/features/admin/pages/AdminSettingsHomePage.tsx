@@ -154,7 +154,7 @@ const colorClasses: Record<string, { border: string; text: string }> = {
 
 export function AdminSettingsHomePage(): React.ReactNode {
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       {/* Header */}
       <SectionHeader
         title='Settings'

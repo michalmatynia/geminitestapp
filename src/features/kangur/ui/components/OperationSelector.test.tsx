@@ -60,6 +60,7 @@ describe('OperationSelector', () => {
           recommendedLabel: 'Misja dnia',
           select: vi.fn(),
           statusLabel: 'Trening swobodny',
+          subject: 'maths',
         },
       ],
       setDifficulty: vi.fn(),

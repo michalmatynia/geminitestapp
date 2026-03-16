@@ -137,7 +137,7 @@ function PageLayoutSaveFooter(): JSX.Element | null {
           'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
       )}
     >
-      <div className={cn(stickyFooter && 'container mx-auto')}>
+      <div className={cn(stickyFooter && 'page-container')}>
         <FormActions
           onSave={() => void onSave()}
           isSaving={isSaving}
@@ -176,7 +176,7 @@ export function PageLayout({
   isSaving = false,
   saveText = 'Save Configuration',
   stickyFooter = false,
-  containerClassName = 'container mx-auto py-10',
+  containerClassName = 'page-section',
 }: PageLayoutProps): React.JSX.Element {
   const runtimeValue = useMemo<PageLayoutRuntimeValue>(
     () => ({

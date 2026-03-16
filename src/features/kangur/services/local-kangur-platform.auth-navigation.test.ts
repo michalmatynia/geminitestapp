@@ -27,6 +27,72 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   trackKangurClientEvent: trackKangurClientEventMock,
+  reportKangurClientError: (
+    error: unknown,
+    report: { context?: Record<string, unknown> }
+  ) => {
+    logKangurClientErrorMock(error, { ...report, ...(report.context ?? {}) });
+  },
+  withKangurClientError: async (
+    report: { context?: Record<string, unknown> } | ((error: unknown) => { context?: Record<string, unknown> }),
+    task: () => Promise<unknown>,
+    options: {
+      fallback: unknown | (() => unknown);
+      onError?: (error: unknown) => void;
+      shouldReport?: (error: unknown) => boolean;
+      shouldRethrow?: (error: unknown) => boolean;
+    }
+  ) => {
+    try {
+      return await task();
+    } catch (error) {
+      const resolvedReport = typeof report === 'function' ? report(error) : report;
+      const shouldReport = options.shouldReport?.(error) ?? true;
+      if (shouldReport) {
+        logKangurClientErrorMock(error, {
+          ...resolvedReport,
+          ...(resolvedReport.context ?? {}),
+        });
+      }
+      options.onError?.(error);
+      if (options.shouldRethrow?.(error)) {
+        throw error;
+      }
+      return typeof options.fallback === 'function'
+        ? (options.fallback as () => unknown)()
+        : options.fallback;
+    }
+  },
+  withKangurClientErrorSync: (
+    report: { context?: Record<string, unknown> } | ((error: unknown) => { context?: Record<string, unknown> }),
+    task: () => unknown,
+    options: {
+      fallback: unknown | (() => unknown);
+      onError?: (error: unknown) => void;
+      shouldReport?: (error: unknown) => boolean;
+      shouldRethrow?: (error: unknown) => boolean;
+    }
+  ) => {
+    try {
+      return task();
+    } catch (error) {
+      const resolvedReport = typeof report === 'function' ? report(error) : report;
+      const shouldReport = options.shouldReport?.(error) ?? true;
+      if (shouldReport) {
+        logKangurClientErrorMock(error, {
+          ...resolvedReport,
+          ...(resolvedReport.context ?? {}),
+        });
+      }
+      options.onError?.(error);
+      if (options.shouldRethrow?.(error)) {
+        throw error;
+      }
+      return typeof options.fallback === 'function'
+        ? (options.fallback as () => unknown)()
+        : options.fallback;
+    }
+  },
 }));
 
 const loadLocalKangurPlatformModule = () =>
@@ -157,6 +223,7 @@ describe('createLocalKangurPlatform auth navigation', () => {
       player_name: 'Gracz',
       score: 8,
       operation: 'addition',
+      subject: 'maths',
       total_questions: 10,
       correct_answers: 8,
       time_taken: 27,

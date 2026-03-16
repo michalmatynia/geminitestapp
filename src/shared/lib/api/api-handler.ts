@@ -18,7 +18,6 @@ import {
   payloadTooLargeError,
   validationError,
 } from '@/shared/errors/app-error';
-import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
 import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
 import { runWithContext } from '@/shared/lib/observability/request-context';
@@ -36,7 +35,7 @@ import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
+import { reportError } from '@/shared/utils/observability/report-error';
 
 const shouldSkipRateLimitInTestEnv = (request: NextRequest): boolean => {
   if (process.env['NODE_ENV'] !== 'test') return false;
@@ -72,14 +71,6 @@ type LogSystemEventParams = {
   correlationId?: string;
   statusCode?: number;
   context?: Record<string, unknown>;
-};
-
-type ErrorFingerprintParams = {
-  message: string;
-  source: string;
-  request: NextRequest;
-  statusCode: number;
-  error: unknown;
 };
 
 const DEFAULT_SLOW_SUCCESS_THRESHOLD_MS = 750;
@@ -142,21 +133,6 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
       service: 'api.handler',
       context: params,
     });
-  }
-};
-
-const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
-  try {
-    const { getErrorFingerprint: realGetFingerprint } =
-      await import('@/shared/lib/observability/system-logger');
-    return realGetFingerprint(params);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    logger.error('Failed to get error fingerprint via observability feature', error, {
-      service: 'api.handler',
-      context: params,
-    });
-    return `${params.source}-${params.statusCode}-${Date.now()}`;
   }
 };
 
@@ -803,11 +779,6 @@ async function createErrorResponseWithTiming(
   context: ApiHandlerContext,
   options: ApiHandlerOptions
 ): Promise<Response> {
-  const resolved = resolveError(error, {
-    ...(options.fallbackMessage !== undefined && { fallbackMessage: options.fallbackMessage }),
-  });
-
-  const level: SystemLogLevel = resolved.expected ? 'warn' : 'error';
   const durationMs = context.getElapsedMs();
   const routePath = (() => {
     try {
@@ -820,59 +791,37 @@ async function createErrorResponseWithTiming(
   const queryKeys = getQueryKeys(request);
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
   const service = options.service?.trim() || resolveServiceFromSource(options.source);
-  const otelContext = getActiveOtelContextAttributes();
-
-  // Log the error with full context
-  void logSystemEvent({
-    level,
-    message: resolved.message,
+  const { resolved, userMessage, fingerprint } = await reportError({
+    error,
     source: options.source,
     service,
-    error,
     request,
     requestId: context.requestId,
     traceId: context.traceId,
     correlationId: context.correlationId,
-    statusCode: resolved.httpStatus,
+    ...(options.fallbackMessage !== undefined && { fallbackMessage: options.fallbackMessage }),
+    includeOtelContext: true,
     context: {
-      errorId: resolved.errorId,
-      code: resolved.code,
-      category: resolved.category,
       durationMs,
       source: options.source,
       route: routePath,
       method: request.method,
       traceId: context.traceId,
       correlationId: context.correlationId,
-      ...otelContext,
-      service,
-      expected: resolved.expected,
-      critical: resolved.critical,
-      retryable: resolved.retryable,
       ...(bodyShape ? { bodyShape } : {}),
       ...(queryKeys.length > 0 ? { queryKeys } : {}),
-      ...(resolved.meta ? { meta: resolved.meta } : {}),
     },
   });
 
   // Build response payload
   const payload: Record<string, unknown> = {
-    error: resolved.message,
+    error: userMessage,
     code: resolved.code,
     errorId: resolved.errorId,
     category: resolved.category,
     suggestedActions: resolved.suggestedActions,
+    ...(fingerprint ? { fingerprint } : {}),
   };
-
-  const fingerprint = await getErrorFingerprint({
-    message: resolved.message,
-    source: options.source,
-    request,
-    statusCode: resolved.httpStatus,
-    error,
-  });
-
-  payload['fingerprint'] = fingerprint;
 
   if (resolved.retryable) {
     payload['retryable'] = true;
@@ -892,7 +841,9 @@ async function createErrorResponseWithTiming(
   response.headers.set('x-trace-id', context.traceId);
   response.headers.set('x-correlation-id', context.correlationId);
   response.headers.set('x-error-id', resolved.errorId);
-  response.headers.set('x-error-fingerprint', fingerprint);
+  if (fingerprint) {
+    response.headers.set('x-error-fingerprint', fingerprint);
+  }
 
   if (resolved.retryable && resolved.retryAfterMs) {
     const retryAfterSeconds = Math.ceil(resolved.retryAfterMs / 1000);

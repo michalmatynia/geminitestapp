@@ -40,7 +40,7 @@ import { cn } from '@/features/kangur/shared/utils';
 import type { DropResult } from '@hello-pangea/dnd';
 
 type AddingBallGameProps = {
-  finishLabelVariant?: 'lesson' | 'topics';
+  finishLabelVariant?: 'lesson' | 'topics' | 'play';
   onFinish: () => void;
 };
 
@@ -1050,7 +1050,12 @@ export default function AddingBallGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
-  const finishLabel = finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Wróć do lekcji';
+  const finishLabel =
+    finishLabelVariant === 'topics'
+      ? 'Wróć do tematów'
+      : finishLabelVariant === 'play'
+        ? 'Wróć do Grajmy'
+        : 'Wróć do lekcji';
   const prefersReducedMotion = useReducedMotion();
   const resolveMotionOpacity = (value: unknown, fallback: number): number => {
     if (!value || typeof value !== 'object') return fallback;

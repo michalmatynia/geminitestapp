@@ -18,6 +18,7 @@ const {
   logoutMock,
   selectLearnerMock,
   checkAppStateMock,
+  lessonsState,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
@@ -28,6 +29,9 @@ const {
   logoutMock: vi.fn(),
   selectLearnerMock: vi.fn(),
   checkAppStateMock: vi.fn(),
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -65,6 +69,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
@@ -115,6 +127,7 @@ describe('ParentDashboard page', () => {
       isError: false,
       error: null,
     });
+    lessonsState.value = [];
     useKangurAuthMock.mockReturnValue({
       isAuthenticated: false,
       user: null,

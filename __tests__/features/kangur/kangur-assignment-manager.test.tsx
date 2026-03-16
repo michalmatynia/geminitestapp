@@ -10,6 +10,7 @@ const {
   useKangurAssignmentsMock,
   useKangurProgressStateMock,
   settingsStoreMock,
+  lessonsState,
   createAssignmentMock,
   updateAssignmentMock,
   refreshMock,
@@ -22,6 +23,9 @@ const {
   settingsStoreMock: {
     get: vi.fn(),
   },
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
@@ -30,6 +34,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -42,6 +54,20 @@ describe('KangurAssignmentManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     settingsStoreMock.get.mockReturnValue(undefined);
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        subject: 'maths',
+        title: 'Nauka zegara',
+        description: 'Odczytuj godziny',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 1000,
+        enabled: true,
+      },
+    ];
     createAssignmentMock.mockResolvedValue({
       id: 'assignment-created',
     });

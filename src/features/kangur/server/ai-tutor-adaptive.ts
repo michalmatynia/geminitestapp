@@ -7,9 +7,11 @@ import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
-  type KangurLearnerRecommendation,
-  type KangurLessonMasteryInsight,
 } from '@/features/kangur/ui/services/profile';
+import type {
+  KangurLearnerRecommendation,
+  KangurLessonMasteryInsight,
+} from '@/features/kangur/shared/contracts/kangur-profile';
 import type {
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,

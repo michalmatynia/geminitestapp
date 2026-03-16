@@ -372,7 +372,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-10'>
+    <div className='page-section space-y-6'>
       <SectionHeader
         eyebrow={<AdminAiEyebrow section='Global Validator' />}
         title='Validation Pattern List Manager'

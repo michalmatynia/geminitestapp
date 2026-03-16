@@ -8,8 +8,11 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import {
+  kangurLessonSubjectSchema,
   kangurScoreLimitSchema,
   kangurScoreSortSchema,
+  resolveKangurScoreSubject,
+  type KangurLessonSubject,
 } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -30,6 +33,7 @@ export const querySchema = z.object({
   limit: z.preprocess(parseOptionalIntegerQueryValue, kangurScoreLimitSchema.optional()),
   player_name: optionalTrimmedQueryString(),
   operation: optionalTrimmedQueryString(),
+  subject: optionalTrimmedQueryString(),
   created_by: optionalTrimmedQueryString(),
   learner_id: optionalTrimmedQueryString(),
 });
@@ -37,6 +41,15 @@ export const querySchema = z.object({
 const resolveOptionalTrimmedString = (value: unknown): string | undefined => {
   const normalized = normalizeOptionalQueryString(value);
   return normalized ?? undefined;
+};
+
+const resolveOptionalSubject = (value: unknown): KangurLessonSubject | undefined => {
+  const normalized = resolveOptionalTrimmedString(value);
+  if (!normalized) {
+    return undefined;
+  }
+  const parsed = kangurLessonSubjectSchema.safeParse(normalized);
+  return parsed.success ? parsed.data : undefined;
 };
 
 const resolveKangurScoresQuery = (
@@ -47,6 +60,7 @@ const resolveKangurScoresQuery = (
   limit?: number;
   player_name?: string;
   operation?: string;
+  subject?: KangurLessonSubject;
   created_by?: string;
   learner_id?: string;
 } => {
@@ -60,6 +74,7 @@ const resolveKangurScoresQuery = (
     limit: parseOptionalIntegerQueryValue(rawQuery['limit']),
     player_name: resolveOptionalTrimmedString(rawQuery['player_name']),
     operation: resolveOptionalTrimmedString(rawQuery['operation']),
+    subject: resolveOptionalSubject(rawQuery['subject']),
     created_by: resolveOptionalTrimmedString(rawQuery['created_by']),
     learner_id: resolveOptionalTrimmedString(rawQuery['learner_id']),
   };
@@ -100,6 +115,7 @@ export async function getKangurScoresHandler(
   const filters = {
     player_name: query.player_name,
     operation: query.operation,
+    subject: query.subject,
     created_by: query.created_by,
     ...(query.learner_id !== undefined || query.player_name || query.operation || query.created_by
       ? { learner_id: query.learner_id }
@@ -123,8 +139,13 @@ export async function postKangurScoresHandler(
   const activeLearner = requireActiveLearner(actor);
 
   const repository = await getKangurScoreRepository();
+  const resolvedSubject = resolveKangurScoreSubject({
+    operation: payload.operation,
+    subject: payload.subject,
+  });
   const row = await repository.createScore({
     ...payload,
+    subject: resolvedSubject,
     created_by: actor.ownerEmail,
     learner_id: activeLearner.id,
     owner_user_id: actor.ownerUserId,
@@ -144,6 +165,7 @@ export async function postKangurScoresHandler(
       correctAnswers: row.correct_answers,
       timeTaken: row.time_taken,
       xpEarned: row.xp_earned ?? null,
+      subject: row.subject,
     },
   });
   return NextResponse.json(row, { status: 201 });

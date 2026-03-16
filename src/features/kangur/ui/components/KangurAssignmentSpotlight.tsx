@@ -1,24 +1,29 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurDivider,
   KangurGlassPanel,
   KangurResultBadge,
+  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentHref,
+  filterKangurAssignmentsBySubject,
   getKangurAssignmentActionLabel,
   resolveKangurAssignmentCountdownLabel,
+  resolveKangurAssignmentSubject,
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import { getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
 
 type KangurAssignmentSpotlightProps = {
   basePath: string;
@@ -29,6 +34,7 @@ export function KangurAssignmentSpotlight({
   basePath,
   enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
+  const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
     query: {
@@ -36,9 +42,13 @@ export function KangurAssignmentSpotlight({
     },
   });
 
+  const subjectAssignments = useMemo(
+    () => filterKangurAssignmentsBySubject(assignments, subject),
+    [assignments, subject]
+  );
   const assignment = useMemo(
-    () => selectKangurPriorityAssignments(assignments, 1)[0] ?? null,
-    [assignments]
+    () => selectKangurPriorityAssignments(subjectAssignments, 1)[0] ?? null,
+    [subjectAssignments]
   );
   const shouldTick =
     Boolean(assignment?.timeLimitMinutes) && assignment?.progress.status !== 'completed';
@@ -60,6 +70,9 @@ export function KangurAssignmentSpotlight({
     return null;
   }
 
+  const assignmentSubject = resolveKangurAssignmentSubject(assignment);
+  const assignmentSubjectLabel = getKangurSubjectLabel(assignmentSubject);
+  const assignmentSubjectAccent = assignmentSubject === 'english' ? 'sky' : 'violet';
   const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
   const transitionSourceId = `assignment-spotlight:${assignment.id}`;
   const countdownLabel = resolveKangurAssignmentCountdownLabel({
@@ -100,12 +113,22 @@ export function KangurAssignmentSpotlight({
         </KangurResultBadge>
 
         <div className='sm:pr-24'>
-          <KangurAssignmentPriorityChip
-            accent='amber'
-            className='text-[11px] uppercase tracking-[0.18em]'
-            priority={assignment.priority}
-            size='sm'
-          />
+          <div className='flex flex-wrap items-center gap-2'>
+            <KangurAssignmentPriorityChip
+              accent='amber'
+              className='text-[11px] uppercase tracking-[0.18em]'
+              priority={assignment.priority}
+              size='sm'
+            />
+            <KangurStatusChip
+              accent={assignmentSubjectAccent}
+              className='text-[11px] uppercase tracking-[0.18em]'
+              labelStyle='compact'
+              size='sm'
+            >
+              {assignmentSubjectLabel}
+            </KangurStatusChip>
+          </div>
           <div className='mt-4 flex items-start kangur-panel-gap'>
             <span className='mt-1 text-xl' aria-hidden='true'>
               {assignment.target.type === 'lesson' ? '📚' : '🎯'}
@@ -148,6 +171,21 @@ export function KangurAssignmentSpotlight({
         >
           <Link
             href={assignmentHref}
+            onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+              if (
+                event.defaultPrevented ||
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              ) {
+                return;
+              }
+              if (assignmentSubject !== subject) {
+                setSubject(assignmentSubject);
+              }
+            }}
             transitionAcknowledgeMs={110}
             transitionSourceId={transitionSourceId}
           >

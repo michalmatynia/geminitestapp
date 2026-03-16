@@ -16,6 +16,8 @@ import {
   LOBBY_MODE_ACCENTS,
   LOBBY_MODE_LABELS,
   SESSION_STATUS_LABELS,
+  formatDuelDifficultyLabel,
+  formatDuelOperationLabel,
   formatRelativeAge,
   resolveLobbyHostInitial,
   resolveSessionAccent,
@@ -130,8 +132,8 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         </div>
       </div>
 
-      <div className='flex flex-wrap items-end kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3'>
-        <div className='min-w-[180px] space-y-1'>
+      <div className='flex flex-col items-stretch kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:flex-row sm:flex-wrap sm:items-end'>
+        <div className='w-full space-y-1 sm:min-w-[180px]'>
           <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
             Tryb
           </div>
@@ -147,7 +149,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             <option value='quick_match'>Szybkie pojedynki</option>
           </KangurSelectField>
         </div>
-        <div className='min-w-[200px] space-y-1'>
+        <div className='w-full space-y-1 sm:min-w-[200px]'>
           <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
             Sortowanie
           </div>
@@ -248,6 +250,8 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             const isFresh =
               typeof freshAt === 'number' && relativeNow - freshAt < freshWindowMs;
             const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
+            const operationLabel = formatDuelOperationLabel(entry.operation);
+            const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);
             return (
               <li key={entry.sessionId}>
                 <KangurInfoCard
@@ -256,7 +260,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                   tone='neutral'
                   className={cn('flex flex-col kangur-panel-gap', isFresh && 'ring-2 ring-emerald-200/70')}
                   role='group'
-                  aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
+                  aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                 >
                   <div className='flex flex-wrap items-start justify-between kangur-panel-gap'>
                     <div className='flex items-center kangur-panel-gap'>
@@ -295,6 +299,12 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                     ) : null}
                     <KangurStatusChip accent={LOBBY_MODE_ACCENTS[entry.mode]} size='sm'>
                       {LOBBY_MODE_LABELS[entry.mode]}
+                    </KangurStatusChip>
+                    <KangurStatusChip accent='slate' size='sm'>
+                      {operationLabel}
+                    </KangurStatusChip>
+                    <KangurStatusChip accent='slate' size='sm'>
+                      {difficultyLabel}
                     </KangurStatusChip>
                     <KangurStatusChip accent='slate' size='sm'>
                       Publiczny

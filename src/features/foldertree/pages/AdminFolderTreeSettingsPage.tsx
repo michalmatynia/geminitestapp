@@ -78,7 +78,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   }, [parsedProfiles]);
 
   return (
-    <div className='container mx-auto py-8'>
+    <div className='page-section-compact'>
       <SectionHeader
         title='Folder Tree Profiles'
         description='Configure placeholders, nesting rules, icons, and capabilities (keyboard nav, multi-selection, search) for each folder tree instance.'

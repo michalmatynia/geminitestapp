@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurAssignmentRepository } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { validationError } from '@/shared/errors/app-error';
 import { parseKangurAssignmentUpdatePayload } from '@/shared/validations/kangur';
 
 
@@ -14,23 +16,34 @@ import {
   listAssignmentSnapshotsForLearner,
 } from '../shared';
 
+const paramsSchema = z.object({
+  id: z.string().trim().min(1, 'Assignment id is required'),
+});
+
 export async function patchKangurAssignmentHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const parsedParams = paramsSchema.safeParse(params);
+  if (!parsedParams.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsedParams.error.flatten(),
+    });
+  }
+  const { id } = parsedParams.data;
   const actor = await resolveAssignmentActor(req);
   const payload = parseKangurAssignmentUpdatePayload(
     await readKangurJsonBody(req, 'assignment update', ctx.body)
   );
   const repository = await getKangurAssignmentRepository();
   let updatedAssignment = await repository
-    .updateAssignment(actor.learnerKey, params.id, payload)
+    .updateAssignment(actor.learnerKey, id, payload)
     .catch(async () => {
       if (!actor.legacyLearnerKey) {
         throw new Error('Assignment update failed.');
       }
-      return repository.updateAssignment(actor.legacyLearnerKey, params.id, payload);
+      return repository.updateAssignment(actor.legacyLearnerKey, id, payload);
     });
   const snapshots = await listAssignmentSnapshotsForLearner({
     learnerKey: actor.learnerKey,

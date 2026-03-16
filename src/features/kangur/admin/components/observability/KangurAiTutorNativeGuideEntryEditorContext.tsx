@@ -3,6 +3,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 export type KangurAiTutorNativeGuideEntryEditorContextValue = {
   selectedEntry: KangurAiTutorNativeGuideEntry | null;
@@ -40,7 +41,7 @@ export function KangurAiTutorNativeGuideEntryEditorProvider({
 export function useKangurAiTutorNativeGuideEntryEditor(): KangurAiTutorNativeGuideEntryEditorContextValue {
   const context = useContext(KangurAiTutorNativeGuideEntryEditorContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKangurAiTutorNativeGuideEntryEditor must be used within a KangurAiTutorNativeGuideEntryEditorProvider'
     );
   }

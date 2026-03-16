@@ -8,6 +8,7 @@ import type { KangurQuestionsManagerInitialView } from '../question-manager-view
 import type { TreeMode } from './test-suites-manager.contracts';
 import { TREE_MODE_STORAGE_KEY } from './test-suites-manager.contracts';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 
 const readPersistedTreeMode = (): TreeMode => {
@@ -58,7 +59,37 @@ type TestSuitesManagerContextValue = {
   setSearchQuery: (query: string) => void;
 };
 
+type TestSuitesManagerActionsContextValue = Pick<
+  TestSuitesManagerContextValue,
+  | 'setShowModal'
+  | 'setShowGroupModal'
+  | 'setEditingSuite'
+  | 'setSuiteToDelete'
+  | 'setEditingGroupOriginalTitle'
+  | 'setGroupToDeleteTitle'
+  | 'setSuiteToMove'
+  | 'setSuiteMoveTargetGroupTitle'
+  | 'setManagingSuite'
+  | 'setManagerInitialView'
+  | 'setFormData'
+  | 'setGroupTitle'
+  | 'setGroupDescription'
+  | 'setShowQuestionMoveModal'
+  | 'setQuestionMoveTargetSuiteId'
+  | 'setTreeMode'
+  | 'setSearchQuery'
+>;
+
+type TestSuitesManagerStateContextValue = Omit<
+  TestSuitesManagerContextValue,
+  keyof TestSuitesManagerActionsContextValue
+>;
+
 const TestSuitesManagerContext = createContext<TestSuitesManagerContextValue | null>(null);
+const TestSuitesManagerStateContext =
+  createContext<TestSuitesManagerStateContextValue | null>(null);
+const TestSuitesManagerActionsContext =
+  createContext<TestSuitesManagerActionsContextValue | null>(null);
 
 export function TestSuitesManagerProvider({ children }: { children: React.ReactNode }) {
   const [showModal, setShowModal] = useState(false);
@@ -88,42 +119,128 @@ export function TestSuitesManagerProvider({ children }: { children: React.ReactN
      /* ignore */ }
   }, [treeMode]);
 
-  const value = useMemo(() => ({
-    showModal, setShowModal,
-    showGroupModal, setShowGroupModal,
-    editingSuite, setEditingSuite,
-    suiteToDelete, setSuiteToDelete,
-    editingGroupOriginalTitle, setEditingGroupOriginalTitle,
-    groupToDeleteTitle, setGroupToDeleteTitle,
-    suiteToMove, setSuiteToMove,
-    suiteMoveTargetGroupTitle, setSuiteMoveTargetGroupTitle,
-    managingSuite, setManagingSuite,
-    managerInitialView, setManagerInitialView,
-    formData, setFormData,
-    groupTitle, setGroupTitle,
-    groupDescription, setGroupDescription,
-    showQuestionMoveModal, setShowQuestionMoveModal,
-    questionMoveTargetSuiteId, setQuestionMoveTargetSuiteId,
-    treeMode, setTreeMode,
-    searchQuery, setSearchQuery,
-  }), [
-    showModal, showGroupModal, editingSuite, suiteToDelete, editingGroupOriginalTitle,
-    groupToDeleteTitle, suiteToMove, suiteMoveTargetGroupTitle, managingSuite,
-    managerInitialView, formData, groupTitle, groupDescription, showQuestionMoveModal,
-    questionMoveTargetSuiteId, treeMode, searchQuery
-  ]);
+  const stateValue = useMemo<TestSuitesManagerStateContextValue>(
+    () => ({
+      showModal,
+      showGroupModal,
+      editingSuite,
+      suiteToDelete,
+      editingGroupOriginalTitle,
+      groupToDeleteTitle,
+      suiteToMove,
+      suiteMoveTargetGroupTitle,
+      managingSuite,
+      managerInitialView,
+      formData,
+      groupTitle,
+      groupDescription,
+      showQuestionMoveModal,
+      questionMoveTargetSuiteId,
+      treeMode,
+      searchQuery,
+    }),
+    [
+      showModal,
+      showGroupModal,
+      editingSuite,
+      suiteToDelete,
+      editingGroupOriginalTitle,
+      groupToDeleteTitle,
+      suiteToMove,
+      suiteMoveTargetGroupTitle,
+      managingSuite,
+      managerInitialView,
+      formData,
+      groupTitle,
+      groupDescription,
+      showQuestionMoveModal,
+      questionMoveTargetSuiteId,
+      treeMode,
+      searchQuery,
+    ]
+  );
+
+  const actionsValue = useMemo<TestSuitesManagerActionsContextValue>(
+    () => ({
+      setShowModal,
+      setShowGroupModal,
+      setEditingSuite,
+      setSuiteToDelete,
+      setEditingGroupOriginalTitle,
+      setGroupToDeleteTitle,
+      setSuiteToMove,
+      setSuiteMoveTargetGroupTitle,
+      setManagingSuite,
+      setManagerInitialView,
+      setFormData,
+      setGroupTitle,
+      setGroupDescription,
+      setShowQuestionMoveModal,
+      setQuestionMoveTargetSuiteId,
+      setTreeMode,
+      setSearchQuery,
+    }),
+    [
+      setShowModal,
+      setShowGroupModal,
+      setEditingSuite,
+      setSuiteToDelete,
+      setEditingGroupOriginalTitle,
+      setGroupToDeleteTitle,
+      setSuiteToMove,
+      setSuiteMoveTargetGroupTitle,
+      setManagingSuite,
+      setManagerInitialView,
+      setFormData,
+      setGroupTitle,
+      setGroupDescription,
+      setShowQuestionMoveModal,
+      setQuestionMoveTargetSuiteId,
+      setTreeMode,
+      setSearchQuery,
+    ]
+  );
+
+  const value = useMemo<TestSuitesManagerContextValue>(
+    () => ({ ...stateValue, ...actionsValue }),
+    [actionsValue, stateValue]
+  );
 
   return (
-    <TestSuitesManagerContext.Provider value={value}>
-      {children}
-    </TestSuitesManagerContext.Provider>
+    <TestSuitesManagerActionsContext.Provider value={actionsValue}>
+      <TestSuitesManagerStateContext.Provider value={stateValue}>
+        <TestSuitesManagerContext.Provider value={value}>
+          {children}
+        </TestSuitesManagerContext.Provider>
+      </TestSuitesManagerStateContext.Provider>
+    </TestSuitesManagerActionsContext.Provider>
   );
 }
 
 export function useTestSuitesManager() {
   const context = useContext(TestSuitesManagerContext);
   if (!context) {
-    throw new Error('useTestSuitesManager must be used within a TestSuitesManagerProvider');
+    throw internalError('useTestSuitesManager must be used within a TestSuitesManagerProvider');
+  }
+  return context;
+}
+
+export function useTestSuitesManagerState(): TestSuitesManagerStateContextValue {
+  const context = useContext(TestSuitesManagerStateContext);
+  if (!context) {
+    throw internalError(
+      'useTestSuitesManagerState must be used within a TestSuitesManagerProvider'
+    );
+  }
+  return context;
+}
+
+export function useTestSuitesManagerActions(): TestSuitesManagerActionsContextValue {
+  const context = useContext(TestSuitesManagerActionsContext);
+  if (!context) {
+    throw internalError(
+      'useTestSuitesManagerActions must be used within a TestSuitesManagerProvider'
+    );
   }
   return context;
 }

@@ -9,12 +9,17 @@ const { useKangurAssignmentsMock } = vi.hoisted(() => ({
   useKangurAssignmentsMock: vi.fn(),
 }));
 
-const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
+const { useKangurPageContentEntryMock, useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurPageContentEntryMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -57,6 +62,10 @@ describe('KangurPriorityAssignments', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useKangurPageContentEntryMock.mockReturnValue({ entry: null });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+    });
     useKangurAssignmentsMock.mockReturnValue({
       assignments: [],
       isLoading: false,

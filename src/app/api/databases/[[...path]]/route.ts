@@ -3,7 +3,10 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 
 import * as backup from '../backup/route-handler';
 import * as backups from '../backups/route-handler';
@@ -29,6 +32,7 @@ import * as engineOperationsJobCancel from '../engine/operations/jobs/[jobId]/ca
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Params = Record<string, string>;
+type RouteParams = { path?: string[] | string };
 type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
@@ -37,26 +41,36 @@ type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHa
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
-const notFound = (): Response => new Response('Not Found', { status: 404 });
-const methodNotAllowed = (allowed: HttpMethod[]): Response =>
-  new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: allowed.join(', ') },
-  });
+const notFound = async (request: NextRequest, source: string): Promise<Response> =>
+  createErrorResponse(notFoundError('Not Found'), { request, source });
+const methodNotAllowed = async (
+  request: NextRequest,
+  allowed: HttpMethod[],
+  source: string
+): Promise<Response> => {
+  const response = await createErrorResponse(methodNotAllowedError('Method not allowed', {
+    allowedMethods: allowed,
+  }), { request, source });
+  response.headers.set('Allow', allowed.join(', '));
+  return response;
+};
 
 const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = <P extends Params>(
+const dispatch = async <P extends Params>(
   module: RouteModule<P>,
   method: HttpMethod,
   request: NextRequest,
-  params?: P
+  params: P | undefined,
+  source: string
 ): Promise<Response> => {
   const handler = module[method];
   if (!handler) {
     const allowed = getAllowedMethods(module);
-    return Promise.resolve(allowed.length > 0 ? methodNotAllowed(allowed) : notFound());
+    return allowed.length > 0
+      ? methodNotAllowed(request, allowed, source)
+      : notFound(request, source);
   }
   return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
 };
@@ -76,113 +90,139 @@ const routeDatabases = (
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
+  const source = `databases.[[...path]].${method}`;
   if (segments.length === 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   const [first, second, third, fourth, fifth] = segments;
 
   if (first === 'backup' && segments.length === 1) {
-    return dispatch(backup, method, request);
+    return dispatch(backup, method, request, undefined, source);
   }
 
   if (first === 'backups' && segments.length === 1) {
-    return dispatch(backups, method, request);
+    return dispatch(backups, method, request, undefined, source);
   }
 
   if (first === 'browse' && segments.length === 1) {
-    return dispatch(browse, method, request);
+    return dispatch(browse, method, request, undefined, source);
   }
 
   if (first === 'copy-collection' && segments.length === 1) {
-    return dispatch(copyCollection, method, request);
+    return dispatch(copyCollection, method, request, undefined, source);
   }
 
   if (first === 'crud' && segments.length === 1) {
-    return dispatch(crud, method, request);
+    return dispatch(crud, method, request, undefined, source);
   }
 
   if (first === 'delete' && segments.length === 1) {
-    return dispatch(deleteDatabase, method, request);
+    return dispatch(deleteDatabase, method, request, undefined, source);
   }
 
   if (first === 'execute' && segments.length === 1) {
-    return dispatch(execute, method, request);
+    return dispatch(execute, method, request, undefined, source);
   }
 
   if (first === 'json-backup' && segments.length === 1) {
-    return dispatch(jsonBackup, method, request);
+    return dispatch(jsonBackup, method, request, undefined, source);
   }
 
   if (first === 'json-restore' && segments.length === 1) {
-    return dispatch(jsonRestore, method, request);
+    return dispatch(jsonRestore, method, request, undefined, source);
   }
 
   if (first === 'preview' && segments.length === 1) {
-    return dispatch(preview, method, request);
+    return dispatch(preview, method, request, undefined, source);
   }
 
   if (first === 'redis' && segments.length === 1) {
-    return dispatch(redis, method, request);
+    return dispatch(redis, method, request, undefined, source);
   }
 
   if (first === 'restore' && segments.length === 1) {
-    return dispatch(restore, method, request);
+    return dispatch(restore, method, request, undefined, source);
   }
 
   if (first === 'schema' && segments.length === 1) {
-    return dispatch(schema, method, request);
+    return dispatch(schema, method, request, undefined, source);
   }
 
   if (first === 'upload' && segments.length === 1) {
-    return dispatch(upload, method, request);
+    return dispatch(upload, method, request, undefined, source);
   }
 
   if (first === 'engine') {
     if (second === 'provider-preview' && segments.length === 2) {
-      return dispatch(engineProviderPreview, method, request);
+      return dispatch(engineProviderPreview, method, request, undefined, source);
     }
     if (second === 'status' && segments.length === 2) {
-      return dispatch(engineStatus, method, request);
+      return dispatch(engineStatus, method, request, undefined, source);
     }
     if (second === 'backup-scheduler') {
       if (third === 'tick' && segments.length === 3) {
-        return dispatch(engineBackupSchedulerTick, method, request);
+        return dispatch(engineBackupSchedulerTick, method, request, undefined, source);
       }
       if (third === 'run-now' && segments.length === 3) {
-        return dispatch(engineBackupSchedulerRunNow, method, request);
+        return dispatch(engineBackupSchedulerRunNow, method, request, undefined, source);
       }
       if (third === 'status' && segments.length === 3) {
-        return dispatch(engineBackupSchedulerStatus, method, request);
+        return dispatch(engineBackupSchedulerStatus, method, request, undefined, source);
       }
     }
     if (second === 'operations' && third === 'jobs') {
       if (segments.length === 3) {
-        return dispatch(engineOperationsJobs, method, request);
+        return dispatch(engineOperationsJobs, method, request, undefined, source);
       }
       if (fourth && fifth === 'cancel' && segments.length === 5) {
-        return dispatch(engineOperationsJobCancel, method, request, { jobId: fourth });
+        return dispatch(engineOperationsJobCancel, method, request, { jobId: fourth }, source);
       }
     }
   }
 
-  return Promise.resolve(notFound());
+  return notFound(request, source);
 };
 
-const buildRouteHandler = (method: HttpMethod) =>
-  apiHandler(
-    async (request: NextRequest) => routeDatabases(method, request, getPathSegments(request)),
-    {
-      source: `databases.router.${method}`,
-      successLogging: 'off',
-      requireCsrf: false,
-      resolveSessionUser: false,
-      rateLimitKey: false,
-    }
-  );
+const ROUTER_OPTIONS = {
+  successLogging: 'off',
+  requireCsrf: false,
+  resolveSessionUser: false,
+  rateLimitKey: false,
+} as const;
 
-export const GET = buildRouteHandler('GET');
-export const POST = buildRouteHandler('POST');
-export const PUT = buildRouteHandler('PUT');
-export const PATCH = buildRouteHandler('PATCH');
-export const DELETE = buildRouteHandler('DELETE');
+export const GET = apiHandlerWithParams<RouteParams>(
+  async (request: NextRequest, _ctx, _params) => {
+    await assertDatabaseEngineManageAccess();
+    return routeDatabases('GET', request, getPathSegments(request));
+  },
+  { ...ROUTER_OPTIONS, source: 'databases.[[...path]].GET', requireAuth: true }
+);
+export const POST = apiHandlerWithParams<RouteParams>(
+  async (request: NextRequest, _ctx, _params) => {
+    await assertDatabaseEngineManageAccess();
+    return routeDatabases('POST', request, getPathSegments(request));
+  },
+  { ...ROUTER_OPTIONS, source: 'databases.[[...path]].POST', requireAuth: true }
+);
+export const PUT = apiHandlerWithParams<RouteParams>(
+  async (request: NextRequest, _ctx, _params) => {
+    await assertDatabaseEngineManageAccess();
+    return routeDatabases('PUT', request, getPathSegments(request));
+  },
+  { ...ROUTER_OPTIONS, source: 'databases.[[...path]].PUT', requireAuth: true }
+);
+export const PATCH = apiHandlerWithParams<RouteParams>(
+  async (request: NextRequest, _ctx, _params) => {
+    await assertDatabaseEngineManageAccess();
+    return routeDatabases('PATCH', request, getPathSegments(request));
+  },
+  { ...ROUTER_OPTIONS, source: 'databases.[[...path]].PATCH', requireAuth: true }
+);
+export const DELETE = apiHandlerWithParams<RouteParams>(
+  async (request: NextRequest, _ctx, _params) => {
+    await assertDatabaseEngineManageAccess();
+    return routeDatabases('DELETE', request, getPathSegments(request));
+  },
+  { ...ROUTER_OPTIONS, source: 'databases.[[...path]].DELETE', requireAuth: true }
+);

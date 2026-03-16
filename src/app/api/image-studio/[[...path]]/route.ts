@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 
 import type { NextRequest } from 'next/server';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as cardsBackfill from '../cards/backfill/route-handler';
 import * as composite from '../composite/route-handler';
@@ -43,6 +45,7 @@ import * as validationPatternsLearn from '../validation-patterns/learn/route-han
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Params = Record<string, string>;
+type RouteParams = { path?: string[] | string };
 type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
@@ -51,26 +54,36 @@ type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHa
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
-const notFound = (): Response => new Response('Not Found', { status: 404 });
-const methodNotAllowed = (allowed: HttpMethod[]): Response =>
-  new Response('Method Not Allowed', {
-    status: 405,
-    headers: { Allow: allowed.join(', ') },
-  });
+const notFound = async (request: NextRequest, source: string): Promise<Response> =>
+  createErrorResponse(notFoundError('Not Found'), { request, source });
+const methodNotAllowed = async (
+  request: NextRequest,
+  allowed: HttpMethod[],
+  source: string
+): Promise<Response> => {
+  const response = await createErrorResponse(methodNotAllowedError('Method not allowed', {
+    allowedMethods: allowed,
+  }), { request, source });
+  response.headers.set('Allow', allowed.join(', '));
+  return response;
+};
 
 const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = <P extends Params>(
+const dispatch = async <P extends Params>(
   module: RouteModule<P>,
   method: HttpMethod,
   request: NextRequest,
-  params?: P
+  params: P | undefined,
+  source: string
 ): Promise<Response> => {
   const handler = module[method];
   if (!handler) {
     const allowed = getAllowedMethods(module);
-    return Promise.resolve(allowed.length > 0 ? methodNotAllowed(allowed) : notFound());
+    return allowed.length > 0
+      ? methodNotAllowed(request, allowed, source)
+      : notFound(request, source);
   }
   return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
 };
@@ -90,164 +103,186 @@ const routeImageStudio = (
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
+  const source = `image-studio.[[...path]].${method}`;
   if (segments.length === 0) {
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   const [first, second, third, fourth] = segments;
 
   if (first === 'cards' && second === 'backfill' && segments.length === 2) {
-    return dispatch(cardsBackfill, method, request);
+    return dispatch(cardsBackfill, method, request, undefined, source);
   }
 
   if (first === 'composite' && segments.length === 1) {
-    return dispatch(composite, method, request);
+    return dispatch(composite, method, request, undefined, source);
   }
 
   if (first === 'mask' && second === 'ai' && segments.length === 2) {
-    return dispatch(maskAi, method, request);
+    return dispatch(maskAi, method, request, undefined, source);
   }
 
   if (first === 'models' && segments.length === 1) {
-    return dispatch(models, method, request);
+    return dispatch(models, method, request, undefined, source);
   }
 
   if (first === 'prompt-extract' && segments.length === 1) {
-    return dispatch(promptExtract, method, request);
+    return dispatch(promptExtract, method, request, undefined, source);
   }
 
   if (first === 'ui-extractor' && segments.length === 1) {
-    return dispatch(uiExtractor, method, request);
+    return dispatch(uiExtractor, method, request, undefined, source);
   }
 
   if (first === 'run' && segments.length === 1) {
-    return dispatch(run, method, request);
+    return dispatch(run, method, request, undefined, source);
   }
 
   if (first === 'runs') {
     if (segments.length === 1) {
-      return dispatch(runsIndex, method, request);
+      return dispatch(runsIndex, method, request, undefined, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(runById, method, request, { runId: second });
+      return dispatch(runById, method, request, { runId: second }, source);
     }
     if (second && third === 'stream' && segments.length === 3) {
-      return dispatch(runStream, method, request, { runId: second });
+      return dispatch(runStream, method, request, { runId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'sequences') {
     if (segments.length === 1) {
-      return dispatch(sequencesIndex, method, request);
+      return dispatch(sequencesIndex, method, request, undefined, source);
     }
     if (second === 'run' && segments.length === 2) {
-      return dispatch(sequencesRun, method, request);
+      return dispatch(sequencesRun, method, request, undefined, source);
     }
     if (second && third === 'stream' && segments.length === 3) {
-      return dispatch(sequenceStream, method, request, { runId: second });
+      return dispatch(sequenceStream, method, request, { runId: second }, source);
     }
     if (second && third === 'cancel' && segments.length === 3) {
-      return dispatch(sequenceCancel, method, request, { runId: second });
+      return dispatch(sequenceCancel, method, request, { runId: second }, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(sequenceById, method, request, { runId: second });
+      return dispatch(sequenceById, method, request, { runId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'slots') {
     if (second === 'base64' && segments.length === 2) {
-      return dispatch(slotsBase64, method, request);
+      return dispatch(slotsBase64, method, request, undefined, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(slotById, method, request, { slotId: second });
+      return dispatch(slotById, method, request, { slotId: second }, source);
     }
     if (second && third === 'analysis' && segments.length === 3) {
-      return dispatch(slotAnalysis, method, request, { slotId: second });
+      return dispatch(slotAnalysis, method, request, { slotId: second }, source);
     }
     if (second && third === 'autoscale' && segments.length === 3) {
-      return dispatch(slotAutoscale, method, request, { slotId: second });
+      return dispatch(slotAutoscale, method, request, { slotId: second }, source);
     }
     if (second && third === 'center' && segments.length === 3) {
-      return dispatch(slotCenter, method, request, { slotId: second });
+      return dispatch(slotCenter, method, request, { slotId: second }, source);
     }
     if (second && third === 'crop' && segments.length === 3) {
-      return dispatch(slotCrop, method, request, { slotId: second });
+      return dispatch(slotCrop, method, request, { slotId: second }, source);
     }
     if (second && third === 'masks' && segments.length === 3) {
-      return dispatch(slotMasks, method, request, { slotId: second });
+      return dispatch(slotMasks, method, request, { slotId: second }, source);
     }
     if (second && third === 'screenshot' && segments.length === 3) {
-      return dispatch(slotScreenshot, method, request, { slotId: second });
+      return dispatch(slotScreenshot, method, request, { slotId: second }, source);
     }
     if (second && third === 'upscale' && segments.length === 3) {
-      return dispatch(slotUpscale, method, request, { slotId: second });
+      return dispatch(slotUpscale, method, request, { slotId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'projects') {
     if (segments.length === 1) {
-      return dispatch(projectsIndex, method, request);
+      return dispatch(projectsIndex, method, request, undefined, source);
     }
     if (second && segments.length === 2) {
-      return dispatch(projectById, method, request, { projectId: second });
+      return dispatch(projectById, method, request, { projectId: second }, source);
     }
     if (second && third === 'slots') {
       if (segments.length === 3) {
-        return dispatch(projectSlots, method, request, { projectId: second });
+        return dispatch(projectSlots, method, request, { projectId: second }, source);
       }
       if (fourth === 'ensure-from-upload' && segments.length === 4) {
-        return dispatch(projectSlotsEnsureFromUpload, method, request, { projectId: second });
+        return dispatch(
+          projectSlotsEnsureFromUpload,
+          method,
+          request,
+          { projectId: second },
+          source
+        );
       }
-      return Promise.resolve(notFound());
+      return notFound(request, source);
     }
     if (second && third === 'assets') {
       if (segments.length === 3) {
-        return dispatch(projectAssets, method, request, { projectId: second });
+        return dispatch(projectAssets, method, request, { projectId: second }, source);
       }
       if (fourth === 'import' && segments.length === 4) {
-        return dispatch(projectAssetsImport, method, request, { projectId: second });
+        return dispatch(projectAssetsImport, method, request, { projectId: second }, source);
       }
       if (fourth === 'delete' && segments.length === 4) {
-        return dispatch(projectAssetsDelete, method, request, { projectId: second });
+        return dispatch(projectAssetsDelete, method, request, { projectId: second }, source);
       }
       if (fourth === 'move' && segments.length === 4) {
-        return dispatch(projectAssetsMove, method, request, { projectId: second });
+        return dispatch(projectAssetsMove, method, request, { projectId: second }, source);
       }
-      return Promise.resolve(notFound());
+      return notFound(request, source);
     }
     if (second && third === 'folders' && segments.length === 3) {
-      return dispatch(projectFolders, method, request, { projectId: second });
+      return dispatch(projectFolders, method, request, { projectId: second }, source);
     }
     if (second && third === 'variants' && fourth === 'delete' && segments.length === 4) {
-      return dispatch(projectVariantsDelete, method, request, { projectId: second });
+      return dispatch(projectVariantsDelete, method, request, { projectId: second }, source);
     }
-    return Promise.resolve(notFound());
+    return notFound(request, source);
   }
 
   if (first === 'validation-patterns' && second === 'learn' && segments.length === 2) {
-    return dispatch(validationPatternsLearn, method, request);
+    return dispatch(validationPatternsLearn, method, request, undefined, source);
   }
 
-  return Promise.resolve(notFound());
+  return notFound(request, source);
 };
 
-const buildRouteHandler = (method: HttpMethod) =>
-  apiHandler(
-    async (request: NextRequest) => routeImageStudio(method, request, getPathSegments(request)),
-    {
-      source: `image-studio.router.${method}`,
-      successLogging: 'off',
-      requireCsrf: false,
-      resolveSessionUser: false,
-      rateLimitKey: false,
-    }
-  );
+const ROUTER_OPTIONS = {
+  successLogging: 'off',
+  requireCsrf: false,
+  resolveSessionUser: false,
+  rateLimitKey: false,
+} as const;
 
-export const GET = buildRouteHandler('GET');
-export const POST = buildRouteHandler('POST');
-export const PUT = buildRouteHandler('PUT');
-export const PATCH = buildRouteHandler('PATCH');
-export const DELETE = buildRouteHandler('DELETE');
+export const GET = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeImageStudio('GET', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].GET', requireAuth: true }
+);
+export const POST = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeImageStudio('POST', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].POST', requireAuth: true }
+);
+export const PUT = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeImageStudio('PUT', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].PUT', requireAuth: true }
+);
+export const PATCH = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeImageStudio('PATCH', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].PATCH', requireAuth: true }
+);
+export const DELETE = apiHandlerWithParams<RouteParams>(
+  (request: NextRequest, _ctx, _params) =>
+    routeImageStudio('DELETE', request, getPathSegments(request)),
+  { ...ROUTER_OPTIONS, source: 'image-studio.[[...path]].DELETE', requireAuth: true }
+);

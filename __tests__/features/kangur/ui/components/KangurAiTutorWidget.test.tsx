@@ -72,6 +72,50 @@ const {
   audioPlayMock: vi.fn().mockResolvedValue(undefined),
   audioPauseMock: vi.fn(),
 }));
+
+type KangurClientErrorHandlingOptions<T> = {
+  fallback: T | (() => T);
+  onError?: (error: unknown) => void;
+  shouldReport?: (error: unknown) => boolean;
+  shouldRethrow?: (error: unknown) => boolean;
+};
+
+const withKangurClientError = async <T,>(
+  _report: unknown,
+  task: () => Promise<T>,
+  options: KangurClientErrorHandlingOptions<T>
+): Promise<T> => {
+  try {
+    return await task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
+const withKangurClientErrorSync = <T,>(
+  _report: unknown,
+  task: () => T,
+  options: KangurClientErrorHandlingOptions<T>
+): T => {
+  try {
+    return task();
+  } catch (error) {
+    options.onError?.(error);
+    if (options.shouldRethrow?.(error)) {
+      throw error;
+    }
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : options.fallback;
+  }
+};
+
 vi.mock('framer-motion', () => ({
   useReducedMotion: useReducedMotionMock,
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -218,6 +262,8 @@ vi.mock('next/link', () => ({
 }));
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 let KangurAiTutorWidget: typeof import('@/features/kangur/ui/components/KangurAiTutorWidget').KangurAiTutorWidget;
 class MockSpeechSynthesisUtterance {
@@ -1863,7 +1909,7 @@ describe('KangurAiTutorWidget', () => {
   it('restores the context-switch notice after remount using the persisted session key', () => {
     window.sessionStorage.setItem(
       'kangur-ai-tutor-widget-v1',
-      JSON.stringify({ lastSessionKey: 'lesson:lesson-1' })
+      JSON.stringify({ lastSessionKey: 'lesson:lesson-1', hidden: false })
     );
     useKangurTextHighlightMock.mockReturnValue({
       selectedText: null,

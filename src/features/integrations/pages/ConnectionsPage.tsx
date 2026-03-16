@@ -47,7 +47,7 @@ function IntegrationsContent(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <ConfirmModal
         isOpen={Boolean(connectionToDelete)}
         onClose={handleCloseDeleteModal}

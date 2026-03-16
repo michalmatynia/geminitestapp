@@ -3,6 +3,7 @@ import {
   getKangurPageHref as createPageUrl,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
+import { KANGUR_LESSON_LIBRARY, getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentSnapshot,
@@ -16,6 +17,7 @@ import type {
 import type {
   KangurLesson,
   KangurLessonComponentId,
+  KangurLessonSubject,
   KangurPracticeAssignmentOperation,
   KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
@@ -39,6 +41,9 @@ export type KangurAssignmentListItem = {
   description: string;
   icon: string;
   createdAt: string;
+  subject: KangurLessonSubject;
+  subjectLabel: string;
+  subjectAccent: 'sky' | 'violet';
   priority: KangurAssignmentSnapshot['priority'];
   status: KangurAssignmentSnapshot['progress']['status'];
   priorityLabel: string;
@@ -62,6 +67,11 @@ const ASSIGNMENT_PRIORITY_ORDER = {
   medium: 1,
   low: 2,
 } as const;
+
+const ASSIGNMENT_SUBJECT_ACCENTS: Record<KangurLessonSubject, 'sky' | 'violet'> = {
+  english: 'sky',
+  maths: 'violet',
+};
 
 const MIXED_TRAINING_PRESET_CATEGORIES: KangurOperation[] = [
   'addition',
@@ -269,6 +279,9 @@ const resolveLessonGroup = (componentId: KangurLessonComponentId): KangurAssignm
   if (componentId.startsWith('logical_')) {
     return 'logic';
   }
+  if (componentId.startsWith('english_')) {
+    return 'logic';
+  }
   return 'arithmetic';
 };
 
@@ -408,6 +421,7 @@ export const buildKangurAssignmentListItem = (
   assignment: KangurAssignmentSnapshot
 ): KangurAssignmentListItem => {
   const timeLimit = formatKangurAssignmentTimeLimit(assignment.timeLimitMinutes);
+  const subject = resolveKangurAssignmentSubject(assignment);
 
   return {
     id: assignment.id,
@@ -415,6 +429,9 @@ export const buildKangurAssignmentListItem = (
     description: assignment.description,
     icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
     createdAt: assignment.createdAt,
+    subject,
+    subjectLabel: getKangurSubjectLabel(subject),
+    subjectAccent: ASSIGNMENT_SUBJECT_ACCENTS[subject],
     priority: assignment.priority,
     status: assignment.progress.status,
     priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority),
@@ -554,6 +571,32 @@ export const filterKangurAssignmentCatalog = (
     );
   });
 };
+
+export const resolveKangurAssignmentSubject = (
+  assignment: Pick<KangurAssignmentSnapshot, 'target'>
+): KangurLessonSubject => {
+  if (assignment.target.type === 'practice') {
+    return 'maths';
+  }
+
+  const componentId = assignment.target.lessonComponentId;
+  const lessonTemplate = KANGUR_LESSON_LIBRARY[componentId];
+  if (lessonTemplate?.subject) {
+    return lessonTemplate.subject;
+  }
+
+  if (componentId.startsWith('english_')) {
+    return 'english';
+  }
+
+  return 'maths';
+};
+
+export const filterKangurAssignmentsBySubject = (
+  assignments: KangurAssignmentSnapshot[],
+  subject: KangurLessonSubject
+): KangurAssignmentSnapshot[] =>
+  assignments.filter((assignment) => resolveKangurAssignmentSubject(assignment) === subject);
 
 export const selectKangurPriorityAssignments = (
   assignments: KangurAssignmentSnapshot[],

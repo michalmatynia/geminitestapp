@@ -10,10 +10,10 @@ export const kangurHeadlineVariants = cva(
   {
     variants: {
       size: {
-        xs: 'text-lg',
-        sm: 'text-xl',
-        md: 'text-2xl',
-        lg: 'text-3xl',
+        xs: 'text-base sm:text-lg',
+        sm: 'text-lg sm:text-xl',
+        md: 'text-xl sm:text-2xl',
+        lg: 'text-2xl sm:text-3xl',
       },
     },
     defaultVariants: {

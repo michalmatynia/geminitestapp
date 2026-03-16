@@ -34,12 +34,18 @@ import {
   type GeometryShapeId,
 } from '@/features/kangur/ui/services/geometry-drawing';
 import {
+  resolveKangurCanvasPoint,
+  syncKangurCanvasContext,
+} from '@/features/kangur/ui/services/drawing-canvas';
+import { loosenMax, loosenMin, loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
+import {
   addXp,
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import type { Point2d } from '@/shared/contracts/geometry';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -164,8 +170,10 @@ const toGridUnits = (value: number): number =>
 const withinTolerance = (value: number, target: number, tolerance = 0): boolean =>
   Math.abs(value - target) <= tolerance;
 
-const GRID_SNAP_TOLERANCE = 6;
-const MIN_GRID_ALIGNMENT_RATIO = 0.8;
+const MIN_DRAWING_POINTS = loosenMinInt(14);
+const MIN_GRID_UNITS = loosenMin(2);
+const GRID_SNAP_TOLERANCE = loosenMax(6);
+const MIN_GRID_ALIGNMENT_RATIO = loosenMin(0.8);
 
 const distanceToNearestGridLine = (value: number): number => {
   const snapped = Math.round(value / GRID_STEP) * GRID_STEP;
@@ -202,6 +210,8 @@ export default function GeometryPerimeterDrawingGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
+  const strokesRef = useRef<Point2d[][]>([]);
+  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [drawingValidated, setDrawingValidated] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
@@ -222,7 +232,7 @@ export default function GeometryPerimeterDrawingGame({
     [perimeter, roundIndex]
   );
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
-  const isDrawingReady = points.length >= 14;
+  const isDrawingReady = points.length >= MIN_DRAWING_POINTS;
   const isLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
   const revealAnswers = feedback?.kind === 'success' || feedback?.kind === 'error';
 
@@ -238,7 +248,7 @@ export default function GeometryPerimeterDrawingGame({
   const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
     if (!ctx) return;
 
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -280,8 +290,17 @@ export default function GeometryPerimeterDrawingGame({
   }, []);
 
   useEffect(() => {
-    redrawCanvas(strokes);
-  }, [redrawCanvas, strokes]);
+    strokesRef.current = strokes;
+  }, [strokes]);
+
+  useEffect(() => {
+    redrawCanvas(strokesRef.current);
+  }, [redrawCanvas]);
+
+  useKangurCanvasRedraw({
+    canvasRef,
+    redraw: () => redrawCanvas(strokes),
+  });
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -309,13 +328,7 @@ export default function GeometryPerimeterDrawingGame({
     (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
       const canvas = canvasRef.current;
       if (!canvas) return { x: 0, y: 0 };
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = rect.width ? canvas.width / rect.width : 1;
-      const scaleY = rect.height ? canvas.height / rect.height : 1;
-      return {
-        x: (event.clientX - rect.left) * scaleX,
-        y: (event.clientY - rect.top) * scaleY,
-      };
+      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
     },
     []
   );
@@ -327,6 +340,7 @@ export default function GeometryPerimeterDrawingGame({
     if (!canvas) return;
     const point = resolvePoint(event);
     isDrawingRef.current = true;
+    setIsPointerDrawing(true);
     canvas.setPointerCapture(event.pointerId);
     updateStrokes((current) => [...current, [point]]);
   };
@@ -347,6 +361,7 @@ export default function GeometryPerimeterDrawingGame({
   const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
+    setIsPointerDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.releasePointerCapture(event.pointerId);
@@ -502,7 +517,7 @@ export default function GeometryPerimeterDrawingGame({
     if (!currentRound) {
       return { accepted: false, message: 'Brak zadania do oceny.' };
     }
-    if (points.length < 14) {
+    if (points.length < MIN_DRAWING_POINTS) {
       return {
         accepted: false,
         message: 'Narysuj figurę trochę dłużej, żeby można było ją ocenić.',
@@ -519,7 +534,7 @@ export default function GeometryPerimeterDrawingGame({
     const widthUnits = toGridUnits(width);
     const heightUnits = toGridUnits(height);
     const minUnits = Math.min(widthUnits, heightUnits);
-    if (minUnits < 2) {
+    if (minUnits < MIN_GRID_UNITS) {
       return { accepted: false, message: 'Narysuj większą figurę na kratkach.' };
     }
 
@@ -745,12 +760,13 @@ export default function GeometryPerimeterDrawingGame({
             aria-label={`Plansza do rysowania figury ${currentRound?.label}. Użyj myszy lub dotyku, aby narysować figurę.`}
             aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
             data-testid='geometry-perimeter-canvas'
+            data-drawing-active={isPointerDrawing ? 'true' : 'false'}
             role='img'
             ref={canvasRef}
             tabIndex={0}
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
-            className='w-full rounded-[20px] touch-none'
+            className='kangur-drawing-canvas w-full rounded-[20px] touch-none'
             style={{ background: 'var(--kangur-soft-card-background)' }}
             onKeyDown={handleCanvasKeyDown}
             onPointerDown={handlePointerDown}
@@ -765,7 +781,10 @@ export default function GeometryPerimeterDrawingGame({
               'pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/80 bg-amber-100/70 shadow-[0_0_0_3px_rgba(251,191,36,0.15)] transition-transform duration-75',
               keyboardDrawing ? 'scale-110' : 'scale-100'
             )}
-            style={{ left: `${keyboardCursor.x}px`, top: `${keyboardCursor.y}px` }}
+            style={{
+              left: `${(keyboardCursor.x / CANVAS_WIDTH) * 100}%`,
+              top: `${(keyboardCursor.y / CANVAS_HEIGHT) * 100}%`,
+            }}
           />
           {points.length === 0 && (
             <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>

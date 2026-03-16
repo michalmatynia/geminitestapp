@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-12'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-12T15:47:19.934Z
+Generated at: 2026-03-16T18:13:34.633Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 4677
+- Files scanned: 5153
 - Features tracked: 10
 - Circular dependencies: 0
 - Errors: 0
@@ -25,11 +25,11 @@ Generated at: 2026-03-12T15:47:19.934Z
 | Feature | Dependencies | Count |
 | --- | --- | ---: |
 | case-resolver | ai, case-resolver-capture, document-editor, filemaker, foldertree | 5 |
-| cms | admin, foldertree, gsap, products, viewer3d | 5 |
-| ai | foldertree, observability, products, viewer3d | 4 |
+| cms | admin, foldertree, gsap, viewer3d | 4 |
 | kangur | ai, cms, document-editor, foldertree | 4 |
+| products | ai, foldertree, internationalization | 3 |
+| ai | foldertree, viewer3d | 2 |
 | notesapp | document-editor, foldertree | 2 |
-| products | foldertree, internationalization | 2 |
 | admin | foldertree | 1 |
 | drafter | products | 1 |
 | integrations | products | 1 |

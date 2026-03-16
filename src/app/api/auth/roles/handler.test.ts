@@ -170,7 +170,7 @@ describe('auth roles handler', () => {
     getAuthUserRolesMock.mockResolvedValue(userRoles);
     getAuthDefaultRoleIdMock.mockResolvedValue('viewer');
 
-    const findOneAndUpdateMock = vi.fn().mockResolvedValue({ value: { _id: 'doc-1' } });
+    const findOneAndUpdateMock = vi.fn().mockResolvedValue({ ok: 1, value: { _id: 'doc-1' } });
     const deleteManyMock = vi.fn().mockResolvedValue({ acknowledged: true });
     const collectionMock = vi
       .fn()

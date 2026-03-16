@@ -16,20 +16,28 @@ const {
   useKangurRoutingMock,
   useKangurAuthMock,
   useKangurLoginModalMock,
+  useKangurSubjectFocusMock,
   useKangurProgressStateMock,
   useKangurAssignmentsMock,
   scoreFilterMock,
   navigateToLoginMock,
   logoutMock,
+  checkAppStateMock,
+  lessonsState,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   useKangurLoginModalMock: vi.fn(),
+  useKangurSubjectFocusMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   scoreFilterMock: vi.fn(),
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
+  checkAppStateMock: vi.fn(),
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -40,10 +48,17 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: useKangurAuthMock,
   useOptionalKangurAuth: useKangurAuthMock,
+  useKangurAuthActions: () => ({
+    checkAppState: checkAppStateMock,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
@@ -71,6 +86,28 @@ vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: useKangurAssignmentsMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    return {
+      data,
+      isLoading: false,
+      error: null,
+    };
+  },
+  useKangurLessonDocuments: () => ({
+    data: {},
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -195,6 +232,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   player_name: 'Jan',
   score: 8,
   operation: 'addition',
+  subject: 'maths',
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,
@@ -241,9 +279,41 @@ describe('Kangur accessibility smoke', () => {
       navigateToLogin: navigateToLoginMock,
       logout: logoutMock,
     });
+    checkAppStateMock.mockResolvedValue(undefined);
     useKangurLoginModalMock.mockReturnValue({
       openLoginModal: vi.fn(),
     });
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-jan',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        title: 'Nauka zegara',
+        description: 'Odczytuj godziny',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 1000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-calendar',
+        componentId: 'calendar',
+        title: 'Nauka kalendarza',
+        description: 'Dni i miesiące',
+        emoji: '📅',
+        color: 'kangur-gradient-accent-emerald',
+        activeBg: 'bg-emerald-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'maths',
+      },
+    ];
   });
 
   it('exposes profile landmarks and action links by accessible role/name', async () => {
@@ -262,9 +332,21 @@ describe('Kangur accessibility smoke', () => {
     renderLearnerProfilePage();
 
     await waitFor(() => expect(scoreFilterMock).toHaveBeenCalledTimes(3));
-    expect(scoreFilterMock).toHaveBeenCalledWith({ learner_id: 'learner-jan' }, '-created_date', 120);
-    expect(scoreFilterMock).toHaveBeenCalledWith({ created_by: 'jan@example.com' }, '-created_date', 120);
-    expect(scoreFilterMock).toHaveBeenCalledWith({ player_name: 'Jan' }, '-created_date', 120);
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { learner_id: 'learner-jan', subject: 'maths' },
+      '-created_date',
+      120
+    );
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { created_by: 'jan@example.com', subject: 'maths' },
+      '-created_date',
+      120
+    );
+    expect(scoreFilterMock).toHaveBeenCalledWith(
+      { player_name: 'Jan', subject: 'maths' },
+      '-created_date',
+      120
+    );
     expect(screen.getByRole('link', { name: 'Przejdź do głównej treści' })).toHaveAttribute(
       'href',
       '#kangur-learner-profile-main'

@@ -7,7 +7,7 @@ import type {
   KangurLearnerRecommendation,
   KangurLessonMasteryInsight,
   KangurRecentSession,
-} from '@/features/kangur/ui/services/profile';
+} from '@/features/kangur/shared/contracts/kangur-profile';
 import {
   ASSIGNMENT_PRIORITY_ORDER,
   ASSIGNMENT_STATUS_ORDER,

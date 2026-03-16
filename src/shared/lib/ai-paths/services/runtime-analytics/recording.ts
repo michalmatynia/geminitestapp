@@ -15,7 +15,7 @@ import {
 } from './utils';
 
 const isRedisReady = (redis: ReturnType<typeof getRedisConnection>): redis is Redis =>
-  Boolean(redis && redis.status === 'ready');
+  Boolean(redis?.status === 'ready');
 
 export const recordRuntimeRunQueued = async (input: {
   runId: string;

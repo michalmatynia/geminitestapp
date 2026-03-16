@@ -25,6 +25,7 @@ const lesson: KangurLesson = {
   id: 'lesson-1',
   componentId: 'clock',
   contentMode: 'document',
+  subject: 'maths',
   title: 'Lesson One',
   description: 'Intro lesson',
   emoji: '🕐',

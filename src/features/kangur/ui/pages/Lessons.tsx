@@ -1,7 +1,6 @@
 'use client';
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -14,10 +13,7 @@ import {
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import {
   hasKangurLessonDocumentContent,
-  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
-  parseKangurLessonDocumentStore,
 } from '@/features/kangur/lesson-documents';
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
 import { KangurActiveLessonHeader } from '@/features/kangur/ui/components/KangurActiveLessonHeader';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import { KangurLessonDocumentRenderer } from '@/features/kangur/ui/components/KangurLessonDocumentRenderer';
@@ -33,6 +29,7 @@ import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/Kan
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurEmptyState,
   KangurGlassPanel,
@@ -45,6 +42,8 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -52,14 +51,8 @@ import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRou
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
-import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
-
-import type { ComponentType } from 'react';
-
-type LessonProps = {
-  onBack?: () => void;
-  onReady?: () => void;
-};
+import { FOCUS_TO_COMPONENT, LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
+import { resolveFocusedLessonSubject } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 
 const LESSONS_CARD_EASE = [0.22, 1, 0.36, 1] as const;
 const LESSONS_CARD_TRANSITION = {
@@ -71,165 +64,6 @@ const LESSONS_ROUTE_ACKNOWLEDGE_MS = 110;
 const ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES = 18;
 const LESSON_NAV_ANCHOR_ID = 'kangur-lesson-navigation';
 
-const LessonLoadingFallback = (): React.JSX.Element => (
-  <LessonLoadingFallbackCard />
-);
-
-const LessonLoadingFallbackCard = (): React.JSX.Element => {
-  const prefersReducedMotion = useReducedMotion();
-  const loadingMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
-
-  return (
-    <motion.div
-      {...loadingMotionProps}
-      className='w-full max-w-5xl'
-      data-testid='lessons-loading-fallback'
-    >
-      <KangurGlassPanel
-        className='flex min-h-[280px] w-full flex-col items-center justify-center kangur-panel-gap text-center'
-        padding='xl'
-        surface='solid'
-        variant='soft'
-      >
-        <KangurStatusChip accent='indigo' className='uppercase tracking-[0.18em]' size='sm'>
-          Lekcja
-        </KangurStatusChip>
-        <div className='break-words text-base font-semibold text-slate-700'>
-          Ładowanie lekcji...
-        </div>
-        <p className='max-w-lg break-words text-sm text-slate-500'>
-          Przygotowujemy materiał, aby przejście do aktywnej sekcji było płynniejsze.
-        </p>
-      </KangurGlassPanel>
-    </motion.div>
-  );
-};
-
-const loadLessonComponent = (loader: () => Promise<unknown>): ComponentType<LessonProps> =>
-  dynamic<LessonProps>(
-    async () => {
-      const module = (await loader()) as { default: ComponentType<LessonProps> };
-      const ResolvedLesson = module.default;
-
-      return function KangurLoadedLesson(props: LessonProps): React.JSX.Element {
-        useEffect(() => {
-          props.onReady?.();
-        }, [props.onReady]);
-
-        return <ResolvedLesson {...props} />;
-      };
-    },
-    {
-      ssr: false,
-      loading: LessonLoadingFallback,
-    }
-  );
-
-const ClockLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/ClockLesson')
-);
-const CalendarLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/CalendarLesson')
-);
-const AddingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/AddingLesson')
-);
-const SubtractingLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/SubtractingLesson')
-);
-const MultiplicationLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/MultiplicationLesson')
-);
-const DivisionLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/DivisionLesson')
-);
-const GeometryBasicsLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryBasicsLesson')
-);
-const GeometryShapesLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryShapesLesson')
-);
-const GeometrySymmetryLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometrySymmetryLesson')
-);
-const GeometryPerimeterLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryPerimeterLesson')
-);
-const LogicalThinkingLesson = loadLessonComponent(
-  () =>
-    import('@/features/kangur/ui/components/lessons').then((module) => ({
-      default: module.LogicalThinkingLesson,
-    }))
-);
-const LogicalPatternsLesson = loadLessonComponent(
-  () =>
-    import('@/features/kangur/ui/components/lessons').then((module) => ({
-      default: module.LogicalPatternsLesson,
-    }))
-);
-const LogicalClassificationLesson = loadLessonComponent(
-  () =>
-    import('@/features/kangur/ui/components/lessons').then((module) => ({
-      default: module.LogicalClassificationLesson,
-    }))
-);
-const LogicalReasoningLesson = loadLessonComponent(
-  () =>
-    import('@/features/kangur/ui/components/lessons').then((module) => ({
-      default: module.LogicalReasoningLesson,
-    }))
-);
-const LogicalAnalogiesLesson = loadLessonComponent(
-  () =>
-    import('@/features/kangur/ui/components/lessons').then((module) => ({
-      default: module.LogicalAnalogiesLesson,
-    }))
-);
-
-const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
-  clock: ClockLesson,
-  calendar: CalendarLesson,
-  adding: AddingLesson,
-  subtracting: SubtractingLesson,
-  multiplication: MultiplicationLesson,
-  division: DivisionLesson,
-  geometry_basics: GeometryBasicsLesson,
-  geometry_shapes: GeometryShapesLesson,
-  geometry_symmetry: GeometrySymmetryLesson,
-  geometry_perimeter: GeometryPerimeterLesson,
-  logical_thinking: LogicalThinkingLesson,
-  logical_patterns: LogicalPatternsLesson,
-  logical_classification: LogicalClassificationLesson,
-  logical_reasoning: LogicalReasoningLesson,
-  logical_analogies: LogicalAnalogiesLesson,
-};
-
-const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
-  adding: 'adding',
-  addition: 'adding',
-  subtracting: 'subtracting',
-  subtraction: 'subtracting',
-  multiplication: 'multiplication',
-  division: 'division',
-  clock: 'clock',
-  calendar: 'calendar',
-  geometry: 'geometry_shapes',
-  geometry_basics: 'geometry_basics',
-  geometry_shapes: 'geometry_shapes',
-  geometry_symmetry: 'geometry_symmetry',
-  geometry_perimeter: 'geometry_perimeter',
-  logical_thinking: 'logical_thinking',
-  thinking: 'logical_thinking',
-  logical_patterns: 'logical_patterns',
-  patterns: 'logical_patterns',
-  logical_classification: 'logical_classification',
-  classification: 'logical_classification',
-  logical_reasoning: 'logical_reasoning',
-  reasoning: 'logical_reasoning',
-  logical_analogies: 'logical_analogies',
-  analogies: 'logical_analogies',
-  logic: 'logical_thinking',
-};
 
 const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {
   const mappedComponent = FOCUS_TO_COMPONENT[focusToken];
@@ -310,6 +144,7 @@ export default function Lessons() {
   const auth = useKangurAuth();
   const { user, logout } = auth;
   const { openLoginModal } = useKangurLoginModal();
+  const { subject, setSubject } = useKangurSubjectFocus();
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
@@ -330,9 +165,9 @@ export default function Lessons() {
     useKangurPageContentEntry('lessons-active-empty-document');
   const { entry: activeLessonNavigationContent } =
     useKangurPageContentEntry('lessons-active-navigation');
-  const settingsStore = useSettingsStore();
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
+  const emptyLessonsRefetchedForSubject = useRef<KangurLesson['subject'] | null>(null);
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
     enabled: isDeferredContentReady && canAccessParentAssignments,
@@ -355,31 +190,131 @@ export default function Lessons() {
     };
   }, []);
 
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
+  const lessonsQuery = useKangurLessons({
+    subject,
+    enabledOnly: true,
+    enabled: isDeferredContentReady,
+  });
+  const lessonDocumentsQuery = useKangurLessonDocuments({ enabled: isDeferredContentReady });
   const lessons = useMemo(
     (): KangurLesson[] =>
       isDeferredContentReady
-        ? parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled)
+        ? (lessonsQuery.data ?? []).filter((lesson) => lesson.subject === subject)
         : [],
-    [isDeferredContentReady, rawLessons]
+    [isDeferredContentReady, lessonsQuery.data, subject]
   );
   const lessonDocuments = useMemo(
-    () => parseKangurLessonDocumentStore(isDeferredContentReady ? rawLessonDocuments : undefined),
-    [isDeferredContentReady, rawLessonDocuments]
+    () => (isDeferredContentReady ? lessonDocumentsQuery.data ?? {} : {}),
+    [isDeferredContentReady, lessonDocumentsQuery.data]
   );
-  const lessonAssignmentsByComponent = useMemo(
-    () => buildActiveKangurLessonAssignmentsByComponent(assignments),
-    [assignments]
-  );
-  const completedLessonAssignmentsByComponent = useMemo(
-    () => buildCompletedKangurLessonAssignmentsByComponent(assignments),
-    [assignments]
-  );
-  const orderedLessons = useMemo(
-    () => orderKangurLessonsByAssignmentPriority(lessons, lessonAssignmentsByComponent),
-    [lessonAssignmentsByComponent, lessons]
-  );
+
+  useEffect(() => {
+    if (!isDeferredContentReady) {
+      return;
+    }
+    if (!lessonsQuery.data) {
+      return;
+    }
+    if (lessonsQuery.data.length > 0) {
+      emptyLessonsRefetchedForSubject.current = null;
+      return;
+    }
+    if (lessonsQuery.isFetching) {
+      return;
+    }
+    if (emptyLessonsRefetchedForSubject.current === subject) {
+      return;
+    }
+
+    emptyLessonsRefetchedForSubject.current = subject;
+    void lessonsQuery.refetch();
+  }, [
+    isDeferredContentReady,
+    lessonsQuery.data,
+    lessonsQuery.isFetching,
+    lessonsQuery.refetch,
+    subject,
+  ]);
+  const lessonAssignmentsByComponent = useMemo(() => {
+    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status !== 'completed')
+      .filter(
+        (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
+          assignment.target.type === 'lesson'
+      )
+      .forEach((assignment) => {
+        const componentId = assignment.target.lessonComponentId;
+        const existing = nextMap.get(componentId);
+        if (!existing) {
+          nextMap.set(componentId, assignment);
+          return;
+        }
+
+        if (
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]
+        ) {
+          nextMap.set(componentId, assignment);
+        }
+      });
+
+    return nextMap;
+  }, [assignments]);
+  const completedLessonAssignmentsByComponent = useMemo(() => {
+    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
+
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status === 'completed')
+      .filter(
+        (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
+          assignment.target.type === 'lesson'
+      )
+      .forEach((assignment) => {
+        const componentId = assignment.target.lessonComponentId;
+        const existing = nextMap.get(componentId);
+        if (!existing) {
+          nextMap.set(componentId, assignment);
+          return;
+        }
+
+        const assignmentTimestamp = getLessonAssignmentTimestamp(
+          assignment.progress.completedAt,
+          assignment.updatedAt
+        );
+        const existingTimestamp = getLessonAssignmentTimestamp(
+          existing.progress.completedAt,
+          existing.updatedAt
+        );
+
+        if (assignmentTimestamp > existingTimestamp) {
+          nextMap.set(componentId, assignment);
+        }
+      });
+
+    return nextMap;
+  }, [assignments]);
+  const orderedLessons = useMemo(() => {
+    return [...lessons].sort((left, right) => {
+      const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
+      const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);
+
+      if (leftAssignment && !rightAssignment) return -1;
+      if (!leftAssignment && rightAssignment) return 1;
+      if (leftAssignment && rightAssignment) {
+        const priorityDelta =
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[leftAssignment.priority] -
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[rightAssignment.priority];
+        if (priorityDelta !== 0) {
+          return priorityDelta;
+        }
+      }
+
+      return left.sortOrder - right.sortOrder;
+    });
+  }, [lessonAssignmentsByComponent, lessons]);
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
@@ -398,7 +333,7 @@ export default function Lessons() {
   }, [activeLessonId, lessons]);
 
   useEffect((): void => {
-    if (activeLessonId || lessons.length === 0 || typeof window === 'undefined') {
+    if (activeLessonId || typeof window === 'undefined') {
       return;
     }
 
@@ -410,7 +345,17 @@ export default function Lessons() {
       return;
     }
 
-    const focusedLessonId = resolveFocusedKangurLessonId(focusToken, lessons);
+    const focusSubject = resolveFocusedLessonSubject(focusToken);
+    if (focusSubject && focusSubject !== subject) {
+      setSubject(focusSubject);
+      return;
+    }
+
+    if (lessons.length === 0) {
+      return;
+    }
+
+    const focusedLessonId = resolveFocusedLessonId(focusToken, lessons);
     if (!focusedLessonId) {
       return;
     }
@@ -419,7 +364,7 @@ export default function Lessons() {
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     const nextHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
     window.history.replaceState({}, '', nextHref);
-  }, [activeLessonId, lessons]);
+  }, [activeLessonId, basePath, lessons, setSubject, subject]);
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
@@ -444,6 +389,7 @@ export default function Lessons() {
   const hasActiveLessonDocumentContent = hasKangurLessonDocumentContent(activeLessonDocument);
   const shouldRenderLessonDocument =
     activeLesson?.contentMode === 'document' && hasActiveLessonDocumentContent;
+  const isMobile = useKangurMobileBreakpoint();
   const activeLessonAssignment = activeLesson
     ? (lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null)
     : null;
@@ -843,7 +789,7 @@ export default function Lessons() {
                     {...lessonContentReadyMotionProps}
                     className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
                     id={orderedLessons.length === 0 ? undefined : 'kangur-lessons-library'}
-                    role='list'
+                    role={orderedLessons.length > 0 ? 'list' : undefined}
                     aria-label='Lista lekcji'
                   >
                     {orderedLessons.length === 0 ? (
@@ -1056,6 +1002,15 @@ export default function Lessons() {
                       ) : null}
 
                   </div>
+                  {isMobile ? (
+                    <div className='w-full max-w-5xl'>
+                      <KangurLessonNavigationWidget
+                        nextLesson={next}
+                        onSelectLesson={handleSelectLesson}
+                        prevLesson={prev}
+                      />
+                    </div>
+                  ) : null}
                 </KangurLessonNavigationProvider>
               </motion.div>
             )}

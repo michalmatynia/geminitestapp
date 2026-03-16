@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-15'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,27 +8,24 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-03-15T14:44:53.411Z
+Generated at: 2026-03-16T18:25:02.216Z
 
 ## Summary
 
-- Status: WARN
-- Route files scanned: 354
-- Handler files scanned: 339
+- Status: PASSED
+- Route files scanned: 280
+- Handler files scanned: 364
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| unchecked-req-json | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | unchecked-req-json | src/app/api/kangur/learner-activity/handler.ts:49 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
+All API error sources are consistent.
 
 ## Notes
 

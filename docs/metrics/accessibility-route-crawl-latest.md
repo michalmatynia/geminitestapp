@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-15'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,33 +8,33 @@ canonical: true
 ---
 # Accessibility Route Crawl Report
 
-Generated at: 2026-03-15T20:21:25.356Z
+Generated at: 2026-03-16T19:21:43.563Z
 
 ## Summary
 
 - Status: FAILED
 - Routes: 28
-- Passed: 8
-- Failed: 20
+- Passed: 9
+- Failed: 19
 - Unexpected Playwright failures: 1
 - Flaky results: 0
-- Skipped: 19
+- Skipped: 18
 - Error messages captured: 1
 
 ## Route Status
 
 | Route | Audience | Status | Duration | Errors |
 | --- | --- | --- | ---: | ---: |
-| / | public | PASS | 15.8s | 0 |
-| /auth/signin | public | PASS | 1.3s | 0 |
-| /auth/register | public | PASS | 1.8s | 0 |
-| /kangur/login | public | PASS | 5.0s | 0 |
-| /kangur | public | PASS | 5.3s | 0 |
-| /kangur/game | public | PASS | 3.3s | 0 |
-| /kangur/lessons | public | PASS | 3.1s | 0 |
+| / | public | PASS | 23.7s | 0 |
+| /auth/signin | public | PASS | 1.9s | 0 |
+| /auth/register | public | PASS | 2.5s | 0 |
+| /kangur/login | public | PASS | 6.3s | 0 |
+| /kangur | public | PASS | 10.0s | 0 |
+| /kangur/game | public | PASS | 5.7s | 0 |
+| /kangur/lessons | public | PASS | 5.0s | 0 |
 | /kangur/profile | public | PASS | 3.1s | 0 |
-| /kangur/parent-dashboard | public | FAIL | 7.6s | 1 |
-| /admin | admin | FAIL | 0ms | 0 |
+| /kangur/parent-dashboard | public | PASS | 3.0s | 0 |
+| /admin | admin | FAIL | 1.0m | 1 |
 | /admin/products | admin | FAIL | 0ms | 0 |
 | /admin/notes | admin | FAIL | 0ms | 0 |
 | /admin/integrations | admin | FAIL | 0ms | 0 |
@@ -56,30 +56,28 @@ Generated at: 2026-03-15T20:21:25.356Z
 
 ## Errors
 
-### Kangur Parent Dashboard
+### Admin Dashboard
 
-- Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m([22m[2m)[22m failed
+- TimeoutError: page.waitForURL: Timeout 60000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+  navigated to "http://127.0.0.1:63940/auth/signin?error=AccessDenied"
+  navigated to "http://127.0.0.1:63940/auth/signin?error=AccessDenied"
+  navigated to "http://127.0.0.1:63940/auth/signin?error=AccessDenied"
+============================================================
 
-Locator:  locator('#app-content')
-Expected: focused
-Received: inactive
-Timeout:  5000ms
+   at support/admin-auth.ts:100
 
-Call log:
-[2m  - Expect "toBeFocused" with timeout 5000ms[22m
-[2m  - waiting for locator('#app-content')[22m
-[2m    8 × locator resolved to <main tabindex="-1" id="app-content" data-kangur-appearance-mode="default" data-kangur-prev-surface-background="" data-kangur-prev-surface-appearance-mode="" data-kangur-prev-surface-scrollbar-gutter="" class="min-h-screen bg-background focus:outline-none kangur-surface-active" data-kangur-prev-surface-vars="{"--kangur-font-heading":"","--kangur-font-body":"","--kangur-font-base-size":"","--kangur-font-line-height":"","--kangur-font-heading-line-height":"","--kangur-page-max-width":"","--kangur-page…>…</main>[22m
-[2m      - unexpected value "inactive"[22m
-
-
-  42 |     await page.keyboard.press('Enter');
-  43 |     await expect(page).toHaveURL(/#app-content$/);
-> 44 |     await expect(main).toBeFocused();
-     |                        ^
-  45 |
-  46 |     if (routeEntry.readySelector) {
-  47 |       await expect(page.locator(routeEntry.readySelector)).toBeVisible();
-    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:44:24
+   98 |
+   99 |     if (!matchesDestination(getCurrentUrl())) {
+> 100 |       await page.waitForURL(
+      |                  ^
+  101 |         (url) =>
+  102 |           url.pathname === destinationUrl.pathname &&
+  103 |           (destinationUrl.search ? url.search === destinationUrl.search : true),
+    at navigateToDestination (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:100:18)
+    at ensureAdminSession (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/support/admin-auth.ts:168:7)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/e2e/features/accessibility/accessibility-route-crawl.spec.ts:20:7
 
 ## Notes
 

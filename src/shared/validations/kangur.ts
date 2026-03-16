@@ -12,6 +12,7 @@ import {
   kangurScoreCreateInputSchema,
   kangurScoreListQuerySchema,
   kangurScoreSortFieldSchema,
+  kangurSubjectFocusSchema,
   type KangurAssignmentCreateInput,
   type KangurAssignmentListQuery,
   type KangurAssignmentUpdateInput,
@@ -23,6 +24,7 @@ import {
   type KangurScoreCreateInput,
   type KangurScoreListQuery,
   type KangurScoreSortField,
+  type KangurSubjectFocus,
 } from '@/shared/contracts/kangur';
 import { validationError } from '@/shared/errors/app-error';
 
@@ -80,6 +82,7 @@ export const parseKangurScoreListQuery = (
     limit: payload['limit'] ? Number(payload['limit']) : undefined,
     player_name: payload['player_name'],
     operation: payload['operation'],
+    subject: payload['subject'],
     created_by: payload['created_by'],
     learner_id: payload['learner_id'],
   });
@@ -94,6 +97,16 @@ export const parseKangurScoreListQuery = (
     ...parsed.data,
     sort: normalizeKangurSort(parsed.data.sort),
   };
+};
+
+export const parseKangurSubjectFocusPayload = (payload: unknown): KangurSubjectFocus => {
+  const parsed = kangurSubjectFocusSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw validationError('Invalid Kangur subject focus payload.', {
+      issues: extractValidationIssues(parsed.error),
+    });
+  }
+  return parsed.data;
 };
 
 export const parseKangurAssignmentCreatePayload = (

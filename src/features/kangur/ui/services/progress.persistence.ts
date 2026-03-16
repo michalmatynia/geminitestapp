@@ -1,6 +1,7 @@
 import {
   createDefaultKangurProgressState,
   normalizeKangurProgressState,
+  type KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import {
@@ -8,15 +9,31 @@ import {
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   KANGUR_PROGRESS_EVENT_NAME,
 } from './progress.contracts';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
+type KangurSubjectProgressStore = {
+  version: 1;
+  subjects: Record<KangurLessonSubject, KangurProgressState>;
+};
+
+const createDefaultProgressStore = (): KangurSubjectProgressStore => ({
+  version: 1,
+  subjects: {
+    maths: createDefaultKangurProgressState(),
+    english: createDefaultKangurProgressState(),
+  },
+});
 
 const DEFAULT_PROGRESS: KangurProgressState = createDefaultKangurProgressState();
-const DEFAULT_PROGRESS_RAW = JSON.stringify(DEFAULT_PROGRESS);
+const DEFAULT_PROGRESS_STORE: KangurSubjectProgressStore = createDefaultProgressStore();
+const DEFAULT_PROGRESS_RAW = JSON.stringify(DEFAULT_PROGRESS_STORE);
 
-let cachedProgressSnapshot: KangurProgressState = { ...DEFAULT_PROGRESS };
+let currentProgressSubject: KangurLessonSubject = 'maths';
+let cachedProgressStore: KangurSubjectProgressStore = DEFAULT_PROGRESS_STORE;
+let cachedProgressSnapshot: KangurProgressState = cloneProgress(DEFAULT_PROGRESS);
+let cachedProgressSubject: KangurLessonSubject = currentProgressSubject;
 let cachedProgressRaw: string | null = DEFAULT_PROGRESS_RAW;
-const SERVER_PROGRESS_SNAPSHOT: KangurProgressState = { ...DEFAULT_PROGRESS };
+const SERVER_PROGRESS_SNAPSHOT: KangurProgressState = cloneProgress(DEFAULT_PROGRESS);
 let progressPersistenceEnabled = true;
 
 const progressListeners = new Set<(progress: KangurProgressState) => void>();
@@ -59,15 +76,63 @@ function cloneProgress(progress: KangurProgressState): KangurProgressState {
   };
 }
 
-const updateCachedProgressSnapshot = (progress: unknown): KangurProgressState => {
-  const normalized = normalizeKangurProgressState(progress);
-  cachedProgressSnapshot = cloneProgress(normalized);
-  cachedProgressRaw = JSON.stringify(cachedProgressSnapshot);
+const cloneProgressStore = (store: KangurSubjectProgressStore): KangurSubjectProgressStore => ({
+  version: 1,
+  subjects: {
+    maths: cloneProgress(store.subjects.maths ?? DEFAULT_PROGRESS),
+    english: cloneProgress(store.subjects.english ?? DEFAULT_PROGRESS),
+  },
+});
+
+const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    const rawSubjects = record['subjects'];
+    if (rawSubjects && typeof rawSubjects === 'object' && !Array.isArray(rawSubjects)) {
+      const subjectsRecord = rawSubjects as Record<string, unknown>;
+      return {
+        version: 1,
+        subjects: {
+          maths: normalizeKangurProgressState(subjectsRecord['maths']),
+          english: normalizeKangurProgressState(subjectsRecord['english']),
+        },
+      };
+    }
+  }
+
+  return {
+    version: 1,
+    subjects: {
+      maths: normalizeKangurProgressState(value),
+      english: createDefaultKangurProgressState(),
+    },
+  };
+};
+
+const updateCachedProgressStore = (store: KangurSubjectProgressStore): KangurProgressState => {
+  cachedProgressStore = cloneProgressStore(store);
+  cachedProgressSnapshot = cloneProgress(
+    cachedProgressStore.subjects[currentProgressSubject] ?? DEFAULT_PROGRESS
+  );
+  cachedProgressSubject = currentProgressSubject;
+  cachedProgressRaw = JSON.stringify(cachedProgressStore);
   return cachedProgressSnapshot;
 };
 
+const updateCachedProgressSnapshot = (progress: unknown): KangurProgressState => {
+  const normalized = normalizeKangurProgressState(progress);
+  const nextStore: KangurSubjectProgressStore = {
+    version: 1,
+    subjects: {
+      ...cachedProgressStore.subjects,
+      [currentProgressSubject]: normalized,
+    },
+  };
+  return updateCachedProgressStore(nextStore);
+};
+
 const updateCachedProgressSnapshotFromStorageRaw = (raw: string): KangurProgressState => {
-  const snapshot = updateCachedProgressSnapshot(JSON.parse(raw));
+  const snapshot = updateCachedProgressStore(normalizeProgressStore(JSON.parse(raw) as unknown));
   cachedProgressRaw = raw;
   return snapshot;
 };
@@ -79,6 +144,19 @@ export function emitProgressChange(progress: KangurProgressState): void {
   progressListeners.forEach((listener) => listener(progress));
 }
 
+export function setProgressSubject(subject: KangurLessonSubject): void {
+  if (currentProgressSubject === subject) {
+    return;
+  }
+  currentProgressSubject = subject;
+  const snapshot = loadProgress();
+  emitProgressChange(snapshot);
+}
+
+export function getProgressSubject(): KangurLessonSubject {
+  return currentProgressSubject;
+}
+
 export function setProgressPersistenceEnabled(enabled: boolean): void {
   if (progressPersistenceEnabled === enabled) {
     return;
@@ -87,8 +165,7 @@ export function setProgressPersistenceEnabled(enabled: boolean): void {
   progressPersistenceEnabled = enabled;
 
   if (!enabled) {
-    updateCachedProgressSnapshot(DEFAULT_PROGRESS);
-    emitProgressChange(cachedProgressSnapshot);
+    resetProgressStore();
   }
 }
 
@@ -97,6 +174,13 @@ export function isProgressPersistenceEnabled(): boolean {
 }
 
 export function loadProgress(): KangurProgressState {
+  if (cachedProgressSubject !== currentProgressSubject) {
+    cachedProgressSnapshot = cloneProgress(
+      cachedProgressStore.subjects[currentProgressSubject] ?? DEFAULT_PROGRESS
+    );
+    cachedProgressSubject = currentProgressSubject;
+  }
+
   if (typeof window === 'undefined') {
     return cachedProgressSnapshot;
   }
@@ -105,22 +189,29 @@ export function loadProgress(): KangurProgressState {
     return cachedProgressSnapshot;
   }
 
-  try {
-    const raw = localStorage.getItem(KANGUR_PROGRESS_STORAGE_KEY);
-    if (!raw) {
-      if (cachedProgressRaw !== DEFAULT_PROGRESS_RAW) {
-        return updateCachedProgressSnapshot(DEFAULT_PROGRESS);
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.progress',
+      action: 'load-storage',
+      description: 'Loads the progress snapshot from local storage.',
+    },
+    () => {
+      const raw = localStorage.getItem(KANGUR_PROGRESS_STORAGE_KEY);
+      if (!raw) {
+        if (cachedProgressRaw !== DEFAULT_PROGRESS_RAW) {
+          return updateCachedProgressStore(createDefaultProgressStore());
+        }
+        return cachedProgressSnapshot;
+      }
+      if (raw !== cachedProgressRaw) {
+        return updateCachedProgressSnapshotFromStorageRaw(raw);
       }
       return cachedProgressSnapshot;
+    },
+    {
+      fallback: () => updateCachedProgressStore(createDefaultProgressStore()),
     }
-    if (raw !== cachedProgressRaw) {
-      return updateCachedProgressSnapshotFromStorageRaw(raw);
-    }
-    return cachedProgressSnapshot;
-  } catch (error) {
-    logClientError(error);
-    return updateCachedProgressSnapshot(DEFAULT_PROGRESS);
-  }
+  );
 }
 
 export function getKangurProgressServerSnapshot(): KangurProgressState {
@@ -140,7 +231,25 @@ export function saveProgress(progress: KangurProgressState): void {
 
   localStorage.setItem(
     KANGUR_PROGRESS_STORAGE_KEY,
-    cachedProgressRaw ?? JSON.stringify(normalized)
+    cachedProgressRaw ?? JSON.stringify(cachedProgressStore)
+  );
+  emitProgressChange(normalized);
+}
+
+export function resetProgressStore(): void {
+  const normalized = updateCachedProgressStore(createDefaultProgressStore());
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!progressPersistenceEnabled) {
+    emitProgressChange(normalized);
+    return;
+  }
+
+  localStorage.setItem(
+    KANGUR_PROGRESS_STORAGE_KEY,
+    cachedProgressRaw ?? JSON.stringify(cachedProgressStore)
   );
   emitProgressChange(normalized);
 }
@@ -154,13 +263,18 @@ export function loadProgressOwnerKey(): string | null {
     return null;
   }
 
-  try {
-    const raw = localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)?.trim() ?? '';
-    return raw.length > 0 ? raw : null;
-  } catch (error) {
-    logClientError(error);
-    return null;
-  }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.progress',
+      action: 'load-owner-key',
+      description: 'Loads the progress owner key from local storage.',
+    },
+    () => {
+      const raw = localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)?.trim() ?? '';
+      return raw.length > 0 ? raw : null;
+    },
+    { fallback: null }
+  );
 }
 
 export function saveProgressOwnerKey(ownerKey: string | null): void {

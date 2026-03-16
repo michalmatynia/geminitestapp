@@ -12,6 +12,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
   player_name: 'Jan',
   score: 8,
   operation: 'addition',
+  subject: 'maths',
   total_questions: 10,
   correct_answers: 8,
   time_taken: 42,

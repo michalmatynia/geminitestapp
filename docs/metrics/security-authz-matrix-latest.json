@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-11T04:30:44.623Z",
+  "generatedAt": "2026-03-16T18:15:52.826Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,12 +7,12 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 346,
-    "methodCount": 494,
+    "routeFileCount": 280,
+    "methodCount": 214,
     "publicRouteCount": 14,
-    "protectedRouteCount": 464,
-    "signedRouteCount": 1,
-    "actorRouteCount": 15
+    "protectedRouteCount": 200,
+    "signedRouteCount": 0,
+    "actorRouteCount": 0
   },
   "routes": [
     {
@@ -51,211 +51,36 @@
       "evidence": []
     },
     {
-      "route": "agentcreator/agent/[runId]/assets/[file]",
+      "route": "agentcreator/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "agentcreator/agent/[runId]/audits",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent/[runId]/controls",
+      "route": "agentcreator/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "agentcreator/agent/[runId]/logs",
-      "method": "GET",
+      "route": "agentcreator/[[...path]]",
+      "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "agentcreator/agent/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent/[runId]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent/[runId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent/[runId]/snapshots",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent/[runId]/stream",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/agent/snapshots/[snapshotId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/personas/[personaId]/memory",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/personas/[personaId]/visuals",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/personas/avatar",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/personas/avatar",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/agents/[agentId]",
+      "route": "agentcreator/[[...path]]",
       "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "agentcreator/teaching/agents/[agentId]",
+      "route": "agentcreator/[[...path]]",
       "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/agents",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/agents",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/chat",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections/[collectionId]/documents/[documentId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections/[collectionId]/documents",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections/[collectionId]/documents",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections/[collectionId]",
-      "method": "PATCH",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections/[collectionId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections/[collectionId]/search",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "agentcreator/teaching/collections",
-      "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
@@ -324,340 +149,39 @@
       "evidence": []
     },
     {
-      "route": "ai-paths/db-action",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "ai-paths/health",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/playwright/[runId]/artifacts/[file]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/playwright/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/playwright",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "ai-paths/portable-engine/remediation-dead-letters/replay-history",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/portable-engine/remediation-dead-letters",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/portable-engine/remediation-dead-letters",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/portable-engine/remediation-webhook",
-      "method": "POST",
-      "policyId": "portable-remediation-webhook",
-      "expectedAccess": "signed",
-      "evidence": [
-        "signature verification"
-      ]
-    },
-    {
-      "route": "ai-paths/portable-engine/schema/diff",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/portable-engine/schema",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/portable-engine/trend-snapshots",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/[runId]/cancel",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/[runId]/resume",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/[runId]/retry-node",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/[runId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/[runId]/stream",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/dead-letter/requeue",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "permission/isElevated",
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/enqueue",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs/queue-status",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runs",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runtime-analytics/insights",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runtime-analytics/insights",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/runtime-analytics/summary",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/settings/maintenance",
+      "route": "ai-paths/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "ai-paths/settings/maintenance",
+      "route": "ai-paths/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "ai-paths/settings",
-      "method": "GET",
+      "route": "ai-paths/[[...path]]",
+      "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "ai-paths/settings",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "ai-paths/settings",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "ai-paths/trigger-buttons/[id]",
+      "route": "ai-paths/[[...path]]",
       "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/trigger-buttons/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/trigger-buttons/cleanup-fixtures",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/trigger-buttons/reorder",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/trigger-buttons",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/trigger-buttons",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "ai-paths/update",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "ai-paths/validation/docs-snapshot",
-      "method": "GET",
+      "route": "ai-paths/[[...path]]",
+      "method": "DELETE",
       "policyId": "default-protected",
       "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
+      "evidence": []
     },
     {
       "route": "analytics/events",
@@ -826,6 +350,24 @@
       "evidence": []
     },
     {
+      "route": "auth/roles",
+      "method": "GET",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": [
+        "auth()"
+      ]
+    },
+    {
+      "route": "auth/roles",
+      "method": "PATCH",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": [
+        "auth()"
+      ]
+    },
+    {
       "route": "auth/users/[id]",
       "method": "PATCH",
       "policyId": "default-protected",
@@ -958,197 +500,36 @@
       "evidence": []
     },
     {
-      "route": "chatbot/agent/[runId]/[action]",
+      "route": "chatbot/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "chatbot/agent/[runId]/[action]",
+      "route": "chatbot/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "chatbot/agent/[runId]/assets/[file]",
-      "method": "GET",
+      "route": "chatbot/[[...path]]",
+      "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "chatbot/agent/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/agent/[runId]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/agent/[runId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/agent",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/agent",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/agent",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/context",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/jobs/[jobId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/jobs/[jobId]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/jobs/[jobId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/jobs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/jobs",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/jobs",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/memory",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/sessions/[sessionId]/messages",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/sessions/[sessionId]/messages",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/sessions/[sessionId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/sessions",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/sessions",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/sessions",
+      "route": "chatbot/[[...path]]",
       "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "chatbot/sessions",
+      "route": "chatbot/[[...path]]",
       "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/settings",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "chatbot/settings",
-      "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
@@ -1322,16 +703,7 @@
       "evidence": []
     },
     {
-      "route": "databases/backup",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/backups",
+      "route": "databases/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
@@ -1340,16 +712,7 @@
       ]
     },
     {
-      "route": "databases/browse",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/copy-collection",
+      "route": "databases/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
@@ -1358,8 +721,8 @@
       ]
     },
     {
-      "route": "databases/copy-collection",
-      "method": "GET",
+      "route": "databases/[[...path]]",
+      "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
@@ -1367,8 +730,8 @@
       ]
     },
     {
-      "route": "databases/crud",
-      "method": "POST",
+      "route": "databases/[[...path]]",
+      "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
@@ -1376,160 +739,8 @@
       ]
     },
     {
-      "route": "databases/delete",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/engine/backup-scheduler/run-now",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "databases/engine/backup-scheduler/status",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/engine/backup-scheduler/tick",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "databases/engine/operations/jobs/[jobId]/cancel",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "databases/engine/operations/jobs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "databases/engine/provider-preview",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/engine/status",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/execute",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/json-backup",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/json-backup",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/json-restore",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/preview",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/redis",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/restore",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/schema",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "databases/upload",
-      "method": "POST",
+      "route": "databases/[[...path]]",
+      "method": "DELETE",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
@@ -1607,397 +818,74 @@
       "evidence": []
     },
     {
-      "route": "image-studio/cards/backfill",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/composite",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/mask/ai",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "image-studio/models",
+      "route": "image-studio/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "image-studio/projects/[projectId]/assets/delete",
+      "route": "image-studio/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "image-studio/projects/[projectId]/assets/import",
-      "method": "POST",
+      "route": "image-studio/[[...path]]",
+      "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "image-studio/projects/[projectId]/assets/move",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/assets",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/assets",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/folders",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/folders",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]",
+      "route": "image-studio/[[...path]]",
       "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "image-studio/projects/[projectId]/slots/ensure-from-upload",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/slots",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/slots",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects/[projectId]/variants/delete",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/projects",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/prompt-extract",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "image-studio/run",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/runs/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/runs/[runId]/stream",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/runs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/sequences/[runId]/cancel",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/sequences/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/sequences/[runId]/stream",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/sequences",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/sequences/run",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]/analysis",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]/autoscale",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]/center",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]/crop",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]/masks",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]",
-      "method": "PATCH",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]",
+      "route": "image-studio/[[...path]]",
       "method": "DELETE",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "image-studio/slots/[slotId]/screenshot",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/[slotId]/upscale",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/slots/base64",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "image-studio/ui-extractor",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "image-studio/validation-patterns/learn",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user",
-        "permission/isElevated"
-      ]
-    },
-    {
-      "route": "kangur/ai-tutor/chat",
-      "method": "POST",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/ai-tutor/content",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "kangur/ai-tutor/content",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/ai-tutor/guest-intro",
+      "route": "kangur/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "auth()",
-        "actor/session resolver"
+        "auth()"
       ]
     },
     {
-      "route": "kangur/ai-tutor/native-guide",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "kangur/ai-tutor/native-guide",
+      "route": "kangur/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "access helper",
-        "actor/session resolver"
+        "auth()"
       ]
     },
     {
-      "route": "kangur/ai-tutor/usage",
-      "method": "GET",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/assignments/[id]",
+      "route": "kangur/[[...path]]",
       "method": "PATCH",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
       "evidence": [
-        "access helper"
+        "auth()"
       ]
     },
     {
-      "route": "kangur/assignments",
-      "method": "GET",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
+      "route": "kangur/[[...path]]",
+      "method": "DELETE",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
       "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "kangur/assignments",
-      "method": "POST",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper"
+        "auth()"
       ]
     },
     {
@@ -2012,24 +900,7 @@
       "method": "POST",
       "policyId": "kangur-learner-auth-public",
       "expectedAccess": "public",
-      "evidence": []
-    },
-    {
-      "route": "kangur/auth/logout",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
       "evidence": [
-        "auth()"
-      ]
-    },
-    {
-      "route": "kangur/auth/me",
-      "method": "GET",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
         "actor/session resolver"
       ]
     },
@@ -2076,121 +947,6 @@
       "expectedAccess": "protected",
       "evidence": [
         "auth()"
-      ]
-    },
-    {
-      "route": "kangur/auth/parent-password",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/learners/[id]",
-      "method": "PATCH",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/learners",
-      "method": "GET",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "kangur/learners",
-      "method": "POST",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "kangur/observability/summary",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()"
-      ]
-    },
-    {
-      "route": "kangur/progress",
-      "method": "GET",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/progress",
-      "method": "PATCH",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/scores",
-      "method": "GET",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/scores",
-      "method": "POST",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/tts/probe",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "access helper",
-        "actor/session resolver"
-      ]
-    },
-    {
-      "route": "kangur/tts",
-      "method": "POST",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper"
-      ]
-    },
-    {
-      "route": "kangur/tts/status",
-      "method": "POST",
-      "policyId": "kangur-actor-routes",
-      "expectedAccess": "actor",
-      "evidence": [
-        "access helper"
       ]
     },
     {
@@ -2749,352 +1505,36 @@
       ]
     },
     {
-      "route": "v2/integrations/[id]/connections/[connectionId]/allegro/authorize",
+      "route": "v2/integrations/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/integrations/[id]/connections/[connectionId]/allegro/callback",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/allegro/disconnect",
+      "route": "v2/integrations/[[...path]]",
       "method": "POST",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/integrations/[id]/connections/[connectionId]/allegro/request",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/allegro/test",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/base/inventories",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/base/products",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/base/request",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/base/test",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections/[connectionId]/test",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/[id]/connections",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/connections/[id]",
+      "route": "v2/integrations/[[...path]]",
       "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/integrations/connections/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user"
-      ]
-    },
-    {
-      "route": "v2/integrations/connections/[id]/session",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/exports/base/[setting]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/exports/base/[setting]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/images/sync-base/all",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/[setting]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/[setting]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/parameters",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/parameters",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/runs/[runId]/cancel",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/runs/[runId]/report",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/runs/[runId]/resume",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/runs/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/runs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/runs",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/sample-product",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/imports/base/sample-product",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/jobs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/product-listings",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/product-listings",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/base/link-existing",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/base/sku-check",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/export-to-base",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "session.user"
-      ]
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings/[listingId]/delete-from-base",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": [
-        "auth()",
-        "session.user"
-      ]
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings/[listingId]/purge",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings/[listingId]/relist",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings/[listingId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings/[listingId]",
+      "route": "v2/integrations/[[...path]]",
       "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/integrations/products/[id]/listings/[listingId]/sync-base-images",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/products/[id]/listings",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/queues/tradera",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/integrations/with-connections",
-      "method": "GET",
+      "route": "v2/integrations/[[...path]]",
+      "method": "DELETE",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
@@ -3135,610 +1575,36 @@
       "evidence": []
     },
     {
-      "route": "v2/products/[id]/duplicate",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/images/[imageFileId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/images/base64",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/images/link-to-file",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]",
+      "route": "v2/products/[[...path]]",
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/products/[id]",
+      "route": "v2/products/[[...path]]",
+      "method": "POST",
+      "policyId": "default-protected",
+      "expectedAccess": "protected",
+      "evidence": []
+    },
+    {
+      "route": "v2/products/[[...path]]",
       "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/products/[id]",
+      "route": "v2/products/[[...path]]",
       "method": "PATCH",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
     },
     {
-      "route": "v2/products/[id]",
+      "route": "v2/products/[[...path]]",
       "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/studio/[action]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/studio/[action]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/studio",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/[id]/studio",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs/[jobId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs/[jobId]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs/[jobId]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs/bulk",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs/enqueue",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-jobs",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ai-paths/description-context",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/[id]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/batch",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/migrate",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/reorder",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/categories/tree",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/count",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/entities/[type]/[id]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/entities/[type]/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/entities/[type]/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/entities/[type]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/entities/[type]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/entities/catalogs/assign",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/ids",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/images/base64/all",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/images/base64",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/images/upload",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/import/csv",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/metadata/[type]/[id]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/metadata/[type]/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/metadata/[type]/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/metadata/[type]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/metadata/[type]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/paged",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/parameters/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/parameters/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/parameters",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/parameters",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/producers/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/producers/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/producers",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/producers",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/simple-parameters",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/simple-parameters",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/profiles/[id]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/profiles/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/profiles/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/profiles/[id]/run",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/profiles",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/profiles",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/relink",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/runs/[runId]",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/sync/runs",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/tags/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/tags/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/tags/all",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/tags",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/tags",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validation",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validation",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-config",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-decisions",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns/[id]",
-      "method": "PUT",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns/[id]",
-      "method": "DELETE",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns/import",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns/reorder",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-patterns/templates/[type]",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-runtime/evaluate",
-      "method": "POST",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-settings",
-      "method": "GET",
-      "policyId": "default-protected",
-      "expectedAccess": "protected",
-      "evidence": []
-    },
-    {
-      "route": "v2/products/validator-settings",
-      "method": "PUT",
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": []
@@ -3774,5 +1640,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 283
+  "durationMs": 176
 }

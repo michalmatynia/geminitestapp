@@ -756,7 +756,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   }, [triggerButtonsQuery.data, triggerButtonPathUsageMap]);
 
   return (
-    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
+    <div className='page-section max-w-5xl space-y-6'>
       <PanelHeader
         title='Trigger Buttons'
         description='Configure interactive buttons that appear in modals and lists to trigger AI path executions.'

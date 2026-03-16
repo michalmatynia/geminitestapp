@@ -452,7 +452,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
 
   if (!event) {
     return (
-      <div className='container mx-auto space-y-6 py-8'>
+      <div className='page-section-compact space-y-6'>
         <SectionHeader
           title='Edit Event'
           description='The requested event record could not be found.'
@@ -477,7 +477,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='page-section-compact space-y-6'>
         <SectionHeader
           title='Edit Event'
           description='Update an event record and linked organizations.'

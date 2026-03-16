@@ -3,13 +3,9 @@ import type {
   KangurProgressState,
   KangurXpRewards,
 } from '@/features/kangur/ui/types';
+import type { KangurProgressLevel } from '@/features/kangur/shared/contracts/kangur-profile';
 
-export type KangurProgressLevel = {
-  level: number;
-  minXp: number;
-  title: string;
-  color: string;
-};
+export type { KangurProgressLevel } from '@/features/kangur/shared/contracts/kangur-profile';
 
 export type KangurBadgeTrackKey =
   | 'onboarding'
@@ -18,7 +14,8 @@ export type KangurBadgeTrackKey =
   | 'variety'
   | 'challenge'
   | 'xp'
-  | 'quest';
+  | 'quest'
+  | 'english';
 
 export type KangurBadge = {
   id: string;
@@ -260,6 +257,7 @@ export const BADGE_TRACK_META: Record<
   challenge: { label: 'Wyzwania', emoji: '🎯', order: 5 },
   xp: { label: 'XP', emoji: '⭐', order: 6 },
   quest: { label: 'Misje', emoji: '🧭', order: 7 },
+  english: { label: 'Angielski', emoji: '🇬🇧', order: 8 },
 };
 
 export const getBadgeTrackMeta = (

@@ -7,6 +7,9 @@ import {
   classifyError as classifySharedError,
   getSuggestedActions as getSharedSuggestedActions,
 } from '@/shared/errors/error-classifier';
+import { isAppError } from '@/shared/errors/app-error';
+import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
+import type { ResolvedError } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -172,13 +175,32 @@ export const ErrorSystem = {
         ? (contextCategory as ErrorCategory)
         : classifySharedError(error);
 
+    const baseResolved: ResolvedError | null = isAppError(error)
+      ? {
+        errorId: context.errorId || `err_${Date.now()}`,
+        message: error.message,
+        code: error.code,
+        httpStatus: error.httpStatus,
+        expected: error.expected,
+        critical: error.critical,
+        retryable: error.retryable,
+        category,
+        suggestedActions: getSharedSuggestedActions(category, error),
+        ...(typeof error.retryAfterMs === 'number' ? { retryAfterMs: error.retryAfterMs } : {}),
+        ...(error.meta ? { meta: error.meta } : {}),
+        cause: error.cause,
+      }
+      : null;
+    const userMessage = context.userMessage || (baseResolved ? resolveErrorUserMessage(baseResolved) : null);
+
     return {
       id: context.errorId || `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
       category,
       message,
       userMessage:
-        context.userMessage || 'An unexpected error occurred. Please try again or contact support.',
+        userMessage ||
+        'An unexpected error occurred. Please try again or contact support.',
       service: context.service || 'unknown',
       suggestedActions: getSharedSuggestedActions(category, error),
       context: {

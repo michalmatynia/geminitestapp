@@ -65,7 +65,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <div className='container mx-auto py-10'>
+      <div className='page-section'>
         <Alert variant='warning' className='p-6 text-sm'>
           You don&apos;t have permission to view auth metrics. Ask an admin to grant
           `auth.users.read` or elevate your account.
@@ -76,7 +76,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
 
   if (authUsersQuery.isPending || authLoading) {
     return (
-      <div className='container mx-auto py-10'>
+      <div className='page-section'>
         <Card variant='glass' padding='lg' className='flex justify-center'>
           <LoadingState message='Loading auth metrics...' />
         </Card>
@@ -85,7 +85,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
+    <div className='page-section max-w-5xl space-y-6'>
       <Card variant='glass' padding='lg'>
         <SectionHeader
           title='Auth Dashboard'

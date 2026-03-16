@@ -16,26 +16,23 @@ import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import {
-  hasKangurLessonDocumentContent,
-  parseKangurLessonDocumentStore,
-} from '@/features/kangur/lesson-documents';
+import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
-import { KANGUR_LESSONS_SETTING_KEY, parseKangurLessons } from '@/features/kangur/settings';
+import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
-import { KANGUR_LESSON_DOCUMENTS_SETTING_KEY } from '@/features/kangur/shared/contracts/kangur';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
-import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import {
   getLessonAssignmentTimestamp,
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
   LESSON_COMPONENTS,
   resolveFocusedLessonId,
+  resolveFocusedLessonSubject,
 } from './KangurLessonsRuntimeContext.shared';
 
 import type {
@@ -59,7 +56,7 @@ export function KangurLessonsRuntimeProvider({
   const { user } = auth;
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
-  const settingsStore = useSettingsStore();
+  const { subject, setSubject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
     enabled: canAccessParentAssignments,
@@ -67,28 +64,100 @@ export function KangurLessonsRuntimeProvider({
       includeArchived: false,
     },
   });
-  const rawLessons = settingsStore.get(KANGUR_LESSONS_SETTING_KEY);
-  const rawLessonDocuments = settingsStore.get(KANGUR_LESSON_DOCUMENTS_SETTING_KEY);
-  const lessons = useMemo(
-    (): KangurLesson[] => parseKangurLessons(rawLessons).filter((lesson) => lesson.enabled),
-    [rawLessons]
+  const lessonsQuery = useKangurLessons({ subject, enabledOnly: true });
+  const lessonDocumentsQuery = useKangurLessonDocuments();
+  const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
+  const lessonComponentIds = useMemo(
+    () => new Set(lessons.map((lesson) => lesson.componentId)),
+    [lessons]
   );
   const lessonDocuments = useMemo(
-    () => parseKangurLessonDocumentStore(rawLessonDocuments),
-    [rawLessonDocuments]
+    () => lessonDocumentsQuery.data ?? {},
+    [lessonDocumentsQuery.data]
   );
-  const lessonAssignmentsByComponent = useMemo(
-    () => buildActiveKangurLessonAssignmentsByComponent(assignments),
-    [assignments]
-  );
-  const completedLessonAssignmentsByComponent = useMemo(
-    () => buildCompletedKangurLessonAssignmentsByComponent(assignments),
-    [assignments]
-  );
-  const orderedLessons = useMemo(
-    () => orderKangurLessonsByAssignmentPriority(lessons, lessonAssignmentsByComponent),
-    [lessonAssignmentsByComponent, lessons]
-  );
+  const lessonAssignmentsByComponent = useMemo(() => {
+    const nextMap = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
+
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status !== 'completed')
+      .filter(
+        (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'lesson' } } =>
+          assignment.target.type === 'lesson'
+      )
+      .filter((assignment) => lessonComponentIds.has(assignment.target.lessonComponentId))
+      .forEach((assignment) => {
+        const componentId = assignment.target.lessonComponentId;
+        const existing = nextMap.get(componentId);
+        if (!existing) {
+          nextMap.set(componentId, assignment);
+          return;
+        }
+
+        if (
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]
+        ) {
+          nextMap.set(componentId, assignment);
+        }
+      });
+
+    return nextMap;
+  }, [assignments, lessonComponentIds]);
+  const completedLessonAssignmentsByComponent = useMemo(() => {
+    const nextMap = new Map<KangurLessonComponentId, KangurAssignmentSnapshot>();
+
+    assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status === 'completed')
+      .filter(
+        (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'lesson' } } =>
+          assignment.target.type === 'lesson'
+      )
+      .filter((assignment) => lessonComponentIds.has(assignment.target.lessonComponentId))
+      .forEach((assignment) => {
+        const componentId = assignment.target.lessonComponentId;
+        const existing = nextMap.get(componentId);
+        if (!existing) {
+          nextMap.set(componentId, assignment);
+          return;
+        }
+
+        const assignmentTimestamp = getLessonAssignmentTimestamp(
+          assignment.progress.completedAt,
+          assignment.updatedAt
+        );
+        const existingTimestamp = getLessonAssignmentTimestamp(
+          existing.progress.completedAt,
+          existing.updatedAt
+        );
+
+        if (assignmentTimestamp > existingTimestamp) {
+          nextMap.set(componentId, assignment);
+        }
+      });
+
+    return nextMap;
+  }, [assignments, lessonComponentIds]);
+  const orderedLessons = useMemo(() => {
+    return [...lessons].sort((left, right) => {
+      const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
+      const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);
+
+      if (leftAssignment && !rightAssignment) return -1;
+      if (!leftAssignment && rightAssignment) return 1;
+      if (leftAssignment && rightAssignment) {
+        const priorityDelta =
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[leftAssignment.priority] -
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[rightAssignment.priority];
+        if (priorityDelta !== 0) {
+          return priorityDelta;
+        }
+      }
+
+      return left.sortOrder - right.sortOrder;
+    });
+  }, [lessonAssignmentsByComponent, lessons]);
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
@@ -108,7 +177,7 @@ export function KangurLessonsRuntimeProvider({
   }, [activeLessonId, lessons]);
 
   useEffect((): void => {
-    if (activeLessonId || lessons.length === 0 || typeof window === 'undefined') {
+    if (activeLessonId || typeof window === 'undefined') {
       return;
     }
 
@@ -120,7 +189,17 @@ export function KangurLessonsRuntimeProvider({
       return;
     }
 
-    const focusedLessonId = resolveFocusedKangurLessonId(focusToken, lessons);
+    const focusSubject = resolveFocusedLessonSubject(focusToken);
+    if (focusSubject && focusSubject !== subject) {
+      setSubject(focusSubject);
+      return;
+    }
+
+    if (lessons.length === 0) {
+      return;
+    }
+
+    const focusedLessonId = resolveFocusedLessonId(focusToken, lessons);
     if (!focusedLessonId) {
       return;
     }
@@ -129,7 +208,7 @@ export function KangurLessonsRuntimeProvider({
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     const nextHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
     window.history.replaceState({}, '', nextHref);
-  }, [activeLessonId, basePath, lessons]);
+  }, [activeLessonId, basePath, lessons, setSubject, subject]);
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] ?? null : null;

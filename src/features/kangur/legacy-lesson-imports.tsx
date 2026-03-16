@@ -283,6 +283,30 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     LOGICAL_ANALOGIES_HUB_SECTIONS,
     LOGICAL_ANALOGIES_SLIDES
   ),
+  english_basics: {
+    kind: 'flat',
+    slides: [],
+  },
+  english_parts_of_speech: {
+    kind: 'flat',
+    slides: [],
+  },
+  english_sentence_structure: {
+    kind: 'flat',
+    slides: [],
+  },
+  english_subject_verb_agreement: {
+    kind: 'flat',
+    slides: [],
+  },
+  english_articles: {
+    kind: 'flat',
+    slides: [],
+  },
+  english_prepositions_time_place: {
+    kind: 'flat',
+    slides: [],
+  },
 };
 
 const buildPagesFromDefinition = (

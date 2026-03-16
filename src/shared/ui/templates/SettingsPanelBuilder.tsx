@@ -10,6 +10,7 @@ import { Checkbox } from '../checkbox';
 import { FormField } from '../form-section';
 import { FormModal } from '../FormModal';
 import { Input } from '../input';
+import { PasswordInput } from '../password-input';
 import { Label } from '../label';
 import { SelectSimple } from '../select-simple';
 import { Switch } from '../switch';
@@ -492,31 +493,53 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 errorId={errorId}
               >
                 <div className='flex items-center gap-2'>
-                  <Input
-                    id={fieldId}
-                    type={field.type}
-                    value={
-                      values[field.key] !== undefined && values[field.key] !== null
-                        ? String(values[field.key])
-                        : ''
-                    }
-                    onChange={(e) =>
-                      handleFieldChange(
-                        field.key,
-                        field.type === 'number' ? Number(e.target.value) : e.target.value
-                      )
-                    }
-                    placeholder={field.placeholder}
-                    disabled={field.disabled || disabled}
-                    min={field.min}
-                    max={field.max}
-                    step={field.step}
-                    className='flex-1'
-                    aria-describedby={describedBy}
-                    aria-invalid={isInvalid || undefined}
-                    aria-errormessage={errorId}
-                    aria-label={field.label}
-                   title={field.placeholder}/>
+                  {field.type === 'password' ? (
+                    <PasswordInput
+                      id={fieldId}
+                      value={
+                        values[field.key] !== undefined && values[field.key] !== null
+                          ? String(values[field.key])
+                          : ''
+                      }
+                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                      placeholder={field.placeholder}
+                      disabled={field.disabled || disabled}
+                      className='flex-1'
+                      containerClassName='flex-1'
+                      aria-describedby={describedBy}
+                      aria-invalid={isInvalid || undefined}
+                      aria-errormessage={errorId}
+                      aria-label={field.label}
+                      title={field.placeholder}
+                    />
+                  ) : (
+                    <Input
+                      id={fieldId}
+                      type={field.type}
+                      value={
+                        values[field.key] !== undefined && values[field.key] !== null
+                          ? String(values[field.key])
+                          : ''
+                      }
+                      onChange={(e) =>
+                        handleFieldChange(
+                          field.key,
+                          field.type === 'number' ? Number(e.target.value) : e.target.value
+                        )
+                      }
+                      placeholder={field.placeholder}
+                      disabled={field.disabled || disabled}
+                      min={field.min}
+                      max={field.max}
+                      step={field.step}
+                      className='flex-1'
+                      aria-describedby={describedBy}
+                      aria-invalid={isInvalid || undefined}
+                      aria-errormessage={errorId}
+                      aria-label={field.label}
+                      title={field.placeholder}
+                    />
+                  )}
                   {field.suffix && (
                     <span className='text-xs text-muted-foreground'>{field.suffix}</span>
                   )}

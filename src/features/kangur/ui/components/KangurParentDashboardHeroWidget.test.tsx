@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   routeNavigatorPushMock,
   settingsStoreMock,
+  lessonsState,
   useKangurLoginModalMock,
   useKangurLearnerActivityStatusMock,
   useKangurParentDashboardRuntimeMock,
@@ -16,6 +17,9 @@ const {
   routeNavigatorPushMock: vi.fn(),
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
+  },
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
   },
   useKangurLoginModalMock: vi.fn(),
   useKangurLearnerActivityStatusMock: vi.fn(),
@@ -60,6 +64,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
   useKangurLearnerActivityStatus: useKangurLearnerActivityStatusMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
@@ -76,6 +88,7 @@ describe('KangurParentDashboardHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     settingsStoreMock.get.mockReturnValue(undefined);
+    lessonsState.value = [];
     useKangurLoginModalMock.mockReturnValue({
       authMode: 'sign-in',
       callbackUrl: '/kangur',

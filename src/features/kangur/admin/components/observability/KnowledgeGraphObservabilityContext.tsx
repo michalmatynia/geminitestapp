@@ -6,6 +6,7 @@ import type {
   KangurKnowledgeGraphPreviewResponse,
   KangurKnowledgeGraphStatusSnapshot,
 } from '@/shared/contracts';
+import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 export type KnowledgeGraphPreviewDraft = {
   latestUserMessage: string;
@@ -90,7 +91,7 @@ export function KnowledgeGraphObservabilityProvider({
 export function useKnowledgeGraphObservability(): KnowledgeGraphObservabilityContextValue {
   const context = useContext(KnowledgeGraphObservabilityContext);
   if (!context) {
-    throw new Error(
+    throw internalError(
       'useKnowledgeGraphObservability must be used within a KnowledgeGraphObservabilityProvider'
     );
   }

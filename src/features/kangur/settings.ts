@@ -3,19 +3,27 @@ import {
   KANGUR_TTS_VOICE_OPTIONS,
   type KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
+import {
+  KANGUR_LESSON_COMPONENT_ORDER,
+  KANGUR_LESSON_LIBRARY,
+} from '@/features/kangur/lessons/lesson-catalog';
+import type { KangurLessonTemplate } from '@/features/kangur/lessons/lesson-types';
 import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
   kangurLessonContentModeSchema,
   kangurLessonComponentIdSchema,
+  kangurLessonSubjectSchema,
   type KangurLesson,
   type KangurLessonComponentId,
   type KangurLessonContentMode,
+  type KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
+export { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY };
 export * from './help-settings';
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
@@ -60,34 +68,6 @@ const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
 const KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS =
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS;
 
-type KangurLessonTemplate = {
-  componentId: KangurLessonComponentId;
-  label: string;
-  title: string;
-  description: string;
-  emoji: string;
-  color: string;
-  activeBg: string;
-};
-
-const KANGUR_LESSON_COMPONENT_ORDER: readonly KangurLessonComponentId[] = [
-  'clock',
-  'calendar',
-  'adding',
-  'subtracting',
-  'multiplication',
-  'division',
-  'geometry_basics',
-  'geometry_shapes',
-  'geometry_symmetry',
-  'geometry_perimeter',
-  'logical_thinking',
-  'logical_patterns',
-  'logical_classification',
-  'logical_reasoning',
-  'logical_analogies',
-] as const;
-
 export const KANGUR_GEOMETRY_LESSON_COMPONENT_IDS = [
   'geometry_basics',
   'geometry_shapes',
@@ -111,157 +91,36 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   logical_classification: 'logical_classification',
   logical_reasoning: 'logical_reasoning',
   logical_analogies: 'logical_analogies',
-};
-
-export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLessonTemplate> = {
-  clock: {
-    componentId: 'clock',
-    label: 'Clock Lesson',
-    title: 'Nauka zegara',
-    description: 'Godziny, minuty i pełny czas na zegarze analogowym',
-    emoji: '🕐',
-    color: 'kangur-gradient-accent-indigo-reverse',
-    activeBg: 'bg-indigo-500',
-  },
-  calendar: {
-    componentId: 'calendar',
-    label: 'Calendar Lesson',
-    title: 'Nauka kalendarza',
-    description: 'Dni, miesiące, daty i pory roku',
-    emoji: '📅',
-    color: 'kangur-gradient-accent-emerald',
-    activeBg: 'bg-green-500',
-  },
-  adding: {
-    componentId: 'adding',
-    label: 'Adding Lesson',
-    title: 'Dodawanie',
-    description: 'Jednocyfrowe, dwucyfrowe i gra z piłkami!',
-    emoji: '➕',
-    color: 'kangur-gradient-accent-amber',
-    activeBg: 'bg-orange-400',
-  },
-  subtracting: {
-    componentId: 'subtracting',
-    label: 'Subtracting Lesson',
-    title: 'Odejmowanie',
-    description: 'Jednocyfrowe, dwucyfrowe i reszta',
-    emoji: '➖',
-    color: 'kangur-gradient-accent-rose',
-    activeBg: 'bg-red-400',
-  },
-  multiplication: {
-    componentId: 'multiplication',
-    label: 'Multiplication Lesson',
-    title: 'Mnożenie',
-    description: 'Tabliczka mnożenia i algorytmy',
-    emoji: '✖️',
-    color: 'kangur-gradient-accent-indigo',
-    activeBg: 'bg-purple-500',
-  },
-  division: {
-    componentId: 'division',
-    label: 'Division Lesson',
-    title: 'Dzielenie',
-    description: 'Proste dzielenie i reszta z dzielenia',
-    emoji: '➗',
-    color: 'kangur-gradient-accent-teal',
-    activeBg: 'bg-blue-500',
-  },
-  geometry_basics: {
-    componentId: 'geometry_basics',
-    label: 'Geometry Basics Lesson',
-    title: 'Podstawy geometrii',
-    description: 'Punkt, odcinek, bok i kąt',
-    emoji: '📐',
-    color: 'kangur-gradient-accent-sky',
-    activeBg: 'bg-cyan-500',
-  },
-  geometry_shapes: {
-    componentId: 'geometry_shapes',
-    label: 'Geometry Shapes Lesson',
-    title: 'Figury geometryczne',
-    description: 'Poznaj figury i narysuj je w grze',
-    emoji: '🔷',
-    color: 'kangur-gradient-accent-violet-reverse',
-    activeBg: 'bg-fuchsia-500',
-  },
-  geometry_symmetry: {
-    componentId: 'geometry_symmetry',
-    label: 'Geometry Symmetry Lesson',
-    title: 'Symetria',
-    description: 'Oś symetrii i odbicia lustrzane',
-    emoji: '🪞',
-    color: 'kangur-gradient-accent-emerald',
-    activeBg: 'bg-emerald-500',
-  },
-  geometry_perimeter: {
-    componentId: 'geometry_perimeter',
-    label: 'Geometry Perimeter Lesson',
-    title: 'Obwód figur',
-    description: 'Liczenie długości boków krok po kroku',
-    emoji: '📏',
-    color: 'kangur-gradient-accent-amber-reverse',
-    activeBg: 'bg-amber-500',
-  },
-  logical_thinking: {
-    componentId: 'logical_thinking',
-    label: 'Logical Thinking Lesson',
-    title: 'Myślenie logiczne',
-    description: 'Wprowadzenie do wzorców, klasyfikacji i analogii',
-    emoji: '🧠',
-    color: 'kangur-gradient-accent-indigo',
-    activeBg: 'bg-violet-500',
-  },
-  logical_patterns: {
-    componentId: 'logical_patterns',
-    label: 'Logical Patterns Lesson',
-    title: 'Wzorce i ciągi',
-    description: 'Odkryj zasady kryjące się w ciągach i wzorcach',
-    emoji: '🔢',
-    color: 'kangur-gradient-accent-violet',
-    activeBg: 'bg-violet-500',
-  },
-  logical_classification: {
-    componentId: 'logical_classification',
-    label: 'Logical Classification Lesson',
-    title: 'Klasyfikacja',
-    description: 'Grupuj, sortuj i znajdź intruza',
-    emoji: '📦',
-    color: 'kangur-gradient-accent-teal',
-    activeBg: 'bg-teal-500',
-  },
-  logical_reasoning: {
-    componentId: 'logical_reasoning',
-    label: 'Logical Reasoning Lesson',
-    title: 'Wnioskowanie',
-    description: 'Jeśli... to... — myśl krok po kroku',
-    emoji: '💡',
-    color: 'kangur-gradient-accent-indigo',
-    activeBg: 'bg-indigo-500',
-  },
-  logical_analogies: {
-    componentId: 'logical_analogies',
-    label: 'Logical Analogies Lesson',
-    title: 'Analogie',
-    description: 'Znajdź tę samą relację w nowym kontekście',
-    emoji: '🔗',
-    color: 'kangur-gradient-accent-rose-reverse',
-    activeBg: 'bg-pink-500',
-  },
+  english_basics: 'english_basics',
+  english_parts_of_speech: 'english_parts_of_speech',
+  english_sentence_structure: 'english_sentence_structure',
+  english_subject_verb_agreement: 'english_subject_verb_agreement',
+  english_articles: 'english_articles',
+  english_prepositions_time_place: 'english_prepositions_time_place',
 };
 
 export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<
   LabeledOptionDto<KangurLessonComponentId>
-> = KANGUR_LESSON_COMPONENT_ORDER.map((componentId) => ({
-  value: componentId,
-  label: KANGUR_LESSON_LIBRARY[componentId].label,
-}));
+> = KANGUR_LESSON_COMPONENT_ORDER.reduce<LabeledOptionDto<KangurLessonComponentId>[]>(
+  (acc, componentId) => {
+    const lesson = KANGUR_LESSON_LIBRARY[componentId];
+    if (!lesson) {
+      return acc;
+    }
+    acc.push({
+      value: componentId,
+      label: lesson.label,
+    });
+    return acc;
+  },
+  []
+);
 
 export type KangurLessonDraft = Pick<
   KangurLesson,
   | 'componentId'
   | 'contentMode'
+  | 'subject'
   | 'title'
   | 'description'
   | 'emoji'
@@ -356,6 +215,18 @@ const resolveKangurLessonContentMode = (value: unknown): KangurLessonContentMode
   return parsed.success ? parsed.data : 'component';
 };
 
+const resolveKangurLessonSubject = (
+  value: unknown,
+  fallback: KangurLessonSubject
+): KangurLessonSubject => {
+  if (typeof value !== 'string') return fallback;
+  const parsed = kangurLessonSubjectSchema.safeParse(value.trim().toLowerCase());
+  return parsed.success ? parsed.data : fallback;
+};
+
+const resolveKangurLessonTemplateSubject = (template: KangurLessonTemplate): KangurLessonSubject =>
+  template.subject ?? 'maths';
+
 const resolveKangurNarratorEngine = (value: unknown): KangurNarratorEngine => {
   if (typeof value !== 'string') return 'server';
   return value.trim().toLowerCase() === 'client' ? 'client' : 'server';
@@ -426,6 +297,7 @@ export const createKangurLessonDraft = (
   return {
     componentId,
     contentMode: 'component',
+    subject: resolveKangurLessonTemplateSubject(template),
     title: template.title,
     description: template.description,
     emoji: template.emoji,
@@ -442,6 +314,7 @@ export const createDefaultKangurLessons = (): KangurLesson[] =>
       id: `kangur-lesson-${componentId}`,
       componentId,
       contentMode: 'component',
+      subject: resolveKangurLessonTemplateSubject(template),
       title: template.title,
       description: template.description,
       emoji: template.emoji,
@@ -545,6 +418,10 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
         id: lessonId,
         componentId,
         contentMode: resolveKangurLessonContentMode(entry['contentMode']),
+        subject: resolveKangurLessonSubject(
+          entry['subject'],
+          resolveKangurLessonTemplateSubject(template)
+        ),
         title: normalizeText(entry['title'], template.title, 120),
         description: normalizeText(entry['description'], template.description, 240),
         emoji: normalizeText(entry['emoji'], template.emoji, 12),
@@ -650,6 +527,7 @@ export const appendMissingKangurLessonsByComponent = (
       id: lessonId,
       componentId,
       contentMode: 'component',
+      subject: resolveKangurLessonTemplateSubject(template),
       title: template.title,
       description: template.description,
       emoji: template.emoji,

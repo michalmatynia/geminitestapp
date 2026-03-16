@@ -9,6 +9,8 @@ import {
 import { ActivityTypes } from '@/shared/constants/observability';
 import {
   createDefaultKangurProgressState,
+  kangurLessonSubjectSchema,
+  type KangurLessonSubject,
   type KangurProgressState,
 } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -46,15 +48,27 @@ const resolveBodyJson = async (
   return readBodyJson(request);
 };
 
+const resolveProgressSubject = (req: NextRequest): KangurLessonSubject => {
+  const raw = req.nextUrl.searchParams.get('subject');
+  const parsed = kangurLessonSubjectSchema.safeParse(raw?.trim());
+  return parsed.success ? parsed.data : 'maths';
+};
+
+const buildSubjectProgressKey = (userKey: string, subject: KangurLessonSubject): string =>
+  `${userKey}::${subject}`;
+
 const resolveProgressKeys = (input: {
   learnerId: string;
   legacyUserKey: string | null;
-}): string[] => {
-  const keys = [input.learnerId];
-  if (input.legacyUserKey) {
-    keys.push(input.legacyUserKey);
-  }
-  return keys;
+  subject: KangurLessonSubject;
+}): { primaryKey: string; keys: string[] } => {
+  const baseKeys = [input.learnerId, ...(input.legacyUserKey ? [input.legacyUserKey] : [])];
+  const subjectKeys = baseKeys.map((key) => buildSubjectProgressKey(key, input.subject));
+  const fallbackKeys = input.subject === 'maths' ? baseKeys : [];
+  return {
+    primaryKey: subjectKeys[0]!,
+    keys: [...subjectKeys, ...fallbackKeys],
+  };
 };
 
 const parseTimestampMs = (value: string | null | undefined): number => {
@@ -204,16 +218,25 @@ const resolveLessonPanelActivity = (
 const loadProgressForLearner = async (input: {
   learnerId: string;
   legacyUserKey: string | null;
+  subject: KangurLessonSubject;
 }) => {
   const repository = await getKangurProgressRepository();
-  const [primary, legacy] = await Promise.all(
-    resolveProgressKeys(input).map((key) => repository.getProgress(key))
+  const { primaryKey, keys } = resolveProgressKeys(input);
+  const progressEntries = await Promise.all(
+    keys.map((key) => repository.getProgress(key))
   );
+  const [primary] = progressEntries;
   const defaultProgress = createDefaultKangurProgressState();
-  const primaryEmpty = JSON.stringify(primary) === JSON.stringify(defaultProgress);
-  if (primaryEmpty && legacy && JSON.stringify(legacy) !== JSON.stringify(defaultProgress)) {
-    await repository.saveProgress(input.learnerId, legacy);
-    return legacy;
+  const primaryEmpty =
+    JSON.stringify(primary ?? defaultProgress) === JSON.stringify(defaultProgress);
+  if (primaryEmpty) {
+    const fallback = progressEntries.find(
+      (entry) => JSON.stringify(entry) !== JSON.stringify(defaultProgress)
+    );
+    if (fallback) {
+      await repository.saveProgress(primaryKey, fallback);
+      return fallback;
+    }
   }
   return primary ?? defaultProgress;
 };
@@ -224,9 +247,11 @@ export async function getKangurProgressHandler(
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
   const activeLearner = requireActiveLearner(actor);
+  const subject = resolveProgressSubject(req);
   const progress = await loadProgressForLearner({
     learnerId: activeLearner.id,
     legacyUserKey: activeLearner.legacyUserKey,
+    subject,
   });
 
   return NextResponse.json(progress);
@@ -241,12 +266,15 @@ export async function patchKangurProgressHandler(
   const ctaId = req.headers.get(KANGUR_PROGRESS_CTA_HEADER);
   const actor = await resolveKangurActor(req);
   const activeLearner = requireActiveLearner(actor);
+  const subject = resolveProgressSubject(req);
   const repository = await getKangurProgressRepository();
   const previousProgress = await loadProgressForLearner({
     learnerId: activeLearner.id,
     legacyUserKey: activeLearner.legacyUserKey,
+    subject,
   });
-  const progress = await repository.saveProgress(activeLearner.id, payload);
+  const progressKey = buildSubjectProgressKey(activeLearner.id, subject);
+  const progress = await repository.saveProgress(progressKey, payload);
 
   void logKangurServerEvent({
     source: 'kangur.progress.update',
@@ -260,6 +288,7 @@ export async function patchKangurProgressHandler(
       gamesPlayed: progress.gamesPlayed,
       lessonsCompleted: progress.lessonsCompleted,
       perfectGames: progress.perfectGames,
+      subject,
     },
   });
 

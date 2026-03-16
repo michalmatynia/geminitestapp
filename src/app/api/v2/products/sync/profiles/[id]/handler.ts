@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   deleteProductSyncProfile,
@@ -14,17 +15,32 @@ import type {
 } from '@/shared/contracts/product-sync';
 import { productSyncProfileUpdatePayloadSchema } from '@/shared/contracts/product-sync';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
 export const updateProfileSchema = productSyncProfileUpdatePayloadSchema;
+
+const paramsSchema = z.object({
+  id: z.string().trim().min(1, 'Sync profile id is required'),
+});
+
+const parseProfileId = (params: { id: string }): string => {
+  const parsed = paramsSchema.safeParse(params);
+  if (!parsed.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsed.error.flatten(),
+    });
+  }
+  return parsed.data.id;
+};
 
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const profile = await getProductSyncProfile(params.id);
+  const profileId = parseProfileId(params);
+  const profile = await getProductSyncProfile(profileId);
   if (!profile) {
-    throw notFoundError('Sync profile not found.', { profileId: params.id });
+    throw notFoundError('Sync profile not found.', { profileId });
   }
   return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
 }
@@ -34,6 +50,7 @@ export async function PUT_handler(
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
+  const profileId = parseProfileId(params);
   const body = ctx.body as ProductSyncProfileUpdatePayload;
   const patch: Partial<ProductSyncProfile> = {};
   if (body.name !== undefined) patch.name = body.name;
@@ -54,10 +71,10 @@ export async function PUT_handler(
     }));
   }
 
-  const profile = await updateProductSyncProfile(params.id, patch);
+  const profile = await updateProductSyncProfile(profileId, patch);
 
   if (!profile) {
-    throw notFoundError('Sync profile not found.', { profileId: params.id });
+    throw notFoundError('Sync profile not found.', { profileId });
   }
 
   return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
@@ -68,9 +85,10 @@ export async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const deleted = await deleteProductSyncProfile(params.id);
+  const profileId = parseProfileId(params);
+  const deleted = await deleteProductSyncProfile(profileId);
   if (!deleted) {
-    throw notFoundError('Sync profile not found.', { profileId: params.id });
+    throw notFoundError('Sync profile not found.', { profileId });
   }
   const response: ProductSyncDeleteResponse = { ok: true };
   return NextResponse.json(response);

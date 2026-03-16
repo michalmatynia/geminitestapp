@@ -3,13 +3,14 @@ import { z } from 'zod';
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import {
   kangurScoreSchema,
+  resolveKangurScoreSubject,
   type KangurScore,
   type KangurScoreCreateInput,
   type KangurScoreFilters,
   type KangurScoreLimit,
   type KangurScoreSort,
 } from '@/features/kangur/shared/contracts/kangur';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 const KANGUR_GUEST_SCORES_STORAGE_KEY = 'kangur_guest_scores_v1';
@@ -103,22 +104,27 @@ const readStoredGuestScores = (): KangurScore[] => {
     return [];
   }
 
-  try {
-    const raw = window.localStorage.getItem(KANGUR_GUEST_SCORES_STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.guest-scores',
+      action: 'read-storage',
+      description: 'Reads guest Kangur scores from local storage.',
+    },
+    () => {
+      const raw = window.localStorage.getItem(KANGUR_GUEST_SCORES_STORAGE_KEY);
+      if (!raw) {
+        return [];
+      }
 
-    const parsed = guestScoreListSchema.safeParse(JSON.parse(raw) as unknown);
-    if (!parsed.success) {
-      return [];
-    }
+      const parsed = guestScoreListSchema.safeParse(JSON.parse(raw) as unknown);
+      if (!parsed.success) {
+        return [];
+      }
 
-    return dedupeScores(parsed.data);
-  } catch (error) {
-    logClientError(error);
-    return [];
-  }
+      return dedupeScores(parsed.data);
+    },
+    { fallback: [] }
+  );
 };
 
 const writeStoredGuestScores = (scores: KangurScore[]): void => {
@@ -154,6 +160,9 @@ const matchesGuestScoreFilters = (
   if (filters.operation && score.operation !== filters.operation) {
     return false;
   }
+  if (filters.subject && resolveKangurScoreSubject(score) !== filters.subject) {
+    return false;
+  }
   if (filters.created_by) {
     return false;
   }
@@ -170,11 +179,16 @@ export const hasGuestKangurScores = (): boolean => loadGuestKangurScores().lengt
 
 export const createGuestKangurScore = (input: KangurScoreCreateInput): KangurScore => {
   const clientMutationId = input.client_mutation_id?.trim() || generateGuestScoreMutationId();
+  const subject = resolveKangurScoreSubject({
+    operation: input.operation,
+    subject: input.subject,
+  });
   const createdScore: KangurScore = {
     id: clientMutationId,
     player_name: input.player_name,
     score: input.score,
     operation: input.operation,
+    subject,
     total_questions: input.total_questions,
     correct_answers: input.correct_answers,
     time_taken: input.time_taken,
@@ -230,10 +244,12 @@ export const syncGuestKangurScores = async (input: {
 
     for (const score of readStoredGuestScores()) {
       const clientMutationId = score.client_mutation_id?.trim() || score.id;
+      const subject = resolveKangurScoreSubject(score);
       await input.persistScore({
         player_name: score.player_name,
         score: score.score,
         operation: score.operation,
+        subject,
         total_questions: score.total_questions,
         correct_answers: score.correct_answers,
         time_taken: score.time_taken,

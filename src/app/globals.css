@@ -87,6 +87,58 @@
 }
 
 @layer utilities {
+  .page-container {
+    @apply container mx-auto;
+  }
+
+  .page-section {
+    @apply container mx-auto py-10;
+  }
+
+  .page-section-compact {
+    @apply container mx-auto py-8;
+  }
+
+  .page-section-tight {
+    @apply container mx-auto py-6;
+  }
+
+  .page-section-slim {
+    @apply container mx-auto py-2;
+  }
+
+  .page-section-tall {
+    @apply container mx-auto py-20;
+  }
+
+  .kangur-max-h-screen-2 {
+    max-height: calc(100vh - 2rem);
+  }
+
+  .kangur-max-h-screen-6 {
+    max-height: calc(100vh - 6rem);
+  }
+
+  @supports (height: 100svh) {
+    .kangur-max-h-screen-2 {
+      max-height: calc(100svh - 2rem);
+    }
+
+    .kangur-max-h-screen-6 {
+      max-height: calc(100svh - 6rem);
+    }
+  }
+
+  @supports (height: 100dvh) {
+    .kangur-max-h-screen-2 {
+      max-height: calc(100dvh - 2rem);
+    }
+
+    .kangur-max-h-screen-6 {
+      max-height: calc(100dvh - 6rem);
+    }
+  }
+
   .cms-css-anim {
     animation-duration: var(--cms-css-anim-duration, 700ms);
     animation-delay: var(--cms-css-anim-delay, 0ms);
@@ -561,12 +613,24 @@
         ) + env(safe-area-inset-bottom)
     );
     padding-left: calc(
-      clamp(
-          12px,
-          calc(var(--kangur-page-padding-left, 32px) * 0.375),
-          var(--kangur-page-padding-left, 32px)
-        ) + env(safe-area-inset-left)
+        clamp(
+            12px,
+            calc(var(--kangur-page-padding-left, 32px) * 0.375),
+            var(--kangur-page-padding-left, 32px)
+          ) + env(safe-area-inset-left)
     );
+  }
+
+  .kangur-page-container img {
+    height: auto;
+    max-width: 100%;
+  }
+
+  .kangur-page-container svg,
+  .kangur-page-container video,
+  .kangur-page-container canvas {
+    height: auto;
+    max-width: 100%;
   }
 
   @media (min-width: 640px) {
@@ -1384,7 +1448,31 @@
   }
 
   @media (max-width: 639px) {
+    .kangur-text-field {
+      font-size: 16px !important;
+    }
+
     .kangur-surface-active {
+      --kangur-page-padding-top: 32px !important;
+      --kangur-page-padding-right: 20px !important;
+      --kangur-page-padding-bottom: 64px !important;
+      --kangur-page-padding-left: 20px !important;
+      --kangur-grid-gutter: 16px !important;
+      --kangur-panel-radius-elevated: 30px !important;
+      --kangur-panel-radius-soft: 28px !important;
+      --kangur-panel-radius-subtle: 22px !important;
+      --kangur-card-radius: 22px !important;
+      --kangur-lesson-callout-radius: 20px !important;
+      --kangur-lesson-inset-radius: 16px !important;
+      --kangur-gradient-icon-tile-radius-md: 14px !important;
+      --kangur-gradient-icon-tile-radius-lg: 20px !important;
+      --kangur-panel-padding-md: 16px !important;
+      --kangur-panel-padding-lg: 18px !important;
+      --kangur-panel-padding-xl: 22px !important;
+      --kangur-card-padding-sm: 10px !important;
+      --kangur-card-padding-md: 14px !important;
+      --kangur-card-padding-lg: 16px !important;
+      --kangur-card-padding-xl: 18px !important;
       --kangur-pill-font-size: 13px;
       --kangur-pill-padding-y: 8px;
       --kangur-pill-padding-x: 12px;
@@ -1414,6 +1502,20 @@
 
     .kangur-segmented-control-item {
       flex: 1 1 calc(50% - 0.5rem);
+    }
+  }
+
+  @media (max-width: 420px) {
+    .kangur-surface-active {
+      --kangur-page-padding-top: 24px !important;
+      --kangur-page-padding-right: 16px !important;
+      --kangur-page-padding-bottom: 56px !important;
+      --kangur-page-padding-left: 16px !important;
+      --kangur-panel-padding-md: 14px !important;
+      --kangur-panel-padding-lg: 16px !important;
+      --kangur-panel-padding-xl: 20px !important;
+      --kangur-card-padding-md: 12px !important;
+      --kangur-card-padding-lg: 14px !important;
     }
   }
 
@@ -3298,7 +3400,7 @@
 
 @layer utilities {
   .kangur-panel-gap {
-    gap: 2rem;
+    gap: 1.5rem;
   }
 
   .kangur-lesson-panel-gap {
@@ -3314,9 +3416,35 @@
     margin-top: calc(var(--kangur-lesson-panel-gap, 1rem) * -0.5);
   }
 
+  .kangur-drawing-canvas[data-drawing-active='true']:focus-visible {
+    box-shadow: none;
+  }
+
+  @supports not selector(:focus-visible) {
+    .kangur-drawing-canvas[data-drawing-active='true']:focus {
+      box-shadow: none;
+    }
+  }
+
   .kangur-panel-shell.kangur-panel-gap,
   .kangur-panel-shell .kangur-panel-gap {
     gap: 1rem;
+  }
+
+  @media (max-width: 420px) {
+    .kangur-panel-gap {
+      gap: 1.25rem;
+    }
+
+    .kangur-lesson-panel-gap {
+      --kangur-lesson-panel-gap: 0.9rem;
+      gap: var(--kangur-lesson-panel-gap);
+    }
+
+    .kangur-panel-shell.kangur-panel-gap,
+    .kangur-panel-shell .kangur-panel-gap {
+      gap: 0.9rem;
+    }
   }
 
   @media (min-width: 640px) {

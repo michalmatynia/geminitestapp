@@ -22,6 +22,7 @@ export const KANGUR_BADGE_TRACK_ACCENTS: Record<KangurBadgeTrackKey, KangurAccen
   challenge: 'amber',
   xp: 'sky',
   quest: 'emerald',
+  english: 'indigo',
 };
 
 // ── Badge Track Card Sub-components ──────────────────────────────────────────

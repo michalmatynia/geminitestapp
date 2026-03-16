@@ -45,7 +45,8 @@ export function KangurAppLoader({
     }
 
     let cancelled = false;
-    let frameId: number | null = null;
+    type FrameHandle = number | ReturnType<typeof setTimeout>;
+    let frameId: FrameHandle | null = null;
     let paintTimeoutId: ReturnType<typeof setTimeout> | null = null;
     const startTime =
       typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -90,19 +91,23 @@ export function KangurAppLoader({
       });
     };
 
-    const scheduleFrame = (callback: FrameRequestCallback): number => {
+    const scheduleFrame = (callback: FrameRequestCallback): FrameHandle => {
       if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
         return window.requestAnimationFrame(callback);
       }
-      return globalThis.setTimeout(() => callback(0), 16) as unknown as number;
+      return globalThis.setTimeout(() => callback(0), 16);
     };
 
-    const cancelFrame = (id: number): void => {
-      if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    const cancelFrame = (id: FrameHandle): void => {
+      if (
+        typeof window !== 'undefined'
+        && typeof window.cancelAnimationFrame === 'function'
+        && typeof id === 'number'
+      ) {
         window.cancelAnimationFrame(id);
         return;
       }
-      globalThis.clearTimeout(id as unknown as ReturnType<typeof setTimeout>);
+      globalThis.clearTimeout(id);
     };
 
     const check = (): void => {

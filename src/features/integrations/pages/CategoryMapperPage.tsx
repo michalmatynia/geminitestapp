@@ -12,7 +12,7 @@ function CategoryMapperPageContent(): React.JSX.Element {
   const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageSelection();
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='page-section'>
       <SectionHeader
         title='Category, Producer & Tag Mapper'
         description='Map external marketplace categories, producers, and tags to internal records for reliable import and export.'

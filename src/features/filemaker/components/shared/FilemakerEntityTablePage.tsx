@@ -101,7 +101,7 @@ export function FilemakerEntityTablePage<TData>(
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='page-section-compact space-y-6'>
       <PanelHeader title={title} description={description} icon={icon} actions={actions} />
 
       <FilemakerEntityTableRuntimeContext.Provider value={runtimeValue}>

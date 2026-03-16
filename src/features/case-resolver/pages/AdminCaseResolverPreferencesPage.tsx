@@ -199,7 +199,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
             Back to Cases
           </Button>
         }
-        containerClassName='container mx-auto max-w-5xl py-10'
+        containerClassName='page-section max-w-5xl'
       >
         <div className='flex min-h-[400px] items-center justify-center'>
           <LoadingState message='Loading preferences...' />
@@ -224,7 +224,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
           Back to Cases
         </Button>
       }
-      containerClassName='container mx-auto max-w-5xl py-10'
+      containerClassName='page-section max-w-5xl'
     >
 
       <FormSection title='Case List Defaults' className='p-6'>

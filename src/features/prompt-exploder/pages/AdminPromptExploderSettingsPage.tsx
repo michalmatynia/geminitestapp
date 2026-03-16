@@ -366,7 +366,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
 
   if (settingsValidationError) {
     return (
-      <div id='prompt-exploder-settings-docs-root' className='container mx-auto space-y-4 py-6'>
+      <div id='prompt-exploder-settings-docs-root' className='page-section-tight space-y-4'>
         <SectionHeader
           eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
           title='Prompt Exploder Settings'
@@ -406,7 +406,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
 
   if (!draft) {
     return (
-      <div id='prompt-exploder-settings-docs-root' className='container mx-auto py-6'>
+      <div id='prompt-exploder-settings-docs-root' className='page-section-tight'>
         <SectionHeader
           eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
           title='Prompt Exploder Settings'
@@ -421,7 +421,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   }
 
   return (
-    <div id='prompt-exploder-settings-docs-root' className='container mx-auto space-y-4 py-6'>
+    <div id='prompt-exploder-settings-docs-root' className='page-section-tight space-y-4'>
       <SectionHeader
         eyebrow={<AdminAiEyebrow section='Prompt Exploder' />}
         title='Prompt Exploder Settings'

@@ -26,6 +26,8 @@ const triagePresetIcons: Record<
   'http-500-last7d': Server,
   'client-errors-last7d': Monitor,
   'auth-anomalies-last3d': Shield,
+  'validation-errors-last7d': AlertTriangle,
+  'integration-errors-last7d': Server,
   'system-alerts-last24h': AlertTriangle,
   'kangur-source-last7d': Monitor,
   'kangur-auth-last3d': Shield,

@@ -19,6 +19,11 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import {
+  KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
+  KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+  KANGUR_LEARNER_PASSWORD_PATTERN,
+} from '@/shared/contracts/kangur';
 
 
 export type KangurParentDashboardTabId =
@@ -217,7 +222,7 @@ export function KangurParentDashboardRuntimeProvider({
 
         const displayName = createForm.displayName.trim();
         const loginName = createForm.loginName.trim();
-        const normalizedLoginName = loginName.replace(/[^a-zA-Z0-9]/g, '');
+        const normalizedLoginName = loginName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         const password = createForm.password.trim();
         const normalizedAge = createForm.age.trim();
         const parsedAge =
@@ -230,8 +235,22 @@ export function KangurParentDashboardRuntimeProvider({
           return;
         }
 
-        if (password.length < 8) {
-          setFeedback('Hasło musi mieć co najmniej 8 znaków');
+        const hasDuplicateLogin = learners.some(
+          (learner) =>
+            learner.loginName.trim().toLowerCase() === normalizedLoginName
+        );
+        if (hasDuplicateLogin) {
+          setFeedback('Ten nick jest już zajęty.');
+          return;
+        }
+
+        if (password.length < KANGUR_LEARNER_PASSWORD_MIN_LENGTH) {
+          setFeedback(`Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków`);
+          return;
+        }
+
+        if (!KANGUR_LEARNER_PASSWORD_PATTERN.test(password)) {
+          setFeedback('Hasło ucznia może zawierać tylko litery i cyfry');
           return;
         }
 
@@ -250,8 +269,8 @@ export function KangurParentDashboardRuntimeProvider({
           return;
         }
 
-        if (password.length > 160) {
-          setFeedback('Hasło może mieć maks. 160 znaków');
+        if (password.length > KANGUR_LEARNER_PASSWORD_MAX_LENGTH) {
+          setFeedback(`Hasło może mieć maks. ${KANGUR_LEARNER_PASSWORD_MAX_LENGTH} znaków`);
           return;
         }
 
@@ -276,6 +295,10 @@ export function KangurParentDashboardRuntimeProvider({
           setFeedback(null);
         } catch (error: unknown) {
           logClientError(error);
+          const status =
+            error && typeof error === 'object' && 'status' in error
+              ? (error as { status?: number }).status
+              : null;
           const details =
             error && typeof error === 'object'
               ? (error as { details?: { issues?: { fieldErrors?: Record<string, string[]> } } })
@@ -283,15 +306,20 @@ export function KangurParentDashboardRuntimeProvider({
               : null;
           const fieldErrors = details?.issues?.fieldErrors ?? null;
 
-          if (fieldErrors?.['password']?.length) {
-            setFeedback('Hasło musi mieć co najmniej 8 znaków');
+          if (status === 409) {
+            setFeedback('Ten nick jest już zajęty.');
+          } else if (fieldErrors?.['password']?.length) {
+            setFeedback(
+              `Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków i zawierać tylko litery oraz cyfry.`
+            );
           } else if (fieldErrors?.['age']?.length) {
             setFeedback('Wiek ucznia musi być w zakresie 3–99');
           } else if (fieldErrors?.['loginName']?.length) {
             setFeedback('Nick może zawierać tylko litery i cyfry');
           } else if (fieldErrors?.['displayName']?.length) {
             setFeedback('Wypełnij dane ucznia');
-          } else if (            error instanceof Error &&
+          } else if (
+            error instanceof Error &&
             /validation failed|invalid kangur learner payload/i.test(error.message)
           ) {
             setFeedback('Wypełnij dane ucznia');
@@ -309,6 +337,24 @@ export function KangurParentDashboardRuntimeProvider({
           return false;
         }
 
+        const trimmedPassword = editForm.password.trim();
+        if (trimmedPassword.length > 0) {
+          if (trimmedPassword.length < KANGUR_LEARNER_PASSWORD_MIN_LENGTH) {
+            setFeedback(
+              `Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków`
+            );
+            return false;
+          }
+          if (!KANGUR_LEARNER_PASSWORD_PATTERN.test(trimmedPassword)) {
+            setFeedback('Hasło ucznia może zawierać tylko litery i cyfry');
+            return false;
+          }
+          if (trimmedPassword.length > KANGUR_LEARNER_PASSWORD_MAX_LENGTH) {
+            setFeedback(`Hasło może mieć maks. ${KANGUR_LEARNER_PASSWORD_MAX_LENGTH} znaków`);
+            return false;
+          }
+        }
+
         setIsSubmitting(true);
         setFeedback(null);
 
@@ -316,7 +362,7 @@ export function KangurParentDashboardRuntimeProvider({
           await kangurPlatform.learners.update(activeLearner.id, {
             displayName: editForm.displayName,
             loginName: editForm.loginName,
-            ...(editForm.password.trim().length > 0 ? { password: editForm.password } : {}),
+            ...(trimmedPassword.length > 0 ? { password: trimmedPassword } : {}),
             status: editForm.status === 'disabled' ? 'disabled' : 'active',
           });
           await checkAppState();
@@ -363,6 +409,7 @@ export function KangurParentDashboardRuntimeProvider({
       checkAppState,
       createForm,
       editForm,
+      learners,
       logout,
       navigateToLogin,
       setCreateLearnerModalOpen,

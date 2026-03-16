@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   assertAiPathRunAccess,
@@ -8,7 +9,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { deletePathRunWithRepository } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { notFoundError } from '@/shared/errors/app-error';
+import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import {
   hasRunRepositorySelectionMismatch,
@@ -16,13 +17,27 @@ import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 
+const paramsSchema = z.object({
+  runId: z.string().trim().min(1, 'Run id is required'),
+});
+
+const parseRunId = (params: { runId: string }): string => {
+  const parsed = paramsSchema.safeParse(params);
+  if (!parsed.success) {
+    throw validationError('Invalid route parameters', {
+      issues: parsed.error.flatten(),
+    });
+  }
+  return parsed.data.runId;
+};
+
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsRunAccess();
-  const runId = params.runId;
+  const runId = parseRunId(params);
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
   let readProvider = repoSelection.provider;
@@ -92,7 +107,7 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-delete');
-  const runId = params.runId;
+  const runId = parseRunId(params);
   const repo = (await resolvePathRunRepository()).repo;
   const run = await repo.findRunById(runId);
   if (run === null) {

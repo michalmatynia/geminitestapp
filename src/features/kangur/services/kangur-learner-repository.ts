@@ -26,6 +26,7 @@ import type { Filter } from 'mongodb';
 
 const KANGUR_LEARNERS_SETTINGS_KEY = 'kangur_learners.v1';
 const KANGUR_LEARNERS_COLLECTION = 'kangur_learners';
+const KANGUR_LEARNERS_LOGIN_NAME_UNIQUE_INDEX = 'kangur_learners_login_name_unique';
 const DEFAULT_DUEL_SEARCH_CONTAINS_CAP = 3;
 const MAX_DUEL_SEARCH_CONTAINS_CAP = 20;
 
@@ -39,6 +40,7 @@ type MongoKangurLearnerDocument = {
   ownerUserId: string;
   displayName: string;
   age?: number | null;
+  avatarId?: string | null;
   loginName: string;
   status: KangurLearnerStatus;
   legacyUserKey: string | null;
@@ -49,6 +51,7 @@ type MongoKangurLearnerDocument = {
 };
 
 const normalizeLoginName = (value: string): string => value.trim().toLowerCase();
+const createLearnerPassword = (): string => randomUUID().replace(/-/g, '');
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const resolveDuelSearchContainsCap = (): number => {
   const raw = process.env['KANGUR_DUEL_SEARCH_CONTAINS_CAP'];
@@ -69,11 +72,34 @@ const normalizeLegacyUserKey = (value: string | null | undefined): string | null
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const normalizeAvatarId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isMongoDuplicateKeyError = (error: unknown): boolean => {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? (error as { code?: unknown }).code
+      : null;
+  const message =
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : typeof error === 'string'
+        ? error.toLowerCase()
+        : '';
+  return code === 11000 || message.includes('e11000') || message.includes('duplicate key');
+};
+
 const toPublicLearnerProfile = (stored: StoredKangurLearnerProfile): KangurLearnerProfile => {
   const baseProfile: KangurLearnerProfile = {
     id: stored.id,
     ownerUserId: stored.ownerUserId,
     displayName: stored.displayName,
+    avatarId: stored.avatarId ?? null,
     loginName: stored.loginName,
     status: stored.status,
     legacyUserKey: stored.legacyUserKey ?? null,
@@ -98,6 +124,7 @@ const toStoredLearnerFromMongo = (
   id: doc.id ?? doc._id,
   ownerUserId: doc.ownerUserId,
   displayName: doc.displayName,
+  avatarId: normalizeAvatarId(doc.avatarId),
   ...(doc.age !== undefined ? { age: doc.age } : {}),
   loginName: normalizeLoginName(doc.loginName),
   status: doc.status,
@@ -134,6 +161,9 @@ const normalizeStoredLearner = (value: unknown): StoredKangurLearnerProfile | nu
             : '',
       ownerUserId: typeof record['ownerUserId'] === 'string' ? record['ownerUserId'] : '',
       displayName: typeof record['displayName'] === 'string' ? record['displayName'] : '',
+      avatarId: normalizeAvatarId(
+        typeof record['avatarId'] === 'string' ? record['avatarId'] : null
+      ),
       ...(normalizedAge !== undefined ? { age: normalizedAge } : {}),
       loginName:
         typeof record['loginName'] === 'string' ? normalizeLoginName(record['loginName']) : '',
@@ -213,11 +243,34 @@ const shouldUseMongoLearnerCollection = async (): Promise<boolean> => {
 const getMongoLearnerCollection = async () =>
   (await getMongoDb()).collection<MongoKangurLearnerDocument>(KANGUR_LEARNERS_COLLECTION);
 
+let ensureMongoLearnerIndexesPromise: Promise<void> | null = null;
+
+const ensureMongoLearnerIndexes = async (): Promise<void> => {
+  if (!ensureMongoLearnerIndexesPromise) {
+    ensureMongoLearnerIndexesPromise = (async () => {
+      const collection = await getMongoLearnerCollection();
+      await collection.createIndex(
+        { loginName: 1 },
+        {
+          name: KANGUR_LEARNERS_LOGIN_NAME_UNIQUE_INDEX,
+          unique: true,
+        }
+      );
+    })().catch((error) => {
+      ensureMongoLearnerIndexesPromise = null;
+      throw error;
+    });
+  }
+
+  return ensureMongoLearnerIndexesPromise;
+};
+
 const toMongoLearnerUpdate = (
   profile: StoredKangurLearnerProfile
 ): Omit<MongoKangurLearnerDocument, '_id'> => ({
   ownerUserId: profile.ownerUserId,
   displayName: profile.displayName,
+  ...(profile.avatarId !== undefined ? { avatarId: profile.avatarId } : {}),
   ...(profile.age !== undefined ? { age: profile.age } : {}),
   loginName: profile.loginName,
   status: profile.status,
@@ -296,20 +349,30 @@ const readMongoStoredLearnerByLoginName = async (
 
 const writeMongoStoredLearner = async (profile: StoredKangurLearnerProfile): Promise<void> => {
   const collection = await getMongoLearnerCollection();
-  await collection.updateOne(
-    {
-      _id: profile.id,
-    },
-    {
-      $set: toMongoLearnerUpdate(profile),
-      $setOnInsert: {
+  await ensureMongoLearnerIndexes();
+  try {
+    await collection.updateOne(
+      {
         _id: profile.id,
       },
-    },
-    {
-      upsert: true,
+      {
+        $set: toMongoLearnerUpdate(profile),
+        $setOnInsert: {
+          _id: profile.id,
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+  } catch (error: unknown) {
+    if (isMongoDuplicateKeyError(error)) {
+      throw conflictError('This learner login name is already in use.', {
+        loginName: profile.loginName,
+      });
     }
-  );
+    throw error;
+  }
 };
 
 const ensureUniqueMongoLoginName = async (
@@ -317,6 +380,7 @@ const ensureUniqueMongoLoginName = async (
   currentLearnerId?: string
 ): Promise<void> => {
   const normalized = normalizeLoginName(loginName);
+  await ensureMongoLearnerIndexes();
   const collection = await getMongoLearnerCollection();
   const duplicate = await collection.findOne({
     loginName: normalized,
@@ -609,6 +673,7 @@ export const updateKangurLearner = async (
     ...current,
     displayName:
       typeof input.displayName === 'string' ? input.displayName.trim() : current.displayName,
+    ...(input.avatarId !== undefined ? { avatarId: normalizeAvatarId(input.avatarId) } : {}),
     ...(typeof input.age === 'number' ? { age: input.age } : {}),
     loginName: nextLoginName,
     status: input.status ?? current.status,
@@ -769,7 +834,7 @@ export const ensureDefaultKangurLearnerForOwner = async (input: {
     learner: {
       displayName: input.displayName.trim() || 'Uczen',
       loginName: candidate,
-      password: randomUUID(),
+      password: createLearnerPassword(),
     },
     legacyUserKey: input.legacyUserKey,
   });

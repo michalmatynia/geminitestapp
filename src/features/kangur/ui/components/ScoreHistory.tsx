@@ -6,7 +6,7 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import { logKangurClientError } from '@/features/kangur/observability/client';
+import { withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord } from '@/features/kangur/services/ports';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
@@ -25,7 +25,8 @@ import {
   SCORE_INSIGHT_WINDOW_DAYS,
   buildKangurScoreInsights,
 } from '@/features/kangur/ui/services/score-insights';
-import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
 
 
 type OperationLabel = {
@@ -58,6 +59,12 @@ const OP_LABELS: Record<string, OperationLabel> = {
   calendar: { label: 'Kalendarz', emoji: '📅' },
   geometry: { label: 'Geometria', emoji: '🔷' },
   mixed: { label: 'Mieszane', emoji: '🎲' },
+  english_basics: { label: 'Podstawy', emoji: '🗣️' },
+  english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
+  english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
+  english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
+  english_articles: { label: 'Przedimki', emoji: '📰' },
+  english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
 const OP_ACCENTS: Record<string, KangurAccent> = {
@@ -72,6 +79,12 @@ const OP_ACCENTS: Record<string, KangurAccent> = {
   calendar: 'emerald',
   geometry: 'teal',
   mixed: 'violet',
+  english_basics: 'emerald',
+  english_parts_of_speech: 'indigo',
+  english_sentence_structure: 'violet',
+  english_subject_verb_agreement: 'teal',
+  english_articles: 'amber',
+  english_prepositions_time_place: 'rose',
 };
 
 const kangurPlatform = getKangurPlatform();
@@ -148,6 +161,7 @@ export default function ScoreHistory({
   createdBy = null,
   basePath = null,
 }: ScoreHistoryProps): React.JSX.Element {
+  const { subject } = useKangurSubjectFocus();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -163,30 +177,40 @@ export default function ScoreHistory({
       }
 
       try {
-        const loadedScores = await loadScopedKangurScores(kangurPlatform.score, {
-          learnerId: normalizedLearnerId,
-          playerName: normalizedPlayerName,
-          createdBy: normalizedCreatedBy,
-          limit: SCORE_FETCH_LIMIT,
-          fallbackToAll: true,
-        });
+        const loadedScores = await withKangurClientError(
+          {
+            source: 'kangur.score-history',
+            action: 'load-scores',
+            description: 'Loads scoped Kangur scores for the learner history panel.',
+            context: {
+              learnerIdProvided: normalizedLearnerId.length > 0,
+              playerNameProvided: normalizedPlayerName.length > 0,
+              createdByProvided: normalizedCreatedBy.length > 0,
+              subject,
+            },
+          },
+          async () =>
+            await loadScopedKangurScores(kangurPlatform.score, {
+              learnerId: normalizedLearnerId,
+              playerName: normalizedPlayerName,
+              createdBy: normalizedCreatedBy,
+              limit: SCORE_FETCH_LIMIT,
+              fallbackToAll: true,
+              subject,
+            }),
+          {
+            fallback: [],
+            onError: () => {
+              if (isActive) {
+                setScores([]);
+              }
+            },
+          }
+        );
         if (!isActive) {
           return;
         }
         setScores(loadedScores);
-      } catch (error: unknown) {
-        logClientError(error);
-        if (!isActive) {
-          return;
-        }
-        logKangurClientError(error, {
-          source: 'KangurScoreHistory',
-          action: 'loadScores',
-          learnerIdProvided: normalizedLearnerId.length > 0,
-          playerNameProvided: normalizedPlayerName.length > 0,
-          createdByProvided: normalizedCreatedBy.length > 0,
-        });
-        setScores([]);
       } finally {
         if (isActive) {
           setLoading(false);
@@ -199,9 +223,13 @@ export default function ScoreHistory({
     return () => {
       isActive = false;
     };
-  }, [createdBy, learnerId, playerName]);
+  }, [createdBy, learnerId, playerName, subject]);
 
-  const insights = useMemo(() => buildKangurScoreInsights(scores), [scores]);
+  const subjectScores = useMemo(
+    () => scores.filter((score) => resolveKangurScoreSubject(score) === subject),
+    [scores, subject]
+  );
+  const insights = useMemo(() => buildKangurScoreInsights(subjectScores), [subjectScores]);
   const weakestLessonHref =
     basePath && insights.weakestOperation
       ? buildLessonFocusHref(basePath, insights.weakestOperation.operation)
@@ -223,19 +251,19 @@ export default function ScoreHistory({
     );
   }
 
-  if (scores.length === 0) {
+  if (subjectScores.length === 0) {
     return <KangurEmptyState description='Brak zapisanych wyników.' padding='lg' />;
   }
 
   const avgAccuracy = Math.round(
-    scores.reduce(
+    subjectScores.reduce(
       (sum, score) => sum + (score.correct_answers / (score.total_questions || 10)) * 100,
       0
-    ) / scores.length
+    ) / subjectScores.length
   );
 
   const opBreakdown: Record<string, OperationBreakdown> = {};
-  for (const score of scores) {
+  for (const score of subjectScores) {
     const operationKey = score.operation;
     const existing = opBreakdown[operationKey] ?? { total: 0, correct: 0, count: 0 };
     existing.total += score.total_questions || 10;
@@ -252,7 +280,7 @@ export default function ScoreHistory({
           align='center'
           data-testid='score-history-total-games'
           label='Gier łącznie'
-          value={scores.length}
+          value={subjectScores.length}
         />
         <KangurMetricCard
           accent='emerald'
@@ -266,7 +294,9 @@ export default function ScoreHistory({
           align='center'
           data-testid='score-history-perfect-games'
           label='Idealne wyniki'
-          value={scores.filter((score) => score.correct_answers === score.total_questions).length}
+          value={
+            subjectScores.filter((score) => score.correct_answers === score.total_questions).length
+          }
         />
       </div>
 
@@ -388,7 +418,7 @@ export default function ScoreHistory({
           Ostatnie gry
         </p>
         <div className='flex flex-col gap-2 max-h-64 overflow-y-auto'>
-          {scores.map((score) => {
+          {subjectScores.map((score) => {
             const info = OP_LABELS[score.operation] ?? { label: score.operation, emoji: '❓' };
             const percent = Math.round(
               ((score.correct_answers || 0) / (score.total_questions || 10)) * 100

@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 
-import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
+import {
+  KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+  KANGUR_LESSON_LIBRARY,
+} from '@/features/kangur/settings';
 import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurGameSetupMomentumCard';
 import { KangurGrajmyWordmark } from '@/features/kangur/ui/components/KangurGrajmyWordmark';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
@@ -10,9 +13,12 @@ import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/Ka
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
+import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
 import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
+import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
   KangurInfoCard,
@@ -24,8 +30,8 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
-import type { KangurDailyQuestState } from '@/features/kangur/ui/services/daily-quests';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
 import {
   getProgressAverageAccuracy,
@@ -33,6 +39,7 @@ import {
   getProgressTopActivities,
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -40,46 +47,134 @@ import type {
   KangurProgressState,
   KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
-import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLessonComponentId,
+  KangurLesson,
+  KangurLessonSubject,
+  KangurRouteAction,
+} from '@/features/kangur/shared/contracts/kangur';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
-const QUICK_PRACTICE_OPTIONS = [
+type LessonQuizDefinition = {
+  accent: KangurAccent;
+  description: string;
+  emoji: string;
+  label: string;
+  lessonComponentIds: readonly KangurLessonComponentId[];
+  onSelectScreen: KangurGameScreen;
+};
+
+type LessonQuizOption = LessonQuizDefinition & {
+  subject: KangurLessonSubject;
+  sortOrder: number;
+};
+
+const LESSON_QUIZ_DEFINITIONS: LessonQuizDefinition[] = [
   {
-    accent: 'rose',
-    description: 'Szybka seria odejmowania z natychmiastową odpowiedzią.',
-    emoji: '➖',
-    label: 'Quiz odejmowania',
-    onSelectScreen: 'subtraction_quiz',
-  },
-  {
-    accent: 'sky',
-    description: 'Szybki quiz z dzielenia na równe grupy.',
-    emoji: '➗',
-    label: 'Quiz dzielenia',
-    onSelectScreen: 'division_quiz',
-  },
-  {
-    accent: 'violet',
-    description: 'Sprawdź tabliczkę w krótkim quizie z mnożenia.',
-    emoji: '✖️',
-    label: 'Quiz mnożenia',
-    onSelectScreen: 'multiplication_quiz',
+    accent: 'indigo',
+    description: 'Ćwicz odczytywanie godzin i minut w trybie quizu.',
+    emoji: '🕐',
+    label: 'Ćwiczenia z Zegarem',
+    lessonComponentIds: ['clock'],
+    onSelectScreen: 'clock_quiz',
   },
   {
     accent: 'emerald',
     description: 'Sprawdź daty, dni tygodnia i miesiące w krótkich zadaniach.',
     emoji: '📅',
     label: 'Ćwiczenia z Kalendarzem',
+    lessonComponentIds: ['calendar'],
     onSelectScreen: 'calendar_quiz',
   },
   {
+    accent: 'amber',
+    description: 'Szybki quiz z dodawania w rytmie gry z lekcji.',
+    emoji: '➕',
+    label: 'Quiz dodawania',
+    lessonComponentIds: ['adding'],
+    onSelectScreen: 'addition_quiz',
+  },
+  {
+    accent: 'rose',
+    description: 'Szybka seria odejmowania z natychmiastową odpowiedzią.',
+    emoji: '➖',
+    label: 'Quiz odejmowania',
+    lessonComponentIds: ['subtracting'],
+    onSelectScreen: 'subtraction_quiz',
+  },
+  {
     accent: 'violet',
-    description: 'Rozpoznawaj figury i ćwicz ich rysowanie w szybkich wyzwaniach.',
+    description: 'Sprawdź tabliczkę w krótkim quizie z mnożenia.',
+    emoji: '✖️',
+    label: 'Quiz mnożenia',
+    lessonComponentIds: ['multiplication'],
+    onSelectScreen: 'multiplication_quiz',
+  },
+  {
+    accent: 'emerald',
+    description: 'Szybki quiz z dzielenia na równe grupy.',
+    emoji: '➗',
+    label: 'Quiz dzielenia',
+    lessonComponentIds: ['division'],
+    onSelectScreen: 'division_quiz',
+  },
+  {
+    accent: 'violet',
+    description: 'Rozpoznawaj figury, symetrię i obwody w krótkich wyzwaniach.',
     emoji: '🔷',
     label: 'Ćwiczenia z Figurami',
+    lessonComponentIds: KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
     onSelectScreen: 'geometry_quiz',
   },
-] as const;
+  {
+    accent: 'violet',
+    description: 'Uzupełniaj ciągi i sprawdzaj reguły wzorców.',
+    emoji: '🔢',
+    label: 'Quiz wzorców',
+    lessonComponentIds: ['logical_patterns'],
+    onSelectScreen: 'logical_patterns_quiz',
+  },
+  {
+    accent: 'teal',
+    description: 'Grupuj elementy i znajdź wspólne cechy.',
+    emoji: '📦',
+    label: 'Quiz klasyfikacji',
+    lessonComponentIds: ['logical_classification'],
+    onSelectScreen: 'logical_classification_quiz',
+  },
+  {
+    accent: 'rose',
+    description: 'Dopasuj relacje i znajdź właściwe analogie.',
+    emoji: '🔗',
+    label: 'Quiz analogii',
+    lessonComponentIds: ['logical_analogies'],
+    onSelectScreen: 'logical_analogies_quiz',
+  },
+  {
+    accent: 'violet',
+    description: 'Ćwicz szyk zdania, pytania i spójniki w krótkich rundach.',
+    emoji: '🧩',
+    label: 'Quiz składni zdania',
+    lessonComponentIds: ['english_sentence_structure'],
+    onSelectScreen: 'english_sentence_quiz',
+  },
+  {
+    accent: 'sky',
+    description: 'Sortuj słowa według części mowy w krótkich rundach.',
+    emoji: '🎮',
+    label: 'Quiz części mowy',
+    lessonComponentIds: ['english_parts_of_speech'],
+    onSelectScreen: 'english_parts_of_speech_quiz',
+  },
+];
+
+const OPERATION_LESSON_QUIZ_SCREENS: Partial<Record<KangurOperation, KangurGameScreen>> = {
+  addition: 'addition_quiz',
+  subtraction: 'subtraction_quiz',
+  multiplication: 'multiplication_quiz',
+  division: 'division_quiz',
+  clock: 'clock_quiz',
+};
 
 type KangurRecommendedSelectorScreen = Extract<
   KangurGameScreen,
@@ -456,6 +551,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     screen,
     setScreen,
   } = useKangurGameRuntime();
+  const { subject } = useKangurSubjectFocus();
   const trainingSectionRef = useRef<HTMLElement | null>(null);
   const normalizedProgress = useMemo(() => {
     const defaults = createDefaultKangurProgressState();
@@ -482,6 +578,63 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     () => getRecommendedTrainingSetup(normalizedProgress),
     [normalizedProgress]
   );
+  const lessonsQuery = useKangurLessons({ subject, enabledOnly: true });
+  const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
+  const lessonQuizOptions = useMemo<LessonQuizOption[]>(() => {
+    const enabledLessons = lessonsQuery.data ?? [];
+    const lessonsByComponentId = new Map(
+      enabledLessons.map((lesson) => [lesson.componentId, lesson] as const)
+    );
+
+    const options = LESSON_QUIZ_DEFINITIONS.flatMap((definition) => {
+      const activeLessons = definition.lessonComponentIds
+        .map((componentId) => lessonsByComponentId.get(componentId))
+        .filter((lesson): lesson is KangurLesson => Boolean(lesson));
+
+      if (activeLessons.length === 0) {
+        return [];
+      }
+
+      const primaryLesson = activeLessons[0]!;
+      const sortOrder = Math.min(...activeLessons.map((lesson) => lesson.sortOrder));
+
+      return [
+        {
+          ...definition,
+          subject: primaryLesson.subject,
+          sortOrder,
+        },
+      ];
+    });
+    return options.sort((left, right) => left.sortOrder - right.sortOrder);
+  }, [lessonsQuery.data, subject]);
+  const lessonQuizGroups = useMemo(
+    () =>
+      KANGUR_SUBJECT_GROUPS.map((group) => ({
+        ...group,
+        options: lessonQuizOptions.filter((option) => option.subject === group.value),
+      })).filter((group) => group.options.length > 0),
+    [lessonQuizOptions]
+  );
+  const filteredLessonQuizGroups = useMemo(
+    () => lessonQuizGroups.filter((group) => group.value === subject),
+    [lessonQuizGroups, subject]
+  );
+  const recommendedLessonQuizScreen = useMemo(() => {
+    if (!recommendation) {
+      return null;
+    }
+
+    if (recommendation.target.kind === 'screen') {
+      return recommendation.target.screen;
+    }
+
+    if (recommendation.target.kind === 'operation') {
+      return OPERATION_LESSON_QUIZ_SCREENS[recommendation.target.operation] ?? null;
+    }
+
+    return null;
+  }, [recommendation]);
   const mixedPracticeAssignment =
     practiceAssignmentsByOperation.mixed ??
     (activePracticeAssignment?.target.operation === 'mixed' ? activePracticeAssignment : null);
@@ -490,6 +643,36 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       ? activePracticeAssignment
       : null;
   const shouldRender = screen === 'operation' || screen === 'training';
+  const showMathSections = subject === 'maths';
+
+  useEffect(() => {
+    if (!lessonsQuery.data) {
+      return;
+    }
+    if (lessonsQuery.data.length > 0) {
+      emptyLessonsRefetchedForSubject.current = null;
+      return;
+    }
+    if (lessonsQuery.isFetching) {
+      return;
+    }
+    if (emptyLessonsRefetchedForSubject.current === subject) {
+      return;
+    }
+
+    emptyLessonsRefetchedForSubject.current = subject;
+    void lessonsQuery.refetch();
+  }, [lessonsQuery.data, lessonsQuery.isFetching, lessonsQuery.refetch, subject]);
+
+  useEffect(() => {
+    if (subject === 'maths') {
+      return;
+    }
+
+    if (screen === 'training') {
+      setScreen('operation');
+    }
+  }, [screen, setScreen, subject]);
 
   useEffect(() => {
     if (screen !== 'training') {
@@ -536,7 +719,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurPageIntroCard
         className='max-w-md'
-        description='Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+        description={
+          subject === 'english'
+            ? 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.'
+            : 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+        }
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-operation-top-section'
@@ -549,7 +736,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           />
         }
       />
-      {operationPracticeAssignment ? (
+      {showMathSections && operationPracticeAssignment ? (
         <div className='flex w-full justify-center px-4'>
           <KangurPracticeAssignmentBanner
             assignment={operationPracticeAssignment}
@@ -558,7 +745,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           />
         </div>
       ) : null}
-      {recommendation ? (
+      {recommendation && showMathSections ? (
         <KangurInfoCard
           accent={recommendation.accent}
           className='w-full max-w-3xl rounded-[28px]'
@@ -590,7 +777,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
               </p>
             </div>
             <KangurButton
-              className='shrink-0'
+              className='w-full shrink-0 sm:w-auto'
               data-testid='kangur-operation-recommendation-action'
               size='sm'
               type='button'
@@ -602,12 +789,14 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           </div>
         </KangurInfoCard>
       ) : null}
-      <OperationSelector
-        onSelect={handleSelectOperation}
-        priorityAssignmentsByOperation={practiceAssignmentsByOperation}
-        recommendedLabel={recommendation?.label}
-        recommendedOperation={recommendation?.recommendedOperation}
-      />
+      {showMathSections ? (
+        <OperationSelector
+          onSelect={handleSelectOperation}
+          priorityAssignmentsByOperation={practiceAssignmentsByOperation}
+          recommendedLabel={recommendation?.label}
+          recommendedOperation={recommendation?.recommendedOperation}
+        />
+      ) : null}
       <section
         aria-labelledby='kangur-game-quick-practice-heading'
         className='w-full max-w-3xl space-y-4'
@@ -615,119 +804,138 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         <KangurSectionHeading
           accent='violet'
           align='left'
-          description='Szybkie tryby ćwiczeń w tej samej karcie i rytmie co mini-gry z Lekcji.'
+          description='Szybkie quizy oparte na tematach z Lekcji.'
           headingAs='h3'
           headingSize='sm'
           title='Szybkie ćwiczenia'
           titleId='kangur-game-quick-practice-heading'
         />
-        <div className='flex w-full flex-col kangur-panel-gap'>
-          {QUICK_PRACTICE_OPTIONS.map((option) => {
-            const isRecommended = recommendation?.recommendedScreen === option.onSelectScreen;
+        <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+          {filteredLessonQuizGroups.map((group) => (
+            <KangurSubjectGroupSection
+              key={group.value}
+              ariaLabel={`${group.label} quick practice`}
+              label={group.label}
+              className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            >
+              <div className='flex w-full flex-col kangur-panel-gap'>
+                {group.options.map((option) => {
+                  const isRecommended = recommendedLessonQuizScreen === option.onSelectScreen;
 
-            return (
-              <KangurIconSummaryOptionCard
-                key={option.onSelectScreen}
-                accent={option.accent}
-                buttonClassName='w-full rounded-[28px] p-4 text-left'
-                data-doc-id='home_quick_practice_action'
-                data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
-                emphasis='accent'
-                aria-label={`Szybkie ćwiczenie: ${option.label}`}
-                onClick={() => setScreen(option.onSelectScreen)}
-              >
-                <KangurIconSummaryCardContent
-                  aside={
-                    <div className='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'>
-                      <KangurStatusChip
-                        accent={option.accent}
-                        className='uppercase tracking-[0.14em]'
-                        size='sm'
-                      >
-                        Gra
-                      </KangurStatusChip>
-                      {isRecommended ? (
-                        <KangurStatusChip
-                          accent={option.accent}
-                          className='text-[11px] font-semibold'
-                          data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
-                          size='sm'
-                        >
-                          {recommendation.label}
-                        </KangurStatusChip>
-                      ) : null}
-                    </div>
-                  }
-                  asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
-                  className='w-full items-center'
-                  contentClassName='flex-1'
-                  description={option.description}
-                  descriptionClassName='text-slate-500'
-                  icon={
-                    <KangurIconBadge accent={option.accent} className='shrink-0' size='xl'>
-                      {option.emoji}
-                    </KangurIconBadge>
-                  }
-                  title={option.label}
-                  titleClassName='text-slate-800'
-                />
-              </KangurIconSummaryOptionCard>
-            );
-          })}
+                  return (
+                    <KangurIconSummaryOptionCard
+                      key={option.onSelectScreen}
+                      accent={option.accent}
+                      buttonClassName='w-full rounded-[24px] p-4 text-left sm:rounded-[28px] sm:p-5'
+                      data-doc-id='home_quick_practice_action'
+                      data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
+                      emphasis='accent'
+                      aria-label={`Szybkie ćwiczenie: ${option.label}`}
+                      onClick={() => setScreen(option.onSelectScreen)}
+                    >
+                      <KangurIconSummaryCardContent
+                        aside={
+                          <>
+                            <KangurStatusChip
+                              accent={option.accent}
+                              className='uppercase tracking-[0.14em]'
+                              size='sm'
+                            >
+                              Gra
+                            </KangurStatusChip>
+                            {isRecommended && recommendation ? (
+                              <KangurStatusChip
+                                accent={option.accent}
+                                className='text-[11px] font-semibold'
+                                data-testid={`kangur-quick-practice-recommendation-${option.onSelectScreen}`}
+                                size='sm'
+                              >
+                                {recommendation.label}
+                              </KangurStatusChip>
+                            ) : null}
+                          </>
+                        }
+                        asideClassName='flex w-full flex-wrap items-start gap-2 sm:w-auto sm:flex-col sm:items-end sm:gap-2'
+                        className='w-full flex-col items-start gap-4 sm:flex-row sm:items-center'
+                        contentClassName='w-full sm:flex-1'
+                        description={option.description}
+                        descriptionClassName='text-slate-500'
+                        headerClassName='flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between'
+                        icon={
+                          <KangurIconBadge
+                            accent={option.accent}
+                            className='shrink-0 scale-90 sm:scale-100'
+                            size='xl'
+                          >
+                            {option.emoji}
+                          </KangurIconBadge>
+                        }
+                        title={option.label}
+                        titleClassName='text-slate-800'
+                        titleWrapperClassName='w-full'
+                      />
+                    </KangurIconSummaryOptionCard>
+                  );
+                })}
+              </div>
+            </KangurSubjectGroupSection>
+          ))}
         </div>
       </section>
-      <section
-        aria-labelledby='kangur-game-training-heading'
-        className='w-full max-w-3xl space-y-4'
-        ref={trainingSectionRef}
-      >
-        <KangurPageIntroCard
-          className='w-full'
-          description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
-          headingAs='h3'
-          headingSize='md'
-          onBack={handleHome}
-          showBackButton={false}
-          testId='kangur-game-training-top-section'
-          title='Trening mieszany'
-          titleId='kangur-game-training-heading'
-          visualTitle={
-            <KangurTreningWordmark
-              className='mx-auto'
-              data-testid='kangur-training-heading-art'
-              idPrefix='kangur-game-training-heading'
-            />
-          }
-        />
-        {mixedPracticeAssignment ? (
-          <div className='flex w-full justify-center px-4'>
-            <KangurPracticeAssignmentBanner
-              assignment={mixedPracticeAssignment}
-              basePath={basePath}
-              mode='active'
-            />
-          </div>
-        ) : null}
-        <KangurGameSetupMomentumCard mode='training' progress={normalizedProgress} />
-        <TrainingSetup
-          onStart={(selection) =>
-            handleStartTraining(selection, {
-              recommendation: hasMatchingTrainingSelection(selection, suggestedTraining.selection)
-                ? {
-                    description: suggestedTraining.description,
-                    label: suggestedTraining.label,
-                    source: 'training_setup',
-                    title: suggestedTraining.title,
-                  }
-                : null,
-            })
-          }
-          suggestedSelection={suggestedTraining.selection}
-          suggestionDescription={suggestedTraining.description}
-          suggestionLabel={suggestedTraining.label}
-          suggestionTitle={suggestedTraining.title}
-        />
-      </section>
+      {showMathSections ? (
+        <section
+          aria-labelledby='kangur-game-training-heading'
+          className='w-full max-w-3xl space-y-4'
+          ref={trainingSectionRef}
+        >
+          <KangurPageIntroCard
+            className='w-full'
+            description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+            headingAs='h3'
+            headingSize='md'
+            onBack={handleHome}
+            showBackButton={false}
+            testId='kangur-game-training-top-section'
+            title='Trening mieszany'
+            titleId='kangur-game-training-heading'
+            visualTitle={
+              <KangurTreningWordmark
+                className='mx-auto'
+                data-testid='kangur-training-heading-art'
+                idPrefix='kangur-game-training-heading'
+              />
+            }
+          />
+          {mixedPracticeAssignment ? (
+            <div className='flex w-full justify-center px-4'>
+              <KangurPracticeAssignmentBanner
+                assignment={mixedPracticeAssignment}
+                basePath={basePath}
+                mode='active'
+              />
+            </div>
+          ) : null}
+          <KangurGameSetupMomentumCard mode='training' progress={normalizedProgress} />
+          <TrainingSetup
+            onStart={(selection) =>
+              handleStartTraining(selection, {
+                recommendation: hasMatchingTrainingSelection(selection, suggestedTraining.selection)
+                  ? {
+                      description: suggestedTraining.description,
+                      label: suggestedTraining.label,
+                      source: 'training_setup',
+                      title: suggestedTraining.title,
+                    }
+                  : null,
+              })
+            }
+            suggestedSelection={suggestedTraining.selection}
+            suggestionDescription={suggestedTraining.description}
+            suggestionLabel={suggestedTraining.label}
+            suggestionTitle={suggestedTraining.title}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }

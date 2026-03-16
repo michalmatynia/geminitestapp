@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-16'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Queue Runtime Health Report
 
-Generated at: 2026-03-11T04:30:50.519Z
+Generated at: 2026-03-16T18:13:46.027Z
 
 ## Summary
 
@@ -39,7 +39,7 @@ Generated at: 2026-03-11T04:30:50.519Z
 | database-backup-scheduler | src/shared/lib/db/workers/databaseBackupSchedulerQueue.ts | no | yes | yes | startDatabaseBackupSchedulerQueue | src/shared/lib/db/workers/databaseBackupSchedulerQueue.ts |
 | image-studio-run | src/features/ai/image-studio/workers/imageStudioRunQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue | src/server/queues/ai.ts |
 | image-studio-sequence | src/features/ai/image-studio/workers/imageStudioSequenceQueue.ts | yes | yes | yes | startAgentQueue, startAiInsightsQueue, startAiPathRunQueue, startChatbotJobQueue, startImageStudioRunQueue, startImageStudioSequenceQueue | src/server/queues/ai.ts |
-| product-ai | src/features/products/workers/productAiQueue.ts | yes | yes | yes | startProductAiJobQueue | src/server/queues/product-ai.ts |
+| product-ai | src/features/products/workers/productAiQueue.ts | yes | yes | yes | startProductAiJobQueue, startProductSyncBackfillQueue, startProductSyncSchedulerQueue, startTraderaListingQueue, startTraderaRelistSchedulerQueue | src/server/queues/integrations.ts, src/server/queues/product-ai.ts, src/server/queues/product-sync.ts |
 | product-sync | src/features/product-sync/workers/productSyncQueue.ts | no | yes | yes | startProductSyncBackfillQueue, startProductSyncSchedulerQueue | src/server/queues/product-sync.ts |
 | product-sync-backfill | src/features/product-sync/workers/productSyncBackfillQueue.ts | no | yes | yes | startProductSyncBackfillQueue, startProductSyncSchedulerQueue | src/server/queues/product-sync.ts |
 | product-sync-scheduler | src/features/product-sync/workers/productSyncSchedulerQueue.ts | no | yes | yes | startProductSyncBackfillQueue, startProductSyncSchedulerQueue | src/server/queues/product-sync.ts |

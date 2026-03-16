@@ -34,7 +34,7 @@ export function AllegroSubpageScaffold({
       {children ??
         (emptyState ? (
           <CompactEmptyState
-            title={emptyStateTitle}
+            title={emptyStateTitle ?? ''}
             description={emptyStateDescription}
             className='border-dashed border-border/60 bg-card/40 py-8'
            />

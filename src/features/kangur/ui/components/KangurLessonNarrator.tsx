@@ -35,10 +35,12 @@ type KangurLessonNarratorProps = {
   lessonDocument: KangurLessonDocument | null;
   lessonContentRef: React.RefObject<HTMLElement | null>;
   className?: string | undefined;
+  displayMode?: 'button' | 'icon';
   readLabel?: string | undefined;
   pauseLabel?: string | undefined;
   resumeLabel?: string | undefined;
   loadingLabel?: string | undefined;
+  showFeedback?: boolean | undefined;
 };
 
 export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JSX.Element | null {
@@ -47,9 +49,12 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     lessonDocument,
     lessonContentRef,
     className,
+    displayMode = 'button',
     readLabel = 'Read',
     pauseLabel = 'Pause',
     resumeLabel = 'Resume',
+    loadingLabel,
+    showFeedback,
   } = props;
   const { data: session } = useSession();
   const settingsStore = useSettingsStore();
@@ -89,8 +94,10 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     )
   );
 
+  const shouldObserveText = lesson.contentMode !== 'document' || !lessonDocument;
+
   useEffect(() => {
-    if (lesson.contentMode === 'document') {
+    if (!shouldObserveText) {
       setObservedText('');
       return;
     }
@@ -131,24 +138,28 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
         window.clearTimeout(timeoutId);
       }
     };
-  }, [lesson.contentMode, lesson.id, lessonContentRef]);
+  }, [lesson.contentMode, lesson.id, lessonContentRef, lessonDocument, shouldObserveText]);
 
   const script = useMemo(() => {
-    if (lesson.contentMode === 'document' && lessonDocument) {
-      return buildKangurLessonDocumentNarrationScript({
+    const documentScript =
+      lesson.contentMode === 'document' && lessonDocument
+        ? buildKangurLessonDocumentNarrationScript({
         lessonId: lesson.id,
         title: lesson.title,
         description: lesson.description,
         document: lessonDocument,
-      });
-    }
-
-    return buildKangurLessonNarrationScriptFromText({
+      })
+        : null;
+    const textScript = buildKangurLessonNarrationScriptFromText({
       lessonId: lesson.id,
       title: lesson.title,
       description: lesson.description,
       text: observedText,
     });
+    if (documentScript && hasKangurLessonNarrationContent(documentScript)) {
+      return documentScript;
+    }
+    return textScript;
   }, [
     lesson.contentMode,
     lesson.description,
@@ -164,16 +175,19 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
 
   return (
     <KangurNarratorControl
-      className={cn('w-full', className)}
+      className={cn(displayMode === 'icon' ? 'w-auto' : 'w-full', className)}
       contextRegistry={requestContextRegistry}
       diagnosticsVisible={isNarratorDiagnosticsVisible}
+      displayMode={displayMode}
       docId='lessons_narrator'
       engine={narratorSettings.engine}
+      loadingLabel={loadingLabel}
       pauseLabel={pauseLabel}
       readLabel={readLabel}
       resumeLabel={resumeLabel}
       script={script}
       shellTestId='lesson-narrator-shell'
+      showFeedback={showFeedback}
       voice={voice}
     />
   );

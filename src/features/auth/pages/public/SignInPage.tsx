@@ -9,6 +9,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   Button,
   Input,
+  PasswordInput,
   Alert,
   Card,
   CardHeader,
@@ -126,20 +127,19 @@ function SignInPageLoader(): React.JSX.Element {
                 ref={focusOnMount}
                 autoComplete='email'
                 className='h-10 bg-gray-900/50'
-               aria-label='name@example.com' title='name@example.com'/>
+              />
             </FormField>
 
             <FormField id='password' label='Password'>
-              <Input
+              <PasswordInput
                 id='password'
-                type='password'
                 placeholder='••••••••'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete='current-password'
                 className='h-10 bg-gray-900/50'
-               aria-label='••••••••' title='••••••••'/>
+              />
             </FormField>
 
             <Button

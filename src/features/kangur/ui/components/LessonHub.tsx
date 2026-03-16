@@ -38,6 +38,7 @@ export default function LessonHub({
 }: LessonHubProps): React.JSX.Element {
   const activeProgressDotClassName = progressDotClassName;
   const hubLabel = lessonTitle ? `Tematy lekcji ${lessonTitle}` : 'Tematy lekcji';
+  const hasSections = sections.length > 0;
   const handleSectionSelect = (id: string): void => {
     onSelect(id);
   };
@@ -48,7 +49,7 @@ export default function LessonHub({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className='flex w-full flex-col kangur-lesson-panel-gap'
-        role='list'
+        role={hasSections ? 'list' : undefined}
       >
         {sections.map((section, i) => {
           const accent = section.isGame ? 'indigo' : 'slate';

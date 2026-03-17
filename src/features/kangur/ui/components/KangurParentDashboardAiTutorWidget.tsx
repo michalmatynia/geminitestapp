@@ -411,7 +411,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       >
         <KangurPanelStack>
           <KangurPanelRow className='items-start sm:items-center'>
-            <BrainCircuit className='h-5 w-5 text-orange-500' />
+            <BrainCircuit aria-hidden='true' className='h-5 w-5 text-orange-500' />
             <KangurPanelIntro
               className='min-w-0'
               description={sectionSummary}
@@ -451,7 +451,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
     >
       <KangurPanelStack>
         <KangurPanelRow className='items-start sm:items-center'>
-          <BrainCircuit className='h-5 w-5 text-orange-500' />
+          <BrainCircuit aria-hidden='true' className='h-5 w-5 text-orange-500' />
           <KangurPanelIntro
             className='min-w-0'
             description={sectionSummary}

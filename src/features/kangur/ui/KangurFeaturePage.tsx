@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
@@ -19,6 +19,7 @@ import {
   useKangurRoutingState,
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
+import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import {
@@ -28,7 +29,7 @@ import {
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 import { cn } from '@/features/kangur/shared/utils';
 
-import type { CSSProperties, JSX } from 'react';
+import type { CSSProperties, JSX, KeyboardEvent } from 'react';
 
 type KangurFeaturePageProps = {
   slug?: string[];
@@ -64,6 +65,22 @@ export function KangurFeaturePageShell(): JSX.Element {
     ? buildKangurScopedCustomCss(kangurAppearance.theme?.customCss, customCssSelectors)
     : '';
   const debugRef = useRef<string | null>(null);
+  const focusSkipTarget = useCallback((event: { preventDefault: () => void }): void => {
+    if (typeof document === 'undefined') return;
+    const target = document.getElementById(KANGUR_MAIN_CONTENT_ID);
+    if (!(target instanceof HTMLElement)) return;
+    event.preventDefault();
+    window.location.hash = KANGUR_MAIN_CONTENT_ID;
+    target.focus();
+  }, []);
+  const handleSkipKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLAnchorElement>): void => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.stopPropagation();
+      focusSkipTarget(event);
+    },
+    [focusSkipTarget]
+  );
   const shellStyle: CSSProperties = {
     background: kangurAppearance.background,
     color: kangurAppearance.tone.text,
@@ -109,6 +126,15 @@ export function KangurFeaturePageShell(): JSX.Element {
       style={shellStyle}
     >
       {customCss ? <style data-kangur-custom-css>{customCss}</style> : null}
+      <a
+        href={`#${KANGUR_MAIN_CONTENT_ID}`}
+        aria-label='Przejdź do głównej treści'
+        className='sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70'
+        onClick={focusSkipTarget}
+        onKeyDown={handleSkipKeyDown}
+      >
+        Przejdź do głównej treści
+      </a>
       <KangurFeatureApp />
       <footer className='w-full border-t border-white/10 px-4 py-6 text-center text-xs [color:var(--kangur-page-muted-text)] sm:px-6'>
         <span>Creator credentials: Michał Matynia · created 2026 · </span>

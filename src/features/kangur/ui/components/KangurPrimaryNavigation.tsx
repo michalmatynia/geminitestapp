@@ -425,7 +425,7 @@ export function KangurPrimaryNavigation({
   const logoutAction: KangurNavActionConfig = {
     content: (
       <>
-        <LogOut className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <LogOut aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>Wyloguj</span>
       </>
     ),
@@ -506,7 +506,7 @@ export function KangurPrimaryNavigation({
                 className: mobileAuthActionClassName,
                 content: (
                   <>
-                    <UserPlus className={ICON_CLASSNAME} strokeWidth={2.15} />
+                    <UserPlus aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
                     <span className='truncate'>
                       {createAccountActionContent?.title ?? 'Utwórz konto'}
                     </span>
@@ -529,7 +529,7 @@ export function KangurPrimaryNavigation({
                 className: mobileAuthActionClassName,
                 content: (
                   <>
-                    <LogIn className={ICON_CLASSNAME} strokeWidth={2.15} />
+                    <LogIn aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
                     <span className='truncate'>
                       {loginActionContent?.title ?? 'Zaloguj się'}
                     </span>
@@ -556,7 +556,7 @@ export function KangurPrimaryNavigation({
       : mobileNavItemClassName,
     content: (
       <>
-        <BrainCircuit className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <BrainCircuit aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>{isTutorHidden ? enableTutorLabel : disableTutorLabel}</span>
       </>
     ),
@@ -574,6 +574,7 @@ export function KangurPrimaryNavigation({
   };
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
+    ariaLabel: 'Strona główna',
     className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
     content: (
       <>
@@ -606,7 +607,7 @@ export function KangurPrimaryNavigation({
     className: mobileNavItemClassName,
     content: (
       <>
-        <BookOpen className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>Lekcje</span>
       </>
     ),
@@ -629,7 +630,7 @@ export function KangurPrimaryNavigation({
     className: yellowPillActionClassName,
     content: (
       <>
-        <BookCheck className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <BookCheck aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>Przedmiot: {subjectChoiceLabel}</span>
       </>
     ),
@@ -643,7 +644,7 @@ export function KangurPrimaryNavigation({
     className: amberPillActionClassName,
     content: (
       <>
-        <Users className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <Users aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>Wiek: {ageGroupChoiceLabel}</span>
       </>
     ),
@@ -657,7 +658,7 @@ export function KangurPrimaryNavigation({
     className: mobileNavItemClassName,
     content: (
       <>
-        <Trophy className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <Trophy aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
         <span className='truncate'>Pojedynki</span>
       </>
     ),
@@ -680,7 +681,7 @@ export function KangurPrimaryNavigation({
       active: currentPage === 'ParentDashboard',
       content: (
         <>
-          <LayoutGrid className={ICON_CLASSNAME} strokeWidth={2.15} />
+          <LayoutGrid aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
           <span className='truncate'>Rodzic</span>
         </>
       ),
@@ -851,7 +852,11 @@ export function KangurPrimaryNavigation({
         type='button'
         variant='navigation'
       >
-        {isMobileMenuOpen ? <X className={ICON_CLASSNAME} /> : <Menu className={ICON_CLASSNAME} />}
+        {isMobileMenuOpen ? (
+          <X aria-hidden='true' className={ICON_CLASSNAME} />
+        ) : (
+          <Menu aria-hidden='true' className={ICON_CLASSNAME} />
+        )}
         <span className='sr-only'>{mobileMenuLabel}</span>
       </KangurButton>
     </KangurTopNavGroup>

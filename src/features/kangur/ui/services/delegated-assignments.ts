@@ -71,6 +71,7 @@ const ASSIGNMENT_PRIORITY_ORDER = {
 
 const ASSIGNMENT_SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
   alphabet: 'amber',
+  geometry: 'emerald',
   english: 'sky',
   maths: 'violet',
   web_development: 'teal',

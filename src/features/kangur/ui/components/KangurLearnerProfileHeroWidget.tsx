@@ -84,7 +84,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
             variant='surface'
             data-doc-id='profile_login'
           >
-            <LogIn className='h-4 w-4' /> Zaloguj się, aby synchronizować postęp
+            <LogIn aria-hidden='true' className='h-4 w-4' /> Zaloguj się, aby synchronizować postęp
           </KangurButton>
           <KangurButton
             className='w-full sm:w-auto'

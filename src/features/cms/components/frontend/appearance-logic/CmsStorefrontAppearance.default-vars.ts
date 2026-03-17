@@ -201,12 +201,12 @@ export const resolveDefaultKangurStorefrontAppearance = (
       '--kangur-text-field-background': 'rgba(240,234,241,0.95)',
       '--kangur-text-field-border': 'rgba(216,208,226,0.94)',
       '--kangur-text-field-text': '#324055',
-      '--kangur-text-field-placeholder': '#5e6d85',
+      '--kangur-text-field-placeholder': '#4a5971',
       '--kangur-text-field-disabled-background': 'rgba(229,222,232,0.94)',
       '--kangur-text-field-disabled-border': 'rgba(208,200,219,0.94)',
       '--kangur-progress-track': 'rgba(212,217,231,0.92)',
       '--kangur-page-text': '#324055',
-      '--kangur-page-muted-text': '#5e6d85',
+      '--kangur-page-muted-text': '#4a5971',
     },
   };
 };

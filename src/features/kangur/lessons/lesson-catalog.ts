@@ -13,6 +13,10 @@ import {
   ALPHABET_LESSON_TEMPLATES,
 } from './subjects/alphabet/catalog';
 import { ENGLISH_LESSON_COMPONENT_ORDER, ENGLISH_LESSON_TEMPLATES } from './subjects/english/catalog';
+import {
+  GEOMETRY_LESSON_COMPONENT_ORDER,
+  GEOMETRY_LESSON_TEMPLATES,
+} from './subjects/geometry/catalog';
 import { MATHS_LESSON_COMPONENT_ORDER, MATHS_LESSON_TEMPLATES } from './subjects/maths/catalog';
 import {
   WEB_DEVELOPMENT_LESSON_COMPONENT_ORDER,
@@ -29,24 +33,31 @@ export const KANGUR_SUBJECTS: readonly KangurSubjectDefinition[] = [
     ageGroups: ['six_year_old'],
   },
   {
+    id: 'geometry',
+    label: 'Maths',
+    shortLabel: 'Maths',
+    sortOrder: 2,
+    ageGroups: ['six_year_old'],
+  },
+  {
     id: 'maths',
     label: 'Matematyka',
     shortLabel: 'Matematyka',
-    sortOrder: 2,
+    sortOrder: 3,
     ageGroups: ['ten_year_old'],
   },
   {
     id: 'english',
     label: 'Angielski',
     shortLabel: 'Angielski',
-    sortOrder: 3,
+    sortOrder: 4,
     ageGroups: ['ten_year_old'],
   },
   {
     id: 'web_development',
     label: 'Web Development',
     shortLabel: 'Web Dev',
-    sortOrder: 4,
+    sortOrder: 5,
     ageGroups: ['grown_ups'],
   },
 ] as const;
@@ -141,6 +152,7 @@ export const resolveKangurSubjectForAgeGroup = (
 
 export const KANGUR_LESSON_COMPONENT_ORDER = [
   ...ALPHABET_LESSON_COMPONENT_ORDER,
+  ...GEOMETRY_LESSON_COMPONENT_ORDER,
   ...MATHS_LESSON_COMPONENT_ORDER,
   ...ENGLISH_LESSON_COMPONENT_ORDER,
   ...WEB_DEVELOPMENT_LESSON_COMPONENT_ORDER,
@@ -148,6 +160,7 @@ export const KANGUR_LESSON_COMPONENT_ORDER = [
 
 export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLessonTemplate> = {
   ...ALPHABET_LESSON_TEMPLATES,
+  ...GEOMETRY_LESSON_TEMPLATES,
   ...MATHS_LESSON_TEMPLATES,
   ...ENGLISH_LESSON_TEMPLATES,
   ...WEB_DEVELOPMENT_LESSON_TEMPLATES,

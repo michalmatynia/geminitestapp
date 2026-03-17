@@ -163,7 +163,7 @@ export function PageNotFound(): React.JSX.Element {
               type='button'
               variant='primary'
             >
-              <Home className='w-4 h-4' />
+              <Home aria-hidden='true' className='w-4 h-4' />
               Go Home
             </KangurButton>
           </div>

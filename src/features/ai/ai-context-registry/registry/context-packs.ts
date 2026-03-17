@@ -92,6 +92,27 @@ export const contextPacks: ContextPack[] = [
       );
     },
   },
+  {
+    id: 'kangur_recent_features',
+    description:
+      'Summarizes the most recent Kangur and StudiQ feature updates for release notes, ' +
+      'LinkedIn posts, and AI prompt grounding.',
+    maxSteps: 4,
+    maxNodes: 40,
+    maxBytes: 80_000,
+    allowedKinds: ['page', 'policy', 'component', 'action'],
+    systemPrompt:
+      'You are a release-notes assistant. Focus on recent Kangur and StudiQ feature changes ' +
+      'and keep outputs concise, factual, and sourced from the context registry bundle.',
+    buildSeedContext(rootIds: string[]): string {
+      return (
+        '[Kangur Recent Features Context]\n' +
+        `Root nodes: ${rootIds.join(', ')}\n` +
+        'Allowed kinds: page, policy, component, action\n' +
+        `Max graph nodes: ${this.maxNodes} | Max bytes: ${this.maxBytes}`
+      );
+    },
+  },
 ];
 
 // ─── Lookup ───────────────────────────────────────────────────────────────────

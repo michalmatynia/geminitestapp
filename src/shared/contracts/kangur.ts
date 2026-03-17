@@ -41,6 +41,7 @@ export const kangurLessonComponentIdSchema = z.enum([
   'alphabet_words',
   'alphabet_matching',
   'alphabet_sequence',
+  'geometry_shape_recognition',
   'clock',
   'calendar',
   'adding',
@@ -71,6 +72,7 @@ export type KangurLessonContentMode = z.infer<typeof kangurLessonContentModeSche
 
 export const kangurLessonSubjectSchema = z.enum([
   'alphabet',
+  'geometry',
   'maths',
   'english',
   'web_development',

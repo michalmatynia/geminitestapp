@@ -351,7 +351,7 @@ export function KangurTestSuitePlayer({
                 variant='surface'
                 data-doc-id='tests_suite_player'
               >
-                <RotateCcw className='size-4' />
+                <RotateCcw aria-hidden='true' className='size-4' />
                 Try again
               </KangurButton>
             </div>
@@ -412,7 +412,7 @@ export function KangurTestSuitePlayer({
               variant='surface'
               data-doc-id='tests_suite_player'
             >
-              <ChevronLeft className='size-4' />
+              <ChevronLeft aria-hidden='true' className='size-4' />
               Previous
             </KangurButton>
 
@@ -448,7 +448,7 @@ export function KangurTestSuitePlayer({
                       ? 'Next'
                       : 'Finish'
                     : 'Check answer'}
-                  <ChevronRight className='size-4' />
+                  <ChevronRight aria-hidden='true' className='size-4' />
                 </KangurButton>
               ) : (
                 <div className='text-xs text-slate-400'>Select an answer to continue</div>

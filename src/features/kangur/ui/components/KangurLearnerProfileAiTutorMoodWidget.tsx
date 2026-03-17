@@ -90,7 +90,7 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
             accent='teal'
             align='left'
             description={sectionDescription}
-            icon={<BrainCircuit className='h-5 w-5' />}
+            icon={<BrainCircuit aria-hidden='true' className='h-5 w-5' />}
             iconAccent='teal'
             layout='inline'
             title={sectionTitle}

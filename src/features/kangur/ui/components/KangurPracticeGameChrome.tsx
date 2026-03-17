@@ -229,7 +229,7 @@ export function KangurPracticeGameSummaryActions({
         size='lg'
         variant='surface'
       >
-        <RefreshCw className='w-4 h-4' /> {restartLabel}
+        <RefreshCw aria-hidden='true' className='w-4 h-4' /> {restartLabel}
       </KangurButton>
       <KangurButton
         className={cn('w-full sm:flex-1', finishClassName)}

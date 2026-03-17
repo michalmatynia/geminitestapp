@@ -52,4 +52,6 @@ Kangur documentation is centralized under `docs/kangur/*`. Tooltip copy must be 
 - `docs/kangur/observability-and-operations.md`
 - `docs/kangur/neo4j-semantic-bridge.md`
 - `docs/kangur/studiq-application.md`
+- `docs/kangur/linkedin-posts-runbook.md`
+- `docs/kangur/recent-feature-updates.md`
 - `docs/kangur/plans/README.md`

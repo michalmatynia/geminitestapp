@@ -136,7 +136,7 @@ export default function ResultScreen({
           size='lg'
           variant='primary'
         >
-          <RotateCcw className='w-5 h-5' /> Zagraj ponownie
+          <RotateCcw aria-hidden='true' className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>
         <KangurButton
           className='w-full sm:w-auto'
@@ -144,7 +144,7 @@ export default function ResultScreen({
           size='lg'
           variant='surface'
         >
-          <Home className='w-5 h-5' /> Strona główna
+          <Home aria-hidden='true' className='w-5 h-5' /> Strona główna
         </KangurButton>
       </KangurPanelRow>
     </motion.div>

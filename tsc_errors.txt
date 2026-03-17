@@ -2,3 +2,329 @@
 > libapp2@0.1.0 typecheck
 > tsc --noEmit --incremental false --incremental false
 
+scripts/db/export-settings-to-env.ts(82,22): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/db/export-settings-to-env.ts(83,21): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/db/export-settings-to-env.ts(84,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+scripts/db/export-settings-to-env.ts(89,33): error TS2532: Object is possibly 'undefined'.
+scripts/db/migrate-env-secrets-to-settings.ts(122,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId> | undefined'.
+src/features/kangur/legacy-lesson-imports.tsx(273,5): error TS2740: Type 'Record<SectionId, LessonSlide[]>' is missing the following properties from type 'readonly LegacyImportSlide[]': length, concat, join, slice, and 26 more.
+src/features/kangur/ui/components/AddingLesson.tsx(46,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/AddingLesson.tsx(65,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/AddingLesson.tsx(78,17): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Record<SectionId, LessonSlide[]>'.
+  No index signature with a parameter of type 'string' was found on type 'Record<SectionId, LessonSlide[]>'.
+src/features/kangur/ui/components/AddingLesson.tsx(79,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/AlphabetMatchingLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/AlphabetSequenceLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/AlphabetSyllablesLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/AlphabetWordsLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/CalendarLesson.tsx(498,64): error TS2345: Argument of type 'CalendarLiveHubSection[]' is not assignable to parameter of type '{ id: LessonSectionId; isGame?: boolean | undefined; }[]'.
+  Type 'CalendarLiveHubSection' is not assignable to type '{ id: LessonSectionId; isGame?: boolean | undefined; }'.
+    Types of property 'id' are incompatible.
+      Type 'CalendarHubId' is not assignable to type 'LessonSectionId'.
+        Type '"game_days"' is not assignable to type 'LessonSectionId'.
+src/features/kangur/ui/components/CalendarLesson.tsx(525,9): error TS2322: Type '{ id: "data" | "miesiace" | "dni"; } | { description: string; emoji: string; isGame: true; title: string; }' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "data" | "miesiace" | "dni"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/CalendarLesson.tsx(526,38): error TS2345: Argument of type 'CalendarLiveHubSection[]' is not assignable to parameter of type '{ id: "data" | "miesiace" | "dni"; }[]'.
+  Type 'CalendarLiveHubSection' is not assignable to type '{ id: "data" | "miesiace" | "dni"; }'.
+    Types of property 'id' are incompatible.
+      Type 'CalendarHubId' is not assignable to type '"data" | "miesiace" | "dni"'.
+        Type '"intro"' is not assignable to type '"data" | "miesiace" | "dni"'.
+src/features/kangur/ui/components/CalendarLesson.tsx(549,9): error TS2322: Type '{ id: "intro" | "data" | "miesiace" | "dni"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "intro" | "data" | "miesiace" | "dni"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/CalendarLesson.tsx(549,51): error TS2345: Argument of type 'CalendarLiveHubSection[]' is not assignable to parameter of type '{ id: "intro" | "data" | "miesiace" | "dni"; }[]'.
+  Type 'CalendarLiveHubSection' is not assignable to type '{ id: "intro" | "data" | "miesiace" | "dni"; }'.
+    Types of property 'id' are incompatible.
+      Type 'CalendarHubId' is not assignable to type '"intro" | "data" | "miesiace" | "dni"'.
+        Type '"game_days"' is not assignable to type '"intro" | "data" | "miesiace" | "dni"'.
+src/features/kangur/ui/components/CalendarLesson.tsx(581,7): error TS2322: Type '({ id: LessonSectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: LessonSectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/CalendarLesson.tsx(582,7): error TS2322: Type '(sectionId: CalendarHubId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'CalendarHubId'.
+src/features/kangur/ui/components/ClockLesson.tsx(729,64): error TS2345: Argument of type 'ClockHubSection[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type 'ClockHubSection' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Types of property 'id' are incompatible.
+      Type 'ClockHubId' is not assignable to type 'SectionId'.
+        Type '"game_hours"' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/ClockLesson.tsx(996,34): error TS2345: Argument of type 'ClockHubSection[]' is not assignable to parameter of type '{ id: "game_hours" | "game_minutes" | "game_combined"; }[]'.
+  Type 'ClockHubSection' is not assignable to type '{ id: "game_hours" | "game_minutes" | "game_combined"; }'.
+    Types of property 'id' are incompatible.
+      Type 'ClockHubId' is not assignable to type '"game_hours" | "game_minutes" | "game_combined"'.
+        Type '"hours"' is not assignable to type '"game_hours" | "game_minutes" | "game_combined"'.
+src/features/kangur/ui/components/ClockLesson.tsx(1071,11): error TS2322: Type '{ id: "game_hours" | "game_minutes" | "game_combined"; } | { description: string; emoji: string; isGame: boolean; title: string; }' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_hours" | "game_minutes" | "game_combined"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/ClockLesson.tsx(1102,9): error TS2322: Type '{ id: "hours" | "minutes" | "combined"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "hours" | "minutes" | "combined"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/ClockLesson.tsx(1102,51): error TS2345: Argument of type 'ClockHubSection[]' is not assignable to parameter of type '{ id: "hours" | "minutes" | "combined"; }[]'.
+  Type 'ClockHubSection' is not assignable to type '{ id: "hours" | "minutes" | "combined"; }'.
+    Types of property 'id' are incompatible.
+      Type 'ClockHubId' is not assignable to type '"hours" | "minutes" | "combined"'.
+        Type '"game_hours"' is not assignable to type '"hours" | "minutes" | "combined"'.
+src/features/kangur/ui/components/ClockLesson.tsx(1121,7): error TS2367: This comparison appears to be unintentional because the types 'SectionId' and '"game_hours"' have no overlap.
+src/features/kangur/ui/components/ClockLesson.tsx(1123,11): error TS2367: This comparison appears to be unintentional because the types 'SectionId' and '"game_minutes"' have no overlap.
+src/features/kangur/ui/components/ClockLesson.tsx(1125,13): error TS2367: This comparison appears to be unintentional because the types 'SectionId' and '"game_combined"' have no overlap.
+src/features/kangur/ui/components/ClockLesson.tsx(1164,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/ClockLesson.tsx(1165,7): error TS2322: Type '(sectionId: ClockHubId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'ClockHubId'.
+src/features/kangur/ui/components/DivisionLesson.tsx(295,9): error TS2322: Type '{ id: "game"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/DivisionLesson.tsx(295,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game"'.
+src/features/kangur/ui/components/DivisionLesson.tsx(311,9): error TS2322: Type '{ id: "intro" | "zapamietaj" | "reszta" | "odwrotnosc"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "intro" | "zapamietaj" | "reszta" | "odwrotnosc"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/DivisionLesson.tsx(311,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "intro" | "zapamietaj" | "reszta" | "odwrotnosc"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "intro" | "zapamietaj" | "reszta" | "odwrotnosc"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "intro" | "zapamietaj" | "reszta" | "odwrotnosc"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"intro" | "zapamietaj" | "reszta" | "odwrotnosc"'.
+src/features/kangur/ui/components/DivisionLesson.tsx(336,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/DivisionLesson.tsx(336,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/DivisionLesson.tsx(337,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishArticlesLesson.tsx(294,9): error TS2322: Type '{ id: "intro" | "summary" | "zero" | "practice" | "the" | "a_an"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "intro" | "summary" | "zero" | "practice" | "the" | "a_an"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishArticlesLesson.tsx(294,51): error TS2345: Argument of type '{ id: string; emoji: string; title: string; description: string; }[]' is not assignable to parameter of type '{ id: "intro" | "summary" | "zero" | "practice" | "the" | "a_an"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; }' is not assignable to type '{ id: "intro" | "summary" | "zero" | "practice" | "the" | "a_an"; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type '"intro" | "summary" | "zero" | "practice" | "the" | "a_an"'.
+src/features/kangur/ui/components/EnglishArticlesLesson.tsx(319,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/EnglishArticlesLesson.tsx(319,52): error TS2345: Argument of type '{ id: string; emoji: string; title: string; description: string; }[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishArticlesLesson.tsx(320,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishLesson.tsx(224,9): error TS2322: Type '{ id: "summary" | "greetings" | "phrases" | "pronoun_remix"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "summary" | "greetings" | "phrases" | "pronoun_remix"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishLesson.tsx(224,51): error TS2345: Argument of type '{ id: string; emoji: string; title: string; description: string; }[]' is not assignable to parameter of type '{ id: "summary" | "greetings" | "phrases" | "pronoun_remix"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; }' is not assignable to type '{ id: "summary" | "greetings" | "phrases" | "pronoun_remix"; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type '"summary" | "greetings" | "phrases" | "pronoun_remix"'.
+src/features/kangur/ui/components/EnglishLesson.tsx(249,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/EnglishLesson.tsx(249,52): error TS2345: Argument of type '{ id: string; emoji: string; title: string; description: string; }[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishLesson.tsx(250,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(385,9): error TS2322: Type '{ id: "game_parts_of_speech"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_parts_of_speech"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(385,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_parts_of_speech"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_parts_of_speech"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_parts_of_speech"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_parts_of_speech"'.
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(405,9): error TS2322: Type '{ id: "game_pronouns_warmup"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_pronouns_warmup"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(405,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_pronouns_warmup"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_pronouns_warmup"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_pronouns_warmup"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_pronouns_warmup"'.
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(422,9): error TS2322: Type '{ id: "summary" | "practice" | "subject_pronouns" | "possessive_adjectives" | "possessive_pronouns"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "summary" | "practice" | "subject_pronouns" | "possessive_adjectives" | "possessive_pronouns"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(422,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "summary" | "practice" | "subject_pronouns" | "possessive_adjectives" | "possessive_pronouns"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "summary" | "practice" | "subject_pronouns" | "possessive_adjectives" | "possessive_pronouns"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "summary" | "practice" | "subject_pronouns" | "possessive_adjectives" | "possessive_pronouns"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"summary" | "practice" | "subject_pronouns" | "possessive_adjectives" | "possessive_pronouns"'.
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(448,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(448,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishPartsOfSpeechLesson.tsx(449,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(439,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_prepositions"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_prepositions"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_prepositions"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_prepositions"'.
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(445,9): error TS2322: Type '{ id: "game_prepositions"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_prepositions"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(455,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_prepositions_sort"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_prepositions_sort"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_prepositions_sort"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_prepositions_sort"'.
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(462,9): error TS2322: Type '{ id: "game_prepositions_sort"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_prepositions_sort"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(472,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_prepositions_order"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_prepositions_order"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_prepositions_order"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_prepositions_order"'.
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(479,9): error TS2322: Type '{ id: "game_prepositions_order"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_prepositions_order"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(492,9): error TS2322: Type '{ id: "intro" | "relations" | "summary" | "time" | "practice" | "place" | "traps"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "intro" | "relations" | "summary" | "time" | "practice" | "place" | "traps"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(492,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "intro" | "relations" | "summary" | "time" | "practice" | "place" | "traps"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "intro" | "relations" | "summary" | "time" | "practice" | "place" | "traps"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "intro" | "relations" | "summary" | "time" | "practice" | "place" | "traps"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"intro" | "relations" | "summary" | "time" | "practice" | "place" | "traps"'.
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(524,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(524,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishPrepositionsLesson.tsx(525,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishSentenceStructureLesson.tsx(279,9): error TS2322: Type '{ id: "summary" | "order" | "practice" | "questions" | "blueprint" | "connectors"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "summary" | "order" | "practice" | "questions" | "blueprint" | "connectors"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishSentenceStructureLesson.tsx(279,51): error TS2345: Argument of type '{ id: string; emoji: string; title: string; description: string; }[]' is not assignable to parameter of type '{ id: "summary" | "order" | "practice" | "questions" | "blueprint" | "connectors"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; }' is not assignable to type '{ id: "summary" | "order" | "practice" | "questions" | "blueprint" | "connectors"; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type '"summary" | "order" | "practice" | "questions" | "blueprint" | "connectors"'.
+src/features/kangur/ui/components/EnglishSentenceStructureLesson.tsx(304,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/EnglishSentenceStructureLesson.tsx(304,52): error TS2345: Argument of type '{ id: string; emoji: string; title: string; description: string; }[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishSentenceStructureLesson.tsx(305,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(516,9): error TS2322: Type '{ id: "game_agreement"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_agreement"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(516,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_agreement"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_agreement"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_agreement"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_agreement"'.
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(533,9): error TS2322: Type '{ id: "summary" | "core" | "practice" | "third_person" | "be_verbs" | "tricky" | "interruptions"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "summary" | "core" | "practice" | "third_person" | "be_verbs" | "tricky" | "interruptions"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(533,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "summary" | "core" | "practice" | "third_person" | "be_verbs" | "tricky" | "interruptions"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "summary" | "core" | "practice" | "third_person" | "be_verbs" | "tricky" | "interruptions"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "summary" | "core" | "practice" | "third_person" | "be_verbs" | "tricky" | "interruptions"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"summary" | "core" | "practice" | "third_person" | "be_verbs" | "tricky" | "interruptions"'.
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(558,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(558,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/EnglishSubjectVerbAgreementLesson.tsx(559,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(298,9): error TS2322: Type '{ id: "game"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(298,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game"'.
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(311,9): error TS2322: Type '{ id: "punkt" | "bok" | "kat" | "podsumowanie"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "punkt" | "bok" | "kat" | "podsumowanie"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(311,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "punkt" | "bok" | "kat" | "podsumowanie"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "punkt" | "bok" | "kat" | "podsumowanie"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "punkt" | "bok" | "kat" | "podsumowanie"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"punkt" | "bok" | "kat" | "podsumowanie"'.
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(339,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(339,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/GeometryBasicsLesson.tsx(340,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(233,9): error TS2322: Type '{ id: "game_draw"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "game_draw"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(233,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "game_draw"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "game_draw"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "game_draw"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"game_draw"'.
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(249,9): error TS2322: Type '{ id: "intro" | "kwadrat" | "podsumowanie" | "prostokan"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "intro" | "kwadrat" | "podsumowanie" | "prostokan"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(249,51): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: "intro" | "kwadrat" | "podsumowanie" | "prostokan"; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: "intro" | "kwadrat" | "podsumowanie" | "prostokan"; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: "intro" | "kwadrat" | "podsumowanie" | "prostokan"; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type '"intro" | "kwadrat" | "podsumowanie" | "prostokan"'.
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(275,7): error TS2322: Type '({ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; })[]' is not assignable to type 'HubSection[]'.
+  Type '{ id: SectionId; isGame?: boolean | undefined; } & { progress?: LessonHubSectionProgress | undefined; }' is missing the following properties from type 'HubSection': emoji, title, description
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(275,52): error TS2345: Argument of type '({ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; })[]' is not assignable to parameter of type '{ id: SectionId; isGame?: boolean | undefined; }[]'.
+  Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; } | { id: string; emoji: string; title: string; description: string; isGame: boolean; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+    Type '{ id: string; emoji: string; title: string; description: string; isGame?: undefined; }' is not assignable to type '{ id: SectionId; isGame?: boolean | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/GeometryPerimeterLesson.tsx(276,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(88,85): error TS2345: Argument of type 'readonly [{ readonly id: "intro"; readonly emoji: "🔍"; readonly title: "Meet the Shapes"; readonly description: "See the most common shapes."; }, { readonly id: "practice"; readonly emoji: "🎯"; readonly title: "Practice"; readonly description: "Name the shape you see."; }, { ...; }]' is not assignable to parameter of type '{ id: SectionId; title: string; }[]'.
+  The type 'readonly [{ readonly id: "intro"; readonly emoji: "🔍"; readonly title: "Meet the Shapes"; readonly description: "See the most common shapes."; }, { readonly id: "practice"; readonly emoji: "🎯"; readonly title: "Practice"; readonly description: "Name the shape you see."; }, { ...; }]' is 'readonly' and cannot be assigned to the mutable type '{ id: SectionId; title: string; }[]'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(169,7): error TS2367: This comparison appears to be unintentional because the types '4' and '0' have no overlap.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(180,51): error TS18048: 'round' is possibly 'undefined'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(181,34): error TS18048: 'round' is possibly 'undefined'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(186,20): error TS18048: 'round' is possibly 'undefined'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(230,10): error TS18048: 'round' is possibly 'undefined'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(233,26): error TS18048: 'round' is possibly 'undefined'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(252,58): error TS18048: 'round' is possibly 'undefined'.
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(331,9): error TS2322: Type '{ id: "intro" | "summary" | "practice"; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: "intro" | "summary" | "practice"; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx(351,7): error TS2322: Type '(sectionId: SectionId) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'sectionId' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'SectionId'.
+src/features/kangur/ui/components/GeometryShapesLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/GeometrySymmetryLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/LogicalAnalogiesLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/LogicalClassificationLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/LogicalPatternsLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/LogicalReasoningLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/LogicalThinkingLesson.tsx(48,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/MultiplicationLesson.tsx(53,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/MultiplicationLesson.tsx(69,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/PageNotFound.tsx(98,21): error TS2353: Object literal may only specify known properties, and ''data-testid'' does not exist in type 'Omit<KangurPageShellProps, "children" | "tone" | "skipLinkTargetId" | "skipLinkLabel">'.
+src/features/kangur/ui/components/SubtractingLesson.tsx(44,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/components/SubtractingLesson.tsx(60,9): error TS2322: Type '{ id: any; } | null' is not assignable to type 'KangurLessonSubsectionSummary | null | undefined'.
+  Type '{ id: any; }' is missing the following properties from type 'KangurLessonSubsectionSummary': emoji, title, description
+src/features/kangur/ui/KangurErrorFallback.tsx(54,9): error TS2353: Object literal may only specify known properties, and ''data-kangur-appearance'' does not exist in type 'Omit<KangurPageShellProps, "children" | "tone" | "skipLinkTargetId" | "skipLinkLabel">'.
+src/features/kangur/ui/pages/LearnerProfile.tsx(62,34): error TS6133: 'scoresError' is declared but its value is never read.
+src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.WorkspacePanels.tsx(11,3): error TS6133: 'Hint' is declared but its value is never read.

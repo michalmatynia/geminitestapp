@@ -229,10 +229,22 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
               </KangurAnswerChoiceBadge>
           <span className='min-w-0 flex-1 break-words'>{choice}</span>
               {confirmed && choice === q.answer && (
-                <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
+                <>
+                  <CheckCircle
+                    aria-hidden='true'
+                    className='w-4 h-4 text-green-600 ml-auto flex-shrink-0'
+                  />
+                  <span className='sr-only'>Poprawna odpowiedź</span>
+                </>
               )}
               {confirmed && choice === selected && choice !== q.answer && (
-                <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
+                <>
+                  <XCircle
+                    aria-hidden='true'
+                    className='w-4 h-4 text-red-500 ml-auto flex-shrink-0'
+                  />
+                  <span className='sr-only'>Błędna odpowiedź</span>
+                </>
               )}
             </KangurAnswerChoiceCard>
           );

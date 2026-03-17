@@ -418,14 +418,14 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
 
 export default function EnglishPrepositionsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
     useKangurLessonPanelProgress({
       lessonKey: LESSON_KEY,
-      slideSections: SLIDES,
+      slideSections: SLIDES as any,
       sectionLabels: SECTION_LABELS,
     });
 
@@ -436,13 +436,13 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   };
 
   if (activeSection === 'game_prepositions') {
-    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any);
     return (
       <LessonActivityStage
         accent='rose'
         icon='🎯'
         onBack={() => setActiveSection(null)}
-        sectionHeader={gameSection}
+        sectionHeader={gameSection as any}
         shellTestId='english-prepositions-game-shell'
         title='Prepositions Sprint'
       >
@@ -452,14 +452,14 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   }
 
   if (activeSection === 'game_prepositions_sort') {
-    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any);
     return (
       <LessonActivityStage
         accent='rose'
         icon='🧲'
         maxWidthClassName='max-w-3xl'
         onBack={() => setActiveSection(null)}
-        sectionHeader={gameSection}
+        sectionHeader={gameSection as any}
         shellTestId='english-prepositions-sort-game-shell'
         title='Sort: Time + Place + Relations'
       >
@@ -469,14 +469,14 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   }
 
   if (activeSection === 'game_prepositions_order') {
-    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any);
     return (
       <LessonActivityStage
         accent='rose'
         icon='🧩'
         maxWidthClassName='max-w-3xl'
         onBack={() => setActiveSection(null)}
-        sectionHeader={gameSection}
+        sectionHeader={gameSection as any}
         shellTestId='english-prepositions-order-game-shell'
         title='Word Order Warm-up'
       >
@@ -488,8 +488,8 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection as SlideSectionId]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        slides={(SLIDES as any)[activeSection as SlideSectionId]}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) =>
@@ -521,8 +521,8 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
       lessonTitle='English: Prepositions'
       gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-rose-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
+      onSelect={handleSelect as any}
     />
   );
 }

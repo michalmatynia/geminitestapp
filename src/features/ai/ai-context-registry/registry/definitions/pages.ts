@@ -457,6 +457,25 @@ export const pageNodes: ContextNode[] = [
     source: { type: 'code', ref: SOURCE_REF },
   },
   {
+    id: 'page:kangur-recent-features',
+    kind: 'page',
+    name: 'Kangur Recent Features',
+    description:
+      'Canonical summary of the most recent Kangur and StudiQ feature work used for release notes and AI prompts.',
+    tags: ['kangur', 'studiq', 'documentation', 'release-notes'],
+    relationships: [
+      { type: 'related_to', targetId: 'policy:kangur-recent-features-source' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-17T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
+  {
     id: 'page:kangur-admin-lessons-manager',
     kind: 'page',
     name: 'Kangur Admin Lessons Manager',

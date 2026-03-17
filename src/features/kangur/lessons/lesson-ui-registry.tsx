@@ -57,6 +57,9 @@ const AlphabetMatchingLesson = loadLessonComponent(
 const AlphabetSequenceLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AlphabetSequenceLesson')
 );
+const GeometryShapeRecognitionLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/GeometryShapeRecognitionLesson')
+);
 const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
 const CalendarLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/CalendarLesson')
@@ -127,6 +130,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   alphabet_words: AlphabetWordsLesson,
   alphabet_matching: AlphabetMatchingLesson,
   alphabet_sequence: AlphabetSequenceLesson,
+  geometry_shape_recognition: GeometryShapeRecognitionLesson,
   clock: ClockLesson,
   calendar: CalendarLesson,
   adding: AddingLesson,
@@ -189,6 +193,12 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   order: 'alphabet_sequence',
   alfabet_order: 'alphabet_sequence',
   alphabet_sequence: 'alphabet_sequence',
+  shape_recognition: 'geometry_shape_recognition',
+  'shape-recognition': 'geometry_shape_recognition',
+  'shape recognition': 'geometry_shape_recognition',
+  recognize_shapes: 'geometry_shape_recognition',
+  'recognize-shapes': 'geometry_shape_recognition',
+  geometry_shape_recognition: 'geometry_shape_recognition',
   adding: 'adding',
   addition: 'adding',
   subtracting: 'subtracting',

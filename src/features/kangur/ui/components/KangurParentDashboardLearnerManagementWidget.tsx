@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Settings } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
@@ -30,6 +30,7 @@ import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
   KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
@@ -37,6 +38,11 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 const kangurPlatform = getKangurPlatform();
 const SESSION_PAGE_LIMIT = 20;
+type ProfileModalTabId = 'settings' | 'metrics';
+const PROFILE_MODAL_TABS: Array<{ id: ProfileModalTabId; label: string; docId: string }> = [
+  { id: 'settings', label: 'Ustawienia', docId: 'parent_profile_tab_settings' },
+  { id: 'metrics', label: 'Metryka', docId: 'parent_profile_tab_metrics' },
+];
 
 export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
   const {
@@ -62,8 +68,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   );
   const [isCreatePasswordVisible, setIsCreatePasswordVisible] = useState(false);
   const createPasswordInputId = useId();
-  const [isEditLearnerModalOpen, setIsEditLearnerModalOpen] = useState(false);
-  const [isProfileMetricsModalOpen, setIsProfileMetricsModalOpen] = useState(false);
+  const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] = useState(false);
+  const [profileModalTab, setProfileModalTab] = useState<ProfileModalTabId>('settings');
   const [sessionHistory, setSessionHistory] = useState<KangurLearnerSessionHistory | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
@@ -127,6 +133,14 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     sessionHistory?.hasMore ??
     (sessionHistory ? sessions.length < sessionHistory.totalSessions : false);
   const nextSessionOffset = sessionHistory?.nextOffset ?? Math.max(sessions.length, 0);
+  const profileModalTitle =
+    profileModalTab === 'metrics' ? 'Metryka profilu ucznia' : 'Ustawienia profilu ucznia';
+  const profileModalDescription =
+    profileModalTab === 'metrics'
+      ? 'Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
+      : 'Zmieniaj dane profilu ucznia, login, hasło oraz status aktywności.';
+  const profileModalCloseLabel =
+    profileModalTab === 'metrics' ? 'Zamknij metrykę profilu' : 'Zamknij ustawienia profilu';
 
   const handleLoadMoreSessions = async (): Promise<void> => {
     if (!activeLearnerId || !sessionHistory || isLoadingMoreSessions) {
@@ -197,20 +211,19 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
   useEffect(() => {
     if (!activeLearnerId) {
-      setIsEditLearnerModalOpen(false);
-      setIsProfileMetricsModalOpen(false);
+      setIsProfileSettingsModalOpen(false);
       setPendingRemovalId(null);
     }
   }, [activeLearnerId]);
 
   useEffect(() => {
-    if (!isEditLearnerModalOpen) {
+    if (!isProfileSettingsModalOpen || profileModalTab !== 'settings') {
       setPendingRemovalId(null);
     }
-  }, [isEditLearnerModalOpen]);
+  }, [isProfileSettingsModalOpen, profileModalTab]);
 
   useEffect(() => {
-    if (!isProfileMetricsModalOpen || !activeLearnerId) {
+    if (!isProfileSettingsModalOpen || profileModalTab !== 'metrics' || !activeLearnerId) {
       return;
     }
 
@@ -245,19 +258,31 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
     return () => {
       isActive = false;
     };
-  }, [activeLearnerId, isProfileMetricsModalOpen]);
+  }, [activeLearnerId, isProfileSettingsModalOpen, profileModalTab]);
+
+  const openProfileSettings = (tab: ProfileModalTabId = 'settings'): void => {
+    setProfileModalTab(tab);
+    setIsProfileSettingsModalOpen(true);
+  };
+
+  const handleProfileModalOpenChange = (open: boolean): void => {
+    setIsProfileSettingsModalOpen(open);
+    if (!open) {
+      setProfileModalTab('settings');
+    }
+  };
 
   const handleEditSave = async (): Promise<void> => {
     const saved = await handleSaveLearner();
     if (saved) {
-      setIsEditLearnerModalOpen(false);
+      setIsProfileSettingsModalOpen(false);
     }
   };
 
   const handleEditDelete = async (learnerId: string): Promise<void> => {
     const removed = await handleDeleteLearner(learnerId);
     if (removed) {
-      setIsEditLearnerModalOpen(false);
+      setIsProfileSettingsModalOpen(false);
     }
   };
 
@@ -353,24 +378,17 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
 
         <KangurPanelRow className='sm:flex-wrap sm:items-center'>
           <KangurButton
-            className='w-full sm:w-auto'
+            className='h-9 w-9 p-0'
             disabled={isSubmitting || !activeLearner}
-            onClick={() => setIsEditLearnerModalOpen(true)}
+            onClick={() => openProfileSettings('settings')}
             size='sm'
-            variant='surface'
-            data-doc-id='parent_open_edit_learner'
+            variant='ghost'
+            data-doc-id='parent_open_profile_settings'
+            data-testid='parent-open-profile-settings'
+            aria-label='Ustawienia profilu ucznia'
+            title='Ustawienia profilu ucznia'
           >
-            Edytuj Profil
-          </KangurButton>
-          <KangurButton
-            className='w-full sm:w-auto'
-            disabled={isSubmitting || !activeLearner}
-            onClick={() => setIsProfileMetricsModalOpen(true)}
-            size='sm'
-            variant='surface'
-            data-doc-id='parent_open_profile_metrics'
-          >
-            Metryka
+            <Settings className='h-4 w-4' aria-hidden='true' />
           </KangurButton>
         </KangurPanelRow>
 
@@ -505,329 +523,331 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
       </KangurGlassPanel>
 
       <KangurDialog
-        open={isProfileMetricsModalOpen}
-        onOpenChange={setIsProfileMetricsModalOpen}
+        open={isProfileSettingsModalOpen}
+        onOpenChange={handleProfileModalOpenChange}
         overlayVariant='standard'
         contentSize='md'
         contentProps={{
-          'data-testid': 'parent-profile-metrics-modal',
-          onEscapeKeyDown: () => setIsProfileMetricsModalOpen(false),
-          onInteractOutside: () => setIsProfileMetricsModalOpen(false),
-          onPointerDownOutside: () => setIsProfileMetricsModalOpen(false),
+          'data-testid': 'parent-profile-settings-modal',
+          onEscapeKeyDown: () => handleProfileModalOpenChange(false),
+          onInteractOutside: () => handleProfileModalOpenChange(false),
+          onPointerDownOutside: () => handleProfileModalOpenChange(false),
         }}
       >
         <KangurDialogHeader
-          title='Szczegóły profilu ucznia'
-          description='Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
-          closeAriaLabel='Zamknij metrykę profilu'
+          title={profileModalTitle}
+          description={profileModalDescription}
+          closeAriaLabel={profileModalCloseLabel}
         />
 
         {activeLearner ? (
           <KangurGlassPanel className='w-full' padding='lg' surface='mistSoft' variant='soft'>
             <KangurPanelStack>
-              <KangurSummaryPanel
-                accent='indigo'
-                description='Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
-                label='Szczegóły profilu'
+              <div
+                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} self-start`}
+                role='tablist'
+                aria-label='Profil ucznia'
               >
-                <div className='mt-3 grid grid-cols-1 kangur-panel-gap sm:grid-cols-2'>
-                  <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
-                    <KangurMetaText caps size='xs'>
-                      Login ucznia
-                    </KangurMetaText>
-                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {activeLearner.loginName}
-                    </div>
-                  </div>
-                  <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
-                    <KangurMetaText caps size='xs'>
-                      Status profilu
-                    </KangurMetaText>
-                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {activeLearner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
-                    </div>
-                  </div>
-                  <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
-                    <KangurMetaText caps size='xs'>
-                      Wiek
-                    </KangurMetaText>
-                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {typeof activeLearner.age === 'number'
-                        ? `${activeLearner.age} lat`
-                        : 'Brak danych'}
-                    </div>
-                  </div>
-                  <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
-                    <KangurMetaText caps size='xs'>
-                      Ostatnie logowanie / aktywność
-                    </KangurMetaText>
-                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                      {lastActivityLabel}
-                    </div>
-                  </div>
-                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
-                      <KangurMetaText caps size='xs'>
-                        Profil utworzony
-                      </KangurMetaText>
-                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                        {formatDateTime(activeLearner.createdAt)}
-                      </div>
-                    </div>
-                    <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
-                      <KangurMetaText caps size='xs'>
-                        Ostatnia aktualizacja profilu
-                      </KangurMetaText>
-                      <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                        {formatDateTime(activeLearner.updatedAt)}
-                      </div>
-                    </div>
-                  </div>
-              </KangurSummaryPanel>
-
-              <KangurSummaryPanel
-                accent='slate'
-                description='Historia logowań ucznia z czasem rozpoczęcia i zakończenia.'
-                label='Sesje logowania'
-              >
-                  {isLoadingSessions ? (
-                    <KangurEmptyState
-                      accent='slate'
-                      align='center'
-                      data-testid='parent-profile-sessions-loading'
-                      description='Ładujemy historię sesji ucznia.'
-                      title='Ładowanie sesji...'
-                    />
-                  ) : sessionsError ? (
-                    <KangurEmptyState
-                      accent='rose'
-                      align='center'
-                      data-testid='parent-profile-sessions-error'
-                      description='Spróbuj odświeżyć metrykę za chwilę.'
-                      title={sessionsError}
-                    />
-                  ) : sessions.length === 0 ? (
-                    <KangurEmptyState
-                      accent='slate'
-                      align='center'
-                      data-testid='parent-profile-sessions-empty'
-                      description='Sesje ucznia pojawią się tutaj po pierwszym logowaniu.'
-                      title='Brak sesji logowania.'
-                    />
-                  ) : (
-                    <div className='mt-3 max-h-72 overflow-y-auto pr-1'>
-                      <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                        {sessions.map((session, index) => {
-                          const endedLabel = session.endedAt
-                            ? formatDateTime(session.endedAt)
-                            : 'W trakcie';
-                          const durationLabel = session.endedAt
-                            ? formatSessionDuration(session.durationSeconds)
-                            : 'W trakcie';
-                          return (
-                            <div
-                              key={session.id}
-                              className='rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3'
-                              data-testid={`parent-profile-session-${session.id}`}
-                            >
-                              <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
-                                <span>{`Sesja ${index + 1}`}</span>
-                                <span>{session.endedAt ? 'Zakończona' : 'Aktywna'}</span>
-                              </div>
-                              <div className='mt-2 grid kangur-panel-gap sm:grid-cols-3'>
-                                <div>
-                                  <KangurMetaText caps size='xs'>
-                                    Start
-                                  </KangurMetaText>
-                                  <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                                    {formatDateTime(session.startedAt)}
-                                  </div>
-                                </div>
-                                <div>
-                                  <KangurMetaText caps size='xs'>
-                                    Koniec
-                                  </KangurMetaText>
-                                  <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                                    {endedLabel}
-                                  </div>
-                                </div>
-                                <div>
-                                  <KangurMetaText caps size='xs'>
-                                    Czas trwania
-                                  </KangurMetaText>
-                                  <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                                    {durationLabel}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {hasMoreSessions ? (
-                        <div className='mt-3 flex justify-center'>
-                          <KangurButton
-                            className='w-full sm:w-auto'
-                            disabled={isLoadingMoreSessions}
-                            onClick={() => void handleLoadMoreSessions()}
-                            size='sm'
-                            variant='surface'
-                            data-doc-id='parent_profile_sessions_load_more'
-                          >
-                            {isLoadingMoreSessions ? 'Ładowanie...' : 'Pokaż starsze sesje'}
-                          </KangurButton>
-                        </div>
-                      ) : null}
-                      {sessionsLoadMoreError ? (
-                        <div className='mt-2 text-xs text-rose-600'>{sessionsLoadMoreError}</div>
-                      ) : null}
-                    </div>
-                  )}
-              </KangurSummaryPanel>
-            </KangurPanelStack>
-          </KangurGlassPanel>
-        ) : null}
-      </KangurDialog>
-
-      <KangurDialog
-        open={isEditLearnerModalOpen}
-        onOpenChange={setIsEditLearnerModalOpen}
-        overlayVariant='standard'
-        contentSize='md'
-        contentProps={{
-          'data-testid': 'parent-edit-learner-modal',
-          onEscapeKeyDown: () => setIsEditLearnerModalOpen(false),
-          onInteractOutside: () => setIsEditLearnerModalOpen(false),
-          onPointerDownOutside: () => setIsEditLearnerModalOpen(false),
-        }}
-      >
-        <KangurDialogHeader
-          title='Edytuj profil ucznia'
-          description='Zmieniaj dane profilu ucznia, login, hasło oraz status aktywności.'
-          closeAriaLabel='Zamknij edycję profilu'
-        />
-
-        {activeLearner ? (
-          <KangurGlassPanel className='w-full' padding='lg' surface='mistSoft' variant='soft'>
-            <KangurPanelStack>
-              <KangurWidgetIntro
-                eyebrow='Wybrany profil'
-                description={
-                  <>
-                    Aktualizujesz dane ucznia{' '}
-                    <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
-                      {activeLearner.displayName}
-                    </span>
-                    .
-                  </>
-                }
-              />
-              <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
-                <KangurTextField
-                  accent='indigo'
-                  maxLength={120}
-                  value={editForm.displayName}
-                  onChange={(event) => updateEditField('displayName', event.target.value)}
-                  placeholder='Imie ucznia'
-                  aria-label='Imie ucznia'
-                  title='Imie ucznia'
-                />
-                <KangurTextField
-                  accent='indigo'
-                  maxLength={80}
-                  value={editForm.loginName}
-                  onChange={(event) => updateEditField('loginName', event.target.value)}
-                  placeholder='Login ucznia'
-                  aria-label='Login ucznia'
-                  title='Login ucznia'
-                />
-                <KangurTextField
-                  accent='indigo'
-                  type='password'
-                  minLength={8}
-                  maxLength={160}
-                  value={editForm.password}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    updateEditField('password', event.target.value)
-                  }
-                  placeholder='Nowe hasło (opcjonalnie)'
-                  aria-label='Nowe hasło (opcjonalnie)'
-                  title='Nowe hasło (opcjonalnie)'
-                />
-                <KangurSelectField
-                  accent='indigo'
-                  value={editForm.status}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                    updateEditField(
-                      'status',
-                      event.target.value === 'disabled' ? 'disabled' : 'active'
-                    )
-                  }
-                  aria-label='Status ucznia'
-                  title='Status ucznia'
-                >
-                  <option value='active'>Aktywny</option>
-                  <option value='disabled'>Wyłączony</option>
-                </KangurSelectField>
+                {PROFILE_MODAL_TABS.map((tab) => (
+                  <KangurButton
+                    key={tab.id}
+                    size='sm'
+                    variant={profileModalTab === tab.id ? 'segmentActive' : 'segment'}
+                    onClick={() => setProfileModalTab(tab.id)}
+                    data-doc-id={tab.docId}
+                    role='tab'
+                    aria-selected={profileModalTab === tab.id}
+                    tabIndex={profileModalTab === tab.id ? 0 : -1}
+                  >
+                    {tab.label}
+                  </KangurButton>
+                ))}
               </div>
-              <KangurPanelRow className='sm:flex-wrap sm:items-center'>
-                <KangurButton
-                  className='w-full sm:w-auto'
-                  disabled={isSubmitting}
-                  onClick={() => void handleEditSave()}
-                  size='sm'
-                  variant='surface'
-                  data-doc-id='parent_save_learner'
-                >
-                  Zapisz ucznia
-                </KangurButton>
-                <KangurButton
-                  className='w-full sm:w-auto text-rose-600 hover:text-rose-700'
-                  disabled={isSubmitting}
-                  onClick={() => setPendingRemovalId(activeLearner.id)}
-                  size='sm'
-                  variant='surface'
-                  data-doc-id='parent_remove_learner'
-                >
-                  Usuń profil ucznia
-                </KangurButton>
-                <div className='text-xs [color:var(--kangur-page-muted-text)]'>
-                  Login i hasło należą do ucznia, ale konto pozostaje własnością rodzica.
-                </div>
-              </KangurPanelRow>
-              {isRemovalPending ? (
-                <div
-                  className='rounded-[20px] border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700'
-                  role='alert'
-                >
-                  <p className='font-semibold'>
-                    Uwaga: usunięcie profilu ucznia usuwa jego login i dostęp do danych. Tej
-                    operacji nie da się cofnąć.
-                  </p>
-                  <div className={`mt-3 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center`}>
+
+              {profileModalTab === 'settings' ? (
+                <KangurPanelStack>
+                  <KangurWidgetIntro
+                    eyebrow='Wybrany profil'
+                    description={
+                      <>
+                        Aktualizujesz dane ucznia{' '}
+                        <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
+                          {activeLearner.displayName}
+                        </span>
+                        .
+                      </>
+                    }
+                  />
+                  <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
+                    <KangurTextField
+                      accent='indigo'
+                      maxLength={120}
+                      value={editForm.displayName}
+                      onChange={(event) => updateEditField('displayName', event.target.value)}
+                      placeholder='Imie ucznia'
+                      aria-label='Imie ucznia'
+                      title='Imie ucznia'
+                    />
+                    <KangurTextField
+                      accent='indigo'
+                      maxLength={80}
+                      value={editForm.loginName}
+                      onChange={(event) => updateEditField('loginName', event.target.value)}
+                      placeholder='Login ucznia'
+                      aria-label='Login ucznia'
+                      title='Login ucznia'
+                    />
+                    <KangurTextField
+                      accent='indigo'
+                      type='password'
+                      minLength={8}
+                      maxLength={160}
+                      value={editForm.password}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        updateEditField('password', event.target.value)
+                      }
+                      placeholder='Nowe hasło (opcjonalnie)'
+                      aria-label='Nowe hasło (opcjonalnie)'
+                      title='Nowe hasło (opcjonalnie)'
+                    />
+                    <KangurSelectField
+                      accent='indigo'
+                      value={editForm.status}
+                      onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                        updateEditField(
+                          'status',
+                          event.target.value === 'disabled' ? 'disabled' : 'active'
+                        )
+                      }
+                      aria-label='Status ucznia'
+                      title='Status ucznia'
+                    >
+                      <option value='active'>Aktywny</option>
+                      <option value='disabled'>Wyłączony</option>
+                    </KangurSelectField>
+                  </div>
+                  <KangurPanelRow className='sm:flex-wrap sm:items-center'>
                     <KangurButton
                       className='w-full sm:w-auto'
                       disabled={isSubmitting}
-                      onClick={() => setPendingRemovalId(null)}
+                      onClick={() => void handleEditSave()}
                       size='sm'
                       variant='surface'
+                      data-doc-id='parent_save_learner'
                     >
-                      Anuluj
+                      Zapisz ucznia
                     </KangurButton>
                     <KangurButton
-                      className='w-full sm:w-auto border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                      className='w-full sm:w-auto text-rose-600 hover:text-rose-700'
                       disabled={isSubmitting}
-                      onClick={() => {
-                        setPendingRemovalId(null);
-                        void handleEditDelete(activeLearner.id);
-                      }}
+                      onClick={() => setPendingRemovalId(activeLearner.id)}
                       size='sm'
-                      variant='primary'
+                      variant='surface'
+                      data-doc-id='parent_remove_learner'
                     >
-                      Potwierdź usunięcie
+                      Usuń profil ucznia
                     </KangurButton>
-                  </div>
-                </div>
-              ) : null}
+                    <div className='text-xs [color:var(--kangur-page-muted-text)]'>
+                      Login i hasło należą do ucznia, ale konto pozostaje własnością rodzica.
+                    </div>
+                  </KangurPanelRow>
+                  {isRemovalPending ? (
+                    <div
+                      className='rounded-[20px] border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700'
+                      role='alert'
+                    >
+                      <p className='font-semibold'>
+                        Uwaga: usunięcie profilu ucznia usuwa jego login i dostęp do danych. Tej
+                        operacji nie da się cofnąć.
+                      </p>
+                      <div className={`mt-3 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center`}>
+                        <KangurButton
+                          className='w-full sm:w-auto'
+                          disabled={isSubmitting}
+                          onClick={() => setPendingRemovalId(null)}
+                          size='sm'
+                          variant='surface'
+                        >
+                          Anuluj
+                        </KangurButton>
+                        <KangurButton
+                          className='w-full sm:w-auto border-rose-500 bg-rose-500 text-white hover:bg-rose-600 hover:border-rose-600'
+                          disabled={isSubmitting}
+                          onClick={() => {
+                            setPendingRemovalId(null);
+                            void handleEditDelete(activeLearner.id);
+                          }}
+                          size='sm'
+                          variant='primary'
+                        >
+                          Potwierdź usunięcie
+                        </KangurButton>
+                      </div>
+                    </div>
+                  ) : null}
+                </KangurPanelStack>
+              ) : (
+                <KangurPanelStack>
+                  <KangurSummaryPanel
+                    accent='indigo'
+                    description='Szybkie dane o aktywnym profilu ucznia, w tym ostatnia aktywność.'
+                    label='Szczegóły profilu'
+                  >
+                    <div className='mt-3 grid grid-cols-1 kangur-panel-gap sm:grid-cols-2'>
+                      <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                        <KangurMetaText caps size='xs'>
+                          Login ucznia
+                        </KangurMetaText>
+                        <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {activeLearner.loginName}
+                        </div>
+                      </div>
+                      <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                        <KangurMetaText caps size='xs'>
+                          Status profilu
+                        </KangurMetaText>
+                        <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {activeLearner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
+                        </div>
+                      </div>
+                      <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                        <KangurMetaText caps size='xs'>
+                          Wiek
+                        </KangurMetaText>
+                        <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {typeof activeLearner.age === 'number'
+                            ? `${activeLearner.age} lat`
+                            : 'Brak danych'}
+                        </div>
+                      </div>
+                      <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                        <KangurMetaText caps size='xs'>
+                          Ostatnie logowanie / aktywność
+                        </KangurMetaText>
+                        <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {lastActivityLabel}
+                        </div>
+                      </div>
+                      <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                        <KangurMetaText caps size='xs'>
+                          Profil utworzony
+                        </KangurMetaText>
+                        <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {formatDateTime(activeLearner.createdAt)}
+                        </div>
+                      </div>
+                      <div className='rounded-[22px] border border-indigo-200/70 bg-white/80 px-4 py-3'>
+                        <KangurMetaText caps size='xs'>
+                          Ostatnia aktualizacja profilu
+                        </KangurMetaText>
+                        <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                          {formatDateTime(activeLearner.updatedAt)}
+                        </div>
+                      </div>
+                    </div>
+                  </KangurSummaryPanel>
+
+                  <KangurSummaryPanel
+                    accent='slate'
+                    description='Historia logowań ucznia z czasem rozpoczęcia i zakończenia.'
+                    label='Sesje logowania'
+                  >
+                    {isLoadingSessions ? (
+                      <KangurEmptyState
+                        accent='slate'
+                        align='center'
+                        data-testid='parent-profile-sessions-loading'
+                        description='Ładujemy historię sesji ucznia.'
+                        title='Ładowanie sesji...'
+                      />
+                    ) : sessionsError ? (
+                      <KangurEmptyState
+                        accent='rose'
+                        align='center'
+                        data-testid='parent-profile-sessions-error'
+                        description='Spróbuj odświeżyć metrykę za chwilę.'
+                        title={sessionsError}
+                      />
+                    ) : sessions.length === 0 ? (
+                      <KangurEmptyState
+                        accent='slate'
+                        align='center'
+                        data-testid='parent-profile-sessions-empty'
+                        description='Sesje ucznia pojawią się tutaj po pierwszym logowaniu.'
+                        title='Brak sesji logowania.'
+                      />
+                    ) : (
+                      <div className='mt-3 max-h-72 overflow-y-auto pr-1'>
+                        <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
+                          {sessions.map((session, index) => {
+                            const endedLabel = session.endedAt
+                              ? formatDateTime(session.endedAt)
+                              : 'W trakcie';
+                            const durationLabel = session.endedAt
+                              ? formatSessionDuration(session.durationSeconds)
+                              : 'W trakcie';
+                            return (
+                              <div
+                                key={session.id}
+                                className='rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3'
+                                data-testid={`parent-profile-session-${session.id}`}
+                              >
+                                <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
+                                  <span>{`Sesja ${index + 1}`}</span>
+                                  <span>{session.endedAt ? 'Zakończona' : 'Aktywna'}</span>
+                                </div>
+                                <div className='mt-2 grid kangur-panel-gap sm:grid-cols-3'>
+                                  <div>
+                                    <KangurMetaText caps size='xs'>
+                                      Start
+                                    </KangurMetaText>
+                                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                      {formatDateTime(session.startedAt)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <KangurMetaText caps size='xs'>
+                                      Koniec
+                                    </KangurMetaText>
+                                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                      {endedLabel}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <KangurMetaText caps size='xs'>
+                                      Czas trwania
+                                    </KangurMetaText>
+                                    <div className='mt-1 break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
+                                      {durationLabel}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {hasMoreSessions ? (
+                          <div className='mt-3 flex justify-center'>
+                            <KangurButton
+                              className='w-full sm:w-auto'
+                              disabled={isLoadingMoreSessions}
+                              onClick={() => void handleLoadMoreSessions()}
+                              size='sm'
+                              variant='surface'
+                              data-doc-id='parent_profile_sessions_load_more'
+                            >
+                              {isLoadingMoreSessions ? 'Ładowanie...' : 'Pokaż starsze sesje'}
+                            </KangurButton>
+                          </div>
+                        ) : null}
+                        {sessionsLoadMoreError ? (
+                          <div className='mt-2 text-xs text-rose-600'>{sessionsLoadMoreError}</div>
+                        ) : null}
+                      </div>
+                    )}
+                  </KangurSummaryPanel>
+                </KangurPanelStack>
+              )}
             </KangurPanelStack>
           </KangurGlassPanel>
         ) : null}

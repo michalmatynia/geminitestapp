@@ -126,9 +126,12 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     variant={completed ? 'success' : 'secondary'}
                   >
                     {completed ? (
-                      <CheckCircle2 className='h-4 w-4 text-emerald-600' />
+                      <CheckCircle2 aria-hidden='true' className='h-4 w-4 text-emerald-600' />
                     ) : (
-                      <Circle className='h-4 w-4 [color:var(--kangur-page-muted-text)]' />
+                      <Circle
+                        aria-hidden='true'
+                        className='h-4 w-4 [color:var(--kangur-page-muted-text)]'
+                      />
                     )}
                   </KangurButton>
                   <div className='min-w-0'>

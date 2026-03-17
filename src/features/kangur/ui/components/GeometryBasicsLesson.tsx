@@ -271,14 +271,14 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
 
 export default function GeometryBasicsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
     useKangurLessonPanelProgress({
       lessonKey: 'geometry_basics',
-      slideSections: SLIDES,
+      slideSections: SLIDES as any,
       sectionLabels: SECTION_LABELS,
     });
 
@@ -295,7 +295,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
         icon='🎯'
         maxWidthClassName='max-w-3xl'
         onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         shellTestId='geometry-basics-game-shell'
         title='Geo-misja'
       >
@@ -307,15 +307,15 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        slides={(SLIDES as any)[activeSection]}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
         onProgressChange={(viewedCount) =>
-          markSectionViewedCount(activeSection, viewedCount)
+          markSectionViewedCount(activeSection as any, viewedCount)
         }
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
+          recordPanelTime(activeSection as any, panelIndex, seconds, panelTitle)
         }
         dotActiveClass='bg-cyan-500'
         dotDoneClass='bg-cyan-300'
@@ -336,8 +336,8 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
       lessonTitle='Podstawy geometrii'
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-cyan-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
+      onSelect={handleSelect as any}
     />
   );
 }

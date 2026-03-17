@@ -81,7 +81,7 @@ export default function TrainingSetup({
           description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
           headingAs='h3'
           headingSize='md'
-          icon={<Dumbbell className='h-6 w-6' />}
+          icon={<Dumbbell aria-hidden='true' className='h-6 w-6' />}
           iconAccent='indigo'
           iconSize='lg'
           layout='inline'

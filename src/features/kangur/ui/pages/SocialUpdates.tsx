@@ -138,7 +138,7 @@ export default function SocialUpdates(): React.JSX.Element {
         <KangurEmptyState
           title='No public updates yet'
           description='Check back soon for the latest Kangur and StudiQ progress updates.'
-          icon={<CalendarClock className='h-5 w-5' />}
+          icon={<CalendarClock aria-hidden='true' className='h-5 w-5' />}
         />
       ) : (
         <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
@@ -193,7 +193,7 @@ export default function SocialUpdates(): React.JSX.Element {
               }
             >
               View on LinkedIn
-              <ExternalLink className='h-4 w-4' />
+              <ExternalLink aria-hidden='true' className='h-4 w-4' />
             </a>
           ) : null}
         </KangurInfoCard>

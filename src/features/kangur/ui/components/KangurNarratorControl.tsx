@@ -478,6 +478,7 @@ export function KangurNarratorControl({
           {...(narratorDocId ? { 'data-doc-id': narratorDocId } : {})}
         >
           <ControlIcon
+            aria-hidden='true'
             className={cn(
               isIconMode ? 'size-3.5' : 'size-4',
               status === 'loading' ? 'animate-spin' : undefined

@@ -34,7 +34,7 @@ export function KangurPanelCloseButton({
       title={resolvedAriaLabel}
       {...props}
     >
-      <X className={cn('h-3.5 w-3.5', iconClassName)} />
+      <X aria-hidden='true' className={cn('h-3.5 w-3.5', iconClassName)} />
     </button>
   );
 }

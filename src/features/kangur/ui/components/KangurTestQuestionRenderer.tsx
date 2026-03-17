@@ -305,12 +305,12 @@ export function KangurTestQuestionRenderer({
         >
           {isCorrect ? (
             <>
-              <CheckCircle className='size-4' />
+              <CheckCircle aria-hidden='true' className='size-4' />
               Correct! +{question.pointValue} pts
             </>
           ) : (
             <>
-              <XCircle className='size-4' />
+              <XCircle aria-hidden='true' className='size-4' />
               Incorrect. Correct answer: {question.correctChoiceLabel}
             </>
           )}

@@ -405,7 +405,7 @@ export default function AddingSynthesisGame({
                     data-testid='adding-synthesis-intro-badge'
                     size='md'
                   >
-                    <Music2 className='h-6 w-6' />
+                    <Music2 aria-hidden='true' className='h-6 w-6' />
                   </KangurIconBadge>
                   <div>
                     <KangurStatusChip
@@ -454,19 +454,19 @@ export default function AddingSynthesisGame({
             >
               <div className='grid kangur-panel-gap min-[420px]:grid-cols-2 lg:grid-cols-3'>
                 <div className='flex items-center kangur-panel-gap'>
-                  <Target className='h-5 w-5 text-amber-500' />
+                  <Target aria-hidden='true' className='h-5 w-5 text-amber-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Klikaj odpowiedni tor lub naciskaj 1, 2, 3, 4.
                   </p>
                 </div>
                 <div className='flex items-center kangur-panel-gap'>
-                  <Gauge className='h-5 w-5 text-sky-500' />
+                  <Gauge aria-hidden='true' className='h-5 w-5 text-sky-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Im bliżej linii trafisz, tym lepszy rytm.
                   </p>
                 </div>
                 <div className='flex items-center kangur-panel-gap'>
-                  <Zap className='h-5 w-5 text-violet-500' />
+                  <Zap aria-hidden='true' className='h-5 w-5 text-violet-500' />
                   <p className='text-sm [color:var(--kangur-page-muted-text)]'>
                     Po każdym błędzie dostajesz szybką podpowiedź.
                   </p>
@@ -482,7 +482,7 @@ export default function AddingSynthesisGame({
                 onClick={startSession}
                 data-testid='adding-synthesis-start'
               >
-                <Sparkles className='h-4 w-4' />
+                <Sparkles aria-hidden='true' className='h-4 w-4' />
                 Start syntezę
               </KangurButton>
               <KangurButton
@@ -553,7 +553,7 @@ export default function AddingSynthesisGame({
 
             <KangurPanelRow>
               <KangurButton type='button' size='lg' variant='primary' onClick={startSession}>
-                <RefreshCw className='h-4 w-4' />
+                <RefreshCw aria-hidden='true' className='h-4 w-4' />
                 Zagraj jeszcze raz
               </KangurButton>
               <KangurButton

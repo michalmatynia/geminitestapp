@@ -21,6 +21,7 @@ const createDefaultProgressStore = (): KangurSubjectProgressStore => ({
   version: 1,
   subjects: {
     alphabet: createDefaultKangurProgressState(),
+    geometry: createDefaultKangurProgressState(),
     maths: createDefaultKangurProgressState(),
     english: createDefaultKangurProgressState(),
     web_development: createDefaultKangurProgressState(),
@@ -83,6 +84,7 @@ const cloneProgressStore = (store: KangurSubjectProgressStore): KangurSubjectPro
   version: 1,
   subjects: {
     alphabet: cloneProgress(store.subjects.alphabet ?? DEFAULT_PROGRESS),
+    geometry: cloneProgress(store.subjects.geometry ?? DEFAULT_PROGRESS),
     maths: cloneProgress(store.subjects.maths ?? DEFAULT_PROGRESS),
     english: cloneProgress(store.subjects.english ?? DEFAULT_PROGRESS),
     web_development: cloneProgress(store.subjects.web_development ?? DEFAULT_PROGRESS),
@@ -99,6 +101,7 @@ const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
         version: 1,
         subjects: {
           alphabet: normalizeKangurProgressState(subjectsRecord['alphabet']),
+          geometry: normalizeKangurProgressState(subjectsRecord['geometry']),
           maths: normalizeKangurProgressState(subjectsRecord['maths']),
           english: normalizeKangurProgressState(subjectsRecord['english']),
           web_development: normalizeKangurProgressState(subjectsRecord['web_development']),
@@ -111,6 +114,7 @@ const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
     version: 1,
     subjects: {
       alphabet: createDefaultKangurProgressState(),
+      geometry: createDefaultKangurProgressState(),
       maths: normalizeKangurProgressState(value),
       english: createDefaultKangurProgressState(),
       web_development: createDefaultKangurProgressState(),

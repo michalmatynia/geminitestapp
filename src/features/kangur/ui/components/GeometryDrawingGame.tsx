@@ -732,7 +732,7 @@ export default function GeometryDrawingGame({
                 />
                 {points.length === 0 && (
                   <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
-                    <PencilRuler className='w-4 h-4 mr-2' />
+                    <PencilRuler aria-hidden='true' className='w-4 h-4 mr-2' />
                     Rysuj tutaj
                   </div>
                 )}
@@ -754,7 +754,7 @@ export default function GeometryDrawingGame({
                   size='lg'
                   variant='surface'
                 >
-                  <Eraser className='w-4 h-4' />
+                  <Eraser aria-hidden='true' className='w-4 h-4' />
                   Wyczyść
                 </KangurButton>
                 <KangurButton

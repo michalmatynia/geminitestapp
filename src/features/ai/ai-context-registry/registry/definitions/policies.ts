@@ -89,4 +89,24 @@ export const policyNodes: ContextNode[] = [
     updatedAtISO: '2026-03-07T00:00:00.000Z',
     source: { type: 'code', ref: SOURCE_REF },
   },
+  {
+    id: 'policy:kangur-recent-features-source',
+    kind: 'policy',
+    name: 'Kangur Recent Features Source',
+    description:
+      'Canonical summary of the most recent Kangur and StudiQ feature work. ' +
+      'Use the Context Registry runtime ref runtime:kangur:recent-features to feed AI prompts.',
+    tags: ['kangur', 'studiq', 'documentation', 'recent-features', 'ai'],
+    relationships: [
+      { type: 'related_to', targetId: 'page:kangur-recent-features' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
+    version: '1.0.0',
+    updatedAtISO: '2026-03-17T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
+  },
 ];

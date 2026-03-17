@@ -214,7 +214,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           className='cursor-pointer rounded-full p-1 [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] hover:[color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
           aria-label={tutorContent.common.closeAria}
           title={tutorContent.common.closeAria}>
-          <X className='h-3.5 w-3.5' />
+          <X aria-hidden='true' className='h-3.5 w-3.5' />
         </button>
       </div>
 
@@ -295,7 +295,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           }`}
           onClick={() => setIsEraser(false)}
           title={drawingContent?.penLabel ?? 'Pióro'}>
-          <Pen className='h-3 w-3' />
+          <Pen aria-hidden='true' className='h-3 w-3' />
         </button>
         <button
           type='button'
@@ -308,7 +308,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           }`}
           onClick={() => setIsEraser(true)}
           title={drawingContent?.eraserLabel ?? 'Gumka'}>
-          <Eraser className='h-3 w-3' />
+          <Eraser aria-hidden='true' className='h-3 w-3' />
         </button>
 
         <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
@@ -320,7 +320,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           disabled={strokes.length === 0}
           onClick={handleUndo}
           title={drawingContent?.undoLabel ?? 'Cofnij'}>
-          <RotateCcw className='h-3 w-3' />
+          <RotateCcw aria-hidden='true' className='h-3 w-3' />
         </button>
         <button
           type='button'
@@ -329,7 +329,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           disabled={strokes.length === 0}
           onClick={handleClear}
           title={drawingContent?.clearLabel ?? 'Wyczyść'}>
-          <Trash2 className='h-3 w-3' />
+          <Trash2 aria-hidden='true' className='h-3 w-3' />
         </button>
       </div>
 

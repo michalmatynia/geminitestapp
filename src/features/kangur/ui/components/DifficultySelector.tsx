@@ -107,7 +107,7 @@ export default function DifficultySelector({
                 {config.label}
               </span>
               <KangurStatusChip accent={difficulty.accent} className='gap-1' size='sm'>
-                <Clock className='h-3 w-3' /> {config.timeLimit}s
+                <Clock aria-hidden='true' className='h-3 w-3' /> {config.timeLimit}s
               </KangurStatusChip>
               <span
                 className={cn(

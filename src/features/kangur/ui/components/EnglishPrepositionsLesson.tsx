@@ -11,6 +11,10 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   EnglishPrepositionsPlaceAnimation,
   EnglishPrepositionsRelationsDiagram,
   EnglishPrepositionsTimeAnimation,
@@ -412,9 +416,7 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  HUB_SECTIONS.map((section) => [section.id, section.title])
-);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 export default function EnglishPrepositionsLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -432,7 +434,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   };
 
   if (activeSection === 'game_prepositions') {
-    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
     return (
       <LessonActivityStage
         accent='rose'
@@ -448,7 +450,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   }
 
   if (activeSection === 'game_prepositions_sort') {
-    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
     return (
       <LessonActivityStage
         accent='rose'
@@ -465,7 +467,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
   }
 
   if (activeSection === 'game_prepositions_order') {
-    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
     return (
       <LessonActivityStage
         accent='rose'
@@ -485,7 +487,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection as SlideSectionId]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) =>

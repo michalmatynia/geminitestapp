@@ -20,6 +20,7 @@ import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documen
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
@@ -57,6 +58,7 @@ export function KangurLessonsRuntimeProvider({
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const { subject, setSubject } = useKangurSubjectFocus();
+  const { ageGroup } = useKangurAgeGroupFocus();
   const progress = useKangurProgressState();
   const { assignments } = useKangurAssignments({
     enabled: canAccessParentAssignments,
@@ -64,7 +66,7 @@ export function KangurLessonsRuntimeProvider({
       includeArchived: false,
     },
   });
-  const lessonsQuery = useKangurLessons({ subject, enabledOnly: true });
+  const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const lessonDocumentsQuery = useKangurLessonDocuments();
   const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const lessonComponentIds = useMemo(

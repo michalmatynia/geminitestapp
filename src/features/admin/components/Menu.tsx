@@ -20,7 +20,7 @@ import type { AdminMenuCustomNode, AdminMenuColorOption } from '@/shared/contrac
 import {
   useCreateChatbotSession,
   useChatbotSessions,
-} from '@/shared/hooks/useAdminChatbotSessionAccess';
+} from '@/features/ai/chatbot/public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeHeader } from '@/shared/ui';
 import { cn } from '@/shared/utils';

@@ -901,7 +901,7 @@ export function KangurLoginPageContent(): React.JSX.Element {
                 resendLabel={resendLabel}
                 resendDisabled={Boolean(resendCooldownLabel) || isLoading}
                 resendHelper={resendHelper}
-                onResend={handleResendVerification}
+                onResend={() => void handleResendVerification()}
               />
             ) : null}
           </div>

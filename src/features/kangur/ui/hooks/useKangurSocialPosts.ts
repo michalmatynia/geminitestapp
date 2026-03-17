@@ -3,6 +3,8 @@
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   kangurSocialPostsSchema,
+  type KangurSocialDocUpdate,
+  type KangurSocialDocUpdatesResponse,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
 import { api } from '@/shared/lib/api-client';
@@ -113,7 +115,18 @@ export type KangurSocialPostGenerationPayload = {
 
 export type KangurSocialPostGenerationResult =
   | KangurSocialPost
-  | { titlePl: string; titleEn: string; bodyPl: string; bodyEn: string; combinedBody: string };
+  | {
+      titlePl: string;
+      titleEn: string;
+      bodyPl: string;
+      bodyEn: string;
+      combinedBody: string;
+      summary?: string;
+      docReferences?: string[];
+      visualSummary?: string | null;
+      visualHighlights?: string[];
+      visualDocUpdates?: KangurSocialDocUpdate[];
+    };
 
 export const useGenerateKangurSocialPost = (): MutationResult<
   KangurSocialPostGenerationResult,
@@ -149,3 +162,39 @@ export const usePublishKangurSocialPost = (): MutationResult<KangurSocialPost, s
       description: 'Publishes Kangur social posts to LinkedIn.',
     },
   });
+
+const makeDocUpdatesMutation = (mode: 'preview' | 'apply') =>
+  createUpdateMutationV2<KangurSocialDocUpdatesResponse, string>({
+    mutationKey: [
+      ...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }),
+      'doc-updates',
+      mode,
+    ],
+    mutationFn: async (postId: string): Promise<KangurSocialDocUpdatesResponse> =>
+      await api.post<KangurSocialDocUpdatesResponse>(
+        `/api/kangur/social-posts/${postId}/doc-updates`,
+        { mode }
+      ),
+    invalidate: invalidateSocialPosts,
+    meta: {
+      source: `kangur.hooks.useKangurSocialDocUpdates.${mode}`,
+      operation: 'update',
+      resource: 'kangur.social-posts.doc-updates',
+      domain: 'kangur',
+      tags: ['kangur', 'social-posts', 'doc-updates', mode],
+      description:
+        mode === 'apply'
+          ? 'Applies Kangur social post doc updates.'
+          : 'Previews Kangur social post doc updates.',
+    },
+  });
+
+export const usePreviewKangurSocialDocUpdates = (): MutationResult<
+  KangurSocialDocUpdatesResponse,
+  string
+> => makeDocUpdatesMutation('preview');
+
+export const useApplyKangurSocialDocUpdates = (): MutationResult<
+  KangurSocialDocUpdatesResponse,
+  string
+> => makeDocUpdatesMutation('apply');

@@ -7,6 +7,10 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonChip,
@@ -43,34 +47,29 @@ const HUB_SECTIONS = [
     id: 'warmup',
     emoji: '🎯',
     title: 'Start',
-    description: 'Rozgrzewka z literami na poczatku slow.',
+    description: 'Rozgrzewka z literami na początku słów.',
   },
   {
     id: 'words',
     emoji: '📖',
-    title: 'Pierwsze slowa',
-    description: 'Czytaj i rozpoznawaj poczatkowe litery.',
+    title: 'Pierwsze słowa',
+    description: 'Czytaj i rozpoznawaj początkowe litery.',
   },
   {
     id: 'game',
     emoji: '🎲',
     title: 'Gra',
-    description: 'Wybierz litere, od ktorej zaczyna sie slowo.',
+    description: 'Wybierz literę, od której zaczyna się słowo.',
   },
   {
     id: 'summary',
     emoji: '⭐',
     title: 'Podsumowanie',
-    description: 'Utrwal najwazniejsze kroki.',
+    description: 'Utrwal najważniejsze kroki.',
   },
 ] as const;
 
-const SECTION_LABELS: Record<SectionId, string> = {
-  warmup: 'Start',
-  words: 'Pierwsze slowa',
-  game: 'Gra',
-  summary: 'Podsumowanie',
-};
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 const GAME_ROUNDS: GameRound[] = [
   {
@@ -160,7 +159,7 @@ const AlphabetFirstLetterGame = (): React.JSX.Element => {
           {round.emoji}
         </div>
         <div className='text-lg font-semibold text-slate-800'>
-          Jaka litera na poczatku slowa {round.word}?
+          Jaka litera na początku słowa {round.word}?
         </div>
         <div className='flex flex-wrap items-center justify-center gap-3'>
           {round.options.map((option) => {
@@ -184,10 +183,10 @@ const AlphabetFirstLetterGame = (): React.JSX.Element => {
           <div className='text-sm font-semibold'>
             {isCorrect
               ? 'Brawo! To dobra litera.'
-              : `Prawidlowa litera to ${round.correct}.`}
+              : `Prawidłowa litera to ${round.correct}.`}
           </div>
         ) : (
-          <div className='text-sm text-slate-500'>Kliknij literke.</div>
+          <div className='text-sm text-slate-500'>Kliknij literkę.</div>
         )}
         <KangurButton
           size='sm'
@@ -206,11 +205,11 @@ const AlphabetFirstLetterGame = (): React.JSX.Element => {
 const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   warmup: [
     {
-      title: 'Start z litera',
+      title: 'Start z literą',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Sprawdz, od jakiej litery zaczyna sie slowo.
+            Sprawdź, od jakiej litery zaczyna się słowo.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
             <div className='flex flex-wrap items-center justify-center gap-3'>
@@ -232,7 +231,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Zobacz slowo i powiedz pierwsza litere.
+            Zobacz słowo i powiedz pierwszą literę.
           </KangurLessonLead>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3'>
             <KangurLessonInset accent='amber'>
@@ -258,7 +257,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wybierz litere, od ktorej zaczyna sie slowo.
+            Wybierz literę, od której zaczyna się słowo.
           </KangurLessonLead>
           <AlphabetFirstLetterGame />
         </KangurLessonStack>
@@ -271,17 +270,17 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Umiesz znalezc pierwsza litere w slowie.
+            Umiesz znaleźć pierwszą literę w słowie.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-left' padding='sm'>
             <ul className='list-disc pl-5 text-sm text-slate-700'>
-              <li>Patrzysz na poczatek slowa.</li>
-              <li>Szukanie pierwszej litery jest latwe po cwiczeniach.</li>
+              <li>Patrzysz na początek słowa.</li>
+              <li>Szukanie pierwszej litery jest łatwe po ćwiczeniach.</li>
               <li>Graj regularnie po kilka minut.</li>
             </ul>
           </KangurLessonCallout>
           <KangurLessonCaption className='max-w-md'>
-            Mozesz wrocic do gry i pobic swoj wynik.
+            Możesz wrócić do gry i pobić swój wynik.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -317,7 +316,7 @@ export default function AlphabetWordsLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
@@ -334,7 +333,7 @@ export default function AlphabetWordsLesson(): React.JSX.Element {
   return (
     <LessonHub
       lessonEmoji='📖'
-      lessonTitle='Pierwsze slowa'
+      lessonTitle='Pierwsze słowa'
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
       sections={sectionList}

@@ -2,6 +2,8 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
+export const UI_CENTER_ROW_RELAXED_CLASSNAME = 'ui-center-row-relaxed';
+
 export function MockButton({
   children,
   disabled,

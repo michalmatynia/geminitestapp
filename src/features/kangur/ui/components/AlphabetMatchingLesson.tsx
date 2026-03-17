@@ -7,6 +7,10 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonChip,
@@ -41,20 +45,20 @@ const HUB_SECTIONS = [
   {
     id: 'pairs',
     emoji: '🔤',
-    title: 'Duze i male',
+    title: 'Duże i małe',
     description: 'Poznaj pary liter.',
   },
   {
     id: 'practice',
     emoji: '🧩',
-    title: 'Cwiczymy',
+    title: 'Ćwiczymy',
     description: 'Szukanie tej samej litery.',
   },
   {
     id: 'game',
     emoji: '🎲',
     title: 'Gra',
-    description: 'Dopasuj mala litere do duzej.',
+    description: 'Dopasuj małą literę do dużej.',
   },
   {
     id: 'summary',
@@ -64,12 +68,7 @@ const HUB_SECTIONS = [
   },
 ] as const;
 
-const SECTION_LABELS: Record<SectionId, string> = {
-  pairs: 'Duze i male',
-  practice: 'Cwiczymy',
-  game: 'Gra',
-  summary: 'Podsumowanie',
-};
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 const MATCH_ROUNDS: MatchRound[] = [
   {
@@ -153,7 +152,7 @@ const AlphabetMatchGame = (): React.JSX.Element => {
       <div className='mt-4 flex flex-col items-center gap-4 text-center'>
         <div className='text-6xl font-black text-slate-800'>{round.upper}</div>
         <div className='text-sm text-slate-600'>
-          Wybierz mala litere pasujaca do tej duzej.
+          Wybierz małą literę pasującą do tej dużej.
         </div>
         <div className='flex flex-wrap items-center justify-center gap-3'>
           {round.options.map((option) => {
@@ -176,11 +175,11 @@ const AlphabetMatchGame = (): React.JSX.Element => {
         {selected ? (
           <div className='text-sm font-semibold'>
             {isCorrect
-              ? 'Brawo! To pasujaca litera.'
-              : `Prawidlowa litera to ${round.correct}.`}
+              ? 'Brawo! To pasująca litera.'
+              : `Prawidłowa litera to ${round.correct}.`}
           </div>
         ) : (
-          <div className='text-sm text-slate-500'>Kliknij literke.</div>
+          <div className='text-sm text-slate-500'>Kliknij literkę.</div>
         )}
         <KangurButton
           size='sm'
@@ -203,7 +202,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Duze i male litery wygladaja inaczej, ale znacza to samo.
+            Duże i małe litery wyglądają inaczej, ale znaczą to samo.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
             <div className='flex flex-wrap items-center justify-center gap-3'>
@@ -213,7 +212,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                 </KangurLessonChip>
               ))}
             </div>
-            <KangurLessonCaption className='mt-2'>Powtarzaj pary na glos.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>Powtarzaj pary na głos.</KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -221,19 +220,19 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Znajdz pare',
+      title: 'Znajdź parę',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Sprawdz, ktora mala litera pasuje do duzej.
+            Sprawdź, która mała litera pasuje do dużej.
           </KangurLessonLead>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2'>
             <KangurLessonInset accent='amber'>
-              <div className='text-xl font-bold text-amber-700'>Duze: A</div>
+              <div className='text-xl font-bold text-amber-700'>Duże: A</div>
               <KangurLessonCaption className='mt-1'>Szukamy: a</KangurLessonCaption>
             </KangurLessonInset>
             <KangurLessonInset accent='sky'>
-              <div className='text-xl font-bold text-sky-700'>Duze: M</div>
+              <div className='text-xl font-bold text-sky-700'>Duże: M</div>
               <KangurLessonCaption className='mt-1'>Szukamy: m</KangurLessonCaption>
             </KangurLessonInset>
           </div>
@@ -247,7 +246,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wybieraj male litery pasujace do duzych.
+            Wybieraj małe litery pasujące do dużych.
           </KangurLessonLead>
           <AlphabetMatchGame />
         </KangurLessonStack>
@@ -256,21 +255,21 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Swietnie',
+      title: 'Świetnie',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Umiesz laczyc duze i male litery.
+            Umiesz łączyć duże i małe litery.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-left' padding='sm'>
             <ul className='list-disc pl-5 text-sm text-slate-700'>
-              <li>Litery wystepuja w parach.</li>
-              <li>Patrzysz na ksztalt litery.</li>
-              <li>Cwiczysz szybko i spokojnie.</li>
+              <li>Litery występują w parach.</li>
+              <li>Patrzysz na kształt litery.</li>
+              <li>Ćwiczysz szybko i spokojnie.</li>
             </ul>
           </KangurLessonCallout>
           <KangurLessonCaption className='max-w-md'>
-            Wroc do gry, aby utrwalic pary.
+            Wróć do gry, aby utrwalić pary.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -306,7 +305,7 @@ export default function AlphabetMatchingLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}

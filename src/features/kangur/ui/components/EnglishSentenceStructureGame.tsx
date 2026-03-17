@@ -232,6 +232,7 @@ export default function EnglishSentenceStructureGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const [selection, setSelection] = useState<string | null>(null);
   const [orderTokens, setOrderTokens] = useState<string[]>([]);
+  const [selectedOrderIndex, setSelectedOrderIndex] = useState<number | null>(null);
   const [fillValue, setFillValue] = useState('');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const sessionStartedAtRef = useRef(Date.now());
@@ -247,6 +248,7 @@ export default function EnglishSentenceStructureGame({
     setSelection(null);
     setFillValue('');
     setOrderTokens(round.kind === 'order' ? shuffle(round.tokens) : []);
+    setSelectedOrderIndex(null);
     setTimeLeft(round.kind === 'timed' ? round.timeLimitSec : null);
     autoSubmitRef.current = false;
     if (timerRef.current) {
@@ -277,6 +279,21 @@ export default function EnglishSentenceStructureGame({
     setOrderTokens((prev) =>
       reorderWithinList(prev, result.source.index, destination.index)
     );
+    setSelectedOrderIndex(null);
+  };
+
+  const moveOrderTokenByOffset = (index: number, offset: number): void => {
+    if (round.kind !== 'order' || isChecking) return;
+    let nextIndex = -1;
+    setOrderTokens((prev) => {
+      const targetIndex = Math.min(Math.max(index + offset, 0), prev.length - 1);
+      if (targetIndex === index) return prev;
+      nextIndex = targetIndex;
+      return reorderWithinList(prev, index, targetIndex);
+    });
+    if (nextIndex >= 0) {
+      setSelectedOrderIndex(nextIndex);
+    }
   };
 
   const handleCheck = (options?: { auto?: boolean }): void => {
@@ -373,6 +390,7 @@ export default function EnglishSentenceStructureGame({
     setIsChecking(false);
     setSelection(null);
     setOrderTokens([]);
+    setSelectedOrderIndex(null);
     setFillValue('');
     setTimeLeft(null);
     setXpEarned(0);
@@ -505,26 +523,53 @@ export default function EnglishSentenceStructureGame({
                         draggableId={`${round.id}-${token}-${index}`}
                         index={index}
                         isDragDisabled={isChecking}
+                        disableInteractiveElementBlocking
                       >
                         {(draggableProvided, snapshot) => {
+                          const isSelected = selectedOrderIndex === index;
                           const content = (
-                            <div
+                            <button
                               ref={draggableProvided.innerRef}
                               {...draggableProvided.draggableProps}
                               {...draggableProvided.dragHandleProps}
+                              type='button'
                               className={cn(
                                 KANGUR_CENTER_ROW_SPACED_CLASSNAME,
-                                'rounded-2xl border px-4 py-3 text-sm font-semibold transition',
+                                'rounded-2xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                                 snapshot.isDragging
                                   ? 'border-violet-300 bg-violet-50 shadow-lg'
-                                  : 'border-slate-200 bg-white/70 hover:-translate-y-[1px]'
+                                  : 'border-slate-200 bg-white/70 hover:-translate-y-[1px]',
+                                isSelected
+                                  ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white'
+                                  : ''
                               )}
+                              aria-label={`Słowo: ${token}`}
+                              aria-disabled={isChecking}
+                              aria-pressed={isSelected}
+                              title={token}
+                              onClick={() => {
+                                if (isChecking) return;
+                                setSelectedOrderIndex((current) =>
+                                  current === index ? null : index
+                                );
+                              }}
+                              onKeyDown={(event) => {
+                                if (isChecking) return;
+                                if (event.key === 'ArrowUp' && isSelected) {
+                                  event.preventDefault();
+                                  moveOrderTokenByOffset(index, -1);
+                                }
+                                if (event.key === 'ArrowDown' && isSelected) {
+                                  event.preventDefault();
+                                  moveOrderTokenByOffset(index, 1);
+                                }
+                              }}
                             >
                               <span className='text-xs uppercase tracking-wide text-slate-400'>
                                 #{index + 1}
                               </span>
                               <span>{token}</span>
-                            </div>
+                            </button>
                           );
 
                           if (snapshot.isDragging && dragPortal) {

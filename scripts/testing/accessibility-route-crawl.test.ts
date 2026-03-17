@@ -57,6 +57,8 @@ describe('normalizeAccessibilityRouteEntries', () => {
         audience: 'admin',
         readySelector: '#app-content h1',
         contextSelector: 'body',
+        navigationWaitUntil: null,
+        navigationTimeoutMs: null,
       },
     ]);
   });

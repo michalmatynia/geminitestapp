@@ -27,6 +27,24 @@ type KangurModeSetupRecommendation = {
   title: string;
 };
 
+export const hasMatchingTrainingSelection = (
+  selection: KangurTrainingSelection,
+  suggestedSelection: KangurTrainingSelection | null
+): boolean => {
+  if (!suggestedSelection) {
+    return false;
+  }
+
+  const selectedCategories = [...selection.categories].sort();
+  const suggestedCategories = [...suggestedSelection.categories].sort();
+  return (
+    selection.count === suggestedSelection.count &&
+    selection.difficulty === suggestedSelection.difficulty &&
+    selectedCategories.length === suggestedCategories.length &&
+    selectedCategories.every((category, index) => category === suggestedCategories[index])
+  );
+};
+
 const TRAINING_CATEGORY_SET = new Set<KangurOperation>([
   'addition',
   'subtraction',

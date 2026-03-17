@@ -6,7 +6,7 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
 
-import { useDocumentState } from '../context/hooks/useDocument';
+import { useDocumentState } from '../context';
 import { promptExploderSafeJsonStringify } from '../helpers/formatting';
 import {
   createLogicalCondition,

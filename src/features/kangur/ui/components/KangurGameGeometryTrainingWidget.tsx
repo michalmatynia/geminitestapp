@@ -1,26 +1,17 @@
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { KangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
 
 export function KangurGameGeometryTrainingWidget(): React.JSX.Element | null {
-  const { handleHome, screen, setScreen } = useKangurGameRuntime();
-
-  if (screen !== 'geometry_quiz') {
-    return null;
-  }
-
   return (
-    <LessonActivityStage
+    <KangurGameQuizStage
       accent='violet'
-      backButtonLabel='Wróć do poprzedniej strony'
       description='Przejdź przez szybkie zadania z rozpoznawania i rysowania figur.'
       icon='🔷'
-      onBack={() => setScreen('operation')}
-      shellClassName='items-center'
+      screen='geometry_quiz'
       shellTestId='kangur-geometry-training-top-section'
       title='Ćwiczenia z Figurami'
     >
-      <GeometryDrawingGame onFinish={handleHome} />
-    </LessonActivityStage>
+      {({ handleHome }) => <GeometryDrawingGame onFinish={handleHome} />}
+    </KangurGameQuizStage>
   );
 }

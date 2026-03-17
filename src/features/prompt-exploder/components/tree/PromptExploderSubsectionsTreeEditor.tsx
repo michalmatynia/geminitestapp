@@ -26,7 +26,7 @@ import {
   PromptExploderTreeNodeRuntimeProvider,
   usePromptExploderTreeNodeRuntimeContext,
 } from './PromptExploderSegmentsTreeEditor';
-import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
+import { useDocumentActions, useDocumentState } from '../../context';
 import {
   promptExploderAddBlankListItem,
   promptExploderCreateSubsection,

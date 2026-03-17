@@ -16,7 +16,7 @@ type KangurConfirmModalProps = {
 
 export function KangurConfirmModal({
   cancelText = 'Anuluj',
-  confirmText = 'Potwierdz',
+  confirmText = 'Potwierdź',
   isOpen,
   message,
   onClose,

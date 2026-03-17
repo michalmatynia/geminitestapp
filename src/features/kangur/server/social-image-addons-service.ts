@@ -219,6 +219,8 @@ export async function createKangurSocialImageAddonFromPlaywright(
       sourceUrl,
       sourceLabel: 'Playwright capture',
       imageAsset,
+      presetId: null,
+      previousAddonId: null,
       playwrightRunId: run.runId,
       playwrightArtifact: artifact.path,
       createdBy: input.createdBy ?? null,

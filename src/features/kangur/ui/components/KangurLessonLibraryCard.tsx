@@ -37,7 +37,7 @@ export function KangurLessonLibraryCardAside({
     <div
       className={cn(
         KANGUR_WRAP_START_ROW_CLASSNAME,
-        'max-[420px]:flex-col sm:flex-col sm:items-end',
+        'max-[480px]:flex-col sm:flex-col sm:items-end',
         className
       )}
     >
@@ -185,7 +185,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
           />
         }
         asideClassName='w-full self-start sm:ml-auto sm:w-auto'
-        className='w-full max-[420px]:flex-col'
+        className='w-full max-[480px]:flex-col'
         contentClassName={contentClassName}
         description={lesson.description}
         footer={

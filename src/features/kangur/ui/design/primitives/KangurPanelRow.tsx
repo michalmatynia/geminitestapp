@@ -1,15 +1,14 @@
-import * as React from 'react';
+import type * as React from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_PANEL_ROW_CLASSNAME } from '../tokens';
-
-export type KangurPanelRowProps = React.HTMLAttributes<HTMLDivElement>;
+import type { KangurPanelProps } from './KangurPanelTypes';
 
 export function KangurPanelRow({
   className,
   ...props
-}: KangurPanelRowProps): React.JSX.Element {
+}: KangurPanelProps): React.JSX.Element {
   return (
     <div
       className={cn('min-w-0', KANGUR_PANEL_ROW_CLASSNAME, className)}

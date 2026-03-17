@@ -3,9 +3,11 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromptExploderProvider } from '@/features/prompt-exploder/context/PromptExploderProvider';
-import { useDocumentState } from '@/features/prompt-exploder/context/hooks/useDocument';
-import { useLibraryState } from '@/features/prompt-exploder/context/hooks/useLibrary';
-import { useSettingsState } from '@/features/prompt-exploder/context/hooks/useSettings';
+import {
+  useDocumentState,
+  useLibraryState,
+  useSettingsState,
+} from '@/features/prompt-exploder/context';
 import {
   buildPromptExploderSegmentationRecord,
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,

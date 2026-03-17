@@ -15,20 +15,19 @@ import { KangurLearnerProfileQuestSummaryWidget } from '@/features/kangur/ui/com
 import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget';
 import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import {
   KangurLearnerProfileRuntimeBoundary,
-  getKangurLearnerProfileDisplayName,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurButton,
-  KangurPageContainer,
   KangurPageShell,
+  KangurPageContainer,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -36,7 +35,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
-import { cn } from '@/features/kangur/shared/utils';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 
 type LearnerProfileTabId = 'overview' | 'ai-mood';
 
@@ -51,372 +50,151 @@ const PROFILE_TABS: Array<
   },
   {
     id: 'ai-mood',
-    label: 'Nastrój Tutor-AI',
-    mobileLabel: 'Nastrój',
-    docId: 'learner_profile_tab_mood',
+    label: 'Relacja z AI Tutorem',
+    mobileLabel: 'AI Tutor',
+    docId: 'learner_profile_tab_ai_mood',
   },
 ];
 
-const getLearnerProfileTabIds = (
-  tabId: LearnerProfileTabId
-): { tabId: string; panelId: string } => ({
-  tabId: `learner-profile-tab-${tabId}`,
-  panelId: `learner-profile-panel-${tabId}`,
-});
+const PROFILE_MAIN_ID = 'kangur-learner-profile-main';
 
 function LearnerProfileContent(): React.JSX.Element {
-  const { basePath } = useKangurRouting();
-  const { user, logout } = useKangurAuth();
-  const { openLoginModal } = useKangurLoginModal();
-  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
-  const { isLoadingScores, progress, user: profileUser } = useKangurLearnerProfileRuntime();
+  const { user, isLoadingScores, scoresError } = useKangurLearnerProfileRuntime();
+  const auth = useKangurAuth();
+  const isAuthenticated = auth.isAuthenticated ?? Boolean(auth.user);
+  const { push: navigateTo } = useKangurRouteNavigator();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
-  const heroAnchorRef = useRef<HTMLDivElement | null>(null);
-  const questSummaryAnchorRef = useRef<HTMLDivElement | null>(null);
-  const moodAnchorRef = useRef<HTMLDivElement | null>(null);
-  const levelProgressAnchorRef = useRef<HTMLDivElement | null>(null);
-  const overviewAnchorRef = useRef<HTMLDivElement | null>(null);
-  const recommendationsAnchorRef = useRef<HTMLDivElement | null>(null);
-  const assignmentsAnchorRef = useRef<HTMLDivElement | null>(null);
-  const masteryAnchorRef = useRef<HTMLDivElement | null>(null);
-  const performanceAnchorRef = useRef<HTMLDivElement | null>(null);
-  const sessionsAnchorRef = useRef<HTMLDivElement | null>(null);
+
   const [activeTab, setActiveTab] = useState<LearnerProfileTabId>('overview');
-  const activeLearnerId = profileUser?.activeLearner?.id?.trim() || null;
-  const profileContentId = activeLearnerId ? `profile:${activeLearnerId}` : 'profile:guest';
-  const profileTitle = getKangurLearnerProfileDisplayName(profileUser);
-  const isOverviewTab = activeTab === 'overview';
-  const isMoodTab = activeTab === 'ai-mood';
-  const hasMeaningfulProgress =
-    progress.totalXp > 0 ||
-    progress.gamesPlayed > 0 ||
-    progress.lessonsCompleted > 0 ||
-    (progress.dailyQuestsCompleted ?? 0) > 0;
-  const shouldRenderHero = !profileUser || hasMeaningfulProgress;
-  const containerStyle = shouldRenderHero ? undefined : { paddingTop: 0 };
+  const tutorAnchorRef = useRef<HTMLDivElement>(null);
 
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const focusTabAt = useCallback((index: number): void => {
-    tabRefs.current[index]?.focus();
-  }, []);
-  const handleTabChange = useCallback((tabId: LearnerProfileTabId): void => {
-    setActiveTab(tabId);
-  }, []);
-  const handleTabKeyDown = useCallback(
-    (index: number, event: React.KeyboardEvent<HTMLButtonElement>): void => {
-      if (PROFILE_TABS.length === 0) {
-        return;
-      }
-
-      let nextIndex = index;
-      switch (event.key) {
-        case 'ArrowRight':
-        case 'ArrowDown':
-          nextIndex = (index + 1) % PROFILE_TABS.length;
-          break;
-        case 'ArrowLeft':
-        case 'ArrowUp':
-          nextIndex = (index - 1 + PROFILE_TABS.length) % PROFILE_TABS.length;
-          break;
-        case 'Home':
-          nextIndex = 0;
-          break;
-        case 'End':
-          nextIndex = PROFILE_TABS.length - 1;
-          break;
-        default:
-          return;
-      }
-
-      event.preventDefault();
-      const nextTab = PROFILE_TABS[nextIndex];
-      if (!nextTab) {
-        return;
-      }
-      handleTabChange(nextTab.id);
-      requestAnimationFrame(() => focusTabAt(nextIndex));
-    },
-    [focusTabAt, handleTabChange]
-  );
-  const handlePointerTabMouseDown = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>): void => {
-      event.preventDefault();
-    },
-    []
-  );
-
-  useKangurRoutePageReady({
-    pageKey: 'LearnerProfile',
-    ready: !isLoadingScores,
-  });
-  useKangurAiTutorSessionSync({
-    learnerId: activeLearnerId,
-    sessionContext: {
-      surface: 'profile',
-      contentId: profileContentId,
-      title: profileTitle,
-      description: 'Profil ucznia z postępem, rekomendacjami i historią sesji.',
-    },
-  });
   useKangurTutorAnchor({
-    id: 'kangur-profile-hero',
-    kind: 'hero',
-    ref: heroAnchorRef,
+    id: 'learner-profile-root',
+    kind: 'screen',
+    ref: tutorAnchorRef,
     surface: 'profile',
     enabled: true,
-    priority: 90,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Hero profilu ucznia',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-quest-summary',
-    kind: 'summary',
-    ref: questSummaryAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 86,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Misja dnia i ścieżki postępu',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-ai-tutor-mood',
-    kind: 'screen',
-    ref: moodAnchorRef,
-    surface: 'profile',
-    enabled: isMoodTab,
-    priority: 84,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Nastrój i wskazówki Tutor-AI',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-level-progress',
-    kind: 'progress',
-    ref: levelProgressAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 82,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Postęp poziomu ucznia',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-overview',
-    kind: 'summary',
-    ref: overviewAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 80,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Przegląd wyników ucznia',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-recommendations',
-    kind: 'screen',
-    ref: recommendationsAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 78,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Rekomendacje dla ucznia',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-assignments',
-    kind: 'assignment',
-    ref: assignmentsAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 76,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Sugestie od rodzica',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-mastery',
-    kind: 'screen',
-    ref: masteryAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 74,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Opanowanie materiału',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-performance',
-    kind: 'summary',
-    ref: performanceAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 72,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Skuteczność ucznia',
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-profile-sessions',
-    kind: 'screen',
-    ref: sessionsAnchorRef,
-    surface: 'profile',
-    enabled: isOverviewTab,
-    priority: 70,
-    metadata: {
-      contentId: profileContentId,
-      label: 'Historia sesji ucznia',
-    },
   });
 
-  const navigation = useMemo(
+  useKangurAiTutorSessionSync({
+    learnerId: user?.activeLearner?.id ?? null,
+    sessionContext: { surface: 'profile' },
+  });
+
+  useKangurRoutePageReady({ pageKey: 'LearnerProfile', ready: !isLoadingScores });
+
+  const handleTabChange = useCallback((tabId: LearnerProfileTabId) => {
+    setActiveTab(tabId);
+  }, []);
+
+  if (isLoadingScores) {
+    return (
+      <div className='flex h-[60vh] items-center justify-center'>
+        <div className='h-8 w-8 animate-spin rounded-full border-4 border-orange-400 border-t-transparent' />
+      </div>
+    );
+  }
+
+  if (scoresError || (isAuthenticated && !user)) {
+    return (
+      <div className='flex h-[60vh] flex-col items-center justify-center gap-4 text-center'>
+        <p className='text-orange-200/60'>Nie udało się załadować profilu.</p>
+        <KangurButton variant='surface' onClick={() => navigateTo('/kangur')}>
+          Wróć do strony głównej
+        </KangurButton>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={tutorAnchorRef}
+      id='learner-profile-root'
+      className={`w-full ${KANGUR_PANEL_GAP_CLASSNAME} flex flex-col`}
+    >
+      <KangurLearnerProfileHeroWidget />
+      <h2 className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
+        Statystyki ucznia
+      </h2>
+
+      <div className='flex flex-col gap-6 lg:flex-row'>
+        <div className='flex flex-1 flex-col gap-6'>
+          <div
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} self-start`}
+            role='tablist'
+            aria-label='Profil ucznia'
+          >
+            {PROFILE_TABS.map((tab) => (
+              <KangurButton
+                key={tab.id}
+                size='sm'
+                variant={activeTab === tab.id ? 'segmentActive' : 'segment'}
+                onClick={() => handleTabChange(tab.id)}
+                data-doc-id={tab.docId}
+                role='tab'
+                aria-selected={activeTab === tab.id}
+                tabIndex={activeTab === tab.id ? 0 : -1}
+              >
+                <span className='hidden sm:inline'>{tab.label}</span>
+                <span className='sm:hidden'>{tab.mobileLabel}</span>
+              </KangurButton>
+            ))}
+          </div>
+
+          {activeTab === 'overview' ? (
+            <>
+              <div className='grid gap-6 sm:grid-cols-2'>
+                <KangurLearnerProfileLevelProgressWidget />
+                <KangurLearnerProfileQuestSummaryWidget />
+              </div>
+              <KangurLearnerProfileOverviewWidget />
+              <KangurLearnerProfileRecommendationsWidget />
+              <KangurLearnerProfileMasteryWidget />
+            </>
+          ) : (
+            <KangurLearnerProfileAiTutorMoodWidget />
+          )}
+        </div>
+
+        <div className='flex w-full flex-col gap-6 lg:w-[380px] xl:w-[420px]'>
+          <KangurLearnerProfileAssignmentsWidget />
+          <KangurLearnerProfilePerformanceWidget />
+          <KangurLearnerProfileSessionsWidget />
+        </div>
+      </div>
+
+      <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='learner-profile-root' />
+    </div>
+  );
+}
+
+export default function LearnerProfilePage(): React.JSX.Element {
+  const { basePath } = useKangurRouting();
+  const { user, isAuthenticated, logout } = useKangurAuth();
+  const { openLoginModal } = useKangurLoginModal();
+  const resolvedIsAuthenticated = isAuthenticated ?? Boolean(user);
+
+  const navigation = useMemo<KangurPrimaryNavigationProps>(
     () => ({
       basePath,
       canManageLearners: Boolean(user?.canManageLearners),
       currentPage: 'LearnerProfile' as const,
-      guestPlayerName: user ? undefined : guestPlayerName,
-      isAuthenticated: Boolean(user),
+      isAuthenticated: resolvedIsAuthenticated,
       onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
-      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: openLoginModal,
       onLogout: () => logout(false),
     }),
-    [basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user]
+    [basePath, logout, openLoginModal, resolvedIsAuthenticated, user]
   );
 
   return (
-    <KangurPageShell
-      tone='profile'
-      id='kangur-learner-profile-page'
-      skipLinkTargetId='kangur-learner-profile-main'
-    >
-      <KangurDocsTooltipEnhancer
-        enabled={docsTooltipsEnabled}
-        rootId='kangur-learner-profile-page'
-      />
-      <KangurTopNavigationController navigation={navigation} />
-
-      <KangurPageContainer
-        as='section'
-        data-kangur-route-main='true'
-        id='kangur-learner-profile-main'
-        className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-        style={containerStyle}
-      >
-        <h2 className='sr-only'>Statystyki ucznia</h2>
-        {shouldRenderHero ? (
-          <div ref={heroAnchorRef}>
-            <KangurLearnerProfileHeroWidget />
-          </div>
-        ) : null}
-        <div
-          className={cn(
-            KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-            'grid grid-cols-2 max-[420px]:grid-cols-1 sm:w-auto sm:grid-cols-none sm:flex'
-          )}
-          role='tablist'
-          aria-orientation='horizontal'
-        >
-          {PROFILE_TABS.map((tab, index) => {
-            const isActive = activeTab === tab.id;
-            const { tabId, panelId } = getLearnerProfileTabIds(tab.id);
-            return (
-              <KangurButton
-                key={tab.id}
-                id={tabId}
-                onMouseDown={handlePointerTabMouseDown}
-                onKeyDown={(event) => handleTabKeyDown(index, event)}
-                onClick={() => {
-                  if (isActive) {
-                    return;
-                  }
-                  handleTabChange(tab.id);
-                }}
-                ref={(node) => {
-                  tabRefs.current[index] = node;
-                }}
-                role='tab'
-                aria-selected={isActive}
-                aria-controls={panelId}
-                tabIndex={isActive ? 0 : -1}
-                className='min-w-0 flex-1 justify-center px-2 text-center sm:px-4'
-                size='sm'
-                type='button'
-                variant={isActive ? 'segmentActive' : 'segment'}
-                data-doc-id={tab.docId}
-              >
-                <span className='text-[11px] font-semibold leading-tight sm:text-sm'>
-                  <span className='sm:hidden'>{tab.mobileLabel}</span>
-                  <span className='hidden sm:inline'>{tab.label}</span>
-                </span>
-              </KangurButton>
-            );
-          })}
-        </div>
-        {isOverviewTab ? (
-          <div
-            id={getLearnerProfileTabIds('overview').panelId}
-            role='tabpanel'
-            aria-labelledby={getLearnerProfileTabIds('overview').tabId}
-            className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-          >
-            <div ref={questSummaryAnchorRef}>
-              <KangurLearnerProfileQuestSummaryWidget />
-            </div>
-            <div ref={levelProgressAnchorRef}>
-              <KangurLearnerProfileLevelProgressWidget />
-            </div>
-            <div ref={overviewAnchorRef}>
-              <KangurLearnerProfileOverviewWidget />
-            </div>
-            <div ref={recommendationsAnchorRef}>
-              <KangurLearnerProfileRecommendationsWidget />
-            </div>
-            <div ref={assignmentsAnchorRef}>
-              <KangurLearnerProfileAssignmentsWidget />
-            </div>
-            <div ref={masteryAnchorRef}>
-              <KangurLearnerProfileMasteryWidget />
-            </div>
-            <div ref={performanceAnchorRef}>
-              <KangurLearnerProfilePerformanceWidget />
-            </div>
-            <div ref={sessionsAnchorRef}>
-              <KangurLearnerProfileSessionsWidget />
-            </div>
-          </div>
-        ) : null}
-        {isMoodTab ? (
-          <div
-            id={getLearnerProfileTabIds('ai-mood').panelId}
-            role='tabpanel'
-            aria-labelledby={getLearnerProfileTabIds('ai-mood').tabId}
-            className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-          >
-            <div ref={moodAnchorRef}>
-              <KangurLearnerProfileAiTutorMoodWidget />
-            </div>
-          </div>
-        ) : null}
-      </KangurPageContainer>
-    </KangurPageShell>
-  );
-}
-
-export default function LearnerProfile(): React.JSX.Element {
-  return (
-    <KangurLearnerProfileRuntimeBoundary enabled>
-      <LearnerProfileContent />
+    <KangurLearnerProfileRuntimeBoundary enabled={true}>
+      <KangurPageShell tone='profile' skipLinkTargetId={PROFILE_MAIN_ID}>
+        <KangurTopNavigationController navigation={navigation} />
+        <KangurPageContainer id={PROFILE_MAIN_ID}>
+          <LearnerProfileContent />
+        </KangurPageContainer>
+      </KangurPageShell>
     </KangurLearnerProfileRuntimeBoundary>
   );
 }

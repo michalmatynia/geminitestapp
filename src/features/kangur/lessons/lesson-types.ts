@@ -16,18 +16,15 @@ export type KangurLessonTemplate = {
   activeBg: string;
 };
 
-export type KangurSubjectDefinition = {
-  id: KangurLessonSubject;
+export type KangurCatalogDefinition<TId extends string> = {
+  id: TId;
   label: string;
   shortLabel: string;
   sortOrder: number;
   default?: boolean;
 };
 
-export type KangurAgeGroupDefinition = {
-  id: KangurLessonAgeGroup;
-  label: string;
-  shortLabel: string;
-  sortOrder: number;
-  default?: boolean;
+export type KangurSubjectDefinition = KangurCatalogDefinition<KangurLessonSubject> & {
+  ageGroups?: readonly KangurLessonAgeGroup[];
 };
+export type KangurAgeGroupDefinition = KangurCatalogDefinition<KangurLessonAgeGroup>;

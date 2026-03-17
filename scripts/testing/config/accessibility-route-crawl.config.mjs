@@ -49,9 +49,33 @@ export const accessibilityRouteCrawlRoutes = [
     audience: 'public',
   },
   {
+    id: 'kangur-tests',
+    name: 'Kangur Tests',
+    route: '/kangur/tests',
+    audience: 'public',
+  },
+  {
     id: 'kangur-parent-dashboard',
     name: 'Kangur Parent Dashboard',
     route: '/kangur/parent-dashboard',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-duels',
+    name: 'Kangur Duels',
+    route: '/kangur/duels',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-social-updates',
+    name: 'Kangur Social Updates',
+    route: '/kangur/social-updates',
+    audience: 'public',
+  },
+  {
+    id: 'kangur-competition',
+    name: 'Kangur Competition',
+    route: '/kangur/competition',
     audience: 'public',
   },
   {

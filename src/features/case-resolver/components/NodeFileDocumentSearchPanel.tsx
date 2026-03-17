@@ -11,7 +11,7 @@ import {
   type AiNode,
   type CaseResolverFile,
 } from '@/shared/contracts/case-resolver';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { useFolderTreeProfile } from '@/features/foldertree';
 import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 

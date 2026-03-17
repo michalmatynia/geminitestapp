@@ -2,7 +2,16 @@
 
 import React, { createContext, useMemo } from 'react';
 
-import type { PromptExploderSegmentationLibraryState } from '@/shared/contracts/prompt-exploder';
+import type { PromptEngineSettings, PromptValidationRule } from '@/shared/contracts/prompt-engine';
+import type {
+  PromptExploderParserTuningRuleDraft,
+  PromptExploderRuntimeRuleProfile,
+  PromptExploderRuntimeValidationScope,
+  PromptExploderSegmentationLibraryState,
+  PromptExploderSegmentationReturnTarget,
+  PromptExploderValidationRuleStack,
+} from '@/shared/contracts/prompt-exploder';
+import type { ValidatorPatternList } from '@/shared/contracts/validator';
 import {
   useSettingsMap,
   useUpdateSetting,
@@ -14,31 +23,126 @@ import {
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
   sortPromptExploderSegmentationRecordsByCapturedAt,
 } from '../segmentation-library';
-import {
-  SettingsActionsContext,
-  type PromptExploderSettingsActions,
-} from './settings/SettingsActionsContext';
-import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';
-import {
-  SettingsDraftsContext,
-  type SettingsDraftsState,
-  type LearningDraft,
-} from './settings/SettingsDraftsContext';
-import {
-  SettingsRuntimeContext,
-  type SettingsRuntimeState,
-} from './settings/SettingsRuntimeContext';
-import {
-  SettingsSnapshotsContext,
-  type SettingsSnapshotsState,
-} from './settings/SettingsSnapshotsContext';
+import type {
+  PromptExploderLearnedTemplate,
+  PromptExploderPatternSnapshot,
+} from '../types';
+import { parsePromptExploderSettings, type PromptExploderSettingsValidationError } from '../settings';
 import { useSettingsActionsImpl } from './settings/useSettingsActionsImpl';
 import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 
 import type { PromptValidationOrchestrationResult } from '../prompt-validation-orchestrator';
 
-export type { LearningDraft, PromptExploderSettingsActions };
-export { SettingsActionsContext };
+export interface LearningDraft {
+  runtimeRuleProfile: PromptExploderRuntimeRuleProfile;
+  runtimeValidationRuleStack: PromptExploderValidationRuleStack;
+  enabled: boolean;
+  autoActivate: boolean;
+  similarityThreshold: number;
+  templateMergeThreshold: number;
+  benchmarkSuggestionUpsertTemplates: boolean;
+  minApprovals: number;
+  minApprovalsForMatching: number;
+  maxTemplates: number;
+  autoActivateLearnedTemplates: boolean;
+}
+
+export interface PromptExploderSettingsActions {
+  setLearningDraft: React.Dispatch<React.SetStateAction<LearningDraft>>;
+  setParserTuningDrafts: React.Dispatch<
+    React.SetStateAction<PromptExploderParserTuningRuleDraft[]>
+  >;
+  setIsParserTuningOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSnapshotDraftName: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedSnapshotId: React.Dispatch<React.SetStateAction<string>>;
+  setSessionLearnedRules: React.Dispatch<React.SetStateAction<PromptValidationRule[]>>;
+  setSessionLearnedTemplates: React.Dispatch<React.SetStateAction<PromptExploderLearnedTemplate[]>>;
+  patchParserTuningDraft: (
+    ruleId: PromptExploderParserTuningRuleDraft['id'],
+    patch: Partial<PromptExploderParserTuningRuleDraft>
+  ) => void;
+  handleInstallPatternPack: () => Promise<void>;
+  handleSaveLearningSettings: () => Promise<void>;
+  handleSaveParserTuningRules: () => Promise<void>;
+  handleResetParserTuningDrafts: () => void;
+  handleCapturePatternSnapshot: () => Promise<void>;
+  handleRestorePatternSnapshot: () => Promise<void>;
+  handleDeletePatternSnapshot: () => Promise<void>;
+  handleTemplateStateChange: (
+    templateId: string,
+    nextState: PromptExploderLearnedTemplate['state']
+  ) => Promise<void>;
+  handleDeleteTemplate: (templateId: string) => Promise<void>;
+  handleRefresh: () => Promise<void>;
+  updateSetting: ReturnType<typeof useUpdateSetting>;
+  updateSettingsBulk: ReturnType<typeof useUpdateSettingsBulk>;
+}
+
+export interface SettingsCoreState {
+  promptSettings: PromptEngineSettings;
+  promptExploderSettings: ReturnType<typeof parsePromptExploderSettings>;
+  promptExploderSettingsValidationError: PromptExploderSettingsValidationError | null;
+  validatorPatternLists: ValidatorPatternList[];
+  incomingBridgeSource: string | null;
+  activeValidationScope: PromptExploderRuntimeValidationScope;
+  activeValidationRuleStack: PromptExploderValidationRuleStack;
+  segmentationLibrary: PromptExploderSegmentationLibraryState;
+  isInitialLoading: boolean;
+  isRefreshing: boolean;
+}
+
+export interface SettingsRuntimeState {
+  activeValidationScope: PromptExploderRuntimeValidationScope;
+  activeValidationRuleStack: PromptExploderValidationRuleStack;
+  scopedRules: PromptValidationRule[];
+  effectiveRules: PromptValidationRule[];
+  runtimeValidationRules: PromptValidationRule[];
+  effectiveLearnedTemplates: PromptExploderLearnedTemplate[];
+  runtimeLearnedTemplates: PromptExploderLearnedTemplate[];
+  runtimeGuardrailIssue: string | null;
+  returnTarget: PromptExploderSegmentationReturnTarget;
+  applyToDrafts: boolean;
+}
+
+export interface SettingsDraftsState {
+  learningDraft: LearningDraft;
+  setLearningDraft: React.Dispatch<React.SetStateAction<LearningDraft>>;
+  parserTuningDrafts: PromptExploderParserTuningRuleDraft[];
+  setParserTuningDrafts: React.Dispatch<React.SetStateAction<PromptExploderParserTuningRuleDraft[]>>;
+  hasUnsavedLearningDraft: boolean;
+  hasUnsavedParserTuningDrafts: boolean;
+  saveError: string | null;
+  setSaveError: React.Dispatch<React.SetStateAction<string | null>>;
+  isParserTuningOpen: boolean;
+  setIsParserTuningOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  sessionLearnedRules: PromptValidationRule[];
+  sessionLearnedTemplates: PromptExploderLearnedTemplate[];
+}
+
+export interface SettingsSnapshotsState {
+  snapshotDraftName: string;
+  selectedSnapshotId: string;
+  availableSnapshots: PromptExploderPatternSnapshot[];
+  selectedSnapshot: PromptExploderPatternSnapshot | null;
+}
+
+export const SettingsActionsContext = createContext<PromptExploderSettingsActions | null>(null);
+const SettingsCoreContext = createContext<SettingsCoreState | null>(null);
+const SettingsDraftsContext = createContext<SettingsDraftsState | null>(null);
+const SettingsRuntimeContext = createContext<SettingsRuntimeState | null>(null);
+const SettingsSnapshotsContext = createContext<SettingsSnapshotsState | null>(null);
+
+export const useSettingsState = (): PromptExploderSettingsState => {
+  const ctx = React.useContext(SettingsStateContext);
+  if (!ctx) throw new Error('useSettingsState must be used within SettingsProvider');
+  return ctx;
+};
+
+export const useSettingsActions = (): PromptExploderSettingsActions => {
+  const ctx = React.useContext(SettingsActionsContext);
+  if (!ctx) throw new Error('useSettingsActions must be used within SettingsProvider');
+  return ctx;
+};
 
 export interface PromptExploderSettingsState
   extends SettingsCoreState, SettingsRuntimeState, SettingsDraftsState, SettingsSnapshotsState {

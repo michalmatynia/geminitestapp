@@ -22,6 +22,10 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   addXp,
   createLessonCompletionReward,
   loadProgress,
@@ -199,9 +203,7 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  HUB_SECTIONS.map((section) => [section.id, section.title])
-);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 export default function GeometryPerimeterLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -226,7 +228,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
         icon='✍️'
         maxWidthClassName='max-w-sm'
         onBack={() => setActiveSection(null)}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         shellTestId='geometry-perimeter-game-shell'
         title='Gra: Rysuj obwód'
       >
@@ -242,7 +244,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection as SlideSectionId]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}

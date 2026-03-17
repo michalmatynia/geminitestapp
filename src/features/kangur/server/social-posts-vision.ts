@@ -7,6 +7,7 @@ import type { ChatCompletionContentPart } from 'openai/resources/chat/completion
 
 import { getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/server';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import { findKangurSocialImageAddonsByIds } from './social-image-addons-repository';
 import {
   kangurSocialDocUpdateSchema,
   type KangurSocialDocUpdate,
@@ -33,6 +34,34 @@ type VisualAnalysisInput = {
   notes?: string;
   modelId?: string;
   imageAddons: KangurSocialImageAddon[];
+};
+
+type BeforeAfterPair = {
+  addon: KangurSocialImageAddon;
+  previousAddon: KangurSocialImageAddon | null;
+};
+
+const resolvePreviousAddons = async (
+  addons: KangurSocialImageAddon[]
+): Promise<Map<string, KangurSocialImageAddon>> => {
+  const previousIds = addons
+    .map((addon) => addon.previousAddonId?.trim())
+    .filter((id): id is string => Boolean(id));
+  if (previousIds.length === 0) return new Map();
+
+  const uniqueIds = [...new Set(previousIds)];
+  const previousAddons = await findKangurSocialImageAddonsByIds(uniqueIds);
+  return new Map(previousAddons.map((addon) => [addon.id, addon]));
+};
+
+const buildBeforeAfterPairs = async (
+  addons: KangurSocialImageAddon[]
+): Promise<BeforeAfterPair[]> => {
+  const previousMap = await resolvePreviousAddons(addons);
+  return addons.map((addon) => ({
+    addon,
+    previousAddon: addon.previousAddonId ? previousMap.get(addon.previousAddonId) ?? null : null,
+  }));
 };
 
 const OPENAI_MAX_IMAGES = 10;
@@ -79,33 +108,67 @@ const readImageDataUrl = async (
   }
 };
 
+const appendImagePart = (
+  parts: ChatCompletionContentPart[],
+  loaded: { dataUrl: string; size: number },
+  label: string
+): void => {
+  parts.push({ type: 'text', text: label });
+  parts.push({
+    type: 'image_url',
+    image_url: { url: loaded.dataUrl },
+  });
+};
+
 const buildImageParts = async (
-  imageAddons: KangurSocialImageAddon[],
+  pairs: BeforeAfterPair[],
   openAiGuards: boolean
 ): Promise<ChatCompletionContentPart[]> => {
-  const sources = imageAddons
-    .map((addon) => resolveAddonSource(addon))
-    .filter((source): source is string => Boolean(source));
-  if (sources.length === 0) return [];
-
-  const limitedSources = openAiGuards ? sources.slice(0, OPENAI_MAX_IMAGES) : sources;
   const parts: ChatCompletionContentPart[] = [];
   let totalBytes = 0;
+  let imageCount = 0;
 
-  for (const source of limitedSources) {
+  for (const { addon, previousAddon } of pairs) {
+    if (openAiGuards && imageCount >= OPENAI_MAX_IMAGES) break;
+
+    const addonLabel = addon.title?.trim() || addon.presetId || 'Screenshot';
+
+    // Load "before" image if previous addon exists
+    if (previousAddon) {
+      const prevSource = resolveAddonSource(previousAddon);
+      if (prevSource) {
+        const prevLoaded = await readImageDataUrl(prevSource);
+        if (prevLoaded) {
+          if (openAiGuards && prevLoaded.size > OPENAI_MAX_IMAGE_BASE64_BYTES) {
+            // skip oversized before image
+          } else {
+            if (openAiGuards) {
+              totalBytes += prevLoaded.dataUrl.length;
+              if (totalBytes > OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES) break;
+            }
+            appendImagePart(parts, prevLoaded, `[BEFORE] ${addonLabel}:`);
+            imageCount += 1;
+          }
+        }
+      }
+    }
+
+    if (openAiGuards && imageCount >= OPENAI_MAX_IMAGES) break;
+
+    // Load "after" (current) image
+    const source = resolveAddonSource(addon);
+    if (!source) continue;
     const loaded = await readImageDataUrl(source);
     if (!loaded) continue;
-    if (openAiGuards && loaded.size > OPENAI_MAX_IMAGE_BASE64_BYTES) {
-      continue;
-    }
+    if (openAiGuards && loaded.size > OPENAI_MAX_IMAGE_BASE64_BYTES) continue;
     if (openAiGuards) {
       totalBytes += loaded.dataUrl.length;
       if (totalBytes > OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES) break;
     }
-    parts.push({
-      type: 'image_url',
-      image_url: { url: loaded.dataUrl },
-    });
+
+    const imageLabel = previousAddon ? `[AFTER] ${addonLabel}:` : `${addonLabel}:`;
+    appendImagePart(parts, loaded, imageLabel);
+    imageCount += 1;
   }
 
   return parts;
@@ -129,7 +192,7 @@ const parseDocUpdates = (value: unknown): KangurSocialDocUpdate[] => {
   return updates.slice(0, 50);
 };
 
-const buildSystemPrompt = (basePrompt: string): string => {
+const buildSystemPrompt = (basePrompt: string, hasBeforeAfter: boolean): string => {
   const lines = [
     basePrompt.trim(),
     'You analyze Kangur UI screenshots against the documentation context.',
@@ -139,8 +202,17 @@ const buildSystemPrompt = (basePrompt: string): string => {
     'docUpdates: array of objects { docPath, section, proposedText, reason }.',
     'Use docPath values that exist under /docs/kangur when possible.',
     'If you are not confident about a doc update, return an empty docUpdates array.',
-  ].filter(Boolean);
-  return lines.join('\n');
+  ];
+  if (hasBeforeAfter) {
+    lines.push(
+      '',
+      'Some images are provided as BEFORE/AFTER pairs. Images labeled [BEFORE] show the previous state and [AFTER] show the current state.',
+      'When you see before/after pairs, focus on what visual changes occurred between the two versions.',
+      'Describe specific differences: layout changes, new elements, removed elements, styling changes, content updates.',
+      'Include these visual changes prominently in both the summary and highlights.'
+    );
+  }
+  return lines.filter(Boolean).join('\n');
 };
 
 export async function analyzeKangurSocialVisuals(
@@ -183,17 +255,21 @@ export async function analyzeKangurSocialVisuals(
       );
     }
 
-    const systemPrompt = buildSystemPrompt(brainConfig.systemPrompt ?? '');
+    const pairs = await buildBeforeAfterPairs(imageAddons);
+    const hasBeforeAfter = pairs.some((pair) => pair.previousAddon !== null);
+
+    const systemPrompt = buildSystemPrompt(brainConfig.systemPrompt ?? '', hasBeforeAfter);
     const userPromptLines = [
       'Documentation context:',
       '',
       context,
       '',
       'Captured screenshots:',
-      ...imageAddons.map((addon, index) => {
+      ...pairs.map(({ addon, previousAddon }, index) => {
         const label = addon.title?.trim() || `Screenshot ${index + 1}`;
         const source = addon.sourceUrl?.trim();
-        return `- ${label}${source ? ` (${source})` : ''}`;
+        const changeNote = previousAddon ? ' [has before/after comparison]' : '';
+        return `- ${label}${source ? ` (${source})` : ''}${changeNote}`;
       }),
     ];
     if (notes) {
@@ -203,7 +279,7 @@ export async function analyzeKangurSocialVisuals(
     const content: ChatCompletionContentPart[] = [
       { type: 'text', text: userPromptLines.join('\n') },
     ];
-    const imageParts = await buildImageParts(imageAddons, vendor === 'openai');
+    const imageParts = await buildImageParts(pairs, vendor === 'openai');
     content.push(...imageParts);
 
     const res = await runBrainChatCompletion({
@@ -243,11 +319,14 @@ export async function analyzeKangurSocialVisuals(
       docUpdates: parseDocUpdates(parsed.docUpdates),
     };
 
+    const beforeAfterCount = pairs.filter((p) => p.previousAddon !== null).length;
+
     void ErrorSystem.logInfo('Kangur social visuals analyzed', {
       service: 'kangur.social-posts.visual-analysis',
       durationMs: Date.now() - startedAt,
       modelId,
       imageAddonCount: imageAddons.length,
+      beforeAfterPairCount: beforeAfterCount,
       docReferenceCount: docReferences.length,
       highlightCount: analysis.highlights.length,
       docUpdateCount: analysis.docUpdates.length,

@@ -47,12 +47,12 @@ vi.mock('@/features/foldertree', async () => {
   };
 });
 
-vi.mock('@/features/prompt-exploder/context/hooks/useDocument', () => ({
+vi.mock('@/features/prompt-exploder/context/DocumentContext', () => ({
   useDocumentState: (): unknown => useDocumentStateMock(),
   useDocumentActions: (): unknown => useDocumentActionsMock(),
 }));
 
-vi.mock('@/features/prompt-exploder/context/hooks/useSegmentEditor', () => ({
+vi.mock('@/features/prompt-exploder/context/SegmentEditorContext', () => ({
   useSegmentEditorActions: (): unknown => useSegmentEditorActionsMock(),
 }));
 

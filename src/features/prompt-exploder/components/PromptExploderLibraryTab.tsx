@@ -22,7 +22,7 @@ import {
   UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
-import { useLibraryActions, useLibraryState } from '../context/hooks/useLibrary';
+import { useLibraryActions, useLibraryState } from '../context';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
 import { buildPromptExploderSegmentationOutline } from '../segmentation-library';
 

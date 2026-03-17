@@ -1,5 +1,8 @@
 import React from 'react';
 
+export const UI_CENTER_ROW_SPACED_CLASSNAME = 'ui-center-row-spaced';
+export const UI_GRID_RELAXED_CLASSNAME = 'ui-grid-relaxed';
+
 export function MockButton({
   children,
   disabled,

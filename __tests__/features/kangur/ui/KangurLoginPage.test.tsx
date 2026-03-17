@@ -9,56 +9,65 @@ import { signOut } from 'next-auth/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
-import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
-import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
-const { trackKangurClientEventMock, withKangurClientError, withKangurClientErrorSync } =
-  globalThis.__kangurClientErrorMocks();
-const checkAppStateMock = vi.fn();
-const locationAssignMock = vi.fn();
-const routerPushMock = vi.fn();
-const routerRefreshMock = vi.fn();
-const signOutMock = vi.mocked(signOut);
-const useKangurAiTutorSessionSyncMock = vi.mocked(useKangurAiTutorSessionSync);
-const useOptionalKangurAuthMock = vi.mocked(useOptionalKangurAuth);
-const useKangurPageContentEntryMock = vi.mocked(useKangurPageContentEntry);
-const usePathnameMock = vi.mocked(usePathname);
-const useRouterMock = vi.mocked(useRouter);
-const useSearchParamsMock = vi.mocked(useSearchParams);
+const {
+  trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+  checkAppStateMock,
+  locationAssignMock,
+  routerPushMock,
+  routerRefreshMock,
+  signOutMock,
+  useKangurAiTutorSessionSyncMock,
+  useOptionalKangurAuthMock,
+  useKangurPageContentEntryMock,
+  usePathnameMock,
+  useRouterMock,
+  useSearchParamsMock,
+} = vi.hoisted(() => ({
+  trackKangurClientEventMock: vi.fn(),
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
+  checkAppStateMock: vi.fn(),
+  locationAssignMock: vi.fn(),
+  routerPushMock: vi.fn(),
+  routerRefreshMock: vi.fn(),
+  signOutMock: vi.fn(),
+  useKangurAiTutorSessionSyncMock: vi.fn(),
+  useOptionalKangurAuthMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
+  usePathnameMock: vi.fn(),
+  useRouterMock: vi.fn(),
+  useSearchParamsMock: vi.fn(),
+}));
 
 vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(),
-  useRouter: vi.fn(),
-  useSearchParams: vi.fn(),
+  usePathname: usePathnameMock,
+  useRouter: useRouterMock,
+  useSearchParams: useSearchParamsMock,
 }));
 
 vi.mock('next-auth/react', () => ({
-  signOut: vi.fn(),
+  signOut: signOutMock,
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
-  ...(() => {
-    const { trackKangurClientEventMock, withKangurClientError, withKangurClientErrorSync } =
-      globalThis.__kangurClientErrorMocks();
-    return {
-      trackKangurClientEvent: trackKangurClientEventMock,
-      withKangurClientError,
-      withKangurClientErrorSync,
-    };
-  })(),
+  trackKangurClientEvent: trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useOptionalKangurAuth: vi.fn(),
+  useOptionalKangurAuth: useOptionalKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  useKangurAiTutorSessionSync: vi.fn(),
+  useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: vi.fn(),
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';

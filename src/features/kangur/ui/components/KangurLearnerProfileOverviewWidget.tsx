@@ -80,7 +80,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       {
         fallback: undefined,
         onError: () => {
-          setAvatarError('Nie udalo sie zapisac avatara.');
+          setAvatarError('Nie udało się zapisać avatara.');
         },
       }
     );
@@ -120,7 +120,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
             <div>
               <h3 className='text-base font-bold text-slate-800'>Avatar ucznia</h3>
               <KangurMetaText className='mt-1'>
-                Wybierz bohatera, ktory bedzie widoczny w profilu ucznia.
+                Wybierz bohatera, który będzie widoczny w profilu ucznia.
               </KangurMetaText>
             </div>
           </div>
@@ -129,7 +129,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           ) : null}
         </div>
         <div
-          className='grid grid-cols-3 gap-3 min-[420px]:grid-cols-4 sm:grid-cols-5'
+          className='grid grid-cols-2 gap-3 min-[360px]:grid-cols-3 min-[420px]:grid-cols-4 sm:grid-cols-5'
           role='radiogroup'
           aria-label='Wybierz avatar'
         >

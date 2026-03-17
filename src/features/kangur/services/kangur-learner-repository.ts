@@ -844,7 +844,7 @@ export const ensureDefaultKangurLearnerForOwner = async (input: {
   return createKangurLearner({
     ownerUserId: input.ownerUserId,
     learner: {
-      displayName: input.displayName.trim() || 'Uczen',
+  displayName: input.displayName.trim() || 'Uczeń',
       loginName: candidate,
       password: createLearnerPassword(),
     },

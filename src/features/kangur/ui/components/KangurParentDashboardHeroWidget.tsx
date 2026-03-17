@@ -12,6 +12,7 @@ import { type RefObject, useMemo } from 'react';
 
 import { getKangurHomeHref, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
@@ -67,7 +68,8 @@ export function KangurParentDashboardHeroWidget({
       learnerId: activeLearnerId,
       refreshIntervalMs: LEARNER_ACTIVITY_REFRESH_MS,
     });
-  const lessonsQuery = useKangurLessons();
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const lessonsQuery = useKangurLessons({ ageGroup });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const learnerLiveState = useMemo(
     () =>

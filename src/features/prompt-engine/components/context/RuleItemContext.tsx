@@ -9,7 +9,7 @@ import type {
   PromptAutofixOperation,
 } from '@/shared/lib/prompt-engine/settings';
 
-import { usePromptEngineActions } from '../../context/prompt-engine/PromptEngineActionsContext';
+import { usePromptEngineActions } from '../../context/PromptEngineContext';
 import {
   updateSimilarInRule,
   removeSimilarFromRule,

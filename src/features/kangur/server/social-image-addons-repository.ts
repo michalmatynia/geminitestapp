@@ -37,6 +37,7 @@ const ensureIndexes = async (): Promise<void> => {
       collection.createIndex({ id: 1 }, { unique: true }),
       collection.createIndex({ createdAt: -1 }),
       collection.createIndex({ updatedAt: -1 }),
+      collection.createIndex({ presetId: 1, createdAt: -1 }),
     ]);
   })().catch((error) => {
     void ErrorSystem.captureException(error, {
@@ -172,6 +173,33 @@ export async function upsertKangurSocialImageAddon(
   }
 
   return toAddon(result);
+}
+
+export async function findLatestAddonByPresetId(
+  presetId: string
+): Promise<KangurSocialImageAddon | null> {
+  const normalized = presetId.trim();
+  if (!normalized) return null;
+
+  if (!process.env['MONGODB_URI']) {
+    return (
+      inMemoryAddons
+        .filter((addon) => addon.presetId === normalized)
+        .sort((a, b) => {
+          const aTs = a.createdAt ? Date.parse(a.createdAt) : 0;
+          const bTs = b.createdAt ? Date.parse(b.createdAt) : 0;
+          return bTs - aTs;
+        })[0] ?? null
+    );
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const doc = await collection.findOne(
+    { presetId: normalized },
+    { sort: { createdAt: -1 } }
+  );
+  return doc ? toAddon(doc) : null;
 }
 
 export async function updateKangurSocialImageAddon(

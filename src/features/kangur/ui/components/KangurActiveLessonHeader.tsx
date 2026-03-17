@@ -206,7 +206,7 @@ function KangurActiveLessonHeaderIcon(): React.JSX.Element {
   const { iconTestId, lesson } = useKangurActiveLessonHeaderContext();
 
   return (
-    <div className='flex w-full shrink-0 justify-end sm:ml-auto sm:w-auto'>
+    <div className='order-first flex w-full shrink-0 justify-center sm:order-none sm:ml-auto sm:w-auto sm:justify-end'>
       <KangurGradientIconTile
         data-testid={iconTestId}
         gradientClass={lesson.color}

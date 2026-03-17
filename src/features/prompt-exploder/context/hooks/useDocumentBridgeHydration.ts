@@ -8,7 +8,7 @@ import {
   type PromptExploderCaseResolverContext,
 } from '../../bridge';
 
-import type { DocumentActions } from '../document/DocumentActionsContext';
+import type { DocumentActions } from '../DocumentContext';
 
 export const useDocumentBridgeHydration = ({
   clearDocument,

@@ -53,7 +53,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   {
     file: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
     requiredTokens: [
-      'tone=\'profile\'',
+      "tone='profile'",
       'Statystyki ucznia',
     ],
   },

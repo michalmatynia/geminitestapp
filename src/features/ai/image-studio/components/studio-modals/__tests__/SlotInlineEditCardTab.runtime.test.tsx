@@ -61,6 +61,7 @@ vi.mock('@/shared/ui', async () => {
     TabsContent: mocks.MockTabsContent,
     ProductImageManager: mocks.MockProductImageManager,
     ProductImageManagerControllerProvider: mocks.MockProductImageManagerControllerProvider,
+    UI_CENTER_ROW_SPACED_CLASSNAME: mocks.UI_CENTER_ROW_SPACED_CLASSNAME,
   };
 });
 

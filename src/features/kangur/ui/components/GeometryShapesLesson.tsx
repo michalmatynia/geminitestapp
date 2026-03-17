@@ -11,6 +11,10 @@ import LessonSlideSection, {
 import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   GeometryMovingPointAnimation,
   GeometryPolygonSidesAnimation,
   GeometryPerimeterTraceAnimation,
@@ -250,9 +254,7 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  HUB_SECTIONS.map((section) => [section.id, section.title])
-);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 export default function GeometryShapesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -287,7 +289,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
           <ArrowLeft className='w-4 h-4' /> Wróć do tematów
         </KangurButton>
         <KangurLessonSubsectionSummarySync
-          summary={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+          summary={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         />
         <KangurGlassPanel
           data-testid='geometry-shapes-game-shell'
@@ -305,7 +307,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>

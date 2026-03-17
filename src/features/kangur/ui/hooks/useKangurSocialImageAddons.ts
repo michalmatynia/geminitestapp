@@ -85,3 +85,38 @@ export const useCreateKangurSocialImageAddon = (): MutationResult<
       description: 'Creates Kangur social image add-ons via Playwright.',
     },
   });
+
+export type KangurSocialImageAddonsBatchPayload = {
+  baseUrl: string;
+  presetIds?: string[];
+};
+
+export type KangurSocialImageAddonsBatchResult = {
+  addons: KangurSocialImageAddon[];
+  failures: Array<{ id: string; reason: string }>;
+  runId: string;
+};
+
+export const useBatchCaptureKangurSocialImageAddons = (): MutationResult<
+  KangurSocialImageAddonsBatchResult,
+  KangurSocialImageAddonsBatchPayload
+> =>
+  createUpdateMutationV2<KangurSocialImageAddonsBatchResult, KangurSocialImageAddonsBatchPayload>({
+    mutationKey: [...QUERY_KEYS.kangur.socialImageAddons({ limit: null }), 'batch'],
+    mutationFn: async (
+      payload: KangurSocialImageAddonsBatchPayload
+    ): Promise<KangurSocialImageAddonsBatchResult> =>
+      await api.post<KangurSocialImageAddonsBatchResult>(
+        '/api/kangur/social-image-addons/batch',
+        payload
+      ),
+    invalidate: invalidateSocialImageAddons,
+    meta: {
+      source: 'kangur.hooks.useBatchCaptureKangurSocialImageAddons',
+      operation: 'update',
+      resource: 'kangur.social-image-addons.batch',
+      domain: 'kangur',
+      tags: ['kangur', 'social-image-addons', 'batch'],
+      description: 'Captures Kangur social image add-ons via Playwright batch.',
+    },
+  });

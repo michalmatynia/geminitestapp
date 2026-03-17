@@ -6,6 +6,7 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import { resolveLessonSectionHeader } from '@/features/kangur/ui/components/lesson-utils';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -33,44 +34,44 @@ const HUB_SECTIONS = [
   {
     id: 'sounds',
     emoji: '🔊',
-    title: 'Dzwieki liter',
+    title: 'Dźwięki liter',
     description: 'Poznaj brzmienie liter A, M i L.',
   },
   {
     id: 'syllables',
     emoji: '🧩',
-    title: 'Laczenie w sylaby',
-    description: 'Polacz litery w proste sylaby MA, LA, PA.',
+    title: 'Łączenie w sylaby',
+    description: 'Połącz litery w proste sylaby MA, LA, PA.',
   },
   {
     id: 'words',
     emoji: '📖',
-    title: 'Pierwsze slowa',
-    description: 'Czytaj latwe slowa z dwoch sylab.',
+    title: 'Pierwsze słowa',
+    description: 'Czytaj łatwe słowa z dwóch sylab.',
   },
   {
     id: 'summary',
     emoji: '🎉',
-    title: 'Powtorka',
+    title: 'Powtórka',
     description: 'Utrwal litery i sylaby.',
   },
 ] as const;
 
 const SECTION_LABELS: Record<SectionId, string> = {
-  sounds: 'Dzwieki liter',
+  sounds: 'Dźwięki liter',
   syllables: 'Sylaby',
-  words: 'Slowa',
-  summary: 'Powtorka',
+  words: 'Słowa',
+  summary: 'Powtórka',
 };
 
 const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   sounds: [
     {
-      title: 'Litera i dzwiek',
+      title: 'Litera i dźwięk',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Kazda litera ma swoj dzwiek. Powtorz glosno za mna.
+            Każda litera ma swój dźwięk. Powtórz głośno za mną.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
             <div className='flex flex-wrap items-center justify-center gap-3'>
@@ -86,11 +87,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Litera w slowie',
+      title: 'Litera w słowie',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Litery pojawiaja sie w slowach. Posluchaj i powtorz.
+            Litery pojawiają się w słowach. Posłuchaj i powtórz.
           </KangurLessonLead>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3'>
             <KangurLessonInset accent='amber'>
@@ -112,17 +113,17 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   syllables: [
     {
-      title: 'Laczymy litery',
+      title: 'Łączymy litery',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Dwie litery moga stworzyc sylabe. Sprobuj przeczytac.
+            Dwie litery mogą stworzyć sylabę. Spróbuj przeczytać.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
             <KangurEquationDisplay accent='amber' size='md'>
               M + A = MA
             </KangurEquationDisplay>
-            <KangurLessonCaption className='mt-2'>Powiedz glosno: MA.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>Powiedz głośno: MA.</KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -142,7 +143,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             ))}
           </div>
           <KangurLessonCaption className='max-w-md'>
-            Zmieniaj tempo: powoli, srednio, szybko.
+            Zmieniaj tempo: powoli, średnio, szybko.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -150,11 +151,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   words: [
     {
-      title: 'Pierwsze slowa',
+      title: 'Pierwsze słowa',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Dwie sylaby tworza slowo. Sprobuj przeczytac:
+            Dwie sylaby tworzą słowo. Spróbuj przeczytać:
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
             <div className='space-y-2 text-lg font-semibold text-amber-700'>
@@ -162,7 +163,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               <div>LA-TO</div>
               <div>PA-PA</div>
             </div>
-            <KangurLessonCaption className='mt-2'>Dodaj gesty, aby zapamietac.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>Dodaj gesty, aby zapamiętać.</KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -172,7 +173,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Polacz slowo z obrazkiem. Powiedz je na glos.
+            Połącz słowo z obrazkiem. Powiedz je na głos.
           </KangurLessonLead>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3'>
             <KangurLessonInset accent='amber'>
@@ -198,17 +199,17 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Potrafisz juz laczyc litery w sylaby i czytac proste slowa.
+            Potrafisz już łączyć litery w sylaby i czytać proste słowa.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-left' padding='sm'>
             <ul className='list-disc pl-5 text-sm text-slate-700'>
-              <li>Litery maja swoj dzwiek.</li>
-              <li>Sylaby powstaja z dwoch liter.</li>
-              <li>Slowa skladaja sie z sylab.</li>
+              <li>Litery mają swój dźwięk.</li>
+              <li>Sylaby powstają z dwóch liter.</li>
+              <li>Słowa składają się z sylab.</li>
             </ul>
           </KangurLessonCallout>
           <KangurLessonCaption className='max-w-md'>
-            Wroc do literek i cwicz codziennie po chwili.
+            Wróć do literek i ćwicz codziennie po chwili.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -235,7 +236,7 @@ export default function AlphabetSyllablesLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}

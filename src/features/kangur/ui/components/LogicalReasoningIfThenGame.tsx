@@ -160,7 +160,7 @@ function DraggableCase({
         <div className='min-w-0 space-y-2'>
           <div className='rounded-xl border border-slate-200/60 bg-white/70 px-2 py-1'>
             <p className='text-[10px] font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
-              Jesli...
+              Jeśli...
             </p>
             <p className='text-sm font-bold [color:var(--kangur-page-text)]'>{item.rule}</p>
           </div>
@@ -345,7 +345,7 @@ export default function LogicalReasoningIfThenGame({
                 Gra logiczna
               </p>
               <p className='text-sm font-bold [color:var(--kangur-page-text)]'>
-                Jesli... to... czy wniosek wynika?
+                Jeśli... to... czy wniosek wynika?
               </p>
               <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
                 Przeciągnij każdą kartę do pola, gdzie wniosek <b>wynika</b> lub <b>nie wynika</b> z reguły.

@@ -16,6 +16,7 @@ import {
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurButton,
@@ -95,8 +96,9 @@ export function KangurParentDashboardProgressWidget({
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
   const { subject } = useKangurSubjectFocus();
+  const { ageGroup } = useKangurAgeGroupFocus();
   const { entry: progressContent } = useKangurPageContentEntry('parent-dashboard-progress');
-  const lessonsQuery = useKangurLessons({ enabledOnly: true });
+  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const [archiveError, setArchiveError] = useState<string | null>(null);

@@ -14,6 +14,8 @@ export const kangurSocialImageAddonSchema = z.object({
   sourceUrl: trimmedString.max(1000).nullable().default(null),
   sourceLabel: trimmedString.max(200).nullable().default(null),
   imageAsset: imageFileSelectionSchema,
+  presetId: trimmedString.max(100).nullable().default(null),
+  previousAddonId: trimmedString.max(160).nullable().default(null),
   playwrightRunId: trimmedString.max(160).nullable().default(null),
   playwrightArtifact: trimmedString.max(240).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),

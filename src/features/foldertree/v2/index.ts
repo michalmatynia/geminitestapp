@@ -4,6 +4,7 @@ export * from './components/FolderTreeContextMenu';
 export * from './components/FolderTreeViewportV2';
 export * from './hooks/useFolderTreeInstanceV2';
 export * from './hooks/useFolderTreeKeyboardNav';
+export * from './hooks/useFolderTreeProfile';
 export * from './operations/bulk';
 export * from './operations/clipboard';
 export * from './operations/drop';

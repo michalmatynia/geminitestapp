@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { FolderTreeSearchBar } from '@/features/foldertree';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { useFolderTreeProfile } from '@/features/foldertree';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import {

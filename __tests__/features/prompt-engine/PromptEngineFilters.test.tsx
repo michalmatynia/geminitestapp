@@ -2,24 +2,17 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PromptEngineFilters } from '@/features/prompt-engine/components/PromptEngineFilters';
-import { usePromptEngineActions } from '@/features/prompt-engine/context/prompt-engine/PromptEngineActionsContext';
-import { usePromptEngineConfig } from '@/features/prompt-engine/context/prompt-engine/PromptEngineConfigContext';
-import { usePromptEngineData } from '@/features/prompt-engine/context/prompt-engine/PromptEngineDataContext';
-import { usePromptEngineFilters } from '@/features/prompt-engine/context/prompt-engine/PromptEngineFiltersContext';
+import {
+  usePromptEngineActions,
+  usePromptEngineConfig,
+  usePromptEngineData,
+  usePromptEngineFilters,
+} from '@/features/prompt-engine/context/PromptEngineContext';
 
-vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineConfigContext', () => ({
+vi.mock('@/features/prompt-engine/context/PromptEngineContext', () => ({
   usePromptEngineConfig: vi.fn(),
-}));
-
-vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineFiltersContext', () => ({
   usePromptEngineFilters: vi.fn(),
-}));
-
-vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineDataContext', () => ({
   usePromptEngineData: vi.fn(),
-}));
-
-vi.mock('@/features/prompt-engine/context/prompt-engine/PromptEngineActionsContext', () => ({
   usePromptEngineActions: vi.fn(),
 }));
 

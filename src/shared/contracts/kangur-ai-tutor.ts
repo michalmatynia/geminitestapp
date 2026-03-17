@@ -197,11 +197,7 @@ export type KangurAiTutorTelemetryContextDto = {
 };
 export type KangurAiTutorTelemetryContext = KangurAiTutorTelemetryContextDto;
 
-export type KangurAiTutorSessionContextTelemetryDto = {
-  surface?: KangurAiTutorSurface | null;
-  contentId?: string | null;
-  title?: string | null;
-};
+export type KangurAiTutorSessionContextTelemetryDto = Partial<KangurAiTutorTelemetryContextDto>;
 export type KangurAiTutorSessionContextTelemetry =
   KangurAiTutorSessionContextTelemetryDto;
 

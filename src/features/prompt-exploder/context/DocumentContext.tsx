@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   PromptExploderParamEntry,
   PromptExploderParamEntriesState,
@@ -17,40 +18,10 @@ import {
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { buildPromptExploderParamEntries } from '../params-editor';
 import { updatePromptExploderDocument } from '../parser';
-import {
-  DocumentActionsContext,
-  type DocumentActions,
-  useDocumentActions as useDocumentActionsValue,
-} from './document/DocumentActionsContext';
-import {
-  DocumentCoreContext,
-  type DocumentCoreState,
-  useDocumentCore as useDocumentCoreValue,
-} from './document/DocumentCoreContext';
-import {
-  DocumentMetricsContext,
-  type DocumentMetricsState,
-  useDocumentMetrics as useDocumentMetricsValue,
-} from './document/DocumentMetricsContext';
-import {
-  DocumentParamsContext,
-  type DocumentParamsState,
-  useDocumentParams as useDocumentParamsValue,
-} from './document/DocumentParamsContext';
-import {
-  DocumentPromptContext,
-  type DocumentPromptState,
-  useDocumentPrompt as useDocumentPromptValue,
-} from './document/DocumentPromptContext';
-import {
-  DocumentSelectionContext,
-  type DocumentSelectionState,
-  useDocumentSelection as useDocumentSelectionValue,
-} from './document/DocumentSelectionContext';
 import { useDocumentApplyAction } from './hooks/useDocumentApplyAction';
 import { useDocumentBridgeHydration } from './hooks/useDocumentBridgeHydration';
 import { useDocumentExplodeAction } from './hooks/useDocumentExplodeAction';
-import { useSettingsState } from './hooks/useSettings';
+import { useSettingsState } from './SettingsContext';
 
 import type {
   PromptExploderBinding,
@@ -60,10 +31,67 @@ import type {
 } from '../types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+export interface DocumentPromptState {
+  promptText: string;
+  returnTarget: 'image-studio' | 'case-resolver';
+}
 
-export { DocumentPromptContext, type DocumentPromptState };
-export { DocumentActionsContext };
-export type { DocumentActions };
+export interface DocumentCoreState {
+  documentState: PromptExploderDocument | null;
+  manualBindings: PromptExploderBinding[];
+  segmentById: Map<string, PromptExploderSegment>;
+  segmentOptions: Array<LabeledOptionDto<string>>;
+}
+
+export interface DocumentSelectionState {
+  selectedSegmentId: string | null;
+  selectedSegment: PromptExploderSegment | null;
+}
+
+export interface DocumentParamsState {
+  selectedParamEntriesState: PromptExploderParamEntriesState | null;
+  listParamOptions: Array<LabeledOptionDto<string>>;
+  listParamEntryByPath: Map<string, PromptExploderParamEntry>;
+}
+
+export interface DocumentMetricsState {
+  explosionMetrics: {
+    total: number;
+    avgConfidence: number;
+    lowConfidenceThreshold: number;
+    lowConfidenceCount: number;
+    typedCoverage: number;
+    typeCounts: Record<string, number>;
+  } | null;
+}
+
+export interface DocumentActions {
+  setPromptText: (text: string) => void;
+  setDocumentState: React.Dispatch<React.SetStateAction<PromptExploderDocument | null>>;
+  setManualBindings: React.Dispatch<React.SetStateAction<PromptExploderBinding[]>>;
+  setSelectedSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
+  handleExplode: () => void;
+  syncManualBindings: (bindings: PromptExploderBinding[]) => void;
+  replaceSegments: (segments: PromptExploderSegment[]) => void;
+  updateSegment: (
+    segmentId: string,
+    updater: (current: PromptExploderSegment) => PromptExploderSegment
+  ) => void;
+  clearDocument: () => void;
+  handleReloadFromStudio: () => void;
+  handleApplyToImageStudio: () => Promise<void>;
+  updateParameterValue: (segmentId: string, path: string, value: unknown) => void;
+  updateParameterSelector: (segmentId: string, path: string, control: string) => void;
+  updateParameterComment: (segmentId: string, path: string, comment: string | null) => void;
+  updateParameterDescription: (segmentId: string, path: string, description: string | null) => void;
+}
+
+export const DocumentPromptContext = createContext<DocumentPromptState | null>(null);
+const DocumentCoreContext = createContext<DocumentCoreState | null>(null);
+const DocumentSelectionContext = createContext<DocumentSelectionState | null>(null);
+const DocumentParamsContext = createContext<DocumentParamsState | null>(null);
+const DocumentMetricsContext = createContext<DocumentMetricsState | null>(null);
+export const DocumentActionsContext = createContext<DocumentActions | null>(null);
 
 export interface DocumentState
   extends
@@ -483,14 +511,41 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 }
 
-export {
-  useDocumentPromptValue as useDocumentPrompt,
-  useDocumentCoreValue as useDocumentCore,
-  useDocumentSelectionValue as useDocumentSelection,
-  useDocumentParamsValue as useDocumentParams,
-  useDocumentMetricsValue as useDocumentMetrics,
-  useDocumentActionsValue as useDocumentActions,
-};
+export function useDocumentPrompt(): DocumentPromptState {
+  const context = useContext(DocumentPromptContext);
+  if (!context) throw internalError('useDocumentPrompt must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentCore(): DocumentCoreState {
+  const context = useContext(DocumentCoreContext);
+  if (!context) throw internalError('useDocumentCore must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentSelection(): DocumentSelectionState {
+  const context = useContext(DocumentSelectionContext);
+  if (!context) throw internalError('useDocumentSelection must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentParams(): DocumentParamsState {
+  const context = useContext(DocumentParamsContext);
+  if (!context) throw internalError('useDocumentParams must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentMetrics(): DocumentMetricsState {
+  const context = useContext(DocumentMetricsContext);
+  if (!context) throw internalError('useDocumentMetrics must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentActions(): DocumentActions {
+  const context = useContext(DocumentActionsContext);
+  if (!context) throw internalError('useDocumentActions must be used within DocumentProvider');
+  return context;
+}
 
 export function useDocumentState(): DocumentState {
   const context = useContext(DocumentStateContext);

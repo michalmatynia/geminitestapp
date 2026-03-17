@@ -432,15 +432,15 @@ const buildGuideMessage = (
   lines.push(entry.fullDescription);
 
   if (entry.hints.length > 0) {
-    lines.push(`Wskazowki: ${entry.hints.join(' ')}`);
+    lines.push(`Wskazówki: ${entry.hints.join(' ')}`);
   }
 
   if (entry.relatedGames.length > 0) {
-    lines.push(`Powiazane gry: ${entry.relatedGames.join(', ')}.`);
+    lines.push(`Powiązane gry: ${entry.relatedGames.join(', ')}.`);
   }
 
   if (entry.relatedTests.length > 0) {
-    lines.push(`Powiazane testy: ${entry.relatedTests.join(', ')}.`);
+    lines.push(`Powiązane testy: ${entry.relatedTests.join(', ')}.`);
   }
 
   return lines.join('\n\n');

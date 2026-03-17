@@ -41,6 +41,7 @@ vi.mock('@/shared/ui', async () => {
     FormModal: mocks.MockFormModal,
     Label: mocks.MockLabel,
     StandardDataTablePanel: mocks.MockStandardDataTablePanel,
+    UI_GRID_RELAXED_CLASSNAME: mocks.UI_GRID_RELAXED_CLASSNAME,
   };
 });
 

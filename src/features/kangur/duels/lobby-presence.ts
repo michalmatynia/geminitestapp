@@ -41,7 +41,7 @@ const ensureLobbyPresenceIndexes = async (): Promise<void> => {
 };
 
 const resolveLearnerDisplayName = (learner: KangurLearnerProfile): string =>
-  learner.displayName?.trim() || learner.loginName?.trim() || 'Uczen';
+  learner.displayName?.trim() || learner.loginName?.trim() || 'Uczeń';
 
 const normalizeLimit = (value?: number): number => {
   if (!Number.isFinite(value)) {

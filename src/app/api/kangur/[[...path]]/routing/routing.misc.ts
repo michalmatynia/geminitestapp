@@ -29,11 +29,13 @@ import {
   postKangurSocialImageAddonsHandler,
   querySchema as socialImageAddonsQuerySchema,
 } from '../../social-image-addons/handler';
+import { postKangurSocialImageAddonsBatchHandler } from '../../social-image-addons/batch/handler';
 import {
   getKangurSocialPostHandler,
   patchKangurSocialPostHandler,
 } from '../../social-posts/[id]/handler';
 import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publish/handler';
+import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
 import { postKangurSocialPostsPublishScheduledHandler } from '../../social-posts/publish-scheduled/handler';
 import { postNumberBalanceCreateHandler } from '../../number-balance/create/handler';
@@ -140,6 +142,15 @@ export const socialImageAddonsPostHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const socialImageAddonsBatchHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialImageAddonsBatchHandler,
+  {
+    source: 'kangur.social-image-addons.batch.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
 export const socialPostGetHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
   getKangurSocialPostHandler,
   {
@@ -162,6 +173,15 @@ export const socialPostPublishHandler: ParamRouteHandler = apiHandlerWithParams<
   {
     source: 'kangur.social-posts.[id].publish.POST',
     service: 'kangur.api',
+  }
+);
+
+export const socialPostDocUpdatesHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+  postKangurSocialPostDocUpdatesHandler,
+  {
+    source: 'kangur.social-posts.[id].doc-updates.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
   }
 );
 
@@ -287,9 +307,19 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostPublishHandler(request, { params: { id } });
     }
+    if (segments[2] === 'doc-updates' && segments.length === 3) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPostDocUpdatesHandler(request, { params: { id } });
+    }
   }
-  if (segments[0] === 'social-image-addons' && segments.length === 1) {
-    return handleGetPost(request, socialImageAddonsGetHandler, socialImageAddonsPostHandler);
+  if (segments[0] === 'social-image-addons') {
+    if (segments.length === 1) {
+      return handleGetPost(request, socialImageAddonsGetHandler, socialImageAddonsPostHandler);
+    }
+    if (segments[1] === 'batch' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialImageAddonsBatchHandler(request);
+    }
   }
   if (segments[0] === 'number-balance') {
     const sub = segments[1];

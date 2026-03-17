@@ -6,7 +6,7 @@ import {
   getFolderTreeProfileV2Key,
   serializeFolderTreeProfileV2Entry,
 } from '@/features/foldertree/v2/settings';
-import { useFolderTreeProfiles } from '@/shared/hooks/use-folder-tree-profile';
+import { useFolderTreeProfiles } from '@/features/foldertree';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Button, SectionHeader, useToast, FormActions } from '@/shared/ui';
 import {

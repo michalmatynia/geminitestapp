@@ -46,7 +46,7 @@ const normalizeMigrationKey = (value: string | null | undefined): string | null 
 };
 
 const buildFallbackDisplayName = (owner: MigrationOwnerSeedInput): string =>
-  owner.name?.trim() || owner.email?.split('@')[0]?.trim() || 'Uczen';
+  owner.name?.trim() || owner.email?.split('@')[0]?.trim() || 'Uczeń';
 
 const buildFallbackLoginName = (owner: MigrationOwnerSeedInput): string =>
   owner.email?.split('@')[0]?.trim().toLowerCase() || owner.id.trim().toLowerCase().slice(0, 12);

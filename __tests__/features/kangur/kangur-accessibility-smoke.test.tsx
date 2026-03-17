@@ -61,6 +61,18 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
+  KangurLearnerProfileRuntimeBoundary: ({ children }: { children: React.ReactNode }) => children,
+  useKangurLearnerProfileRuntime: () => ({
+    user: {
+      id: 'user-jan',
+      activeLearner: { id: 'learner-jan', displayName: 'Jan' },
+    },
+    isLoadingScores: false,
+    scoresError: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
   useKangurDocsTooltips: () => ({

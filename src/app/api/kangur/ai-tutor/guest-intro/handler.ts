@@ -4,13 +4,17 @@ import { auth, extractClientIp } from '@/features/auth/server';
 import { registerKangurGuestAiTutorIntroAppearance } from '@/features/kangur/server/guest-ai-tutor-intro';
 import { readKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 export async function getKangurAiTutorGuestIntroHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const [parentSession, learnerSession] = await Promise.all([
-    auth().catch(() => null),
+    auth().catch((error) => {
+      void ErrorSystem.captureException(error);
+      return null;
+    }),
     Promise.resolve(readKangurLearnerSession(req)),
   ]);
 

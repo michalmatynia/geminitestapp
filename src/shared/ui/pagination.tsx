@@ -4,44 +4,14 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React, { createContext, useContext, useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
 import { Label } from './label';
 import { SelectSimple } from './select-simple';
 
-export interface PaginationProps {
-  page: number;
-  totalPages?: number;
-  totalCount?: number;
-  pageSize?: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
-  pageSizeOptions?: number[];
-  showPageSize?: boolean;
-  showInfo?: boolean;
-  isLoading?: boolean;
-  className?: string;
-  showLabels?: boolean;
-  variant?: 'default' | 'compact' | 'panel';
-}
-
-export interface PaginationContextValue {
-  page: number;
-  totalPages: number;
-  totalCount?: number;
-  pageSize?: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
-  pageSizeOptions: number[];
-  showPageSize: boolean;
-  showInfo: boolean;
-  isLoading: boolean;
-  showLabels: boolean;
-  variant: 'default' | 'compact' | 'panel';
-  startItem: number;
-  endItem: number;
-}
+export type { PaginationContextValue, PaginationProps };
 
 const PaginationContext = createContext<PaginationContextValue | null>(null);
 

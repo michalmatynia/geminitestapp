@@ -19,7 +19,6 @@ export const getKangurScoreRepository = async (): Promise<KangurScoreRepository>
       try {
         return await repository.createScore(input);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_SCORE_REPOSITORY_SERVICE,
           action: 'createScore',
@@ -36,7 +35,6 @@ export const getKangurScoreRepository = async (): Promise<KangurScoreRepository>
       try {
         return await repository.listScores(input);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_SCORE_REPOSITORY_SERVICE,
           action: 'listScores',

@@ -23,6 +23,7 @@ import {
   parseKangurStorefrontAppearanceMode,
   type KangurStorefrontAppearanceMode,
 } from '@/features/kangur/storefront-appearance-settings';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import {
   AppearanceSlot,
@@ -116,7 +117,9 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
           setCatalogOverrideRaw(raw);
         }
       })
-      .catch(() => {});
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
+      });
   }, [catalogRaw, settingsReady]);
 
   const slotAssignments = useMemo(

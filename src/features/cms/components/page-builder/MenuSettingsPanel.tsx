@@ -19,7 +19,8 @@ import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Input, SelectSimple, Button, SectionHeader, FormSection } from '@/shared/ui';
-import { SettingsPanelField, SettingsFieldsRenderer } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { useThemeSettingsValue } from './ThemeSettingsContext';
@@ -712,7 +713,7 @@ export function MenuSettingsPanel({
         <SettingsFieldsRenderer
           fields={fields}
           values={settings}
-          onChange={(values) =>
+          onChange={(values: Partial<MenuSettings>) =>
             setUserSettings((prev) => ({ ...(prev ?? initialSettings), ...values }))
           }
         />

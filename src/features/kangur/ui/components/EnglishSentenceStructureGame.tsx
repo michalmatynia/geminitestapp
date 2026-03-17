@@ -27,6 +27,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -551,7 +552,7 @@ export default function EnglishSentenceStructureGame({
             {round.hint}
           </KangurInfoCard>
         )}
-        <div className='flex flex-wrap gap-2'>
+        <div className={KANGUR_WRAP_ROW_CLASSNAME}>
           <KangurButton
             onClick={() => handleCheck()}
             disabled={!isReady || isChecking}

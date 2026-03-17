@@ -6,14 +6,21 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurPanelRow,
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_START_ROW_SPACED_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { formatRelativeAge, resolveLobbyHostInitial } from '@/features/kangur/ui/pages/duels/duels-helpers';
 import { useKangurLobbyChat } from '@/features/kangur/ui/hooks/useKangurLobbyChat';
 import { cn } from '@/features/kangur/shared/utils';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 const LOBBY_CHAT_GROUP_WINDOW_MS = 2 * 60 * 1000;
 const LOBBY_CHAT_SCROLL_THRESHOLD_PX = 16;
@@ -122,7 +129,8 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
     try {
       await sendMessage({ message: trimmed });
       setDraft('');
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       // errors are handled in hook state
     }
   };
@@ -197,9 +205,9 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
       role='region'
       aria-labelledby='kangur-lobby-chat-heading'
     >
-      <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
+      <KangurPanelRow className='sm:flex-wrap sm:items-center sm:justify-between'>
         <div className='space-y-1'>
-          <div className='flex flex-wrap items-center gap-2'>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <h3 id='kangur-lobby-chat-heading' className='text-xl font-semibold text-slate-900'>
               Czat lobby
             </h3>
@@ -211,7 +219,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             Porozmawiaj z graczami, zanim dołączysz do pojedynku.
           </p>
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
+        <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
           {!isAtBottom && unreadCount > 0 ? (
             <KangurButton
               onClick={() => {
@@ -256,7 +264,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             {isLoading ? 'Odświeżamy…' : 'Odśwież'}
           </KangurButton>
         </div>
-      </div>
+      </KangurPanelRow>
 
       {error ? (
         <KangurInfoCard accent='rose' padding='md' tone='accent' role='alert' aria-live='assertive'>
@@ -310,7 +318,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                   <li
                     key={message.id}
                     className={cn(
-                      'flex items-start gap-3',
+                      KANGUR_START_ROW_SPACED_CLASSNAME,
                       isOwn ? 'flex-row-reverse text-right' : null
                     )}
                   >
@@ -379,7 +387,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
 
       {!canPost ? (
         <KangurInfoCard accent='slate' padding='md' tone='accent' role='status'>
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+          <KangurPanelRow className='sm:items-center sm:justify-between'>
             <span className='text-sm text-slate-700'>
               Zaloguj się, aby pisać na czacie.
             </span>
@@ -390,12 +398,12 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             >
               Zaloguj się
             </KangurButton>
-          </div>
+          </KangurPanelRow>
         </KangurInfoCard>
       ) : null}
 
       <div className='flex flex-col gap-2'>
-        <div className='flex flex-col sm:flex-row sm:items-center kangur-panel-gap'>
+        <KangurPanelRow className='sm:items-center'>
           <KangurTextField
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
@@ -430,8 +438,8 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
           >
             {isSending ? 'Wysyłamy…' : 'Wyślij'}
           </KangurButton>
-        </div>
-        <div className='flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between'>
+        </KangurPanelRow>
+        <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} text-xs text-slate-500 sm:items-center sm:justify-between`}>
           <span
             className={cn(
               remainingChars === 0

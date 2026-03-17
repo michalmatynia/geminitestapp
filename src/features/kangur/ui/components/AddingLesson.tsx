@@ -38,6 +38,10 @@ import {
   KangurEquationDisplay,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_START_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
@@ -104,7 +108,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Część + część daje całość.
             </KangurLessonCaption>
           </KangurLessonCallout>
-          <div className='grid w-full max-w-md grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-3'>
+          <div className='grid w-full max-w-md grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-3'>
             <div className='rounded-2xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-center text-xs font-semibold text-amber-700'>
               <div className='text-xl'>🍎🍎</div>
               <p className='mt-1'>Start</p>
@@ -133,7 +137,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               4 + 3 = ?
             </KangurEquationDisplay>
             <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='amber' size='sm'>
                   1
                 </KangurIconBadge>
@@ -141,7 +145,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                   Startuj od większej liczby: <b>4</b>
                 </span>
               </div>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='amber' size='sm'>
                   2
                 </KangurIconBadge>
@@ -149,7 +153,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
                   Dolicz trzy kroki w górę: 5, 6, <b>7</b>
                 </span>
               </div>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='amber' size='sm'>
                   3
                 </KangurIconBadge>
@@ -205,15 +209,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               Kropki łączą się w jedną grupę i tworzą sumę.
             </KangurLessonCaption>
             <div className='mt-3 flex flex-wrap items-center justify-center kangur-panel-gap text-xs font-semibold'>
-              <div className='flex items-center gap-2'>
+              <div className={KANGUR_CENTER_ROW_CLASSNAME}>
                 <span className='h-2.5 w-2.5 rounded-full bg-amber-400' />
                 <span>Grupa A</span>
               </div>
-              <div className='flex items-center gap-2'>
+              <div className={KANGUR_CENTER_ROW_CLASSNAME}>
                 <span className='h-2.5 w-2.5 rounded-full bg-sky-400' />
                 <span>Grupa B</span>
               </div>
-              <div className='flex items-center gap-2'>
+              <div className={KANGUR_CENTER_ROW_CLASSNAME}>
                 <span className='h-2.5 w-2.5 rounded-full bg-emerald-400' />
                 <span>Suma</span>
               </div>
@@ -273,7 +277,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
               <span>+3</span>
               <span>=10</span>
             </div>
-            <div className='mt-2 flex items-center gap-2'>
+            <div className={`mt-2 ${KANGUR_CENTER_ROW_CLASSNAME}`}>
               <div className='rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700'>
                 Zostaje +2
               </div>
@@ -430,15 +434,15 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='flex flex-wrap items-center justify-center kangur-panel-gap text-xs font-semibold'>
-            <div className='flex items-center gap-2'>
+            <div className={KANGUR_CENTER_ROW_CLASSNAME}>
               <span className='h-2.5 w-2.5 rounded-sm bg-emerald-400' />
               <span>Dziesiątki</span>
             </div>
-            <div className='flex items-center gap-2'>
+            <div className={KANGUR_CENTER_ROW_CLASSNAME}>
               <span className='h-2.5 w-2.5 rounded-sm bg-sky-400' />
               <span>Jedności</span>
             </div>
-            <div className='flex items-center gap-2'>
+            <div className={KANGUR_CENTER_ROW_CLASSNAME}>
               <span className='h-2.5 w-2.5 rounded-sm bg-amber-400' />
               <span>Suma</span>
             </div>

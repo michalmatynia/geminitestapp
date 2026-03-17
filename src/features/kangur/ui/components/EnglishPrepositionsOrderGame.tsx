@@ -26,6 +26,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -430,7 +431,7 @@ export default function EnglishPrepositionsOrderGame({
           ) : null}
 
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
-            <div className='flex flex-wrap items-center gap-2'>
+            <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton size='sm' type='button' variant='surface' onClick={handleReset} disabled={checked}>
                 Tasuj ponownie
               </KangurButton>

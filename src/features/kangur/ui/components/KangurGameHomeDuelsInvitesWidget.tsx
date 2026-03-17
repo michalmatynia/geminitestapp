@@ -16,7 +16,11 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_SPACED_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   formatDuelDifficultyLabel,
   formatDuelOperationLabel,
@@ -136,9 +140,9 @@ export function KangurGameHomeDuelsInvitesWidget({
       aria-labelledby={headingId}
       data-testid='kangur-home-duels-invites'
     >
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+      <div className={`${KANGUR_SPACED_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
         <div className='space-y-1'>
-          <div className='flex flex-wrap items-center gap-2'>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <h3 id={headingId} className='text-base font-semibold text-slate-900'>
               Zaproszenia do pojedynku
             </h3>
@@ -193,7 +197,7 @@ export function KangurGameHomeDuelsInvitesWidget({
                   accent='indigo'
                   padding='md'
                   tone='accent'
-                  className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'
+                  className={`${KANGUR_SPACED_ROW_CLASSNAME} sm:items-center sm:justify-between`}
                   role='group'
                   aria-label={`Zaproszenie od ${entry.host.displayName}`}
                 >

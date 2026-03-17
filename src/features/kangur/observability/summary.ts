@@ -14,6 +14,9 @@ import {
   emptyRouteMetrics,
   resolveKangurObservabilityRangeWindow,
 } from './summary/summary.routes';
+import { buildKangurObservabilityAlerts } from './summary/summary.alerts-builder';
+import { summarizeKangurAiTutorAnalytics } from './summary/summary.analytics';
+import { buildRouteLatencyStats } from './summary/summary.routes';
 
 export const getKangurObservabilitySummary = async (input: {
   range?: KangurObservabilityRange;
@@ -43,4 +46,10 @@ export const getKangurObservabilitySummary = async (input: {
     performanceBaseline: null,
     errors: null,
   };
+};
+
+export const __testables = {
+  buildKangurObservabilityAlerts,
+  buildRouteLatencyStats,
+  summarizeKangurAiTutorAnalytics,
 };

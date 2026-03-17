@@ -10,6 +10,7 @@ import {
   getNextLockedBadge,
   type KangurBadgeTrackKey,
 } from '@/features/kangur/ui/services/progress';
+import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -69,7 +70,7 @@ export default function KangurHeroMilestoneSummary({
           }}
         >
           <KangurProgressHighlightCardContent>
-            <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+            <KangurPanelRow className='items-start sm:justify-between'>
               <KangurProgressHighlightHeader
                 description={nextBadge.desc}
                 descriptionStyle={{
@@ -91,7 +92,7 @@ export default function KangurHeroMilestoneSummary({
                 className='text-[11px]'
                 label={nextBadge.summary}
               />
-            </div>
+            </KangurPanelRow>
             <KangurProgressHighlightBar
               accent='amber'
               testId={`${summaryTestIdPrefix}-next-badge-bar`}
@@ -103,7 +104,7 @@ export default function KangurHeroMilestoneSummary({
 
       <div data-testid={`${summaryTestIdPrefix}-tracks`}>
         <KangurBadgeTrackHighlights
-          className='min-[360px]:grid-cols-2'
+          className='min-[420px]:grid-cols-2'
           dataTestIdPrefix={badgeTrackTestIdPrefix}
           limit={trackLimitValue}
           minimumItems={trackMinimumValue}

@@ -30,10 +30,8 @@ import {
   SelectSimple,
   useToast,
 } from '@/shared/ui';
-import {
-  SettingsFieldsRenderer,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -522,7 +520,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           <SettingsFieldsRenderer
             fields={runtimeFields}
             values={draft.runtime}
-            onChange={(vals) =>
+            onChange={(vals: Partial<PromptExploderSettings['runtime']>) =>
               setDraft((prev) => (prev ? { ...prev, runtime: { ...prev.runtime, ...vals } } : null))
             }
             className='grid gap-x-6 gap-y-2 md:grid-cols-2 lg:grid-cols-3'
@@ -538,7 +536,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           <SettingsFieldsRenderer
             fields={learningFields}
             values={draft.learning}
-            onChange={(vals) =>
+            onChange={(vals: Partial<PromptExploderSettings['learning']>) =>
               setDraft((prev) =>
                 prev ? { ...prev, learning: { ...prev.learning, ...vals } } : null
               )

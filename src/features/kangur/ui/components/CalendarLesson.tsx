@@ -265,7 +265,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       tts: 'Rok ma 12 miesięcy podzielonych na cztery pory roku.',
       content: (
         <KangurLessonStack className='w-full max-w-sm text-center' gap='sm'>
-          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
             {[
               {
                 season: '🌸 Wiosna',

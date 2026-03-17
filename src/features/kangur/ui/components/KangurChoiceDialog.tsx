@@ -1,7 +1,6 @@
 'use client';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
-import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import {
   KangurButton,
@@ -25,8 +24,8 @@ type KangurChoiceDialogOption = {
 type KangurChoiceDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
+  header: ReactNode;
+  title: string; // Used for the internal heading
   defaultChoiceLabel: string;
   currentChoiceLabel: string;
   closeAriaLabel: string;
@@ -38,8 +37,8 @@ type KangurChoiceDialogProps = {
 export function KangurChoiceDialog({
   open,
   onOpenChange,
+  header,
   title,
-  description,
   defaultChoiceLabel,
   currentChoiceLabel,
   closeAriaLabel,
@@ -54,7 +53,7 @@ export function KangurChoiceDialog({
       overlayVariant='dark'
       contentVariant='choice'
     >
-        <KangurDialogHeader title={title} description={description} />
+        {header}
         <KangurGlassPanel
           className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
           padding='lg'

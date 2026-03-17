@@ -196,6 +196,8 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleAllegroDisconnect: actions.handleAllegroDisconnect,
       handleAllegroSandboxToggle: actions.handleAllegroSandboxToggle,
       handleAllegroSandboxConnect: actions.handleAllegroSandboxConnect,
+      handleLinkedInAuthorize: actions.handleLinkedInAuthorize,
+      handleLinkedInDisconnect: actions.handleLinkedInDisconnect,
       handleBaseApiRequest: actions.handleBaseApiRequest,
       handleAllegroApiRequest: actions.handleAllegroApiRequest,
       onCloseModal: actions.onCloseModal,

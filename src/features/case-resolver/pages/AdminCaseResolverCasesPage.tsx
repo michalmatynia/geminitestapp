@@ -5,10 +5,8 @@ import React, { useMemo } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { ConfirmModal, Input, MultiSelect } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { CaseListPanel } from '../components/CaseListPanel';
 import {
@@ -260,7 +258,7 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
           isSent: caseDraft.isSent === true,
           activeDocumentVersion: caseDraft.activeDocumentVersion ?? 'original',
         }}
-        onChange={(values) => {
+        onChange={(values: Partial<CaseResolverFile>) => {
           setCaseDraft((previous) => ({
             ...previous,
             ...values,

@@ -34,6 +34,7 @@ import {
 } from '@/shared/contracts/kangur-duels-chat';
 import { reportKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import {
   KANGUR_DUELS_ANSWER_ENDPOINT,
@@ -573,6 +574,7 @@ export const sendDuelLobbyChatMessageViaApi = async (
                 errorMessage = responseText.trim().slice(0, 240);
               }
             } catch (error) {
+              void ErrorSystem.captureException(error);
               reportKangurClientError(error, {
                 source: 'kangur.local-platform',
                 action: 'duels.lobby_chat_send',
@@ -587,6 +589,7 @@ export const sendDuelLobbyChatMessageViaApi = async (
             }
           }
         } catch (error) {
+          void ErrorSystem.captureException(error);
           reportKangurClientError(error, {
             source: 'kangur.local-platform',
             action: 'duels.lobby_chat_send',

@@ -17,7 +17,11 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import {
   getCurrentLevel,
@@ -115,7 +119,7 @@ export default function ProgressOverview({
         </KangurPanelRow>
       </KangurGlassPanel>
 
-      <div className='grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 sm:grid-cols-3'>
+      <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 sm:grid-cols-3'>
         {stats.map((stat) => (
           <KangurMetricCard
             key={stat.label}
@@ -135,7 +139,7 @@ export default function ProgressOverview({
           variant='subtle'
         >
           <KangurProgressHighlightCardContent>
-            <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+            <KangurPanelRow className='items-start sm:justify-between'>
               <KangurProgressHighlightHeader
                 description={dailyQuestHeaderDescription}
                 descriptionClassName='text-xs leading-5'
@@ -147,7 +151,7 @@ export default function ProgressOverview({
                 className='shrink-0'
                 label={dailyQuestProgressLabel}
               />
-            </div>
+            </KangurPanelRow>
             <KangurProgressHighlightBar
               accent={dailyQuestProgressAccent}
               testId='progress-overview-daily-quest-bar'
@@ -165,7 +169,7 @@ export default function ProgressOverview({
           variant='subtle'
         >
           <KangurProgressHighlightCardContent>
-            <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+            <KangurPanelRow className='items-start sm:justify-between'>
               <KangurProgressHighlightHeader
                 description={
                   guidedMomentum.nextBadgeName
@@ -181,7 +185,7 @@ export default function ProgressOverview({
                 className='shrink-0'
                 label={guidedMomentum.summary}
               />
-            </div>
+            </KangurPanelRow>
             <KangurProgressHighlightBar
               accent='sky'
               testId='progress-overview-guided-momentum-bar'
@@ -196,7 +200,7 @@ export default function ProgressOverview({
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
           <KangurPanelSectionHeading>Ćwiczone operacje</KangurPanelSectionHeading>
-          <div className='flex flex-wrap gap-2'>
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             {operationsPlayed.map((operation) => (
               <KangurStatusChip
                 accent='indigo'

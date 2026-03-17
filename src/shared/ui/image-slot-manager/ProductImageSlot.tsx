@@ -99,7 +99,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
       <div data-preserve-slot-selection='true'>
         <FileUploadTrigger
           accept='image/*'
-          onFilesSelected={(files) => handleSlotFileUpload(index, files)}
+          onFilesSelected={(files: File[]) => handleSlotFileUpload(index, files)}
           asChild
           preserveChildSemantics
         >
@@ -150,7 +150,7 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
   const thumbnailFrame = (
     <FileUploadTrigger
       accept='image/*'
-      onFilesSelected={(files) => handleSlotFileUpload(index, files)}
+      onFilesSelected={(files: File[]) => handleSlotFileUpload(index, files)}
       disabled={imageLocked}
       asChild
       preserveChildSemantics={isSingleMinimalSlot}

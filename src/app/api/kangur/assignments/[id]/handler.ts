@@ -8,6 +8,7 @@ import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { parseKangurAssignmentUpdatePayload } from '@/shared/validations/kangur';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
 import {
@@ -39,7 +40,8 @@ export async function patchKangurAssignmentHandler(
   const repository = await getKangurAssignmentRepository();
   let updatedAssignment = await repository
     .updateAssignment(actor.learnerKey, id, payload)
-    .catch(async () => {
+    .catch(async (error) => {
+      void ErrorSystem.captureException(error);
       if (!actor.legacyLearnerKey) {
         throw new Error('Assignment update failed.');
       }

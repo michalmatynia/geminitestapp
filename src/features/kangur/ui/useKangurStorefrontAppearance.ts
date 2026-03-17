@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
-import { resolveKangurStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance.logic';
+import { resolveKangurStorefrontAppearance } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
   resolveKangurThemeSettingsRawForMode,

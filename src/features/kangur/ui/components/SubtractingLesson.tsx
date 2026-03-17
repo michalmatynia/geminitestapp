@@ -21,6 +21,7 @@ import {
   KangurEquationDisplay,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
@@ -507,7 +508,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               9 − 4 = ?
             </KangurEquationDisplay>
             <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   1
                 </KangurIconBadge>
@@ -515,7 +516,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                   Startuj od <b>9</b>
                 </span>
               </div>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   2
                 </KangurIconBadge>
@@ -523,7 +524,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                   Cofnij się o 4 kroki: 8, 7, 6, <b>5</b>
                 </span>
               </div>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   3
                 </KangurIconBadge>

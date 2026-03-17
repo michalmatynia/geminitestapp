@@ -17,6 +17,9 @@ import * as allegroCallback from '../[id]/connections/[connectionId]/allegro/cal
 import * as allegroDisconnect from '../[id]/connections/[connectionId]/allegro/disconnect/route-handler';
 import * as allegroRequest from '../[id]/connections/[connectionId]/allegro/request/route-handler';
 import * as allegroTest from '../[id]/connections/[connectionId]/allegro/test/route-handler';
+import * as linkedinAuthorize from '../[id]/connections/[connectionId]/linkedin/authorize/route-handler';
+import * as linkedinCallback from '../[id]/connections/[connectionId]/linkedin/callback/route-handler';
+import * as linkedinDisconnect from '../[id]/connections/[connectionId]/linkedin/disconnect/route-handler';
 import * as baseInventories from '../[id]/connections/[connectionId]/base/inventories/route-handler';
 import * as baseProducts from '../[id]/connections/[connectionId]/base/products/route-handler';
 import * as baseRequest from '../[id]/connections/[connectionId]/base/request/route-handler';
@@ -268,6 +271,17 @@ const routeIntegrations = (
         }
         if (fifth === 'test' && segments.length === 5) {
           return dispatch(allegroTest, method, request, { id: integrationId, connectionId }, source);
+        }
+      }
+      if (fourth === 'linkedin') {
+        if (fifth === 'authorize' && segments.length === 5) {
+          return dispatch(linkedinAuthorize, method, request, { id: integrationId, connectionId }, source);
+        }
+        if (fifth === 'callback' && segments.length === 5) {
+          return dispatch(linkedinCallback, method, request, { id: integrationId, connectionId }, source);
+        }
+        if (fifth === 'disconnect' && segments.length === 5) {
+          return dispatch(linkedinDisconnect, method, request, { id: integrationId, connectionId }, source);
         }
       }
       if (fourth === 'base') {

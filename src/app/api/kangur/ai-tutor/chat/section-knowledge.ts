@@ -4,6 +4,7 @@ import { resolveKangurPageContentFragment } from '@/features/kangur/page-content
 import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type {
   KangurAiTutorConversationContext,
@@ -286,8 +287,14 @@ export async function resolveKangurAiTutorSectionKnowledgeBundle(input: {
 
   const locale = input.locale ?? 'pl';
   const [pageContentStore, nativeGuideStore] = await Promise.all([
-    getKangurPageContentStore(locale).catch(() => null),
-    getKangurAiTutorNativeGuideStore(locale).catch(() => null),
+    getKangurPageContentStore(locale).catch((error) => {
+      void ErrorSystem.captureException(error);
+      return null;
+    }),
+    getKangurAiTutorNativeGuideStore(locale).catch((error) => {
+      void ErrorSystem.captureException(error);
+      return null;
+    }),
   ]);
   if (!pageContentStore) {
     return null;

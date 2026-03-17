@@ -19,7 +19,6 @@ export const getKangurProgressRepository = async (): Promise<KangurProgressRepos
       try {
         return await repository.getProgress(userKey);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_PROGRESS_REPOSITORY_SERVICE,
           action: 'getProgress',
@@ -33,7 +32,6 @@ export const getKangurProgressRepository = async (): Promise<KangurProgressRepos
       try {
         return await repository.saveProgress(userKey, progress);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_PROGRESS_REPOSITORY_SERVICE,
           action: 'saveProgress',

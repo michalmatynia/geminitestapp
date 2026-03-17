@@ -12,10 +12,8 @@ import {
   isSameCatalogEntry,
 } from '@/shared/lib/ai-brain/catalog-entries';
 import { Button, FormSection, Input, Label, useToast } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { useBrain } from '../context/BrainContext';
 import {

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
+  isLinkedInIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsActions,
@@ -17,6 +18,7 @@ type UseIntegrationTabsResult = {
   integrationSlug: string;
   isTradera: boolean;
   isAllegro: boolean;
+  isLinkedIn: boolean;
   isBaselinker: boolean;
   showPlaywright: boolean;
   showAllegroConsole: boolean;
@@ -45,6 +47,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
       integrationSlug: '',
       isTradera: false,
       isAllegro: false,
+      isLinkedIn: false,
       isBaselinker: false,
       showPlaywright: false,
       showAllegroConsole: false,
@@ -64,6 +67,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
+  const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
   const showPlaywright = isTradera && !isTraderaApi;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
@@ -81,6 +85,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
     integrationSlug,
     isTradera,
     isAllegro,
+    isLinkedIn,
     isBaselinker,
     showPlaywright,
     showAllegroConsole,

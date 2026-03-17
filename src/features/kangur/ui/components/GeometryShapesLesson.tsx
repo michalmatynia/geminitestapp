@@ -25,7 +25,10 @@ import {
   KangurButton,
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_PANEL_GAP_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -50,7 +53,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Poznaj figury',
       content: (
         <div className='space-y-3'>
-          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {SHAPE_CARDS.slice(0, 4).map((shape) => (
               <KangurLessonCallout
                 key={shape.name}
@@ -112,7 +115,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               className='border-fuchsia-200/85'
               padding='sm'
             >
-              <div className='flex items-center gap-2'>
+              <div className={KANGUR_CENTER_ROW_CLASSNAME}>
                 <span className='text-2xl'>{shape.emoji}</span>
                 <div>
                   <p className='text-sm font-bold [color:var(--kangur-page-text)]'>

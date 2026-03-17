@@ -7,7 +7,7 @@ import {
   KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 // ── Daily Quest Highlight Card Sub-components ────────────────────────────────
@@ -31,7 +31,7 @@ export function KangurDailyQuestHighlightChips({
   chipLabelStyle?: 'caps' | 'compact';
   className?: string;
 }): React.JSX.Element {
-  const containerClassName = cn('flex flex-wrap items-center gap-2', className);
+  const containerClassName = cn(KANGUR_WRAP_CENTER_ROW_CLASSNAME, className);
   const questChipProps = {
     accent: questLabelAccent,
     labelStyle: chipLabelStyle,

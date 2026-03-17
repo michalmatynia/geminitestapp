@@ -7,6 +7,7 @@ import {
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 export async function postKangurLearnerSignOutHandler(
   req: NextRequest,
@@ -28,7 +29,9 @@ export async function postKangurLearnerSignOutHandler(
         learnerId: learnerSession.learnerId,
         ownerUserId: learnerSession.ownerUserId,
       },
-    }).catch(() => {});
+    }).catch((error) => {
+      void ErrorSystem.captureException(error);
+    });
   }
   return response;
 }

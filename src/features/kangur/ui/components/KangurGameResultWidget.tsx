@@ -14,7 +14,7 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import { BADGES, getNextLockedBadge } from '@/features/kangur/ui/services/progress';
 
@@ -46,7 +46,7 @@ function KangurResultSectionCard({
 }
 
 function KangurResultSectionChips({ children }: { children: ReactNode }): React.JSX.Element {
-  return <div className='flex flex-wrap gap-2'>{children}</div>;
+  return <div className={KANGUR_WRAP_ROW_CLASSNAME}>{children}</div>;
 }
 
 export function KangurGameResultWidget(): React.JSX.Element | null {

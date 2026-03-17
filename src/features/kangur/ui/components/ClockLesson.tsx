@@ -25,7 +25,7 @@ import {
   KangurLessonCaption,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
@@ -931,7 +931,7 @@ export default function ClockLesson(): React.JSX.Element {
 
     const trainingFooterNavigation =
       trainingPanels.length > 1 ? (
-        <div className='flex w-full flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
+        <KangurPanelRow className='w-full sm:items-center sm:justify-between'>
           {currentTrainingPanelIndex > 0 ? (
             <KangurButton
               onClick={() =>
@@ -976,7 +976,7 @@ export default function ClockLesson(): React.JSX.Element {
           ) : (
             <div className='hidden sm:block sm:min-w-[72px]' />
           )}
-        </div>
+        </KangurPanelRow>
       ) : null;
     const nextTrainingPanel =
       currentTrainingPanelIndex >= 0 && currentTrainingPanelIndex < trainingPanels.length - 1

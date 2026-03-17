@@ -1,5 +1,6 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { formatKangurAiTutorTemplate } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 
@@ -41,7 +42,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
 
   return (
     <div
-      className='flex flex-wrap gap-2 border-b kangur-chat-divider kangur-chat-padding-md'
+      className={`${KANGUR_WRAP_ROW_CLASSNAME} border-b kangur-chat-divider kangur-chat-padding-md`}
       data-kangur-tts-ignore='true'
     >
       {shouldRenderToolbox ? (
@@ -56,7 +57,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
             {auxiliaryContent?.toolboxDescription ??
               'Skróty do wskazówek, rysowania i kolejnych kroków w bieżącej rozmowie.'}
           </div>
-          <div className='mt-3 flex flex-wrap gap-2'>
+          <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
             {canStartHomeOnboardingManually ? (
               <KangurButton
                 data-testid='kangur-ai-tutor-home-onboarding-replay'
@@ -116,7 +117,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
         <div
           className='w-full kangur-chat-inset border kangur-chat-padding-sm kangur-chat-surface-warm text-[11px] [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'
         >
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+          <KangurPanelRow className='sm:items-center sm:justify-between'>
             <span className='font-semibold'>
               {formatKangurAiTutorTemplate(tutorContent.auxiliaryControls.dailyLimitTemplate, {
                 count: usageSummary.messageCount,
@@ -133,7 +134,7 @@ export function KangurAiTutorPanelAuxiliaryControls(): JSX.Element | null {
                     { remaining: remainingMessages }
                   )}
             </span>
-          </div>
+          </KangurPanelRow>
         </div>
       ) : null}
     </div>

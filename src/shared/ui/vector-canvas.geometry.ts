@@ -2,9 +2,10 @@ import type {
   PositiveRectBoundsDto as VectorCanvasViewCropRect,
   PositiveRectBoundsDto as VectorCanvasImageContentFrame,
 } from '@/shared/contracts/geometry';
+import type { VectorViewTransform } from '@/shared/contracts/ui';
 import { type VectorPoint, type VectorShape } from '@/shared/contracts/vector';
 
-export type { VectorCanvasViewCropRect, VectorCanvasImageContentFrame };
+export type { VectorCanvasViewCropRect, VectorCanvasImageContentFrame, VectorViewTransform };
 
 export const DEFAULT_VECTOR_VIEWBOX = 1000;
 export const MIN_VECTOR_VIEW_SCALE = 0.5;
@@ -152,13 +153,6 @@ export function resolveRectResizePoints(
   });
   return dragIndex === 0 ? [movedPoint, anchorPoint] : [anchorPoint, movedPoint];
 }
-
-export type VectorViewTransform = {
-  scale: number;
-  panX: number;
-  panY: number;
-  rotateDeg: number;
-};
 
 export const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 

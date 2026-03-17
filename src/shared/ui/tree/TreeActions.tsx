@@ -1,22 +1,24 @@
 import { Slot } from '@radix-ui/react-slot';
 import React from 'react';
 
+import type {
+  TreeActionButtonProps,
+  TreeActionSize,
+  TreeActionSlotAlign,
+  TreeActionSlotProps,
+  TreeActionSlotShow,
+  TreeActionTone,
+} from '@/shared/contracts/ui';
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
-type DataAttributes = {
-  'data-testid'?: string;
-  'data-doc-id'?: string;
-  'data-doc-alias'?: string;
+export type {
+  TreeActionButtonProps,
+  TreeActionSize,
+  TreeActionSlotAlign,
+  TreeActionSlotProps,
+  TreeActionSlotShow,
+  TreeActionTone,
 };
-
-export type TreeActionSlotShow = 'hover' | 'always';
-export type TreeActionSlotAlign = 'end' | 'inline';
-
-export interface TreeActionSlotProps extends React.HTMLAttributes<HTMLDivElement> {
-  show?: TreeActionSlotShow;
-  isVisible?: boolean;
-  align?: TreeActionSlotAlign;
-}
 
 export function TreeActionSlot({
   show = 'hover',
@@ -44,9 +46,6 @@ export function TreeActionSlot({
   );
 }
 
-export type TreeActionTone = 'default' | 'muted' | 'danger';
-export type TreeActionSize = 'xs' | 'sm' | 'md';
-
 const TONE_CLASSES: Record<TreeActionTone, string> = {
   default: 'text-gray-300 hover:text-white hover:bg-muted/50',
   muted: 'text-gray-400 hover:text-gray-200 hover:bg-muted/40',
@@ -58,14 +57,6 @@ const SIZE_CLASSES: Record<TreeActionSize, string> = {
   sm: 'p-1',
   md: 'p-1.5',
 };
-
-export interface TreeActionButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    DataAttributes {
-  asChild?: boolean;
-  tone?: TreeActionTone;
-  size?: TreeActionSize;
-}
 
 export function TreeActionButton({
   asChild = false,

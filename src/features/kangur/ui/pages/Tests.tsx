@@ -26,7 +26,11 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
@@ -421,13 +425,13 @@ export default function Tests(): React.JSX.Element {
                         </KangurStatusChip>
                       </div>
                       {summaryParts.length > 0 ? (
-                        <div className='flex flex-wrap gap-2 text-xs text-slate-500'>
+                        <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs text-slate-500`}>
                           {summaryParts.map((part) => (
                             <span key={part}>{part}</span>
                           ))}
                         </div>
                       ) : null}
-                      <div className='flex w-full flex-col gap-2 sm:flex-row sm:items-center'>
+                      <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
                         <KangurButton
                           className='w-full sm:w-auto'
                           onClick={() => handleSelectSuite(suite.id)}

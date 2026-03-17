@@ -8,11 +8,13 @@ import {
   KangurButton,
   KangurDisplayEmoji,
   KangurGlassPanel,
+  KangurPanelRow,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
@@ -55,7 +57,7 @@ export function KangurPracticeGameProgress({
   const progressValue = (currentRound / totalRounds) * 100;
 
   return (
-    <div className='flex items-center gap-2 w-full'>
+    <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'w-full')}>
       <KangurProgressBar
         accent={progressAccent}
         className='flex-1'
@@ -220,7 +222,7 @@ export function KangurPracticeGameSummaryActions({
   const wrapperClassName = className;
 
   return (
-    <div className={cn('flex w-full flex-col kangur-panel-gap sm:flex-row', wrapperClassName)}>
+    <KangurPanelRow className={cn('w-full', wrapperClassName)}>
       <KangurButton
         className={cn('w-full sm:flex-1', restartClassName)}
         onClick={handleRestart}
@@ -237,7 +239,7 @@ export function KangurPracticeGameSummaryActions({
       >
         {finishLabel}
       </KangurButton>
-    </div>
+    </KangurPanelRow>
   );
 }
 

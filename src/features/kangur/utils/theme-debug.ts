@@ -1,3 +1,5 @@
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
+
 const DEBUG_PARAM = 'kangurThemeDebug';
 const DEBUG_STORAGE_KEY = 'kangur_theme_debug';
 const DEBUG_ENV_KEY = 'NEXT_PUBLIC_KANGUR_THEME_DEBUG';
@@ -16,7 +18,8 @@ export const isKangurThemeDebugEnabled = (): boolean => {
     if (parseFlag(params.get(DEBUG_PARAM))) return true;
     const stored = window.localStorage.getItem(DEBUG_STORAGE_KEY);
     return parseFlag(stored);
-  } catch {
+  } catch (error) {
+    void ErrorSystem.captureException(error);
     return false;
   }
 };

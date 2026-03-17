@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { Label, Textarea } from '@/shared/ui';
-import { SettingsFieldsRenderer } from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 
@@ -23,7 +23,9 @@ export function ThemeCustomCssSection(): React.JSX.Element {
           },
         ]}
         values={theme}
-        onChange={(values) => update('customCssSelectors', values.customCssSelectors as string)}
+        onChange={(values: Partial<{ customCssSelectors: string }>) =>
+          update('customCssSelectors', values.customCssSelectors as string)
+        }
       />
       <div className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>CSS Code</Label>

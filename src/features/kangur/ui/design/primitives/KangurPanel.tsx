@@ -5,7 +5,7 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_PANEL_CLASSNAMES } from '../tokens';
 
-export const kangurPanelVariants = cva('', {
+export const kangurPanelVariants = cva('min-w-0 max-w-full', {
   variants: {
     variant: {
       elevated: KANGUR_PANEL_CLASSNAMES.elevated,

@@ -33,11 +33,14 @@ export function ActiveLessonView() {
     activeLessonContentRef,
     orderedLessons,
     isSecretLessonActive,
+    progress,
   } = useLessons();
 
   const { entry: activeLessonHeaderContent } = useKangurPageContentEntry('lessons-active-header');
   const { entry: activeLessonAssignmentContent } = useKangurPageContentEntry('lessons-active-assignment');
   const { entry: activeLessonDocumentContent } = useKangurPageContentEntry('lessons-active-document');
+  const { entry: activeLessonNavigationContent } = useKangurPageContentEntry('lessons-active-navigation');
+  const { entry: activeLessonEmptyDocumentContent } = useKangurPageContentEntry('lessons-active-empty-document');
   const { entry: activeLessonSecretPanelContent } = useKangurPageContentEntry('lessons-active-secret-panel');
 
   const isMobile = useKangurMobileBreakpoint();
@@ -56,14 +59,37 @@ export function ActiveLessonView() {
   const completedActiveLessonAssignment = !activeLessonAssignment ? (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null) : null;
 
   const secretHostLesson = orderedLessons.at(-1) ?? null;
-  const isSecretLessonUnlocked = orderedLessons.length > 0 && orderedLessons.every(l => (l.sortOrder > 0)); // Simplified
+  const masteryByComponent = progress?.lessonMastery ?? {};
+  const isSecretLessonUnlocked =
+    orderedLessons.length > 0 &&
+    orderedLessons.every((lesson) => (masteryByComponent[lesson.componentId]?.completions ?? 0) > 0);
   const isSecretLessonHostActive = isSecretLessonActive && Boolean(secretHostLesson && activeLesson?.id === secretHostLesson.id);
+  const handleOpenSecretLesson = () => {
+    if (!secretHostLesson) return;
+    handleSelectLesson(secretHostLesson.id, { secret: true });
+  };
+  const secretHostLabel = secretHostLesson?.title ?? 'Ostatnia lekcja';
+
+  const emptyDocumentTitle = activeLessonEmptyDocumentContent?.title?.trim() || activeLesson.title;
+  const emptyDocumentDescription =
+    activeLessonEmptyDocumentContent?.summary?.trim() ||
+    'Ta lekcja ma włączony tryb dokumentu, ale nie zapisano jeszcze bloków treści.';
+
+  void activeLessonNavigationContent;
 
   return (
-    <motion.div key={activeLesson.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+    <motion.div
+      key={activeLesson.id}
+      data-testid='lessons-active-transition'
+      initial={{ opacity: 0.92, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0.98, y: -4 }}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+    >
       <KangurLessonNavigationProvider
         onBack={() => handleSelectLesson(null)}
-        secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: () => {} }}
+        secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
         <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
           <KangurActiveLessonHeader
@@ -75,10 +101,10 @@ export function ActiveLessonView() {
             onBack={() => handleSelectLesson(null)}
             titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
             headerTestId='active-lesson-header'
-            headerActionsTestId='active-lesson-header-actions'
-            iconTestId='active-lesson-icon'
-            priorityChipTestId='active-lesson-priority-chip'
-            completedChipTestId='active-lesson-completed-chip'
+            headerActionsTestId='active-lesson-header-icon-actions'
+            iconTestId={`active-lesson-icon-${activeLesson.id}`}
+            priorityChipTestId='active-lesson-parent-priority-chip'
+            completedChipTestId='active-lesson-parent-completed-chip'
             descriptionOverride={activeLessonHeaderContent?.summary ?? undefined}
             assignmentSectionTitle={activeLessonAssignmentContent?.title ?? undefined}
             assignmentSectionSummary={activeLessonAssignmentContent?.summary ?? undefined}
@@ -89,15 +115,53 @@ export function ActiveLessonView() {
         </div>
         <div ref={activeLessonContentRef} className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
           {isSecretLessonHostActive ? (
-            <KangurGlassPanel className='flex w-full max-w-3xl flex-col items-center text-center' padding='xl' surface='solid'>
-              <KangurStatusChip accent='amber' size='sm'>Sekret odblokowany</KangurStatusChip>
-              <h2 className='text-2xl font-black text-slate-800'>{activeLessonSecretPanelContent?.title ?? 'Ukryty finisz'}</h2>
-              <p className='text-sm text-slate-600'>{activeLessonSecretPanelContent?.summary ?? 'Sekretne zakończenie!'}</p>
+            <KangurGlassPanel
+              className='flex w-full max-w-3xl flex-col items-center text-center'
+              data-testid='lessons-secret-panel'
+              padding='xl'
+              surface='solid'
+            >
+              <KangurStatusChip accent='amber' data-testid='lessons-secret-pill-chip' size='sm'>
+                Sekret odblokowany
+              </KangurStatusChip>
+              <div
+                className='mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500'
+                data-testid='lessons-secret-host-label'
+              >
+                {secretHostLabel}
+              </div>
+              <h2 className='mt-2 text-2xl font-black text-slate-800'>
+                {activeLessonSecretPanelContent?.title ?? 'Ukryty finisz'}
+              </h2>
+              <p className='text-sm text-slate-600'>
+                {activeLessonSecretPanelContent?.summary ?? 'Sekretne zakończenie!'}
+              </p>
             </KangurGlassPanel>
           ) : activeLesson.contentMode === 'document' && hasActiveLessonDocContent ? (
             <div className='w-full max-w-5xl space-y-4'>
-              <KangurSummaryPanel accent='sky' description={activeLessonDocumentContent?.summary ?? 'Czytaj dokument.'} title={activeLessonDocumentContent?.title ?? 'Materiał lekcji'} tone='accent' />
+              <KangurSummaryPanel
+                accent='sky'
+                data-testid='lessons-document-summary'
+                description={activeLessonDocumentContent?.summary ?? 'Czytaj dokument.'}
+                label='Lesson document'
+                labelAccent='sky'
+                title={activeLessonDocumentContent?.title ?? 'Materiał lekcji'}
+                tone='accent'
+              />
               <KangurLessonDocumentRenderer document={activeLessonDocument!} />
+            </div>
+          ) : activeLesson.contentMode === 'document' && !hasActiveLessonDocContent ? (
+            <div className='w-full max-w-5xl space-y-4'>
+              <KangurSummaryPanel
+                accent='amber'
+                align='center'
+                data-testid='lessons-empty-document-summary'
+                description={emptyDocumentDescription}
+                label='Lesson document'
+                labelAccent='amber'
+                title={emptyDocumentTitle}
+                tone='accent'
+              />
             </div>
           ) : ActiveLessonComponent ? (
             <ActiveLessonComponent onReady={() => setIsActiveLessonComponentReady(true)} />

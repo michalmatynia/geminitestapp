@@ -1,5 +1,5 @@
 import { FOCUS_TO_COMPONENT } from '@/features/kangur/lessons/lesson-ui-registry';
-import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 
 export const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson[]): string | null => {

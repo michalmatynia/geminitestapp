@@ -1,7 +1,12 @@
-import type { KangurLessonActivityBlock, KangurLessonActivityId } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLessonActivityBlock,
+  KangurLessonActivityId,
+  KangurLessonActivityType,
+} from '@/features/kangur/shared/contracts/kangur';
 
 type KangurLessonActivityDefinition = {
   id: KangurLessonActivityId;
+  type: KangurLessonActivityType;
   label: string;
   title: string;
   description: string;
@@ -13,18 +18,21 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
 > = {
   'adding-ball': {
     id: 'adding-ball',
+    type: 'practice-drag-drop',
     label: 'Adding ball game',
     title: 'Gra z piłkami',
     description: 'Ćwicz dodawanie, przesuwając piłki i rozwiązując zadania krok po kroku.',
   },
   'adding-synthesis': {
     id: 'adding-synthesis',
+    type: 'practice-rhythm',
     label: 'Adding synthesis game',
     title: 'Synteza dodawania',
     description: 'Uderzaj w poprawny tor odpowiedzi, gdy działanie zbliża się do linii rytmu.',
   },
   'subtracting-game': {
     id: 'subtracting-game',
+    type: 'practice-drag-drop',
     label: 'Subtracting game',
     title: 'Gra z odejmowaniem',
     description:
@@ -32,36 +40,42 @@ export const KANGUR_LESSON_ACTIVITY_DEFINITIONS: Record<
   },
   'multiplication-array': {
     id: 'multiplication-array',
+    type: 'practice-tap-select',
     label: 'Multiplication array game',
     title: 'Gra z grupami',
     description: 'Buduj grupy elementów i odkrywaj mnożenie przez układy oraz powtarzanie.',
   },
   'multiplication-quiz': {
     id: 'multiplication-quiz',
+    type: 'practice-multiple-choice',
     label: 'Multiplication quiz',
     title: 'Quiz tabliczki',
     description: 'Sprawdź tabliczkę mnożenia w krótkim quizie z szybkimi pytaniami.',
   },
   'division-game': {
     id: 'division-game',
+    type: 'practice-multiple-choice',
     label: 'Division game',
     title: 'Gra z dzieleniem',
     description: 'Ćwicz dzielenie i rozdzielanie elementów w zadaniach interaktywnych.',
   },
   'geometry-drawing': {
     id: 'geometry-drawing',
+    type: 'training-drawing',
     label: 'Geometry drawing game',
     title: 'Rysuj figury',
     description: 'Rysuj kształty i sprawdzaj, jak dobrze rozpoznajesz figury geometryczne.',
   },
   'calendar-interactive': {
     id: 'calendar-interactive',
+    type: 'practice-calendar-interactive',
     label: 'Calendar interactive game',
     title: 'Gra z kalendarzem',
     description: 'Ćwicz daty, miesiące i dni tygodnia w interaktywnym kalendarzu.',
   },
   'clock-training': {
     id: 'clock-training',
+    type: 'training-clock',
     label: 'Clock training game',
     title: 'Ćwiczenie z zegarem',
     description:

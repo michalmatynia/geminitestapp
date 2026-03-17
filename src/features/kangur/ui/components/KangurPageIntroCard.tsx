@@ -6,6 +6,7 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurHeadline,
+  KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
@@ -101,10 +102,10 @@ function KangurPageIntroHeading(): React.JSX.Element | null {
   }
 
   return (
-    <div className='flex flex-col kangur-panel-gap text-left sm:flex-row sm:items-center sm:justify-between'>
+    <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
       <div className='min-w-0'>{headline}</div>
       <div className='flex w-full justify-start sm:w-auto sm:justify-end'>{headingAction}</div>
-    </div>
+    </KangurPanelRow>
   );
 }
 

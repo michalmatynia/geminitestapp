@@ -7,7 +7,10 @@ import {
 import { getLessonMasteryPresentation } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KangurEmptyState } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_LESSON_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_LESSON_PANEL_GAP_CLASSNAME,
+  KANGUR_PANEL_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 
@@ -75,7 +78,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                   <div key={lesson.id} role='listitem' className='w-full'>
                     <KangurLessonLibraryCard
                       ariaCurrent={isActive ? 'page' : undefined}
-                      buttonClassName='kangur-lessons-panel flex flex-col items-start kangur-panel-gap rounded-[30px] p-5 max-sm:pr-5 max-sm:pb-5 sm:flex-row'
+                      buttonClassName={`kangur-lessons-panel ${KANGUR_PANEL_ROW_CLASSNAME} items-start rounded-[26px] p-4 sm:rounded-[30px] sm:p-5`}
                       completedLessonAssignment={completedLessonAssignment}
                       contentClassName='w-full'
                       emphasis={isActive ? 'accent' : 'neutral'}
@@ -86,7 +89,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                       lessonAssignment={lessonAssignment}
                       masteryPresentation={masteryPresentation}
                       onSelect={() => selectLesson(lesson.id)}
-                      statusGroupClassName='w-full items-start max-[360px]:flex-col sm:w-auto sm:flex-col sm:items-end'
+                      statusGroupClassName='w-full items-start max-[420px]:flex-col sm:w-auto sm:flex-col sm:items-end'
                     />
                   </div>
                 );

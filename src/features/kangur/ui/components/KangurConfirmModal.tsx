@@ -1,6 +1,7 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 type KangurConfirmModalProps = {
   cancelText?: string;
@@ -51,7 +52,7 @@ export function KangurConfirmModal({
               {message}
             </div>
           </div>
-          <div className='flex w-full flex-col gap-2 sm:flex-row sm:justify-end'>
+          <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:justify-end`}>
             {showCancel ? (
               <AlertDialog.Cancel asChild>
                 <KangurButton

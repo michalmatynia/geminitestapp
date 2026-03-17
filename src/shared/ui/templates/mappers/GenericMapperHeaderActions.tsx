@@ -1,15 +1,10 @@
 import { Download, Save } from 'lucide-react';
 import React from 'react';
 
+import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui';
 import { Button } from '../../button';
 
-export type GenericMapperHeaderActionsProps = {
-  onFetch: () => void;
-  isFetching: boolean;
-  onSave: () => void;
-  isSaving: boolean;
-  pendingCount: number;
-};
+export type { GenericMapperHeaderActionsProps };
 
 export function GenericMapperHeaderActions(
   props: GenericMapperHeaderActionsProps

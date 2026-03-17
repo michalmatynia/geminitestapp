@@ -18,6 +18,7 @@ export const useKangurCoarsePointer = (): boolean => {
       media.addListener(updatePointer);
       return () => media.removeListener(updatePointer);
     }
+    return undefined;
   }, []);
 
   return isCoarsePointer;

@@ -1,7 +1,9 @@
 import React from 'react';
 
-import { Button, type ButtonProps } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+type ButtonComponentProps = React.ComponentProps<typeof Button>;
 
 export interface StudioActionButtonConfig {
   key: string;
@@ -10,9 +12,9 @@ export interface StudioActionButtonConfig {
   disabled?: boolean;
   loading?: boolean;
   loadingText?: string;
-  size?: ButtonProps['size'];
-  variant?: ButtonProps['variant'];
-  type?: ButtonProps['type'];
+  size?: ButtonComponentProps['size'];
+  variant?: ButtonComponentProps['variant'];
+  type?: ButtonComponentProps['type'];
   className?: string;
   title?: string;
   ariaLabel?: string;

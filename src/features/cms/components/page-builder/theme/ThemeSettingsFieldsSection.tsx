@@ -3,10 +3,8 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import {
-  SettingsFieldsRenderer,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 

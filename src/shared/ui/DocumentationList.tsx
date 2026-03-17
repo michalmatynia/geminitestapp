@@ -1,20 +1,14 @@
 'use client';
 
-import React, { type ReactNode, useState, useMemo } from 'react';
+import React, { type ReactNode, useMemo, useState } from 'react';
 
+import type { DocumentationListItem, DocumentationListVariant } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { DocumentationSection } from './documentation-section';
 import { SearchInput } from './search-input';
 
-export type DocumentationListVariant = 'default' | 'warning' | 'recommendation' | 'error' | 'info';
-
-export interface DocumentationListItem {
-  label: ReactNode;
-  value?: ReactNode;
-  description?: ReactNode;
-  icon?: ReactNode;
-}
+export type { DocumentationListItem, DocumentationListVariant };
 
 interface DocumentationListProps {
   title: string;

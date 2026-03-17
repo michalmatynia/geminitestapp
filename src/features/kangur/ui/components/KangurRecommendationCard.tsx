@@ -6,6 +6,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/utils/cn';
 
 // ── Recommendation Card Sub-components ───────────────────────────────────────
@@ -38,7 +39,7 @@ export function KangurRecommendationCardHeader({
   const chipLabelSize = labelSize;
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn(KANGUR_WRAP_CENTER_ROW_CLASSNAME, className)}>
       {labelContent ??
         (label ? (
           <KangurStatusChip

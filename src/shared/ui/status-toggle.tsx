@@ -3,22 +3,13 @@
 import { type VariantProps } from 'class-variance-authority';
 import React, { useMemo } from 'react';
 
+import type { StatusToggleProps } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { badgeVariants } from './badge';
 
-export interface StatusToggleProps {
-  enabled: boolean;
-  onToggle: (next: boolean) => void;
-  enabledLabel?: string;
-  disabledLabel?: string;
-  enabledVariant?: 'emerald' | 'cyan' | 'blue';
-  disabledVariant?: 'red' | 'slate' | 'gray';
-  size?: 'sm' | 'default';
-  disabled?: boolean;
-  className?: string;
-}
+export type { StatusToggleProps };
 
 type StatusToggleRuntimeValue = {
   variant: VariantProps<typeof badgeVariants>['variant'];

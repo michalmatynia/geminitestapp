@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
+import type { PendingExternalMappingsState, PendingMappingStats } from '@/shared/contracts/ui';
+
 type UsePendingMappingsConfig<TMapping> = {
   mappings: TMapping[];
   internalIds: string[];
@@ -10,19 +12,7 @@ type UsePendingMappingsConfig<TMapping> = {
   isActive?: (mapping: TMapping) => boolean;
 };
 
-type MappingStats = {
-  total: number;
-  mapped: number;
-  pending: number;
-};
-
-export type PendingExternalMappingsState = {
-  pendingMappings: Map<string, string | null>;
-  getCurrentMapping: (internalId: string) => string | null;
-  handleMappingChange: (internalId: string, externalId: string | null) => void;
-  resetPendingMappings: () => void;
-  stats: MappingStats;
-};
+type MappingStats = PendingMappingStats;
 
 export function usePendingMappings<TMapping>({
   mappings,

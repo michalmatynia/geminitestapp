@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 
+import type { SearchableListProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { Badge } from './badge';
@@ -10,22 +11,7 @@ import { Checkbox } from './checkbox';
 import { Hint } from './Hint';
 import { SearchInput } from './search-input';
 
-export interface SearchableListProps<T> {
-  items: T[];
-  selectedIds: string[];
-  onToggle: (id: string) => void;
-  renderItem?: (item: T) => React.ReactNode;
-  getId: (item: T) => string;
-  getLabel: (item: T) => string;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-  maxHeight?: string;
-  className?: string;
-  listClassName?: string;
-  showCount?: boolean;
-  countLabel?: string;
-  extraActions?: React.ReactNode;
-}
+export type { SearchableListProps };
 
 export function SearchableList<T>(props: SearchableListProps<T>): React.JSX.Element {
   const {

@@ -6,6 +6,7 @@ import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -291,7 +292,7 @@ export default function KangurGameHomeMomentumWidget({
       accent={recommendation.accent}
       bodyClassName='min-w-0'
       className='rounded-[28px]'
-      contentClassName='kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'
+      contentClassName={`${KANGUR_PANEL_ROW_CLASSNAME} sm:items-start sm:justify-between`}
       dataTestId='kangur-home-momentum-widget'
       description={recommendation.description}
       descriptionClassName='mt-1 opacity-85'

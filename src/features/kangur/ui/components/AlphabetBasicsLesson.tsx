@@ -9,6 +9,7 @@ import {
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import {
   resolveKangurCanvasPoint,
@@ -393,7 +394,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               </p>
             )}
           </div>
-          <div className='flex flex-wrap gap-2'>
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             <KangurButton size='sm' type='button' variant='surface' onClick={clearDrawing}>
               Wyczysc
             </KangurButton>

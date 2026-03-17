@@ -129,7 +129,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Dwójki i trójki mają rytm: liczymy skokami po osi.
           </KangurLessonLead>
-          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {[2, 3].map((base) => (
               <KangurLessonCallout
                 key={base}
@@ -175,7 +175,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game_array'>, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Czwórki to podwójne dwójki, a piątki mają rytm co pięć.
           </KangurLessonLead>
-          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {[4, 5].map((base) => (
               <KangurLessonCallout
                 key={base}

@@ -8,7 +8,11 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   useKangurLeaderboardState,
   type KangurLeaderboardUserFilterIcon,
@@ -40,7 +44,7 @@ export default function Leaderboard(): React.JSX.Element {
       surface='solid'
       variant='soft'
     >
-      <div className='mb-4 flex items-center gap-2'>
+      <div className={`mb-4 ${KANGUR_CENTER_ROW_CLASSNAME}`}>
         <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' aria-hidden='true' />
         <h3 className='break-words text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
           {leaderboardContent?.title ?? 'Najlepsze wyniki'}
@@ -119,7 +123,7 @@ export default function Leaderboard(): React.JSX.Element {
             return (
               <KangurInfoCard
                 accent={item.isCurrentUser ? 'indigo' : 'slate'}
-                className='flex flex-col items-start kangur-panel-gap p-3 sm:flex-row sm:items-center'
+                className={`${KANGUR_PANEL_ROW_CLASSNAME} items-start sm:items-center p-3`}
                 data-testid={`leaderboard-row-${item.id}`}
                 key={item.id}
                 padding='sm'

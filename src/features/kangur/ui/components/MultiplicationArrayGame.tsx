@@ -23,6 +23,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -185,7 +186,7 @@ export default function MultiplicationArrayGame({
               : 'Dobra próba! Graj dalej, aby ćwiczyć!'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={finishLabel}
           onFinish={handleFinishGame}

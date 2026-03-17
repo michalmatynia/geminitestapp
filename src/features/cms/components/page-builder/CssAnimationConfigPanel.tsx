@@ -12,10 +12,8 @@ import {
   type CssAnimationConfig,
 } from '@/shared/contracts/cms';
 import { Checkbox, FormSection } from '@/shared/ui';
-import {
-  SettingsFieldsRenderer,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import {
   useComponentSettingsActions,
@@ -95,7 +93,9 @@ export function CssAnimationConfigPanel(): React.ReactNode {
                 } as SettingsPanelField<{ easing: string }>,
               ]}
               values={{ easing: easingSelectValue || 'ease-out' }}
-              onChange={(vals) => fieldChange(vals.easing === 'custom' ? value : vals.easing)}
+              onChange={(vals: Partial<{ easing: string }>) =>
+                fieldChange(vals.easing === 'custom' ? value : vals.easing)
+              }
             />
             {easingSelectValue === 'custom' && (
               <SettingsFieldsRenderer
@@ -109,7 +109,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
                   } as SettingsPanelField<{ easing: string }>,
                 ]}
                 values={{ easing: String(value) }}
-                onChange={(vals) => fieldChange(vals.easing)}
+                onChange={(vals: Partial<{ easing: string }>) => fieldChange(vals.easing)}
               />
             )}
           </div>
@@ -207,7 +207,9 @@ export function CssAnimationConfigPanel(): React.ReactNode {
             <SettingsFieldsRenderer
               fields={fields}
               values={config}
-              onChange={(updates) => onChange({ ...config, ...updates })}
+              onChange={(updates: Partial<CssAnimationConfig>) =>
+                onChange({ ...config, ...updates })
+              }
             />
           </div>
         )}
@@ -219,7 +221,9 @@ export function CssAnimationConfigPanel(): React.ReactNode {
             <SettingsFieldsRenderer
               fields={transformFields}
               values={config}
-              onChange={(updates) => onChange({ ...config, ...updates })}
+              onChange={(updates: Partial<CssAnimationConfig>) =>
+                onChange({ ...config, ...updates })
+              }
               className='grid gap-x-4 sm:grid-cols-2 space-y-0'
             />
           </div>

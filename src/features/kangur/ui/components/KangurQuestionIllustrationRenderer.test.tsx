@@ -124,7 +124,7 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(container.firstElementChild).toHaveClass(
       'grid',
       'grid-cols-1',
-      'min-[360px]:grid-cols-2',
+      'min-[420px]:grid-cols-2',
       'sm:grid-cols-3'
     );
   });

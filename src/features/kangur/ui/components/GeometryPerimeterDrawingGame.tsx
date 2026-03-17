@@ -22,11 +22,13 @@ import {
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
+  KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -708,7 +710,7 @@ export default function GeometryPerimeterDrawingGame({
               : 'Dobra próba! Spróbuj ponownie.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
@@ -824,7 +826,7 @@ export default function GeometryPerimeterDrawingGame({
         </p>
 
         {drawingValidated ? (
-          <div className='grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {choices.map((choice, index) => {
               let accent: KangurAccent = 'amber';
               let emphasis: 'neutral' | 'accent' = 'neutral';
@@ -874,7 +876,7 @@ export default function GeometryPerimeterDrawingGame({
           </div>
         ) : null}
 
-        <div className='flex w-full flex-col kangur-panel-gap sm:flex-row'>
+        <KangurPanelRow className='w-full'>
           <KangurButton
             className='w-full sm:flex-1'
             disabled={feedback !== null || points.length === 0}
@@ -909,7 +911,7 @@ export default function GeometryPerimeterDrawingGame({
           >
             {drawingValidated ? 'Sprawdź obwód' : 'Sprawdź rysunek'}
           </KangurButton>
-        </div>
+        </KangurPanelRow>
 
         {feedback && (
           <p

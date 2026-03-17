@@ -167,7 +167,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
             Ta sama cecha prowadzi do tej samej grupy.
           </KangurLessonCaption>
         </KangurLessonCallout>
-        <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
+        <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
           <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
             <p className='mb-1 text-sm font-bold text-green-700'>Owoce</p>
             <p className='text-2xl'>🍎 🍌 🍇 🍓</p>

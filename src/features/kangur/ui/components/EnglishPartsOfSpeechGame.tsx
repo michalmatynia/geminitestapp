@@ -25,7 +25,11 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_INLINE_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -228,7 +232,8 @@ const buildTokenClassName = ({
   isCorrect: boolean;
 }): string =>
   cn(
-    'inline-flex items-center gap-2 rounded-[18px] border px-3 py-2 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white cursor-grab select-none',
+    KANGUR_INLINE_CENTER_ROW_CLASSNAME,
+    'rounded-[18px] border px-3 py-2 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white cursor-grab select-none',
     KANGUR_ACCENT_STYLES.slate.badge,
     KANGUR_ACCENT_STYLES.slate.hoverCard,
     isDragging && 'scale-[1.02] shadow-[0_18px_40px_-26px_rgba(15,23,42,0.2)] cursor-grabbing',
@@ -653,7 +658,7 @@ export default function EnglishPartsOfSpeechGame({
                         aria-label={`${bin.label} bin`}
                       >
                         <div className='flex items-center justify-between gap-2'>
-                          <div className='flex items-center gap-2 text-sm font-bold text-slate-700'>
+                          <div className={`${KANGUR_CENTER_ROW_CLASSNAME} text-sm font-bold text-slate-700`}>
                             <span className='text-lg' aria-hidden='true'>
                               {bin.emoji}
                             </span>
@@ -666,7 +671,7 @@ export default function EnglishPartsOfSpeechGame({
                           ) : null}
                         </div>
                         <p className='mt-1 text-xs text-slate-500'>{bin.description}</p>
-                        <div className='mt-3 flex flex-wrap gap-2'>
+                        <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
                           {items.map((item, index) => (
                             <DraggableToken
                               key={item.id}
@@ -699,7 +704,7 @@ export default function EnglishPartsOfSpeechGame({
           ) : null}
 
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
-            <div className='flex flex-wrap items-center gap-2'>
+            <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton
                 size='sm'
                 type='button'

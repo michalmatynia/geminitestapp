@@ -8,6 +8,7 @@ import type {
   KangurDuelStateResponse,
   KangurDuelReactionType,
 } from '@/features/kangur/shared/contracts/kangur-duels';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 import {
   DUEL_POLL_INTERVAL_MS,
@@ -62,6 +63,7 @@ export function useDuelState(options: DuelStateOptions) {
         setAction(null);
         return { response, error: null };
       } catch (err) {
+        void ErrorSystem.captureException(err);
         setAction(null);
         setError(
           typeof err === 'object' && err !== null && 'message' in err
@@ -139,6 +141,7 @@ export function useDuelState(options: DuelStateOptions) {
         signal: controller.signal,
       });
     } catch (err) {
+      void ErrorSystem.captureException(err);
       // Heartbeat failures are usually non-fatal, but we track them
     } finally {
       if (duelHeartbeatAbortRef.current === controller) {

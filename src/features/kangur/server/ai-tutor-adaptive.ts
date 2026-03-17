@@ -244,7 +244,14 @@ export async function buildKangurAiTutorAdaptiveGuidance({
       coachingFrame,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'kangur.ai-tutor',
+      action: 'buildAdaptiveGuidance',
+      learnerId,
+      surface: context?.surface,
+      contentId: context?.contentId,
+      interactionIntent: context?.interactionIntent,
+    });
     return {
       instructions: '',
       followUpActions: [],

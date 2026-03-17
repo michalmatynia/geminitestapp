@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 
+import type { SectionHeaderRefreshConfig } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { RefreshButton } from './RefreshButton';
@@ -20,12 +21,7 @@ type SectionHeaderProps = {
   subtitle?: ReactNode | undefined;
   description?: ReactNode | undefined;
   actions?: ReactNode | undefined;
-  refresh?:
-    | {
-        onRefresh: () => void;
-        isRefreshing: boolean;
-      }
-    | undefined;
+  refresh?: SectionHeaderRefreshConfig | undefined;
   eyebrow?: ReactNode | undefined;
   icon?: ReactNode | undefined;
   size?: SectionHeaderSize | undefined;
@@ -37,10 +33,7 @@ type SectionHeaderProps = {
   children?: ReactNode | undefined;
 };
 
-export type SectionHeaderRefreshConfig = {
-  onRefresh: () => void;
-  isRefreshing: boolean;
-};
+export type { SectionHeaderRefreshConfig };
 
 export function SectionHeader({
   title,

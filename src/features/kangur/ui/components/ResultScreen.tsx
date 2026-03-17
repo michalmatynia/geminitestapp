@@ -6,6 +6,7 @@ import {
   KangurDisplayEmoji,
   KangurGlassPanel,
   KangurHeadline,
+  KangurPanelRow,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -97,24 +98,24 @@ export default function ResultScreen({
         variant='soft'
       >
         <dl className='space-y-3 text-lg'>
-          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+          <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Wynik</dt>
             <dd className='font-bold text-indigo-600'>
               {score} / {total}
             </dd>
-          </div>
-          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+          </KangurPanelRow>
+          <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Dokładność</dt>
             <dd className='font-bold text-green-500'>{percent}%</dd>
-          </div>
-          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+          </KangurPanelRow>
+          <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Czas</dt>
             <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
-          </div>
-          <div className='flex flex-col text-left sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+          </KangurPanelRow>
+          <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
             <dt className='[color:var(--kangur-page-muted-text)]'>Temat</dt>
             <dd className='font-bold text-purple-500'>{operationLabel}</dd>
-          </div>
+          </KangurPanelRow>
         </dl>
         <KangurProgressBar
           accent='indigo'
@@ -128,14 +129,24 @@ export default function ResultScreen({
         />
       </KangurGlassPanel>
 
-      <div className='flex w-full flex-col kangur-panel-gap sm:flex-row sm:justify-center'>
-        <KangurButton className='w-full sm:w-auto' onClick={handleRestartGame} size='lg' variant='primary'>
+      <KangurPanelRow className='w-full sm:justify-center'>
+        <KangurButton
+          className='w-full sm:w-auto'
+          onClick={handleRestartGame}
+          size='lg'
+          variant='primary'
+        >
           <RotateCcw className='w-5 h-5' /> Zagraj ponownie
         </KangurButton>
-        <KangurButton className='w-full sm:w-auto' onClick={handleGoHome} size='lg' variant='surface'>
+        <KangurButton
+          className='w-full sm:w-auto'
+          onClick={handleGoHome}
+          size='lg'
+          variant='surface'
+        >
           <Home className='w-5 h-5' /> Strona główna
         </KangurButton>
-      </div>
+      </KangurPanelRow>
     </motion.div>
   );
 }

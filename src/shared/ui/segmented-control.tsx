@@ -2,23 +2,11 @@
 
 import * as React from 'react';
 
-import type { SegmentedControlOption } from '@/shared/contracts/ui';
+import type { SegmentedControlOption, SegmentedControlProps } from '@/shared/contracts/ui';
 
 import { cn, getTextContent, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
-export type { SegmentedControlOption };
-
-export interface SegmentedControlProps<T extends string> {
-  options: ReadonlyArray<SegmentedControlOption<T>>;
-  value: T;
-  onChange: (value: T) => void;
-  className?: string;
-  itemClassName?: string;
-  activeClassName?: string;
-  size?: 'xs' | 'sm' | 'md';
-  ariaLabel?: string;
-  ariaLabelledBy?: string;
-}
+export type { SegmentedControlOption, SegmentedControlProps };
 
 export function SegmentedControl<T extends string>({
   options,

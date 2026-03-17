@@ -267,6 +267,7 @@ const ensureMongoLearnerIndexes = async (): Promise<void> => {
         throw error;
       }
     })().catch((error) => {
+      void ErrorSystem.captureException(error);
       ensureMongoLearnerIndexesPromise = null;
       throw error;
     });
@@ -376,6 +377,7 @@ const writeMongoStoredLearner = async (profile: StoredKangurLearnerProfile): Pro
       }
     );
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     if (isMongoDuplicateKeyError(error)) {
       throw conflictError('This learner login name is already in use.', {
         loginName: profile.loginName,

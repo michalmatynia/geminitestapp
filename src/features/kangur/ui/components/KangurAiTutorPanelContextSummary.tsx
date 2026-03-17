@@ -1,6 +1,12 @@
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
+import {
+  KANGUR_STACK_ROW_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_START_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 import { KangurAiTutorWarmInsetCard } from './KangurAiTutorChrome';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
@@ -73,14 +79,14 @@ function KangurAiTutorPanelContextCard({
       tone='panel'
       className='mt-2 kangur-chat-padding-md'
     >
-      <KangurPanelStack className='sm:flex-row sm:items-start sm:justify-between'>
+      <KangurPanelStack className={`${KANGUR_STACK_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
         <div className='min-w-0 flex-1'>
           <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
             {title}
           </div>
           {content ? <div className='mt-2'>{content}</div> : null}
         </div>
-        <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end'>
+        <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:flex-wrap sm:justify-end`}>
           {primaryActionConfig ? (
             <KangurButton
               data-testid={primaryActionConfig.testId}
@@ -195,7 +201,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
             ) : null}
           </div>
         ) : null}
-        <div className='flex flex-wrap items-start gap-2'>
+        <div className={KANGUR_WRAP_START_ROW_CLASSNAME}>
           {focusChipLabel ? (
             <KangurAiTutorPanelContextChip
               testId='kangur-ai-tutor-focus-chip'
@@ -271,7 +277,7 @@ export function KangurAiTutorPanelContextSummary(): JSX.Element {
                 <div className='text-[10px] font-bold uppercase tracking-[0.16em] [color:var(--kangur-chat-kicker-text,var(--kangur-chat-panel-text,var(--kangur-page-text)))]'>
                   Zapisane źródło
                 </div>
-                <div className='mt-2 flex flex-wrap items-center gap-2'>
+                <div className={`mt-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
                   {resolvedSelectedKnowledgeLabel ? (
                     <KangurAiTutorPanelContextChip className='text-xs font-semibold normal-case tracking-normal'>
                       {resolvedSelectedKnowledgeLabel}

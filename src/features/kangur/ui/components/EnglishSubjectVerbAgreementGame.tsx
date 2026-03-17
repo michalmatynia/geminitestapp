@@ -25,6 +25,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -282,7 +283,7 @@ export default function EnglishSubjectVerbAgreementGame({
 
         <div className='space-y-3'>
           <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-700'>
-            <div className='flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400'>
+            <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400`}>
               <span>Subject</span>
               <KangurStatusChip accent={round.accent} size='sm'>
                 {round.subject}
@@ -307,7 +308,7 @@ export default function EnglishSubjectVerbAgreementGame({
             </p>
           </div>
 
-          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {round.options.map((option) => {
               const isSelected = selection === option;
               return (

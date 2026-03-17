@@ -4,7 +4,7 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -634,7 +634,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                       <span className='text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
                         {zoneId === 'classify-yes' ? 'Ma skrzydła' : 'Nie ma skrzydeł'}
                       </span>
-                      <div className='flex flex-wrap gap-2 text-2xl'>
+                      <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-2xl`}>
                         {classifyState[zoneId].map((item, index) => (
                           <Draggable
                             key={item.id}
@@ -831,7 +831,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
         </KangurInfoCard>
       ) : null}
 
-      <div className='flex flex-wrap gap-2'>
+      <div className={KANGUR_WRAP_ROW_CLASSNAME}>
         <KangurButton onClick={handleCheck} size='sm' type='button' variant='primary'>
           Sprawdź
         </KangurButton>

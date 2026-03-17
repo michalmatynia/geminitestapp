@@ -177,11 +177,14 @@ const renderPage = () => {
 
 describe('SystemLogsPage', () => {
   const mockConfirmAction = vi.fn();
+  let mockHandleClearLogs: ReturnType<typeof vi.fn>;
+  const MockConfirmationModal = () => <div data-testid='confirm-modal' />;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Default context mock
+    mockHandleClearLogs = vi.fn();
     const mockSystemLogsValue = {
       logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as unknown as any,
       metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as unknown as any,
@@ -196,8 +199,8 @@ describe('SystemLogsPage', () => {
       clearLogsMutation: { isPending: false } as unknown as any,
       rebuildIndexesMutation: { isPending: false } as unknown as any,
       confirmAction: mockConfirmAction,
-      ConfirmationModal: () => null,
-      handleClearLogs: vi.fn(),
+      ConfirmationModal: MockConfirmationModal,
+      handleClearLogs: mockHandleClearLogs,
       handleRebuildMongoIndexes: vi.fn(),
       handleRunInsight: vi.fn(),
       handleInterpretLog: vi.fn(),
@@ -287,7 +290,20 @@ describe('SystemLogsPage', () => {
     const clearButton = screen.getByText('Wipe Logs');
     await user.click(clearButton);
 
-    expect(mockConfirmAction).toHaveBeenCalled();
+    expect(mockConfirmAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Wipe Observation Logs',
+        confirmText: 'Confirm Wipe',
+        isDangerous: true,
+        onConfirm: mockHandleClearLogs,
+      })
+    );
+  });
+
+  it('renders confirmation modal mount point', () => {
+    renderPage();
+
+    expect(screen.getByTestId('confirm-modal')).toBeInTheDocument();
   });
 
   it('exports logs to clipboard', async () => {

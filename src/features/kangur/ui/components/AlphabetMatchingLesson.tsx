@@ -103,7 +103,16 @@ const AlphabetMatchGame = (): React.JSX.Element => {
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
 
-  const round = MATCH_ROUNDS[roundIndex] ?? MATCH_ROUNDS[0];
+  if (MATCH_ROUNDS.length === 0) {
+    return (
+      <KangurGlassPanel className='w-full max-w-lg' padding='lg' surface='playField'>
+        <div className='text-sm text-slate-500'>Brak rund do zagrania.</div>
+      </KangurGlassPanel>
+    );
+  }
+
+  const safeIndex = Math.min(roundIndex, MATCH_ROUNDS.length - 1);
+  const round = MATCH_ROUNDS[safeIndex]!;
   const isLast = roundIndex >= MATCH_ROUNDS.length - 1;
   const isCorrect = selected ? selected === round.correct : null;
 

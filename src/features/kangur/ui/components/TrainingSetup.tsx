@@ -14,6 +14,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
@@ -107,7 +108,7 @@ export default function TrainingSetup({
         <DifficultySelector selected={difficulty} onSelect={setDifficulty} showHeading={false} />
 
         <section aria-labelledby={categoryHeadingId}>
-          <div className='mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between'>
+          <div className={`mb-2 ${KANGUR_TIGHT_ROW_CLASSNAME} items-start sm:items-center sm:justify-between`}>
             <h3 id={categoryHeadingId} className='text-sm font-bold [color:var(--kangur-page-text)]'>
               Kategorie pytań
             </h3>

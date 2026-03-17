@@ -21,7 +21,6 @@ import { resolveHomeActionVars } from './CmsStorefrontAppearance.home-actions';
 import {
   buildGelButtonShadow,
   resolveButtonTextShadow,
-  resolveStorefrontAppearanceColorSchemes,
   resolveStorefrontAppearanceTone,
 } from './appearance-logic/CmsStorefrontAppearance.color-resolvers';
 import { resolveKangurRuntimeThemeVars } from './appearance-logic/CmsStorefrontAppearance.runtime-vars';
@@ -812,7 +811,14 @@ export const resolveCmsStorefrontAppearance = (
   return {
     background: result.background,
     pageTone: result.tone,
-    vars: result.vars,
+    vars: {
+      ...result.vars,
+      '--cms-appearance-bg': result.vars['--kangur-page-background'] ?? result.background,
+      '--cms-appearance-button-primary-text':
+        result.vars['--kangur-button-primary-text'] ?? result.tone.text,
+      '--cms-appearance-input-border':
+        result.vars['--kangur-text-field-border'] ?? result.tone.border,
+    },
   };
 };
 

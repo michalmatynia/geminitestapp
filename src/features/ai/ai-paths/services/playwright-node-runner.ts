@@ -510,6 +510,25 @@ const executePlaywrightNodeRun = async (
           artifacts.push(artifact);
           return artifact.path;
         },
+        file: async (
+          name: string,
+          value: string | Buffer,
+          options?: { extension?: string; mimeType?: string; kind?: string }
+        ): Promise<string> => {
+          const extension = options?.extension?.trim() || 'bin';
+          const mimeType = options?.mimeType?.trim() || 'application/octet-stream';
+          const kind = options?.kind?.trim() || 'file';
+          const artifact = await saveFileArtifact(
+            runArtifactsDir,
+            name,
+            extension,
+            value,
+            mimeType,
+            kind
+          );
+          artifacts.push(artifact);
+          return artifact.path;
+        },
         html: async (name: string = 'page'): Promise<string> => {
           if (!page) throw new Error('Page is not available.');
           const artifact = await saveFileArtifact(

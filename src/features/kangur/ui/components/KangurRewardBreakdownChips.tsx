@@ -1,5 +1,5 @@
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_WRAP_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -42,7 +42,7 @@ export default function KangurRewardBreakdownChips({
   }
 
   return (
-    <div className={cn('flex flex-wrap gap-2', className)} data-testid={dataTestId}>
+    <div className={cn(KANGUR_WRAP_ROW_CLASSNAME, className)} data-testid={dataTestId}>
       {visibleBreakdown.map((entry) => (
         <KangurStatusChip
           accent={chipAccent}

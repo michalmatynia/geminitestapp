@@ -19,7 +19,11 @@ import {
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
@@ -292,7 +296,8 @@ export function KangurTestQuestionRenderer({
         <KangurInfoCard
           accent={isCorrect ? 'emerald' : 'rose'}
           className={cn(
-            'flex items-center gap-2 rounded-[22px] text-sm font-semibold',
+            KANGUR_CENTER_ROW_CLASSNAME,
+            'rounded-[22px] text-sm font-semibold',
             isCorrect ? 'text-emerald-700' : 'text-rose-700'
           )}
           padding='md'

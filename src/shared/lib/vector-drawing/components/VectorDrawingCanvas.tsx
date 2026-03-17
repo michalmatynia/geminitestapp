@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { VectorCanvas, type VectorCanvasProps } from '@/shared/ui';
+import type { VectorCanvasProps } from '@/shared/contracts/ui';
+import { VectorCanvas } from '@/shared/ui';
 import {
   VectorCanvasProvider,
   type VectorCanvasContextValue,
@@ -13,7 +14,7 @@ import {
   useOptionalVectorDrawingState,
 } from '../context/VectorDrawingContext';
 
-export type { VectorCanvasProps } from '@/shared/ui';
+export type { VectorCanvasProps } from '@/shared/contracts/ui';
 
 export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JSX.Element {
   const {

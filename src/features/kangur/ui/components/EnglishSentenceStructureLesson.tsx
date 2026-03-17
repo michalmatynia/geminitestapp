@@ -21,6 +21,7 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -64,7 +65,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
             Dodatki (time, place, manner) zwykle idą po obiekcie.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' padding='sm'>
-            <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
               <KangurLessonChip accent='violet'>Subject</KangurLessonChip>
               <KangurLessonChip accent='violet'>Verb</KangurLessonChip>
               <KangurLessonChip accent='violet'>Object</KangurLessonChip>

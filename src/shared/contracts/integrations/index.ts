@@ -689,12 +689,19 @@ export type IntegrationRecord = Omit<Integration, 'createdAt' | 'updatedAt'> & {
 
 export type IntegrationConnectionRecord = Omit<
   IntegrationConnection,
-  'createdAt' | 'updatedAt' | 'playwrightStorageStateUpdatedAt' | 'traderaApiTokenUpdatedAt'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'playwrightStorageStateUpdatedAt'
+  | 'traderaApiTokenUpdatedAt'
+  | 'linkedinTokenUpdatedAt'
+  | 'linkedinExpiresAt'
 > & {
   createdAt: string | Date;
   updatedAt: string | Date | null;
   playwrightStorageStateUpdatedAt?: string | Date | null;
   traderaApiTokenUpdatedAt?: string | Date | null;
+  linkedinTokenUpdatedAt?: string | Date | null;
+  linkedinExpiresAt?: string | Date | null;
 };
 
 export type IntegrationRepository = {
@@ -801,6 +808,7 @@ export const integrationDefinitions = [
   { name: 'Tradera API', slug: 'tradera-api' },
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
+  { name: 'LinkedIn', slug: 'linkedin' },
 ] as const;
 
 /**

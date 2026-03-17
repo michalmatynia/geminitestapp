@@ -19,7 +19,12 @@ import {
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_START_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
@@ -67,7 +72,12 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
       surface='neutral'
       variant='soft'
     >
-      <header className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
+      <header
+        className={cn(
+          KANGUR_PANEL_ROW_CLASSNAME,
+          'items-start sm:items-center sm:justify-between'
+        )}
+      >
         <KangurSectionEyebrow className='text-sm tracking-[0.18em]'>
           Zadania
         </KangurSectionEyebrow>
@@ -100,7 +110,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                 )}
                 padding='md'
               >
-                <div className='flex items-start gap-2'>
+                <div className={KANGUR_START_ROW_CLASSNAME}>
                   <KangurButton
                     type='button'
                     onClick={() => toggleAssignment(assignment.id)}
@@ -122,7 +132,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     )}
                   </KangurButton>
                   <div className='min-w-0'>
-                    <div className='flex flex-wrap items-center gap-2'>
+                    <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                       <KangurCardTitle as='p'>
                         {assignment.title}
                       </KangurCardTitle>

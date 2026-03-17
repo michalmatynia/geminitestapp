@@ -1,19 +1,12 @@
 import React from 'react';
 
+import type { LogListEntry } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { StatusBadge } from './status-badge';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-export interface LogListEntry {
-  id: string;
-  timestamp: string | number | Date;
-  level: string;
-  message: string;
-  context?: Record<string, unknown> | null | undefined;
-  source?: string | undefined;
-}
+export type { LogListEntry };
 
 interface LogListProps {
   logs: LogListEntry[];

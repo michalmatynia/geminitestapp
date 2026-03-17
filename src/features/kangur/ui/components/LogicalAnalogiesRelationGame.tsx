@@ -22,7 +22,12 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_STACK_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createLessonPracticeReward,
@@ -393,7 +398,7 @@ export default function LogicalAnalogiesRelationGame({
               : 'Dobra próba! Spróbuj jeszcze raz i zobacz różnice.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
@@ -422,7 +427,7 @@ export default function LogicalAnalogiesRelationGame({
 
         <div className='flex w-full flex-col gap-1'>
           <div className='flex w-full flex-wrap items-center justify-between gap-2'>
-            <div className='flex flex-wrap gap-2'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
               <KangurButton
                 size='sm'
                 type='button'
@@ -465,12 +470,12 @@ export default function LogicalAnalogiesRelationGame({
         </div>
 
         <KangurInfoCard accent='rose' className='w-full' padding='sm' tone='accent'>
-          <div className='flex flex-wrap items-center justify-between gap-2'>
+          <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} justify-between`}>
             <div>
               <p className='text-sm font-bold'>Most relacji</p>
               <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
             </div>
-            <div className='flex flex-wrap items-center gap-2'>
+            <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurStatusChip accent='rose' size='sm'>
                 Runda {roundIndex + 1}/{TOTAL_ROUNDS}
               </KangurStatusChip>
@@ -494,7 +499,7 @@ export default function LogicalAnalogiesRelationGame({
             <p className='text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-600'>
               Ikony relacji
             </p>
-            <div className='flex flex-wrap gap-2'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
               {relationTokens.map((token) => {
                 const isActive = activeRelationId === token.id;
                 return (
@@ -620,7 +625,7 @@ export default function LogicalAnalogiesRelationGame({
                 </div>
               )}
             </Droppable>
-            <div className='flex flex-wrap gap-2'>
+            <div className={KANGUR_WRAP_ROW_CLASSNAME}>
               <KangurButton
                 size='sm'
                 type='button'
@@ -764,7 +769,7 @@ export default function LogicalAnalogiesRelationGame({
           <p className='text-xs [color:var(--kangur-page-muted-text)]'>
             Każda relacja pasuje tylko do jednej pary.
           </p>
-          <div className='flex flex-wrap gap-2'>
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             {!checked ? (
               <KangurButton
                 size='sm'

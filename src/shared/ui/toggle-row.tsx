@@ -1,32 +1,15 @@
 'use client';
 
-import React, { type ReactNode, createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 
+import type { ToggleRowProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { Card } from './card';
 import { Checkbox } from './checkbox';
 import { Switch } from './switch';
 
-export interface ToggleRowProps {
-  label: string;
-  description?: string | ReactNode | undefined;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  disabled?: boolean | undefined;
-  variant?: 'checkbox' | 'switch' | undefined;
-  className?: string | undefined;
-  labelClassName?: string | undefined;
-  descriptionClassName?: string | undefined;
-  id?: string | undefined;
-  icon?: ReactNode | undefined;
-  loading?: boolean | undefined;
-  error?: string | undefined;
-  title?: string | undefined;
-  children?: ReactNode | undefined;
-  showBorder?: boolean | undefined;
-  controlWrapper?: (control: ReactNode) => ReactNode;
-}
+export type { ToggleRowProps };
 
 type ToggleRowContextValue = ToggleRowProps & {
   descriptionId?: string;

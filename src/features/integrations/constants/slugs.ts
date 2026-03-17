@@ -1,5 +1,6 @@
 const BASE_INTEGRATION_SLUG_VALUES = ['baselinker', 'base', 'base-com'] as const;
 const TRADERA_INTEGRATION_SLUG_VALUES = ['tradera', 'tradera-api'] as const;
+export const LINKEDIN_INTEGRATION_SLUG = 'linkedin';
 
 export const BASE_INTEGRATION_SLUGS = new Set<string>(BASE_INTEGRATION_SLUG_VALUES);
 export const TRADERA_BROWSER_INTEGRATION_SLUG = 'tradera';
@@ -20,3 +21,6 @@ export const isTraderaBrowserIntegrationSlug = (value: string | null | undefined
 
 export const isTraderaApiIntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === TRADERA_API_INTEGRATION_SLUG;
+
+export const isLinkedInIntegrationSlug = (value: string | null | undefined): boolean =>
+  normalizeIntegrationSlug(value) === LINKEDIN_INTEGRATION_SLUG;

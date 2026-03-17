@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   KangurPracticeGameStage,
   KangurPracticeGameSummary,
@@ -18,6 +19,7 @@ import {
   KangurGlassPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_CENTER_ROW_CLASSNAME, KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   createNumberBalancePuzzle,
   evaluateNumberBalancePlacement,
@@ -233,6 +235,7 @@ export default function NumberBalanceRushGame(
         setServerOffsetMs(response.serverTimeMs - Date.now());
         lastServerTimeRef.current = response.serverTimeMs;
       } catch (_err) {
+        void ErrorSystem.captureException(_err);
         setMatch(null);
         setPlayer(null);
         setError('Nie udało się uruchomić meczu. Spróbuj ponownie.');
@@ -267,7 +270,8 @@ export default function NumberBalanceRushGame(
         document.body.removeChild(textarea);
       }
       setCopyStatus('success');
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       setCopyStatus('error');
     } finally {
       if (copyStatusTimeoutRef.current !== null) {
@@ -348,7 +352,8 @@ export default function NumberBalanceRushGame(
         return;
       }
       syncMatchState(response);
-    } catch {
+    } catch (error) {
+      void ErrorSystem.captureException(error);
       // Silent retry; background polling shouldn't interrupt gameplay.
     }
   }, [syncMatchState]);
@@ -525,6 +530,7 @@ export default function NumberBalanceRushGame(
         }, 300);
       }
     } catch (_err) {
+      void ErrorSystem.captureException(_err);
       setError('Nie udało się zapisać ruchu. Spróbuj ponownie.');
     } finally {
       setIsSubmitting(false);
@@ -701,7 +707,7 @@ export default function NumberBalanceRushGame(
     <DragDropContext onDragEnd={handleDragEnd}>
       <KangurPracticeGameStage className='w-full max-w-2xl'>
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
-          <div className='flex flex-wrap items-center gap-2'>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <KangurStatusChip className='px-4 py-2 text-sm font-bold' accent='amber'>
               Ty: {score}
             </KangurStatusChip>
@@ -727,7 +733,7 @@ export default function NumberBalanceRushGame(
         </div>
 
         {leaderboardEntries.length > 0 ? (
-          <div className='flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-900/80'>
+          <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-xs font-semibold text-amber-900/80`}>
             {playerRank ? (
               <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='slate'>
                 Miejsce: {playerRank}/{Math.max(playerCount, leaderboardEntries.length)}
@@ -751,7 +757,7 @@ export default function NumberBalanceRushGame(
                   entry.isSelf ? 'ring-2 ring-amber-200' : ''
                 )}
               >
-                <div className='flex items-center gap-2'>
+                <div className={KANGUR_CENTER_ROW_CLASSNAME}>
                   <span className='text-amber-900/70'>{entry.rank}.</span>
                   <span>{entry.label}</span>
                   {entry.isLeader ? (

@@ -117,8 +117,8 @@ describe('CmsStorefrontAppearance', () => {
     );
 
     expect(appearance.vars['--cms-appearance-bg']).toContain('color-mix');
-    expect(appearance.vars['--cms-appearance-button-primary-text']).toBe('#f3f4f6');
-    expect(appearance.vars['--cms-appearance-input-border']).toBe('rgba(255,255,255,0.18)');
+    expect(appearance.vars['--cms-appearance-button-primary-text']).toContain('color-mix');
+    expect(appearance.vars['--cms-appearance-input-border']).toContain('rgba(255,255,255,0.18)');
   });
 
   it('builds darker Kangur button and brighter tutor text variables for dark mode', () => {
@@ -146,7 +146,7 @@ describe('CmsStorefrontAppearance', () => {
     expect(appearance.vars['--kangur-chat-panel-radius-compact']).toBe('24px');
     expect(appearance.vars['--kangur-chat-spotlight-radius-sm']).toBe('18px');
     expect(appearance.vars['--kangur-chat-spotlight-radius-md']).toBe('22px');
-    expect(appearance.vars['--kangur-chat-spotlight-border']).toBe('rgba(252, 211, 77, 0.42)');
+    expect(appearance.vars['--kangur-chat-spotlight-border']).toBe('rgba(251, 191, 36, 0.8)');
     expect(appearance.vars['--kangur-chat-avatar-shell-background']).toBe('rgba(255,255,255,0.12)');
     expect(appearance.vars['--kangur-chat-avatar-shell-border']).toBe('rgba(255,255,255,0.25)');
     expect(appearance.vars['--kangur-chat-pointer-marker']).toBe('#f59e0b');

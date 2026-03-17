@@ -16,6 +16,48 @@ export const KANGUR_TOP_BAR_INNER_CLASSNAME =
 export const KANGUR_PAGE_CONTAINER_CLASSNAME =
   'kangur-page-container w-full min-w-0 mx-auto';
 export const KANGUR_PANEL_GAP_CLASSNAME = 'kangur-panel-gap';
+export const KANGUR_PANEL_ROW_CLASSNAME = cn(
+  'flex flex-col',
+  KANGUR_PANEL_GAP_CLASSNAME,
+  'sm:flex-row'
+);
+export const KANGUR_PANEL_ROW_MD_CLASSNAME = cn(
+  'flex flex-col',
+  KANGUR_PANEL_GAP_CLASSNAME,
+  'md:flex-row'
+);
+export const KANGUR_COMPACT_ROW_CLASSNAME = cn('flex flex-col gap-1', 'sm:flex-row');
+export const KANGUR_TIGHT_ROW_CLASSNAME = cn('flex flex-col gap-2', 'sm:flex-row');
+export const KANGUR_SPACED_ROW_CLASSNAME = cn('flex flex-col gap-3', 'sm:flex-row');
+export const KANGUR_RELAXED_ROW_CLASSNAME = cn('flex flex-col gap-4', 'sm:flex-row');
+export const KANGUR_STACK_ROW_CLASSNAME = cn('flex-col', 'sm:flex-row');
+export const KANGUR_STACK_ROW_LG_CLASSNAME = cn('flex-col', 'lg:flex-row');
+export const KANGUR_PANEL_ROW_LG_CLASSNAME = cn(
+  'flex flex-col',
+  KANGUR_PANEL_GAP_CLASSNAME,
+  'lg:flex-row'
+);
+export const KANGUR_PANEL_ROW_XL_CLASSNAME = cn(
+  'flex flex-col',
+  KANGUR_PANEL_GAP_CLASSNAME,
+  'xl:flex-row'
+);
+export const KANGUR_WRAP_ROW_CLASSNAME = 'flex flex-wrap gap-2';
+export const KANGUR_WRAP_CENTER_ROW_CLASSNAME = 'flex flex-wrap items-center gap-2';
+export const KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME = 'inline-flex flex-wrap items-center gap-2';
+export const KANGUR_WRAP_START_ROW_CLASSNAME = 'flex flex-wrap items-start gap-2';
+export const KANGUR_WRAP_ROW_TIGHT_CLASSNAME = 'flex flex-wrap gap-x-2 gap-y-1';
+export const KANGUR_WRAP_ROW_SPACED_CLASSNAME = 'flex flex-wrap gap-x-3 gap-y-2';
+export const KANGUR_START_ROW_CLASSNAME = 'flex items-start gap-2';
+export const KANGUR_START_ROW_SPACED_CLASSNAME = 'flex items-start gap-3';
+export const KANGUR_CENTER_ROW_CLASSNAME = 'flex items-center gap-2';
+export const KANGUR_INLINE_CENTER_ROW_CLASSNAME = 'inline-flex items-center gap-2';
+export const KANGUR_WRAP_ROW_FINE_CLASSNAME = 'flex flex-wrap gap-1.5';
+export const KANGUR_PANEL_GRID_TO_ROW_CLASSNAME = cn(
+  'grid w-full',
+  KANGUR_PANEL_GAP_CLASSNAME,
+  'sm:flex sm:w-auto sm:flex-row'
+);
 export const KANGUR_LESSON_PANEL_GAP_CLASSNAME = 'kangur-lesson-panel-gap';
 export const KANGUR_WIDGET_TITLE_CLASSNAME = 'text-lg font-bold tracking-[-0.02em]';
 
@@ -136,7 +178,7 @@ export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
 };
 
 export const KANGUR_SURFACE_CARD_CLASSNAME =
-  'soft-card kangur-card-surface w-full border text-left transition duration-200';
+  'soft-card kangur-card-surface w-full min-w-0 border text-left transition duration-200';
 
 export const KANGUR_OPTION_CARD_CLASSNAME = `${KANGUR_SURFACE_CARD_CLASSNAME} group kangur-card-padding-md hover:-translate-y-[1px]`;
 

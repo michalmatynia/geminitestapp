@@ -108,7 +108,10 @@ export async function getKangurScoresHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  await resolveKangurActor(req).catch(() => null);
+  await resolveKangurActor(req).catch((error) => {
+    void ErrorSystem.captureException(error);
+    return null;
+  });
   const query = resolveKangurScoresQuery(req, ctx);
 
   const repository = await getKangurScoreRepository();

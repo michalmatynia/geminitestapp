@@ -21,7 +21,11 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_STACK_ROW_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createLessonPracticeReward,
@@ -443,7 +447,7 @@ export default function GeometryBasicsWorkshopGame({
               : 'Dobra próba! Spróbuj jeszcze raz, aby utrwalić pojęcia.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}

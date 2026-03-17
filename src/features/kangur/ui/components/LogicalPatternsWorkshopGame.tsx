@@ -21,7 +21,13 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_STACK_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createLessonPracticeReward,
@@ -449,7 +455,7 @@ export default function LogicalPatternsWorkshopGame({
               : 'Dobra próba! Spróbuj jeszcze raz i sprawdź reguły.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
@@ -489,7 +495,7 @@ export default function LogicalPatternsWorkshopGame({
           <p className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
             Przeciągnij kafelki do pustych pól albo kliknij kafelek i potem kliknij puste pole.
           </p>
-          <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <div className={`mt-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
             <KangurButton
               size='sm'
               type='button'
@@ -655,7 +661,7 @@ export default function LogicalPatternsWorkshopGame({
 
           {checked ? (
             <KangurInfoCard accent='violet' padding='sm' tone='accent' className='w-full'>
-              <div className='flex flex-wrap items-center gap-2'>
+              <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                 <KangurStatusChip accent='violet' size='sm' labelStyle='caps'>
                   Reguła
                 </KangurStatusChip>
@@ -666,7 +672,7 @@ export default function LogicalPatternsWorkshopGame({
               <p className='mt-1 text-[11px] [color:var(--kangur-page-muted-text)]'>
                 {round.stepHint}
               </p>
-              <div className='mt-2 flex flex-wrap items-center gap-2'>
+              <div className={`mt-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
                 {usedHint ? (
                   <KangurStatusChip accent='rose' size='sm'>
                     Podpowiedź użyta
@@ -802,7 +808,7 @@ export default function LogicalPatternsWorkshopGame({
         </div>
 
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
-          <div className='flex flex-wrap gap-2'>
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             <KangurButton
               size='sm'
               type='button'

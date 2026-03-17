@@ -605,8 +605,15 @@
     color: var(--kangur-page-text, #334155);
   }
 
+  html.kangur-surface-active,
+  body.kangur-surface-active,
+  #app-content.kangur-surface-active {
+    overflow-x: hidden;
+  }
+
   .kangur-page-container {
     max-width: var(--kangur-page-max-width, 1440px);
+    min-width: 0;
     padding-top: clamp(
       24px,
       calc(var(--kangur-page-padding-top, 40px) * 0.6),
@@ -633,6 +640,11 @@
             var(--kangur-page-padding-left, 32px)
           ) + env(safe-area-inset-left)
     );
+    overflow-wrap: anywhere;
+  }
+
+  .kangur-page-container > * {
+    min-width: 0;
   }
 
   .kangur-page-container img {
@@ -1523,6 +1535,14 @@
     .kangur-segmented-control-item {
       flex: 1 1 calc(50% - 0.5rem);
     }
+
+    .kangur-nav-item,
+    .kangur-segmented-control-item {
+      max-width: 100%;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+    }
   }
 
   @media (max-width: 420px) {
@@ -1533,9 +1553,18 @@
       --kangur-page-padding-left: 16px !important;
       --kangur-panel-padding-md: 14px !important;
       --kangur-panel-padding-lg: 16px !important;
-      --kangur-panel-padding-xl: 20px !important;
+      --kangur-panel-padding-xl: 18px !important;
+      --kangur-card-padding-sm: 8px !important;
       --kangur-card-padding-md: 12px !important;
       --kangur-card-padding-lg: 14px !important;
+      --kangur-card-padding-xl: 16px !important;
+      --kangur-pill-font-size: 12px;
+      --kangur-pill-padding-y: 7px;
+      --kangur-pill-padding-x: 10px;
+    }
+
+    .kangur-segmented-control-item {
+      flex: 1 1 100%;
     }
   }
 

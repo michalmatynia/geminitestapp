@@ -5,10 +5,11 @@ import {
   KangurInfoCard,
   KangurMetaText,
   KangurPanelIntro,
+  KangurPanelRow,
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_COMPACT_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { buildLessonMasteryInsights } from '@/features/kangur/ui/services/profile';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -74,7 +75,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
               className='rounded-[22px]'
               padding='md'
             >
-              <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+              <KangurPanelRow className='items-start sm:justify-between'>
                 <div className='min-w-0'>
                   <KangurCardTitle as='div'>
                     {item.emoji} {item.title}
@@ -90,7 +91,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                 >
                   {item.masteryPercent}%
                 </KangurStatusChip>
-              </div>
+              </KangurPanelRow>
               <KangurMetaText as='div' className='mt-2' size='xs'>
                 Najlepszy wynik: {item.bestScorePercent}% · Ostatnia próba:{' '}
                 {formatCompletedAt(item.lastCompletedAt)}
@@ -116,7 +117,7 @@ export default function LessonMasteryInsights({
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
-      <div className='flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between'>
+      <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-end sm:justify-between`}>
         <KangurPanelIntro description={resolvedSectionSummary} eyebrow={resolvedSectionTitle} />
         {insights.trackedLessons > 0 && (
           <KangurStatusChip accent='indigo' size='md'>

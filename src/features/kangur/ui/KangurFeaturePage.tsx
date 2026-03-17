@@ -7,6 +7,7 @@ import {
 } from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
+  getKangurPageHref,
   resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
 import {
@@ -37,7 +38,7 @@ type KangurFeaturePageProps = {
 
 export function KangurFeaturePageShell(): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
-  const { embedded, pageKey, requestedPath } = useKangurRoutingState();
+  const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
   const classOverrides = useKangurClassOverrides();
@@ -102,6 +103,13 @@ export function KangurFeaturePageShell(): JSX.Element {
       <KangurFeatureApp />
       <footer className='w-full border-t border-white/10 px-4 py-6 text-center text-xs [color:var(--kangur-page-muted-text)] sm:px-6'>
         <span>Creator credentials: Michał Matynia · created 2026 · </span>
+        <a
+          className='font-semibold [color:var(--kangur-page-text)] hover:underline'
+          href={getKangurPageHref('SocialUpdates', basePath)}
+        >
+          Social updates
+        </a>
+        <span> · </span>
         <a
           className='font-semibold [color:var(--kangur-page-text)] hover:underline'
           href='mailto:mmatynia@gmail.com'

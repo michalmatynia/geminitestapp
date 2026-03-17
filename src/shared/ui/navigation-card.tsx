@@ -1,28 +1,12 @@
 import Link from 'next/link';
 import * as React from 'react';
 
+import type { NavigationCardProps } from '@/shared/contracts/ui';
 import { cn, getTextContent, warnMissingAccessibleLabel } from '@/shared/utils';
 
-import { Card, type CardProps } from './card';
+import { Card } from './card';
 
-type NavigationCardHeadingTag = 'h2' | 'h3' | 'p';
-
-export type NavigationCardProps = {
-  description?: React.ReactNode;
-  href: string;
-  leading?: React.ReactNode;
-  linkClassName?: string;
-  title: React.ReactNode;
-  ariaLabel?: string;
-  titleAs?: NavigationCardHeadingTag;
-  titleClassName?: string;
-  descriptionClassName?: string;
-  contentClassName?: string;
-  trailing?: React.ReactNode;
-  className?: string;
-  variant?: CardProps['variant'];
-  padding?: CardProps['padding'];
-};
+export type { NavigationCardProps };
 
 export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
   const {

@@ -18,9 +18,11 @@ export type KangurNavActionProps = {
   targetPageKey?: string;
   testId?: string;
   title?: string;
-  transitionActive?: boolean;
-  transitionAcknowledgeMs?: number;
-  transitionSourceId?: string;
+  transition?: {
+    active?: boolean;
+    acknowledgeMs?: number;
+    sourceId?: string;
+  };
   size?: KangurButtonProps['size'];
   variant?: KangurButtonProps['variant'];
   children: ReactNode;
@@ -37,13 +39,12 @@ export function KangurNavAction({
   targetPageKey,
   testId,
   title,
-  transitionActive = false,
-  transitionAcknowledgeMs,
-  transitionSourceId,
+  transition,
   size = 'md',
   variant,
   children,
 }: KangurNavActionProps): React.JSX.Element {
+  const transitionActive = transition?.active ?? false;
   const resolvedVariant =
     variant ?? (active || transitionActive ? 'navigationActive' : 'navigation');
 
@@ -65,8 +66,8 @@ export function KangurNavAction({
         <Link
           href={href}
           targetPageKey={targetPageKey}
-          transitionAcknowledgeMs={transitionAcknowledgeMs}
-          transitionSourceId={transitionSourceId}
+          transitionAcknowledgeMs={transition?.acknowledgeMs}
+          transitionSourceId={transition?.sourceId}
         >
           {children}
         </Link>

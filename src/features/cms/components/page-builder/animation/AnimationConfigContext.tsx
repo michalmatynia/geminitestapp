@@ -5,7 +5,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { internalError } from '@/shared/errors/app-error';
-import type { VectorShape } from '@/shared/ui';
+import type { VectorShape } from '@/shared/contracts/vector';
 
 
 export type OpenVectorOverlay = (options: {

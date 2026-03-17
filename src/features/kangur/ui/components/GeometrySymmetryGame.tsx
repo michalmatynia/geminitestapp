@@ -19,6 +19,7 @@ import {
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
+  KangurPanelRow,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -1072,7 +1073,7 @@ export default function GeometrySymmetryGame({
             </p>
           )}
 
-          <div className='flex w-full flex-col kangur-panel-gap sm:flex-row'>
+          <KangurPanelRow className='w-full'>
             <KangurButton
               className='w-full sm:flex-1'
               disabled={feedback !== null || points.length === 0}
@@ -1103,7 +1104,7 @@ export default function GeometrySymmetryGame({
             >
               Sprawdź
             </KangurButton>
-          </div>
+          </KangurPanelRow>
         </KangurGlassPanel>
       </div>
     </section>

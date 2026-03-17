@@ -137,6 +137,7 @@ function SystemLogsContent(): React.JSX.Element {
     logsQuery,
     metricsQuery,
     clearLogsMutation,
+    ConfirmationModal,
   } = useSystemLogsState();
   const { handleFilterChange, handleResetFilters, confirmAction, handleClearLogs } =
     useSystemLogsActions();
@@ -162,6 +163,7 @@ function SystemLogsContent(): React.JSX.Element {
   return (
     <>
       <SystemLogsContextRegistrySource />
+      <ConfirmationModal />
       <PageLayout
         title='Observation Post'
         description='Aggregate telemetry and event logging across all platform components.'

@@ -18,8 +18,8 @@ import {
   FileUploadTrigger,
   EmptyState,
   Card,
+  PanelHeader,
 } from '@/shared/ui';
-import { PanelHeader } from '@/shared/contracts/ui';
 
 import {
   useCaseResolverPageActions,
@@ -169,7 +169,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
           <div className='h-full p-3'>
             <FileUploadTrigger
               accept='image/*'
-              onFilesSelected={(files) => {
+              onFilesSelected={(files: File[]) => {
                 if (files[0]) void handleAttachImageFile(files[0]);
               }}
               disabled={isAttachingImage}

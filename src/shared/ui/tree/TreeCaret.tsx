@@ -3,23 +3,12 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 
+import type { TreeCaretProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { useTreeNodeState } from './TreeContext';
 
-export interface TreeCaretProps {
-  nodeId?: string | undefined;
-  isOpen?: boolean | undefined;
-  hasChildren?: boolean | undefined;
-  showDot?: boolean | undefined;
-  onToggle?: ((event: React.MouseEvent | React.KeyboardEvent) => void) | undefined;
-  ariaLabel?: string | undefined;
-  className?: string | undefined;
-  buttonClassName?: string | undefined;
-  iconClassName?: string | undefined;
-  placeholderClassName?: string | undefined;
-  dotClassName?: string | undefined;
-}
+export type { TreeCaretProps };
 
 export function TreeCaret({
   nodeId,

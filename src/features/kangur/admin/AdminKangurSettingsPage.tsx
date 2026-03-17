@@ -4,12 +4,6 @@ import Link from 'next/link';
 import { type ReactElement, Suspense } from 'react';
 
 import {
-  type KangurParentVerificationEmailSettings,
-} from '@/features/kangur/settings';
-import {
-  type KangurAiTutorAppSettings,
-} from '@/features/kangur/settings-ai-tutor';
-import {
   Badge,
   Button,
   Card,
@@ -30,7 +24,7 @@ import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 
-export default function AdminKangurSettingsPage(): ReactElement {
+export function AdminKangurSettingsPage(): ReactElement {
   const {
     engine,
     setEngine,
@@ -284,3 +278,5 @@ export default function AdminKangurSettingsPage(): ReactElement {
     </KangurAdminContentShell>
   );
 }
+
+export default AdminKangurSettingsPage;

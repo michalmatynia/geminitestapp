@@ -14,6 +14,7 @@ const {
   redirectMock,
   resolveCmsDomainFromHeadersMock,
   shouldApplyFrontPageAppSelectionMock,
+  getKangurStorefrontDefaultModeMock,
 } = vi.hoisted(() => ({
   flushMock: vi.fn(),
   frontPageAllowed: new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']),
@@ -28,6 +29,7 @@ const {
   redirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
+  getKangurStorefrontDefaultModeMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -48,8 +50,12 @@ vi.mock('@/app/(frontend)/HomeContent', () => ({
   HomeContent: homeContentMock,
 }));
 
-vi.mock('@/features/kangur/ui/KangurPublicApp', () => ({
-  KangurPublicApp: kangurPublicAppMock,
+vi.mock('@/features/kangur/ui/KangurPublicAppEntry', () => ({
+  KangurPublicAppEntry: kangurPublicAppMock,
+}));
+
+vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+  getKangurStorefrontDefaultMode: getKangurStorefrontDefaultModeMock,
 }));
 
 vi.mock('@/shared/lib/front-page-app', () => ({
@@ -87,6 +93,7 @@ describe('front page app selection', () => {
     kangurPublicAppMock.mockReturnValue(null);
     resolveCmsDomainFromHeadersMock.mockResolvedValue({ id: 'default-domain' });
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
+    getKangurStorefrontDefaultModeMock.mockResolvedValue('default');
     getFrontPagePublicOwnerMock.mockImplementation((value: string | null | undefined) =>
       value === 'kangur' ? 'kangur' : 'cms'
     );
@@ -136,7 +143,7 @@ describe('front page app selection', () => {
 
     expect(result).toMatchObject({
       type: kangurPublicAppMock,
-      props: { basePath: '/' },
+      props: { basePath: '/', initialMode: 'default' },
     });
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();

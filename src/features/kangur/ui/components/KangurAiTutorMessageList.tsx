@@ -4,6 +4,7 @@ import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/Ka
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn, sanitizeSvg } from '@/features/kangur/shared/utils';
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
@@ -419,7 +420,7 @@ export function KangurAiTutorMessageList({
                   data-kangur-tts-ignore='true'
                   className='soft-card kangur-chat-card kangur-chat-padding-sm border kangur-chat-surface-soft'
                 >
-                  <div className='flex flex-wrap items-center gap-2'>
+                  <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                     <span className='text-[10px] font-semibold uppercase tracking-[0.16em] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
                       {tutorContent.messageList.helpfulPrompt}
                     </span>

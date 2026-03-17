@@ -1,9 +1,10 @@
 import { AlertCircle, X } from 'lucide-react';
 import * as React from 'react';
 
+import type { AlertVariant } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
-export type AlertVariant = 'default' | 'error' | 'warning' | 'success' | 'info';
+export type { AlertVariant };
 
 interface AlertProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   variant?: AlertVariant;

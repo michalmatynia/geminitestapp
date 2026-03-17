@@ -32,7 +32,7 @@ export * from './card';
 export * from './client-only';
 export * from './checkbox';
 export * from './collapsible';
-export * from './DocsTooltipEnhancer';
+export { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './input';

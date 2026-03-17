@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Hint } from '@/shared/ui';
-import { SettingsFieldsRenderer } from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 import { MiniRichTextEditor } from './MiniRichTextEditor';

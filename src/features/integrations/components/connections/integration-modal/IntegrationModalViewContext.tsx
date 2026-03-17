@@ -9,6 +9,7 @@ export type IntegrationModalViewContextValue = {
   activeTab: string;
   isTradera: boolean;
   isAllegro: boolean;
+  isLinkedIn: boolean;
   isBaselinker: boolean;
   showPlaywright: boolean;
   showAllegroConsole: boolean;

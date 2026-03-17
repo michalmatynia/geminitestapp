@@ -4,9 +4,16 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurPanelRow,
   KangurSelectField,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_SPACED_ROW_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurDuelLobbyEntry, KangurDuelMode } from '@/features/kangur/shared/contracts/kangur-duels';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -91,9 +98,9 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
       aria-describedby={lobbyDescriptionId}
       aria-busy={isLobbyLoading}
     >
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+      <KangurPanelRow className='sm:items-center sm:justify-between'>
         <div className='space-y-1 min-w-0'>
-          <div className='flex flex-wrap items-center gap-2' aria-live='polite' aria-atomic='true'>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME} aria-live='polite' aria-atomic='true'>
             <h3 id={lobbyHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
               Lobby pojedynków
             </h3>
@@ -108,8 +115,8 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             Wybierz ucznia, który czeka na pojedynek albo dodaj własne wyzwanie.
           </p>
         </div>
-        <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end'>
-          <div className='flex flex-wrap items-center gap-2'>
+        <div className={cn(KANGUR_TIGHT_ROW_CLASSNAME, 'w-full sm:w-auto sm:items-center sm:justify-end')}>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             {lobbyLastUpdatedAt ? (
               <KangurStatusChip accent='slate' size='sm'>
                 Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
@@ -131,7 +138,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
             {isLobbyLoading ? 'Odświeżamy…' : 'Odśwież'}
           </KangurButton>
         </div>
-      </div>
+      </KangurPanelRow>
 
       <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2 sm:p-4'>
         <div className='min-w-0 space-y-1'>
@@ -212,7 +219,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                   <div className='h-3 w-36 rounded-full bg-slate-200/60' />
                 </div>
               </div>
-              <div className='flex flex-wrap gap-2'>
+              <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                 <div className='h-6 w-20 rounded-full bg-slate-200/60' />
                 <div className='h-6 w-24 rounded-full bg-slate-200/60' />
                 <div className='h-6 w-16 rounded-full bg-slate-200/60' />
@@ -275,7 +282,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                   role='group'
                   aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                 >
-                  <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                  <div className={cn(KANGUR_SPACED_ROW_CLASSNAME, 'sm:items-start sm:justify-between')}>
                     <div className='flex items-center kangur-panel-gap min-w-0'>
                       <div
                         className='flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-base font-extrabold text-indigo-700 sm:h-12 sm:w-12 sm:text-lg'
@@ -302,7 +309,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                       Dołącz
                     </KangurButton>
                   </div>
-                  <div className='flex flex-wrap gap-2'>
+                  <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                     <KangurStatusChip accent={resolveSessionAccent(entry.status)} size='sm'>
                       {SESSION_STATUS_LABELS[entry.status]}
                     </KangurStatusChip>

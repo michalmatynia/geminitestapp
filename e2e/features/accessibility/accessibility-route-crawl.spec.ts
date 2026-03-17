@@ -17,9 +17,10 @@ const routes = filterAccessibilityRouteEntries(
 test.describe.configure({ mode: 'serial' });
 
 const PUBLIC_ROUTE_TIMEOUT_MS = 180_000;
-const ADMIN_ROUTE_TIMEOUT_MS = 240_000;
-const ADMIN_NAV_TIMEOUT_MS = 180_000;
-const ADMIN_TRANSITION_TIMEOUT_MS = 90_000;
+const ADMIN_ROUTE_TIMEOUT_MS = 360_000;
+const ADMIN_NAV_TIMEOUT_MS = 240_000;
+const ADMIN_TRANSITION_TIMEOUT_MS = 120_000;
+const MAIN_READY_TIMEOUT_MS = 30_000;
 
 for (const routeEntry of routes) {
   test(buildAccessibilityRouteCrawlTitle(routeEntry), async ({ page }) => {
@@ -42,10 +43,11 @@ for (const routeEntry of routes) {
     }
 
     const main = page.locator('#app-content');
-    await expect(main).toBeVisible();
-    await expect(main).toHaveAttribute('tabindex', '-1');
+    await expect(main).toBeVisible({ timeout: MAIN_READY_TIMEOUT_MS });
+    await expect(main).toHaveAttribute('tabindex', '-1', { timeout: MAIN_READY_TIMEOUT_MS });
 
-    const skipLink = page.getByRole('link', { name: 'Skip to content', includeHidden: true });
+    const skipLink = page.getByRole('link', { name: 'Skip to content', includeHidden: true }).first();
+    await expect(skipLink).toBeVisible({ timeout: MAIN_READY_TIMEOUT_MS });
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');

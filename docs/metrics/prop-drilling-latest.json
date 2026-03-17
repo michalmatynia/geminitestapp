@@ -1,25 +1,25 @@
 {
   "summary": {
-    "generatedAt": "2026-03-17T11:42:57.999Z",
-    "scannedSourceFiles": 5214,
-    "scannedJsxFiles": 1893,
-    "componentCount": 3085,
+    "generatedAt": "2026-03-17T14:09:05.570Z",
+    "scannedSourceFiles": 5277,
+    "scannedJsxFiles": 1896,
+    "componentCount": 3109,
     "componentsWithForwarding": 25,
     "componentsWithAnyForwarding": 28,
-    "resolvedTransitionCount": 127,
-    "depth2CandidateChainCount": 127,
+    "resolvedTransitionCount": 100,
+    "depth2CandidateChainCount": 100,
     "candidateChainCount": 0,
     "highPriorityChainCount": 0,
-    "unknownSpreadForwardingCount": 3,
-    "highPropCountComponentCount": 36,
-    "passThroughHotspotCount": 8,
+    "unknownSpreadForwardingCount": 4,
+    "highPropCountComponentCount": 34,
+    "passThroughHotspotCount": 7,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
         "count": 21
       },
       {
-        "scope": "shared-ui",
+        "scope": "app",
         "count": 3
       },
       {
@@ -27,247 +27,13 @@
         "count": 2
       },
       {
-        "scope": "shared",
+        "scope": "shared-ui",
         "count": 2
       }
     ]
   },
   "backlog": [],
   "transitionBacklog": [
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "requireEmailVerification",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "requireEmailVerification",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 78
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "requireEmailVerification",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "requireEmailVerification",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 78
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "requireEmailVerification",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "requireEmailVerification",
-          "targetProp": "checked",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 78
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "requireCaptcha",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "requireCaptcha",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "requireCaptcha",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "requireCaptcha",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "requireCaptcha",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "requireCaptcha",
-          "targetProp": "checked",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "notificationsEnabled",
-        "label"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "notificationsEnabled",
-          "targetProp": "label",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 114
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "notificationsEnabled",
-        "description"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "notificationsEnabled",
-          "targetProp": "description",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 114
-        }
-      ]
-    },
-    {
-      "score": 78,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "notificationsEnabled",
-        "checked"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "notificationsEnabled",
-          "targetProp": "checked",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 114
-        }
-      ]
-    },
     {
       "score": 72,
       "depth": 2,
@@ -317,6 +83,58 @@
           "targetProp": "themeSettings",
           "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
           "line": 79
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 98
         }
       ]
     },
@@ -373,58 +191,6 @@
       ]
     },
     {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setNotificationsDisabledUntilInput",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setNotificationsDisabledUntilInput",
-          "targetProp": "onChange",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 132
-        }
-      ]
-    },
-    {
-      "score": 68,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "setNotificationsDisabledUntilInput",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "setNotificationsDisabledUntilInput",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 142
-        }
-      ]
-    },
-    {
       "score": 64,
       "depth": 2,
       "rootFanout": 3,
@@ -451,6 +217,32 @@
       ]
     },
     {
+      "score": 64,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onOpenChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onOpenChange",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 50
+        }
+      ]
+    },
+    {
       "score": 62,
       "depth": 2,
       "rootFanout": 2,
@@ -659,314 +451,28 @@
       ]
     },
     {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-        "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton"
-      ],
-      "propPath": [
-        "onOpenChange",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-          "toComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
-          "sourceProp": "onOpenChange",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
-          "line": 75
-        }
-      ]
-    },
-    {
-      "score": 62,
-      "depth": 2,
-      "rootFanout": 2,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-      "componentPath": [
-        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
-      ],
-      "propPath": [
-        "onOpenChange",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
-          "sourceProp": "onOpenChange",
-          "targetProp": "onClick",
-          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
-          "line": 102
-        }
-      ]
-    },
-    {
       "score": 58,
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "sinkComponentId": "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx#CmsStorefrontAppearanceProvider",
       "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/input.tsx#Input"
+        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+        "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx#CmsStorefrontAppearanceProvider"
       ],
       "propPath": [
-        "dailyMessageLimitInput",
-        "value"
+        "storefrontAppearanceMode",
+        "initialMode"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "dailyMessageLimitInput",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 171
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setDailyMessageLimitInput",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setDailyMessageLimitInput",
-          "targetProp": "onChange",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 171
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "guestIntroMode",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "guestIntroMode",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 189
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setGuestIntroMode",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setGuestIntroMode",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 189
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "homeOnboardingMode",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "homeOnboardingMode",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 206
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setHomeOnboardingMode",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setHomeOnboardingMode",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 206
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "agentPersonaId",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "agentPersonaId",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 229
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setAgentPersonaId",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setAgentPersonaId",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 229
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "motionPresetId",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "motionPresetId",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 276
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/select-simple.tsx#SelectSimple"
-      ],
-      "propPath": [
-        "setMotionPresetId",
-        "onValueChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
-          "sourceProp": "setMotionPresetId",
-          "targetProp": "onValueChange",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 276
+          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+          "toComponentId": "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx#CmsStorefrontAppearanceProvider",
+          "sourceProp": "storefrontAppearanceMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
+          "line": 22
         }
       ]
     },
@@ -1045,188 +551,6 @@
           "targetProp": "disabled",
           "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
           "line": 175
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "setRequireEmailVerification",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "setRequireEmailVerification",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 78
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "setRequireCaptcha",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "setRequireCaptcha",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/toggle-row.tsx#ToggleRow"
-      ],
-      "propPath": [
-        "setNotificationsEnabled",
-        "onCheckedChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
-          "sourceProp": "setNotificationsEnabled",
-          "targetProp": "onCheckedChange",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 114
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "notificationsDisabledUntilInput",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "notificationsDisabledUntilInput",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 132
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "resendCooldownInput",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "resendCooldownInput",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 162
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "setResendCooldownInput",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "setResendCooldownInput",
-          "targetProp": "onChange",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 162
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "sinkComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
-      "componentPath": [
-        "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "initialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "initialMode",
-          "relativePath": "src/shared/components/FrontendPublicOwnerShell.tsx",
-          "line": 31
         }
       ]
     },
@@ -1391,6 +715,32 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
+      "sinkComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
+      "componentPath": [
+        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
+        "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider"
+      ],
+      "propPath": [
+        "kangurInitialMode",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
+          "toComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
+          "sourceProp": "kangurInitialMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -1538,7 +888,59 @@
           "sourceProp": "closeAriaLabel",
           "targetProp": "aria-label",
           "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
-          "line": 75
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogCloseButton.tsx#KangurDialogCloseButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+        "src/features/kangur/ui/components/KangurDialogCloseButton.tsx#KangurDialogCloseButton"
+      ],
+      "propPath": [
+        "closeAriaLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialogCloseButton.tsx#KangurDialogCloseButton",
+          "sourceProp": "closeAriaLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogCloseButton.tsx#KangurDialogCloseButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+        "src/features/kangur/ui/components/KangurDialogCloseButton.tsx#KangurDialogCloseButton"
+      ],
+      "propPath": [
+        "closeLabel",
+        "label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialogCloseButton.tsx#KangurDialogCloseButton",
+          "sourceProp": "closeLabel",
+          "targetProp": "label",
+          "relativePath": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
+          "line": 28
         }
       ]
     },
@@ -1807,32 +1209,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyCmsStorefrontAppearanceProvider",
-      "componentPath": [
-        "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/shared/components/FrontendLayoutClient.tsx#LazyCmsStorefrontAppearanceProvider"
-      ],
-      "propPath": [
-        "storefrontAppearanceMode",
-        "initialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyCmsStorefrontAppearanceProvider",
-          "sourceProp": "storefrontAppearanceMode",
-          "targetProp": "initialMode",
-          "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
-          "line": 41
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -1859,24 +1235,50 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "sinkComponentId": "src/shared/ui/form-section.tsx#FormSection",
+      "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+      "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
       "componentPath": [
-        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-        "src/shared/ui/form-section.tsx#FormSection"
+        "src/app/(frontend)/kangur/error.tsx#Error",
+        "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback"
       ],
       "propPath": [
-        "className",
-        "className"
+        "error",
+        "error"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-          "toComponentId": "src/shared/ui/form-section.tsx#FormSection",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-          "line": 137
+          "fromComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+          "toComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
+          "sourceProp": "error",
+          "targetProp": "error",
+          "relativePath": "src/app/(frontend)/kangur/error.tsx",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+      "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
+      "componentPath": [
+        "src/app/(frontend)/kangur/error.tsx#Error",
+        "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback"
+      ],
+      "propPath": [
+        "reset",
+        "reset"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
+          "toComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
+          "sourceProp": "reset",
+          "targetProp": "reset",
+          "relativePath": "src/app/(frontend)/kangur/error.tsx",
+          "line": 14
         }
       ]
     },
@@ -1907,132 +1309,54 @@
       ]
     },
     {
-      "score": 50,
+      "score": 44,
       "depth": 2,
       "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "sinkComponentId": "src/shared/ui/form-section.tsx#FormSection",
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "sinkComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
       "componentPath": [
-        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-        "src/shared/ui/form-section.tsx#FormSection"
+        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell"
       ],
       "propPath": [
-        "className",
-        "className"
+        "publicOwner",
+        "publicOwner"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-          "toComponentId": "src/shared/ui/form-section.tsx#FormSection",
-          "sourceProp": "className",
-          "targetProp": "className",
-          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-          "line": 66
+          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+          "sourceProp": "publicOwner",
+          "targetProp": "publicOwner",
+          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
+          "line": 24
         }
       ]
     },
     {
-      "score": 50,
+      "score": 44,
       "depth": 2,
       "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "sinkComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
       "componentPath": [
-        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
+        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell"
       ],
       "propPath": [
-        "enabled",
-        "enabled"
+        "kangurInitialMode",
+        "kangurInitialMode"
       ],
       "transitions": [
         {
-          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-          "sourceProp": "enabled",
-          "targetProp": "enabled",
-          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
-          "line": 22
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-      "componentPath": [
-        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
-      ],
-      "propPath": [
-        "moduleId",
-        "moduleId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-          "sourceProp": "moduleId",
-          "targetProp": "moduleId",
-          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
-          "line": 22
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-      "componentPath": [
-        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
-      ],
-      "propPath": [
-        "rootId",
-        "rootId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-          "sourceProp": "rootId",
-          "targetProp": "rootId",
-          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
-          "line": 22
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-      "componentPath": [
-        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
-      ],
-      "propPath": [
-        "fallbackDocId",
-        "fallbackDocId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
-          "sourceProp": "fallbackDocId",
-          "targetProp": "fallbackDocId",
-          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
-          "line": 22
+          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+          "sourceProp": "kangurInitialMode",
+          "targetProp": "kangurInitialMode",
+          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
+          "line": 24
         }
       ]
     },
@@ -2370,7 +1694,7 @@
           "sourceProp": "finishLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx",
-          "line": 537
+          "line": 542
         }
       ]
     },
@@ -2396,7 +1720,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx",
-          "line": 537
+          "line": 542
         }
       ]
     },
@@ -2474,7 +1798,7 @@
           "sourceProp": "finishLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx",
-          "line": 349
+          "line": 350
         }
       ]
     },
@@ -2500,7 +1824,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx",
-          "line": 349
+          "line": 350
         }
       ]
     },
@@ -2526,7 +1850,7 @@
           "sourceProp": "finishLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx",
-          "line": 411
+          "line": 414
         }
       ]
     },
@@ -2552,7 +1876,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx",
-          "line": 411
+          "line": 414
         }
       ]
     },
@@ -2682,7 +2006,7 @@
           "sourceProp": "finishLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx",
-          "line": 409
+          "line": 410
         }
       ]
     },
@@ -2708,7 +2032,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx",
-          "line": 409
+          "line": 410
         }
       ]
     },
@@ -2734,7 +2058,7 @@
           "sourceProp": "finishLabel",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx",
-          "line": 241
+          "line": 242
         }
       ]
     },
@@ -2760,7 +2084,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx",
-          "line": 241
+          "line": 242
         }
       ]
     },
@@ -2770,9 +2094,35 @@
       "rootFanout": 1,
       "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
       "componentPath": [
         "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog"
+      ],
+      "propPath": [
+        "open",
+        "open"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialog.tsx#KangurDialog",
+          "sourceProp": "open",
+          "targetProp": "open",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 50
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
         "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
       ],
       "propPath": [
@@ -2781,12 +2131,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "fromComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
           "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
           "sourceProp": "title",
           "targetProp": "title",
-          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
-          "line": 60
+          "relativePath": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
+          "line": 25
         }
       ]
     },
@@ -2795,10 +2145,10 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "rootComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
       "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
       "componentPath": [
-        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
         "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
       ],
       "propPath": [
@@ -2807,12 +2157,12 @@
       ],
       "transitions": [
         {
-          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "fromComponentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
           "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
           "sourceProp": "description",
           "targetProp": "description",
-          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
-          "line": 60
+          "relativePath": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
+          "line": 25
         }
       ]
     },
@@ -3237,58 +2587,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
-      "componentPath": [
-        "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell"
-      ],
-      "propPath": [
-        "publicOwner",
-        "publicOwner"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
-          "line": 43
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
-      "componentPath": [
-        "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
-          "line": 43
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
       "sinkComponentId": "src/shared/ui/button.tsx#Button",
       "componentPath": [
@@ -3348,24 +2646,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "name": "KangurParentVerificationSettingsPanel",
-      "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 18,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "name": "KangurAiTutorSettingsPanel",
-      "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 11,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
       "name": "HomeContentClient",
       "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
@@ -3393,12 +2673,12 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-      "name": "KangurChoiceDialog",
-      "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "componentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+      "name": "KangurDialogHeader",
+      "relativePath": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
+      "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -3411,12 +2691,21 @@
       "hasUnknownSpreadForwarding": true
     },
     {
-      "componentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-      "name": "DocsTooltipEnhancer",
-      "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
+      "componentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "name": "KangurChoiceDialog",
+      "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "name": "FrontendLayoutClient",
+      "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
+      "feature": "app",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -3424,15 +2713,6 @@
       "name": "KangurStandardPageLayout",
       "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "name": "FrontendLayoutClient",
-      "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
-      "feature": "shared",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
@@ -3454,6 +2734,15 @@
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/app/(frontend)/kangur/error.tsx#Error",
+      "name": "Error",
+      "relativePath": "src/app/(frontend)/kangur/error.tsx",
+      "feature": "app",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
     },
     {
       "componentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
@@ -3562,6 +2851,15 @@
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
       "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+      "name": "FrontendPublicOwnerShell",
+      "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
+      "feature": "app",
+      "forwardedPropCount": 0,
+      "outgoingTransitionCount": 0,
+      "hasUnknownSpreadForwarding": true
     }
   ],
   "forwardingComponentBacklog": [
@@ -3575,24 +2873,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
-      "name": "KangurParentVerificationSettingsPanel",
-      "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 18,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
-      "name": "KangurAiTutorSettingsPanel",
-      "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 11,
-      "outgoingTransitionCount": 11,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
       "name": "HomeContentClient",
       "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
@@ -3620,12 +2900,12 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
-      "name": "KangurChoiceDialog",
-      "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "componentId": "src/features/kangur/ui/components/KangurDialogHeader.tsx#KangurDialogHeader",
+      "name": "KangurDialogHeader",
+      "relativePath": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
-      "outgoingTransitionCount": 5,
+      "outgoingTransitionCount": 4,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -3638,12 +2918,21 @@
       "hasUnknownSpreadForwarding": true
     },
     {
-      "componentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
-      "name": "DocsTooltipEnhancer",
-      "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
-      "feature": "shared-ui",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
+      "componentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "name": "KangurChoiceDialog",
+      "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "name": "FrontendLayoutClient",
+      "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
+      "feature": "app",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -3651,15 +2940,6 @@
       "name": "KangurStandardPageLayout",
       "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
       "feature": "feature:kangur",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "name": "FrontendLayoutClient",
-      "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
-      "feature": "shared",
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
@@ -3681,6 +2961,15 @@
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/app/(frontend)/kangur/error.tsx#Error",
+      "name": "Error",
+      "relativePath": "src/app/(frontend)/kangur/error.tsx",
+      "feature": "app",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
     },
     {
       "componentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
@@ -3788,6 +3077,15 @@
       "feature": "shared-ui",
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
+      "name": "FrontendPublicOwnerShellClient",
+      "relativePath": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -3809,13 +3107,13 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+      "componentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
       "name": "FrontendPublicOwnerShell",
-      "relativePath": "src/shared/components/FrontendPublicOwnerShell.tsx",
-      "feature": "shared",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
-      "hasUnknownSpreadForwarding": false
+      "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
+      "feature": "app",
+      "forwardedPropCount": 0,
+      "outgoingTransitionCount": 0,
+      "hasUnknownSpreadForwarding": true
     }
   ],
   "chains": []

@@ -10,6 +10,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_WRAP_ROW_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 import type { ClockTrainingTaskPoolId } from './types';
@@ -421,7 +422,7 @@ export function DraggableClock({
         <circle cx='100' cy='100' r='5' fill='#6366f1' />
       </svg>
 
-      <div className='flex flex-wrap justify-center gap-x-3 gap-y-2 text-sm [color:var(--kangur-page-muted-text)]'>
+      <div className={`${KANGUR_WRAP_ROW_SPACED_CLASSNAME} justify-center text-sm [color:var(--kangur-page-muted-text)]`}>
         <span className='flex items-center gap-1'>
           <KangurAccentDot
             accent='rose'

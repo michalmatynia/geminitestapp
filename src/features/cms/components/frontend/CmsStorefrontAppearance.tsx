@@ -11,10 +11,7 @@ import {
   VALID_MODES,
 } from './CmsStorefrontAppearance.contracts';
 import { isDarkStorefrontAppearanceMode } from './CmsStorefrontAppearance.utils';
-import {
-  resolveCmsStorefrontAppearance,
-  withFallbackTone,
-} from './CmsStorefrontAppearance.logic';
+import { withFallbackTone } from './CmsStorefrontAppearance.logic';
 import { useCmsStorefrontAppearance } from './CmsStorefrontAppearance.context';
 
 // Re-export modular parts
@@ -82,5 +79,3 @@ export function CmsStorefrontAppearanceButtons({
     </div>
   );
 }
-
-export { resolveCmsStorefrontAppearance };

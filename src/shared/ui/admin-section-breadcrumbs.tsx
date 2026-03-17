@@ -1,6 +1,10 @@
 import * as React from 'react';
 
-import type { AdminBreadcrumbNode } from '@/shared/contracts/ui';
+import type {
+  AdminBreadcrumbNode,
+  AdminSectionBreadcrumbsConfig,
+  AdminSectionBreadcrumbsProps,
+} from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { Breadcrumbs } from './Breadcrumbs';
@@ -20,14 +24,6 @@ export function buildAdminSectionBreadcrumbItems({
   ];
 }
 
-export type AdminSectionBreadcrumbsProps = {
-  section: AdminBreadcrumbNode;
-  current: string;
-  parent?: AdminBreadcrumbNode;
-  className?: string;
-  baseClassName?: string;
-};
-
 export function AdminSectionBreadcrumbs({
   section,
   current,
@@ -40,8 +36,5 @@ export function AdminSectionBreadcrumbs({
 
   return <Breadcrumbs items={items} className={resolvedClassName} />;
 }
-export type AdminSectionBreadcrumbsConfig = {
-  section: AdminBreadcrumbNode;
-  current: string;
-  parent?: AdminBreadcrumbNode;
-};
+
+export type { AdminSectionBreadcrumbsConfig, AdminSectionBreadcrumbsProps };

@@ -7,6 +7,7 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_PANEL_ROW_MD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 type KangurBadgeTrackPlaceholderCardProps = {
   cardClassName?: string;
@@ -33,7 +34,8 @@ export function KangurBadgeTrackPlaceholderCard({
 }: KangurBadgeTrackPlaceholderCardProps): React.JSX.Element {
   const infoCardClassName = cn('rounded-[24px] text-left', cardClassName);
   const headerClassNameValue = cn(
-    'flex flex-col items-start kangur-panel-gap md:flex-row md:items-start md:justify-between',
+    KANGUR_PANEL_ROW_MD_CLASSNAME,
+    'items-start md:items-start md:justify-between',
     headerClassName
   );
   const trackLabelClassNameValue = cn('tracking-[0.16em]', trackLabelClassName);

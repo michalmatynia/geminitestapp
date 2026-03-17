@@ -12,20 +12,29 @@ describe('loadProgress', () => {
     localStorage.setItem(
       KANGUR_PROGRESS_STORAGE_KEY,
       JSON.stringify({
-        gamesPlayed: 22,
-        totalXp: 620,
-        perfectGames: 6,
-        lessonsCompleted: 9,
-        clockPerfect: 2,
-        calendarPerfect: 1,
-        geometryPerfect: 1,
-        badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
-        operationsPlayed: ['addition', 'multiplication', 'division'],
-        lessonMastery: {},
+        version: 1,
+        subjects: {
+          alphabet: {
+            gamesPlayed: 22,
+            totalXp: 620,
+            perfectGames: 6,
+            lessonsCompleted: 9,
+            clockPerfect: 2,
+            calendarPerfect: 1,
+            geometryPerfect: 1,
+            badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
+            operationsPlayed: ['addition', 'multiplication', 'division'],
+            lessonMastery: {},
+          },
+          maths: {},
+          english: {},
+          web_development: {},
+        },
       })
     );
 
-    const { loadProgress } = await import('@/features/kangur/ui/services/progress');
+    const { loadProgress, setProgressSubject } = await import('@/features/kangur/ui/services/progress');
+    setProgressSubject('alphabet');
     const first = loadProgress();
     const second = loadProgress();
 

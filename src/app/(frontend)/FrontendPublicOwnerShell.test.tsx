@@ -27,7 +27,7 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
   },
 }));
 
-import FrontendPublicOwnerShell from '@/shared/components/FrontendPublicOwnerShell';
+import FrontendPublicOwnerShell from './_components/FrontendPublicOwnerShell';
 
 describe('FrontendPublicOwnerShell', () => {
   beforeEach(() => {

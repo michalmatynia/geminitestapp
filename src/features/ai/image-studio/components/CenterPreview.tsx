@@ -10,6 +10,7 @@ import {
   type SlotGenerationMetadata,
 } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
+import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -18,7 +19,6 @@ import {
 } from '@/shared/lib/products/constants';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/ui';
 import { FocusModeTogglePortal, useToast } from '@/shared/ui';
 
 import {

@@ -23,6 +23,10 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurIconBadge } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_START_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -146,7 +150,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           >
             <EnglishThirdPersonSAnimation />
           </KangurLessonVisual>
-          <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
             <KangurLessonChip accent='teal'>I play</KangurLessonChip>
             <KangurLessonChip accent='teal'>She plays</KangurLessonChip>
             <KangurLessonChip accent='teal'>They play</KangurLessonChip>
@@ -239,7 +243,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-sm' padding='sm'>
             <div className='space-y-2 text-slate-700'>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   !
                 </KangurIconBadge>
@@ -248,7 +252,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                   <p className='text-xs text-slate-500'>Everyone = singular</p>
                 </div>
               </div>
-              <div className='flex items-start gap-2'>
+              <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   !
                 </KangurIconBadge>
@@ -279,7 +283,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                 Neither the students nor the teacher <span className='text-amber-700'>is</span> ready.
               </p>
             </div>
-            <div className='mt-3 flex flex-wrap gap-2 text-xs font-semibold'>
+            <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
               <KangurLessonChip accent='amber'>Closest subject rule</KangurLessonChip>
             </div>
           </KangurLessonCallout>
@@ -330,7 +334,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                 <span className='font-semibold text-teal-700'>are</span> ready.
               </p>
             </div>
-            <div className='mt-3 flex flex-wrap gap-2 text-xs font-semibold'>
+            <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
               <KangurLessonChip accent='slate'>Ignore the middle</KangurLessonChip>
             </div>
           </KangurLessonCallout>

@@ -31,6 +31,13 @@ const AVAILABLE_INTEGRATIONS = [
     method: 'api',
   },
   {
+    name: 'LinkedIn',
+    slug: 'linkedin',
+    description: 'Connect a LinkedIn personal profile for social updates.',
+    type: 'platform',
+    method: 'api',
+  },
+  {
     name: 'Tradera',
     slug: 'tradera',
     description: 'Direct integration with Tradera marketplace.',

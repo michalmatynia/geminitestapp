@@ -5,6 +5,11 @@ import { useCallback } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurTextField } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_START_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_FINE_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
@@ -67,7 +72,7 @@ export function KangurAiTutorComposer(): JSX.Element {
       {drawingImageData ? (
         <div
           data-testid='kangur-ai-tutor-drawing-preview'
-          className='mb-2 flex items-start gap-2'
+          className={`mb-2 ${KANGUR_START_ROW_CLASSNAME}`}
         >
           <div className='relative'>
             <img
@@ -91,7 +96,7 @@ export function KangurAiTutorComposer(): JSX.Element {
       ) : null}
       {!showToolboxLayout && visibleQuickActions.length ? (
         <div
-          className='mb-2.5 flex flex-wrap gap-1.5'
+          className={`mb-2.5 ${KANGUR_WRAP_ROW_FINE_CLASSNAME}`}
           data-kangur-tts-ignore='true'
           data-testid='kangur-ai-tutor-composer-pills'
         >
@@ -117,7 +122,7 @@ export function KangurAiTutorComposer(): JSX.Element {
           ))}
         </div>
       ) : null}
-      <div className='flex items-center gap-2'>
+      <div className={KANGUR_CENTER_ROW_CLASSNAME}>
         <div className='relative flex-1'>
           <KangurTextField
             ref={inputRef}

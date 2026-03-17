@@ -7,6 +7,8 @@ import { createPortal } from 'react-dom';
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
@@ -153,8 +155,8 @@ function DraggableCase({
         status === 'neutral' ? 'border-slate-200/60' : 'border-transparent'
       )}
     >
-      <div className='flex items-start justify-between gap-2'>
-        <div className='space-y-2'>
+      <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
+        <div className='min-w-0 space-y-2'>
           <div className='rounded-xl border border-slate-200/60 bg-white/70 px-2 py-1'>
             <p className='text-[10px] font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
               Jesli...
@@ -394,7 +396,7 @@ export default function LogicalReasoningIfThenGame({
                     }}
                     {...provided.droppableProps}
                   >
-                    <div className='mb-2 flex items-center justify-between gap-2'>
+                    <div className={`mb-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:justify-between`}>
                       <p className='text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
                         {zoneTitles[zoneId]}
                       </p>
@@ -461,7 +463,7 @@ export default function LogicalReasoningIfThenGame({
               }}
               {...provided.droppableProps}
             >
-              <div className='mb-2 flex items-center justify-between gap-2'>
+              <div className={`mb-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:justify-between`}>
                 <p className='text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
                   {zoneTitles.pool}
                 </p>
@@ -498,7 +500,7 @@ export default function LogicalReasoningIfThenGame({
           )}
         </Droppable>
 
-        <div className='flex flex-wrap items-center gap-2 text-xs'>
+        <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-xs`}>
           <span
             className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
             role='status'

@@ -4,7 +4,7 @@ import {
   KangurPanelIntro,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_PANEL_ROW_MD_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
@@ -22,7 +22,7 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
       surface='mistStrong'
       variant='soft'
     >
-      <div className='flex flex-col kangur-panel-gap md:flex-row md:items-end md:justify-between'>
+      <div className={`${KANGUR_PANEL_ROW_MD_CLASSNAME} md:items-end md:justify-between`}>
         <KangurPanelIntro
           description={
             <>

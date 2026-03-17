@@ -9,6 +9,7 @@ import {
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 const AUTH_COOKIE_KEYS = [
   'sessionToken',
@@ -122,7 +123,10 @@ export async function postKangurLogoutHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  await auth().catch(() => null);
+  await auth().catch((error) => {
+    void ErrorSystem.captureException(error);
+    return null;
+  });
   const learnerSession = readKangurLearnerSession(req);
   const response = NextResponse.json({ ok: true });
 
@@ -141,7 +145,10 @@ export async function postKangurLogoutHandler(
         ownerUserId: learnerSession.ownerUserId,
         reason: 'parent_logout',
       },
-    }).catch(() => {});
+    }).catch((error) => {
+      void ErrorSystem.captureException(error);
+      // Avoid failing logout on activity log issues.
+    });
   }
 
   AUTH_COOKIE_KEYS.forEach((key) => {

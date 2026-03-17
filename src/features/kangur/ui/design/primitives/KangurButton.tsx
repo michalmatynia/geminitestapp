@@ -13,7 +13,7 @@ import {
 } from '../tokens';
 
 export const kangurButtonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 border font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
+  'inline-flex min-w-0 max-w-full cursor-pointer items-center justify-center gap-2 border font-bold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none',
   {
     variants: {
       variant: {

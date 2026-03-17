@@ -15,7 +15,8 @@ import {
   PromptExploderDocsTooltipSwitchFromRuntime,
   PromptExploderDocsTooltipSwitchRuntimeContext,
 } from '../../components/PromptExploderDocsTooltipSwitch';
-import { useDocumentActions } from '../../context';
+import { useDocumentActions } from '../../context/DocumentContext';
+
 
 type PromptExploderErrorBoundaryState = {
   hasError: boolean;

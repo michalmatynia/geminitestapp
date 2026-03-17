@@ -17,12 +17,6 @@ import { PromptExploderProvider } from '../context';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 
 import {
-  PromptExploderErrorBoundary,
-  PromptExploderHeaderBar,
-} from './admin-prompt-exploder/PromptExploder.Header';
-import { PROMPT_EXPLODER_ACTIVE_TAB_KEY } from './admin-prompt-exploder/PromptExploder.Constants';
-import { PromptExploderDocsTab } from './admin-prompt-exploder/PromptExploder.Docs';
-import {
   BindingsPanel,
   ExplosionMetricsPanel,
   PromptProjectsPanel,
@@ -30,10 +24,14 @@ import {
   SegmentEditorPanel,
   SourcePromptPanel,
   WarningsPanel,
-} from './admin-prompt-exploder/PromptExploder.WorkspacePanels';
-import { PatternRuntimePanel } from './admin-prompt-exploder/PromptExploder.PatternRuntime';
-import { ParserTuningSection } from './admin-prompt-exploder/PromptExploder.ParserTuning';
-import { BenchmarkReportPanel } from './admin-prompt-exploder/PromptExploder.Benchmark';
+  PromptExploderErrorBoundary,
+  PromptExploderHeaderBar,
+  PROMPT_EXPLODER_ACTIVE_TAB_KEY,
+  PromptExploderDocsTab,
+  PatternRuntimePanel,
+  ParserTuningSection,
+  BenchmarkReportPanel,
+} from './admin-prompt-exploder';
 
 export default function AdminPromptExploderPage(): React.JSX.Element {
   const { docsTooltipsEnabled, setDocsTooltipsEnabled } = usePromptExploderDocsTooltips();

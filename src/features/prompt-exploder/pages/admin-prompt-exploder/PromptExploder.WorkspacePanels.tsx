@@ -19,10 +19,10 @@ import {
 
 import { SegmentDetailEditor } from '../../components/segment-editor/SegmentDetailEditor';
 import { PromptExploderSegmentsTreeEditor } from '../../components/tree/PromptExploderSegmentsTreeEditor';
-import { useBindingsActions, useBindingsState } from '../../context/hooks/useBindings';
-import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
-import { useLibraryActions, useLibraryState } from '../../context/hooks/useLibrary';
-import { useSettingsState } from '../../context/hooks/useSettings';
+import { useBindingsActions, useBindingsState } from '../../context/BindingsContext';
+import { useDocumentActions, useDocumentState } from '../../context/DocumentContext';
+import { useLibraryActions, useLibraryState } from '../../context/LibraryContext';
+import { useSettingsState } from '../../context/SettingsContext';
 import { promptExploderFormatTimestamp } from '../../helpers/formatting';
 import { promptExploderFormatSubsectionLabel } from '../../helpers/segment-helpers';
 import { BINDING_TYPE_OPTIONS } from './PromptExploder.Constants';
@@ -129,10 +129,10 @@ export function ExplosionMetricsPanel(): React.JSX.Element {
           <div>Typed coverage: {(explosionMetrics.typedCoverage * 100).toFixed(1)}%</div>
           <div className='rounded border border-border/50 bg-card/20 p-2'>
             {Object.entries(explosionMetrics.typeCounts)
-              .sort((left, right) => right[1] - left[1])
+              .sort((left, right) => (right[1] as any) - (left[1] as any))
               .map(([type, count]) => (
                 <div key={type}>
-                  {type}: {count}
+                  {type}: {count as any}
                 </div>
               ))}
           </div>
@@ -226,9 +226,9 @@ export function PromptProjectsPanel(): React.JSX.Element {
                 description: item.prompt,
                 subtitle: `segments ${item.document?.segments.length ?? 0} · updated ${promptExploderFormatTimestamp(item.updatedAt)}`,
                 original: item,
-              }))}
+              })) as any}
               selectedId={selectedLibraryItemId ?? undefined}
-              onSelect={(item) => handleLoadLibraryItem(item.id)}
+              onSelect={(item: any) => handleLoadLibraryItem(item.id)}
               emptyMessage='No projects saved yet.'
               padding='sm'
             />
@@ -337,7 +337,7 @@ export function BindingsPanel(): React.JSX.Element {
                   size='sm'
                   value={bindingDraft.type}
                   onValueChange={(value: string) => {
-                    setBindingDraft((previous) => ({
+                    setBindingDraft((previous: any) => ({
                       ...previous,
                       type: value as PromptExploderBindingType,
                     }));

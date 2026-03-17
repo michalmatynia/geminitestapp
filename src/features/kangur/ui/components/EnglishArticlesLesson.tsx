@@ -7,6 +7,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
@@ -309,10 +310,7 @@ export default function EnglishArticlesLesson(): React.JSX.Element {
       lessonTitle='English: Articles'
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         markSectionOpened(id as SectionId);
         setActiveSection(id as SectionId);

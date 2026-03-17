@@ -63,14 +63,6 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: useKangurSubjectFocusMock,
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () => ({
-  KangurLearnerProfileRuntimeBoundary: ({ children }: { children: React.ReactNode }) => children,
-  useKangurLearnerProfileRuntime: () => ({
-    user: useKangurAuthMock().user,
-    isLoadingScores: false,
-    scoresError: null,
-  }),
-}));
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: getKangurPlatformMock,
 }));

@@ -473,12 +473,15 @@ const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = LIVE
   (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
 );
 
-const SECTION_LABELS: Partial<Record<LessonSectionId, string>> = buildLessonSectionLabels(
-  LIVE_HUB_SECTIONS.filter((section) => !section.isGame) as Array<{
-    id: LessonSectionId;
-    title: string;
-  }>
+const LESSON_SECTIONS: Array<
+  CalendarLiveHubSection & { id: LessonSectionId; isGame?: false }
+> = LIVE_HUB_SECTIONS.filter(
+  (section): section is CalendarLiveHubSection & { id: LessonSectionId; isGame?: false } =>
+    !section.isGame
 );
+
+const SECTION_LABELS: Partial<Record<LessonSectionId, string>> =
+  buildLessonSectionLabels(LESSON_SECTIONS);
 
 export default function CalendarLesson(): React.JSX.Element {
   const [view, setView] = useState<CalendarLessonView>({ kind: 'hub' });

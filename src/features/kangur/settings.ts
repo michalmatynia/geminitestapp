@@ -536,13 +536,26 @@ export type AppendMissingKangurLessonsResult = {
   addedCount: number;
 };
 
+const resolveAgeGroupsForComponents = (
+  componentIds: readonly KangurLessonComponentId[]
+): KangurLessonAgeGroup[] => {
+  const groups = new Set<KangurLessonAgeGroup>();
+  for (const componentId of componentIds) {
+    const template = getKangurLessonTemplate(componentId);
+    groups.add(resolveKangurLessonTemplateAgeGroup(template));
+  }
+  return Array.from(groups);
+};
+
 export const appendMissingKangurLessonsByComponent = (
   lessons: KangurLesson[],
   componentIds: readonly KangurLessonComponentId[],
   ageGroups: readonly KangurLessonAgeGroup[] = [DEFAULT_KANGUR_AGE_GROUP]
 ): AppendMissingKangurLessonsResult => {
   const existingLessonKeys = new Set(
-    lessons.map((lesson) => `${lesson.componentId}:${lesson.ageGroup}`)
+    lessons.map(
+      (lesson) => `${lesson.componentId}:${lesson.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP}`
+    )
   );
   const usedIds = new Set(lessons.map((lesson) => lesson.id));
   let nextSortOrder =
@@ -596,7 +609,11 @@ export const appendMissingKangurLessonsByComponent = (
 export const appendMissingGeometryKangurLessons = (
   lessons: KangurLesson[]
 ): AppendMissingKangurLessonsResult =>
-  appendMissingKangurLessonsByComponent(lessons, KANGUR_GEOMETRY_LESSON_COMPONENT_IDS);
+  appendMissingKangurLessonsByComponent(
+    lessons,
+    KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+    resolveAgeGroupsForComponents(KANGUR_GEOMETRY_LESSON_COMPONENT_IDS)
+  );
 
 export const KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS = [
   'logical_thinking',
@@ -609,4 +626,8 @@ export const KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS = [
 export const appendMissingLogicalThinkingKangurLessons = (
   lessons: KangurLesson[]
 ): AppendMissingKangurLessonsResult =>
-  appendMissingKangurLessonsByComponent(lessons, KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS);
+  appendMissingKangurLessonsByComponent(
+    lessons,
+    KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS,
+    resolveAgeGroupsForComponents(KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS)
+  );

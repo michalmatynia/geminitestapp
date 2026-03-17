@@ -12,6 +12,7 @@ import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
   buildLessonSectionLabels,
+  buildLessonHubSectionsWithProgress,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -326,14 +327,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       lessonTitle='Figury geometryczne'
       gradientClass='kangur-gradient-accent-violet-reverse'
       progressDotClassName='bg-fuchsia-300'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-            ...section,
-            progress: sectionProgress[section.id as keyof typeof SLIDES],
-          }
-      )}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         if (id === 'game') {
           handleGameStart();

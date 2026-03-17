@@ -27,6 +27,7 @@ import {
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   buildLessonSectionLabels,
+  buildLessonHubSectionsWithProgress,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -328,14 +329,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
       lessonTitle='Podstawy geometrii'
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-cyan-300'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-              ...section,
-              progress: sectionProgress[section.id as Exclude<SectionId, 'game'>],
-            }
-      )}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         if (id !== 'game') {
           markSectionOpened(id as Exclude<SectionId, 'game'>);

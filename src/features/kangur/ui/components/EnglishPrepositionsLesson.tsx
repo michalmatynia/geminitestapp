@@ -11,6 +11,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
@@ -509,14 +510,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
       lessonTitle='English: Prepositions'
       gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-rose-300'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-            ...section,
-            progress: sectionProgress[section.id as SlideSectionId],
-          }
-      )}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         if (id !== 'game_prepositions' && id !== 'game_prepositions_sort' && id !== 'game_prepositions_order') {
           markSectionOpened(id as SlideSectionId);

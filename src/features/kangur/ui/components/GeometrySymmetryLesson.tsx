@@ -19,6 +19,7 @@ import {
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   buildLessonSectionLabels,
+  buildLessonHubSectionsWithProgress,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -337,14 +338,7 @@ export default function GeometrySymmetryLesson(): React.JSX.Element {
       lessonTitle='Symetria'
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-            ...section,
-            progress: sectionProgress[section.id as SlideSectionId],
-          }
-      )}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         if (id !== 'game') {
           markSectionOpened(id as SlideSectionId);

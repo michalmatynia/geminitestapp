@@ -16,6 +16,7 @@ import {
   KangurGlassPanel,
   KangurInfoCard,
   KangurPanelIntro,
+  KangurPanelRow,
   KangurProgressBar,
   KangurSectionEyebrow,
   KangurStatusChip,
@@ -179,11 +180,11 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           data-testid={`kangur-assignments-list-divider-${item.id}`}
           size='sm'
         />
-        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
+        <KangurPanelRow className='sm:items-center sm:justify-between'>
           <KangurCardDescription as='div' size='sm'>
             {item.progressSummary}
           </KangurCardDescription>
-          <KangurButton asChild size='sm' variant={item.actionVariant}>
+          <KangurButton asChild className='w-full sm:w-auto' size='sm' variant={item.actionVariant}>
             <Link
               href={item.actionHref}
               onClick={(event) => {
@@ -197,7 +198,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
               {item.actionLabel}
             </Link>
           </KangurButton>
-        </div>
+        </KangurPanelRow>
         {countdownLabel ? (
           <KangurMetaText className='flex items-center gap-2'>
             <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
@@ -234,7 +235,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
       className='h-full'
       padding='lg'
     >
-      <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+      <KangurPanelRow className='sm:items-start sm:justify-between'>
         <div className='min-w-0'>
           <KangurCardTitle className='break-words text-lg' size='lg'>
             {item.title}
@@ -258,7 +259,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
             {item.progressPercent}%
           </KangurStatusChip>
         </div>
-      </div>
+      </KangurPanelRow>
 
       <KangurSummaryPanel
         accent='indigo'

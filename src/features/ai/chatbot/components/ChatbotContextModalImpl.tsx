@@ -8,7 +8,7 @@ import { Button, Input, Tag } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import type { ContextDraft } from '../hooks/useChatbotContextState';
 

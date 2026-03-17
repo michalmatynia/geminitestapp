@@ -1,0 +1,327 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+
+import LessonHub from '@/features/kangur/ui/components/LessonHub';
+import LessonSlideSection, {
+  type LessonSlide,
+} from '@/features/kangur/ui/components/LessonSlideSection';
+import {
+  KangurLessonCallout,
+  KangurLessonCaption,
+  KangurLessonChip,
+  KangurLessonInset,
+  KangurLessonLead,
+  KangurLessonStack,
+} from '@/features/kangur/ui/design/lesson-primitives';
+import {
+  KangurButton,
+  KangurGlassPanel,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
+import {
+  addXp,
+  createLessonCompletionReward,
+  loadProgress,
+} from '@/features/kangur/ui/services/progress';
+
+type SectionId = 'pairs' | 'practice' | 'game' | 'summary';
+
+type SlideSectionId = SectionId;
+
+type MatchRound = {
+  id: string;
+  upper: string;
+  correct: string;
+  options: string[];
+};
+
+const HUB_SECTIONS = [
+  {
+    id: 'pairs',
+    emoji: '🔤',
+    title: 'Duze i male',
+    description: 'Poznaj pary liter.',
+  },
+  {
+    id: 'practice',
+    emoji: '🧩',
+    title: 'Cwiczymy',
+    description: 'Szukanie tej samej litery.',
+  },
+  {
+    id: 'game',
+    emoji: '🎲',
+    title: 'Gra',
+    description: 'Dopasuj mala litere do duzej.',
+  },
+  {
+    id: 'summary',
+    emoji: '⭐',
+    title: 'Podsumowanie',
+    description: 'Utrwal pary liter.',
+  },
+] as const;
+
+const SECTION_LABELS: Record<SectionId, string> = {
+  pairs: 'Duze i male',
+  practice: 'Cwiczymy',
+  game: 'Gra',
+  summary: 'Podsumowanie',
+};
+
+const MATCH_ROUNDS: MatchRound[] = [
+  {
+    id: 'a',
+    upper: 'A',
+    correct: 'a',
+    options: ['a', 'm', 'l'],
+  },
+  {
+    id: 'm',
+    upper: 'M',
+    correct: 'm',
+    options: ['m', 'k', 't'],
+  },
+  {
+    id: 'l',
+    upper: 'L',
+    correct: 'l',
+    options: ['l', 'p', 'a'],
+  },
+  {
+    id: 'k',
+    upper: 'K',
+    correct: 'k',
+    options: ['k', 'n', 's'],
+  },
+];
+
+const AlphabetMatchGame = (): React.JSX.Element => {
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+
+  const round = MATCH_ROUNDS[roundIndex] ?? MATCH_ROUNDS[0];
+  const isLast = roundIndex >= MATCH_ROUNDS.length - 1;
+  const isCorrect = selected ? selected === round.correct : null;
+
+  const handleSelect = (option: string): void => {
+    if (selected) {
+      return;
+    }
+    setSelected(option);
+    if (option === round.correct) {
+      setScore((value) => value + 1);
+    }
+  };
+
+  const handleNext = (): void => {
+    if (!selected) {
+      return;
+    }
+    if (isLast) {
+      setRoundIndex(0);
+      setSelected(null);
+      setScore(0);
+      return;
+    }
+    setRoundIndex((value) => value + 1);
+    setSelected(null);
+  };
+
+  return (
+    <KangurGlassPanel className='w-full max-w-lg' padding='lg' surface='playField'>
+      <div className='flex items-center justify-between gap-2'>
+        <KangurStatusChip accent='amber' size='sm'>
+          Runda {roundIndex + 1}/{MATCH_ROUNDS.length}
+        </KangurStatusChip>
+        <KangurStatusChip accent='sky' size='sm'>
+          Punkty {score}/{MATCH_ROUNDS.length}
+        </KangurStatusChip>
+      </div>
+      <div className='mt-4 flex flex-col items-center gap-4 text-center'>
+        <div className='text-6xl font-black text-slate-800'>{round.upper}</div>
+        <div className='text-sm text-slate-600'>
+          Wybierz mala litere pasujaca do tej duzej.
+        </div>
+        <div className='flex flex-wrap items-center justify-center gap-3'>
+          {round.options.map((option) => {
+            const isOptionSelected = option === selected;
+            const isOptionCorrect = selected && option === round.correct;
+            const variant = isOptionSelected || isOptionCorrect ? 'primary' : 'surface';
+            return (
+              <KangurButton
+                key={option}
+                size='sm'
+                type='button'
+                variant={variant}
+                onClick={() => handleSelect(option)}
+              >
+                {option}
+              </KangurButton>
+            );
+          })}
+        </div>
+        {selected ? (
+          <div className='text-sm font-semibold'>
+            {isCorrect
+              ? 'Brawo! To pasujaca litera.'
+              : `Prawidlowa litera to ${round.correct}.`}
+          </div>
+        ) : (
+          <div className='text-sm text-slate-500'>Kliknij literke.</div>
+        )}
+        <KangurButton
+          size='sm'
+          type='button'
+          variant='surface'
+          onClick={handleNext}
+          disabled={!selected}
+        >
+          {isLast ? 'Zagraj jeszcze raz' : 'Dalej'}
+        </KangurButton>
+      </div>
+    </KangurGlassPanel>
+  );
+};
+
+const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
+  pairs: [
+    {
+      title: 'Pary liter',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Duze i male litery wygladaja inaczej, ale znacza to samo.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
+            <div className='flex flex-wrap items-center justify-center gap-3'>
+              {['A a', 'M m', 'L l', 'K k'].map((pair) => (
+                <KangurLessonChip key={pair} accent='amber'>
+                  {pair}
+                </KangurLessonChip>
+              ))}
+            </div>
+            <KangurLessonCaption className='mt-2'>Powtarzaj pary na glos.</KangurLessonCaption>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+  ],
+  practice: [
+    {
+      title: 'Znajdz pare',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Sprawdz, ktora mala litera pasuje do duzej.
+          </KangurLessonLead>
+          <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2'>
+            <KangurLessonInset accent='amber'>
+              <div className='text-xl font-bold text-amber-700'>Duze: A</div>
+              <KangurLessonCaption className='mt-1'>Szukamy: a</KangurLessonCaption>
+            </KangurLessonInset>
+            <KangurLessonInset accent='sky'>
+              <div className='text-xl font-bold text-sky-700'>Duze: M</div>
+              <KangurLessonCaption className='mt-1'>Szukamy: m</KangurLessonCaption>
+            </KangurLessonInset>
+          </div>
+        </KangurLessonStack>
+      ),
+    },
+  ],
+  game: [
+    {
+      title: 'Dopasuj litery',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Wybieraj male litery pasujace do duzych.
+          </KangurLessonLead>
+          <AlphabetMatchGame />
+        </KangurLessonStack>
+      ),
+    },
+  ],
+  summary: [
+    {
+      title: 'Swietnie',
+      content: (
+        <KangurLessonStack>
+          <KangurLessonLead>
+            Umiesz laczyc duze i male litery.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='amber' className='max-w-md text-left' padding='sm'>
+            <ul className='list-disc pl-5 text-sm text-slate-700'>
+              <li>Litery wystepuja w parach.</li>
+              <li>Patrzysz na ksztalt litery.</li>
+              <li>Cwiczysz szybko i spokojnie.</li>
+            </ul>
+          </KangurLessonCallout>
+          <KangurLessonCaption className='max-w-md'>
+            Wroc do gry, aby utrwalic pary.
+          </KangurLessonCaption>
+        </KangurLessonStack>
+      ),
+    },
+  ],
+};
+
+export default function AlphabetMatchingLesson(): React.JSX.Element {
+  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
+    useKangurLessonPanelProgress({
+      lessonKey: 'alphabet_matching',
+      slideSections: SLIDES,
+      sectionLabels: SECTION_LABELS,
+    });
+
+  const handleComplete = (): void => {
+    const progress = loadProgress();
+    const reward = createLessonCompletionReward(progress, 'alphabet_matching', 110);
+    addXp(reward.xp, reward.progressUpdates);
+  };
+
+  const sectionList = useMemo(
+    () =>
+      HUB_SECTIONS.map((section) => ({
+        ...section,
+        progress: sectionProgress[section.id as SectionId],
+      })),
+    [sectionProgress]
+  );
+
+  if (activeSection) {
+    return (
+      <LessonSlideSection
+        slides={SLIDES[activeSection]}
+        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        onBack={() => setActiveSection(null)}
+        onComplete={activeSection === 'summary' ? handleComplete : undefined}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
+        }
+        dotActiveClass='bg-amber-500'
+        dotDoneClass='bg-amber-300'
+        gradientClass='kangur-gradient-accent-amber'
+      />
+    );
+  }
+
+  return (
+    <LessonHub
+      lessonEmoji='🔤'
+      lessonTitle='Dopasuj litery'
+      gradientClass='kangur-gradient-accent-amber'
+      progressDotClassName='bg-amber-300'
+      sections={sectionList}
+      onSelect={(id) => {
+        markSectionOpened(id as SectionId);
+        setActiveSection(id as SectionId);
+      }}
+    />
+  );
+}

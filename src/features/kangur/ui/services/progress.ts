@@ -494,8 +494,8 @@ export function recordKangurLessonPanelProgress(
 
   if (
     nextViewedCount === existingSection?.viewedCount &&
-    nextTotalCount === existingSection.totalCount &&
-    label === existingSection.label
+    nextTotalCount === existingSection?.totalCount &&
+    label === existingSection?.label
   ) {
     return;
   }

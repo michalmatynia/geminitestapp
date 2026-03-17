@@ -6,7 +6,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { buildAiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
-import type { StatusVariant } from '@/shared/ui';
+import type { StatusVariant } from '@/shared/contracts/ui';
 
 import { safeJsonStringify } from './AiPathsSettingsUtils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import '@testing-library/jest-dom/vitest';
 import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { server } from './src/mocks/server';
 
 // Force MongoDB as the database provider for tests.
@@ -72,12 +73,24 @@ const createKangurClientErrorMocks = () => {
   };
 };
 
+const kangurClientErrorMocks = createKangurClientErrorMocks();
+
 declare global {
   // eslint-disable-next-line no-var
-  var __kangurClientErrorMocks: () => ReturnType<typeof createKangurClientErrorMocks>;
+  var __kangurClientErrorMocks: () => typeof kangurClientErrorMocks;
+  // eslint-disable-next-line no-var
+  var __kangurAgeGroupFocusMock: () => typeof kangurAgeGroupFocusMock;
 }
 
-globalThis.__kangurClientErrorMocks = createKangurClientErrorMocks;
+globalThis.__kangurClientErrorMocks = () => kangurClientErrorMocks;
+
+const kangurAgeGroupFocusMock = {
+  ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+  setAgeGroup: vi.fn(),
+  ageGroupKey: null as string | null,
+};
+
+globalThis.__kangurAgeGroupFocusMock = () => kangurAgeGroupFocusMock;
 
 const THREE_DUPLICATE_IMPORT_WARNING = 'THREE.WARNING: Multiple instances of Three.js being imported.';
 const QUIET_TEST_LOG_PATTERNS = [
@@ -192,6 +205,11 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProviderSetting: vi.fn().mockResolvedValue('mongodb'),
   invalidateAppDbProviderCache: vi.fn(),
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  KangurAgeGroupFocusProvider: ({ children }: { children: React.ReactNode }) => children,
+  useKangurAgeGroupFocus: () => kangurAgeGroupFocusMock,
 }));
 
 vi.mock('@/shared/lib/db/collection-provider-map', () => ({

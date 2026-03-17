@@ -283,6 +283,18 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     LOGICAL_ANALOGIES_HUB_SECTIONS,
     LOGICAL_ANALOGIES_SLIDES
   ),
+  alphabet_basics: {
+    kind: 'flat',
+    slides: [],
+  },
+  alphabet_syllables: {
+    kind: 'flat',
+    slides: [],
+  },
+  alphabet_words: {
+    kind: 'flat',
+    slides: [],
+  },
   english_basics: {
     kind: 'flat',
     slides: [],
@@ -304,6 +316,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     slides: [],
   },
   english_prepositions_time_place: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_components: {
     kind: 'flat',
     slides: [],
   },

@@ -405,6 +405,7 @@ export function KangurTestSuitePlayer({
               type='button'
               onClick={handlePrev}
               disabled={currentIndex === 0}
+              className='w-full sm:w-auto'
               size='sm'
               variant='surface'
               data-doc-id='tests_suite_player'
@@ -413,7 +414,7 @@ export function KangurTestSuitePlayer({
               Previous
             </KangurButton>
 
-            <div className='flex flex-wrap items-center justify-end gap-2'>
+            <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end'>
               {canAskAboutSelectedChoice ? (
                 <KangurButton
                   type='button'
@@ -421,6 +422,7 @@ export function KangurTestSuitePlayer({
                     void handleAskAboutSelectedChoice();
                   }}
                   disabled={tutor?.isLoading}
+                  className='w-full sm:w-auto'
                   size='sm'
                   variant='surface'
                   data-doc-id='tests_suite_player'
@@ -434,6 +436,7 @@ export function KangurTestSuitePlayer({
                 <KangurButton
                   type='button'
                   onClick={showAnswer ? handleNext : handleRevealAnswer}
+                  className='w-full sm:w-auto'
                   size='sm'
                   variant='primary'
                   data-doc-id='tests_suite_player'

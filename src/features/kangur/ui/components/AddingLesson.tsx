@@ -51,7 +51,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           <KangurLessonLead>
             Dodawanie to łączenie dwóch grup razem, żeby policzyć, ile ich jest łącznie.
           </KangurLessonLead>
-          <div className='flex items-center kangur-panel-gap'>
+          <div className='flex flex-wrap items-center justify-center kangur-panel-gap'>
             <KangurDisplayEmoji size='md'>🍎🍎</KangurDisplayEmoji>
             <KangurEquationDisplay
               accent='slate'
@@ -76,7 +76,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             2 + 3 = 5
           </KangurEquationDisplay>
           <KangurLessonCallout accent='slate' className='max-w-md text-center'>
-            <div className='grid grid-cols-[1fr_auto_1fr] items-center kangur-panel-gap'>
+            <div className='grid grid-cols-1 items-center justify-items-center kangur-panel-gap sm:grid-cols-[1fr_auto_1fr] sm:justify-items-stretch'>
               <div className='rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-2'>
                 <p className='text-[11px] font-semibold uppercase tracking-wide text-amber-700'>
                   Część
@@ -464,22 +464,22 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           </KangurLessonCallout>
           <KangurLessonInset accent='slate' className='max-w-md text-left' padding='sm'>
             <div className='grid gap-2 text-sm'>
-              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 font-semibold'>
+              <div className='grid grid-cols-1 items-center gap-2 text-center font-semibold sm:grid-cols-[1fr_auto_1fr] sm:text-left'>
                 <span>Dziesiątki</span>
                 <span className='text-slate-400'>+</span>
                 <span>Jedności</span>
               </div>
-              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md bg-slate-50 px-2 py-1'>
+              <div className='grid grid-cols-1 items-center gap-2 text-center rounded-md bg-slate-50 px-2 py-1 sm:grid-cols-[1fr_auto_1fr] sm:text-left'>
                 <span>20 + 10</span>
                 <span className='text-slate-400'>→</span>
                 <span>30</span>
               </div>
-              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md bg-slate-50 px-2 py-1'>
+              <div className='grid grid-cols-1 items-center gap-2 text-center rounded-md bg-slate-50 px-2 py-1 sm:grid-cols-[1fr_auto_1fr] sm:text-left'>
                 <span>4 + 3</span>
                 <span className='text-slate-400'>→</span>
                 <span>7</span>
               </div>
-              <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-slate-200 pt-2 font-semibold'>
+              <div className='grid grid-cols-1 items-center gap-2 text-center border-t border-slate-200 pt-2 font-semibold sm:grid-cols-[1fr_auto_1fr] sm:text-left'>
                 <span>30 + 7</span>
                 <span className='text-slate-400'>=</span>
                 <span>37</span>

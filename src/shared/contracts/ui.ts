@@ -1,7 +1,15 @@
 import { NextRequest } from 'next/server';
-import { ReactNode } from 'react';
+import { ReactNode, type ComponentType } from 'react';
 
-import type { IdDataDto, OptionalIdDataDto, ListResponse, LabelValueOptionDto } from './base';
+import type {
+  IdDataDto,
+  OptionalIdDataDto,
+  ListResponse,
+  LabelValueOptionDto,
+  IdLabeledOptionDto,
+  LabeledOptionDto,
+  LabeledOptionWithDisabledDto,
+} from './base';
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import type { ZodSchema } from 'zod';
 
@@ -21,6 +29,36 @@ export type DataAttributesDto = {
   'data-doc-alias'?: string;
 };
 export type DataAttributes = DataAttributesDto;
+
+export type BreadcrumbItemDto = {
+  label: string;
+  href?: string;
+  onClick?: (e: React.MouseEvent) => void;
+};
+export type BreadcrumbItem = BreadcrumbItemDto;
+
+export type AdminBreadcrumbNodeDto = {
+  label: string;
+  href?: string;
+};
+export type AdminBreadcrumbNode = AdminBreadcrumbNodeDto;
+
+export type FileUploadHelpersDto = {
+  setProgress: (value: number) => void;
+  reportProgress: (loaded: number, total?: number) => void;
+};
+export type FileUploadHelpers = FileUploadHelpersDto;
+
+export type FileUploadButtonPropsDto = {
+  accept?: string;
+  multiple?: boolean;
+  enableDrop?: boolean;
+  enablePaste?: boolean;
+  showProgress?: boolean;
+  onFilesSelected: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
+  onError?: (error: unknown) => void;
+};
+export type FileUploadButtonProps = FileUploadButtonPropsDto;
 
 export interface EntityModalProps<T, TList = T> extends ModalStateProps {
   item?: T | null;
@@ -88,6 +126,113 @@ export type {
   LabeledOptionWithDisabledDto,
   LabeledOptionWithDisabled,
 } from './base';
+
+export type SelectOptionDto<
+  TValue = unknown,
+  TId extends string | number = string | number,
+> = IdLabeledOptionDto<TId, TValue> & {
+  disabled?: boolean;
+  description?: string;
+};
+export type SelectOption<
+  TValue = unknown,
+  TId extends string | number = string | number,
+> = SelectOptionDto<TValue, TId>;
+
+export type SelectSimpleOptionDto = LabeledOptionDto<string> & {
+  description?: string;
+  disabled?: boolean;
+  group?: string;
+};
+export type SelectSimpleOption = SelectSimpleOptionDto;
+
+export type MultiSelectOptionDto = LabeledOptionWithDisabledDto<string>;
+export type MultiSelectOption = MultiSelectOptionDto;
+
+export type SegmentedControlOptionDto<T extends string = string> = {
+  value: T;
+  label: ReactNode;
+  icon?: ComponentType<{ className?: string }>;
+  ariaLabel?: string;
+};
+export type SegmentedControlOption<T extends string = string> = SegmentedControlOptionDto<T>;
+
+export type StatusVariant =
+  | 'pending'
+  | 'active'
+  | 'failed'
+  | 'removed'
+  | 'neutral'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'processing';
+
+export type FieldType =
+  | 'text'
+  | 'email'
+  | 'password'
+  | 'number'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'switch'
+  | 'color'
+  | 'background'
+  | 'range'
+  | 'custom';
+
+export interface SettingsPanelField<T extends object> {
+  /** Field key in the form data */
+  key: keyof T;
+
+  /** Label displayed to user */
+  label: string;
+
+  /** Field type */
+  type: FieldType;
+
+  /** Placeholder text */
+  placeholder?: string;
+
+  /** Help text shown below field */
+  helperText?: string;
+
+  /** Is this field required? */
+  required?: boolean;
+
+  /** Disabled state */
+  disabled?: boolean;
+
+  /** For select fields, list of options */
+  options?: ReadonlyArray<LabeledOptionDto<string | number>>;
+
+  /** For number and range fields */
+  min?: number;
+  max?: number;
+  step?: number;
+  suffix?: string;
+
+  /** Custom render function for advanced fields */
+  render?: (props: SettingsFieldRenderProps) => ReactNode;
+}
+
+export interface SettingsFieldRenderProps {
+  value: unknown;
+  onChange: (value: unknown) => void;
+  error?: string;
+  disabled?: boolean;
+}
+
+export interface SettingsFieldsRendererProps<T extends object> {
+  fields: SettingsPanelField<T>[];
+  values: T;
+  errors?: Partial<Record<keyof T, string>>;
+  onChange: (values: Partial<T>) => void;
+  disabled?: boolean;
+  className?: string;
+}
 
 export type PanelRuntimeSlotsDto = {
   header?: ReactNode;

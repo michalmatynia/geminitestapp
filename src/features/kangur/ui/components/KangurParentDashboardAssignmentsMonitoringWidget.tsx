@@ -554,7 +554,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
               <KangurMetaText tone='slate'>Filtry</KangurMetaText>
               <div
-                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start`}
+                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
                 role='tablist'
                 aria-label='Filtrowanie interakcji'
               >
@@ -566,7 +566,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                     aria-pressed={interactionFilter === option.value}
                     aria-selected={interactionFilter === option.value}
                     role='tab'
-                    className='min-w-0 px-3 text-xs'
+                    className='min-w-0 flex-1 px-3 text-xs sm:flex-none'
                     size='sm'
                     variant={interactionFilter === option.value ? 'segmentActive' : 'segment'}
                   >
@@ -607,6 +607,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                       setInteractionDateFrom('');
                       setInteractionDateTo('');
                     }}
+                    className='w-full sm:w-auto'
                   >
                     Wyczyść filtry
                   </KangurButton>

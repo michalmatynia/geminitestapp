@@ -5,23 +5,25 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 const {
+  withKangurClientError,
+  withKangurClientErrorSync,
   useKangurAuthMock,
   useKangurRoutingMock,
   useKangurAssignmentsMock,
   useKangurProgressStateMock,
   useKangurSubjectFocusMock,
   scoreCreateMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   useKangurAuthMock: vi.fn(),
   useKangurRoutingMock: vi.fn(),
   useKangurAssignmentsMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useKangurSubjectFocusMock: vi.fn(),
   scoreCreateMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -41,7 +43,7 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+  useKangurSubjectFocus: useKangurSubjectFocusMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({

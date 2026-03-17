@@ -58,9 +58,7 @@ function AnalogClockSmall({
       aria-label={ariaLabel}
       role='img'
       viewBox='0 0 200 200'
-      width='140'
-      height='140'
-      className='drop-shadow-lg'
+      className='h-28 w-28 drop-shadow-lg sm:h-36 sm:w-36'
     >
       <circle
         cx='100'

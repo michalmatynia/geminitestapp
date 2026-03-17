@@ -123,7 +123,7 @@ export default function TrainingSetup({
           </div>
           <div
             aria-labelledby={categoryHeadingId}
-            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start`}
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} sm:flex-wrap sm:justify-start`}
             data-testid='training-setup-category-group'
             role='group'
           >
@@ -159,7 +159,7 @@ export default function TrainingSetup({
           </h3>
           <div
             aria-labelledby={countHeadingId}
-            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start sm:w-auto`}
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} sm:w-auto sm:flex-wrap sm:justify-start`}
             data-testid='training-setup-count-group'
             role='group'
           >

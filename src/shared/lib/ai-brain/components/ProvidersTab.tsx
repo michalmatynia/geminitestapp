@@ -15,7 +15,7 @@ import { Button, FormSection, Input, Label, useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { useBrain } from '../context/BrainContext';
 import {

@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getPromptValidationObservabilitySnapshot } from '@/shared/lib/prompt-core/runtime-observability';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import {
   Button,
   FormSection,
@@ -110,11 +111,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
   );
 
   React.useEffect(() => {
-    const timer = window.setInterval(() => {
+    const timer = safeSetInterval(() => {
       setRuntimeHealthTick((current) => current + 1);
     }, 4_000);
     return () => {
-      window.clearInterval(timer);
+      safeClearInterval(timer);
     };
   }, []);
 

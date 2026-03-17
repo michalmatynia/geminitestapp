@@ -12,7 +12,7 @@ export function KangurPanelStack({
 }: KangurPanelStackProps): React.JSX.Element {
   return (
     <div
-      className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME, className)}
+      className={cn('flex min-w-0 flex-col', KANGUR_PANEL_GAP_CLASSNAME, className)}
       {...props}
     />
   );

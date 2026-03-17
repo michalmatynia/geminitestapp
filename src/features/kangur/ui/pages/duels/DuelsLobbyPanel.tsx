@@ -1,7 +1,5 @@
 'use client';
 
-import type { MutableRefObject } from 'react';
-
 import {
   KangurButton,
   KangurGlassPanel,
@@ -42,7 +40,7 @@ type DuelsLobbyPanelProps = {
   isLobbyLoading: boolean;
   isBusy: boolean;
   relativeNow: number;
-  lobbyFreshRef: MutableRefObject<Map<string, number>>;
+  lobbyFresh: Map<string, number>;
   freshWindowMs: number;
   onRefresh: () => void;
   onModeFilterChange: (value: 'all' | KangurDuelMode) => void;
@@ -74,7 +72,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
     isLobbyLoading,
     isBusy,
     relativeNow,
-    lobbyFreshRef,
+    lobbyFresh,
     freshWindowMs,
     onRefresh,
     onModeFilterChange,
@@ -94,9 +92,9 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
       aria-busy={isLobbyLoading}
     >
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
-        <div className='space-y-1'>
+        <div className='space-y-1 min-w-0'>
           <div className='flex flex-wrap items-center gap-2' aria-live='polite' aria-atomic='true'>
-            <h3 id={lobbyHeadingId} className='text-xl font-semibold text-slate-900'>
+            <h3 id={lobbyHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
               Lobby pojedynków
             </h3>
             <KangurStatusChip
@@ -106,19 +104,21 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
               {lobbyCountLabel}
             </KangurStatusChip>
           </div>
-          <p id={lobbyDescriptionId} className='text-sm text-slate-600'>
+          <p id={lobbyDescriptionId} className='text-sm leading-relaxed text-slate-600 max-w-2xl'>
             Wybierz ucznia, który czeka na pojedynek albo dodaj własne wyzwanie.
           </p>
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          {lobbyLastUpdatedAt ? (
+        <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end'>
+          <div className='flex flex-wrap items-center gap-2'>
+            {lobbyLastUpdatedAt ? (
+              <KangurStatusChip accent='slate' size='sm'>
+                Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
+              </KangurStatusChip>
+            ) : null}
             <KangurStatusChip accent='slate' size='sm'>
-              Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
+              Auto co {lobbyRefreshSeconds}s
             </KangurStatusChip>
-          ) : null}
-          <KangurStatusChip accent='slate' size='sm'>
-            Auto co {lobbyRefreshSeconds}s
-          </KangurStatusChip>
+          </div>
           <KangurButton
             onClick={onRefresh}
             variant='ghost'
@@ -133,14 +133,14 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         </div>
       </div>
 
-      <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2'>
+      <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2 sm:p-4'>
         <div className='min-w-0 space-y-1'>
           <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
             Tryb
           </div>
           <KangurSelectField
             value={lobbyModeFilter}
-            onChange={(event) => onModeFilterChange(event.target.value as 'all' | KangurDuelMode)}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onModeFilterChange(event.target.value as 'all' | KangurDuelMode)}
             aria-label='Filtruj lobby po trybie pojedynku'
             size='sm'
             accent='slate'
@@ -156,7 +156,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
           </div>
           <KangurSelectField
             value={lobbySort}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
               onSortChange(
                 event.target.value as
                   | 'recent'
@@ -259,7 +259,7 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
         >
           {filteredPublicLobbyEntries.map((entry) => {
             const hostInitial = resolveLobbyHostInitial(entry.host.displayName);
-            const freshAt = lobbyFreshRef.current.get(entry.sessionId);
+            const freshAt = lobbyFresh.get(entry.sessionId);
             const isFresh =
               typeof freshAt === 'number' && relativeNow - freshAt < freshWindowMs;
             const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
@@ -275,19 +275,19 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
                   role='group'
                   aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                 >
-                  <div className='flex flex-wrap items-start justify-between kangur-panel-gap'>
-                    <div className='flex items-center kangur-panel-gap'>
+                  <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+                    <div className='flex items-center kangur-panel-gap min-w-0'>
                       <div
-                        className='flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg font-extrabold text-indigo-700'
+                        className='flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-base font-extrabold text-indigo-700 sm:h-12 sm:w-12 sm:text-lg'
                         aria-hidden='true'
                       >
                         {hostInitial}
                       </div>
-                      <div>
-                        <div className='text-sm font-semibold text-slate-800'>
+                      <div className='min-w-0'>
+                        <div className='text-sm font-semibold text-slate-800 truncate'>
                           {entry.host.displayName}
                         </div>
-                        <div className='text-xs text-slate-500'>
+                        <div className='text-xs text-slate-500 leading-tight'>
                           Czeka na przeciwnika • {updatedLabel}
                         </div>
                       </div>

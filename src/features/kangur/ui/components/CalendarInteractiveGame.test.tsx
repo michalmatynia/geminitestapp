@@ -74,9 +74,6 @@ describe('CalendarInteractiveGame', () => {
     const winterTarget = screen.getByTestId('calendar-season-3');
 
     expect(winterTarget).toHaveClass('soft-card');
-
-    fireEvent.dragOver(winterTarget);
-    expect(winterTarget).toHaveClass('scale-[1.02]');
   });
 
   it('shows day-section guidance and only day-oriented task UI', () => {

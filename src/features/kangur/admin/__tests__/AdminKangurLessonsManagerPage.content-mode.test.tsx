@@ -9,6 +9,7 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
 
+const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();
 const {
   updateLessonsMock,
   updateLessonDocumentsMock,
@@ -18,27 +19,22 @@ const {
   lessonDocumentsState,
   useMasterFolderTreeShellMock,
   latestNodesState,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => {
-  return {
-    updateLessonsMock: vi.fn(),
-    updateLessonDocumentsMock: vi.fn(),
-    apiPostMock: vi.fn(),
-    toastMock: vi.fn(),
-    lessonsState: {
-      value: [] as Array<Record<string, unknown>>,
-    },
-    lessonDocumentsState: {
-      value: {} as Record<string, unknown>,
-    },
-    useMasterFolderTreeShellMock: vi.fn(),
-    latestNodesState: {
-      value: [] as Array<Record<string, unknown>>,
-    },
-    ...globalThis.__kangurClientErrorMocks(),
-  };
-});
+} = vi.hoisted(() => ({
+  updateLessonsMock: vi.fn(),
+  updateLessonDocumentsMock: vi.fn(),
+  apiPostMock: vi.fn(),
+  toastMock: vi.fn(),
+  lessonsState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+  lessonDocumentsState: {
+    value: {} as Record<string, unknown>,
+  },
+  useMasterFolderTreeShellMock: vi.fn(),
+  latestNodesState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
+}));
 
 vi.mock('@/features/foldertree', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/foldertree')>();
@@ -267,8 +263,11 @@ vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
-  withKangurClientError,
-  withKangurClientErrorSync,
+  ...(() => {
+    const { withKangurClientError, withKangurClientErrorSync } =
+      globalThis.__kangurClientErrorMocks();
+    return { withKangurClientError, withKangurClientErrorSync };
+  })(),
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
@@ -282,6 +281,8 @@ const baseLessons = [
     id: 'kangur-lesson-clock',
     componentId: 'clock',
     contentMode: 'component',
+    subject: 'maths',
+    ageGroup: 'ten_year_old',
     title: 'Nauka zegara',
     description: 'Odczytuj godziny',
     emoji: '🕐',

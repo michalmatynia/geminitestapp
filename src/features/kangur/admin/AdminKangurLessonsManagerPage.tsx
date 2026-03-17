@@ -10,7 +10,12 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
 import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
-import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import { DEFAULT_KANGUR_AGE_GROUP, KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog';
+import type {
+  KangurLesson,
+  KangurLessonAgeGroup,
+  KangurLessonComponentId,
+} from '@/features/kangur/shared/contracts/kangur';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
@@ -53,8 +58,9 @@ import {
   updateKangurLessonDocumentTimestamp,
 } from '../lesson-documents';
 import {
-  appendMissingGeometryKangurLessons,
-  appendMissingLogicalThinkingKangurLessons,
+  appendMissingKangurLessonsByComponent,
+  KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+  KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS,
   KANGUR_LESSON_LIBRARY,
   KANGUR_LESSON_SORT_ORDER_GAP,
   canonicalizeKangurLessons,
@@ -140,6 +146,7 @@ export function AdminKangurLessonsManagerPage({
   const [orderedTreeSearchQuery, setOrderedTreeSearchQuery] = useState('');
   const [catalogTreeSearchQuery, setCatalogTreeSearchQuery] = useState('');
   const [authoringFilter, setAuthoringFilter] = useState<KangurLessonAuthoringFilter>('all');
+  const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | KangurLessonAgeGroup>('all');
   const isCatalogMode = treeMode === 'catalog';
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
@@ -183,13 +190,27 @@ export function AdminKangurLessonsManagerPage({
     );
   }, [treeMode]);
 
-  const filteredLessons = useMemo(
+  const authoringFilteredLessons = useMemo(
     () =>
       lessons.filter((lesson) =>
         matchesKangurLessonAuthoringFilter(authoringFilter, lesson, lessonDocuments)
       ),
     [authoringFilter, lessonDocuments, lessons]
   );
+  const ageGroupCounts = useMemo(() => {
+    const counts = new Map<KangurLessonAgeGroup, number>();
+    KANGUR_AGE_GROUPS.forEach((group) => counts.set(group.id, 0));
+    authoringFilteredLessons.forEach((lesson) => {
+      counts.set(lesson.ageGroup, (counts.get(lesson.ageGroup) ?? 0) + 1);
+    });
+    return counts;
+  }, [authoringFilteredLessons]);
+  const filteredLessons = useMemo(() => {
+    if (ageGroupFilter === 'all') {
+      return authoringFilteredLessons;
+    }
+    return authoringFilteredLessons.filter((lesson) => lesson.ageGroup === ageGroupFilter);
+  }, [ageGroupFilter, authoringFilteredLessons]);
   const filterCounts = useMemo(
     () => getKangurLessonAuthoringFilterCounts(lessons, lessonDocuments),
     [lessonDocuments, lessons]
@@ -207,13 +228,28 @@ export function AdminKangurLessonsManagerPage({
     [filteredLessons, isCatalogMode]
   );
 
+  const packAgeGroups = useMemo(() => {
+    const uniqueAgeGroups = Array.from(new Set(lessons.map((lesson) => lesson.ageGroup)));
+    return uniqueAgeGroups.length > 0 ? uniqueAgeGroups : [DEFAULT_KANGUR_AGE_GROUP];
+  }, [lessons]);
+
   const geometryPackAddedCount = useMemo(
-    () => appendMissingGeometryKangurLessons(lessons).addedCount,
-    [lessons]
+    () =>
+      appendMissingKangurLessonsByComponent(
+        lessons,
+        KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+        packAgeGroups
+      ).addedCount,
+    [lessons, packAgeGroups]
   );
   const logicPackAddedCount = useMemo(
-    () => appendMissingLogicalThinkingKangurLessons(lessons).addedCount,
-    [lessons]
+    () =>
+      appendMissingKangurLessonsByComponent(
+        lessons,
+        KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS,
+        packAgeGroups
+      ).addedCount,
+    [lessons, packAgeGroups]
   );
 
   const adapter = useMemo(
@@ -352,6 +388,7 @@ export function AdminKangurLessonsManagerPage({
       ...current,
       componentId,
       subject: template.subject ?? 'maths',
+      ageGroup: template.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP,
       title: template.title,
       description: template.description,
       emoji: template.emoji,
@@ -552,7 +589,11 @@ export function AdminKangurLessonsManagerPage({
         description: 'Appends missing geometry lessons to the catalog.',
       },
       async () => {
-        const result = appendMissingGeometryKangurLessons(lessons);
+        const result = appendMissingKangurLessonsByComponent(
+          lessons,
+          KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+          packAgeGroups
+        );
         const nextLessons = canonicalizeKangurLessons(result.lessons);
         await updateLessons.mutateAsync(nextLessons);
         return true;
@@ -578,7 +619,11 @@ export function AdminKangurLessonsManagerPage({
         description: 'Appends missing logical thinking lessons to the catalog.',
       },
       async () => {
-        const result = appendMissingLogicalThinkingKangurLessons(lessons);
+        const result = appendMissingKangurLessonsByComponent(
+          lessons,
+          KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS,
+          packAgeGroups
+        );
         const nextLessons = canonicalizeKangurLessons(result.lessons);
         await updateLessons.mutateAsync(nextLessons);
         return true;
@@ -641,6 +686,11 @@ export function AdminKangurLessonsManagerPage({
   const lessonsNeedingLegacyImport = countLessonsRequiringLegacyImport(lessons, lessonDocuments);
   const activeFilterLabel =
     filterCounts.find((filter) => filter.id === authoringFilter)?.label ?? 'All lessons';
+  const activeAgeGroupLabel =
+    ageGroupFilter === 'all'
+      ? 'All ages'
+      : (KANGUR_AGE_GROUPS.find((group) => group.id === ageGroupFilter)?.label ??
+        ageGroupFilter);
   const needsFixesCount = filterCountMap.get('needsFixes')?.count ?? 0;
   const missingNarrationCount = filterCountMap.get('missingNarration')?.count ?? 0;
   const hiddenLessonCount = filterCountMap.get('hidden')?.count ?? 0;
@@ -806,13 +856,59 @@ export function AdminKangurLessonsManagerPage({
                 </div>
               </div>
 
+              <div className='space-y-2'>
+                <div className={filterSectionLabelClassName}>Age groups</div>
+                <div className='flex flex-wrap items-center gap-1.5'>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    className={cn(
+                      'h-8 rounded-xl px-3 text-xs font-semibold',
+                      ageGroupFilter === 'all' ? activeSegmentClassName : inactiveSegmentClassName
+                    )}
+                    onClick={(): void => setAgeGroupFilter('all')}
+                    disabled={isSaving}
+                  >
+                    All ages
+                    <span className='ml-1 text-[10px] text-current/75'>
+                      {authoringFilteredLessons.length}
+                    </span>
+                  </Button>
+                  {KANGUR_AGE_GROUPS.map((group) => (
+                    <Button
+                      key={group.id}
+                      type='button'
+                      size='sm'
+                      variant='outline'
+                      className={cn(
+                        'h-8 rounded-xl px-3 text-xs font-semibold',
+                        ageGroupFilter === group.id
+                          ? activeSegmentClassName
+                          : inactiveSegmentClassName
+                      )}
+                      onClick={(): void => setAgeGroupFilter(group.id)}
+                      disabled={isSaving}
+                    >
+                      {group.label}
+                      <span className='ml-1 text-[10px] text-current/75'>
+                        {ageGroupCounts.get(group.id) ?? 0}
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
               <div className='flex flex-wrap items-center gap-2'>
                 <span className='text-xs text-muted-foreground'>
                   {isCatalogMode
-                    ? 'Catalog mode groups lessons by visibility and lesson type.'
+                    ? 'Catalog mode groups lessons by visibility, age group, and lesson type.'
                     : 'Ordered mode supports drag-and-drop reordering.'}
                   {authoringFilter !== 'all'
                     ? ` Showing ${filteredLessons.length} matching lessons.`
+                    : ''}
+                  {ageGroupFilter !== 'all' && authoringFilter === 'all'
+                    ? ` Showing ${filteredLessons.length} lessons for ${activeAgeGroupLabel}.`
                     : ''}
                 </span>
               </div>
@@ -854,7 +950,9 @@ export function AdminKangurLessonsManagerPage({
               searchState={searchState}
               rootDropUi={isCatalogMode ? { ...rootDropUi, enabled: false } : rootDropUi}
               renderNode={renderNode}
-              enableDnd={!isCatalogMode && authoringFilter === 'all' && !isSaving}
+              enableDnd={
+                !isCatalogMode && authoringFilter === 'all' && ageGroupFilter === 'all' && !isSaving
+              }
               emptyLabel={
                 authoringFilter === 'all'
                   ? 'No lessons yet. Add the first lesson to start.'
@@ -952,6 +1050,10 @@ export function AdminKangurLessonsManagerPage({
           {
             label: 'Filter',
             value: <Badge variant='outline'>{activeFilterLabel}</Badge>,
+          },
+          {
+            label: 'Age group',
+            value: <Badge variant='outline'>{activeAgeGroupLabel}</Badge>,
           },
           {
             label: 'Lessons',

@@ -112,7 +112,9 @@
     ".next-dev-playwright-broker-web-dev-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/dev/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/dev/types/**/*.ts"
+    ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

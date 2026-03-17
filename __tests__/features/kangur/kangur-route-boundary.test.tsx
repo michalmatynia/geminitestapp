@@ -12,6 +12,10 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
   KangurFeatureRouteShell: () => <div data-testid='kangur-route-shell'>Kangur route shell</div>,
 }));
 
+vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+  getKangurStorefrontDefaultMode: async () => 'default',
+}));
+
 import KangurLayout from '@/app/(frontend)/kangur/layout';
 import KangurAppLayout from '@/app/(frontend)/kangur/(app)/layout';
 import {
@@ -26,17 +30,23 @@ function AppearanceModeProbe(): React.JSX.Element {
 }
 
 describe('kangur route boundary', () => {
-  it('renders nested Kangur routes through the shared surface layout', () => {
-    render(KangurLayout({ children: <div data-testid='kangur-layout-child'>Child route</div> }));
+  it('renders nested Kangur routes through the shared surface layout', async () => {
+    const layout = await KangurLayout({
+      children: <div data-testid='kangur-layout-child'>Child route</div>,
+    });
+
+    render(layout);
 
     expect(screen.getByTestId('kangur-surface-sync')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-layout-child')).toHaveTextContent('Child route');
   });
 
-  it('defaults the Kangur route subtree to light mode even when the parent storefront is dark', () => {
+  it('defaults the Kangur route subtree to light mode even when the parent storefront is dark', async () => {
+    const layout = await KangurLayout({ children: <AppearanceModeProbe /> });
+
     render(
       <CmsStorefrontAppearanceProvider initialMode='dark'>
-        {KangurLayout({ children: <AppearanceModeProbe /> })}
+        {layout}
       </CmsStorefrontAppearanceProvider>
     );
 

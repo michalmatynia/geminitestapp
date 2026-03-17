@@ -167,7 +167,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Indukcja zbiera obserwacje i buduje prawdopodobną regułę.
           </KangurLessonLead>
           <KangurLessonInset accent='emerald' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-28 w-72'>
+            <div className='mx-auto h-28 w-72 max-w-full'>
               <InductionGatherAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -185,7 +185,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Warunek pokazuje związek: gdy P jest prawdziwe, Q musi być prawdziwe.
           </KangurLessonLead>
           <KangurLessonInset accent='indigo' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <IfThenArrowAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -284,7 +284,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Sprawdzaj, czy zdanie dotyczy wszystkich, tylko niektórych, czy żadnych elementów.
           </KangurLessonLead>
           <KangurLessonInset accent='emerald' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <QuantifierScopeAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>

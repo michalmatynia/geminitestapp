@@ -3,6 +3,8 @@
 import { useQueryClient, type Query } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+
 interface QueryMetadata {
   priority: number;
   lastAccessed: number;
@@ -134,12 +136,12 @@ export function useQueryLifecycle(): {
 
   // Periodic cleanup and optimization
   useEffect((): (() => void) => {
-    const cleanupInterval = setInterval(cleanupStaleQueries, 10 * 60 * 1000); // 10 minutes
-    const optimizeInterval = setInterval(optimizeQueryPriorities, 5 * 60 * 1000); // 5 minutes
+    const cleanupInterval = safeSetInterval(cleanupStaleQueries, 10 * 60 * 1000); // 10 minutes
+    const optimizeInterval = safeSetInterval(optimizeQueryPriorities, 5 * 60 * 1000); // 5 minutes
 
     return (): void => {
-      clearInterval(cleanupInterval);
-      clearInterval(optimizeInterval);
+      safeClearInterval(cleanupInterval);
+      safeClearInterval(optimizeInterval);
     };
   }, [cleanupStaleQueries, optimizeQueryPriorities]);
 

@@ -9,7 +9,7 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import { SegmentedControl } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/ui/templates/panels';
+import type { FilterField } from '@/shared/contracts/ui';
 
 import { usePromptEngineActions } from '../context/prompt-engine/PromptEngineActionsContext';
 import { usePromptEngineConfig } from '../context/prompt-engine/PromptEngineConfigContext';

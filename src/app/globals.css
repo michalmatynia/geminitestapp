@@ -39,6 +39,20 @@
     --radius: 0.5rem;
   }
 
+  html {
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  button,
+  [role='button'],
+  a,
+  input,
+  textarea,
+  select {
+    touch-action: manipulation;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -1448,6 +1462,12 @@
   }
 
   @media (max-width: 639px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+
     .kangur-text-field {
       font-size: 16px !important;
     }
@@ -3416,6 +3436,14 @@
     margin-top: calc(var(--kangur-lesson-panel-gap, 1rem) * -0.5);
   }
 
+  .kangur-drawing-canvas {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: contain;
+  }
+
   .kangur-drawing-canvas[data-drawing-active='true']:focus-visible {
     box-shadow: none;
   }
@@ -3432,7 +3460,10 @@
   }
 
   @media (pointer: coarse) {
-    [data-rbd-draggable-id] {
+    [data-rbd-draggable-id],
+    [data-rbd-drag-handle-draggable-id],
+    [data-rfd-draggable-id],
+    [data-rfd-drag-handle-draggable-id] {
       touch-action: none;
       -webkit-user-select: none;
       user-select: none;

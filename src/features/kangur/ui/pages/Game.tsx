@@ -38,6 +38,7 @@ import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import {
   KangurButton,
@@ -51,7 +52,7 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 
 const GAME_BRAND_NAME = 'Sprycio';
 const GAME_MAIN_ID = 'kangur-game-main';
@@ -146,6 +147,8 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 function GameContent(): React.JSX.Element {
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast } = runtime;
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const isAdultFocus = ageGroup !== DEFAULT_KANGUR_AGE_GROUP;
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
@@ -631,6 +634,55 @@ function GameContent(): React.JSX.Element {
       {children}
     </motion.div>
   );
+
+  if (isAdultFocus) {
+    return (
+      <KangurStandardPageLayout
+        tone='play'
+        id='kangur-game-page'
+        skipLinkTargetId={GAME_MAIN_ID}
+        docsRootId='kangur-game-page'
+        docsTooltipsEnabled={docsTooltipsEnabled}
+        beforeNavigation={(
+          <XpToast
+            xpGained={xpToast.xpGained}
+            newBadges={xpToast.newBadges}
+            breakdown={xpToast.breakdown}
+            dailyQuest={xpToast.dailyQuest}
+            nextBadge={xpToast.nextBadge}
+            recommendation={xpToast.recommendation}
+            visible={xpToast.visible}
+          />
+        )}
+        navigation={<KangurGameNavigationWidget />}
+        afterNavigation={(
+          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
+            Widok: {currentScreenLabel}
+          </div>
+        )}
+        containerProps={{
+          as: 'section',
+          'data-kangur-route-main': true,
+          id: GAME_MAIN_ID,
+          'aria-labelledby': GAME_TITLE_ID,
+          className: `flex flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:px-6 sm:pt-10 lg:px-8 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+        }}
+      >
+        <h1 id={GAME_TITLE_ID} className='sr-only'>
+          {GAME_BRAND_NAME}
+        </h1>
+        <div className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+          <KangurEmptyState
+            accent='amber'
+            className='w-full'
+            description='Sekcja Grajmy jest teraz dostępna dla 10-latków.'
+            padding='xl'
+            title='Gry dla dorosłych w przygotowaniu'
+          />
+        </div>
+      </KangurStandardPageLayout>
+    );
+  }
 
   return (
     <>

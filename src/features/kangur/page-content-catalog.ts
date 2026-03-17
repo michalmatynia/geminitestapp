@@ -218,6 +218,18 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
       'Odejmowanie jednocyfrowe i dwucyfrowe, także z pożyczaniem. Pomaga zrozumieć różnicę i kontrolować wynik przez dodawanie.',
     triggerPhrases: ['odejmowanie', 'różnica', 'minus', 'odejmij'],
   },
+  alphabet_basics: {
+    explanation: 'Rysuj litery po kolorowym sladzie. To gra dla 6-latkow.',
+    triggerPhrases: ['alfabet', 'litery', 'pisanie'],
+  },
+  alphabet_syllables: {
+    explanation: 'Buduj slowa z sylab. Gra dla 7-latkow.',
+    triggerPhrases: ['sylaby', 'slowa'],
+  },
+  webdev_react_components: {
+    explanation: 'Buduj interaktywne komponenty w React. Lekcja dla doroslych.',
+    triggerPhrases: ['react', 'komponenty', 'programowanie'],
+  },
   multiplication: {
     explanation:
       'Utrwala tabliczkę mnożenia, mnożenie jako grupowanie i prosty algorytm. Dobra do automatyzacji iloczynów.',

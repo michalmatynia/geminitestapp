@@ -42,7 +42,7 @@ const STOCK_OPERATOR_OPTIONS: Array<
 ];
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/ui/templates/panels';
+import type { FilterField } from '@/shared/contracts/ui';
 
 import {
   createAdvancedPreset,
@@ -369,7 +369,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
             size='sm'
             variant={hasAdvancedFilter ? 'default' : 'outline'}
             onClick={() => setIsAdvancedFilterOpen(true)}
-            className='h-8'
+            className='h-8 w-full sm:w-auto'
           >
             Advanced Filter
           </Button>

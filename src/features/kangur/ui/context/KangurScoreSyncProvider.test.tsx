@@ -10,17 +10,21 @@ import {
 } from '@/features/kangur/services/guest-kangur-scores';
 
 const {
-  useKangurAuthMock,
-  scoreCreateMock,
   logKangurClientErrorMock,
   reportKangurClientErrorMock,
   trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  useKangurAuthMock,
+  scoreCreateMock,
 } = vi.hoisted(() => ({
+  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
+  reportKangurClientErrorMock: globalThis.__kangurClientErrorMocks().reportKangurClientErrorMock,
+  trackKangurClientEventMock: globalThis.__kangurClientErrorMocks().trackKangurClientEventMock,
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   useKangurAuthMock: vi.fn(),
   scoreCreateMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({

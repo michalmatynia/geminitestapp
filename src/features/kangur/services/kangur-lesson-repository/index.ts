@@ -24,6 +24,7 @@ export const getKangurLessonRepository = async (): Promise<KangurLessonRepositor
           action: 'listLessons',
           provider,
           subject: input?.subject ?? null,
+          ageGroup: input?.ageGroup ?? null,
           enabledOnly: input?.enabledOnly ?? null,
         });
         throw error;

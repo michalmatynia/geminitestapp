@@ -15,6 +15,7 @@ const lesson = {
   componentId: 'clock',
   contentMode: 'document',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Nauka zegara',
   description: 'Odczytuj godziny i minuty.',
   emoji: '🕐',

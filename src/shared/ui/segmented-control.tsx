@@ -2,14 +2,11 @@
 
 import * as React from 'react';
 
+import type { SegmentedControlOption } from '@/shared/contracts/ui';
+
 import { cn, getTextContent, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
-export interface SegmentedControlOption<T extends string> {
-  value: T;
-  label: React.ReactNode;
-  icon?: React.ComponentType<{ className?: string }>;
-  ariaLabel?: string;
-}
+export type { SegmentedControlOption };
 
 export interface SegmentedControlProps<T extends string> {
   options: ReadonlyArray<SegmentedControlOption<T>>;

@@ -13,7 +13,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { FilterPanel, Button, FormSection, CompactEmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
-import type { FilterField } from '@/shared/ui/templates/panels';
+import type { FilterField } from '@/shared/contracts/ui';
 
 import { useAsset3DPickerModalRuntime } from './Asset3DPickerModalRuntimeContext';
 

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Test Distribution Check
 
-Generated at: 2026-03-16T18:13:36.066Z
+Generated at: 2026-03-17T09:54:58.618Z
 
 ## Summary
 
@@ -18,7 +18,7 @@ Generated at: 2026-03-16T18:13:36.066Z
 - Features without tests: 0
 - Features without fast tests: 0
 - Features without negative-path tests: 2
-- Total test files: 1720
+- Total test files: 1732
 - .only() occurrences: 0
 - .skip() occurrences: 32
 - .todo() occurrences: 0
@@ -27,8 +27,8 @@ Generated at: 2026-03-16T18:13:36.066Z
 
 | Feature | Test Files | Fast | E2E | Negative |
 | --- | ---: | ---: | ---: | ---: |
-| kangur | 316 | 303 | 13 | 61 |
-| ai | 229 | 229 | 0 | 86 |
+| kangur | 318 | 305 | 13 | 61 |
+| ai | 230 | 230 | 0 | 86 |
 | products | 83 | 76 | 7 | 28 |
 | case-resolver | 78 | 77 | 1 | 32 |
 | cms | 63 | 62 | 1 | 15 |

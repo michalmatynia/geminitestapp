@@ -2,16 +2,13 @@
 
 import { useState, useCallback, useMemo } from 'react';
 
-import type { IdLabeledOptionDto } from '@/shared/contracts/base';
+import type { SelectOption } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { FormModal } from '@/shared/ui/FormModal';
 import { SearchInput } from '@/shared/ui/search-input';
 import { cn } from '@/shared/utils';
 
-export type SelectOption<T> = IdLabeledOptionDto<string | number, T> & {
-  disabled?: boolean;
-  description?: string;
-};
+export type { SelectOption };
 
 export interface SelectModalProps<T> {
   open: boolean;

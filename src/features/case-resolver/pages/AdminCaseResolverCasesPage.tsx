@@ -8,7 +8,7 @@ import { ConfirmModal, Input, MultiSelect } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { CaseListPanel } from '../components/CaseListPanel';
 import {

@@ -14,6 +14,7 @@ import {
 import { useQueryPersistence } from '@/shared/hooks/query/useQueryPersistence';
 import { useSmartCache, useCacheWarming } from '@/shared/hooks/query/useSmartCache';
 import { usePerformanceMonitor } from '@/shared/hooks/useQueryAnalytics';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { setupOfflineSupport } from '@/shared/lib/offline-support';
 import { createQueryClient } from '@/shared/lib/query-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -49,7 +50,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
   useQueryBatching({ maxBatchSize: 5, batchDelay: 100 });
 
   useEffect((): (() => void) => {
-    const optimizeInterval = setInterval(
+    const optimizeInterval = safeSetInterval(
       (): void => {
         optimizeCache();
         optimizeQueryPriorities();
@@ -57,7 +58,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
       5 * 60 * 1000
     );
 
-    const cleanupInterval = setInterval(
+    const cleanupInterval = safeSetInterval(
       (): void => {
         cleanupStaleQueries();
       },
@@ -65,8 +66,8 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
     );
 
     return (): void => {
-      clearInterval(optimizeInterval);
-      clearInterval(cleanupInterval);
+      safeClearInterval(optimizeInterval);
+      safeClearInterval(cleanupInterval);
     };
   }, [cleanupStaleQueries, optimizeCache, optimizeQueryPriorities]);
 

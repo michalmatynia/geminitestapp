@@ -1,5 +1,4 @@
 import { auth } from '@/features/auth/auth';
-import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
@@ -7,10 +6,9 @@ import { productService } from '@/features/products/server';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 
-import { HomeCmsDefaultContent } from './home-cms-default-content';
-import { HomeFallbackContent } from './home-fallback-content';
 import { canPreviewDrafts } from './home-helpers';
 import { normalizeHomeProducts } from './home-product-normalize';
+import { HomeContentClient } from '@/features/cms/components/frontend/home/HomeContentClient';
 
 type HomeContentProps = {
   domainId: string;
@@ -53,20 +51,16 @@ export async function HomeContent({
     const showMenu = cmsPage?.showMenu !== false;
 
     return (
-      <CmsPageShell
+      <HomeContentClient
+        variant='cms'
         menu={menuSettings}
         theme={themeSettings}
         colorSchemes={colorSchemes}
         showMenu={showMenu}
-      >
-        <HomeCmsDefaultContent
-          themeSettings={themeSettings}
-          colorSchemes={colorSchemes}
-          hasCmsContent={hasCmsContent}
-          defaultSlug={defaultSlug.slug}
-          rendererComponents={rendererComponents}
-        />
-      </CmsPageShell>
+        hasCmsContent={hasCmsContent}
+        defaultSlug={defaultSlug.slug}
+        rendererComponents={rendererComponents as any}
+      />
     );
   }
 
@@ -80,23 +74,20 @@ export async function HomeContent({
   const showFallbackHeader = !menuSettings.showMenu;
 
   return (
-    <CmsPageShell
+    <HomeContentClient
+      variant='fallback'
       menu={menuSettings}
       theme={themeSettings}
       colorSchemes={colorSchemes}
       showMenu={Boolean(menuSettings.showMenu)}
-    >
-      <HomeFallbackContent
-        showFallbackHeader={showFallbackHeader}
-        products={products}
-        themeSettings={themeSettings}
-        appearanceTone={{
-          background: themeSettings.backgroundColor,
-          text: themeSettings.textColor,
-          border: themeSettings.borderColor,
-          accent: themeSettings.accentColor || themeSettings.primaryColor || themeSettings.textColor,
-        }}
-      />
-    </CmsPageShell>
+      showFallbackHeader={showFallbackHeader}
+      products={products}
+      appearanceTone={{
+        background: themeSettings.backgroundColor,
+        text: themeSettings.textColor,
+        border: themeSettings.borderColor,
+        accent: themeSettings.accentColor || themeSettings.primaryColor || themeSettings.textColor,
+      }}
+    />
   );
 }

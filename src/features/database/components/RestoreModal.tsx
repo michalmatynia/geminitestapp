@@ -6,7 +6,7 @@ import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 interface RestoreModalProps extends ModalStateProps {
   backupName: string;

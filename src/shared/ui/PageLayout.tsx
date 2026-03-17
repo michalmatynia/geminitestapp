@@ -120,7 +120,7 @@ function PageLayoutContent(): JSX.Element {
     return <>{children}</>;
   }
   return (
-    <div className={cn('rounded-lg border border-border bg-card p-6', panelClassName)}>
+    <div className={cn('rounded-lg border border-border bg-card p-4 sm:p-6', panelClassName)}>
       {children}
     </div>
   );
@@ -134,7 +134,7 @@ function PageLayoutSaveFooter(): JSX.Element | null {
       className={cn(
         'mt-6',
         stickyFooter &&
-          'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
+          'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-4 sm:p-6 backdrop-blur-md'
       )}
     >
       <div className={cn(stickyFooter && 'page-container')}>

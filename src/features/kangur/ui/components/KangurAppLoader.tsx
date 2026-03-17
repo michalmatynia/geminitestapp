@@ -219,14 +219,14 @@ export function KangurAppLoader({
             <div className='relative flex h-full w-full items-center justify-center'>
               <div
                 aria-hidden='true'
-                className='absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl'
+                className='absolute left-1/2 top-1/2 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl sm:h-[360px] sm:w-[360px]'
                 style={{
                   background:
                     'radial-gradient(circle, color-mix(in srgb, var(--kangur-soft-card-border, #cbd5e1) 34%, transparent) 0%, transparent 74%)',
                 }}
               />
               <motion.div
-                className='relative flex flex-col items-center justify-center kangur-panel-gap rounded-[40px] border px-12 py-11 backdrop-blur-xl'
+                className='relative flex w-full max-w-[360px] flex-col items-center justify-center kangur-panel-gap rounded-[40px] border px-6 py-8 backdrop-blur-xl sm:max-w-[420px] sm:px-12 sm:py-11'
                 data-loader-layout='expanded-card'
                 data-testid='kangur-app-loader-panel'
                 initial={

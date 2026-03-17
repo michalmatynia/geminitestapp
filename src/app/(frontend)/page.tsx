@@ -4,7 +4,8 @@ import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/server';
 import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { KangurPublicApp } from '@/features/kangur/public';
+import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { KangurPublicAppEntry } from '@/features/kangur/ui/KangurPublicAppEntry';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from './home-helpers';
@@ -30,8 +31,9 @@ export default async function Home(): Promise<JSX.Element> {
   }
 
   if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
+    const initialMode = await getKangurStorefrontDefaultMode();
     await flush();
-    return <KangurPublicApp basePath='/' />;
+    return <KangurPublicAppEntry basePath='/' initialMode={initialMode} />;
   }
 
   const cmsRepository = await withTiming('cmsRepository', getCmsRepository);

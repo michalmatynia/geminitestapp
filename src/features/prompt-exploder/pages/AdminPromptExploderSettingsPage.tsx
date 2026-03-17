@@ -16,12 +16,14 @@ import {
 } from '@/shared/contracts/validator';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   AdminAiEyebrow,
   FormField,
   FormActions,
   FormSection,
   Alert,
+  DocsTooltipEnhancer,
   Input,
   SectionHeader,
   Button,
@@ -31,11 +33,10 @@ import {
 import {
   SettingsFieldsRenderer,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 import { defaultPromptExploderSettings, parsePromptExploderSettingsResult } from '../settings';
@@ -399,6 +400,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         <DocsTooltipEnhancer
           rootId='prompt-exploder-settings-docs-root'
           enabled={docsTooltipsEnabled}
+          moduleId={DOCUMENTATION_MODULE_IDS.promptExploder}
+          fallbackDocId='workflow_overview'
         />
       </div>
     );
@@ -415,6 +418,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         <DocsTooltipEnhancer
           rootId='prompt-exploder-settings-docs-root'
           enabled={docsTooltipsEnabled}
+          moduleId={DOCUMENTATION_MODULE_IDS.promptExploder}
+          fallbackDocId='workflow_overview'
         />
       </div>
     );
@@ -563,6 +568,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       <DocsTooltipEnhancer
         rootId='prompt-exploder-settings-docs-root'
         enabled={docsTooltipsEnabled}
+        moduleId={DOCUMENTATION_MODULE_IDS.promptExploder}
+        fallbackDocId='workflow_overview'
       />
     </div>
   );

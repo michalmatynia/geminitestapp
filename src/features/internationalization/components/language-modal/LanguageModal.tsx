@@ -10,7 +10,7 @@ import {
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { useLanguageForm } from './hooks/useLanguageForm';
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';

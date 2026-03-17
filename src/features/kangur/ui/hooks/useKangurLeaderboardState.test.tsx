@@ -7,17 +7,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 
 const {
-  authMeMock,
-  scoreFilterMock,
   logKangurClientErrorMock,
-  useKangurSubjectFocusMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  authMeMock,
+  scoreFilterMock,
+  useKangurSubjectFocusMock,
 } = vi.hoisted(() => ({
+  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   authMeMock: vi.fn<() => Promise<KangurUser>>(),
   scoreFilterMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
   useKangurSubjectFocusMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

@@ -379,13 +379,13 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           data-testid='clock-mode-switch'
           className={cn(
             KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-            'inline-flex w-auto flex-wrap items-center justify-center'
+            'w-full sm:w-auto sm:flex-wrap sm:justify-center'
           )}
         >
           <KangurButton
             data-testid='clock-mode-practice'
             onClick={() => resetSession('practice')}
-            className='h-10 px-4 text-xs sm:flex-none'
+            className='h-10 flex-1 px-4 text-xs sm:flex-none'
             size='sm'
             variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
           >
@@ -394,7 +394,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           <KangurButton
             data-testid='clock-mode-challenge'
             onClick={() => resetSession('challenge')}
-            className='h-10 px-4 text-xs sm:flex-none'
+            className='h-10 flex-1 px-4 text-xs sm:flex-none'
             size='sm'
             variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
           >

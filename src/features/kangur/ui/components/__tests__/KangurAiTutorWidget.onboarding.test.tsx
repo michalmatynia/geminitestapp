@@ -10,14 +10,68 @@ import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contra
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 
 import {
-  createTutorMocks,
   MockSpeechSynthesisUtterance,
   resetTutorAuthAnchorRects,
   TutorAuthAnchor,
   TutorGameAnchor,
 } from './KangurAiTutorWidget.test-utils';
 
-const mocks = createTutorMocks();
+const mocks = vi.hoisted(() => {
+  const settingsStoreMock = {
+    get: vi.fn<(key: string) => string | undefined>(),
+  };
+  const useKangurAiTutorMock = vi.fn();
+  const useKangurLoginModalMock = vi.fn();
+  const useOptionalKangurAuthMock = vi.fn();
+  const useKangurTextHighlightMock = vi.fn();
+  const useOptionalKangurRoutingMock = vi.fn();
+  const useReducedMotionMock = vi.fn();
+  const sendMessageMock = vi.fn();
+  const openChatMock = vi.fn();
+  const closeChatMock = vi.fn();
+  const recordFollowUpCompletionMock = vi.fn();
+  const navigateToLoginMock = vi.fn();
+  const setHighlightedTextMock = vi.fn();
+  const activateSelectionGlowMock = vi.fn().mockReturnValue(false);
+  const clearSelectionMock = vi.fn();
+  const clearSelectionGlowMock = vi.fn();
+  const trackKangurClientEventMock = vi.fn();
+  const useKangurPageContentEntryMock = vi.fn();
+  const speechSynthesisMock = {
+    speak: vi.fn(),
+    cancel: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
+    paused: false,
+    speaking: false,
+  };
+  const audioPlayMock = vi.fn().mockResolvedValue(undefined);
+  const audioPauseMock = vi.fn();
+
+  return {
+    settingsStoreMock,
+    useKangurAiTutorMock,
+    useKangurLoginModalMock,
+    useOptionalKangurAuthMock,
+    useKangurTextHighlightMock,
+    useOptionalKangurRoutingMock,
+    useReducedMotionMock,
+    sendMessageMock,
+    openChatMock,
+    closeChatMock,
+    recordFollowUpCompletionMock,
+    navigateToLoginMock,
+    setHighlightedTextMock,
+    activateSelectionGlowMock,
+    clearSelectionMock,
+    clearSelectionGlowMock,
+    trackKangurClientEventMock,
+    useKangurPageContentEntryMock,
+    speechSynthesisMock,
+    audioPlayMock,
+    audioPauseMock,
+  };
+});
 
 const { withKangurClientError, withKangurClientErrorSync } = vi.hoisted(() =>
   globalThis.__kangurClientErrorMocks()

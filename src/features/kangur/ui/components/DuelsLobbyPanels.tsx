@@ -14,6 +14,7 @@ import {
   KangurButton,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurPanelRow,
   KangurSelectField,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -152,14 +153,14 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
             <div className='space-y-1'>
               <div className='flex flex-wrap items-center gap-2'>
-                <h3 id={inviteHeadingId} className='text-xl font-semibold text-slate-900'>
+                <h3 id={inviteHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
                   Zaproszenia
                 </h3>
                 <KangurStatusChip accent='indigo' size='sm'>
                   {inviteLobbyEntries.length}
                 </KangurStatusChip>
               </div>
-              <p className='text-sm text-slate-600'>
+              <p className='text-sm leading-relaxed text-slate-600'>
                 Prywatne pojedynki, do których zostałeś zaproszony.
               </p>
             </div>
@@ -198,18 +199,18 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     aria-label={`Prywatne zaproszenie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                   >
                     <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between kangur-panel-gap'>
-                      <div className='flex items-center kangur-panel-gap'>
+                      <div className='flex items-center kangur-panel-gap min-w-0'>
                         <div
-                          className='flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg font-extrabold text-indigo-700'
+                          className='flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-base font-extrabold text-indigo-700 sm:h-12 sm:w-12 sm:text-lg'
                           aria-hidden='true'
                         >
                           {hostInitial}
                         </div>
-                        <div>
-                          <div className='text-sm font-semibold text-slate-800'>
+                        <div className='min-w-0'>
+                          <div className='text-sm font-semibold text-slate-800 truncate'>
                             {entry.host.displayName}
                           </div>
-                          <div className='text-xs text-slate-500'>
+                          <div className='text-xs text-slate-500 leading-tight'>
                             Zaproszenie prywatne • {updatedLabel}
                           </div>
                         </div>
@@ -300,58 +301,65 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
         aria-busy={isLobbyLoading}
       >
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
-          <div className='space-y-1'>
+          <div className='space-y-1 min-w-0'>
             <div className='flex flex-wrap items-center gap-2' aria-live='polite' aria-atomic='true'>
-              <h3 id={lobbyHeadingId} className='text-xl font-semibold text-slate-900'>
+              <h3 id={lobbyHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
                 Lobby pojedynków
               </h3>
               <KangurStatusChip accent={lobbyEntries.length > 0 ? 'emerald' : 'slate'} size='sm'>
                 {lobbyCountLabel}
               </KangurStatusChip>
             </div>
-            <p id={lobbyDescriptionId} className='text-sm text-slate-600'>
+            <p
+              id={lobbyDescriptionId}
+              className='text-sm leading-relaxed text-slate-600 max-w-2xl'
+            >
               Wybierz ucznia, który czeka na pojedynek albo dodaj własne wyzwanie.
             </p>
           </div>
-          <div className='flex flex-wrap items-center gap-2'>
-            {showPausedChip ? (
-              <KangurStatusChip accent='amber' size='sm'>
-                Odświeżanie wstrzymane
-              </KangurStatusChip>
-            ) : null}
-            {showOfflineChip ? (
-              <KangurStatusChip accent='rose' size='sm'>
-                Brak połączenia
-              </KangurStatusChip>
-            ) : null}
-            {showErrorChip ? (
-              <KangurStatusChip accent='rose' size='sm'>
-                Problem z połączeniem
-              </KangurStatusChip>
-            ) : null}
-            {showConnectingChip ? (
+          <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end'>
+            <div className='flex flex-wrap items-center gap-2'>
+              {showPausedChip ? (
+                <KangurStatusChip accent='amber' size='sm'>
+                  Odświeżanie wstrzymane
+                </KangurStatusChip>
+              ) : null}
+              {showOfflineChip ? (
+                <KangurStatusChip accent='rose' size='sm'>
+                  Brak połączenia
+                </KangurStatusChip>
+              ) : null}
+              {showErrorChip ? (
+                <KangurStatusChip accent='rose' size='sm'>
+                  Problem z połączeniem
+                </KangurStatusChip>
+              ) : null}
+              {showConnectingChip ? (
+                <KangurStatusChip accent='slate' size='sm'>
+                  Łączymy na żywo
+                </KangurStatusChip>
+              ) : null}
+              {showLiveChip ? (
+                <KangurStatusChip accent='emerald' size='sm'>
+                  Na żywo
+                </KangurStatusChip>
+              ) : null}
+              {showStaleChip ? (
+                <KangurStatusChip accent='rose' size='sm'>
+                  Dane mogą być nieaktualne
+                </KangurStatusChip>
+              ) : null}
+              {lobbyLastUpdatedAt ? (
+                <KangurStatusChip accent='slate' size='sm'>
+                  Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
+                </KangurStatusChip>
+              ) : null}
               <KangurStatusChip accent='slate' size='sm'>
-                Łączymy na żywo
+                {showLiveChip
+                  ? `Awaryjnie co ${lobbyRefreshSeconds}s`
+                  : `Auto co ${lobbyRefreshSeconds}s`}
               </KangurStatusChip>
-            ) : null}
-            {showLiveChip ? (
-              <KangurStatusChip accent='emerald' size='sm'>
-                Na żywo
-              </KangurStatusChip>
-            ) : null}
-            {showStaleChip ? (
-              <KangurStatusChip accent='rose' size='sm'>
-                Dane mogą być nieaktualne
-              </KangurStatusChip>
-            ) : null}
-            {lobbyLastUpdatedAt ? (
-              <KangurStatusChip accent='slate' size='sm'>
-                Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
-              </KangurStatusChip>
-            ) : null}
-            <KangurStatusChip accent='slate' size='sm'>
-              {showLiveChip ? `Awaryjnie co ${lobbyRefreshSeconds}s` : `Auto co ${lobbyRefreshSeconds}s`}
-            </KangurStatusChip>
+            </div>
             <KangurButton
               onClick={() => {
                 trackKangurClientEvent('kangur_duels_lobby_refresh_clicked', {
@@ -379,7 +387,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
             role='status'
             aria-live='polite'
           >
-            <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
+            <KangurPanelRow className='sm:items-center sm:justify-between'>
               <div className='text-sm text-slate-700'>
                 Lobby jest widoczne dla gości. Zaloguj się, aby dołączać do pojedynków i tworzyć
                 własne wyzwania.
@@ -397,11 +405,11 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               >
                 Zaloguj się, aby zagrać
               </KangurButton>
-            </div>
+            </KangurPanelRow>
           </KangurInfoCard>
         ) : null}
 
-        <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4'>
           <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
               Tryb
@@ -528,7 +536,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
             role='alert'
             aria-live='assertive'
           >
-            <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>
+            <KangurPanelRow className='sm:items-center sm:justify-between'>
               <div className='text-sm text-rose-900'>{lobbyError}</div>
               <KangurButton
                 onClick={() => {
@@ -545,7 +553,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               >
                 Spróbuj ponownie
               </KangurButton>
-            </div>
+            </KangurPanelRow>
           </KangurInfoCard>
         ) : null}
 

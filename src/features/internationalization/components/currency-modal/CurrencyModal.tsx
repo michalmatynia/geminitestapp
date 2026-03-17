@@ -9,7 +9,7 @@ import {
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { useCurrencyForm } from './hooks/useCurrencyForm';
 

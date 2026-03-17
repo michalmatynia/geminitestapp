@@ -8,7 +8,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 

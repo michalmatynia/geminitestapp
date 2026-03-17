@@ -1,9 +1,11 @@
 'use client';
 
 import { Eraser, Pen, RotateCcw, Trash2, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react';
 
@@ -45,6 +47,9 @@ function getPointerPosition(
     y: (event.clientY - rect.top) * scaleY,
   };
 }
+
+const distance = (a: { x: number; y: number }, b: { x: number; y: number }): number =>
+  Math.hypot(a.x - b.x, a.y - b.y);
 
 function renderStrokes(
   ctx: CanvasRenderingContext2D,
@@ -92,9 +97,15 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
   const [strokes, setStrokes] = useState<DrawingStroke[]>([]);
   const [activeStroke, setActiveStroke] = useState<DrawingStroke | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>(COLORS[0]);
-  const [selectedWidth, setSelectedWidth] = useState<number>(STROKE_WIDTHS[1]);
+  const isCoarsePointer = useKangurCoarsePointer();
+  const strokeWidths = useMemo(
+    () => (isCoarsePointer ? STROKE_WIDTHS.map((width) => width + 2) : [...STROKE_WIDTHS]),
+    [isCoarsePointer]
+  );
+  const [selectedWidth, setSelectedWidth] = useState<number>(strokeWidths[1]);
   const [isEraser, setIsEraser] = useState(false);
   const isDrawingRef = useRef(false);
+  const minPointDistance = isCoarsePointer ? 4 : 2;
 
   const redraw = useCallback(
     (extraStroke?: DrawingStroke | null) => {
@@ -112,11 +123,19 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
     redraw();
   }, [redraw]);
 
+  useEffect(() => {
+    setSelectedWidth((current) =>
+      strokeWidths.includes(current) ? current : strokeWidths[1]
+    );
+  }, [strokeWidths]);
+  useKangurCanvasTouchLock(canvasRef);
+
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
+      event.preventDefault();
       canvas.setPointerCapture(event.pointerId);
       isDrawingRef.current = true;
 
@@ -138,7 +157,12 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
       const canvas = canvasRef.current;
       if (!canvas) return;
 
+      event.preventDefault();
       const pos = getPointerPosition(event, canvas);
+      const lastPoint = activeStroke.points[activeStroke.points.length - 1];
+      if (lastPoint && distance(lastPoint, pos) < minPointDistance) {
+        return;
+      }
       const updated: DrawingStroke = {
         ...activeStroke,
         points: [...activeStroke.points, pos],
@@ -146,7 +170,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
       setActiveStroke(updated);
       redraw(updated);
     },
-    [activeStroke, redraw]
+    [activeStroke, minPointDistance, redraw]
   );
 
   const handlePointerUp = useCallback((): void => {
@@ -199,7 +223,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
           width={320}
           height={240}
           aria-label={drawingContent?.canvasLabel ?? 'Plansza do rysowania'}
-          className='touch-none rounded-none'
+          className='kangur-drawing-canvas touch-none rounded-none'
           style={{ cursor: isEraser ? 'cell' : 'crosshair', width: '100%', height: 'auto' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -233,7 +257,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         <div className='mx-1 h-4 w-px [background:var(--kangur-soft-card-border)]' />
 
         <div className='flex items-center gap-1'>
-          {STROKE_WIDTHS.map((w) => (
+          {strokeWidths.map((w) => (
             <button
               key={w}
               type='button'

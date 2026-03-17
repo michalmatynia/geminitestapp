@@ -1,6 +1,5 @@
 'use client';
 
-import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Clock } from 'lucide-react';
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 
@@ -9,6 +8,8 @@ import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports'
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
+import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
   KangurButton,
@@ -18,6 +19,7 @@ import {
   KangurGlassPanel,
   KangurInfoCard,
   KangurMetricCard,
+  KangurPanelRow,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
@@ -87,9 +89,9 @@ function KangurAssignmentManagerCardHeader({
   children: ReactNode;
 }): React.JSX.Element {
   return (
-    <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+    <KangurPanelRow className='items-start sm:justify-between'>
       {children}
-    </div>
+    </KangurPanelRow>
   );
 }
 
@@ -98,7 +100,11 @@ function KangurAssignmentManagerCardFooter({
 }: {
   children: ReactNode;
 }): React.JSX.Element {
-  return <div className='mt-3 flex flex-col kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'>{children}</div>;
+  return (
+    <KangurPanelRow className='mt-3 sm:items-center sm:justify-between'>
+      {children}
+    </KangurPanelRow>
+  );
 }
 
 const FILTER_OPTIONS = [
@@ -615,125 +621,105 @@ export function KangurAssignmentManager({
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <DialogPrimitive.Root open={isTimeLimitModalOpen} onOpenChange={(open) => {
-        if (!open) {
-          handleCloseTimeLimitModal();
-        }
-      }}>
-        <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay
-            className='fixed inset-0 z-50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
-            style={{
-              background:
-                'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 16%, rgba(2,6,23,0.7))',
-            }}
-          />
-          <DialogPrimitive.Content
-            className='fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),32rem)] kangur-max-h-screen-2 -translate-x-1/2 -translate-y-1/2 overflow-y-auto outline-none'
-            data-testid='assignment-time-limit-modal'
-            onEscapeKeyDown={handleCloseTimeLimitModal}
-            onInteractOutside={handleCloseTimeLimitModal}
-            onPointerDownOutside={handleCloseTimeLimitModal}
-          >
-            <DialogPrimitive.Title className='sr-only'>Czas na wykonanie</DialogPrimitive.Title>
-            <DialogPrimitive.Description className='sr-only'>
-              Ustaw limit czasu dla zadania. Pozostaw puste, aby przypisać bez limitu.
-            </DialogPrimitive.Description>
+      <KangurDialog
+        open={isTimeLimitModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseTimeLimitModal();
+          }
+        }}
+        overlayVariant='standard'
+        contentSize='sm'
+        contentProps={{
+          'data-testid': 'assignment-time-limit-modal',
+          onEscapeKeyDown: handleCloseTimeLimitModal,
+          onInteractOutside: handleCloseTimeLimitModal,
+          onPointerDownOutside: handleCloseTimeLimitModal,
+        } as any}
+      >
+        <KangurDialogHeader
+          title='Czas na wykonanie'
+          description='Ustaw limit czasu dla zadania. Pozostaw puste, aby przypisać bez limitu.'
+          closeAriaLabel='Zamknij ustawienia czasu'
+        />
 
-            <DialogPrimitive.Close asChild>
-              <button
-                aria-label='Zamknij ustawienia czasu'
-                className='absolute right-4 top-4 z-10 cursor-pointer rounded-full border border-amber-200/80 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] shadow-[0_16px_34px_-26px_rgba(249,115,22,0.5)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
-                style={{
-                  background:
-                    'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 88%, rgba(254,243,199,0.95)) 0%, color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 82%, rgba(255,237,213,0.9)) 100%)',
-                  color: '#9a5418',
-                }}
-                type='button'
-              >
-                Zamknij
-              </button>
-            </DialogPrimitive.Close>
+        <KangurGlassPanel
+          className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
+          padding='lg'
+          surface='mistSoft'
+          variant='soft'
+        >
+          <div>
+            <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
+              Czas na wykonanie
+            </KangurStatusChip>
+            <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
+              Ustaw limit czasu dla wybranego zadania. Pozostaw puste, aby przypisać bez limitu.
+            </KangurCardDescription>
+          </div>
 
-            <KangurGlassPanel
-              className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-              padding='lg'
-              surface='mistSoft'
-              variant='soft'
-            >
-              <div>
-                <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
-                  Czas na wykonanie
-                </KangurStatusChip>
-                <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
-                  Ustaw limit czasu dla wybranego zadania. Pozostaw puste, aby przypisać bez limitu.
-                </KangurCardDescription>
+          {timeLimitTarget ? (
+            <div className='rounded-[18px] border border-slate-200/70 bg-white/80 px-4 py-3'>
+              <div className='break-words text-sm font-semibold text-slate-900'>
+                {timeLimitTarget.title}
               </div>
-
-              {timeLimitTarget ? (
-                <div className='rounded-[18px] border border-slate-200/70 bg-white/80 px-4 py-3'>
-                  <div className='break-words text-sm font-semibold text-slate-900'>
-                    {timeLimitTarget.title}
-                  </div>
-                  {timeLimitTarget.description ? (
-                    <div className='mt-1 break-words text-xs text-slate-600'>
-                      {timeLimitTarget.description}
-                    </div>
-                  ) : null}
-                  {timeLimitPreview ? (
-                    <div className='mt-2 text-xs text-slate-500'>
-                      Aktualnie: {timeLimitPreview}
-                    </div>
-                  ) : null}
+              {timeLimitTarget.description ? (
+                <div className='mt-1 break-words text-xs text-slate-600'>
+                  {timeLimitTarget.description}
                 </div>
               ) : null}
-
-              <div className='space-y-2'>
-                <KangurTextField
-                  accent='indigo'
-                  aria-label='Czas na wykonanie w minutach'
-                  title='Czas na wykonanie (minuty)'
-                  inputMode='numeric'
-                  min={TIME_LIMIT_MINUTES_MIN}
-                  max={TIME_LIMIT_MINUTES_MAX}
-                  placeholder={'np. 30'}
-                  type='number'
-                  value={timeLimitDraft}
-                  onChange={(event) => setTimeLimitDraft(event.target.value)}
-                />
-                <div className='text-xs text-slate-500'>
-                  Wpisz liczbę minut ({TIME_LIMIT_MINUTES_MIN}-{TIME_LIMIT_MINUTES_MAX}).
+              {timeLimitPreview ? (
+                <div className='mt-2 text-xs text-slate-500'>
+                  Aktualnie: {timeLimitPreview}
                 </div>
-                {timeLimitParsed.error ? (
-                  <div className='text-xs text-rose-600'>{timeLimitParsed.error}</div>
-                ) : null}
-              </div>
+              ) : null}
+            </div>
+          ) : null}
 
-              <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'>
-                <KangurButton
-                  className='w-full sm:w-auto'
-                  size='sm'
-                  type='button'
-                  variant='ghost'
-                  onClick={handleCloseTimeLimitModal}
-                >
-                  Anuluj
-                </KangurButton>
-                <KangurButton
-                  className='w-full sm:w-auto'
-                  size='sm'
-                  type='button'
-                  variant='surface'
-                  disabled={isTimeLimitSaveDisabled}
-                  onClick={() => void handleSaveTimeLimit()}
-                >
-                  {timeLimitSaveLabel}
-                </KangurButton>
-              </div>
-            </KangurGlassPanel>
-          </DialogPrimitive.Content>
-        </DialogPrimitive.Portal>
-      </DialogPrimitive.Root>
+          <div className='space-y-2'>
+            <KangurTextField
+              accent='indigo'
+              aria-label='Czas na wykonanie w minutach'
+              title='Czas na wykonanie (minuty)'
+              inputMode='numeric'
+              min={TIME_LIMIT_MINUTES_MIN}
+              max={TIME_LIMIT_MINUTES_MAX}
+              placeholder={'np. 30'}
+              type='number'
+              value={timeLimitDraft}
+              onChange={(event) => setTimeLimitDraft(event.target.value)}
+            />
+            <div className='text-xs text-slate-500'>
+              Wpisz liczbę minut ({TIME_LIMIT_MINUTES_MIN}-{TIME_LIMIT_MINUTES_MAX}).
+            </div>
+            {timeLimitParsed.error ? (
+              <div className='text-xs text-rose-600'>{timeLimitParsed.error}</div>
+            ) : null}
+          </div>
+
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'>
+            <KangurButton
+              className='w-full sm:w-auto'
+              size='sm'
+              type='button'
+              variant='ghost'
+              onClick={handleCloseTimeLimitModal}
+            >
+              Anuluj
+            </KangurButton>
+            <KangurButton
+              className='w-full sm:w-auto'
+              size='sm'
+              type='button'
+              variant='surface'
+              disabled={isTimeLimitSaveDisabled}
+              onClick={() => void handleSaveTimeLimit()}
+            >
+              {timeLimitSaveLabel}
+            </KangurButton>
+          </div>
+        </KangurGlassPanel>
+      </KangurDialog>
       {shouldShowCatalog ? (
         <KangurGlassPanel
           data-testid='assignment-manager-create-shell'
@@ -855,7 +841,7 @@ export function KangurAssignmentManager({
           />
 
           <div
-            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 flex-wrap justify-start sm:w-auto`}
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 w-full sm:w-auto sm:flex-wrap sm:justify-start`}
           >
             {FILTER_OPTIONS.map((option) => (
               <KangurButton
@@ -863,7 +849,7 @@ export function KangurAssignmentManager({
                 type='button'
                 onClick={() => setActiveFilter(option.value)}
                 aria-pressed={activeFilter === option.value}
-                className='min-w-0 flex-none px-3 text-xs'
+                className='min-w-0 flex-1 px-3 text-xs sm:flex-none'
                 data-testid={`assignment-manager-filter-${option.value}`}
                 size='sm'
                 variant={activeFilter === option.value ? 'segmentActive' : 'segment'}

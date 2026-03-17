@@ -79,6 +79,7 @@ import {
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
 import { createScoreViaApi, requestMergedScores } from './local-kangur-platform-scores';
 import {
+  createKangurClientFallback,
   createActorAwareHeaders,
   trackReadFailure,
   trackWriteFailure,
@@ -152,7 +153,7 @@ const requestProgressFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurProgressState,
+      fallback: createKangurClientFallback('progress.get'),
       shouldReport: (error) => !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
       onError: (error) => {
@@ -227,7 +228,7 @@ const updateProgressViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurProgressState,
+      fallback: createKangurClientFallback('progress.update'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('progress.update', error, {
@@ -278,7 +279,7 @@ const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStat
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerActivityStatus,
+      fallback: createKangurClientFallback('learnerActivity.get'),
       shouldReport: (error) => !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
       onError: (error) => {
@@ -341,7 +342,7 @@ const updateLearnerActivityViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerActivitySnapshot,
+      fallback: createKangurClientFallback('learnerActivity.update'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('learnerActivity.update', error, {

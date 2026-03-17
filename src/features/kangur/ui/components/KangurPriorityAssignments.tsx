@@ -13,7 +13,6 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentListItems,
-  filterKangurAssignmentsBySubject,
   selectKangurPriorityAssignments,
   type KangurAssignmentListItem,
 } from '@/features/kangur/ui/services/delegated-assignments';
@@ -49,13 +48,9 @@ export function KangurPriorityAssignments({
     },
   });
 
-  const subjectAssignments = useMemo(
-    () => filterKangurAssignmentsBySubject(assignments, subject),
-    [assignments, subject]
-  );
   const visibleAssignments = useMemo(
-    () => selectKangurPriorityAssignments(subjectAssignments, limit),
-    [subjectAssignments, limit]
+    () => selectKangurPriorityAssignments(assignments, limit),
+    [assignments, limit]
   );
   const visibleItems = useMemo(
     () => buildKangurAssignmentListItems(basePath, visibleAssignments),

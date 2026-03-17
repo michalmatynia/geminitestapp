@@ -38,6 +38,7 @@ import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -232,7 +233,7 @@ export default function EnglishSentenceStructureGame({
   const sessionStartedAtRef = useRef(Date.now());
   const handleCheckRef = useRef<(options?: { auto?: boolean }) => void>(() => undefined);
   const autoSubmitRef = useRef(false);
-  const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<SafeTimerId | null>(null);
 
   const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
 
@@ -245,7 +246,7 @@ export default function EnglishSentenceStructureGame({
     setTimeLeft(round.kind === 'timed' ? round.timeLimitSec : null);
     autoSubmitRef.current = false;
     if (timerRef.current) {
-      window.clearInterval(timerRef.current);
+      safeClearInterval(timerRef.current);
       timerRef.current = null;
     }
   }, [roundIndex, round]);
@@ -282,7 +283,7 @@ export default function EnglishSentenceStructureGame({
     setIsChecking(true);
     autoSubmitRef.current = true;
     if (timerRef.current) {
-      window.clearInterval(timerRef.current);
+      safeClearInterval(timerRef.current);
       timerRef.current = null;
     }
 
@@ -337,7 +338,7 @@ export default function EnglishSentenceStructureGame({
       return;
     }
 
-    timerRef.current = window.setInterval(() => {
+    timerRef.current = safeSetInterval(() => {
       setTimeLeft((prev) => {
         if (prev === null) return prev;
         const next = prev - 1;
@@ -354,7 +355,7 @@ export default function EnglishSentenceStructureGame({
 
     return () => {
       if (timerRef.current) {
-        window.clearInterval(timerRef.current);
+        safeClearInterval(timerRef.current);
         timerRef.current = null;
       }
     };

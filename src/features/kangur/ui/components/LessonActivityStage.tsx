@@ -173,7 +173,7 @@ export default function LessonActivityStage({
     <LessonActivityStageContext.Provider value={contextValue}>
       <div
         className={cn(
-          'flex w-full flex-col items-center',
+          'flex w-full min-w-0 flex-col items-center',
           KANGUR_PANEL_GAP_CLASSNAME,
           maxWidthClassName
         )}

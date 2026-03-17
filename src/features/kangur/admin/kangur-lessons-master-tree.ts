@@ -1,15 +1,18 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   KangurLesson,
+  KangurLessonAgeGroup,
   KangurLessonComponentId,
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import type { MasterTreeNode } from '@/features/kangur/shared/utils/master-folder-tree-contract';
 
+import { KANGUR_AGE_GROUPS, KANGUR_SUBJECTS } from '@/features/kangur/lessons/lesson-catalog';
 import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_SORT_ORDER_GAP } from '../settings';
 
 const KANGUR_LESSON_NODE_PREFIX = 'kangur-lesson:';
 const KANGUR_LESSON_GROUP_NODE_PREFIX = 'kangur-lesson-group:';
+const KANGUR_LESSON_AGE_GROUP_GROUP_NODE_PREFIX = 'kangur-lesson-age-group-group:';
 const KANGUR_LESSON_SUBJECT_GROUP_NODE_PREFIX = 'kangur-lesson-subject-group:';
 const KANGUR_LESSON_COMPONENT_GROUP_NODE_PREFIX = 'kangur-lesson-component-group:';
 
@@ -27,24 +30,36 @@ export const fromKangurLessonNodeId = (nodeId: string): string | null => {
 const toKangurLessonVisibilityGroupNodeId = (group: KangurLessonVisibilityGroup): string =>
   `${KANGUR_LESSON_GROUP_NODE_PREFIX}${group}`;
 
+const toKangurLessonAgeGroupGroupNodeId = ({
+  group,
+  ageGroup,
+}: {
+  group: KangurLessonVisibilityGroup;
+  ageGroup: KangurLessonAgeGroup;
+}): string => `${KANGUR_LESSON_AGE_GROUP_GROUP_NODE_PREFIX}${group}:${ageGroup}`;
+
 const toKangurLessonSubjectGroupNodeId = ({
   group,
+  ageGroup,
   subject,
 }: {
   group: KangurLessonVisibilityGroup;
+  ageGroup: KangurLessonAgeGroup;
   subject: KangurLessonSubject;
-}): string => `${KANGUR_LESSON_SUBJECT_GROUP_NODE_PREFIX}${group}:${subject}`;
+}): string => `${KANGUR_LESSON_SUBJECT_GROUP_NODE_PREFIX}${group}:${ageGroup}:${subject}`;
 
 const toKangurLessonComponentGroupNodeId = ({
   group,
+  ageGroup,
   subject,
   componentId,
 }: {
   group: KangurLessonVisibilityGroup;
+  ageGroup: KangurLessonAgeGroup;
   subject: KangurLessonSubject;
   componentId: KangurLessonComponentId;
 }): string =>
-  `${KANGUR_LESSON_COMPONENT_GROUP_NODE_PREFIX}${group}:${subject}:${componentId}`;
+  `${KANGUR_LESSON_COMPONENT_GROUP_NODE_PREFIX}${group}:${ageGroup}:${subject}:${componentId}`;
 
 export const buildKangurLessonMasterNodes = (lessons: KangurLesson[]): MasterTreeNode[] =>
   [...lessons]
@@ -73,6 +88,7 @@ export const buildKangurLessonMasterNodes = (lessons: KangurLesson[]): MasterTre
           lessonId: lesson.id,
           componentId: lesson.componentId,
           contentMode: lesson.contentMode,
+          ageGroup: lesson.ageGroup,
           subject: lesson.subject,
           title: lesson.title,
           description: lesson.description,
@@ -86,15 +102,25 @@ const LESSON_VISIBILITY_GROUPS: Array<LabeledOptionDto<KangurLessonVisibilityGro
   { value: 'hidden', label: 'Hidden lessons' },
 ];
 
-const LESSON_SUBJECT_GROUPS: Array<LabeledOptionDto<KangurLessonSubject>> = [
-  { value: 'maths', label: 'Maths' },
-  { value: 'english', label: 'English' },
-];
+const LESSON_SUBJECT_GROUPS: Array<LabeledOptionDto<KangurLessonSubject>> = KANGUR_SUBJECTS.map(
+  (subject) => ({
+    value: subject.id,
+    label: subject.label,
+  })
+);
+
+const LESSON_AGE_GROUPS: Array<LabeledOptionDto<KangurLessonAgeGroup>> = KANGUR_AGE_GROUPS.map(
+  (group) => ({
+    value: group.id,
+    label: group.label,
+  })
+);
 
 const buildLessonSearchMetadata = (lesson: KangurLesson): Record<string, string> => ({
   lessonId: lesson.id,
   componentId: lesson.componentId,
   contentMode: lesson.contentMode,
+  ageGroup: lesson.ageGroup,
   subject: lesson.subject,
   title: lesson.title,
   description: lesson.description,
@@ -145,96 +171,133 @@ export const buildKangurLessonCatalogMasterNodes = (lessons: KangurLesson[]): Ma
       },
     });
 
-    LESSON_SUBJECT_GROUPS.forEach((subject, subjectIndex) => {
-      const subjectLessons = groupLessons.filter((lesson) => lesson.subject === subject.value);
-      const subjectNodeId = toKangurLessonSubjectGroupNodeId({
+    LESSON_AGE_GROUPS.forEach((ageGroup, ageGroupIndex) => {
+      const ageGroupLessons = groupLessons.filter((lesson) => lesson.ageGroup === ageGroup.value);
+      const ageGroupNodeId = toKangurLessonAgeGroupGroupNodeId({
         group: group.value,
-        subject: subject.value,
+        ageGroup: ageGroup.value,
       });
       nodes.push({
-        id: subjectNodeId,
+        id: ageGroupNodeId,
         type: 'folder',
-        kind: 'kangur-lesson-subject-group',
+        kind: 'kangur-lesson-age-group-group',
         parentId: visibilityNodeId,
-        name: subject.label,
-        path: `${group.value}/${subject.value}`,
-        sortOrder: (subjectIndex + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
+        name: ageGroup.label,
+        path: `${group.value}/${ageGroup.value}`,
+        sortOrder: (ageGroupIndex + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
         metadata: {
           kangurLessonGroup: {
-            kind: 'subject',
+            kind: 'ageGroup',
             visibility: group.value,
-            subject: subject.value,
-            lessonCount: subjectLessons.length,
+            ageGroup: ageGroup.value,
+            lessonCount: ageGroupLessons.length,
           },
           search: {
             visibility: group.value,
-            subject: subject.value,
-            groupLabel: subject.label,
-            lessonCount: String(subjectLessons.length),
+            ageGroup: ageGroup.value,
+            groupLabel: ageGroup.label,
+            lessonCount: String(ageGroupLessons.length),
           },
         },
       });
 
-      const componentIds = [
-        ...new Set(subjectLessons.map((lesson): KangurLessonComponentId => lesson.componentId)),
-      ];
-      componentIds.forEach((componentId, componentIndex) => {
-        const componentLessons = subjectLessons.filter(
-          (lesson) => lesson.componentId === componentId
-        );
-        const componentLabel = componentLabelById.get(componentId) ?? componentId;
-        const componentNodeId = toKangurLessonComponentGroupNodeId({
+      LESSON_SUBJECT_GROUPS.forEach((subject, subjectIndex) => {
+        const subjectLessons = ageGroupLessons.filter((lesson) => lesson.subject === subject.value);
+        const subjectNodeId = toKangurLessonSubjectGroupNodeId({
           group: group.value,
+          ageGroup: ageGroup.value,
           subject: subject.value,
-          componentId,
         });
         nodes.push({
-          id: componentNodeId,
+          id: subjectNodeId,
           type: 'folder',
-          kind: 'kangur-lesson-component-group',
-          parentId: subjectNodeId,
-          name: componentLabel,
-          path: `${group.value}/${subject.value}/${componentId}`,
-          sortOrder: (componentIndex + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
+          kind: 'kangur-lesson-subject-group',
+          parentId: ageGroupNodeId,
+          name: subject.label,
+          path: `${group.value}/${ageGroup.value}/${subject.value}`,
+          sortOrder: (subjectIndex + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
           metadata: {
             kangurLessonGroup: {
-              kind: 'component',
+              kind: 'subject',
               visibility: group.value,
+              ageGroup: ageGroup.value,
               subject: subject.value,
-              componentId,
-              lessonCount: componentLessons.length,
+              lessonCount: subjectLessons.length,
             },
             search: {
               visibility: group.value,
+              ageGroup: ageGroup.value,
               subject: subject.value,
-              componentId,
-              groupLabel: componentLabel,
-              lessonCount: String(componentLessons.length),
+              groupLabel: subject.label,
+              lessonCount: String(subjectLessons.length),
             },
           },
         });
 
-        componentLessons.forEach((lesson) => {
+        const componentIds = [
+          ...new Set(subjectLessons.map((lesson): KangurLessonComponentId => lesson.componentId)),
+        ];
+        componentIds.forEach((componentId, componentIndex) => {
+          const componentLessons = subjectLessons.filter(
+            (lesson) => lesson.componentId === componentId
+          );
+          const componentLabel = componentLabelById.get(componentId) ?? componentId;
+          const componentNodeId = toKangurLessonComponentGroupNodeId({
+            group: group.value,
+            ageGroup: ageGroup.value,
+            subject: subject.value,
+            componentId,
+          });
           nodes.push({
-            id: toKangurLessonNodeId(lesson.id),
-            type: 'file' as const,
-            kind: 'kangur-lesson',
-            parentId: componentNodeId,
-            name: lesson.title,
-            path: `${group.value}/${subject.value}/${componentId}/${lesson.id}`,
-            sortOrder: nextSortOrder,
+            id: componentNodeId,
+            type: 'folder',
+            kind: 'kangur-lesson-component-group',
+            parentId: subjectNodeId,
+            name: componentLabel,
+            path: `${group.value}/${ageGroup.value}/${subject.value}/${componentId}`,
+            sortOrder: (componentIndex + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
             metadata: {
-              kangurLesson: {
-                lessonId: lesson.id,
-                componentId: lesson.componentId,
-                contentMode: lesson.contentMode,
-                enabled: lesson.enabled,
-                description: lesson.description,
+              kangurLessonGroup: {
+                kind: 'component',
+                visibility: group.value,
+                ageGroup: ageGroup.value,
+                subject: subject.value,
+                componentId,
+                lessonCount: componentLessons.length,
               },
-              search: buildLessonSearchMetadata(lesson),
+              search: {
+                visibility: group.value,
+                ageGroup: ageGroup.value,
+                subject: subject.value,
+                componentId,
+                groupLabel: componentLabel,
+                lessonCount: String(componentLessons.length),
+              },
             },
           });
-          nextSortOrder += KANGUR_LESSON_SORT_ORDER_GAP;
+
+          componentLessons.forEach((lesson) => {
+            nodes.push({
+              id: toKangurLessonNodeId(lesson.id),
+              type: 'file' as const,
+              kind: 'kangur-lesson',
+              parentId: componentNodeId,
+              name: lesson.title,
+              path: `${group.value}/${ageGroup.value}/${subject.value}/${componentId}/${lesson.id}`,
+              sortOrder: nextSortOrder,
+              metadata: {
+                kangurLesson: {
+                  lessonId: lesson.id,
+                  componentId: lesson.componentId,
+                  contentMode: lesson.contentMode,
+                  enabled: lesson.enabled,
+                  description: lesson.description,
+                },
+                search: buildLessonSearchMetadata(lesson),
+              },
+            });
+            nextSortOrder += KANGUR_LESSON_SORT_ORDER_GAP;
+          });
         });
       });
     });

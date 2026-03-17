@@ -8,6 +8,7 @@ import {
   useSystemLogsState,
 } from '@/features/observability/context/SystemLogsContext';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import type { StatusVariant } from '@/shared/contracts/ui';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
@@ -20,7 +21,6 @@ import {
   Tooltip,
   Hint,
   Card,
-  type StatusVariant,
 } from '@/shared/ui';
 
 import { ContextDocumentCard } from './ContextDocumentCard';

@@ -10,7 +10,7 @@ import {
   SelectSimple,
   ToggleRow,
 } from '@/shared/ui';
-import type { SelectSimpleOption } from '@/shared/ui/select-simple';
+import type { SelectSimpleOption } from '@/shared/contracts/ui';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];

@@ -13,6 +13,7 @@ import {
   KangurGlassPanel,
   KangurMetricCard,
   KangurPanelIntro,
+  KangurPanelRow,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -86,35 +87,32 @@ export default function ProgressOverview({
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurGlassPanel
-        className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center'
-        padding='lg'
-        surface='mistStrong'
-        variant='soft'
-      >
-        <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
-        <div className='flex-1'>
-          <KangurPanelIntro
-            eyebrow='Poziom i doświadczenie'
-            title={currentLevel.title}
-            titleAs='p'
-            titleClassName={`mt-1 text-lg font-extrabold sm:text-xl ${currentLevel.color}`}
-            description={`Poziom ${currentLevel.level} · ${totalXp} XP łącznie`}
-            descriptionClassName='mb-2'
-          />
-          <KangurProgressBar
-            accent='indigo'
-            animated
-            data-testid='progress-overview-level-bar'
-            size='md'
-            value={percent}
-          />
-          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
-            {nextLevel
-              ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
-              : 'Osiągnięto maksymalny poziom!'}
-          </p>
-        </div>
+      <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
+        <KangurPanelRow className='sm:items-center'>
+          <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
+          <div className='flex-1'>
+            <KangurPanelIntro
+              eyebrow='Poziom i doświadczenie'
+              title={currentLevel.title}
+              titleAs='p'
+              titleClassName={`mt-1 text-lg font-extrabold sm:text-xl ${currentLevel.color}`}
+              description={`Poziom ${currentLevel.level} · ${totalXp} XP łącznie`}
+              descriptionClassName='mb-2'
+            />
+            <KangurProgressBar
+              accent='indigo'
+              animated
+              data-testid='progress-overview-level-bar'
+              size='md'
+              value={percent}
+            />
+            <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+              {nextLevel
+                ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
+                : 'Osiągnięto maksymalny poziom!'}
+            </p>
+          </div>
+        </KangurPanelRow>
       </KangurGlassPanel>
 
       <div className='grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 sm:grid-cols-3'>

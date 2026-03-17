@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '@/shared/contracts/cms';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -312,8 +313,8 @@ export function PreviewSlideshowBlock({
 
   useEffect((): (() => void) | undefined => {
     if (!autoplay || isPaused || slideCount <= 1 || autoplaySpeed <= 0) return undefined;
-    const interval = window.setInterval(goToNext, autoplaySpeed);
-    return (): void => window.clearInterval(interval);
+    const interval = safeSetInterval(goToNext, autoplaySpeed);
+    return (): void => safeClearInterval(interval);
   }, [autoplay, autoplaySpeed, isPaused, slideCount, goToNext]);
   useEffect((): void => {
     if (!allowPauseOnHover && isPaused) {

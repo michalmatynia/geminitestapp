@@ -1,6 +1,4 @@
 import React from 'react';
-
-import { DocumentWysiwygEditor } from '@/features/document-editor';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   KangurLessonCalloutBlock,
@@ -8,6 +6,12 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import { FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+
+const LazyDocumentWysiwygEditor = React.lazy(() =>
+  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+    default: mod.DocumentWysiwygEditor,
+  }))
+);
 
 const VARIANT_OPTIONS: Array<
   LabeledOptionDto<KangurLessonCalloutVariant> & { icon: string; className: string }
@@ -62,10 +66,18 @@ export function CalloutEditorCard(props: {
       </FormField>
 
       <FormField label='Content'>
-        <DocumentWysiwygEditor
-          value={block.html}
-          onChange={(nextHtml): void => onChange({ ...block, html: nextHtml })}
-        />
+        <React.Suspense
+          fallback={
+            <div className='min-h-[220px] rounded-lg border border-border/40 bg-card/20 p-4 text-sm text-muted-foreground'>
+              Loading editor...
+            </div>
+          }
+        >
+          <LazyDocumentWysiwygEditor
+            value={block.html}
+            onChange={(nextHtml): void => onChange({ ...block, html: nextHtml })}
+          />
+        </React.Suspense>
       </FormField>
 
       <FormField label='TTS narration override (optional)'>

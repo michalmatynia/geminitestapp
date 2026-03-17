@@ -2,6 +2,7 @@ import 'server-only';
 
 import { rateLimitedError } from '@/shared/errors/app-error';
 import { getRedisClient } from '@/shared/lib/redis';
+import { safeSetInterval } from '@/shared/lib/timers';
 import { logger } from '@/shared/utils/logger';
 
 import type { NextRequest } from 'next/server';
@@ -191,7 +192,7 @@ export const enforceRateLimit = async (
 };
 
 if (typeof setInterval !== 'undefined') {
-  setInterval(
+  safeSetInterval(
     (): void => {
       Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
     },

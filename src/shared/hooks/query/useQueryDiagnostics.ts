@@ -4,6 +4,7 @@ import { useQueryClient, type QueryClient, type Query } from '@tanstack/react-qu
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -124,12 +125,12 @@ export function useQueryDiagnostics(options: UseQueryDiagnosticsOptions = {}): {
       }, 0);
     };
     const unsubscribe = cache.subscribe(update);
-    const intervalId = setInterval(update, 5000);
+    const intervalId = safeSetInterval(update, 5000);
     update();
     return (): void => {
       if (timeoutId) clearTimeout(timeoutId);
       unsubscribe();
-      clearInterval(intervalId);
+      safeClearInterval(intervalId);
     };
   }, [enabled, queryClient]);
 

@@ -1,8 +1,10 @@
 'use client';
 
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -73,6 +75,18 @@ const SEASON_ACCENTS: Record<Season, KangurAccent> = {
   '☀️ Lato': 'amber',
   '🍂 Jesień': 'rose',
   '❄️ Zima': 'sky',
+};
+const dragPortal = typeof document === 'undefined' ? null : document.body;
+
+const seasonDroppableId = (season: Season): string => {
+  const index = SEASONS.indexOf(season);
+  return index >= 0 ? `season-${index}` : 'season-unknown';
+};
+
+const resolveSeasonFromDroppableId = (droppableId: string): Season | null => {
+  if (!droppableId.startsWith('season-')) return null;
+  const index = Number.parseInt(droppableId.replace('season-', ''), 10);
+  return Number.isNaN(index) ? null : (SEASONS[index] ?? null);
 };
 
 type DayLabel = (typeof DAY_LABELS_FULL)[number];
@@ -330,7 +344,6 @@ export default function CalendarInteractiveGame({
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [dragOver, setDragOver] = useState<Season | null>(null);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null);
   const [selectedWeekdayIdx, setSelectedWeekdayIdx] = useState<number | null>(null);
@@ -407,11 +420,18 @@ export default function CalendarInteractiveGame({
   };
 
   const handleDrop = (season: Season): void => {
-    setDragOver(null);
     if (feedback) return;
     if (task.type !== 'drag_season') return;
     setSelectedSeason(season);
     nextRound(season === task.correctSeason);
+  };
+
+  const handleSeasonDragEnd = (result: DropResult): void => {
+    const destination = result.destination;
+    if (!destination) return;
+    const season = resolveSeasonFromDroppableId(destination.droppableId);
+    if (!season) return;
+    handleDrop(season);
   };
 
   const restart = (): void => {
@@ -423,7 +443,6 @@ export default function CalendarInteractiveGame({
     setSelectedDays([]);
     setSelectedSeason(null);
     setSelectedWeekdayIdx(null);
-    setDragOver(null);
     setMonth(startMonth);
     setTask(generateTask(startMonth, YEAR, section));
   };
@@ -749,74 +768,118 @@ export default function CalendarInteractiveGame({
       )}
 
       {task.type === 'drag_season' && (
-        <div className='flex flex-col items-center kangur-panel-gap w-full'>
-          <div
-            draggable
-            className='bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg'
-          >
-            📅 {task.monthName}
-          </div>
-          <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-            Przeciągnij powyżej na właściwą porę roku ⬇️
-          </p>
-
-          <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
-            {SEASONS.map((season, index) => {
-              const accent = SEASON_ACCENTS[season];
-              const isCorrectSeason = feedback !== null && season === task.correctSeason;
-              const isWrongSelectedSeason =
-                feedback === 'wrong' && selectedSeason === season && season !== task.correctSeason;
-              const isDragOverSeason = dragOver === season && feedback === null;
-              const isMutedSeason =
-                feedback === 'wrong' &&
-                selectedSeason !== null &&
-                season !== task.correctSeason &&
-                season !== selectedSeason;
-
-              return (
-                <KangurAnswerChoiceCard
-                  accent={
-                    isCorrectSeason ? 'emerald' : isWrongSelectedSeason ? 'rose' : accent
-                  }
-                  buttonClassName={cn(
-                    'flex min-h-[108px] flex-col items-center justify-center gap-1 text-center',
-                    isCorrectSeason
-                      ? KANGUR_ACCENT_STYLES.emerald.activeText
-                      : isWrongSelectedSeason
-                        ? KANGUR_ACCENT_STYLES.rose.activeText
-                        : KANGUR_ACCENT_STYLES[accent].activeText,
-                    isDragOverSeason && 'scale-[1.02]',
-                    isCorrectSeason &&
-                      KANGUR_ACCENT_STYLES.emerald.activeText,
-                    isWrongSelectedSeason && KANGUR_ACCENT_STYLES.rose.activeText,
-                    isMutedSeason && 'opacity-70'
-                  )}
-                  data-testid={`calendar-season-${index}`}
-                  emphasis={
-                    isCorrectSeason || isWrongSelectedSeason || isDragOverSeason
-                      ? 'accent'
-                      : 'neutral'
-                  }
-                  interactive={false}
-                  key={season}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDragOver(season);
-                  }}
-                  onDragLeave={() => setDragOver(null)}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    handleDrop(season);
-                  }}
-                  type='button'
+        <DragDropContext onDragEnd={handleSeasonDragEnd}>
+          <div className='flex flex-col items-center kangur-panel-gap w-full'>
+            <Droppable droppableId='calendar-season-pool' direction='horizontal'>
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className='flex w-full justify-center'
                 >
-                  <span className='text-2xl'>{season.split(' ')[0]}</span>
-                  <span className='text-xs font-bold'>{season.split(' ').slice(1).join(' ')}</span>
-                </KangurAnswerChoiceCard>
-              );
-            })}
+                  <Draggable
+                    draggableId='calendar-season'
+                    index={0}
+                    isDragDisabled={feedback !== null}
+                  >
+                    {(dragProvided, snapshot) => {
+                      const content = (
+                        <div
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          {...dragProvided.dragHandleProps}
+                          className={cn(
+                            'bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg',
+                            snapshot.isDragging ? 'scale-[1.02] shadow-xl' : undefined
+                          )}
+                          aria-label={`Miesiąc ${task.monthName}`}
+                        >
+                          📅 {task.monthName}
+                        </div>
+                      );
+
+                      if (snapshot.isDragging && dragPortal) {
+                        return createPortal(content, dragPortal);
+                      }
+                      return content;
+                    }}
+                  </Draggable>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+
+            <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+              Przeciągnij powyżej na właściwą porę roku ⬇️
+            </p>
+
+            <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
+              {SEASONS.map((season, index) => {
+                const accent = SEASON_ACCENTS[season];
+                const isCorrectSeason = feedback !== null && season === task.correctSeason;
+                const isWrongSelectedSeason =
+                  feedback === 'wrong' && selectedSeason === season && season !== task.correctSeason;
+                const isMutedSeason =
+                  feedback === 'wrong' &&
+                  selectedSeason !== null &&
+                  season !== task.correctSeason &&
+                  season !== selectedSeason;
+
+                return (
+                  <Droppable
+                    key={season}
+                    droppableId={seasonDroppableId(season)}
+                    isDropDisabled={feedback !== null}
+                  >
+                    {(provided, snapshot) => {
+                      const isDragOverSeason = snapshot.isDraggingOver && feedback === null;
+
+                      return (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className='w-full'
+                        >
+                          <KangurAnswerChoiceCard
+                            accent={
+                              isCorrectSeason ? 'emerald' : isWrongSelectedSeason ? 'rose' : accent
+                            }
+                            buttonClassName={cn(
+                              'flex min-h-[108px] flex-col items-center justify-center gap-1 text-center',
+                              isCorrectSeason
+                                ? KANGUR_ACCENT_STYLES.emerald.activeText
+                                : isWrongSelectedSeason
+                                  ? KANGUR_ACCENT_STYLES.rose.activeText
+                                  : KANGUR_ACCENT_STYLES[accent].activeText,
+                              isDragOverSeason && 'scale-[1.02]',
+                              isCorrectSeason && KANGUR_ACCENT_STYLES.emerald.activeText,
+                              isWrongSelectedSeason && KANGUR_ACCENT_STYLES.rose.activeText,
+                              isMutedSeason && 'opacity-70'
+                            )}
+                            data-testid={`calendar-season-${index}`}
+                            emphasis={
+                              isCorrectSeason || isWrongSelectedSeason || isDragOverSeason
+                                ? 'accent'
+                                : 'neutral'
+                            }
+                            interactive={false}
+                            type='button'
+                          >
+                            <span className='text-2xl'>{season.split(' ')[0]}</span>
+                            <span className='text-xs font-bold'>
+                              {season.split(' ').slice(1).join(' ')}
+                            </span>
+                          </KangurAnswerChoiceCard>
+                          {provided.placeholder}
+                        </div>
+                      );
+                    }}
+                  </Droppable>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </DragDropContext>
       )}
     </KangurPracticeGameStage>
   );

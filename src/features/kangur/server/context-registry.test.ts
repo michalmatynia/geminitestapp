@@ -51,6 +51,7 @@ const makeLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
   componentId: 'adding',
   contentMode: 'document',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Dodawanie',
   description: 'Licz dwa zbiory razem.',
   emoji: '➕',

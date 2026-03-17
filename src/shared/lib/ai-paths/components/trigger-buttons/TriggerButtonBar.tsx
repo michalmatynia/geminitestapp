@@ -7,6 +7,7 @@ import type {
   AiTriggerButtonLocation,
   AiTriggerButtonRecord,
 } from '@/shared/contracts/ai-trigger-buttons';
+import type { StatusVariant } from '@/shared/contracts/ui';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   ActionMenu,
@@ -19,7 +20,6 @@ import {
   DialogTrigger,
   DropdownMenuItem,
   StatusBadge,
-  type StatusVariant,
   ToggleRow,
   Tooltip,
 } from '@/shared/ui';

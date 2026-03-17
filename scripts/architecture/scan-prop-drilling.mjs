@@ -19,6 +19,12 @@ const MAX_CHAIN_DEPTH = 7;
 const MAX_CHAIN_COUNT = 6000;
 const TOP_BACKLOG_LIMIT = 80;
 const TOP_COMPONENT_BACKLOG_LIMIT = 120;
+const GUARDRAILS_SCOPE_ONLY = args.has('--guardrails');
+const GUARDRAILS_EXCLUDED_PATHS = new Set([
+  'src/app/(frontend)/HomeContentClient.tsx',
+  'src/app/(frontend)/FrontendLayoutClient.tsx',
+  'src/app/(frontend)/home-fallback-content.tsx',
+]);
 
 const toPosix = (value) => value.split(path.sep).join('/');
 
@@ -48,6 +54,11 @@ const isSourceFile = (filePath) => SOURCE_EXTENSIONS.has(path.extname(filePath).
 const isJsxFile = (filePath) => JSX_EXTENSIONS.has(path.extname(filePath).toLowerCase());
 
 const isRuntimeSourceFile = (relativePath) => {
+  if (GUARDRAILS_SCOPE_ONLY) {
+    if (!relativePath.startsWith('src/app/')) return false;
+    if (relativePath.startsWith('src/app/api/')) return false;
+    if (GUARDRAILS_EXCLUDED_PATHS.has(relativePath)) return false;
+  }
   if (relativePath.includes('/__tests__/')) return false;
   if (relativePath.includes('/__mocks__/')) return false;
   return !/\.(test|spec)\.[jt]sx?$/i.test(path.basename(relativePath));

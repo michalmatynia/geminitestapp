@@ -1,4 +1,5 @@
 import {
+  type KangurLessonAgeGroup,
   type KangurLessonComponentId,
   type KangurLessonContentMode,
   type KangurLessonSubject,
@@ -11,6 +12,7 @@ export type LessonFormData = {
   componentId: KangurLessonComponentId;
   contentMode: KangurLessonContentMode;
   subject: KangurLessonSubject;
+  ageGroup: KangurLessonAgeGroup;
   title: string;
   description: string;
   emoji: string;

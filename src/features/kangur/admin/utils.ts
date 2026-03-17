@@ -60,6 +60,7 @@ export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
   componentId: lesson.componentId,
   contentMode: lesson.contentMode,
   subject: lesson.subject,
+  ageGroup: lesson.ageGroup,
   title: lesson.title,
   description: lesson.description,
   emoji: lesson.emoji,

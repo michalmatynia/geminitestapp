@@ -26,11 +26,27 @@ import { LessonContentEditorProvider } from '@/features/kangur/admin/context/Les
 import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import { buildKangurLessonDocumentNarrationSignature } from '@/features/kangur/tts/script';
 
+const createLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
+  id: 'clock',
+  componentId: 'clock',
+  contentMode: 'document',
+  subject: 'maths',
+  ageGroup: 'ten_year_old',
+  title: 'Nauka zegara',
+  description: 'Czytamy godziny i minuty.',
+  emoji: '🕐',
+  color: 'kangur-gradient-accent-indigo-reverse',
+  activeBg: 'bg-indigo-500',
+  sortOrder: 1_000,
+  enabled: true,
+  ...overrides,
+});
+
 function StatefulNarrationPanelHarness({
   lesson,
   document,
 }: {
-  lesson: Pick<KangurLesson, 'id' | 'title' | 'description'>;
+  lesson: KangurLesson;
   document: KangurLessonDocument;
 }): React.JSX.Element {
   const [value, setValue] = React.useState(document);
@@ -42,7 +58,7 @@ function StatefulNarrationPanelHarness({
       rootNodeIds={['page:kangur-admin-lessons-manager']}
     >
       <LessonContentEditorProvider
-        lesson={lesson as KangurLesson}
+        lesson={lesson}
         document={value}
         onChange={setValue}
       >
@@ -85,11 +101,12 @@ describe('KangurLessonNarrationPanel', () => {
 
     const { container } = render(
       <StatefulNarrationPanelHarness
-        lesson={{
+        lesson={createLesson({
           id: 'geometry-advanced',
+          componentId: 'geometry_shapes',
           title: 'Figury z opisem lektora',
           description: '',
-        }}
+        })}
         document={{
           version: 1,
           narration: {
@@ -247,11 +264,7 @@ describe('KangurLessonNarrationPanel', () => {
 
     render(
       <StatefulNarrationPanelHarness
-        lesson={{
-          id: 'clock',
-          title: 'Nauka zegara',
-          description: 'Czytamy godziny i minuty.',
-        }}
+        lesson={createLesson()}
         document={{
           version: 1,
           narration: {

@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -163,6 +163,28 @@ vi.mock('@/features/kangur/shared/ui/select-simple', () => ({
   ),
 }));
 
+const setViewport = ({ width, matches }: { width: number; matches: boolean }): void => {
+  Object.defineProperty(window, 'innerWidth', {
+    writable: true,
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: vi.fn().mockImplementation((query) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+};
+
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
@@ -179,6 +201,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setViewport({ width: 1024, matches: false });
     optionalAuthMock.mockReturnValue(null);
     optionalTutorMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
@@ -375,6 +398,29 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch to Nightly theme' }));
 
     expect(screen.getByRole('button', { name: 'Switch to Daily theme' })).toBeInTheDocument();
+  });
+
+  it('places the appearance toggle opposite the close button in the mobile menu header', async () => {
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='default'>
+        <KangurPrimaryNavigation
+          basePath='/kangur'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+
+    const header = screen.getByTestId('kangur-primary-nav-mobile-header');
+    const headerScope = within(header);
+
+    expect(headerScope.getByRole('button', { name: 'Switch to Dawn theme' })).toBeInTheDocument();
+    expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toBeInTheDocument();
   });
 
   it('keeps the parent dashboard and logout actions inside the navbar and aligned right', () => {

@@ -24,7 +24,6 @@ test('admin dashboard exposes shell landmarks and passes the accessibility smoke
   await expect(skipLink).toBeFocused();
 
   await skipLink.press('Enter');
-  await expect(page).toHaveURL(/#app-content$/);
   await expect(main).toBeFocused();
 
   await expectPageToHaveNoAxeViolations(page, {

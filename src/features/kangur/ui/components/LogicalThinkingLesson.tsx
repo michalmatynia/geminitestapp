@@ -49,7 +49,7 @@ const INTRO_SLIDES: LessonSlide[] = [
           wniosków krok po kroku.
         </KangurLessonLead>
         <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalThinkingIntroAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -76,7 +76,7 @@ const INTRO_SLIDES: LessonSlide[] = [
           Najpierw obserwujesz, potem łączysz fakty, a na końcu sprawdzasz wniosek.
         </KangurLessonLead>
         <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-28 w-56 sm:h-32 sm:w-64'>
+          <div className='mx-auto h-28 w-56 max-w-full sm:h-32 sm:w-64'>
             <LogicalThinkingStepsAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -104,7 +104,7 @@ const PATTERN_SLIDES: LessonSlide[] = [
           Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie dalej!
         </KangurLessonLead>
         <KangurLessonCallout accent='sky' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalPatternAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -134,7 +134,7 @@ const PATTERN_SLIDES: LessonSlide[] = [
           Wzorzec może się powtarzać i jednocześnie rosnąć. To też jest reguła!
         </KangurLessonLead>
         <KangurLessonCallout accent='sky' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalPatternGrowthAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -160,7 +160,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
           Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy.
         </KangurLessonLead>
         <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalClassificationAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -199,7 +199,7 @@ const CLASSIFICATION_SLIDES: LessonSlide[] = [
           Najpierw wybierasz cechę, a potem elementy trafiają do właściwej grupy.
         </KangurLessonLead>
         <KangurLessonCallout accent='emerald' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-28 w-56 sm:h-32 sm:w-64'>
+          <div className='mx-auto h-28 w-56 max-w-full sm:h-32 sm:w-64'>
             <LogicalClassificationKeyAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -245,7 +245,7 @@ const REASONING_SLIDES: LessonSlide[] = [
           Wnioskowanie to wyciąganie wniosków z tego, co wiemy. Używamy schematu: jeśli... to...
         </KangurLessonLead>
         <KangurLessonCallout accent='indigo' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-28 w-56 sm:h-32 sm:w-64'>
+          <div className='mx-auto h-28 w-56 max-w-full sm:h-32 sm:w-64'>
             <LogicalReasoningAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -303,7 +303,7 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
           Analogia to podobna relacja między różnymi parami. Uzupełnij brakujące ogniwo!
         </KangurLessonLead>
         <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalAnalogiesAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -340,7 +340,7 @@ const ANALOGIES_SLIDES: LessonSlide[] = [
           Sprawdź relację w pierwszej parze i przenieś ją na drugą.
         </KangurLessonLead>
         <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalAnalogyMapAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -364,7 +364,7 @@ const SUMMARY_SLIDES: LessonSlide[] = [
     content: (
       <KangurLessonStack>
         <KangurLessonCallout accent='amber' className='w-full text-center' padding='sm'>
-          <div className='mx-auto h-20 w-40'>
+          <div className='mx-auto h-20 w-40 max-w-full'>
             <LogicalSummaryAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>

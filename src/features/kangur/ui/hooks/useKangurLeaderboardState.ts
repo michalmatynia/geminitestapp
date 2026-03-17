@@ -104,6 +104,15 @@ const OPERATION_LABELS_BY_SUBJECT: Record<
 > = {
   maths: MATH_OPERATION_LABELS,
   english: ENGLISH_OPERATION_LABELS,
+  alphabet: {
+    all: { label: 'Wszystkie', emoji: '🏆' },
+    alphabet_basics: { label: 'Alfabet', emoji: '🔤' },
+    alphabet_syllables: { label: 'Sylaby', emoji: '🗣️' },
+  },
+  web_development: {
+    all: { label: 'Wszystkie', emoji: '🏆' },
+    webdev_react_components: { label: 'React', emoji: '⚛️' },
+  },
 };
 
 const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {

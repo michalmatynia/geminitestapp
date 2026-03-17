@@ -3,11 +3,20 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 
-import { Alert, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import {
+  Alert,
+  Button,
+  DocsTooltipEnhancer,
+  ListPanel,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui';
 
 import { BenchmarkReportPanel } from '../components/BenchmarkReportPanel';
 import { BindingsPanel } from '../components/BindingsPanel';
-import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { ExplosionMetricsPanel } from '../components/ExplosionMetricsPanel';
 import { ParserTuningSection } from '../components/ParserTuningSection';
 import { PatternRuntimePanel } from '../components/PatternRuntimePanel';
@@ -197,7 +206,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             </Tabs>
           </ListPanel>
         </div>
-        <DocsTooltipEnhancer rootId='prompt-exploder-docs-root' enabled={docsTooltipsEnabled} />
+        <DocsTooltipEnhancer
+          rootId='prompt-exploder-docs-root'
+          enabled={docsTooltipsEnabled}
+          moduleId={DOCUMENTATION_MODULE_IDS.promptExploder}
+          fallbackDocId='workflow_overview'
+        />
       </PromptExploderProvider>
     </PromptExploderErrorBoundary>
   );

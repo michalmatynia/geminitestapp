@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
@@ -20,6 +20,11 @@ import {
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import {
+  buildKangurScopedCustomCss,
+  resolveKangurCustomCssScopeSelector,
+} from '@/features/kangur/utils/custom-css';
+import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { CSSProperties, JSX } from 'react';
@@ -40,12 +45,35 @@ export function KangurFeaturePageShell(): JSX.Element {
     classOverrides.globals.shell,
     classOverrides.components['kangur-feature-page-shell']?.['root']
   );
-  const customCss = kangurAppearance.theme?.customCss?.trim();
+  const customCssSelectors = kangurAppearance.theme?.customCssSelectors ?? '';
+  const customCssScope = useMemo(
+    () => resolveKangurCustomCssScopeSelector(customCssSelectors),
+    [customCssSelectors]
+  );
+  const customCss = buildKangurScopedCustomCss(
+    kangurAppearance.theme?.customCss,
+    customCssSelectors
+  );
+  const debugRef = useRef<string | null>(null);
   const shellStyle: CSSProperties = {
     background: kangurAppearance.background,
     color: kangurAppearance.tone.text,
     ...kangurAppearance.vars,
   };
+
+  useEffect(() => {
+    if (!isKangurThemeDebugEnabled()) return;
+    const payload = {
+      mode: appearanceMode,
+      customCssScope,
+      customCssSelectors: customCssSelectors || null,
+      hasCustomCss: Boolean(customCss),
+    };
+    const signature = JSON.stringify(payload);
+    if (debugRef.current === signature) return;
+    debugRef.current = signature;
+    console.info('[KangurThemeDebug]', payload);
+  }, [appearanceMode, customCss, customCssScope, customCssSelectors]);
 
   useEffect(() => {
     setKangurClientObservabilityContext({

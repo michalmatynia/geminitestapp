@@ -33,7 +33,7 @@ const KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS = [
 type KangurLessonNarratorProps = {
   lesson: Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>;
   lessonDocument: KangurLessonDocument | null;
-  lessonContentRef: React.RefObject<HTMLElement | null>;
+  lessonContentRef?: React.RefObject<HTMLElement | null> | null;
   className?: string | undefined;
   displayMode?: 'button' | 'icon';
   readLabel?: string | undefined;
@@ -98,6 +98,11 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
 
   useEffect(() => {
     if (!shouldObserveText) {
+      setObservedText('');
+      return;
+    }
+
+    if (!lessonContentRef) {
       setObservedText('');
       return;
     }

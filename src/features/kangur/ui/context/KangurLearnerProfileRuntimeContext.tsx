@@ -14,7 +14,7 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import { logKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
@@ -42,8 +42,6 @@ import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
-
-const kangurPlatform = getKangurPlatform();
 
 const QUICK_START_OPERATIONS = new Set<KangurOperation>([
   'addition',
@@ -173,6 +171,7 @@ export function KangurLearnerProfileRuntimeProvider({
   const { user, navigateToLogin } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
+  const kangurPlatform = useMemo(() => getKangurPlatform(), []);
   const hasUser = Boolean(user);
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [isLoadingScores, setIsLoadingScores] = useState(true);
@@ -228,8 +227,15 @@ export function KangurLearnerProfileRuntimeProvider({
                 setScoresError(null);
               } else {
                 setScoresError('Nie udało się pobrać historii wyników.');
+                logKangurClientError(error, {
+                  source: 'kangur.learner-profile',
+                  action: 'load-scores',
+                  hasUser,
+                  subject,
+                });
               }
             },
+            shouldReport: () => false,
           }
         );
         if (!isActive) {
@@ -248,7 +254,7 @@ export function KangurLearnerProfileRuntimeProvider({
     return () => {
       isActive = false;
     };
-  }, [hasUser, subject, user?.activeLearner?.id, user?.email, user?.full_name]);
+  }, [hasUser, subject, user?.activeLearner?.id, user?.email, user?.full_name, kangurPlatform]);
 
   const snapshot = useMemo(
     () =>

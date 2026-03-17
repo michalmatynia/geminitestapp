@@ -457,10 +457,10 @@ export function ThemePreviewPanel({
                   margin: '2px 0 1px',
                 }}
               >
-                Matematyka — klasa 4
+                Alphabet — 6 lat
               </div>
               <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 10, margin: 0, lineHeight: 1.4 }}>
-                Ułamki, procenty i działania na liczbach.
+                Litery, sylaby i pierwsze słowa.
               </p>
             </div>
 

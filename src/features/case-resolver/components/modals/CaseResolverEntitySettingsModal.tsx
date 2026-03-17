@@ -6,7 +6,7 @@ import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 export interface CaseResolverEntitySettingsModalRuntimeValue<TItem, TForm extends object> {
   isOpen: boolean | undefined;

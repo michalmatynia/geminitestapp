@@ -9,6 +9,17 @@ const normalizeOptionalString = (value) => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const parseRouteIdFilter = (value) => {
+  if (typeof value !== 'string') {
+    return [];
+  }
+
+  return value
+    .split(/[,\s]+/)
+    .map((entry) => normalizeString(entry))
+    .filter(Boolean);
+};
+
 export const buildAccessibilityRouteCrawlTitle = (routeEntry) =>
   `[${routeEntry.id}] ${routeEntry.route} passes the route-crawl accessibility scan`;
 
@@ -88,6 +99,25 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
       contextSelector,
     };
   });
+};
+
+export const filterAccessibilityRouteEntries = (routeEntries, { env = process.env } = {}) => {
+  const includeIds = parseRouteIdFilter(env['PLAYWRIGHT_ROUTE_CRAWL_IDS']);
+  if (includeIds.length === 0) {
+    return routeEntries;
+  }
+
+  const includeSet = new Set(includeIds);
+  const filtered = routeEntries.filter((entry) => includeSet.has(entry.id));
+  const missing = includeIds.filter((id) => !routeEntries.some((entry) => entry.id === id));
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Accessibility route crawl ids not found: ${missing.join(', ')}. Check PLAYWRIGHT_ROUTE_CRAWL_IDS.`
+    );
+  }
+
+  return filtered;
 };
 
 const flattenSuites = (suites = []) => {

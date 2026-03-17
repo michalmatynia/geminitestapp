@@ -15,7 +15,7 @@ import { Checkbox, FormSection } from '@/shared/ui';
 import {
   SettingsFieldsRenderer,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import {
   useComponentSettingsActions,

@@ -29,6 +29,7 @@ import {
 import { clearSessionUserCache, resolveSessionUser } from './local-kangur-platform-auth';
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
 import {
+  createKangurClientFallback,
   createActorAwareHeaders,
   trackReadFailure,
   trackWriteFailure,
@@ -136,7 +137,7 @@ export const createLearnerViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerProfile,
+      fallback: createKangurClientFallback('learners.create'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('learners.create', error, {
@@ -200,7 +201,7 @@ export const updateLearnerViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerProfile,
+      fallback: createKangurClientFallback('learners.update'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('learners.update', error, {
@@ -261,7 +262,7 @@ export const deleteLearnerViaApi = async (id: string): Promise<KangurLearnerProf
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerProfile,
+      fallback: createKangurClientFallback('learners.delete'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('learners.delete', error, {
@@ -298,7 +299,7 @@ export const selectLearner = async (learnerId: string): Promise<KangurUser> => {
       return user;
     },
     {
-      fallback: null as unknown as KangurUser,
+      fallback: createKangurClientFallback('learners.select'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('learners.select', error, {
@@ -367,7 +368,7 @@ export const requestLearnerSessions = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerSessionHistory,
+      fallback: createKangurClientFallback('learnerSessions.list'),
       shouldReport: (error) => !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
       onError: (error) => {
@@ -444,7 +445,7 @@ export const requestLearnerInteractions = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurLearnerInteractionHistory,
+      fallback: createKangurClientFallback('learnerInteractions.list'),
       shouldReport: (error) => !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
       onError: (error) => {

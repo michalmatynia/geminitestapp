@@ -5,6 +5,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { act, render, screen } from '@/__tests__/test-utils';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
@@ -31,6 +32,10 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
+  useKangurAgeGroupFocusMock: vi.fn(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
   useOptionalKangurRouting: () => null,
@@ -43,6 +48,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => useKangurAgeGroupFocusMock(),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -104,6 +113,7 @@ const lessonsSettingsValue = JSON.stringify([
     id: 'kangur-lesson-clock',
     componentId: 'clock',
     subject: 'maths',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     title: 'Nauka zegara',
     description: 'Odczytuj godziny',
     emoji: '🕐',
@@ -116,6 +126,7 @@ const lessonsSettingsValue = JSON.stringify([
     id: 'kangur-lesson-geometry-shapes',
     componentId: 'geometry_shapes',
     subject: 'maths',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     title: 'Figury geometryczne',
     description: 'Poznaj figury',
     emoji: '🔷',
@@ -128,6 +139,7 @@ const lessonsSettingsValue = JSON.stringify([
     id: 'kangur-lesson-calendar',
     componentId: 'calendar',
     subject: 'maths',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     title: 'Nauka kalendarza',
     description: 'Dni i miesiące',
     emoji: '📅',
@@ -162,6 +174,10 @@ describe('Lessons page mastery list', () => {
       subject: 'maths',
       setSubject: vi.fn(),
       subjectKey: 'learner-ada',
+    });
+    useKangurAgeGroupFocusMock.mockReturnValue({
+      ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+      setAgeGroup: vi.fn(),
     });
     lessonsState.value = JSON.parse(lessonsSettingsValue) as Array<Record<string, unknown>>;
     settingsStoreGetMock.mockReturnValue(undefined);

@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
+import { CheckCircle, ChevronLeft, XCircle } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';
 
 import {
@@ -46,6 +46,8 @@ import { getKangurQuestions } from '@/features/kangur/ui/services/kangur-questio
 import type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/ui/types';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/shared/utils';
+import { ExamNavigation } from './ExamNavigation';
+import { ExamNavigationProvider, useExamNavigation } from '@/features/kangur/ui/context/ExamNavigationContext';
 
 type IllustrationComponent = () => React.JSX.Element;
 
@@ -54,31 +56,12 @@ type ExamQuestionProps = {
   qIndex: number;
   total: number;
   selected: KangurQuestionChoice | undefined;
-  onPrev: () => void;
-  onNext: () => void;
-  prevLabel: string;
-  nextLabel: string;
-  prevDisabled: boolean;
-  nextDisabled: boolean;
   onSelect: (choice: KangurQuestionChoice) => void;
 };
 
 type ExamSummaryProps = {
   questions: KangurExamQuestion[];
   answers: Record<string, KangurQuestionChoice | undefined>;
-};
-
-type ExamNavigationProps = {
-  prevDisabled: boolean;
-  nextDisabled: boolean;
-  prevLabel: string;
-  nextLabel: string;
-  onPrev: () => void;
-  onNext: () => void;
-  ariaLabel?: string;
-  progressLabel?: string;
-  progressAriaLabel?: string;
-  progressTestId?: string;
 };
 
 const ILLUSTRATIONS: Record<string, IllustrationComponent | undefined> = {
@@ -124,85 +107,27 @@ const POINT_LABELS: Record<string, string> = {
   '2024_5pt_24': '5 pkt',
 };
 
-function ExamNavigation({
-  prevDisabled,
-  nextDisabled,
-  prevLabel,
-  nextLabel,
-  onPrev,
-  onNext,
-  ariaLabel = 'Nawigacja w teście Kangur',
-  progressLabel,
-  progressAriaLabel,
-  progressTestId,
-}: ExamNavigationProps): React.JSX.Element {
-  const buttonClassName =
-    'justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35';
-
-  return (
-    <div className='grid w-full gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
-      <div className='hidden sm:block' />
-      <nav className='flex items-center justify-center gap-2' aria-label={ariaLabel}>
-        <KangurButton
-          onClick={prevDisabled ? undefined : onPrev}
-          disabled={prevDisabled}
-          className={buttonClassName}
-          size='sm'
-          type='button'
-          variant='surface'
-          aria-label={prevLabel}
-          title={prevLabel}
-        >
-          <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-          <span className='sr-only'>{prevLabel}</span>
-        </KangurButton>
-        <KangurButton
-          onClick={nextDisabled ? undefined : onNext}
-          disabled={nextDisabled}
-          className={buttonClassName}
-          size='sm'
-          type='button'
-          variant='surface'
-          aria-label={nextLabel}
-          title={nextLabel}
-        >
-          <span className='sr-only'>{nextLabel}</span>
-          <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-        </KangurButton>
-      </nav>
-      <div className='flex justify-center sm:justify-end' aria-live='polite' aria-atomic='true'>
-        {progressLabel ? (
-          <KangurStatusChip
-            accent='amber'
-            data-testid={progressTestId}
-            aria-label={progressAriaLabel ?? progressLabel}
-            size='sm'
-          >
-            {progressLabel}
-          </KangurStatusChip>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 function ExamQuestion({
   q,
   qIndex,
   total,
   selected,
-  onPrev,
-  onNext,
-  prevLabel,
-  nextLabel,
-  prevDisabled,
-  nextDisabled,
   onSelect,
 }: ExamQuestionProps): React.JSX.Element {
+  const {
+    prevDisabled,
+    nextDisabled,
+    prevLabel,
+    nextLabel,
+    onPrev,
+    onNext,
+    progressLabel,
+    progressAriaLabel,
+  } = useExamNavigation();
+
   const Illustration = ILLUSTRATIONS[q.id];
   const pointLabel = POINT_LABELS[q.id];
   const questionNumber = qIndex + 1;
-  const progressValueText = `Pytanie ${questionNumber} z ${total}`;
   const headingId = useId();
   const descriptionId = useId();
   const narrationSourceRef = useRef<HTMLDivElement | null>(null);
@@ -246,8 +171,8 @@ function ExamQuestion({
         nextLabel={nextLabel}
         onPrev={onPrev}
         onNext={onNext}
-        progressLabel={`${questionNumber}/${total}`}
-        progressAriaLabel={progressValueText}
+        progressLabel={progressLabel}
+        progressAriaLabel={progressAriaLabel}
         progressTestId='kangur-exam-progress-pill'
       />
 
@@ -397,7 +322,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           progressLabel={`${reviewing + 1}/${reviewQuestionCount}`}
           progressAriaLabel={`Pytanie ${reviewing + 1} z ${reviewQuestionCount}`}
         />
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
           <KangurButton
             onClick={handleExitReview}
             size='sm'
@@ -417,7 +342,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           padding='lg'
           tone='neutral'
         >
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <p className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'>
               Pytanie {reviewing + 1}
             </p>
@@ -674,6 +599,17 @@ export default function KangurExam(): React.JSX.Element {
   }
   const selected = answers[activeQuestion.id];
 
+  const navigationValue = {
+    onPrev: handlePrev,
+    onNext: handleNext,
+    prevDisabled: current === 0,
+    nextDisabled: questions.length === 0,
+    prevLabel: current === 0 ? 'Brak poprzedniego pytania' : 'Poprzednie pytanie',
+    nextLabel: current === questions.length - 1 ? 'Zakończ test' : 'Następne pytanie',
+    progressLabel: `${current + 1}/${questions.length}`,
+    progressAriaLabel: `Pytanie ${current + 1} z ${questions.length}`,
+  };
+
   return (
     <AnimatePresence mode='wait'>
       <motion.div
@@ -681,19 +617,15 @@ export default function KangurExam(): React.JSX.Element {
         {...questionMotionProps}
         className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
       >
-        <ExamQuestion
-          q={activeQuestion}
-          qIndex={current}
-          total={questions.length}
-          selected={selected}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          prevLabel={current === 0 ? 'Brak poprzedniego pytania' : 'Poprzednie pytanie'}
-          nextLabel={current === questions.length - 1 ? 'Zakończ test' : 'Następne pytanie'}
-          prevDisabled={current === 0}
-          nextDisabled={questions.length === 0}
-          onSelect={handleSelect}
-        />
+        <ExamNavigationProvider value={navigationValue}>
+          <ExamQuestion
+            q={activeQuestion}
+            qIndex={current}
+            total={questions.length}
+            selected={selected}
+            onSelect={handleSelect}
+          />
+        </ExamNavigationProvider>
         {!selected && (
           <p className='break-words text-center text-xs [color:var(--kangur-page-muted-text)]'>
             Możesz pominąć pytanie i wrócić do niego później

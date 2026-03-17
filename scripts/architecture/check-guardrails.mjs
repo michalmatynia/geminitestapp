@@ -32,6 +32,7 @@ const collectPropDrillingGuardrail = async () => {
     cwd: root,
     commandArgs: [
       scanPropDrillingScriptPath,
+      '--guardrails',
       '--ci',
       '--no-history',
       '--no-write',

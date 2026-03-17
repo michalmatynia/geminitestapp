@@ -1,8 +1,14 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type {
+  FieldType,
+  SettingsFieldRenderProps,
+  SettingsFieldsRendererProps,
+  SettingsPanelField,
+} from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
@@ -21,70 +27,12 @@ const normalizeSelectOptions = (
 ): Array<LabeledOptionDto<string>> =>
   (options ?? []).map((option) => ({ label: option.label, value: String(option.value) }));
 
-export type FieldType =
-  | 'text'
-  | 'email'
-  | 'password'
-  | 'number'
-  | 'textarea'
-  | 'select'
-  | 'checkbox'
-  | 'switch'
-  | 'color'
-  | 'background'
-  | 'range'
-  | 'custom';
-
-export interface SettingsPanelField<T extends object> {
-  /** Field key in the form data */
-  key: keyof T;
-
-  /** Label displayed to user */
-  label: string;
-
-  /** Field type */
-  type: FieldType;
-
-  /** Placeholder text */
-  placeholder?: string;
-
-  /** Help text shown below field */
-  helperText?: string;
-
-  /** Is this field required? */
-  required?: boolean;
-
-  /** Disabled state */
-  disabled?: boolean;
-
-  /** For select fields, list of options */
-  options?: ReadonlyArray<LabeledOptionDto<string | number>>;
-
-  /** For number and range fields */
-  min?: number;
-  max?: number;
-  step?: number;
-  suffix?: string;
-
-  /** Custom render function for advanced fields */
-  render?: (props: SettingsFieldRenderProps) => ReactNode;
-}
-
-export interface SettingsFieldRenderProps {
-  value: unknown;
-  onChange: (value: unknown) => void;
-  error?: string;
-  disabled?: boolean;
-}
-
-export interface SettingsFieldsRendererProps<T extends object> {
-  fields: SettingsPanelField<T>[];
-  values: T;
-  errors?: Partial<Record<keyof T, string>>;
-  onChange: (values: Partial<T>) => void;
-  disabled?: boolean;
-  className?: string;
-}
+export type {
+  FieldType,
+  SettingsFieldRenderProps,
+  SettingsFieldsRendererProps,
+  SettingsPanelField,
+} from '@/shared/contracts/ui';
 
 /**
  * Renders a list of settings fields based on configuration.

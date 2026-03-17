@@ -18,7 +18,8 @@ import {
   type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
-import { useToast, type FileUploadHelpers } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

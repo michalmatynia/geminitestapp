@@ -42,7 +42,7 @@ const formatOverrides = (
       return {
         value: JSON.stringify(normalized, null, 2),
         invalid: false,
-      };
+      } as { value: string; invalid: boolean };
     },
     { fallback: { value: raw, invalid: true } }
   );

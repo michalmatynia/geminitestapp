@@ -308,7 +308,7 @@ export function KangurGameHomeActionsWidget({
     },
   ];
   const visibleActions =
-    subject === 'english' ? actions.filter((action) => action.id !== 'kangur') : actions;
+    subject === 'maths' ? actions : actions.filter((action) => action.id !== 'kangur');
 
   return (
     <KangurGlassPanel

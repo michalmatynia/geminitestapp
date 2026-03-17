@@ -20,6 +20,7 @@ import {
   scoreQueryInFlight,
 } from './local-kangur-platform-score-cache';
 import {
+  createKangurClientFallback,
   createActorAwareHeaders,
   trackReadFailure,
   trackWriteSuccess,
@@ -300,7 +301,7 @@ export const createScoreViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurScoreRecord,
+      fallback: createKangurClientFallback('score.create'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('score.create', error, {

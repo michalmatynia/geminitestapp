@@ -12,6 +12,7 @@ import { withKangurClientError } from '@/features/kangur/observability/client';
 
 import { KANGUR_ASSIGNMENTS_ENDPOINT } from './local-kangur-platform-endpoints';
 import {
+  createKangurClientFallback,
   createActorAwareHeaders,
   trackReadFailure,
   trackWriteFailure,
@@ -140,7 +141,7 @@ export const createAssignmentViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurAssignmentSnapshot,
+      fallback: createKangurClientFallback('assignments.create'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('assignments.create', error, {
@@ -204,7 +205,7 @@ export const updateAssignmentViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurAssignmentSnapshot,
+      fallback: createKangurClientFallback('assignments.update'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('assignments.update', error, {
@@ -262,7 +263,7 @@ export const reassignAssignmentViaApi = async (id: string): Promise<KangurAssign
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurAssignmentSnapshot,
+      fallback: createKangurClientFallback('assignments.reassign'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('assignments.reassign', error, {

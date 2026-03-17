@@ -5,7 +5,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 const {
+  logKangurClientErrorMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
   useRouterMock,
   routerPushMock,
   routerRefreshMock,
@@ -14,10 +18,10 @@ const {
   redirectToLoginMock,
   logoutMock,
   selectLearnerMock,
-  logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
 } = vi.hoisted(() => ({
+  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   useRouterMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerRefreshMock: vi.fn(),
@@ -26,11 +30,10 @@ const {
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
   selectLearnerMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: useRouterMock,
+  useRouter: () => useRouterMock(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

@@ -178,8 +178,8 @@ export const ProductListHeader = memo(function ProductListHeader({
         onValueChange={(value: string) => setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')}
         options={languageOptions}
         placeholder='Language'
-        className='w-40 shrink-0'
-        triggerClassName='h-8 text-xs'
+        className='w-full shrink-0 sm:w-40'
+        triggerClassName='h-8 w-full text-xs'
         ariaLabel='Select product name language'
        title='Language'/>
 
@@ -189,8 +189,8 @@ export const ProductListHeader = memo(function ProductListHeader({
         onValueChange={setCurrencyCode}
         options={currencySelectOptions}
         placeholder='Currency'
-        className='w-28 shrink-0'
-        triggerClassName='h-8 text-xs'
+        className='w-full shrink-0 sm:w-28'
+        triggerClassName='h-8 w-full text-xs'
         ariaLabel='Select currency'
        title='Currency'/>
 
@@ -200,16 +200,16 @@ export const ProductListHeader = memo(function ProductListHeader({
         onValueChange={setCatalogFilter}
         options={catalogFilterOptions}
         placeholder='Catalog'
-        className='w-48 shrink-0'
-        triggerClassName='h-8 text-xs'
+        className='w-full shrink-0 sm:w-48'
+        triggerClassName='h-8 w-full text-xs'
         ariaLabel='Filter by catalog'
        title='Catalog'/>
 
-      <div className='inline-flex shrink-0 items-center gap-2'>
+      <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'>
         <TriggerButtonBar
           location='product_list'
           entityType='product'
-          className='shrink-0 flex-nowrap'
+          className='w-full flex-nowrap sm:w-auto'
         />
         <Button
           type='button'
@@ -218,7 +218,7 @@ export const ProductListHeader = memo(function ProductListHeader({
           onClick={() => setShowTriggerRunFeedback(!showTriggerRunFeedback)}
           aria-label={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
           title={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
-          className='h-8 shrink-0 gap-1.5 px-2 text-xs'
+          className='h-8 w-full gap-1.5 px-2 text-xs sm:w-auto'
         >
           {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
           <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
@@ -255,7 +255,7 @@ export const ProductListHeader = memo(function ProductListHeader({
 
             <div className='space-y-3'>
               <div className='relative z-10 flex justify-center'>{renderPaginationControl()}</div>
-              <div className='flex w-full items-center justify-end gap-2 max-sm:flex-wrap'>
+              <div className='flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end'>
                 {renderSelectorsAndTriggers()}
               </div>
               {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}

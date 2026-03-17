@@ -13,7 +13,6 @@ import {
 import { isDarkStorefrontAppearanceMode } from './CmsStorefrontAppearance.utils';
 import {
   resolveCmsStorefrontAppearance,
-  resolveKangurStorefrontAppearance as resolveKangurAppearance,
   withFallbackTone,
 } from './CmsStorefrontAppearance.logic';
 import { useCmsStorefrontAppearance } from './CmsStorefrontAppearance.context';
@@ -84,4 +83,4 @@ export function CmsStorefrontAppearanceButtons({
   );
 }
 
-export { resolveCmsStorefrontAppearance, resolveKangurAppearance as resolveKangurStorefrontAppearance };
+export { resolveCmsStorefrontAppearance };

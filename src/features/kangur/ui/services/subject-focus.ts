@@ -3,6 +3,7 @@ import {
   kangurSubjectFocusSchema,
   type KangurLessonSubject,
 } from '@/shared/contracts/kangur';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 import {
   withKangurClientError,
   withKangurClientErrorSync,
@@ -14,7 +15,7 @@ import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/
 export const KANGUR_SUBJECT_FOCUS_STORAGE_KEY = 'kangur_subject_focus_v1';
 export const KANGUR_SUBJECT_FOCUS_EVENT_NAME = 'kangur-subject-focus-changed';
 
-const DEFAULT_SUBJECT: KangurLessonSubject = 'maths';
+const DEFAULT_SUBJECT: KangurLessonSubject = DEFAULT_KANGUR_SUBJECT;
 
 type KangurSubjectFocusStore = {
   version: 1;

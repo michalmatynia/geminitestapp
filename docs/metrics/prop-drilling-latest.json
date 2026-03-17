@@ -1,23 +1,3822 @@
 {
   "summary": {
-    "generatedAt": "2026-03-16T05:30:54.163Z",
-    "scannedSourceFiles": 4894,
-    "scannedJsxFiles": 1819,
-    "componentCount": 2937,
-    "componentsWithForwarding": 0,
-    "componentsWithAnyForwarding": 0,
-    "resolvedTransitionCount": 0,
-    "depth2CandidateChainCount": 0,
+    "generatedAt": "2026-03-17T11:42:57.999Z",
+    "scannedSourceFiles": 5214,
+    "scannedJsxFiles": 1893,
+    "componentCount": 3085,
+    "componentsWithForwarding": 25,
+    "componentsWithAnyForwarding": 28,
+    "resolvedTransitionCount": 127,
+    "depth2CandidateChainCount": 127,
     "candidateChainCount": 0,
     "highPriorityChainCount": 0,
-    "unknownSpreadForwardingCount": 0,
-    "highPropCountComponentCount": 29,
-    "passThroughHotspotCount": 0,
-    "topFeatureScopes": []
+    "unknownSpreadForwardingCount": 3,
+    "highPropCountComponentCount": 36,
+    "passThroughHotspotCount": 8,
+    "topFeatureScopes": [
+      {
+        "scope": "feature:kangur",
+        "count": 21
+      },
+      {
+        "scope": "shared-ui",
+        "count": 3
+      },
+      {
+        "scope": "feature:cms",
+        "count": 2
+      },
+      {
+        "scope": "shared",
+        "count": 2
+      }
+    ]
   },
   "backlog": [],
-  "transitionBacklog": [],
-  "componentBacklog": [],
-  "forwardingComponentBacklog": [],
+  "transitionBacklog": [
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "requireEmailVerification",
+        "label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "requireEmailVerification",
+          "targetProp": "label",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "requireEmailVerification",
+        "description"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "requireEmailVerification",
+          "targetProp": "description",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "requireEmailVerification",
+        "checked"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "requireEmailVerification",
+          "targetProp": "checked",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "requireCaptcha",
+        "label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "requireCaptcha",
+          "targetProp": "label",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "requireCaptcha",
+        "description"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "requireCaptcha",
+          "targetProp": "description",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "requireCaptcha",
+        "checked"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "requireCaptcha",
+          "targetProp": "checked",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "notificationsEnabled",
+        "label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "notificationsEnabled",
+          "targetProp": "label",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "notificationsEnabled",
+        "description"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "notificationsEnabled",
+          "targetProp": "description",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "score": 78,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "notificationsEnabled",
+        "checked"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "notificationsEnabled",
+          "targetProp": "checked",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent"
+      ],
+      "propPath": [
+        "theme",
+        "themeSettings"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+          "sourceProp": "theme",
+          "targetProp": "themeSettings",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 72,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent"
+      ],
+      "propPath": [
+        "theme",
+        "themeSettings"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+          "sourceProp": "theme",
+          "targetProp": "themeSettings",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/alert.tsx#Alert",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+        "src/shared/ui/alert.tsx#Alert"
+      ],
+      "propPath": [
+        "narratorProbe",
+        "variant"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+          "toComponentId": "src/shared/ui/alert.tsx#Alert",
+          "sourceProp": "narratorProbe",
+          "targetProp": "variant",
+          "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/alert.tsx#Alert",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+        "src/shared/ui/alert.tsx#Alert"
+      ],
+      "propPath": [
+        "narratorProbe",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+          "toComponentId": "src/shared/ui/alert.tsx#Alert",
+          "sourceProp": "narratorProbe",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "setNotificationsDisabledUntilInput",
+        "onChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "setNotificationsDisabledUntilInput",
+          "targetProp": "onChange",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 132
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "setNotificationsDisabledUntilInput",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "setNotificationsDisabledUntilInput",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "score": 64,
+      "depth": 2,
+      "rootFanout": 3,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell"
+      ],
+      "propPath": [
+        "theme",
+        "theme"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+          "sourceProp": "theme",
+          "targetProp": "theme",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 64
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "prevDisabled",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "prevDisabled",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "prevDisabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "prevDisabled",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "prevLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "prevLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "prevLabel",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "prevLabel",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "nextDisabled",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "nextDisabled",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "nextDisabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "nextDisabled",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "nextLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "nextLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "nextLabel",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "nextLabel",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "score": 62,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onOpenChange",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onOpenChange",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 102
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "dailyMessageLimitInput",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "dailyMessageLimitInput",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "setDailyMessageLimitInput",
+        "onChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "setDailyMessageLimitInput",
+          "targetProp": "onChange",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "guestIntroMode",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "guestIntroMode",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 189
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "setGuestIntroMode",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "setGuestIntroMode",
+          "targetProp": "onValueChange",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 189
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "homeOnboardingMode",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "homeOnboardingMode",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 206
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "setHomeOnboardingMode",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "setHomeOnboardingMode",
+          "targetProp": "onValueChange",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 206
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "agentPersonaId",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "agentPersonaId",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 229
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "setAgentPersonaId",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "setAgentPersonaId",
+          "targetProp": "onValueChange",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 229
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "motionPresetId",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "motionPresetId",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 276
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "setMotionPresetId",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "setMotionPresetId",
+          "targetProp": "onValueChange",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 276
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onCopyTemplateText",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onCopyTemplateText",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+          "line": 167
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onProbeNarrator",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onProbeNarrator",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isProbingNarrator",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isProbingNarrator",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "setRequireEmailVerification",
+        "onCheckedChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "setRequireEmailVerification",
+          "targetProp": "onCheckedChange",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "setRequireCaptcha",
+        "onCheckedChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "setRequireCaptcha",
+          "targetProp": "onCheckedChange",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/toggle-row.tsx#ToggleRow"
+      ],
+      "propPath": [
+        "setNotificationsEnabled",
+        "onCheckedChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/toggle-row.tsx#ToggleRow",
+          "sourceProp": "setNotificationsEnabled",
+          "targetProp": "onCheckedChange",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "notificationsDisabledUntilInput",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "notificationsDisabledUntilInput",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 132
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "resendCooldownInput",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "resendCooldownInput",
+          "targetProp": "value",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "setResendCooldownInput",
+        "onChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "setResendCooldownInput",
+          "targetProp": "onChange",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+      "sinkComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
+      "componentPath": [
+        "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+        "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider"
+      ],
+      "propPath": [
+        "kangurInitialMode",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+          "toComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
+          "sourceProp": "kangurInitialMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/shared/components/FrontendPublicOwnerShell.tsx",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell"
+      ],
+      "propPath": [
+        "colorSchemes",
+        "colorSchemes"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+          "sourceProp": "colorSchemes",
+          "targetProp": "colorSchemes",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 64
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent"
+      ],
+      "propPath": [
+        "colorSchemes",
+        "colorSchemes"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+          "sourceProp": "colorSchemes",
+          "targetProp": "colorSchemes",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+      "sinkComponentId": "src/features/cms/components/frontend/home/home-fallback-content.header.tsx#HomeFallbackHeader",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+        "src/features/cms/components/frontend/home/home-fallback-content.header.tsx#HomeFallbackHeader"
+      ],
+      "propPath": [
+        "appearanceTone",
+        "appearanceTone"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+          "toComponentId": "src/features/cms/components/frontend/home/home-fallback-content.header.tsx#HomeFallbackHeader",
+          "sourceProp": "appearanceTone",
+          "targetProp": "appearanceTone",
+          "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+      "sinkComponentId": "src/features/cms/components/frontend/home/home-fallback-content.hero.tsx#HomeFallbackHero",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+        "src/features/cms/components/frontend/home/home-fallback-content.hero.tsx#HomeFallbackHero"
+      ],
+      "propPath": [
+        "appearanceTone",
+        "appearanceTone"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+          "toComponentId": "src/features/cms/components/frontend/home/home-fallback-content.hero.tsx#HomeFallbackHero",
+          "sourceProp": "appearanceTone",
+          "targetProp": "appearanceTone",
+          "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
+          "line": 134
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/password-input.tsx#PasswordInput",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/shared/ui/password-input.tsx#PasswordInput",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "disabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/password-input.tsx#PasswordInput",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "disabled",
+          "targetProp": "disabled",
+          "relativePath": "src/shared/ui/password-input.tsx",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/password-input.tsx#PasswordInput",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/password-input.tsx#PasswordInput",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "disabled",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/password-input.tsx#PasswordInput",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "disabled",
+          "targetProp": "disabled",
+          "relativePath": "src/shared/ui/password-input.tsx",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onPrev",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onPrev",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onNext",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onNext",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip"
+      ],
+      "propPath": [
+        "progressTestId",
+        "data-testid"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+          "sourceProp": "progressTestId",
+          "targetProp": "data-testid",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip"
+      ],
+      "propPath": [
+        "progressAriaLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+          "sourceProp": "progressAriaLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+      "componentPath": [
+        "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+        "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip"
+      ],
+      "propPath": [
+        "progressLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
+          "sourceProp": "progressLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton"
+      ],
+      "propPath": [
+        "closeAriaLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurPanelCloseButton.tsx#KangurPanelCloseButton",
+          "sourceProp": "closeAriaLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "active",
+        "aria-current"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "active",
+          "targetProp": "aria-current",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "ariaLabel",
+        "aria-label"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "ariaLabel",
+          "targetProp": "aria-label",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "docId",
+        "data-doc-id"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "docId",
+          "targetProp": "data-doc-id",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "transitionActive",
+        "data-nav-state"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "transitionActive",
+          "targetProp": "data-nav-state",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "testId",
+        "data-testid"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "testId",
+          "targetProp": "data-testid",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "elementRef",
+        "ref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "elementRef",
+          "targetProp": "ref",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "center",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "center",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/login-page/login-forms.tsx#LoginForm",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/login-page/login-forms.tsx#LoginForm",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "isLoading",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/login-page/login-forms.tsx#LoginForm",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "isLoading",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/login-page/login-forms.tsx",
+          "line": 119
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "isLoading",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "isLoading",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "isCaptchaRequired",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "isCaptchaRequired",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "sinkComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyCmsStorefrontAppearanceProvider",
+      "componentPath": [
+        "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+        "src/shared/components/FrontendLayoutClient.tsx#LazyCmsStorefrontAppearanceProvider"
+      ],
+      "propPath": [
+        "storefrontAppearanceMode",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+          "toComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyCmsStorefrontAppearanceProvider",
+          "sourceProp": "storefrontAppearanceMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "score": 52,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onToggleFocusMode",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onToggleFocusMode",
+          "targetProp": "onClick",
+          "relativePath": "src/shared/ui/FocusModeTogglePortal.tsx",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/form-section.tsx#FormSection",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+        "src/shared/ui/form-section.tsx#FormSection"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormSection",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+          "line": 137
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "sinkComponentId": "src/shared/ui/form-section.tsx#FormSection",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+        "src/shared/ui/form-section.tsx#FormSection"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormSection",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+          "line": 70
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "sinkComponentId": "src/shared/ui/form-section.tsx#FormSection",
+      "componentPath": [
+        "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+        "src/shared/ui/form-section.tsx#FormSection"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+          "toComponentId": "src/shared/ui/form-section.tsx#FormSection",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+          "line": 66
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+      "componentPath": [
+        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
+      ],
+      "propPath": [
+        "enabled",
+        "enabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+          "sourceProp": "enabled",
+          "targetProp": "enabled",
+          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+      "componentPath": [
+        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
+      ],
+      "propPath": [
+        "moduleId",
+        "moduleId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+          "sourceProp": "moduleId",
+          "targetProp": "moduleId",
+          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+      "componentPath": [
+        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
+      ],
+      "propPath": [
+        "rootId",
+        "rootId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+          "sourceProp": "rootId",
+          "targetProp": "rootId",
+          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "score": 50,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+      "sinkComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+      "componentPath": [
+        "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+        "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer"
+      ],
+      "propPath": [
+        "fallbackDocId",
+        "fallbackDocId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+          "toComponentId": "src/shared/lib/documentation/DocumentationTooltipEnhancer.tsx#DocumentationTooltipEnhancer",
+          "sourceProp": "fallbackDocId",
+          "targetProp": "fallbackDocId",
+          "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell"
+      ],
+      "propPath": [
+        "menu",
+        "menu"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+          "sourceProp": "menu",
+          "targetProp": "menu",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 64
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell"
+      ],
+      "propPath": [
+        "showMenu",
+        "showMenu"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyCmsPageShell",
+          "sourceProp": "showMenu",
+          "targetProp": "showMenu",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 64
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent"
+      ],
+      "propPath": [
+        "hasCmsContent",
+        "hasCmsContent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+          "sourceProp": "hasCmsContent",
+          "targetProp": "hasCmsContent",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent"
+      ],
+      "propPath": [
+        "defaultSlug",
+        "defaultSlug"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+          "sourceProp": "defaultSlug",
+          "targetProp": "defaultSlug",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent"
+      ],
+      "propPath": [
+        "rendererComponents",
+        "rendererComponents"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeCmsDefaultContent",
+          "sourceProp": "rendererComponents",
+          "targetProp": "rendererComponents",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent"
+      ],
+      "propPath": [
+        "showFallbackHeader",
+        "showFallbackHeader"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+          "sourceProp": "showFallbackHeader",
+          "targetProp": "showFallbackHeader",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent"
+      ],
+      "propPath": [
+        "products",
+        "products"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+          "sourceProp": "products",
+          "targetProp": "products",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "sinkComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+        "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent"
+      ],
+      "propPath": [
+        "appearanceTone",
+        "appearanceTone"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+          "toComponentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#LazyHomeFallbackContent",
+          "sourceProp": "appearanceTone",
+          "targetProp": "appearanceTone",
+          "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+      "sinkComponentId": "src/features/cms/components/frontend/home/home-fallback-content.products.tsx#HomeFallbackProducts",
+      "componentPath": [
+        "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+        "src/features/cms/components/frontend/home/home-fallback-content.products.tsx#HomeFallbackProducts"
+      ],
+      "propPath": [
+        "products",
+        "products"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+          "toComponentId": "src/features/cms/components/frontend/home/home-fallback-content.products.tsx#HomeFallbackProducts",
+          "sourceProp": "products",
+          "targetProp": "products",
+          "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
+          "line": 150
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/KangurPublicApp.tsx#KangurPublicApp",
+      "sinkComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
+      "componentPath": [
+        "src/features/kangur/ui/KangurPublicApp.tsx#KangurPublicApp",
+        "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider"
+      ],
+      "propPath": [
+        "initialMode",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/KangurPublicApp.tsx#KangurPublicApp",
+          "toComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
+          "sourceProp": "initialMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/features/kangur/ui/KangurPublicApp.tsx",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+      "sinkComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#LazyKangurPublicApp",
+      "componentPath": [
+        "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+        "src/features/kangur/ui/KangurPublicAppEntry.tsx#LazyKangurPublicApp"
+      ],
+      "propPath": [
+        "basePath",
+        "basePath"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+          "toComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#LazyKangurPublicApp",
+          "sourceProp": "basePath",
+          "targetProp": "basePath",
+          "relativePath": "src/features/kangur/ui/KangurPublicAppEntry.tsx",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+      "sinkComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#LazyKangurPublicApp",
+      "componentPath": [
+        "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+        "src/features/kangur/ui/KangurPublicAppEntry.tsx#LazyKangurPublicApp"
+      ],
+      "propPath": [
+        "initialMode",
+        "initialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+          "toComponentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#LazyKangurPublicApp",
+          "sourceProp": "initialMode",
+          "targetProp": "initialMode",
+          "relativePath": "src/features/kangur/ui/KangurPublicAppEntry.tsx",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx",
+          "line": 537
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx",
+          "line": 537
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx",
+          "line": 283
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx",
+          "line": 283
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx",
+          "line": 349
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx",
+          "line": 349
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx",
+          "line": 411
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx",
+          "line": 411
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishPronounsGame.tsx",
+          "line": 219
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishPronounsGame.tsx",
+          "line": 219
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx",
+          "line": 211
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx",
+          "line": 211
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx",
+          "line": 409
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "finishLabel",
+        "finishLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "finishLabel",
+          "targetProp": "finishLabel",
+          "relativePath": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx",
+          "line": 241
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+      "componentPath": [
+        "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+        "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions"
+      ],
+      "propPath": [
+        "onFinish",
+        "onFinish"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+          "toComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
+          "sourceProp": "onFinish",
+          "targetProp": "onFinish",
+          "relativePath": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx",
+          "line": 241
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
+      ],
+      "propPath": [
+        "title",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
+          "sourceProp": "title",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+        "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta"
+      ],
+      "propPath": [
+        "description",
+        "description"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+          "toComponentId": "src/features/kangur/ui/components/KangurDialogMeta.tsx#KangurDialogMeta",
+          "sourceProp": "description",
+          "targetProp": "description",
+          "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "onClick",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "onClick",
+          "targetProp": "onClick",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "size",
+        "size"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "size",
+          "targetProp": "size",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton"
+      ],
+      "propPath": [
+        "title",
+        "title"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
+          "sourceProp": "title",
+          "targetProp": "title",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
+      ],
+      "propPath": [
+        "href",
+        "href"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+          "sourceProp": "href",
+          "targetProp": "href",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
+      ],
+      "propPath": [
+        "targetPageKey",
+        "targetPageKey"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+          "sourceProp": "targetPageKey",
+          "targetProp": "targetPageKey",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
+      ],
+      "propPath": [
+        "transitionAcknowledgeMs",
+        "transitionAcknowledgeMs"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+          "sourceProp": "transitionAcknowledgeMs",
+          "targetProp": "transitionAcknowledgeMs",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "sinkComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+        "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink"
+      ],
+      "propPath": [
+        "transitionSourceId",
+        "transitionSourceId"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+          "toComponentId": "src/features/kangur/ui/components/KangurTransitionLink.tsx#KangurTransitionLink",
+          "sourceProp": "transitionSourceId",
+          "targetProp": "transitionSourceId",
+          "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+        "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell"
+      ],
+      "propPath": [
+        "tone",
+        "tone"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell",
+          "sourceProp": "tone",
+          "targetProp": "tone",
+          "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
+          "line": 54
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+        "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell"
+      ],
+      "propPath": [
+        "id",
+        "id"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell",
+          "sourceProp": "id",
+          "targetProp": "id",
+          "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
+          "line": 54
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell",
+      "componentPath": [
+        "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+        "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell"
+      ],
+      "propPath": [
+        "skipLinkLabel",
+        "skipLinkLabel"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPageShell.tsx#KangurPageShell",
+          "sourceProp": "skipLinkLabel",
+          "targetProp": "skipLinkLabel",
+          "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
+          "line": 54
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "padding",
+        "padding"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "padding",
+          "targetProp": "padding",
+          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+      "componentPath": [
+        "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+        "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro"
+      ],
+      "propPath": [
+        "titleAs",
+        "titleAs"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+          "sourceProp": "titleAs",
+          "targetProp": "titleAs",
+          "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+      "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+      "componentPath": [
+        "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+        "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro"
+      ],
+      "propPath": [
+        "titleClassName",
+        "titleClassName"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+          "toComponentId": "src/features/kangur/ui/design/primitives/KangurPanelIntro.tsx#KangurPanelIntro",
+          "sourceProp": "titleClassName",
+          "targetProp": "titleClassName",
+          "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
+          "line": 18
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "sinkComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
+      "componentPath": [
+        "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+        "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell"
+      ],
+      "propPath": [
+        "publicOwner",
+        "publicOwner"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+          "toComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
+          "sourceProp": "publicOwner",
+          "targetProp": "publicOwner",
+          "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "sinkComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
+      "componentPath": [
+        "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+        "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell"
+      ],
+      "propPath": [
+        "kangurInitialMode",
+        "kangurInitialMode"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+          "toComponentId": "src/shared/components/FrontendLayoutClient.tsx#LazyFrontendPublicOwnerShell",
+          "sourceProp": "kangurInitialMode",
+          "targetProp": "kangurInitialMode",
+          "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/FocusModeTogglePortal.tsx",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/password-input.tsx#PasswordInput",
+      "sinkComponentId": "src/shared/ui/input.tsx#Input",
+      "componentPath": [
+        "src/shared/ui/password-input.tsx#PasswordInput",
+        "src/shared/ui/input.tsx#Input"
+      ],
+      "propPath": [
+        "className",
+        "className"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/password-input.tsx#PasswordInput",
+          "toComponentId": "src/shared/ui/input.tsx#Input",
+          "sourceProp": "className",
+          "targetProp": "className",
+          "relativePath": "src/shared/ui/password-input.tsx",
+          "line": 33
+        }
+      ]
+    }
+  ],
+  "componentBacklog": [
+    {
+      "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "name": "KangurNavAction",
+      "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 14,
+      "outgoingTransitionCount": 14,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "name": "KangurParentVerificationSettingsPanel",
+      "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 11,
+      "outgoingTransitionCount": 18,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "name": "KangurAiTutorSettingsPanel",
+      "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 11,
+      "outgoingTransitionCount": 11,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "name": "HomeContentClient",
+      "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+      "feature": "feature:cms",
+      "forwardedPropCount": 10,
+      "outgoingTransitionCount": 13,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "name": "ExamNavigation",
+      "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 9,
+      "outgoingTransitionCount": 13,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "name": "KangurNarratorSettingsPanel",
+      "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 5,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "name": "KangurChoiceDialog",
+      "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "name": "KangurLessonVisual",
+      "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+      "name": "DocsTooltipEnhancer",
+      "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+      "name": "KangurStandardPageLayout",
+      "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "name": "FrontendLayoutClient",
+      "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
+      "feature": "shared",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+      "name": "HomeFallbackContent",
+      "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
+      "feature": "feature:cms",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/password-input.tsx#PasswordInput",
+      "name": "PasswordInput",
+      "relativePath": "src/shared/ui/password-input.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+      "name": "KangurPublicAppEntry",
+      "relativePath": "src/features/kangur/ui/KangurPublicAppEntry.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+      "name": "EnglishPartsOfSpeechGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+      "name": "EnglishPrepositionsGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+      "name": "EnglishPrepositionsOrderGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+      "name": "EnglishPrepositionsSortGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+      "name": "EnglishPronounsGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPronounsGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+      "name": "EnglishPronounsWarmupGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+      "name": "EnglishSentenceStructureGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+      "name": "EnglishSubjectVerbAgreementGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+      "name": "KangurWidgetIntro",
+      "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+      "name": "SignupForm",
+      "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+      "name": "FocusModeTogglePortal",
+      "relativePath": "src/shared/ui/FocusModeTogglePortal.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
+  "forwardingComponentBacklog": [
+    {
+      "componentId": "src/features/kangur/ui/components/KangurNavAction.tsx#KangurNavAction",
+      "name": "KangurNavAction",
+      "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 14,
+      "outgoingTransitionCount": 14,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx#KangurParentVerificationSettingsPanel",
+      "name": "KangurParentVerificationSettingsPanel",
+      "relativePath": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 11,
+      "outgoingTransitionCount": 18,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx#KangurAiTutorSettingsPanel",
+      "name": "KangurAiTutorSettingsPanel",
+      "relativePath": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 11,
+      "outgoingTransitionCount": 11,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/cms/components/frontend/home/HomeContentClient.tsx#HomeContentClient",
+      "name": "HomeContentClient",
+      "relativePath": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+      "feature": "feature:cms",
+      "forwardedPropCount": 10,
+      "outgoingTransitionCount": 13,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/ExamNavigation.tsx#ExamNavigation",
+      "name": "ExamNavigation",
+      "relativePath": "src/features/kangur/ui/components/ExamNavigation.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 9,
+      "outgoingTransitionCount": 13,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx#KangurNarratorSettingsPanel",
+      "name": "KangurNarratorSettingsPanel",
+      "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 5,
+      "outgoingTransitionCount": 6,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/KangurChoiceDialog.tsx#KangurChoiceDialog",
+      "name": "KangurChoiceDialog",
+      "relativePath": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "name": "KangurLessonVisual",
+      "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/shared/ui/DocsTooltipEnhancer.tsx#DocsTooltipEnhancer",
+      "name": "DocsTooltipEnhancer",
+      "relativePath": "src/shared/ui/DocsTooltipEnhancer.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 4,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx#KangurStandardPageLayout",
+      "name": "KangurStandardPageLayout",
+      "relativePath": "src/features/kangur/ui/components/KangurStandardPageLayout.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/components/FrontendLayoutClient.tsx#FrontendLayoutClient",
+      "name": "FrontendLayoutClient",
+      "relativePath": "src/shared/components/FrontendLayoutClient.tsx",
+      "feature": "shared",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/cms/components/frontend/home/home-fallback-content.tsx#HomeFallbackContent",
+      "name": "HomeFallbackContent",
+      "relativePath": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
+      "feature": "feature:cms",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/password-input.tsx#PasswordInput",
+      "name": "PasswordInput",
+      "relativePath": "src/shared/ui/password-input.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/KangurPublicAppEntry.tsx#KangurPublicAppEntry",
+      "name": "KangurPublicAppEntry",
+      "relativePath": "src/features/kangur/ui/KangurPublicAppEntry.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx#EnglishPartsOfSpeechGame",
+      "name": "EnglishPartsOfSpeechGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx#EnglishPrepositionsGame",
+      "name": "EnglishPrepositionsGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx#EnglishPrepositionsOrderGame",
+      "name": "EnglishPrepositionsOrderGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx#EnglishPrepositionsSortGame",
+      "name": "EnglishPrepositionsSortGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPronounsGame.tsx#EnglishPronounsGame",
+      "name": "EnglishPronounsGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPronounsGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx#EnglishPronounsWarmupGame",
+      "name": "EnglishPronounsWarmupGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx#EnglishSentenceStructureGame",
+      "name": "EnglishSentenceStructureGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx#EnglishSubjectVerbAgreementGame",
+      "name": "EnglishSubjectVerbAgreementGame",
+      "relativePath": "src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx#KangurWidgetIntro",
+      "name": "KangurWidgetIntro",
+      "relativePath": "src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": true
+    },
+    {
+      "componentId": "src/features/kangur/ui/login-page/signup-forms.tsx#SignupForm",
+      "name": "SignupForm",
+      "relativePath": "src/features/kangur/ui/login-page/signup-forms.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/ui/FocusModeTogglePortal.tsx#FocusModeTogglePortal",
+      "name": "FocusModeTogglePortal",
+      "relativePath": "src/shared/ui/FocusModeTogglePortal.tsx",
+      "feature": "shared-ui",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/KangurPublicApp.tsx#KangurPublicApp",
+      "name": "KangurPublicApp",
+      "relativePath": "src/features/kangur/ui/KangurPublicApp.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/login-page/login-forms.tsx#LoginForm",
+      "name": "LoginForm",
+      "relativePath": "src/features/kangur/ui/login-page/login-forms.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/shared/components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
+      "name": "FrontendPublicOwnerShell",
+      "relativePath": "src/shared/components/FrontendPublicOwnerShell.tsx",
+      "feature": "shared",
+      "forwardedPropCount": 1,
+      "outgoingTransitionCount": 1,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
   "chains": []
 }

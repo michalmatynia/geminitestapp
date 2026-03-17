@@ -3,8 +3,8 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
 import { KangurAdminMenuToggle } from '@/features/kangur/admin/KangurAdminMenuToggle';
+import type { BreadcrumbItem } from '@/shared/contracts/ui';
 import { Breadcrumbs, ListPanel, SectionHeader } from '@/features/kangur/shared/ui';
-import type { BreadcrumbItem } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
 
 type KangurAdminRefresh = {

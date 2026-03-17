@@ -18,6 +18,7 @@ import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTes
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurButton,
@@ -32,6 +33,7 @@ import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRou
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
@@ -85,6 +87,8 @@ export default function Tests(): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');
   const settingsStore = useSettingsStore();
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const isAdultFocus = ageGroup !== DEFAULT_KANGUR_AGE_GROUP;
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [activeSuiteId, setActiveSuiteId] = useState<string | null>(null);
   const testsListIntroRef = useRef<HTMLDivElement | null>(null);
@@ -110,16 +114,19 @@ export default function Tests(): React.JSX.Element {
   const rawQuestions = settingsStore.get(KANGUR_TEST_QUESTIONS_SETTING_KEY);
   const suites = useMemo(
     () =>
-      isDeferredContentReady
+      isDeferredContentReady && !isAdultFocus
         ? parseKangurTestSuites(rawSuites)
           .filter((suite) => isLiveKangurTestSuite(suite))
           .sort((left, right) => left.sortOrder - right.sortOrder)
         : [],
-    [isDeferredContentReady, rawSuites]
+    [isAdultFocus, isDeferredContentReady, rawSuites]
   );
   const questionStore = useMemo(
-    () => parseKangurTestQuestionStore(isDeferredContentReady ? rawQuestions : undefined),
-    [isDeferredContentReady, rawQuestions]
+    () =>
+      parseKangurTestQuestionStore(
+        isDeferredContentReady && !isAdultFocus ? rawQuestions : undefined
+      ),
+    [isAdultFocus, isDeferredContentReady, rawQuestions]
   );
   const questionCountBySuite = useMemo(() => {
     const next = new Map<string, number>();
@@ -322,6 +329,15 @@ export default function Tests(): React.JSX.Element {
     () => createKangurPageTransitionMotionProps(prefersReducedMotion),
     [prefersReducedMotion]
   );
+  const emptyStateCopy = isAdultFocus
+    ? {
+        title: 'Testy dla dorosłych w przygotowaniu',
+        description: 'Aktualnie dostępne są testy dla 10-latków.',
+      }
+    : {
+        title: 'Brak aktywnych testów',
+        description: 'Włącz testy w panelu admina, aby pojawiły się tutaj.',
+      };
 
   return (
     <KangurStandardPageLayout
@@ -360,9 +376,9 @@ export default function Tests(): React.JSX.Element {
               <KangurEmptyState
                 accent='indigo'
                 className='w-full'
-                description='Włącz testy w panelu admina, aby pojawiły się tutaj.'
+                description={emptyStateCopy.description}
                 padding='xl'
-                title='Brak aktywnych testów'
+                title={emptyStateCopy.title}
               />
             ) : (
               <div

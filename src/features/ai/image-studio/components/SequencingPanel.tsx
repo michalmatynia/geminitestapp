@@ -54,6 +54,7 @@ import {
   type SequencingPanelContextValue,
 } from './sequencing/SequencingPanelContext';
 import { useSequenceMonitor } from './sequencing/useSequenceMonitor';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -729,14 +730,14 @@ export function SequencingPanel(): React.JSX.Element {
       }
     };
 
-    const timer = setInterval(() => {
+    const timer = safeSetInterval(() => {
       void tick();
     }, AUTO_SLOT_SYNC_RETRY_MS);
     void tick();
 
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      safeClearInterval(timer);
     };
   }, [
     activeSequenceRunId,

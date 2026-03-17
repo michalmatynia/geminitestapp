@@ -1,13 +1,11 @@
 import * as React from 'react';
 
+import type { AdminBreadcrumbNode } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { Breadcrumbs } from './Breadcrumbs';
 
-export type AdminBreadcrumbNode = {
-  label: string;
-  href?: string;
-};
+export type { AdminBreadcrumbNode };
 
 export function buildAdminSectionBreadcrumbItems({
   section,

@@ -20,7 +20,7 @@ import {
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
 import { getRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
-import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -69,7 +69,7 @@ const hasTrackedProductRuns = (
 export function useProductAiPathsRunSync(): void {
   const queryClient = useQueryClient();
   const trackedRunsRef = useRef<Map<string, TrackedProductRun>>(new Map());
-  const badgeRefreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const badgeRefreshIntervalRef = useRef<SafeTimerId | null>(null);
   const disposedRef = useRef(false);
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export function useProductAiPathsRunSync(): void {
 
     const stopBadgeRefresh = (): void => {
       if (badgeRefreshIntervalRef.current === null) return;
-      clearInterval(badgeRefreshIntervalRef.current);
+      safeClearInterval(badgeRefreshIntervalRef.current);
       badgeRefreshIntervalRef.current = null;
     };
 
@@ -121,7 +121,7 @@ export function useProductAiPathsRunSync(): void {
       if (trackedRunsRef.current.size === 0 || badgeRefreshIntervalRef.current !== null) {
         return;
       }
-      badgeRefreshIntervalRef.current = setInterval(
+      badgeRefreshIntervalRef.current = safeSetInterval(
         refreshTrackedRunBadges,
         AI_PATH_RUN_BADGE_REFRESH_INTERVAL_MS
       );

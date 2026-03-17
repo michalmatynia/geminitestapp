@@ -474,7 +474,7 @@ export function useProductListState(): ProductListContextType & {
     currencyCode,
     setCurrencyCode: handleSetCurrencyPreference,
     currencyOptions,
-    filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? false,
+    filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? true,
     catalogFilter,
     setCatalogFilter: handleSetCatalogPreference,
     baseExported,

@@ -188,27 +188,27 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.queryByText(/^AI Tutor dla /i)).not.toBeInTheDocument();
   });
 
-  it('temporarily disables AI Tutor controls in the parent dashboard', async () => {
+  it('enables AI Tutor controls in the parent dashboard when not disabled', async () => {
     render(<KangurParentDashboardAiTutorWidget />);
     const lessonsToggle = screen.getByRole('checkbox', { name: /pokazuj tutora w lekcjach/i });
     const saveButton = screen.getByRole('button', { name: /zapisz ustawienia ai tutora/i });
-    const toggleButton = screen.getByRole('button', { name: /włącz ai-tutora/i });
+    const toggleButton = screen.getByRole('button', { name: /wyłącz ai-tutora/i });
 
-    expect(lessonsToggle).toBeDisabled();
-    expect(toggleButton).toBeDisabled();
-    expect(saveButton).toBeDisabled();
+    expect(lessonsToggle).not.toBeDisabled();
+    expect(toggleButton).not.toBeDisabled();
+    expect(saveButton).not.toBeDisabled();
 
     fireEvent.click(saveButton);
 
-    await waitFor(() => expect(apiPostMock).not.toHaveBeenCalled());
+    await waitFor(() => expect(apiPostMock).toHaveBeenCalledTimes(1));
   });
 
-  it('hides live daily usage when the parent dashboard control is disabled', () => {
+  it('hides live daily usage when the tutor is disabled for the learner', () => {
     settingsStoreMock.get.mockImplementation((key: string) => {
       if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
         return JSON.stringify({
           'learner-1': {
-            enabled: true,
+            enabled: false,
             uiMode: 'anchored',
             allowCrossPagePersistence: true,
             allowLessons: true,
@@ -349,9 +349,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
     render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(
-      screen.queryByText('Nie udało się odczytać bieżącego użycia.')
-    ).not.toBeInTheDocument();
+    expect(screen.getByText('Nie udało się odczytać bieżącego użycia.')).toBeInTheDocument();
   });
 
   it('does not show app-wide tutor controls in the parent dashboard', () => {

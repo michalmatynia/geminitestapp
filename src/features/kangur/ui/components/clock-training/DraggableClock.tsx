@@ -201,7 +201,7 @@ export function DraggableClock({
         <div
           className={cn(
             KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-            'inline-flex w-auto flex-wrap items-center justify-center'
+            'w-full sm:w-auto sm:flex-wrap sm:justify-center'
           )}
           data-testid='clock-snap-mode-switch'
         >
@@ -209,7 +209,7 @@ export function DraggableClock({
             type='button'
             data-testid='clock-snap-mode-5'
             onClick={() => setMinuteSnapMode('5min')}
-            className='h-10 px-3.5 text-xs sm:flex-none'
+            className='h-10 flex-1 px-3.5 text-xs sm:flex-none'
             size='sm'
             variant={minuteSnapMode === '5min' ? 'segmentActive' : 'segment'}
           >
@@ -219,7 +219,7 @@ export function DraggableClock({
             type='button'
             data-testid='clock-snap-mode-1'
             onClick={() => setMinuteSnapMode('1min')}
-            className='h-10 px-3.5 text-xs sm:flex-none'
+            className='h-10 flex-1 px-3.5 text-xs sm:flex-none'
             size='sm'
             variant={minuteSnapMode === '1min' ? 'segmentActive' : 'segment'}
           >

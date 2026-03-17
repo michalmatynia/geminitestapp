@@ -52,6 +52,7 @@ import {
   KANGUR_DUELS_STATE_ENDPOINT,
 } from './local-kangur-platform-endpoints';
 import {
+  createKangurClientFallback,
   createActorAwareHeaders,
   trackReadFailure,
   trackWriteFailure,
@@ -104,7 +105,7 @@ export const requestDuelStateFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelStateResponse,
+      fallback: createKangurClientFallback('duels.state'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -171,7 +172,7 @@ export const requestDuelSpectatorStateFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelSpectatorStateResponse,
+      fallback: createKangurClientFallback('duels.spectate'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -237,7 +238,7 @@ export const requestDuelLobbyFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelLobbyResponse,
+      fallback: createKangurClientFallback('duels.lobby'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -302,7 +303,7 @@ export const requestDuelLobbyPresenceFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelLobbyPresenceResponse,
+      fallback: createKangurClientFallback('duels.lobby_presence'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -371,7 +372,7 @@ export const pingDuelLobbyPresenceViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelLobbyPresenceResponse,
+      fallback: createKangurClientFallback('duels.lobby_presence_ping'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -439,7 +440,7 @@ export const requestDuelLeaderboardFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelLeaderboardResponse,
+      fallback: createKangurClientFallback('duels.leaderboard'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -516,7 +517,7 @@ export const requestDuelLobbyChatFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelLobbyChatListResponse,
+      fallback: createKangurClientFallback('duels.lobby_chat'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -620,7 +621,7 @@ export const sendDuelLobbyChatMessageViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelLobbyChatSendResponse,
+      fallback: createKangurClientFallback('duels.lobby_chat_send'),
       shouldReport: (error) => !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
       onError: (error) => {
@@ -684,7 +685,7 @@ export const requestDuelOpponentsFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelOpponentsResponse,
+      fallback: createKangurClientFallback('duels.opponents'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -755,7 +756,7 @@ export const requestDuelSearchFromApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelSearchResponse,
+      fallback: createKangurClientFallback('duels.search'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -820,7 +821,7 @@ export const createDuelViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelStateResponse,
+      fallback: createKangurClientFallback('duels.create'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('duels.create', error, {
@@ -882,7 +883,7 @@ export const joinDuelViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelStateResponse,
+      fallback: createKangurClientFallback('duels.join'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('duels.join', error, {
@@ -938,7 +939,7 @@ export const heartbeatDuelViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelStateResponse,
+      fallback: createKangurClientFallback('duels.heartbeat'),
       shouldReport: (error) =>
         !isAbortLikeError(error, options?.signal) && !isKangurAuthStatusError(error),
       shouldRethrow: () => true,
@@ -1000,7 +1001,7 @@ export const submitDuelAnswerViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelStateResponse,
+      fallback: createKangurClientFallback('duels.answer'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('duels.answer', error, {
@@ -1063,7 +1064,7 @@ export const sendDuelReactionViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelReactionResponse,
+      fallback: createKangurClientFallback('duels.reaction'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('duels.reaction', error, {
@@ -1125,7 +1126,7 @@ export const leaveDuelViaApi = async (
       return parsed.data;
     },
     {
-      fallback: null as unknown as KangurDuelStateResponse,
+      fallback: createKangurClientFallback('duels.leave'),
       shouldRethrow: () => true,
       onError: (error) => {
         trackWriteFailure('duels.leave', error, {

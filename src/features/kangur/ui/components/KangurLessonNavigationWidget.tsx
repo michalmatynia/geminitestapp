@@ -42,10 +42,10 @@ export function KangurLessonNavigationWidget({
     align === 'start' ? 'kangur-lesson-nav-inline' : null
   );
   const buttonGroupClassName = cn(
-    'flex items-center gap-2',
+    'flex w-full items-center gap-2',
     align === 'start'
-      ? 'w-full justify-start'
-      : 'w-fit justify-center self-center'
+      ? 'justify-start'
+      : 'justify-center sm:w-fit sm:self-center'
   );
 
   return (
@@ -69,7 +69,7 @@ export function KangurLessonNavigationWidget({
         <KangurButton
           onClick={prevLesson ? () => handleSelectLesson(prevLesson.id) : undefined}
           disabled={!prevLesson}
-          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35'
+          className='flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 sm:flex-none'
           size='sm'
           variant='surface'
           data-doc-id='lessons_prev_next'
@@ -85,7 +85,7 @@ export function KangurLessonNavigationWidget({
         <KangurButton
           onClick={nextLesson ? () => handleSelectLesson(nextLesson.id) : undefined}
           disabled={!nextLesson}
-          className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35'
+          className='flex-1 justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-35 sm:flex-none'
           size='sm'
           variant='surface'
           data-doc-id='lessons_prev_next'

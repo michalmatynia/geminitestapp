@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
-import { useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import { useToast, FileUploadButton } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

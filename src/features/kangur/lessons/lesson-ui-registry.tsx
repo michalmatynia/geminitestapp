@@ -39,6 +39,18 @@ const loadLessonComponent = (
     }
   );
 
+const AlphabetBasicsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AlphabetBasicsLesson')
+);
+const AlphabetSyllablesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AlphabetSyllablesLesson')
+);
+const AlphabetWordsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AlphabetWordsLesson')
+);
+const AlphabetMatchingLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AlphabetMatchingLesson')
+);
 const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
 const CalendarLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/CalendarLesson')
@@ -98,8 +110,15 @@ const EnglishSubjectVerbAgreementLesson = loadLessonComponent(
 const EnglishArticlesLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/EnglishArticlesLesson')
 );
+const WebDevelopmentReactComponentsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactComponentsLesson')
+);
 
 export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
+  alphabet_basics: AlphabetBasicsLesson,
+  alphabet_syllables: AlphabetSyllablesLesson,
+  alphabet_words: AlphabetWordsLesson,
+  alphabet_matching: AlphabetMatchingLesson,
   clock: ClockLesson,
   calendar: CalendarLesson,
   adding: AddingLesson,
@@ -121,9 +140,39 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   english_sentence_structure: EnglishSentenceStructureLesson,
   english_subject_verb_agreement: EnglishSubjectVerbAgreementLesson,
   english_articles: EnglishArticlesLesson,
+  webdev_react_components: WebDevelopmentReactComponentsLesson,
 };
 
 export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
+  alphabet: 'alphabet_basics',
+  alfabet: 'alphabet_basics',
+  letters: 'alphabet_basics',
+  literki: 'alphabet_basics',
+  abc: 'alphabet_basics',
+  letter_tracing: 'alphabet_basics',
+  'letter-tracing': 'alphabet_basics',
+  tracing: 'alphabet_basics',
+  trace: 'alphabet_basics',
+  rysowanie: 'alphabet_basics',
+  alphabet_basics: 'alphabet_basics',
+  syllables: 'alphabet_syllables',
+  sylaby: 'alphabet_syllables',
+  sylaba: 'alphabet_syllables',
+  words: 'alphabet_words',
+  slowa: 'alphabet_words',
+  slowo: 'alphabet_words',
+  czytanie: 'alphabet_words',
+  reading: 'alphabet_words',
+  pierwsze_slowa: 'alphabet_words',
+  'pierwsze-slowa': 'alphabet_words',
+  alphabet_syllables: 'alphabet_syllables',
+  alphabet_words: 'alphabet_words',
+  matching: 'alphabet_matching',
+  dopasuj: 'alphabet_matching',
+  pary: 'alphabet_matching',
+  uppercase: 'alphabet_matching',
+  lowercase: 'alphabet_matching',
+  alphabet_matching: 'alphabet_matching',
   adding: 'adding',
   addition: 'adding',
   subtracting: 'subtracting',
@@ -216,4 +265,10 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   przyimki_miejsca: 'english_prepositions_time_place',
   'przyimki-czasu': 'english_prepositions_time_place',
   'przyimki-miejsca': 'english_prepositions_time_place',
+  react: 'webdev_react_components',
+  react_components: 'webdev_react_components',
+  'react-components': 'webdev_react_components',
+  components: 'webdev_react_components',
+  webdev: 'webdev_react_components',
+  web_development: 'webdev_react_components',
 };

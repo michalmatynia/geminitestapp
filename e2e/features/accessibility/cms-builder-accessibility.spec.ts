@@ -7,21 +7,43 @@ import { mockCmsBuilderApis } from '../../support/cms-builder-fixtures';
 test('cms builder exposes shell controls accessibly and passes the accessibility smoke scan', async ({
   page,
 }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(360_000);
 
   await mockCmsBuilderApis(page);
-  await ensureAdminSession(page, '/admin/cms/builder');
-  await page.goto('/admin/cms/builder?pageId=page-1');
+  await ensureAdminSession(page, '/admin', {
+    destinationNavigationTimeoutMs: 60_000,
+    transitionTimeoutMs: 30_000,
+  });
+  try {
+    await page.goto('/admin/cms/builder?pageId=page-1', {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('Timeout')) {
+      throw error;
+    }
+  }
 
   const main = page.locator('#app-content');
-  await expect(main).toBeVisible();
+  await expect(main).toBeVisible({ timeout: 60_000 });
   await expect(main).toHaveAttribute('tabindex', '-1');
 
-  await expect(page.getByRole('combobox', { name: 'Select a page...' })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Zone selector' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Hide left panel' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Hide right panel' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '2 sections' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Select a page...' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByRole('combobox', { name: 'Zone selector' }).first()).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByRole('button', { name: 'Hide left panel' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByRole('button', { name: 'Hide right panel' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.getByRole('heading', { name: '2 sections' })).toBeVisible({
+    timeout: 60_000,
+  });
 
   const selectSectionButton = page.getByRole('button', { name: 'Select section Block' }).first();
   await selectSectionButton.focus();

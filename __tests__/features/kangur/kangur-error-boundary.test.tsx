@@ -5,11 +5,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const {
-  logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => globalThis.__kangurClientErrorMocks());
+
+const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
+  vi.hoisted(() => {
+    const mocks = globalThis.__kangurClientErrorMocks();
+    return {
+      logKangurClientErrorMock: mocks.logKangurClientErrorMock,
+      withKangurClientError: mocks.withKangurClientError,
+      withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    };
+  });
 
 vi.mock('next/link', () => ({
   default: ({

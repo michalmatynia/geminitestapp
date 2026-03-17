@@ -5,7 +5,7 @@ import React, { createContext, useContext } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
 import type { AiPathsValidationConfig, DataContractPreflightReport } from '@/shared/lib/ai-paths';
-import type { StatusVariant } from '@/shared/ui';
+import type { StatusVariant } from '@/shared/contracts/ui';
 
 import type { UseAiPathsSettingsStateReturn } from './types';
 

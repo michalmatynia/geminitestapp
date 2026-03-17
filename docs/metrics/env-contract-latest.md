@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Environment Contract Report
 
-Generated at: 2026-03-16T18:13:42.065Z
+Generated at: 2026-03-17T09:55:05.260Z
 
 ## Summary
 

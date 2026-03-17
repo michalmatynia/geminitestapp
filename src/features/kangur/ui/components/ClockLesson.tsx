@@ -213,7 +213,7 @@ const HOURS_SLIDES: LessonSlide[] = [
           />
         </div>
         <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockHourHandSweepAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -256,7 +256,7 @@ const HOURS_SLIDES: LessonSlide[] = [
           />
         </div>
         <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockFullHourStepAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -282,7 +282,7 @@ const HOURS_SLIDES: LessonSlide[] = [
           label='Jaka to godzina?'
         />
         <KangurLessonCallout accent='rose' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockHourHandSweepAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -317,7 +317,7 @@ const MINUTES_SLIDES: LessonSlide[] = [
           label='Długa wskazówka = minuty'
         />
         <KangurLessonCallout accent='emerald' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockMinuteHandSweepAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -360,7 +360,7 @@ const MINUTES_SLIDES: LessonSlide[] = [
           />
         </div>
         <KangurLessonCallout accent='emerald' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockFiveMinuteStepsAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -386,7 +386,7 @@ const MINUTES_SLIDES: LessonSlide[] = [
           label='Jaka to liczba minut?'
         />
         <KangurLessonCallout accent='emerald' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockMinuteByMinuteAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -415,7 +415,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
       <KangurLessonStack className='text-center'>
         <AnalogClock hours={8} minutes={30} label='Przykład: 8:30' />
         <KangurLessonCallout accent='indigo' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockCombinedHandsAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -445,7 +445,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
           <AnalogClock hours={5} minutes={45} label='5:45 - kwadrans do 6' />
         </div>
         <KangurLessonCallout accent='indigo' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockQuarterAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>
@@ -465,7 +465,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
       <KangurLessonStack className='text-center'>
         <div className='text-7xl'>✨</div>
         <KangurLessonCallout accent='indigo' className='mx-auto max-w-xs' padding='sm'>
-          <div className='mx-auto h-24 w-32'>
+          <div className='mx-auto h-24 w-32 max-w-full'>
             <ClockHalfPastAnimation />
           </div>
           <KangurLessonCaption className='mt-2'>

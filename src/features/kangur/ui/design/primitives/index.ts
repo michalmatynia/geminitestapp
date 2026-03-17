@@ -1,5 +1,6 @@
 export * from './KangurButton';
 export * from './KangurPanel';
+export * from './KangurPanelRow';
 export * from './KangurPanelStack';
 export * from './KangurOptionCardButton';
 export * from './KangurStatusChip';

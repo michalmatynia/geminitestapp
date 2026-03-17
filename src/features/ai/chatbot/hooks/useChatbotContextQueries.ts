@@ -9,7 +9,7 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { FileUploadHelpers } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
 
 import * as chatbotApi from '../api';
 

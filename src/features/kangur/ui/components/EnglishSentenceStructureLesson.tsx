@@ -1,17 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishConnectorBridgeAnimation,
   EnglishQuestionFlipAnimation,
@@ -31,12 +20,7 @@ import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId =
   | 'blueprint'
@@ -255,54 +239,22 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
-
 export default function EnglishSentenceStructureLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'english_sentence_structure',
-      slideSections: SLIDES as any,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, 'english_sentence_structure', 120);
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={(SLIDES as any)[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-violet-500'
-        dotDoneClass='bg-violet-300'
-        gradientClass='kangur-gradient-accent-violet'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='english_sentence_structure'
       lessonEmoji='🧩'
       lessonTitle='Angielski: składnia zdania'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-violet'
       progressDotClassName='bg-violet-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-violet-500'
+      dotDoneClass='bg-violet-300'
+      completionSectionId='summary'
+      autoRecordComplete
+      scorePercent={120}
     />
   );
 }

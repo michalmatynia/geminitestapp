@@ -20,7 +20,7 @@ type LessonSectionInput<SectionId extends string> = {
 
 type UseKangurLessonSubsectionProgressOptions<SectionId extends string> = {
   lessonId: string;
-  sections: LessonSectionInput<SectionId>[];
+  sections: ReadonlyArray<LessonSectionInput<SectionId>>;
 };
 
 type UseKangurLessonSubsectionProgressResult<SectionId extends string> = {

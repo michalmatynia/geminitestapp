@@ -66,7 +66,10 @@ const pickActiveLearner = (
   return learners[0]!;
 };
 
-const mapRole = (role: unknown): 'admin' | 'user' => (role === 'admin' ? 'admin' : 'user');
+const ELEVATED_ROLES = new Set(['admin', 'super_admin', 'superuser']);
+
+const mapRole = (role: unknown): 'admin' | 'user' =>
+  typeof role === 'string' && ELEVATED_ROLES.has(role) ? 'admin' : 'user';
 
 const kangurAuthEmailSchema = z.string().trim().email();
 

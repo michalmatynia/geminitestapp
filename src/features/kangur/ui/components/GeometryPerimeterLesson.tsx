@@ -1,13 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
 import GeometryPerimeterDrawingGame from '@/features/kangur/ui/components/GeometryPerimeterDrawingGame';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   GeometryPerimeterOppositeSidesAnimation,
   GeometryPerimeterSumAnimation,
@@ -20,18 +14,7 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  createLessonHubSelectHandler,
-  buildLessonSectionLabels,
-  buildLessonHubSectionsWithProgress,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
 type SlideSectionId = Exclude<SectionId, 'game_draw'>;
@@ -205,75 +188,42 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
-
 export default function GeometryPerimeterLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'geometry_perimeter',
-      slideSections: SLIDES,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, 'geometry_perimeter', 100);
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection === 'game_draw') {
-    return (
-      <LessonActivityStage
-        accent='amber'
-        headerTestId='geometry-perimeter-game-header'
-        icon='✍️'
-        maxWidthClassName='max-w-sm'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
-        shellTestId='geometry-perimeter-game-shell'
-        title='Gra: Rysuj obwód'
-      >
-        <GeometryPerimeterDrawingGame
-          finishLabel='Wróć do tematów'
-          onFinish={() => setActiveSection(null)}
-        />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={SLIDES[activeSection as SlideSectionId]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-amber-500'
-        dotDoneClass='bg-amber-300'
-        gradientClass='kangur-gradient-accent-amber-reverse'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-    skipMarkFor: ['game_draw'] as const,
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='geometry_perimeter'
       lessonEmoji='📏'
       lessonTitle='Obwód figur'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-amber-reverse'
       progressDotClassName='bg-amber-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      dotActiveClass='bg-amber-500'
+      dotDoneClass='bg-amber-300'
+      completionSectionId='podsumowanie'
+      autoRecordComplete
+      scorePercent={100}
+      skipMarkFor={['game_draw']}
+      games={[
+        {
+          sectionId: 'game_draw',
+          stage: {
+            accent: 'amber',
+            title: 'Gra: Rysuj obwód',
+            icon: '✍️',
+            maxWidthClassName: 'max-w-sm',
+            headerTestId: 'geometry-perimeter-game-header',
+            shellTestId: 'geometry-perimeter-game-shell',
+          },
+          render: ({ onFinish }) => (
+            <GeometryPerimeterDrawingGame
+              finishLabel='Wróć do tematów'
+              onFinish={onFinish}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

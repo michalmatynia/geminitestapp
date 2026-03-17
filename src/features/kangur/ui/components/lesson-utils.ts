@@ -1,5 +1,5 @@
 export const buildLessonSectionLabels = <SectionId extends string>(
-  sections: { id: SectionId; title: string }[]
+  sections: ReadonlyArray<{ id: SectionId; title: string }>
 ): Partial<Record<SectionId, string>> =>
   Object.fromEntries(sections.map((section) => [section.id, section.title])) as Partial<
     Record<SectionId, string>
@@ -9,7 +9,7 @@ export const resolveLessonSectionHeader = <
   SectionId extends string,
   Section extends { id: SectionId },
 >(
-  sections: Section[],
+  sections: ReadonlyArray<Section>,
   activeSection: SectionId | null
 ): Section | null => {
   if (!activeSection) {
@@ -24,7 +24,7 @@ export const buildLessonHubSectionsWithProgress = <
   Section extends { id: SectionId; isGame?: boolean },
   Progress = unknown,
 >(
-  sections: Section[],
+  sections: ReadonlyArray<Section>,
   sectionProgress: Partial<Record<SectionId, Progress>>
 ): Array<Section & { progress?: Progress }> =>
   sections.map((section) =>

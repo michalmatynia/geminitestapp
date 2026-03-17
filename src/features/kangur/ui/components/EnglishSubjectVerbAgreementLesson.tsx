@@ -1,19 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
 import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishAgreementBalanceAnimation,
   EnglishBeVerbSwitchAnimation,
@@ -35,12 +23,7 @@ import {
   KANGUR_START_ROW_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId =
   | 'core'
@@ -485,78 +468,41 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
-
 export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'english_subject_verb_agreement',
-      slideSections: SLIDES as any,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(
-      progress,
-      'english_subject_verb_agreement',
-      140
-    );
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection === 'game_agreement') {
-    return (
-      <LessonActivityStage
-        accent='teal'
-        headerTestId='english-agreement-game-header'
-        icon='🎮'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        shellTestId='english-agreement-game-shell'
-        title='Gra: Subject-verb agreement'
-        description='Kliknij poprawną formę czasownika w zdaniach.'
-      >
-        <EnglishSubjectVerbAgreementGame
-          finishLabel='Wróć do tematów'
-          onFinish={() => setActiveSection(null)}
-        />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={(SLIDES as any)[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection as SlideSectionId, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-teal-500'
-        dotDoneClass='bg-teal-300'
-        gradientClass='kangur-gradient-accent-teal'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='english_subject_verb_agreement'
       lessonEmoji='⚖️'
       lessonTitle='Angielski: subject-verb agreement'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-teal-500'
+      dotDoneClass='bg-teal-300'
+      completionSectionId='summary'
+      autoRecordComplete
+      scorePercent={140}
+      games={[
+        {
+          sectionId: 'game_agreement',
+          stage: {
+            accent: 'teal',
+            title: 'Gra: Subject-verb agreement',
+            icon: '🎮',
+            description: 'Kliknij poprawną formę czasownika w zdaniach.',
+            headerTestId: 'english-agreement-game-header',
+            shellTestId: 'english-agreement-game-shell',
+          },
+          render: ({ onFinish }) => (
+            <EnglishSubjectVerbAgreementGame
+              finishLabel='Wróć do tematów'
+              onFinish={onFinish}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

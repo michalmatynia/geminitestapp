@@ -1,17 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishArticleFocusAnimation,
   EnglishArticleVowelAnimation,
@@ -33,12 +22,7 @@ import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'intro' | 'a_an' | 'the' | 'zero' | 'practice' | 'summary';
 
@@ -270,54 +254,22 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
-
 export default function EnglishArticlesLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'english_articles',
-      slideSections: SLIDES,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, 'english_articles', 120);
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-amber-500'
-        dotDoneClass='bg-amber-300'
-        gradientClass='kangur-gradient-accent-amber'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='english_articles'
       lessonEmoji='📚'
       lessonTitle='English: Articles'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-amber-500'
+      dotDoneClass='bg-amber-300'
+      completionSectionId='summary'
+      autoRecordComplete
+      scorePercent={120}
     />
   );
 }

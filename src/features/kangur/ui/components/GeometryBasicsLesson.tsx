@@ -1,13 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
 import GeometryBasicsWorkshopGame from '@/features/kangur/ui/components/GeometryBasicsWorkshopGame';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   GeometryAngleAnimation,
   GeometryAngleTypesAnimation,
@@ -24,18 +18,7 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  createLessonHubSelectHandler,
-  buildLessonSectionLabels,
-  buildLessonHubSectionsWithProgress,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie' | 'game';
 
@@ -271,73 +254,36 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
-
 export default function GeometryBasicsLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'geometry_basics',
-      slideSections: SLIDES as any,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, 'geometry_basics', 100);
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection === 'game') {
-    return (
-      <LessonActivityStage
-        accent='sky'
-        icon='🎯'
-        maxWidthClassName='max-w-3xl'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        shellTestId='geometry-basics-game-shell'
-        title='Geo-misja'
-      >
-        <GeometryBasicsWorkshopGame onFinish={() => setActiveSection(null)} />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={(SLIDES as any)[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) =>
-          markSectionViewedCount(activeSection as any, viewedCount)
-        }
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection as any, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-cyan-500'
-        dotDoneClass='bg-cyan-300'
-        gradientClass='kangur-gradient-accent-sky'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-    skipMarkFor: ['game'] as const,
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='geometry_basics'
       lessonEmoji='📐'
       lessonTitle='Podstawy geometrii'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-cyan-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-cyan-500'
+      dotDoneClass='bg-cyan-300'
+      completionSectionId='podsumowanie'
+      autoRecordComplete
+      scorePercent={100}
+      skipMarkFor={['game']}
+      games={[
+        {
+          sectionId: 'game',
+          stage: {
+            accent: 'sky',
+            title: 'Geo-misja',
+            icon: '🎯',
+            maxWidthClassName: 'max-w-3xl',
+            shellTestId: 'geometry-basics-game-shell',
+          },
+          render: ({ onFinish }) => <GeometryBasicsWorkshopGame onFinish={onFinish} />,
+        },
+      ]}
     />
   );
 }

@@ -1,21 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-
 import EnglishPrepositionsGame from '@/features/kangur/ui/components/EnglishPrepositionsGame';
 import EnglishPrepositionsOrderGame from '@/features/kangur/ui/components/EnglishPrepositionsOrderGame';
 import EnglishPrepositionsSortGame from '@/features/kangur/ui/components/EnglishPrepositionsSortGame';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishPrepositionsPlaceAnimation,
   EnglishPrepositionsRelationsDiagram,
@@ -35,12 +23,7 @@ import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 const LESSON_KEY = 'english_prepositions_time_place';
 
@@ -418,111 +401,61 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
-
 export default function EnglishPrepositionsLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: LESSON_KEY,
-      slideSections: SLIDES as any,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, LESSON_KEY, 120);
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection === 'game_prepositions') {
-    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any);
-    return (
-      <LessonActivityStage
-        accent='rose'
-        icon='🎯'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={gameSection as any}
-        shellTestId='english-prepositions-game-shell'
-        title='Prepositions Sprint'
-      >
-        <EnglishPrepositionsGame onFinish={() => setActiveSection(null)} />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection === 'game_prepositions_sort') {
-    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any);
-    return (
-      <LessonActivityStage
-        accent='rose'
-        icon='🧲'
-        maxWidthClassName='max-w-3xl'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={gameSection as any}
-        shellTestId='english-prepositions-sort-game-shell'
-        title='Sort: Time + Place + Relations'
-      >
-        <EnglishPrepositionsSortGame onFinish={() => setActiveSection(null)} />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection === 'game_prepositions_order') {
-    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any);
-    return (
-      <LessonActivityStage
-        accent='rose'
-        icon='🧩'
-        maxWidthClassName='max-w-3xl'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={gameSection as any}
-        shellTestId='english-prepositions-order-game-shell'
-        title='Word Order Warm-up'
-      >
-        <EnglishPrepositionsOrderGame onFinish={() => setActiveSection(null)} />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={(SLIDES as any)[activeSection as SlideSectionId]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) =>
-          markSectionViewedCount(activeSection as SlideSectionId, viewedCount)
-        }
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-rose-500'
-        dotDoneClass='bg-rose-300'
-        gradientClass='kangur-gradient-accent-rose'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-    skipMarkFor: [
-      'game_prepositions',
-      'game_prepositions_sort',
-      'game_prepositions_order',
-    ] as const,
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId={LESSON_KEY}
       lessonEmoji='🧭'
       lessonTitle='English: Prepositions'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-rose-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-rose-500'
+      dotDoneClass='bg-rose-300'
+      completionSectionId='summary'
+      autoRecordComplete
+      scorePercent={120}
+      skipMarkFor={[
+        'game_prepositions',
+        'game_prepositions_sort',
+        'game_prepositions_order',
+      ]}
+      games={[
+        {
+          sectionId: 'game_prepositions',
+          stage: {
+            accent: 'rose',
+            title: 'Prepositions Sprint',
+            icon: '🎯',
+            shellTestId: 'english-prepositions-game-shell',
+          },
+          render: ({ onFinish }) => <EnglishPrepositionsGame onFinish={onFinish} />,
+        },
+        {
+          sectionId: 'game_prepositions_sort',
+          stage: {
+            accent: 'rose',
+            title: 'Sort: Time + Place + Relations',
+            icon: '🧲',
+            maxWidthClassName: 'max-w-3xl',
+            shellTestId: 'english-prepositions-sort-game-shell',
+          },
+          render: ({ onFinish }) => <EnglishPrepositionsSortGame onFinish={onFinish} />,
+        },
+        {
+          sectionId: 'game_prepositions_order',
+          stage: {
+            accent: 'rose',
+            title: 'Word Order Warm-up',
+            icon: '🧩',
+            maxWidthClassName: 'max-w-3xl',
+            shellTestId: 'english-prepositions-order-game-shell',
+          },
+          render: ({ onFinish }) => <EnglishPrepositionsOrderGame onFinish={onFinish} />,
+        },
+      ]}
     />
   );
 }

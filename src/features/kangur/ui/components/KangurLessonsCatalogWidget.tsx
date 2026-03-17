@@ -170,39 +170,36 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                   const isExpanded = expandedLessonGroupId === groupKey;
 
                   return (
-                    <KangurGlassPanel
-                      key={groupKey}
-                      className='w-full'
-                      padding='lg'
-                      surface='playField'
-                    >
-                      <button
-                        type='button'
-                        onClick={() => setExpandedLessonGroupId(isExpanded ? null : groupKey)}
-                        className='flex w-full items-center justify-between gap-3 text-left'
-                      >
-                        <div className='min-w-0'>
-                          <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                            {entry.group.typeLabel ?? 'Grupa'}
-                          </div>
-                          <div className='mt-1 text-lg font-semibold text-slate-900'>
-                            {entry.group.label}
-                          </div>
-                        </div>
-                        <ChevronDown
-                          aria-hidden='true'
-                          className={`h-5 w-5 text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                      {isExpanded && (
-                        <div
-                          className={`mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
-                          role='list'
+                    <div key={groupKey} role='listitem' className='w-full'>
+                      <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
+                        <button
+                          type='button'
+                          onClick={() => setExpandedLessonGroupId(isExpanded ? null : groupKey)}
+                          className='flex w-full items-center justify-between gap-3 text-left'
                         >
-                          {entry.group.lessons.map((lesson) => renderLessonCard(lesson))}
-                        </div>
-                      )}
-                    </KangurGlassPanel>
+                          <div className='min-w-0'>
+                            <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
+                              {entry.group.typeLabel ?? 'Grupa'}
+                            </div>
+                            <div className='mt-1 text-lg font-semibold text-slate-900'>
+                              {entry.group.label}
+                            </div>
+                          </div>
+                          <ChevronDown
+                            aria-hidden='true'
+                            className={`h-5 w-5 text-slate-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {isExpanded && (
+                          <div
+                            className={`mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
+                            role='list'
+                          >
+                            {entry.group.lessons.map((lesson) => renderLessonCard(lesson))}
+                          </div>
+                        )}
+                      </KangurGlassPanel>
+                    </div>
                   );
                 }
 

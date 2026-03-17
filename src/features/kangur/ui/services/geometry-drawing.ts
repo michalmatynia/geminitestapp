@@ -4,7 +4,9 @@ import { loosenMax, loosenMin, loosenMinInt } from './drawing-leniency';
 
 export type GeometryShapeId =
   | 'circle'
+  | 'oval'
   | 'triangle'
+  | 'diamond'
   | 'square'
   | 'rectangle'
   | 'pentagon'
@@ -69,6 +71,19 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     successMessage: 'Super! To wygląda jak koło.',
     failureMessage: 'Spróbuj narysować bardziej okrągłą linię.',
   },
+  oval: {
+    idealCorners: 0,
+    minCorners: 0,
+    maxCorners: 5,
+    minScore: 0.52,
+    maxClosureRatio: 0.28,
+    minAspect: 1.15,
+    maxAspect: 3.0,
+    idealAspect: 1.7,
+    aspectTolerance: 1.1,
+    successMessage: 'Świetnie! To wygląda jak owal.',
+    failureMessage: 'Spróbuj narysować bardziej wydłużony owal.',
+  },
   triangle: {
     idealCorners: 3,
     minCorners: 2,
@@ -92,6 +107,19 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     aspectTolerance: 0.5,
     successMessage: 'Świetnie! To wygląda jak kwadrat.',
     failureMessage: 'Spróbuj narysować 4 boki o podobnej długości.',
+  },
+  diamond: {
+    idealCorners: 4,
+    minCorners: 3,
+    maxCorners: 6,
+    minScore: 0.54,
+    maxClosureRatio: 0.26,
+    minAspect: 1,
+    maxAspect: 2.4,
+    idealAspect: 1.2,
+    aspectTolerance: 1.1,
+    successMessage: 'Brawo! To wygląda jak romb.',
+    failureMessage: 'Spróbuj narysować ukośne boki i 4 wyraźne rogi.',
   },
   rectangle: {
     idealCorners: 4,
@@ -410,6 +438,8 @@ const resolveFailureMessage = (
     if (target === 'square') return 'Kwadrat powinien mieć boki bardziej podobnej długości.';
     if (target === 'rectangle') return 'Prostokąt powinien mieć dwa boki wyraźnie dłuższe.';
     if (target === 'circle') return 'Koło powinno być bardziej równe i okrągłe.';
+    if (target === 'oval') return 'Owal powinien być bardziej wydłużony.';
+    if (target === 'diamond') return 'Romb powinien być mniej spłaszczony lub mniej wydłużony.';
   }
 
   return rule.failureMessage;

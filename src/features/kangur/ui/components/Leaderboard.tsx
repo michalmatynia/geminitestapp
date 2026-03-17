@@ -153,7 +153,7 @@ export default function Leaderboard(): React.JSX.Element {
                         size='sm'
                         title='Zalogowany'
                       >
-                        <User className='w-3 h-3' />
+                        <User aria-hidden='true' className='w-3 h-3' />
                       </KangurIconBadge>
                     ) : (
                       <KangurIconBadge
@@ -162,7 +162,7 @@ export default function Leaderboard(): React.JSX.Element {
                         size='sm'
                         title='Anonim'
                       >
-                        <Ghost className='w-3 h-3' />
+                        <Ghost aria-hidden='true' className='w-3 h-3' />
                       </KangurIconBadge>
                     )}
                     {item.isCurrentUser && (

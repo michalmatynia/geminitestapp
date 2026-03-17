@@ -86,6 +86,7 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   alphabet_words: 'alphabet_words',
   alphabet_matching: 'alphabet_matching',
   alphabet_sequence: 'alphabet_sequence',
+  geometry_shape_recognition: 'geometry_shape_recognition',
   clock: 'clock',
   calendar: 'calendar',
   adding: 'adding',

@@ -61,6 +61,7 @@ export function KangurSectionHeading({
             kangurIconBadgeVariants({ size: iconSize }),
             KANGUR_ACCENT_STYLES[iconAccent ?? accent].icon
           )}
+          aria-hidden='true'
         >
           {icon}
         </span>

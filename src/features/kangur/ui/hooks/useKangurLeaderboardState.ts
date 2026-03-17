@@ -113,6 +113,11 @@ const ALPHABET_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel>
   alphabet_syllables: { label: 'Sylaby', emoji: '🗣️' },
 };
 
+const GEOMETRY_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  geometry_shape_recognition: { label: 'Geometria', emoji: '🔷' },
+};
+
 const OPERATION_LABELS_BY_SUBJECT: Record<
   KangurLessonSubject,
   Record<string, KangurLeaderboardOperationLabel>
@@ -120,6 +125,7 @@ const OPERATION_LABELS_BY_SUBJECT: Record<
   maths: MATH_OPERATION_LABELS,
   english: ENGLISH_OPERATION_LABELS,
   alphabet: ALPHABET_OPERATION_LABELS,
+  geometry: GEOMETRY_OPERATION_LABELS,
   web_development: {
     all: { label: 'Wszystkie', emoji: '🏆' },
     webdev_react_components: { label: 'React', emoji: '⚛️' },
@@ -130,6 +136,7 @@ const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   ...MATH_OPERATION_LABELS,
   ...ENGLISH_OPERATION_LABELS,
   ...ALPHABET_OPERATION_LABELS,
+  ...GEOMETRY_OPERATION_LABELS,
 };
 
 const buildOperationOptions = (subject: KangurLessonSubject): KangurLeaderboardOperationOption[] =>

@@ -12,6 +12,13 @@ const isDev = process.env.NODE_ENV !== 'production';
 // it on Vercel adds unnecessary filesystem work (tracing + copying node_modules)
 // that contributes to the 45-minute build timeout.
 const isVercel = Boolean(process.env.VERCEL);
+// Turbopack builds do not emit output file tracing manifests yet, so standalone
+// output will fail to copy traced files. Use webpack builds when standalone
+// artifacts are required (see npm run build:webpack).
+const isTurbopack =
+  Boolean(process.env.TURBOPACK) &&
+  process.env.TURBOPACK !== '0' &&
+  process.env.TURBOPACK !== 'false';
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -48,7 +55,7 @@ const nextConfig = {
   // Standalone output is needed for Docker/self-hosted deploys (see Dockerfile).
   // On Vercel, Vercel manages deployment itself and standalone output only adds
   // expensive file-tracing work that can push builds past the 45-minute limit.
-  ...(isVercel
+  ...(isVercel || isTurbopack
     ? {}
     : {
         output: 'standalone',

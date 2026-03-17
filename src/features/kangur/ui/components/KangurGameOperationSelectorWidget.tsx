@@ -277,7 +277,10 @@ const resolveActivityRecommendationTarget = (
   if (primary === 'calendar') {
     return { kind: 'screen', screen: 'calendar_quiz' };
   }
-  if (primary === 'geometry' || primary.startsWith('geometry_')) {
+  if (
+    primary === 'geometry' ||
+    (primary.startsWith('geometry_') && primary !== 'geometry_shape_recognition')
+  ) {
     return { kind: 'screen', screen: 'geometry_quiz' };
   }
 
@@ -665,6 +668,8 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       ? 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
       : subject === 'alphabet'
         ? 'Wybierz literową zabawę i ćwicz alfabet.'
+        : subject === 'geometry'
+          ? 'Wybierz zabawę z kształtami i ćwicz geometrię.'
         : 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.';
 
   useEffect(() => {

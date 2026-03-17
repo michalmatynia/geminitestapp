@@ -554,7 +554,10 @@ export default function CalendarInteractiveGame({
                 type='button'
                 variant='surface'
               >
-                <ChevronLeft className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
+                <ChevronLeft
+                  aria-hidden='true'
+                  className='w-4 h-4 [color:var(--kangur-page-muted-text)]'
+                />
               </KangurButton>
               <p className='font-extrabold text-green-700 text-sm'>
                 {monthData.name} {YEAR}
@@ -567,7 +570,10 @@ export default function CalendarInteractiveGame({
                 type='button'
                 variant='surface'
               >
-                <ChevronRight className='w-4 h-4 [color:var(--kangur-page-muted-text)]' />
+                <ChevronRight
+                  aria-hidden='true'
+                  className='w-4 h-4 [color:var(--kangur-page-muted-text)]'
+                />
               </KangurButton>
             </div>
 

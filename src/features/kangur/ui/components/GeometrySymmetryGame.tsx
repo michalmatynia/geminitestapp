@@ -1082,7 +1082,7 @@ export default function GeometrySymmetryGame({
               size='lg'
               variant='surface'
             >
-              <Eraser className='w-4 h-4' />
+              <Eraser aria-hidden='true' className='w-4 h-4' />
               Wyczyść
             </KangurButton>
             <KangurButton

@@ -101,6 +101,7 @@ const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
   clock: 'clock',
   calendar: 'calendar',
   geometry: 'geometry',
+  geometry_shape_recognition: 'geometry',
   geometry_basics: 'geometry',
   geometry_shapes: 'geometry',
   geometry_symmetry: 'geometry',

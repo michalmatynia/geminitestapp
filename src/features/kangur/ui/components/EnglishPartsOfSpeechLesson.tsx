@@ -358,14 +358,14 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
 
 export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
     useKangurLessonPanelProgress({
       lessonKey: 'english_parts_of_speech',
-      slideSections: SLIDES,
+      slideSections: SLIDES as any,
       sectionLabels: SECTION_LABELS,
     });
 
@@ -382,7 +382,7 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
         headerTestId='english-parts-of-speech-game-header'
         icon='🎮'
         onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         shellTestId='english-parts-of-speech-game-shell'
         title='Gra: Parts of Speech'
         description='Przeciągnij słowa do właściwych części mowy.'
@@ -402,7 +402,7 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
         headerTestId='english-pronouns-warmup-game-header'
         icon='⚡'
         onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         shellTestId='english-pronouns-warmup-game-shell'
         title='Gra: Pronoun Warm-up'
         description='Szybka rozgrzewka z zaimkami w matematycznych zdaniach.'
@@ -418,8 +418,8 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        slides={(SLIDES as any)[activeSection]}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
@@ -445,8 +445,8 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
       lessonTitle='English: Pronouns'
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-sky-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
+      onSelect={handleSelect as any}
     />
   );
 }

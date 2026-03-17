@@ -165,6 +165,7 @@
     "docs:structure:check": "node scripts/docs/check-docs-structure.mjs",
     "docs:structure:audit:frontmatter": "node scripts/docs/audit-docs-frontmatter.mjs",
     "docs:structure:sync-mirrors": "node scripts/docs/sync-docs-structure-mirrors.mjs",
+    "docs:kangur:recent-features:refresh": "node --import tsx scripts/docs/refresh-kangur-recent-features.ts",
     "docs:metrics:normalize-frontmatter": "node scripts/docs/normalize-metrics-frontmatter.mjs",
     "docs:validator:generate": "tsx scripts/docs/generate-validator-docs.ts",
     "docs:validator:check": "tsx scripts/docs/check-validator-doc-coverage.ts",

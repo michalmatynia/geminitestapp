@@ -332,7 +332,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
             type='button'
             variant='surface'
           >
-            <ChevronLeft className='w-4 h-4' /> Podsumowanie
+            <ChevronLeft aria-hidden='true' className='w-4 h-4' /> Podsumowanie
           </KangurButton>
           <span className='self-center break-words text-xs font-bold [color:var(--kangur-page-muted-text)]'>
             {reviewing + 1}/{reviewQuestionCount}
@@ -416,10 +416,22 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
                 </KangurAnswerChoiceBadge>
                 <span className='min-w-0 flex-1 break-words'>{choice}</span>
                 {choice === question.answer && (
-                  <CheckCircle className='w-4 h-4 text-green-600 ml-auto flex-shrink-0' />
+                  <>
+                    <CheckCircle
+                      aria-hidden='true'
+                      className='w-4 h-4 text-green-600 ml-auto flex-shrink-0'
+                    />
+                    <span className='sr-only'>Poprawna odpowiedź</span>
+                  </>
                 )}
                 {choice === userAnswer && choice !== question.answer && (
-                  <XCircle className='w-4 h-4 text-red-500 ml-auto flex-shrink-0' />
+                  <>
+                    <XCircle
+                      aria-hidden='true'
+                      className='w-4 h-4 text-red-500 ml-auto flex-shrink-0'
+                    />
+                    <span className='sr-only'>Błędna odpowiedź</span>
+                  </>
                 )}
               </KangurAnswerChoiceCard>
             );
@@ -538,9 +550,15 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
               {skipped ? (
                 <span className='text-sm'>➖</span>
               ) : correct ? (
-                <CheckCircle className='w-4 h-4 text-green-600' />
+                <>
+                  <CheckCircle aria-hidden='true' className='w-4 h-4 text-green-600' />
+                  <span className='sr-only'>Poprawna odpowiedź</span>
+                </>
               ) : (
-                <XCircle className='w-4 h-4 text-red-500' />
+                <>
+                  <XCircle aria-hidden='true' className='w-4 h-4 text-red-500' />
+                  <span className='sr-only'>Błędna odpowiedź</span>
+                </>
               )}
               <span
                 className={`text-[10px] font-bold ${

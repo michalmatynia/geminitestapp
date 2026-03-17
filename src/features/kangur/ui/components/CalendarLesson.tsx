@@ -483,7 +483,7 @@ const LESSON_SECTIONS: Array<
 );
 
 const SECTION_LABELS: Partial<Record<LessonSectionId, string>> =
-  buildLessonSectionLabels(LESSON_SECTIONS);
+  buildLessonSectionLabels(LESSON_SECTIONS as any);
 
 export default function CalendarLesson(): React.JSX.Element {
   const [view, setView] = useState<CalendarLessonView>({ kind: 'hub' });
@@ -495,7 +495,7 @@ export default function CalendarLesson(): React.JSX.Element {
     });
   const lessonCompletionAwardedRef = useRef(false);
 
-  const lessonHubSections = buildLessonHubSectionsWithProgress(LIVE_HUB_SECTIONS, sectionProgress);
+  const lessonHubSections = buildLessonHubSectionsWithProgress(LIVE_HUB_SECTIONS as any, sectionProgress);
 
   const handleStartTraining = useCallback((sectionId: CalendarInteractiveSectionId) => {
     if (!lessonCompletionAwardedRef.current) {
@@ -523,7 +523,7 @@ export default function CalendarLesson(): React.JSX.Element {
         maxWidthClassName='max-w-lg'
         onBack={() => setView({ kind: 'hub' })}
         sectionHeader={
-          resolveLessonSectionHeader(LIVE_HUB_SECTIONS, view.sectionId) ?? {
+          (resolveLessonSectionHeader(LIVE_HUB_SECTIONS as any, view.sectionId) as any) ?? {
             description: currentTrainingSection.description,
             emoji: currentTrainingSection.emoji,
             isGame: true,
@@ -546,7 +546,7 @@ export default function CalendarLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SECTION_SLIDES[view.sectionId]}
-        sectionHeader={resolveLessonSectionHeader(LIVE_HUB_SECTIONS, view.sectionId)}
+        sectionHeader={resolveLessonSectionHeader(LIVE_HUB_SECTIONS as any, view.sectionId) as any}
         onBack={() => setView({ kind: 'hub' })}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
@@ -578,8 +578,8 @@ export default function CalendarLesson(): React.JSX.Element {
       lessonTitle='Nauka kalendarza'
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-200'
-      sections={lessonHubSections}
-      onSelect={handleSelect}
+      sections={lessonHubSections as any}
+      onSelect={handleSelect as any}
     />
   );
 }

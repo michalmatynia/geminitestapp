@@ -54,6 +54,10 @@ const NODE_KIND_FILTERS: Array<LabeledOptionDto<ContextNodeKind | 'all'>> = [
   { label: 'Workflows', value: 'workflow' },
 ];
 
+const KANGUR_RECENT_FEATURES_REF_ID = 'runtime:kangur:recent-features';
+const KANGUR_RECENT_FEATURES_PROVIDER_ID = 'kangur-recent-features';
+const KANGUR_RECENT_FEATURES_ENTITY_TYPE = 'kangur_recent_features';
+
 const readErrorMessage = async (response: Response): Promise<string> => {
   const payload = (await response.json().catch(() => null)) as Record<string, unknown> | null;
   return String(payload?.['message'] ?? payload?.['error'] ?? response.statusText);
@@ -94,7 +98,15 @@ const parseRuntimeRefs = (input: string): ContextRegistryRef[] => {
   const refs = parts.map((id): ContextRegistryRef => ({
     id,
     kind: 'runtime_document',
-    ...(id.startsWith('runtime:kangur:') ? { providerId: 'kangur' } : {}),
+    ...(id === KANGUR_RECENT_FEATURES_REF_ID
+      ? {
+        providerId: KANGUR_RECENT_FEATURES_PROVIDER_ID,
+        entityType: KANGUR_RECENT_FEATURES_ENTITY_TYPE,
+      }
+      : {}),
+    ...(id.startsWith('runtime:kangur:') && id !== KANGUR_RECENT_FEATURES_REF_ID
+      ? { providerId: 'kangur' }
+      : {}),
     ...(id.startsWith('runtime:ai-path-run:')
       ? { providerId: 'ai-path-run', entityType: 'ai_path_run' }
       : {}),

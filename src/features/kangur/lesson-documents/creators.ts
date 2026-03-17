@@ -48,6 +48,79 @@ export const createKangurLessonSvgBlock = (): KangurLessonSvgBlock => ({
   maxWidth: 420,
 });
 
+type KangurLessonSvgPreset = {
+  title: string;
+  markup: string;
+  viewBox?: string;
+};
+
+const GEOMETRY_SHAPE_SVG_PRESETS: KangurLessonSvgPreset[] = [
+  {
+    title: 'Koło',
+    markup:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="34" fill="#38bdf8" stroke="#0f172a" stroke-width="6"/></svg>',
+    viewBox: '0 0 120 120',
+  },
+  {
+    title: 'Kwadrat',
+    markup:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect x="26" y="26" width="68" height="68" rx="10" fill="#4ade80" stroke="#0f172a" stroke-width="6"/></svg>',
+    viewBox: '0 0 120 120',
+  },
+  {
+    title: 'Trójkąt',
+    markup:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><polygon points="60,18 104,102 16,102" fill="#fbbf24" stroke="#0f172a" stroke-width="6" stroke-linejoin="round"/></svg>',
+    viewBox: '0 0 120 120',
+  },
+  {
+    title: 'Prostokąt',
+    markup:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect x="20" y="38" width="80" height="44" rx="10" fill="#fb7185" stroke="#0f172a" stroke-width="6"/></svg>',
+    viewBox: '0 0 120 120',
+  },
+  {
+    title: 'Owal',
+    markup:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><ellipse cx="60" cy="60" rx="40" ry="26" fill="#a78bfa" stroke="#0f172a" stroke-width="6"/></svg>',
+    viewBox: '0 0 120 120',
+  },
+  {
+    title: 'Romb',
+    markup:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><polygon points="60,12 104,60 60,108 16,60" fill="#f97316" stroke="#0f172a" stroke-width="6" stroke-linejoin="round"/></svg>',
+    viewBox: '0 0 120 120',
+  },
+];
+
+const createKangurLessonSvgBlockFromPreset = (
+  preset: KangurLessonSvgPreset
+): KangurLessonSvgBlock => ({
+  ...createKangurLessonSvgBlock(),
+  title: preset.title,
+  markup: preset.markup,
+  viewBox: preset.viewBox ?? '0 0 120 120',
+});
+
+const createGeometryShapeRecognitionDocument = (): KangurLessonDocument => {
+  const gridBlock: KangurLessonGridBlock = {
+    id: createKangurLessonBlockId('lesson-grid'),
+    type: 'grid',
+    columns: 2,
+    gap: 18,
+    rowHeight: 220,
+    denseFill: false,
+    stackOnMobile: true,
+    items: GEOMETRY_SHAPE_SVG_PRESETS.map((preset) =>
+      createKangurLessonGridItem(createKangurLessonSvgBlockFromPreset(preset))
+    ),
+  };
+
+  return createLessonDocument([
+    createKangurLessonPage('', [createKangurLessonTextBlock(), gridBlock]),
+  ]);
+};
+
 export const createKangurLessonImageBlock = (): KangurLessonImageBlock => ({
   id: createKangurLessonBlockId('lesson-image'),
   type: 'image',
@@ -412,6 +485,7 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   alphabet_words: 'article',
   alphabet_matching: 'article',
   alphabet_sequence: 'article',
+  geometry_shape_recognition: 'svg-gallery-page',
   english_basics: 'article',
   english_parts_of_speech: 'article',
   english_sentence_structure: 'article',
@@ -428,4 +502,6 @@ export const resolveStarterKangurLessonDocumentTemplate = (
 export const createStarterKangurLessonDocument = (
   componentId: KangurLessonComponentId
 ): KangurLessonDocument =>
-  createKangurLessonDocumentFromTemplate(resolveStarterKangurLessonDocumentTemplate(componentId));
+  componentId === 'geometry_shape_recognition'
+    ? createGeometryShapeRecognitionDocument()
+    : createKangurLessonDocumentFromTemplate(resolveStarterKangurLessonDocumentTemplate(componentId));

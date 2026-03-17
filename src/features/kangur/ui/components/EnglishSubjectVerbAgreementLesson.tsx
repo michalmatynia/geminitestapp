@@ -485,14 +485,14 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
 
 export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
     useKangurLessonPanelProgress({
       lessonKey: 'english_subject_verb_agreement',
-      slideSections: SLIDES,
+      slideSections: SLIDES as any,
       sectionLabels: SECTION_LABELS,
     });
 
@@ -513,7 +513,7 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
         headerTestId='english-agreement-game-header'
         icon='🎮'
         onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         shellTestId='english-agreement-game-shell'
         title='Gra: Subject-verb agreement'
         description='Kliknij poprawną formę czasownika w zdaniach.'
@@ -529,13 +529,13 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        slides={(SLIDES as any)[activeSection]}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
+        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection as SlideSectionId, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
+          recordPanelTime(activeSection as SlideSectionId, panelIndex, seconds, panelTitle)
         }
         dotActiveClass='bg-teal-500'
         dotDoneClass='bg-teal-300'
@@ -555,8 +555,8 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
       lessonTitle='Angielski: subject-verb agreement'
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
+      onSelect={handleSelect as any}
     />
   );
 }

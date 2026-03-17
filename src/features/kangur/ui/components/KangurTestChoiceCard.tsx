@@ -63,11 +63,21 @@ export function KangurTestChoiceCardFeedback({
   if (!showAnswer) return null;
 
   if (isChoiceCorrect) {
-    return <CheckCircle className='size-4 shrink-0 text-emerald-500' />;
+    return (
+      <>
+        <CheckCircle aria-hidden='true' className='size-4 shrink-0 text-emerald-500' />
+        <span className='sr-only'>Poprawna odpowiedź</span>
+      </>
+    );
   }
 
   if (isSelected && !isChoiceCorrect) {
-    return <XCircle className='size-4 shrink-0 text-rose-500' />;
+    return (
+      <>
+        <XCircle aria-hidden='true' className='size-4 shrink-0 text-rose-500' />
+        <span className='sr-only'>Błędna odpowiedź</span>
+      </>
+    );
   }
 
   return null;

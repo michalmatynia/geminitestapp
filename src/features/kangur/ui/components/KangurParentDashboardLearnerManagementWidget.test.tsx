@@ -250,7 +250,8 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
 
     render(<KangurParentDashboardLearnerManagementWidget />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Metryka' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia profilu ucznia' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Metryka' }));
 
     await waitFor(() => {
       expect(learnerSessionsListMock).toHaveBeenCalledWith('learner-1', {

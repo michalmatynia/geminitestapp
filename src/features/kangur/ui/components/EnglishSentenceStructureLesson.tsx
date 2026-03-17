@@ -255,14 +255,14 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
 
 export default function EnglishSentenceStructureLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
     useKangurLessonPanelProgress({
       lessonKey: 'english_sentence_structure',
-      slideSections: SLIDES,
+      slideSections: SLIDES as any,
       sectionLabels: SECTION_LABELS,
     });
 
@@ -275,8 +275,8 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
   if (activeSection) {
     return (
       <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        slides={(SLIDES as any)[activeSection]}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
@@ -301,8 +301,8 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
       lessonTitle='Angielski: składnia zdania'
       gradientClass='kangur-gradient-accent-violet'
       progressDotClassName='bg-violet-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
+      onSelect={handleSelect as any}
     />
   );
 }

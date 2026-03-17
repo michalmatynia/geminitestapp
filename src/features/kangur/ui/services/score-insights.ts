@@ -10,6 +10,7 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   alphabet_words: { label: 'Pierwsze slowa', emoji: '📖' },
   alphabet_matching: { label: 'Dopasuj litery', emoji: '🔤' },
   alphabet_sequence: { label: 'Kolejnosc liter', emoji: '🔤' },
+  geometry_shape_recognition: { label: 'Geometria', emoji: '🔷' },
   addition: { label: 'Dodawanie', emoji: '➕' },
   subtraction: { label: 'Odejmowanie', emoji: '➖' },
   multiplication: { label: 'Mnożenie', emoji: '✖️' },

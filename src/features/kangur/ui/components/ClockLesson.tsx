@@ -514,7 +514,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(LESSON_SECTIONS);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(LESSON_SECTIONS as any);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   hours: HOURS_SLIDES,
@@ -711,7 +711,7 @@ export default function ClockLesson(): React.JSX.Element {
   const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
     useKangurLessonPanelProgress({
       lessonKey: 'clock',
-      slideSections: runtimeSlides.current,
+      slideSections: runtimeSlides.current as any,
       sectionLabels: SECTION_LABELS,
     });
   const lessonCompletionAwardedRef = useRef(false);
@@ -726,8 +726,8 @@ export default function ClockLesson(): React.JSX.Element {
     (sectionProgress.combined?.viewedCount ?? 0) >= (sectionProgress.combined?.totalCount ?? 0);
   const isCombinedUnlocked = isHoursComplete && isMinutesComplete;
   const isClockLessonComplete = isHoursComplete && isMinutesComplete && isCombinedComplete;
-  const lessonHubSections = buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress).map(
-    (section) => {
+  const lessonHubSections = buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress).map(
+    (section: any) => {
       if (!section.isGame && section.id === 'combined' && !isCombinedUnlocked) {
         return {
           ...section,
@@ -951,7 +951,7 @@ export default function ClockLesson(): React.JSX.Element {
               title='Poprzedni panel'
               variant='surface'
             >
-              <ChevronLeft className='h-4 w-4 flex-shrink-0' />
+              <ChevronLeft aria-hidden='true' className='h-4 w-4 flex-shrink-0' />
             </KangurButton>
           ) : (
             <div className='hidden sm:block sm:min-w-[72px]' />
@@ -974,7 +974,7 @@ export default function ClockLesson(): React.JSX.Element {
               title='Następny panel'
               variant='surface'
             >
-              <ChevronRight className='h-4 w-4 flex-shrink-0' />
+              <ChevronRight aria-hidden='true' className='h-4 w-4 flex-shrink-0' />
             </KangurButton>
           ) : (
             <div className='hidden sm:block sm:min-w-[72px]' />
@@ -993,7 +993,7 @@ export default function ClockLesson(): React.JSX.Element {
           ? 'game_minutes'
           : 'game_combined';
     const currentTrainingHeader =
-      resolveLessonSectionHeader(HUB_SECTIONS, currentTrainingHeaderId) ?? {
+      (resolveLessonSectionHeader(HUB_SECTIONS as any, currentTrainingHeaderId as any) as any) ?? {
         description: currentTrainingSection.description,
         emoji: currentTrainingSection.emoji,
         isGame: true,
@@ -1044,13 +1044,13 @@ export default function ClockLesson(): React.JSX.Element {
           markTrainingPanelCompleted('challenge');
           setChallengeMedalBySection((currentMedals) => ({
             ...currentMedals,
-            [view.sectionId]: result.medal ?? 'bronze',
+            [view.sectionId]: (result as any).medal ?? 'bronze',
           }));
         }}
         practiceTasks={
           currentTrainingPanel === 'challenge'
             ? undefined
-            : TRAINING_PANEL_TASKS[view.sectionId][currentTrainingPanel]
+            : (TRAINING_PANEL_TASKS[view.sectionId] as any)[currentTrainingPanel]
         }        section={view.sectionId}
         showTaskTitle={trainingPanels.length === 1 || currentTrainingPanel === 'learn'}
         showTimeDisplay={false}
@@ -1068,7 +1068,7 @@ export default function ClockLesson(): React.JSX.Element {
           maxWidthClassName='max-w-lg'
           navigationPills={trainingPills}
           onBack={() => requestTrainingExitAction({ kind: 'hub' })}
-          sectionHeader={currentTrainingHeader}
+          sectionHeader={currentTrainingHeader as any}
           shellTestId='clock-lesson-training-shell'
           title={currentTrainingSection.title}
         >
@@ -1089,7 +1089,7 @@ export default function ClockLesson(): React.JSX.Element {
             setPendingTrainingExitAction(null);
             executeTrainingExitAction(action);
           }}
-          title='Opuścić wyzwanie?'
+          title='Ouścić wyzwanie?'
         />
       </>
     );
@@ -1098,8 +1098,8 @@ export default function ClockLesson(): React.JSX.Element {
   if (view.kind === 'lesson') {
     return (
       <LessonSlideSection
-        slides={runtimeSlides.current[view.sectionId]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, view.sectionId)}
+        slides={(runtimeSlides.current as any)[view.sectionId]}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, view.sectionId as any) as any}
         onBack={handleReturnToHub}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
@@ -1148,9 +1148,9 @@ export default function ClockLesson(): React.JSX.Element {
     game_combined: () => handleStartTraining('combined'),
   };
   const handleSelect = createLessonHubSelectHandler<ClockHubId>({
-    markSectionOpened: (sectionId) => markSectionOpened(sectionId as SectionId),
+    markSectionOpened: (sectionId) => markSectionOpened(sectionId as LessonSectionId),
     onSelectSection: (sectionId) =>
-      setView({ kind: 'lesson', sectionId: sectionId as SectionId }),
+      setView({ kind: 'lesson', sectionId: sectionId as LessonSectionId }),
     skipMarkFor: ['game_hours', 'game_minutes', 'game_combined'] as const,
     handlers: hubHandlers,
   });
@@ -1161,8 +1161,8 @@ export default function ClockLesson(): React.JSX.Element {
       lessonTitle='Nauka zegara'
       gradientClass='kangur-gradient-accent-indigo-reverse'
       progressDotClassName='bg-indigo-200'
-      sections={lessonHubSectionsWithGameProgress}
-      onSelect={handleSelect}
+      sections={lessonHubSectionsWithGameProgress as any}
+      onSelect={handleSelect as any}
     />
   );
 }

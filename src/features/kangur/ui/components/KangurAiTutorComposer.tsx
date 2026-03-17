@@ -86,7 +86,7 @@ export function KangurAiTutorComposer(): JSX.Element {
               className='absolute -right-1.5 -top-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border kangur-chat-surface-soft shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white hover:[background:var(--kangur-chat-danger-background,#fff1f2)] hover:[color:var(--kangur-chat-danger-text,#ef4444)] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'
               aria-label={drawingContent?.clearLabel ?? 'Usuń rysunek'}
               title={drawingContent?.clearLabel ?? 'Usuń rysunek'}>
-              <X className='h-2.5 w-2.5' />
+              <X aria-hidden='true' className='h-2.5 w-2.5' />
             </button>
           </div>
           <span className='mt-1 text-[10px] [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
@@ -154,7 +154,7 @@ export function KangurAiTutorComposer(): JSX.Element {
               aria-label={drawingContent?.toggleLabel ?? 'Rysuj'}
               aria-pressed={drawingMode}
             >
-              <Pen className='h-3.5 w-3.5' />
+              <Pen aria-hidden='true' className='h-3.5 w-3.5' />
             </button>
           ) : null}
         </div>

@@ -282,7 +282,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
               Alphabet
             </KangurHeadline>
             <p className='mt-2 text-sm text-slate-600'>
-              Track: Letter Tracing. Przepisuj litery pod wzorem. To gra dla 6-latkow.
+              Track: Przepisz litery. Ćwicz płynność pisania pod wzorem. To gra dla 6-latków.
             </p>
           </div>
           <div className='flex flex-col items-end gap-2'>
@@ -301,7 +301,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                Wzor litery
+                Wzór litery
               </div>
               <p className='mt-1 text-sm text-slate-600'>
                 Litera {currentRound.label} jak {currentRound.word}.

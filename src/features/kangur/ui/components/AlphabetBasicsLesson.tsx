@@ -270,7 +270,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               Alphabet
             </KangurHeadline>
             <p className='mt-2 text-sm text-slate-600'>
-              Track: Letter Tracing. Rysuj litery po kolorowym śladzie. To gra dla 6-latków.
+              Track: Rysuj litery po śladzie. Ćwicz precyzję ruchu na kolorowych śladach. To gra dla 6-latków.
             </p>
           </div>
           <div className='flex flex-col items-end gap-2'>

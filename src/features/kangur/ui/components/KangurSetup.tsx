@@ -212,7 +212,7 @@ export default function KangurSetup({
                     </KangurStatusChip>
                     {!edition.available ? (
                       <KangurStatusChip accent='slate' size='sm'>
-                        <Lock className='h-3 w-3' /> Wkrótce dostępna
+                        <Lock aria-hidden='true' className='h-3 w-3' /> Wkrótce dostępna
                       </KangurStatusChip>
                     ) : null}
                   </span>
@@ -244,7 +244,7 @@ export default function KangurSetup({
         type='button'
         variant='surface'
       >
-        <ArrowLeft className='w-4 h-4' /> Edycje
+        <ArrowLeft aria-hidden='true' className='w-4 h-4' /> Edycje
       </KangurButton>
 
       <KangurSetupShell testId='kangur-setup-selected-edition-shell'>
@@ -307,7 +307,7 @@ export default function KangurSetup({
                   </KangurStatusChip>
                   {!setItem.available ? (
                     <KangurStatusChip accent='slate' size='sm'>
-                      <Lock className='h-3 w-3' /> Wkrótce dostępna
+                      <Lock aria-hidden='true' className='h-3 w-3' /> Wkrótce dostępna
                     </KangurStatusChip>
                   ) : null}
                   {isRecommendedSet ? (
@@ -322,7 +322,7 @@ export default function KangurSetup({
                 </span>
                 <span className={`${KANGUR_CENTER_ROW_CLASSNAME} text-base font-extrabold [color:var(--kangur-page-text)]`}>
                   {setItem.label}
-                  {!setItem.available && <Lock className='h-3.5 w-3.5' />}
+                  {!setItem.available && <Lock aria-hidden='true' className='h-3.5 w-3.5' />}
                 </span>
                 <span
                   id={`kangur-setup-set-description-${setItem.id}`}

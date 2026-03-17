@@ -266,6 +266,11 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
       'Rozpoznawanie figur (trójkąt, kwadrat, prostokąt, koło) i ich cech. Uczy nazywania i odróżniania kształtów.',
     triggerPhrases: ['figury', 'kształty', 'trójkąt', 'kwadrat', 'prostokąt', 'koło'],
   },
+  geometry_shape_recognition: {
+    explanation:
+      'Ćwiczy rozpoznawanie podstawowych kształtów: koła, kwadratu, trójkąta, prostokąta, owalu i rombu.',
+    triggerPhrases: ['kształty', 'figury', 'koło', 'kwadrat', 'trójkąt', 'prostokąt', 'owal', 'romb'],
+  },
   geometry_symmetry: {
     explanation:
       'Oś symetrii i odbicia lustrzane. Ćwiczy zauważanie, czy kształty są symetryczne i gdzie przebiega oś.',

@@ -256,6 +256,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
   geometry_shapes: createSectionedDefinition(GEOMETRY_SHAPES_HUB_SECTIONS, GEOMETRY_SHAPES_SLIDES, {
     game: 'geometry-drawing',
   }),
+  geometry_shape_recognition: {
+    kind: 'flat',
+    slides: [],
+  },
   geometry_symmetry: createSectionedDefinition(
     GEOMETRY_SYMMETRY_HUB_SECTIONS,
     GEOMETRY_SYMMETRY_SLIDES

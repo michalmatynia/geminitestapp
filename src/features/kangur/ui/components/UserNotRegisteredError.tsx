@@ -29,7 +29,7 @@ export default function UserNotRegisteredError(): React.JSX.Element {
       >
         <div className='text-center'>
           <KangurIconBadge accent='amber' data-testid='user-not-registered-icon' size='lg'>
-            <AlertTriangle className='h-8 w-8' />
+            <AlertTriangle aria-hidden='true' className='h-8 w-8' />
           </KangurIconBadge>
 
           <div className='mt-6'>

@@ -171,7 +171,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         description={`Najlepsza sesja: ${snapshot.bestAccuracy}%`}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <BarChart2 className='h-4 w-4' /> Średnia skuteczność
+            <BarChart2 aria-hidden='true' className='h-4 w-4' /> Średnia skuteczność
           </span>
         }
         value={`${snapshot.averageAccuracy}%`}
@@ -183,7 +183,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         description={`Najdłuższa: ${snapshot.longestStreakDays} dni`}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Flame className='h-4 w-4' /> Seria dni
+            <Flame aria-hidden='true' className='h-4 w-4' /> Seria dni
           </span>
         }
         value={snapshot.currentStreakDays}
@@ -195,7 +195,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         description={`7 dni: +${snapshot.weeklyXpEarned} XP · średnio ${snapshot.averageXpPerSession} XP na sesję`}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Sparkles className='h-4 w-4' /> XP dzisiaj
+            <Sparkles aria-hidden='true' className='h-4 w-4' /> XP dzisiaj
           </span>
         }
         value={`+${snapshot.todayXpEarned}`}
@@ -212,7 +212,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           }
           label={
             <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-              <Compass className='h-4 w-4' /> Polecone rundy
+              <Compass aria-hidden='true' className='h-4 w-4' /> Polecone rundy
             </span>
           }
           value={snapshot.recommendedSessionsCompleted}
@@ -244,7 +244,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Target className='h-4 w-4' /> Misja dnia
+            <Target aria-hidden='true' className='h-4 w-4' /> Misja dnia
           </span>
         }
         value={dailyQuest ? `${dailyQuest.progress.percent}%` : dailyQuest === null ? '—' : '...'}
@@ -271,7 +271,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         description={`Wypełnienie: ${snapshot.dailyGoalPercent}%`}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Target className='h-4 w-4' /> Cel dzienny
+            <Target aria-hidden='true' className='h-4 w-4' /> Cel dzienny
           </span>
         }
         value={`${snapshot.todayGames}/${snapshot.dailyGoalGames}`}
@@ -287,7 +287,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         }
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Award className='h-4 w-4' /> Odznaki
+            <Award aria-hidden='true' className='h-4 w-4' /> Odznaki
           </span>
         }
         value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}

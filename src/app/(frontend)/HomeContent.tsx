@@ -3,7 +3,7 @@ import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { productService } from '@/features/products/server';
-import type { Page, Slug } from '@/shared/contracts/cms';
+import type { Page, PageComponent, Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 
 import { canPreviewDrafts } from './home-helpers';
@@ -59,7 +59,7 @@ export async function HomeContent({
         showMenu={showMenu}
         hasCmsContent={hasCmsContent}
         defaultSlug={defaultSlug.slug}
-        rendererComponents={rendererComponents as any}
+        rendererComponents={rendererComponents as PageComponent[]}
       />
     );
   }

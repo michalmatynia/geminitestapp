@@ -118,8 +118,8 @@ export function useKangurAiTutorTelemetryBridge(input: {
     proactiveNudgeTelemetryKey,
     proactiveNudges,
     quotaExhaustedTelemetryKey,
-    sessionContext: sessionContext as KangurAiTutorSessionContextTelemetryDto,
-    telemetryContext: telemetryContext as KangurAiTutorTelemetryContextDto,
+    sessionContext: sessionContext,
+    telemetryContext: telemetryContext,
     usageSummary,
     visibleProactiveNudge,
   });
@@ -134,7 +134,7 @@ export function useKangurAiTutorTelemetryBridge(input: {
     motionProfile,
     motionTimeoutRef,
     prefersReducedMotion,
-    sessionContext: sessionContext as KangurAiTutorSessionContextTelemetryDto,
+    sessionContext: sessionContext,
     setPanelMotionState,
   });
 }

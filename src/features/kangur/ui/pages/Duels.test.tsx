@@ -6,16 +6,50 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useDuelsLobbyMock, useDuelStateMock, authState } = vi.hoisted(() => ({
+const { useDuelsLobbyMock, useDuelStateMock, authState, navigationSpy } = vi.hoisted(() => ({
   useDuelsLobbyMock: vi.fn(),
   useDuelStateMock: vi.fn(),
   authState: {
     isAuthenticated: false,
+    user: null,
+    logout: vi.fn(),
   },
+  navigationSpy: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => authState,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  useKangurRouting: () => ({
+    basePath: '/kangur',
+    embedded: false,
+  }),
+  useOptionalKangurRouting: () => ({
+    basePath: '/kangur',
+    embedded: false,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurGuestPlayerContext', () => ({
+  useKangurGuestPlayer: () => ({
+    guestPlayerName: 'Guest',
+    setGuestPlayerName: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
+  useKangurLoginModal: () => ({
+    openLoginModal: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+  KangurTopNavigationController: ({ navigation }: { navigation: any }) => {
+    navigationSpy(navigation);
+    return <div data-testid='kangur-top-navigation' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
@@ -45,6 +79,7 @@ describe('Duels page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.isAuthenticated = false;
+    authState.user = null;
     useDuelsLobbyMock.mockReturnValue({
       lobbyEntries: [],
       isLobbyLoading: false,
@@ -94,6 +129,18 @@ describe('Duels page', () => {
       expect.objectContaining({
         canPlay: true,
         isGuest: false,
+      })
+    );
+  });
+
+  it('registers top navigation for the Duels page', () => {
+    render(<Duels />);
+
+    expect(navigationSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basePath: '/kangur',
+        currentPage: 'Duels',
+        isAuthenticated: false,
       })
     );
   });

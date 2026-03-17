@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   PageLayout,
+  UI_CENTER_ROW_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -191,7 +192,7 @@ function AuthUsersPageContent(): React.JSX.Element {
         data={filteredUsers}
         isLoading={isLoading}
         filters={
-          <div className='flex items-center gap-4'>
+          <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
             <div className='flex-1 max-w-sm'>
               <SearchInput
                 value={search}

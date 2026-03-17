@@ -1,7 +1,7 @@
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
 import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import type { StatusVariant } from '@/shared/contracts/ui';
-import { StatusBadge, CompactEmptyState, Button } from '@/shared/ui';
+import { StatusBadge, CompactEmptyState, Button, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import {
   resolveRunHistoryEntryAction,
@@ -187,7 +187,7 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                 Duration: {formatDurationMs(entry.durationMs)}
               </div>
             )}
-            <div className='mt-3 grid gap-4 lg:grid-cols-2'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 lg:grid-cols-2`}>
               <div>
                 <div className='text-[11px] uppercase text-gray-500'>Inputs</div>
                 <pre className='mt-2 max-h-64 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
@@ -209,7 +209,7 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                 </pre>
               </div>
             </div>
-            <div className='mt-3 grid gap-4 lg:grid-cols-2 text-xs text-gray-400'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 lg:grid-cols-2 text-xs text-gray-400`}>
               <div>
                 <div className='text-[11px] uppercase text-gray-500'>From</div>
                 {entry.inputsFrom && entry.inputsFrom.length > 0 ? (

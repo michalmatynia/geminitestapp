@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 
 import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
-import { Button } from '@/shared/ui';
+import { Button, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { Toast, ToastVariant, ToastOptions };
@@ -217,7 +217,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
                   className={`pointer-events-auto flex flex-col gap-1 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm transition-all animate-in fade-in slide-in-from-right-5 duration-300 ${classes.container} max-w-sm`}
                   role='alert'
                 >
-                  <div className='flex items-center gap-3 text-sm'>
+                  <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} text-sm`}>
                     {IconComponent && (
                       <IconComponent
                         className={`size-4 flex-shrink-0 ${classes.icon}`}

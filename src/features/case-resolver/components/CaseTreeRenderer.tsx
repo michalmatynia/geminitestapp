@@ -27,6 +27,7 @@ import {
   MetadataItem,
   Tooltip,
   useToast,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -192,7 +193,7 @@ export function CaseTreeRenderer({
                     </div>
                   </div>
 
-                  <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                  <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-3`}>
                     <FormField label='Parent Case'>
                       <SelectSimple
                         size='sm'

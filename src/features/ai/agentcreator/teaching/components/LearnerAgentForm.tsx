@@ -6,7 +6,7 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import { Input, Textarea, Checkbox, FormField } from '@/shared/ui';
+import { Input, Textarea, Checkbox, FormField, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export type LearnerAgentLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & {
@@ -33,7 +33,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
 
   return (
     <div className='space-y-6'>
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormField
           label='LLM model'
           description='Brain-managed via Agent Teaching Chat capability.'
@@ -72,7 +72,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
          aria-label='Enter prompt instructions' title='Enter prompt instructions'/>
       </FormField>
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormField
           label='Temperature'
           description='Higher = more creative, lower = more deterministic.'
@@ -117,7 +117,7 @@ export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Elemen
          aria-label='Max docs scanned per collection' title='Max docs scanned per collection'/>
       </FormField>
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormField label='Retrieval top K'>
           <Input
             type='number'

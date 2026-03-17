@@ -1,18 +1,31 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Folder,
+  GripVertical,
+  ListTree,
+  Plus,
+  Waypoints,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
+  type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
-import { Button, Card, FormField, Input, SectionHeader, Textarea } from '@/shared/ui';
+import { Badge, Button, Card, FormField, Input, SectionHeader, Textarea } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
-import { PromptExploderTreeNode } from './PromptExploderTreeNode';
-import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
+import {
+  PromptExploderTreeNodeRuntimeProvider,
+  usePromptExploderTreeNodeRuntimeContext,
+} from './PromptExploderSegmentsTreeEditor';
 import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
 import {
   promptExploderAddBlankListItem,
@@ -29,9 +42,137 @@ import {
   updatePromptExploderSubsectionById,
   updatePromptExploderSubsectionItemById,
 } from '../../tree/subsections-master-tree';
-import { readPromptExploderTreeMetadata, toPromptExploderTreeNodeId } from '../../tree/types';
+import {
+  readPromptExploderTreeMetadata,
+  toPromptExploderTreeNodeId,
+  type PromptExploderTreeNodeKind,
+} from '../../tree/types';
 
 import type { PromptExploderListItem, PromptExploderSegment } from '../../types';
+
+type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput;
+
+const resolveNodeIcon = (kind: PromptExploderTreeNodeKind | null) => {
+  switch (kind) {
+    case 'segment':
+      return FileText;
+    case 'subsection':
+      return Folder;
+    case 'subsection_item':
+      return ListTree;
+    case 'list_item':
+    case 'hierarchy_item':
+      return Waypoints;
+    default:
+      return Folder;
+  }
+};
+
+function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isMultiSelected,
+    isDragging,
+    dropPosition,
+    select,
+    toggleExpand,
+  } = props;
+
+  const { armDragHandle, releaseDragHandle } = usePromptExploderTreeNodeRuntimeContext();
+  const metadata = readPromptExploderTreeMetadata(node);
+  const Icon = resolveNodeIcon(metadata?.kind ?? null);
+  const stateClassName = isSelected
+    ? 'bg-blue-600/20 text-white ring-1 ring-inset ring-blue-400/40 shadow-sm'
+    : isMultiSelected
+      ? 'bg-blue-500/15 text-blue-100 ring-1 ring-inset ring-blue-400/25'
+      : dropPosition === 'before'
+        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+        : dropPosition === 'after'
+          ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+          : isDragging
+            ? 'opacity-50'
+            : 'text-gray-300 hover:bg-muted/40';
+
+  const badgeLabel =
+    metadata?.kind === 'segment'
+      ? (metadata.segmentType?.replaceAll('_', ' ') ?? 'segment')
+      : metadata?.kind === 'subsection'
+        ? metadata.code?.trim() || 'subsection'
+        : metadata?.kind === 'subsection_item'
+          ? metadata.logicalOperator?.replaceAll('_', ' ') || 'item'
+          : metadata?.kind === 'list_item' || metadata?.kind === 'hierarchy_item'
+            ? metadata.logicalOperator?.replaceAll('_', ' ') || 'item'
+            : null;
+
+  return (
+    <div
+      className={cn(
+        'group flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-all',
+        stateClassName
+      )}
+      style={{ paddingLeft: `${depth * 16 + 8}px` }}
+    >
+      <button
+        type='button'
+        aria-label='Drag node'
+        data-master-tree-drag-handle='true'
+        onPointerDown={(): void => {
+          armDragHandle(node.id);
+        }}
+        onPointerUp={releaseDragHandle}
+        onPointerCancel={releaseDragHandle}
+        onMouseDown={(): void => {
+          armDragHandle(node.id);
+        }}
+        onMouseUp={releaseDragHandle}
+        className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-white/10 hover:text-gray-100 active:cursor-grabbing'
+        title='Drag node'
+      >
+        <GripVertical className='size-3.5' />
+      </button>
+      {hasChildren ? (
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
+          onClick={(event): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleExpand();
+          }}
+          aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          title={isExpanded ? 'Collapse' : 'Expand'}
+        >
+          {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
+        </Button>
+      ) : (
+        <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+      )}
+      <button
+        type='button'
+        onClick={select}
+        aria-pressed={isSelected}
+        aria-label={`Select ${node.name}`}
+        className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+      >
+        <Icon className='size-4 shrink-0 text-sky-200/80' />
+        <span className='min-w-0 flex-1 truncate'>{node.name}</span>
+        {badgeLabel ? (
+          <Badge
+            variant='neutral'
+            className='shrink-0 border-border/60 bg-card/40 text-[10px] h-4 px-1 uppercase tracking-wider'
+          >
+            {badgeLabel}
+          </Badge>
+        ) : null}
+      </button>
+    </div>
+  );
+}
 
 const createChildListItem = (): PromptExploderListItem => {
   const [item] = promptExploderAddBlankListItem([]);

@@ -4,6 +4,7 @@ import { Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
+import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
@@ -18,7 +19,7 @@ export function FrontendImageWithTextBlock(): React.ReactNode {
   const mediaStyles = useMediaStyles();
 
   return (
-    <div className={`flex flex-col gap-4 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+    <div className={`${UI_STACK_RELAXED_CLASSNAME} ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
       {/* Image */}
       <div className='cms-media relative w-full md:w-2/5' style={mediaStyles ?? undefined}>
         {image ? (

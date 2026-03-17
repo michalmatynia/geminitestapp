@@ -18,7 +18,7 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
+import { Button, StatusBadge, SelectSimple, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import { AiPathsLiveLog } from './AiPathsLiveLog';
@@ -892,7 +892,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
 
       {!isFocusMode && <RuntimeEventLogPanel />}
       {!isFocusMode && (
-        <div className='grid gap-4 lg:grid-cols-2'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
           <AiPathsRuntimeAnalysis />
           <AiPathsLiveLog />
         </div>

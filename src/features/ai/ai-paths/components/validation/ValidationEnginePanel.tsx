@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Card, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Card, Input, Label, SelectSimple, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
@@ -45,7 +45,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
           </Button>
         </div>
       </div>
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <div>
           <Label className='text-xs text-gray-400'>Status</Label>
           <SelectSimple

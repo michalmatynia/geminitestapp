@@ -19,6 +19,7 @@ import {
   Badge,
   Card,
   FormField,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
 export type {
@@ -170,7 +171,7 @@ export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Elem
       </div>
 
       {/* Send Button & Base URL */}
-      <div className='mt-3 flex items-center gap-3'>
+      <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} mt-3`}>
         <Button type='button' disabled={loading || !isConnected} onClick={onRequest} size='sm'>
           {loading ? 'Sending...' : 'Send request'}
         </Button>

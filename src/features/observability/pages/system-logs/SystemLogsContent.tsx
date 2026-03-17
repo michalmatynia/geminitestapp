@@ -17,6 +17,7 @@ import {
   Card,
   CopyButton,
   PageLayout,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import { type SystemLogFilterFormValues } from '@/shared/lib/observability/log-triage-presets';
@@ -162,7 +163,7 @@ export function SystemLogsContent(): React.JSX.Element {
 
           <LogDiagnostics />
 
-          <div className='grid gap-6 lg:grid-cols-2'>
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
             <LogMetrics />
             <AiLogInterpreter />
           </div>

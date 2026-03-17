@@ -2,7 +2,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { SimpleSettingsList, ToggleRow } from '@/shared/ui';
+import { SimpleSettingsList, ToggleRow, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { APP_EMBED_OPTIONS } from '../lib/constants';
 
@@ -21,7 +21,7 @@ export function AppEmbedList(): React.ReactNode {
       renderActions={(item) => {
         const isEnabled = enabled.has(item.id);
         return (
-          <div className='flex items-center gap-4'>
+          <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
             <ToggleRow
               label='Enabled'
               checked={isEnabled}

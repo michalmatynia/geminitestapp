@@ -15,6 +15,7 @@ import { LoadingState } from './LoadingState';
 import { ResourceCard } from './ResourceCard';
 import { SectionHeader } from './section-header';
 import { Textarea } from './textarea';
+import { UI_GRID_RELAXED_CLASSNAME } from './layout';
 
 export interface LibraryItem {
   id: string;
@@ -181,7 +182,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
           }
         />
       ) : (
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 xl:grid-cols-3`}>
           {sortedItems.map((item) => (
             <ResourceCard
               key={item.id}
@@ -266,7 +267,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
         saveText={editingItem ? 'Save Changes' : `Create ${entityName}`}
       >
         <div className='space-y-6'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <div className='space-y-2'>
               <Label htmlFor={nameId}>Name</Label>
               <Input

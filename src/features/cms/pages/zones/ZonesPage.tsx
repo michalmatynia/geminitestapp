@@ -22,6 +22,7 @@ import {
   FormField,
   FormSection,
   PanelFilters,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -140,7 +141,7 @@ export default function ZonesPage(): React.JSX.Element {
         accessorKey: 'domain',
         header: 'Hostname / URL',
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <div className='flex h-8 w-8 items-center justify-center rounded bg-emerald-500/10 text-emerald-400'>
               <Globe className='size-4' />
             </div>

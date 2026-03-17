@@ -15,6 +15,7 @@ import {
   Card,
   FilterPanel,
   LoadingState,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
@@ -66,7 +67,7 @@ export function Asset3DListPage(): React.JSX.Element {
         accessorKey: 'name',
         header: 'Name',
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
               <Box className='h-4 w-4 text-muted-foreground' />
             </div>

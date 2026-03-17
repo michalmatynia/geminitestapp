@@ -6,6 +6,7 @@ import React from 'react';
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useRequiredBlockSettings } from './BlockContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
 
 
 export function AnnouncementBlock(): React.ReactNode {
@@ -67,7 +68,7 @@ export function SocialLinksBlock(): React.ReactNode {
   }
 
   return (
-    <div className='flex items-center gap-4'>
+    <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
       {links.map((link: string, idx: number) => {
         let label = 'Link';
         try {

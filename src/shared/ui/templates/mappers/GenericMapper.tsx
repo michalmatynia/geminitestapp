@@ -120,7 +120,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
     }
 
     try {
-      const mappings = Array.from<[string, string | null]>(pendingMappings.entries() as any).map(
+      const mappings = Array.from(pendingMappings.entries()).map(
         ([internalId, externalId]) => ({
           internalId,
           externalId,

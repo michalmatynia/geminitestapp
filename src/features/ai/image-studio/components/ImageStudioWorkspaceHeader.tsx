@@ -10,6 +10,8 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
+  UI_CENTER_ROW_CLASSNAME,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
 import type { PreviewCanvasSize } from '../context/UiContext';
@@ -50,7 +52,7 @@ export function ImageStudioWorkspaceHeader({
 
   return (
     <div className={hideTopBar ? 'border-b bg-muted/40 px-1 py-1.5' : 'border-b bg-muted/40 px-1 py-2'}>
-      <div className={hideTopBar ? 'flex items-center gap-2' : 'flex items-center gap-3'}>
+      <div className={hideTopBar ? UI_CENTER_ROW_CLASSNAME : UI_CENTER_ROW_SPACED_CLASSNAME}>
         {tabsList}
         {showReturnButton ? (
           <Button

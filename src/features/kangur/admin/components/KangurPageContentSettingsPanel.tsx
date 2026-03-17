@@ -8,6 +8,7 @@ import {
   FormSection,
   Textarea,
 } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentMutations } from '../hooks/useKangurPageContentMutations';
 import { KangurPageContentEntryEditor } from './KangurPageContentEntryEditor';
 import { KangurPageContentEntryList } from './KangurPageContentEntryList';
@@ -109,7 +110,9 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
         ) : null}
 
         {parsedState.store ? (
-          <div className='mt-4 grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]'>
+          <div
+            className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 xl:grid-cols-[320px_minmax(0,1fr)]`}
+          >
             <KangurPageContentEntryList
               entries={parsedState.store.entries}
               selectedEntryId={selectedEntryId}

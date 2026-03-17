@@ -21,6 +21,7 @@ import {
   MetadataItem,
   SimpleSettingsList,
   ToggleRow,
+  UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -135,7 +136,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
         isDangerous={true}
       />
 
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
         <FormSection
           title='Sync Schedule'
           description='Toggle background synchronization and set the refresh interval.'

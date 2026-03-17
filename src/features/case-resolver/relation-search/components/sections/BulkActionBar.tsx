@@ -3,7 +3,7 @@
 import { ListPlus } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 
 import {
   useDocumentRelationSearchActionsContext,
@@ -17,7 +17,7 @@ export function BulkActionBar(): React.JSX.Element | null {
   const selectedCount = selectedFileIds.size;
   if (selectedCount === 0) return null;
   return (
-    <div className='flex items-center gap-3 border-b border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs'>
+    <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} border-b border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs`}>
       <span className='text-cyan-200 font-medium'>{selectedCount} selected</span>
       <Button
         variant='ghost'

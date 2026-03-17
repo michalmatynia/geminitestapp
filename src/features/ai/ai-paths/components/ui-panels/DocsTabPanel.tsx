@@ -22,6 +22,7 @@ import {
   useToast,
   Card,
   Hint,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import { buildFullDocumentationClipboardText } from './docs-utils';
@@ -349,7 +350,7 @@ export function DocsTabPanel(): React.JSX.Element {
         />
       ) : null}
 
-      <div className='grid gap-4 lg:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
         {showCoreFlow ? (
           <DocumentationList
             title='Core Flow'
@@ -540,7 +541,7 @@ export function DocsTabPanel(): React.JSX.Element {
                 <div className='border-t border-border/60 px-4 py-4'>
                   <p className='text-gray-400'>{doc.purpose}</p>
 
-                  <div className='mt-4 grid gap-4 md:grid-cols-2'>
+                  <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-4 md:grid-cols-2`}>
                     <div className='rounded-md border border-border/60 bg-card/30 p-3'>
                       <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                         Inputs

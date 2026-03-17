@@ -26,7 +26,7 @@ import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-re
 import { api } from '@/shared/lib/api-client';
 import { Badge } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
-import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_GRID_RELAXED_CLASSNAME, KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   withKangurClientError,
   withKangurClientErrorSync,
@@ -397,7 +397,7 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
 
   return (
     <section className={cn('rounded-2xl border border-border/60 bg-card/40 p-5 shadow-sm')}>
-      <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+      <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} lg:flex-row lg:items-start lg:justify-between`}>
         <div className='min-w-0'>
           <div className='inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-foreground'>
             <Volume2 className='size-3.5' />

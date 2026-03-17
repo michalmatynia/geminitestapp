@@ -14,6 +14,7 @@ import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsSto
 import { Badge, Button, Card, FormSection, Switch, useToast } from '@/features/kangur/shared/ui';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 
 const DOCS_TOOLTIP_SURFACES: Array<{
@@ -166,7 +167,7 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
           </div>
         </Card>
 
-        <div className='grid gap-4 lg:grid-cols-2'>
+        <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
           {DOCS_TOOLTIP_SURFACES.map((surface) => (
             <Card
               key={surface.key}

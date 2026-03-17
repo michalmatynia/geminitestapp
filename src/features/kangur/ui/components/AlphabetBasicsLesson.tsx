@@ -9,7 +9,10 @@ import {
   KangurHeadline,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_STACK_ROOMY_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
 import {
   resolveKangurCanvasPoint,
@@ -255,7 +258,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   };
 
   return (
-    <div className='flex w-full flex-col items-center gap-6'>
+    <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full items-center`}>
       <KangurGlassPanel
         className='w-full max-w-3xl'
         padding='lg'

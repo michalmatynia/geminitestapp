@@ -9,7 +9,14 @@ import {
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { SyncDirection } from '@/shared/contracts/products';
-import { Button, Card, Hint, Badge } from '@/shared/ui';
+import {
+  Button,
+  Card,
+  Hint,
+  Badge,
+  UI_CENTER_ROW_RELAXED_CLASSNAME,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
@@ -127,7 +134,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
                 {field.name}
               </span>
             </div>
-            <div className='flex items-center gap-4 shrink-0'>
+            <div className={cn(UI_CENTER_ROW_RELAXED_CLASSNAME, 'shrink-0')}>
               <span
                 className='text-[11px] font-mono text-gray-400 max-w-[140px] truncate'
                 title={field.value}
@@ -146,7 +153,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         <Hint size='xxs' uppercase>
           {activeFields.length} of {syncFields.length} fields active
         </Hint>
-        <div className='flex items-center gap-3 text-[10px] text-gray-500 font-bold uppercase'>
+        <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'text-[10px] text-gray-500 font-bold uppercase')}>
           <div className='flex items-center gap-1'>
             <ArrowRight className='size-2.5 text-blue-400' />
             <span>Export</span>

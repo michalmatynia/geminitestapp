@@ -18,6 +18,7 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
+  BaseImportMode,
   BaseImportItemRecord,
   BaseImportPreflightIssue,
   CatalogOption,
@@ -55,6 +56,9 @@ import {
   TabsTrigger,
   ToggleRow,
   Tooltip,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -98,6 +102,12 @@ const IMPORT_MODE_OPTIONS = [
 ] as const satisfies ReadonlyArray<
   LabeledOptionDto<'create_only' | 'upsert_on_base_id' | 'upsert_on_sku'>
 >;
+
+const isImageMode = (value: string): value is 'links' | 'download' =>
+  IMAGE_MODE_OPTIONS.some((option) => option.value === value);
+
+const isImportMode = (value: string): value is BaseImportMode =>
+  IMPORT_MODE_OPTIONS.some((option) => option.value === value);
 
 const IMPORT_LIST_MODE_OPTIONS: Array<LabeledOptionDto<'all' | 'unique'>> = [
   { value: 'all', label: 'All products' },
@@ -207,7 +217,7 @@ function ImportBaseConnectionSection(): React.JSX.Element {
       className='p-6'
     >
       <div className='space-y-6'>
-        <div className='grid gap-6 md:grid-cols-2'>
+        <div className={cn(UI_GRID_ROOMY_CLASSNAME, 'md:grid-cols-2')}>
           <FormField
             label='Base Connection'
             description='Select which Base.com account to use for this import.'
@@ -280,15 +290,15 @@ function ImportBaseConnectionSection(): React.JSX.Element {
                 >
                   Load inventories
                 </Button>
-                <Button
-                  size='sm'
-                  variant='ghost'
-                  onClick={(): void => {
-                    handleClearInventory();
-                  }}
-                >
-                  Clear
-                </Button>
+                  <Button
+                    size='sm'
+                    variant='ghost'
+                    onClick={(): void => {
+                      void handleClearInventory();
+                    }}
+                  >
+                    Clear
+                  </Button>
               </div>
               <FormField
                 label='Limit'
@@ -305,7 +315,7 @@ function ImportBaseConnectionSection(): React.JSX.Element {
           </FormField>
         </div>
 
-        <div className='grid gap-6 md:grid-cols-2'>
+        <div className={cn(UI_GRID_ROOMY_CLASSNAME, 'md:grid-cols-2')}>
           <FormField label='Catalog' description='Optional catalog override for import.'>
             <SelectSimple
               size='sm'
@@ -328,7 +338,7 @@ function ImportBaseConnectionSection(): React.JSX.Element {
           </FormField>
         </div>
 
-        <div className='grid gap-4 md:grid-cols-2'>
+        <div className={cn(UI_GRID_RELAXED_CLASSNAME, 'md:grid-cols-2')}>
           <FormSection
             title='Import Mode'
             description='Choose how Base products should be matched.'
@@ -337,7 +347,11 @@ function ImportBaseConnectionSection(): React.JSX.Element {
             <SelectSimple
               size='sm'
               value={importMode}
-              onValueChange={(v: string): void => setImportMode(v)}
+              onValueChange={(value: string): void => {
+                if (isImportMode(value)) {
+                  setImportMode(value);
+                }
+              }}
               options={IMPORT_MODE_OPTIONS}
             />
             <Hint className='mt-2'>
@@ -352,7 +366,11 @@ function ImportBaseConnectionSection(): React.JSX.Element {
             <SelectSimple
               size='sm'
               value={imageMode}
-              onValueChange={(v: string): void => setImageMode(v)}
+              onValueChange={(value: string): void => {
+                if (isImageMode(value)) {
+                  setImageMode(value);
+                }
+              }}
               options={IMAGE_MODE_OPTIONS}
             />
             <Hint className='mt-2'>
@@ -665,7 +683,7 @@ function ImportListPreviewSection(): React.JSX.Element {
               <span className='text-amber-500'> · SKU dups: {importListStats.skuDuplicates}</span>
             ) : null}
           </div>
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <button
               type='button'
               className='hover:text-white transition-colors'

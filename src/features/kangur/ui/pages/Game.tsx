@@ -51,6 +51,7 @@ import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorA
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 
@@ -627,7 +628,12 @@ function GameContent(): React.JSX.Element {
     children: React.ReactNode,
     screenRef?: RefObject<HTMLDivElement | null>
   ): React.JSX.Element => (
-    <motion.div key={screenKey} {...screenMotionProps} className={className} ref={screenRef}>
+    <motion.div
+      key={screenKey}
+      {...screenMotionProps}
+      className={cn('w-full min-w-0 max-w-full', className)}
+      ref={screenRef}
+    >
       <h2 id={GAME_SCREEN_TITLE_ID} ref={screenHeadingRef} tabIndex={-1} className='sr-only'>
         {GAME_SCREEN_LABELS[screenKey]}
       </h2>

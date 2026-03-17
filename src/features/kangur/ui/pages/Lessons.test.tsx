@@ -130,6 +130,7 @@ vi.mock('@/features/kangur/ui/design/tokens', () => ({
   KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'gap',
   KANGUR_PANEL_GAP_CLASSNAME: 'gap',
   KANGUR_SEGMENTED_CONTROL_CLASSNAME: 'segmented',
+  KANGUR_STACK_SPACED_CLASSNAME: 'stack',
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({

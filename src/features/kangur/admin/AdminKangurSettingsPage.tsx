@@ -136,7 +136,9 @@ export function AdminKangurSettingsPage(): ReactElement {
           copyStatus={copyStatus}
           onCopyTemplateText={() => void handleCopyTemplateText()}
           isProbingNarrator={isProbingNarrator}
-          onProbeNarrator={handleProbeNarrator}
+          onProbeNarrator={() => {
+            void handleProbeNarrator();
+          }}
           narratorProbe={narratorProbe}
           className={SETTINGS_SECTION_CLASS_NAME}
         />
@@ -202,7 +204,9 @@ export function AdminKangurSettingsPage(): ReactElement {
           </Suspense>
         </div>
 
-        <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+        <div
+          className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]`}
+        >
           <FormSection
             title='Operations & Observability'
             description='Quick access to Kangur telemetry, summary health, and log triage surfaces.'

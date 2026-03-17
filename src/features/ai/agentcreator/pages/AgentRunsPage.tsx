@@ -15,6 +15,8 @@ import {
   ListPanel,
   MetadataItem,
   StatusBadge,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 
@@ -55,13 +57,13 @@ function AgentRunsContent(): React.JSX.Element {
         isLoading={isAgentRunsLoading}
         loadingMessage='Loading agent runs...'
       >
-        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-3`}>
           {agentRuns.map((job: AgentRunRecord) => (
             <Card
               key={job.id}
               variant='subtle'
               padding='md'
-              className='flex flex-col gap-4 border-border/60 bg-card/50 transition-colors hover:bg-card/60'
+              className={`${UI_STACK_RELAXED_CLASSNAME} border-border/60 bg-card/50 transition-colors hover:bg-card/60`}
             >
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0 flex-1 space-y-3'>

@@ -6,7 +6,7 @@ import {
   CategoryMapperPageProvider,
   useCategoryMapperPageSelection,
 } from '@/features/integrations/context/CategoryMapperPageContext';
-import { SectionHeader, Card } from '@/shared/ui';
+import { SectionHeader, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 function CategoryMapperPageContent(): React.JSX.Element {
   const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageSelection();
@@ -19,7 +19,7 @@ function CategoryMapperPageContent(): React.JSX.Element {
         className='mb-6'
       />
 
-      <div className='grid gap-6 md:grid-cols-[280px_1fr]'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-[280px_1fr]`}>
         {/* Sidebar */}
         <Card variant='subtle' padding='md' className='bg-card/40'>
           <MarketplaceSelector />

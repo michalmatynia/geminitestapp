@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
   Textarea,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import { useLibraryActions, useLibraryState } from '../context/hooks/useLibrary';
@@ -135,7 +136,7 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
         </div>
       }
     >
-      <div className='grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-[320px_minmax(0,1fr)]`}>
         <div className='space-y-2'>
           <Label className='text-[11px] text-gray-400'>Captured Records</Label>
           <div className='max-h-[700px] overflow-auto rounded border border-border/50 bg-card/20 p-2'>

@@ -14,6 +14,7 @@ import { api } from '@/shared/lib/api-client';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Alert, Badge, Button, Card, FormField, FormSection, Input, Textarea, useToast } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   withKangurClientError,
   withKangurClientErrorSync,
@@ -360,7 +361,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 Edit the learner-facing onboarding copy directly. Changes still sync back into the full Mongo JSON below.
               </p>
 
-              <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+              <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-2`}>
                 <FormField label='Initial headline'>
                   <Input
                     value={parsedAiTutorContentState.content.guestIntro.initial.headline}
@@ -402,7 +403,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 </FormField>
               </div>
 
-              <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+              <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-2`}>
                 <FormField label='Repeated-entry description'>
                   <Textarea
                     value={parsedAiTutorContentState.content.guestIntro.repeated.description}
@@ -477,7 +478,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 These fields drive the built-in home walkthrough shown before any model-based tutoring.
               </p>
 
-              <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+              <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-2`}>
                 <FormField label='Callout header label'>
                   <Input
                     value={parsedAiTutorContentState.content.homeOnboarding.calloutHeaderLabel}
@@ -512,7 +513,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 </FormField>
               </div>
 
-              <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+              <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-2`}>
                 <FormField label='Manual start label'>
                   <Input
                     value={parsedAiTutorContentState.content.homeOnboarding.manualStartLabel}
@@ -547,7 +548,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 </FormField>
               </div>
 
-              <div className='mt-4 grid gap-4 xl:grid-cols-2'>
+              <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 xl:grid-cols-2`}>
                 {AI_TUTOR_HOME_ONBOARDING_STEP_FIELDS.map((step) => (
                   <Card
                     key={step.key}
@@ -624,7 +625,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 </div>
                 <Badge variant='secondary'>Callout</Badge>
               </div>
-              <div className='mt-4 grid gap-4 lg:grid-cols-3'>
+              <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-3`}>
                 <FormField label='Back button'>
                   <Input
                     value={parsedAiTutorContentState.content.guidedCallout.buttons.back}

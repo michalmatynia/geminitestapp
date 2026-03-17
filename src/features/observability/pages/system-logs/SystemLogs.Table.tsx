@@ -19,13 +19,18 @@ import {
   StandardDataTablePanel,
   StatusBadge,
   Tooltip,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import type { StatusVariant } from '@/shared/contracts/ui';
 import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
-import { type ContextDocumentDisplay, type ContextRegistryNodeDisplay } from '../types';
-import { formatTimestamp } from '../utils/formatTimestamp';
+import {
+  type ContextDocumentDisplay,
+  type ContextDocumentSectionDisplay,
+  type ContextRegistryNodeDisplay,
+} from '../../types';
+import { formatTimestamp } from '../../utils/formatTimestamp';
 import {
   getLogCategory,
   getPrimaryContextDocument,
@@ -33,7 +38,7 @@ import {
   readAlertEvidence,
   readContextString,
   readLogContextRegistry,
-} from '../utils/logHelpers';
+} from '../../utils/logHelpers';
 
 export function ContextDocumentCard(props: {
   document: ContextDocumentDisplay;
@@ -57,7 +62,7 @@ export function ContextDocumentCard(props: {
             size='sm'
           />
         ) : null}
-        {document.tags.map((tag) => (
+        {document.tags.map((tag: string) => (
           <StatusBadge key={`${document.id}-${tag}`} status={tag} variant='neutral' size='sm' />
         ))}
       </div>
@@ -69,7 +74,7 @@ export function ContextDocumentCard(props: {
       </div>
       {document.facts.length ? (
         <div className='grid grid-cols-2 gap-2'>
-          {document.facts.map((fact) => (
+          {document.facts.map((fact: { label: string; value: React.ReactNode }) => (
             <MetadataItem
               key={`${document.id}-${fact.label}`}
               label={fact.label}
@@ -79,7 +84,7 @@ export function ContextDocumentCard(props: {
           ))}
         </div>
       ) : null}
-      {document.sections.map((section) => (
+      {document.sections.map((section: ContextDocumentSectionDisplay) => (
         <div key={`${document.id}-${section.id ?? section.title}`}>
           <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
             {section.title}
@@ -94,7 +99,7 @@ export function ContextDocumentCard(props: {
           ) : null}
           {section.items.length ? (
             <div className='space-y-2'>
-              {section.items.map((item, index) => (
+              {section.items.map((item: Record<string, string>, index: number) => (
                 <div
                   key={`${document.id}-${section.id ?? section.title}-${index}`}
                   className='rounded border border-white/5 bg-black/20 px-3 py-2'
@@ -350,7 +355,7 @@ export function EventStreamPanel(): React.JSX.Element {
               </Alert>
             )}
 
-            <div className='grid gap-6 md:grid-cols-2'>
+            <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
               <div className='space-y-4'>
                 <div>
                   <Hint uppercase variant='muted' className='mb-2 font-semibold'>

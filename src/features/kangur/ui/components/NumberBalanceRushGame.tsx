@@ -22,6 +22,7 @@ import {
 import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_STACK_ROOMY_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -787,7 +788,7 @@ export default function NumberBalanceRushGame(
           )}
           surface='playField'
         >
-          <div className='flex w-full flex-col gap-6'>
+          <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full`}>
             <div className='flex items-end justify-center gap-6'>
               <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
                 <div className='text-sm font-semibold text-amber-900'>

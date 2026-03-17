@@ -4,6 +4,7 @@ import React from 'react';
 
 import ProductCard from '@/features/products/components/ProductCard';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { UI_GRID_ROOMY_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
 
 export function HomeFallbackProducts({
   products,
@@ -23,7 +24,7 @@ export function HomeFallbackProducts({
         aria-hidden='true'
       />
       <div className='container px-4 md:px-6'>
-        <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2'>
+        <div className={`${UI_STACK_RELAXED_CLASSNAME} md:flex-row md:items-end md:justify-between motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2`}>
           <div className='space-y-2'>
             <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
               Products
@@ -46,13 +47,13 @@ export function HomeFallbackProducts({
         </div>
         <div className='mt-7'>
           {hasProducts ? (
-            <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+            <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}>
               {products.map((product: ProductWithImages) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
-            <div className='cms-appearance-subtle-surface flex flex-col items-start gap-4 rounded-3xl border p-6 text-sm leading-relaxed text-[var(--cms-appearance-muted-text)]'>
+            <div className={`cms-appearance-subtle-surface ${UI_STACK_RELAXED_CLASSNAME} items-start rounded-3xl border p-6 text-sm leading-relaxed text-[var(--cms-appearance-muted-text)]`}>
               <p>
                 Your products will appear here once you add them in the admin panel. Start by
                 creating a few featured items and uploading imagery.

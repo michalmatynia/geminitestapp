@@ -11,6 +11,7 @@ import {
   Badge,
   ConfirmModal,
   PanelHeader,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 
 import { DocumentAddForm } from '../components/DocumentAddForm';
@@ -148,7 +149,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         }
       />
 
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
         <DocumentAddForm
           title={title}
           setTitle={setTitle}

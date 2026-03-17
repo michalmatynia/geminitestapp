@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { type JSX, type ReactNode } from 'react';
 
 import { Button, Card, MetadataItem, StatusBadge } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurObservabilitySummary, KangurRouteHealth } from '@/shared/contracts';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
@@ -123,7 +124,7 @@ export function AlertsGrid(): JSX.Element {
   } = useObservabilitySummaryContext();
 
   return (
-    <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+    <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-2 xl:grid-cols-3`}>
       {alerts.map((alert) => (
         <Card
           key={alert.id}

@@ -11,6 +11,7 @@ import {
   StatusBadge,
   Textarea,
 } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_LOOSE_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
 import type { KangurAiTutorPromptMode, KangurAiTutorSurface } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 
@@ -72,7 +73,9 @@ export function KnowledgeGraphQueryPreviewSection(): JSX.Element {
     <div id='knowledge-graph-query-preview'>
       <FormSection title='Knowledge Graph Query Preview' variant='subtle'>
         <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-          <div className='grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]'>
+          <div
+            className={`${KANGUR_GRID_LOOSE_CLASSNAME} xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]`}
+          >
             <div className='space-y-4'>
               <div className='space-y-2'>
                 <div className='text-sm font-semibold text-white'>Run an admin graph preview</div>

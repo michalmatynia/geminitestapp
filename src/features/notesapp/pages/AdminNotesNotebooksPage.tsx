@@ -21,6 +21,7 @@ import {
   StandardDataTablePanel,
   FormActions,
   FilterPanel,
+  UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -318,7 +319,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     >
       <div className='max-w-4xl space-y-6'>
         <FormSection title='Create Notebook' className='p-6'>
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
+          <div className={`${UI_STACK_RELAXED_CLASSNAME} sm:flex-row sm:items-end`}>
             <FormField label='Notebook Name' className='flex-1'>
               <Input
                 type='text'

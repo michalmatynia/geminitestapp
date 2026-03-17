@@ -6,16 +6,18 @@ import { useDuelsLobby } from './duels/useDuelsLobby';
 import { useDuelState } from './duels/useDuelState';
 import type { KangurDuelMode } from '@/features/kangur/shared/contracts/kangur-duels';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
-import {
-  KangurPageShell,
-  KangurPageContainer,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { LOBBY_FRESH_WINDOW_MS, LOBBY_POLL_INTERVAL_MS } from './duels/constants';
 
 type LobbySort = 'recent' | 'time_fast' | 'time_slow' | 'questions_low' | 'questions_high';
+const DUELS_MAIN_ID = 'kangur-duels-main';
 
 const formatLobbyCountLabel = (count: number): string => {
   if (count === 1) return '1 aktywny';
@@ -28,7 +30,11 @@ const formatLobbyCountLabel = (count: number): string => {
  * Modularized version of the 3.7k LOC Duels.tsx
  */
 function DuelsContent(): React.JSX.Element {
-  const { isAuthenticated } = useKangurAuth();
+  const { basePath } = useKangurRouting();
+  const auth = useKangurAuth();
+  const { user, isAuthenticated, logout } = auth;
+  const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
+  const { openLoginModal } = useKangurLoginModal();
   const isGuest = !isAuthenticated;
   const [lobbyModeFilter, setLobbyModeFilter] = useState<'all' | KangurDuelMode>('all');
   const [lobbySort, setLobbySort] = useState<LobbySort>('recent');
@@ -51,6 +57,21 @@ function DuelsContent(): React.JSX.Element {
     isOnline: true,
     isPageActive: true,
   });
+
+  const navigation = useMemo(
+    () => ({
+      basePath,
+      canManageLearners: Boolean(user?.canManageLearners),
+      currentPage: 'Duels' as const,
+      guestPlayerName: user ? undefined : guestPlayerName,
+      isAuthenticated: Boolean(user),
+      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
+      onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
+      onLogin: openLoginModal,
+      onLogout: () => logout(false),
+    }),
+    [basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user]
+  );
 
   const publicLobbyEntries = lobby.lobbyEntries ?? [];
   const filteredPublicLobbyEntries = useMemo(() => {
@@ -89,51 +110,52 @@ function DuelsContent(): React.JSX.Element {
   const lobbyFresh = lobby.lobbyFresh ?? new Map();
 
   return (
-    <KangurPageShell id='kangur-duels-page'>
-      <KangurPageContainer
-        id='kangur-duels-main'
-        className={cn(
-          'w-full max-w-5xl pb-10 pt-6',
-          KANGUR_PANEL_GAP_CLASSNAME
-        )}
-      >
-        <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
-          <DuelsLobbyPanel
-            lobbyHeadingId='kangur-duels-lobby-heading'
-            lobbyDescriptionId='kangur-duels-lobby-description'
-            lobbyListId='kangur-duels-lobby-list'
-            lobbyModeFilter={lobbyModeFilter}
-            lobbySort={lobbySort}
-            lobbyLastUpdatedAt={lobby.lobbyLastUpdatedAt}
-            lobbyRefreshSeconds={lobbyRefreshSeconds}
-            lobbyCountLabel={lobbyCountLabel}
-            lobbyEntriesCount={publicLobbyCount}
-            publicLobbyCount={publicLobbyCount}
-            visibleLobbyCount={visibleLobbyCount}
-            filteredPublicLobbyEntries={filteredPublicLobbyEntries}
-            hasAnyPublicLobbyEntries={publicLobbyCount > 0}
-            hasVisiblePublicLobbyEntries={visibleLobbyCount > 0}
-            lobbyError={lobby.lobbyError}
-            isLobbyLoading={lobby.isLobbyLoading}
-            isBusy={lobby.isLobbyLoading}
-            relativeNow={lobby.relativeNow ?? Date.now()}
-            lobbyFresh={lobbyFresh}
-            freshWindowMs={LOBBY_FRESH_WINDOW_MS}
-            onRefresh={() => {
-              void lobby.loadLobby({ showLoading: true });
-            }}
-            onModeFilterChange={setLobbyModeFilter}
-            onSortChange={setLobbySort}
-            onJoin={() => undefined}
-            onCreateChallenge={() => undefined}
-            onResetFilters={() => {
-              setLobbyModeFilter('all');
-              setLobbySort('recent');
-            }}
-          />
-        </div>
-      </KangurPageContainer>
-    </KangurPageShell>
+    <KangurStandardPageLayout
+      tone='play'
+      id='kangur-duels-page'
+      skipLinkTargetId={DUELS_MAIN_ID}
+      navigation={<KangurTopNavigationController navigation={navigation} />}
+      containerProps={{
+        id: DUELS_MAIN_ID,
+        className: cn('w-full max-w-5xl pb-10 pt-6', KANGUR_PANEL_GAP_CLASSNAME),
+      }}
+    >
+      <div className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
+        <DuelsLobbyPanel
+          lobbyHeadingId='kangur-duels-lobby-heading'
+          lobbyDescriptionId='kangur-duels-lobby-description'
+          lobbyListId='kangur-duels-lobby-list'
+          lobbyModeFilter={lobbyModeFilter}
+          lobbySort={lobbySort}
+          lobbyLastUpdatedAt={lobby.lobbyLastUpdatedAt}
+          lobbyRefreshSeconds={lobbyRefreshSeconds}
+          lobbyCountLabel={lobbyCountLabel}
+          lobbyEntriesCount={publicLobbyCount}
+          publicLobbyCount={publicLobbyCount}
+          visibleLobbyCount={visibleLobbyCount}
+          filteredPublicLobbyEntries={filteredPublicLobbyEntries}
+          hasAnyPublicLobbyEntries={publicLobbyCount > 0}
+          hasVisiblePublicLobbyEntries={visibleLobbyCount > 0}
+          lobbyError={lobby.lobbyError}
+          isLobbyLoading={lobby.isLobbyLoading}
+          isBusy={lobby.isLobbyLoading}
+          relativeNow={lobby.relativeNow ?? Date.now()}
+          lobbyFresh={lobbyFresh}
+          freshWindowMs={LOBBY_FRESH_WINDOW_MS}
+          onRefresh={() => {
+            void lobby.loadLobby({ showLoading: true });
+          }}
+          onModeFilterChange={setLobbyModeFilter}
+          onSortChange={setLobbySort}
+          onJoin={() => undefined}
+          onCreateChallenge={() => undefined}
+          onResetFilters={() => {
+            setLobbyModeFilter('all');
+            setLobbySort('recent');
+          }}
+        />
+      </div>
+    </KangurStandardPageLayout>
   );
 }
 

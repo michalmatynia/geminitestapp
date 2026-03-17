@@ -11,9 +11,10 @@ import {
   LoadingState,
   MetadataItem,
   StatusBadge,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
-import { formatTimestamp } from '../utils/formatTimestamp';
+import { formatTimestamp } from '../../utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {
   const { metricsQuery, metrics, levels } = useSystemLogsState();
@@ -35,7 +36,7 @@ export function LogMetrics(): React.JSX.Element {
       {metricsQuery.isLoading ? (
         <LoadingState message='Calculating metrics...' className='py-8' size='sm' />
       ) : metrics ? (
-        <div className='grid gap-4 md:grid-cols-3 mt-4'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-3 mt-4`}>
           <Card variant='glass' padding='md'>
             <Hint uppercase className='mb-2 font-semibold' variant='muted'>
               Retention Period

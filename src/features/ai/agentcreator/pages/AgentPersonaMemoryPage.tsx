@@ -19,6 +19,7 @@ import {
   SelectSimple,
   StandardDataTablePanel,
   Tag,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -189,7 +190,7 @@ export function AgentPersonaMemoryPage({
         </Button>
       }
     >
-      <div className='mb-6 grid gap-4 md:grid-cols-4'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} mb-6 md:grid-cols-4`}>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/30'>
           <Hint size='xxs' uppercase>
             Records
@@ -230,7 +231,7 @@ export function AgentPersonaMemoryPage({
           ) : null
         }
         filters={
-          <div className='grid gap-4 md:grid-cols-6'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-6`}>
             <FormField label='Search memory'>
               <Input
                 size='sm'
@@ -293,7 +294,7 @@ export function AgentPersonaMemoryPage({
         data={items}
         isLoading={memoryQuery.isLoading}
         renderRowDetails={({ row }: { row: { original: PersonaMemoryRecord } }) => (
-          <div className='grid gap-4 bg-black/20 p-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} bg-black/20 p-4 md:grid-cols-2`}>
             <div>
               <Hint size='xxs' uppercase className='mb-2'>
                 Full content

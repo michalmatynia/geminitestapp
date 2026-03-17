@@ -9,7 +9,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import { Checkbox, FormField, Input, Label } from '@/shared/ui';
+import { Checkbox, FormField, Input, Label, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 
 type ConnectionFormFieldsProps = {
   integrationSlug: string;
@@ -193,7 +193,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               }
              aria-label='Auto relist lead (minutes)' title='Auto relist lead (minutes)'/>
           </FormField>
-          <div className='flex items-center gap-3 py-1'>
+          <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} py-1`}>
             <Checkbox
               id={`${idPrefix}-traderaAutoRelistEnabled`}
               checked={form.traderaAutoRelistEnabled}
@@ -303,7 +303,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                   </p>
                 )}
               </FormField>
-              <div className='flex items-center gap-3 py-1'>
+              <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} py-1`}>
                 <Checkbox
                   id={`${idPrefix}-traderaApiSandbox`}
                   checked={form.traderaApiSandbox}

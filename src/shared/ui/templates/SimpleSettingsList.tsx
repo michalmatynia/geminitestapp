@@ -9,6 +9,7 @@ import { ActionMenu } from '../ActionMenu';
 import { DropdownMenuItem } from '../dropdown-menu';
 import { CompactEmptyState } from '../empty-state';
 import { LoadingState } from '../LoadingState';
+import { UI_GRID_RELAXED_CLASSNAME } from '../layout';
 
 export type { SimpleSettingsListItem };
 
@@ -75,7 +76,7 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>(
   }[padding];
 
   return (
-    <div className={cn('grid gap-4', gridCols, className)}>
+    <div className={cn(UI_GRID_RELAXED_CLASSNAME, gridCols, className)}>
       {items.map((item) => {
         const isSelected = selectedId === item.id;
         const isClickable = typeof onSelect === 'function';

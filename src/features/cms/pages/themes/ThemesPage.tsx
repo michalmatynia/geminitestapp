@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   StandardDataTablePanel,
   FilterPanel,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -58,7 +59,7 @@ export default function ThemesPage(): React.ReactNode {
         accessorKey: 'name',
         header: 'Theme Name',
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <div className='flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary'>
               <Palette className='size-4' />
             </div>

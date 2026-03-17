@@ -26,6 +26,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_SPACED_CLASSNAME,
   KANGUR_GRID_SPACED_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -512,7 +513,8 @@ export default function EnglishSentenceStructureGame({
                               {...draggableProvided.draggableProps}
                               {...draggableProvided.dragHandleProps}
                               className={cn(
-                                'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition',
+                                KANGUR_CENTER_ROW_SPACED_CLASSNAME,
+                                'rounded-2xl border px-4 py-3 text-sm font-semibold transition',
                                 snapshot.isDragging
                                   ? 'border-violet-300 bg-violet-50 shadow-lg'
                                   : 'border-slate-200 bg-white/70 hover:-translate-y-[1px]'

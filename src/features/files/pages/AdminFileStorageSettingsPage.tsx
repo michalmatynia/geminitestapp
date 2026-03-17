@@ -20,6 +20,7 @@ import {
   Input,
   SelectSimple,
   ToggleRow,
+  UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -144,7 +145,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
       current='File Storage'
       description='Choose whether files are served from local uploads or FastComet storage.'
     >
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
         <FormSection
           title='Storage Source'
           description='Switch where new uploads are written and where file URLs point.'

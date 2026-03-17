@@ -10,7 +10,16 @@ import {
   type ImageStudioUiPreset,
 } from '@/features/ai/image-studio/utils/ui-presets';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, Textarea, SelectSimple, useToast, Card, CompactEmptyState } from '@/shared/ui';
+import {
+  Button,
+  Card,
+  CompactEmptyState,
+  Label,
+  SelectSimple,
+  Textarea,
+  UI_GRID_RELAXED_CLASSNAME,
+  useToast,
+} from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -133,7 +142,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
             className='border-dashed border-border py-8'
            />
         ) : (
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             {presets.map((preset: ImageStudioUiPreset) => (
               <Card
                 key={preset.id}

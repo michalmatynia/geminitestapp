@@ -18,6 +18,7 @@ import {
   FormSection,
   FormField,
   SimpleSettingsList,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -248,7 +249,7 @@ export function TagsSettings(): React.JSX.Element {
             </FormField>
 
             <FormField label='Color'>
-              <div className='flex items-center gap-3 mt-1'>
+              <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} mt-1`}>
                 <Input
                   type='color'
                   className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900'

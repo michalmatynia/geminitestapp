@@ -125,7 +125,7 @@ export const toAssignmentFollowUpAction = (
     };
   }
 
-  const query: Record<string, string> = QUICK_START_OPERATIONS.has(assignment.target.operation as any)
+  const query: Record<string, string> = QUICK_START_OPERATIONS.has(assignment.target.operation)
     ? {
       quickStart: 'operation',
       operation: assignment.target.operation,

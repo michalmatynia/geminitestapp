@@ -137,6 +137,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
   const addonsQuery = useKangurSocialImageAddons({ limit: 12 });
   const createAddonMutation = useCreateKangurSocialImageAddon();
   const brainModelOptions = useBrainModelOptions({ capability: 'kangur_social.post_generation' });
+  const visionModelOptions = useBrainModelOptions({ capability: 'kangur_social.visual_analysis' });
   const integrationsQuery = useIntegrations();
   const linkedinIntegration = useMemo(
     () => integrationsQuery.data?.find((integration) => integration.slug === 'linkedin') ?? null,
@@ -163,6 +164,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [linkedinConnectionId, setLinkedinConnectionId] = useState<string | null>(null);
   const [brainModelId, setBrainModelId] = useState<string | null>(null);
+  const [visionModelId, setVisionModelId] = useState<string | null>(null);
 
   const linkedInOptions = useMemo(
     () =>
@@ -210,6 +212,42 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     : BRAIN_MODEL_DEFAULT_VALUE;
   const resolvedBrainModelLabel =
     brainModelId?.trim() || brainModelOptions.effectiveModelId || 'Not configured';
+  const visionModelSelectOptions = useMemo(() => {
+    const defaultDescription = visionModelOptions.effectiveModelId
+      ? `Default: ${visionModelOptions.effectiveModelId}`
+      : 'Default model not configured';
+    const overrideId = visionModelId?.trim() ?? '';
+    const hasOverride = Boolean(overrideId);
+    const hasOverrideInList = visionModelOptions.models.includes(overrideId);
+    const overrideOption =
+      hasOverride && !hasOverrideInList
+        ? [
+          {
+            value: overrideId,
+            label: overrideId,
+            description: 'Custom override',
+          },
+        ]
+        : [];
+    return [
+      {
+        value: BRAIN_MODEL_DEFAULT_VALUE,
+        label: 'Use Brain routing',
+        description: defaultDescription,
+      },
+      ...overrideOption,
+      ...visionModelOptions.models.map((modelId) => ({
+        value: modelId,
+        label: modelId,
+        description: modelId === visionModelOptions.effectiveModelId ? 'Routing default' : undefined,
+      })),
+    ];
+  }, [visionModelId, visionModelOptions.effectiveModelId, visionModelOptions.models]);
+  const visionModelSelectValue = visionModelId?.trim()
+    ? visionModelId
+    : BRAIN_MODEL_DEFAULT_VALUE;
+  const resolvedVisionModelLabel =
+    visionModelId?.trim() || visionModelOptions.effectiveModelId || 'Not configured';
   const selectedLinkedInConnection = useMemo(
     () =>
       linkedinConnections.find((connection) => connection.id === linkedinConnectionId) ?? null,
@@ -257,9 +295,11 @@ export function AdminKangurSocialPage(): React.JSX.Element {
       hasLinkedInIntegration: Boolean(linkedinIntegration),
       connectionCount: linkedinConnections.length,
       brainModelId: brainModelId ?? null,
+      visionModelId: visionModelId ?? null,
     });
   }, [
     brainModelId,
+    visionModelId,
     linkedinConnections.length,
     linkedinIntegration,
     posts.length,
@@ -275,6 +315,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
       setImageAddonIds([]);
       setLinkedinConnectionId(null);
       setBrainModelId(null);
+      setVisionModelId(null);
       return;
     }
     setEditorState({
@@ -287,6 +328,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     setDocReferenceInput(activePost.docReferences?.join(', ') ?? '');
     setLinkedinConnectionId(activePost.linkedinConnectionId ?? null);
     setBrainModelId(activePost.brainModelId ?? null);
+    setVisionModelId(activePost.visionModelId ?? null);
     setImageAddonIds(activePost.imageAddonIds ?? []);
     setImageAssets(
       (activePost.imageAssets ?? []).map((asset, index) => ({
@@ -387,6 +429,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     notesLength: generationNotes.trim().length,
     hasLinkedInConnection: Boolean(linkedinConnectionId),
     brainModelId: brainModelId ?? null,
+    visionModelId: visionModelId ?? null,
     ...overrides,
   });
 
@@ -395,6 +438,14 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     setBrainModelId(nextValue);
     trackKangurClientEvent('kangur_social_post_model_select', {
       ...buildSocialContext({ nextModelId: nextValue }),
+    });
+  };
+
+  const handleVisionModelChange = (value: string): void => {
+    const nextValue = value === BRAIN_MODEL_DEFAULT_VALUE ? null : value;
+    setVisionModelId(nextValue);
+    trackKangurClientEvent('kangur_social_post_vision_model_select', {
+      ...buildSocialContext({ nextVisionModelId: nextValue }),
     });
   };
 
@@ -463,6 +514,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           docReferences: resolveDocReferences(),
           linkedinConnectionId: linkedinConnectionId ?? null,
           brainModelId: brainModelId ?? null,
+          visionModelId: visionModelId ?? null,
           publishError: null,
         },
       });
@@ -496,6 +548,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
         docReferences: resolveDocReferences(),
         notes: generationNotes,
         modelId: brainModelId ?? undefined,
+        visionModelId: visionModelId ?? undefined,
         imageAddonIds,
       });
       trackKangurClientEvent(
@@ -539,6 +592,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           docReferences: resolveDocReferences(),
           linkedinConnectionId: linkedinConnectionId ?? null,
           brainModelId: brainModelId ?? null,
+          visionModelId: visionModelId ?? null,
           publishError: null,
         },
       });
@@ -574,7 +628,13 @@ export function AdminKangurSocialPage(): React.JSX.Element {
       ]}
       headerActions={
         <div className='flex flex-wrap items-center gap-2'>
-          <Button variant='outline' size='sm' onClick={handleCreateDraft}>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              void handleCreateDraft();
+            }}
+          >
             New draft
           </Button>
           <Button asChild variant='outline' size='sm'>
@@ -678,6 +738,48 @@ export function AdminKangurSocialPage(): React.JSX.Element {
               {brainModelOptions.sourceWarnings.length > 0 ? (
                 <div className='text-xs text-amber-500'>
                   {brainModelOptions.sourceWarnings.join(' ')}
+                </div>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card
+            variant='subtle'
+            padding='md'
+            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+          >
+            <div className='flex items-center justify-between'>
+              <div>
+                <div className='text-sm font-semibold text-foreground'>Vision model</div>
+                <div className='text-sm text-muted-foreground'>
+                  Capability: Kangur Social Visual Analysis
+                </div>
+              </div>
+              <Badge variant='outline'>{resolvedVisionModelLabel}</Badge>
+            </div>
+            <div className='mt-3 space-y-2'>
+              <SelectSimple
+                value={visionModelSelectValue}
+                onValueChange={handleVisionModelChange}
+                options={visionModelSelectOptions}
+                placeholder='Select model override'
+                size='sm'
+                ariaLabel='Vision model override'
+                title='Vision model override'
+                disabled={visionModelOptions.isLoading}
+              />
+              {visionModelId ? (
+                <div className='text-xs text-muted-foreground'>
+                  Using per-post vision model override.
+                </div>
+              ) : (
+                <div className='text-xs text-muted-foreground'>
+                  Using Brain routing defaults.
+                </div>
+              )}
+              {visionModelOptions.sourceWarnings.length > 0 ? (
+                <div className='text-xs text-amber-500'>
+                  {visionModelOptions.sourceWarnings.join(' ')}
                 </div>
               ) : null}
             </div>
@@ -788,7 +890,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                     type='button'
                     variant='outline'
                     size='sm'
-                    onClick={handleCreateAddon}
+                    onClick={() => {
+                      void handleCreateAddon();
+                    }}
                     disabled={
                       createAddonMutation.isPending ||
                       !addonForm.title.trim() ||
@@ -1000,7 +1104,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={handleGenerate}
+                  onClick={() => {
+                    void handleGenerate();
+                  }}
                   disabled={!activePost}
                   className='inline-flex items-center gap-2'
                 >
@@ -1039,11 +1145,74 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                 </div>
               </FormSection>
 
+              <FormSection title='Visual analysis' className='space-y-3'>
+                {activePost?.visualSummary ? (
+                  <Textarea
+                    value={activePost.visualSummary}
+                    rows={4}
+                    readOnly
+                    className='text-xs'
+                  />
+                ) : (
+                  <div className='text-xs text-muted-foreground'>
+                    Generate a draft with image add-ons to analyze visuals.
+                  </div>
+                )}
+                {activePost?.visualHighlights && activePost.visualHighlights.length > 0 ? (
+                  <div className='flex flex-wrap gap-2'>
+                    {activePost.visualHighlights.map((highlight, index) => (
+                      <Badge key={`${highlight}-${index}`} variant='outline'>
+                        {highlight}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='text-xs text-muted-foreground'>
+                    No visual highlights captured yet.
+                  </div>
+                )}
+                {activePost?.visualDocUpdates && activePost.visualDocUpdates.length > 0 ? (
+                  <div className='space-y-2'>
+                    {activePost.visualDocUpdates.map((update, index) => (
+                      <div
+                        key={`${update.docPath}-${index}`}
+                        className='rounded-lg border border-border/60 bg-background/60 p-3'
+                      >
+                        <div className='text-xs font-semibold text-foreground'>
+                          {update.docPath}
+                        </div>
+                        {update.section ? (
+                          <div className='text-xs text-muted-foreground'>
+                            Section: {update.section}
+                          </div>
+                        ) : null}
+                        {update.proposedText ? (
+                          <div className='mt-2 text-xs whitespace-pre-wrap text-foreground'>
+                            {update.proposedText}
+                          </div>
+                        ) : null}
+                        {update.reason ? (
+                          <div className='mt-2 text-xs text-muted-foreground'>
+                            Reason: {update.reason}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='text-xs text-muted-foreground'>
+                    No documentation updates suggested yet.
+                  </div>
+                )}
+              </FormSection>
+
               <div className='flex flex-wrap items-center gap-2'>
                 <Button
                   type='button'
                   size='sm'
-                  onClick={() => handleSave('draft')}
+                  onClick={() => {
+                    void handleSave('draft');
+                  }}
                   disabled={!activePost}
                 >
                   Save draft
@@ -1052,7 +1221,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={() => handleSave('scheduled')}
+                  onClick={() => {
+                    void handleSave('scheduled');
+                  }}
                   disabled={!activePost || !scheduledAt}
                 >
                   Schedule
@@ -1061,7 +1232,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                   type='button'
                   variant='outline'
                   size='sm'
-                  onClick={handlePublish}
+                  onClick={() => {
+                    void handlePublish();
+                  }}
                   disabled={!activePost}
                 >
                   Publish to LinkedIn

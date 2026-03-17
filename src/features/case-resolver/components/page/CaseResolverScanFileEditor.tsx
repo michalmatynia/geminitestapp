@@ -31,6 +31,9 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  UI_GRID_ROOMY_CLASSNAME,
+  UI_STACK_RELAXED_CLASSNAME,
+  UI_STACK_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 
 import {
@@ -267,7 +270,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
 
         <div className='flex-1 overflow-auto mt-4'>
           {/* ── Scans Tab ── */}
-          <TabsContent value='document' className='m-0 flex flex-col gap-4'>
+          <TabsContent value='document' className={`${UI_STACK_RELAXED_CLASSNAME} m-0`}>
             {/* Upload section — compact, above the text field */}
             <div className='flex flex-col gap-2 rounded-lg border border-border/60 bg-card/10 p-3'>
               <div className='flex items-center justify-between gap-2'>
@@ -449,7 +452,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
           </TabsContent>
 
           {/* ── Relations Tab ── */}
-          <TabsContent value='relations' className='m-0 flex flex-col gap-6'>
+          <TabsContent value='relations' className={`${UI_STACK_ROOMY_CLASSNAME} m-0`}>
             {/* Advanced document search panel */}
             <DocumentRelationSearchPanel
               draftFileId={draft.id}
@@ -542,7 +545,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
 
           {/* ── Metadata Tab ── */}
           <TabsContent value='metadata' className='m-0'>
-            <div className='grid gap-6 lg:grid-cols-2'>
+            <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
               <FormField label='File Name'>
                 <Input
                   value={draft.name}

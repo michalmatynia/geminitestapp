@@ -22,7 +22,14 @@ import type {
   BrainOperationsRange,
   BrainOperationsTrend,
 } from '@/shared/contracts/ai-brain';
-import { Card, CompactEmptyState, SectionHeader, SelectSimple, StatusBadge } from '@/shared/ui';
+import {
+  Card,
+  CompactEmptyState,
+  SectionHeader,
+  SelectSimple,
+  StatusBadge,
+  UI_GRID_RELAXED_CLASSNAME,
+} from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 
@@ -244,7 +251,7 @@ export function OperationsTab(): React.JSX.Element {
             Range: {selectedRangeLabel}
           </div>
 
-          <div className='grid gap-4 lg:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
             {DOMAIN_ORDER.map((key: BrainOperationsDomainKey) => {
               const domain = data.domains[key];
               const Icon = DOMAIN_ICONS[key];

@@ -17,6 +17,7 @@ import {
   FormSection,
   LoadingState,
   SectionHeader,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 
 import { InsightCard } from '../components/InsightCard';
@@ -183,7 +184,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
         }
       />
 
-      <div className='grid gap-6 xl:grid-cols-3'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} xl:grid-cols-3`}>
         <AnalyticsInsightsPanel />
         <RuntimeAnalyticsInsightsPanel />
         <LogInsightsPanel />

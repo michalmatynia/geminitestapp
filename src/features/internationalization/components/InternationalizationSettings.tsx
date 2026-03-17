@@ -17,6 +17,7 @@ import {
   SimpleSettingsList,
   Badge,
   Hint,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 
 import { CountryModal } from './country-modal/CountryModal';
@@ -44,7 +45,7 @@ export function InternationalizationSettings(): React.JSX.Element {
 
   return (
     <div className='space-y-8'>
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
         {/* Currencies Section */}
         <FormSection
           title='Currencies'

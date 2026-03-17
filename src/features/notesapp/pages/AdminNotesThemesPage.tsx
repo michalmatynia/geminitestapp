@@ -24,6 +24,8 @@ import {
   FormField,
   ListPanel,
   FormActions,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -165,7 +167,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
     >
       <div className='max-w-5xl space-y-8'>
         <FormSection title='Create Theme' className='p-6'>
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-3`}>
             <FormField label='Theme Name' className='sm:col-span-2'>
               <Input
                 type='text'
@@ -330,7 +332,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                     className='rounded-lg border border-border/60 bg-card/30 p-5 transition-colors hover:bg-card/40'
                   >
                     <div className='flex flex-wrap items-center justify-between gap-3 mb-4'>
-                      <div className='flex items-center gap-3'>
+                      <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
                         <div className='text-lg font-semibold text-white'>{theme.name}</div>
                         <div className='text-xs text-gray-500'>
                           Updated{' '}
@@ -371,7 +373,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                         )}
                       </div>
                     </div>
-                    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                    <div
+                      className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}
+                    >
                       <FormField label='Theme Name'>
                         <Input
                           type='text'

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button } from '@/shared/ui';
+import { Button, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
 
 export type RightSidebarPromptControlHeaderRuntimeValue = {
   onClose: () => void;
@@ -30,7 +30,7 @@ export function RightSidebarPromptControlHeader(): React.JSX.Element {
 
   return (
     <div className='flex items-center justify-between gap-3'>
-      <div className='flex items-center gap-4'>
+      <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
         <Button
           type='button'
           onClick={runtime.onSave}

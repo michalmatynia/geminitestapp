@@ -12,6 +12,7 @@ import {
   Tag,
   Card,
   Hint,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import { useChatbotMemoryState, type ExtendedMemoryItem } from '../hooks/useChatbotMemoryState';
@@ -134,7 +135,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
           ) : null
         }
         filters={
-          <div className='grid gap-4 md:grid-cols-4'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-4`}>
             <FormField label='Memory key'>
               <Input
                 size='sm'
@@ -180,7 +181,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
         isLoading={loading}
         renderRowDetails={({ row }: { row: { original: ExtendedMemoryItem } }) => (
           <div className='p-4 space-y-4 bg-black/20'>
-            <div className='grid gap-4 md:grid-cols-2'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
               <div>
                 <Hint size='xxs' uppercase className='mb-2'>
                   Full Content

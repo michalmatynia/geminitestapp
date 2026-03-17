@@ -15,6 +15,7 @@ import {
   ToggleRow,
   CollapsibleSection,
   Label,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
@@ -82,7 +83,7 @@ export function ReportsTab(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <FormSection title='Schedules' className='p-4'>
-        <div className='mt-3 grid gap-4 md:grid-cols-3'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 md:grid-cols-3`}>
           <div className='space-y-3'>
             <ToggleRow
               variant='switch'
@@ -160,7 +161,7 @@ export function ReportsTab(): React.JSX.Element {
         description='Edit the system prompt used by report generation models. JSON output requirements are enforced automatically.'
         className='p-4'
       >
-        <div className='mt-3 grid gap-4 md:grid-cols-3'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 md:grid-cols-3`}>
           <FormField label='Analytics prompt'>
             <Textarea
               className='min-h-[160px] text-xs'

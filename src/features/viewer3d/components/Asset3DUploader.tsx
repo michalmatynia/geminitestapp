@@ -16,6 +16,7 @@ import {
   Tag,
   FormField,
   FormActions,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -214,7 +215,7 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
         <div className='space-y-4'>
           {/* Selected File */}
           <div className='flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700'>
-            <div className='flex items-center gap-3'>
+            <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
               <div className='h-10 w-10 bg-blue-500/20 rounded flex items-center justify-center'>
                 <Upload className='h-5 w-5 text-blue-400' />
               </div>
@@ -336,7 +337,9 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
           </FormField>
 
           {/* Visibility */}
-          <div className='flex items-center gap-3 p-3 rounded-md border border-border/40 bg-gray-900/40'>
+          <div
+            className={`${UI_CENTER_ROW_SPACED_CLASSNAME} p-3 rounded-md border border-border/40 bg-gray-900/40`}
+          >
             <Checkbox
               id='upload-is-public'
               checked={isPublic}

@@ -22,12 +22,12 @@ import {
   EmptyState,
   StandardDataTablePanel,
   Card,
+  ToggleRow,
 } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 import {
@@ -374,9 +374,15 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
         ]}
       />
       <div className='flex justify-end'>
-        <PromptExploderDocsTooltipSwitch
-          docsTooltipsEnabled={docsTooltipsEnabled}
-          onDocsTooltipsChange={setDocsTooltipsEnabled}
+        <ToggleRow
+          id='prompt-exploder-docs-tooltips-toggle'
+          label='Docs Tooltips'
+          checked={docsTooltipsEnabled}
+          onCheckedChange={(checked: boolean) => {
+            setDocsTooltipsEnabled(checked);
+          }}
+          className='ml-1 border-border/60 bg-card/30 px-2 py-1'
+          data-doc-id='docs_tooltips_toggle'
         />
       </div>
 

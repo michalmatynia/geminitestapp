@@ -38,6 +38,7 @@ import {
   ConfirmModal,
   Card,
   Hint,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
@@ -640,11 +641,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               const checked = draft.locations.includes(option.value);
               return (
                 <div key={option.value} className='block'>
-                  <Card
-                    variant='subtle-compact'
-                    padding='none'
-                    className={cn(
-                      'flex items-center gap-3 border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
+                    <Card
+                      variant='subtle-compact'
+                      padding='none'
+                      className={cn(
+                      UI_CENTER_ROW_SPACED_CLASSNAME,
+                      'border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
                       checked && 'border-primary/30 bg-primary/5'
                     )}
                   >

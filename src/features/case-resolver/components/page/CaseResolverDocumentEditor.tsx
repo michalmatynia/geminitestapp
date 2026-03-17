@@ -39,6 +39,9 @@ import {
   SelectSimple,
   CompactEmptyState,
   FormSection,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
+  UI_STACK_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
@@ -179,7 +182,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>
       <div className='flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-4'>
-        <div className='flex min-w-0 flex-1 items-center gap-3'>
+        <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'min-w-0 flex-1')}>
           <Button
             type='button'
             size='sm'
@@ -344,11 +347,11 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
         <div className='flex-1 overflow-auto mt-4'>
           <TabsContent value='document' className='m-0 space-y-6'>
-            <div className='flex flex-col gap-6'>
+            <div className={UI_STACK_ROOMY_CLASSNAME}>
               {pendingPromptExploderPayload && (
                 <Card className='border-blue-500/30 bg-blue-500/5 p-4'>
                   <div className='flex items-center justify-between gap-4'>
-                    <div className='flex items-center gap-3'>
+                    <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
                       <div className='rounded-full bg-blue-500/20 p-2'>
                         <Terminal className='size-5 text-blue-400' />
                       </div>
@@ -489,7 +492,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
             </div>
           </TabsContent>
 
-          <TabsContent value='relations' className='m-0 flex flex-col gap-6'>
+          <TabsContent value='relations' className={cn(UI_STACK_ROOMY_CLASSNAME, 'm-0')}>
             {/* Advanced document search panel */}
             <DocumentRelationSearchPanel
               draftFileId={draft.id}
@@ -581,7 +584,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
           <TabsContent value='metadata' className='m-0'>
             <FormSection title='Document Metadata' className='p-6'>
-              <div className='grid gap-6 lg:grid-cols-2'>
+              <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
                 <FormField label='Document Tag'>
                   <SelectSimple
                     value={editingDocumentDraft.tagId ?? '__none__'}

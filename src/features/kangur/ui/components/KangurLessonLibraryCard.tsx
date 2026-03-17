@@ -185,7 +185,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
           />
         }
         asideClassName='w-full self-start sm:ml-auto sm:w-auto'
-        className='w-full'
+        className='w-full max-[420px]:flex-col'
         contentClassName={contentClassName}
         description={lesson.description}
         footer={

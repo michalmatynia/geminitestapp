@@ -21,6 +21,8 @@ import {
   Hint,
   Card,
   PageLayout,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -299,7 +301,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               title='Run Summary'
               variant='subtle'
               actions={
-                <div className='flex items-center gap-3'>
+                <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
                   <StatusBadge
                     status={streamStatus}
                     variant='neutral'
@@ -317,7 +319,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
               }
             >
-              <div className='grid gap-4 md:grid-cols-3'>
+              <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-3`}>
                 <MetadataItem label='Run ID' value={detail.run.id} mono />
                 <MetadataItem label='Status' value={<StatusBadge status={detail.run.status} />} />
                 <MetadataItem
@@ -469,7 +471,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   }, [expandedNodeIds])}
                   renderRowDetails={({ row }) => (
                     <div className='p-4 bg-black/40 border-t border-white/5'>
-                      <div className='grid gap-4 md:grid-cols-2'>
+                      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
                         <div className='space-y-1'>
                           <Hint size='xxs' uppercase className='text-gray-600 font-bold'>
                             Inputs

@@ -6,7 +6,7 @@ import React from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import { useToast, FileUploadButton } from '@/shared/ui';
+import { useToast, FileUploadButton, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -135,7 +135,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
     >
       <div className='flex flex-col h-full overflow-hidden'>
         <div className='p-4 border-b border-border/40'>
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <FileUploadButton
               variant='outline'
               size='sm'

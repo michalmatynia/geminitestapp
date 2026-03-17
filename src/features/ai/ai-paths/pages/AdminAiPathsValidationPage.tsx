@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { LoadingState, Card } from '@/shared/ui';
+import { LoadingState, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 import { CentralDocsSyncPanel } from '../components/validation/CentralDocsSyncPanel';
 import { DocsConnectionsPanel } from '../components/validation/DocsConnectionsPanel';
@@ -48,7 +48,7 @@ function AdminAiPathsValidationPageInner(): React.JSX.Element {
             : 'No AI Path config found for the selected path.'}
         </Card>
       ) : (
-        <div className='grid gap-6 xl:grid-cols-12'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} xl:grid-cols-12`}>
           <div className='space-y-6 xl:col-span-7'>
             <ValidationEnginePanel />
             <DocsConnectionsPanel />

@@ -5,6 +5,11 @@ import type { NavigationCardProps } from '@/shared/contracts/ui';
 import { cn, getTextContent, warnMissingAccessibleLabel } from '@/shared/utils';
 
 import { Card } from './card';
+import {
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_START_ROW_RELAXED_CLASSNAME,
+  UI_START_ROW_SPACED_CLASSNAME,
+} from './layout';
 
 export type { NavigationCardProps };
 
@@ -47,10 +52,10 @@ export function NavigationCard(props: NavigationCardProps): React.JSX.Element {
       {...(accessibleLabel ? { title: accessibleLabel } : {})}
     >
       <Card variant={variant} padding={padding} className={cn('h-full transition-colors', className)}>
-        <div className={cn('flex h-full items-start gap-4', contentClassName)}>
+        <div className={cn(UI_START_ROW_RELAXED_CLASSNAME, 'h-full', contentClassName)}>
           {leading ? <div className='shrink-0'>{leading}</div> : null}
           <div className='min-w-0 flex-1'>
-            <div className={cn('flex items-start gap-3', trailing ? 'justify-between' : null)}>
+            <div className={cn(UI_START_ROW_SPACED_CLASSNAME, trailing ? 'justify-between' : null)}>
               <div className='min-w-0 flex-1'>
                 <TitleTag className={cn('text-lg font-semibold text-white', titleClassName)}>
                   {title}
@@ -76,7 +81,7 @@ export function NavigationCardGrid({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return (
-    <div className={cn('grid gap-4', className)} {...props}>
+    <div className={cn(UI_GRID_RELAXED_CLASSNAME, className)} {...props}>
       {children}
     </div>
   );

@@ -39,6 +39,7 @@ import {
   PanelHeader,
   ToggleRow,
   FolderTreePanel,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -456,7 +457,9 @@ function MenuBuilderSection(): React.JSX.Element {
         </Button>
       </div>
 
-      <div className='mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+      <div
+        className={`${UI_GRID_ROOMY_CLASSNAME} mt-6 lg:grid-cols-[minmax(0,1fr)_360px]`}
+      >
         <div className='space-y-4'>
           <div>
             <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Layout</h3>
@@ -630,7 +633,7 @@ function AdminMenuSettingsInner(): React.JSX.Element {
         ]}
       />
 
-      <div className='mt-8 grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} mt-8 lg:grid-cols-2`}>
         <FavoritesSection />
         <SectionColorsSection />
       </div>

@@ -9,6 +9,7 @@ import { Badge } from './badge';
 import { Card } from './card';
 import { Checkbox } from './checkbox';
 import { Hint } from './Hint';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from './layout';
 import { SearchInput } from './search-input';
 
 export type { SearchableListProps };
@@ -78,7 +79,7 @@ export function SearchableList<T>(props: SearchableListProps<T>): React.JSX.Elem
               return (
                 <label
                   key={id}
-                  className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors group'
+                  className={`${UI_CENTER_ROW_SPACED_CLASSNAME} p-2 hover:bg-white/5 cursor-pointer transition-colors group`}
                 >
                   <Checkbox checked={checked} onCheckedChange={() => onToggle(id)} />
                   <div className='flex flex-1 items-center justify-between'>

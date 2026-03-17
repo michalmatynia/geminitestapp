@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import React from 'react';
 
+import { UI_STACK_ROOMY_CLASSNAME } from '@/shared/ui';
 export function HomeFallbackNextSteps(): React.JSX.Element {
   return (
     <section className='w-full py-12'>
@@ -14,7 +15,7 @@ export function HomeFallbackNextSteps(): React.JSX.Element {
             }}
             aria-hidden='true'
           />
-          <div className='relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
+          <div className={`${UI_STACK_ROOMY_CLASSNAME} relative md:flex-row md:items-center md:justify-between`}>
             <div className='space-y-2'>
               <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
                 Next steps

@@ -83,7 +83,7 @@ export function useLoginLogic() {
       );
 
       // Force session refresh
-      await clearSessionUserCache();
+      clearSessionUserCache();
       
       // Update active learner state
       if (kind === 'student' && learnerId) {

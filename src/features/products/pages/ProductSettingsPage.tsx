@@ -33,7 +33,7 @@ import {
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
 import { ProductSyncSettings } from '@/shared/lib/product-sync-adapter';
-import { AdminProductsPageLayout, Button, useToast, Card } from '@/shared/ui';
+import { AdminProductsPageLayout, Button, useToast, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -274,7 +274,7 @@ export function ProductSettingsPage(): React.JSX.Element {
             </Button>
           </div>
         </Card>
-        <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-[240px_1fr]`}>
           <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
             <div className='flex flex-col gap-2'>
               {settingSections.map((section: (typeof settingSections)[number]) => (

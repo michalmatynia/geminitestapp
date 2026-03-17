@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { Button } from '@/shared/ui';
+import { Button, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
 
 export function NoteDetailActions(): React.JSX.Element | null {
   const { selectedNote, isEditing } = useNotesAppState();
@@ -15,7 +15,7 @@ export function NoteDetailActions(): React.JSX.Element | null {
   if (!selectedNote) return null;
 
   return (
-    <div className='mb-4 flex items-center gap-4'>
+    <div className={`${UI_CENTER_ROW_RELAXED_CLASSNAME} mb-4`}>
       <Button
         onClick={(): void => {
           if (isEditing) {

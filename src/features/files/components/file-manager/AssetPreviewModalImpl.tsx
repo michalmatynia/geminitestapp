@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { StatusBadge, MetadataItem, Badge } from '@/shared/ui';
+import { Badge, MetadataItem, StatusBadge, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 import { DetailModal, DetailModalSection } from '@/shared/ui/templates/modals';
 import { formatDateTime, formatFileSize } from '@/shared/utils';
 
@@ -24,7 +24,7 @@ export function AssetPreviewModal(props: AssetPreviewModalProps): React.JSX.Elem
       size='lg'
     >
       <div className='space-y-6'>
-        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-3`}>
           <MetadataItem label='Size' value={formatFileSize(previewAsset.size)} />
           <MetadataItem label='MIME Type' value={previewAsset.mimetype} />
           <MetadataItem

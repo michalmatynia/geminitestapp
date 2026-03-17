@@ -5,7 +5,15 @@ import { useMemo, useId, type JSX } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, Label, Textarea, Checkbox, Badge, SelectSimple } from '@/shared/ui';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Label,
+  SelectSimple,
+  Textarea,
+  UI_GRID_ROOMY_CLASSNAME,
+} from '@/shared/ui';
 
 interface PromptGenerationSectionProps {
   pathNumber: number;
@@ -241,7 +249,9 @@ function PromptGenerationOutputPanels(): JSX.Element | null {
   const { outputEnabled } = usePromptGenerationSectionRuntime();
   if (!outputEnabled) return null;
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300'>
+    <div
+      className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-300`}
+    >
       <PromptGenerationOutputPromptPanel />
       <PromptGenerationFinalResultPanel />
     </div>
@@ -254,7 +264,7 @@ function PromptGenerationSectionRuntime(): JSX.Element {
       <PromptGenerationSectionHeader />
 
       <div className='pl-8 space-y-6'>
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2`}>
           <PromptGenerationInputPanel />
           <PromptGenerationInitialResultPanel />
         </div>

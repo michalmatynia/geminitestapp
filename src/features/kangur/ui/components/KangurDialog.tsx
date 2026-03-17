@@ -43,6 +43,10 @@ const CONTENT_SIZE_CLASSNAMES: Record<KangurDialogContentSize, string> = {
   md: 'w-[min(calc(100vw-2rem),42rem)]',
 };
 
+type KangurDialogContentProps = ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+  'data-testid'?: string;
+};
+
 type KangurDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -51,7 +55,7 @@ type KangurDialogProps = {
   contentVariant?: KangurDialogContentVariant;
   contentSize?: KangurDialogContentSize;
   overlayProps?: ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>;
-  contentProps?: ComponentPropsWithoutRef<typeof DialogPrimitive.Content>;
+  contentProps?: KangurDialogContentProps;
   children: ReactNode;
 };
 

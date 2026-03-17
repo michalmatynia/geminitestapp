@@ -11,6 +11,8 @@ import {
   FormSection,
   Input,
   ToggleRow,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -162,7 +164,7 @@ function TransientRecoverySettingsForm({
         }
         className='p-6'
       >
-        <div className='grid gap-6 md:grid-cols-2'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
           <FormSection
             title='Retry Policy'
             description='Applies to transient external calls and webhooks.'
@@ -177,7 +179,7 @@ function TransientRecoverySettingsForm({
               />
             }
           >
-            <div className='grid gap-4 mt-2'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-2`}>
               <FormField label='Max attempts' description='Maximum number of execution tries.'>
                 <Input
                   type='number'
@@ -194,7 +196,7 @@ function TransientRecoverySettingsForm({
                   title='Max attempts'
                 />
               </FormField>
-              <div className='grid grid-cols-2 gap-4'>
+              <div className={`${UI_GRID_RELAXED_CLASSNAME} grid-cols-2`}>
                 <FormField label='Initial delay (ms)'>
                   <Input
                     type='number'
@@ -261,7 +263,7 @@ function TransientRecoverySettingsForm({
               />
             }
           >
-            <div className='grid gap-4 mt-2'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-2`}>
               <FormField label='Failure threshold' description='Consecutive failures before opening.'>
                 <Input
                   type='number'

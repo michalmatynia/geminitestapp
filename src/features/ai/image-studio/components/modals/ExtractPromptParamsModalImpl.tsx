@@ -3,7 +3,13 @@
 import { Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
-import { FormModal, Label, StandardDataTablePanel, CompactEmptyState } from '@/shared/ui';
+import {
+  CompactEmptyState,
+  FormModal,
+  Label,
+  StandardDataTablePanel,
+  UI_GRID_RELAXED_CLASSNAME,
+} from '@/shared/ui';
 
 import { StudioActionButtonRow, type StudioActionButtonConfig } from './StudioActionButtonRow';
 import { StudioPromptTextSection } from './StudioPromptTextSection';
@@ -156,7 +162,9 @@ export function ExtractPromptParamsModal(): React.JSX.Element {
         ) : null}
 
         {studioSettings.promptExtraction.showValidationSummary && previewValidation ? (
-          <div className='grid gap-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs md:grid-cols-2'>
+          <div
+            className={`${UI_GRID_RELAXED_CLASSNAME} rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs md:grid-cols-2`}
+          >
             <div className='space-y-2'>
               <div className='font-bold uppercase tracking-wide text-cyan-400'>
                 Validation Before: {previewValidation.before.length}

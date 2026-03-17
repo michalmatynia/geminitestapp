@@ -13,6 +13,11 @@ import type {
   KangurAiTutorConversationContext,
   KangurAiTutorLearnerMemory,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAssignment,
+  KangurProgressState,
+  KangurScore,
+} from '@/features/kangur/shared/contracts/kangur';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import {
@@ -69,7 +74,11 @@ export async function buildKangurAiTutorAdaptiveGuidance({
       getKangurAssignmentRepository(),
     ]);
 
-    const [progress, scores, assignments]: [any, any, any] = await Promise.all([
+    const [progress, scores, assignments]: [
+      KangurProgressState,
+      KangurScore[],
+      KangurAssignment[],
+    ] = await Promise.all([
       progressRepository.getProgress(learnerId),
       scoreRepository.listScores({
         sort: '-created_date',
@@ -91,14 +100,14 @@ export async function buildKangurAiTutorAdaptiveGuidance({
     });
     const masteryInsights = buildLessonMasteryInsights(progress, 2);
     const activeAssignments = assignments
-      .map((assignment: any) =>
+      .map((assignment) =>
         evaluateKangurAssignment({
           assignment,
           progress,
           scores,
         })
       )
-      .filter((assignment: any) => !assignment.archived && assignment.progress.status !== 'completed')
+      .filter((assignment) => !assignment.archived && assignment.progress.status !== 'completed')
       .sort(sortAssignments);
     const completedFollowUp = parseCompletedFollowUp(memory);
     const orderedAssignments = buildOrderedAssignmentCandidates(activeAssignments, context);

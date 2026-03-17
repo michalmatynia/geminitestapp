@@ -29,7 +29,9 @@ import {
   ListPanel,
   EmptyState,
   Hint,
+  UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 type RouteMapEntry = FlattenedNavItem & {
   description: string;
@@ -236,7 +238,12 @@ export function AdminRouteMapPage(): React.JSX.Element {
 
       <ListPanel
         filters={
-          <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+          <div
+            className={cn(
+              UI_STACK_RELAXED_CLASSNAME,
+              'md:flex-row md:items-center md:justify-between'
+            )}
+          >
             <div className='flex flex-col gap-1'>
               <div className='text-sm text-gray-200'>Routes indexed</div>
               <Hint variant='muted' size='xs'>

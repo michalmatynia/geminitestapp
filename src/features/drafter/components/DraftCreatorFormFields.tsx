@@ -24,6 +24,7 @@ import {
   Card,
   CompactEmptyState,
   ToggleRow,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
 import {
@@ -175,7 +176,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         <Card
           variant='subtle-compact'
           padding='sm'
-          className='flex items-center gap-3 border-border bg-card/40'
+          className={`${UI_CENTER_ROW_SPACED_CLASSNAME} border-border bg-card/40`}
         >
           <div
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 ${

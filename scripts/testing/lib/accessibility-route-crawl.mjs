@@ -1,12 +1,24 @@
 import { sanitizeRuntimeToken } from './runtime-broker.mjs';
 
 const VALID_AUDIENCES = new Set(['public', 'admin']);
+const VALID_NAVIGATION_WAIT_UNTIL = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeOptionalString = (value) => {
   const normalized = normalizeString(value);
   return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeOptionalPositiveNumber = (value) => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+  return null;
 };
 
 const parseRouteIdFilter = (value) => {
@@ -69,6 +81,8 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
     const audience = normalizeString(entry?.audience).toLowerCase() || 'public';
     const readySelector = normalizeOptionalString(entry?.readySelector);
     const contextSelector = normalizeOptionalString(entry?.contextSelector);
+    const navigationWaitUntil = normalizeOptionalString(entry?.navigationWaitUntil);
+    const navigationTimeoutMs = normalizeOptionalPositiveNumber(entry?.navigationTimeoutMs);
 
     if (!route.startsWith('/')) {
       throw new Error(`Accessibility route crawl entry "${id}" must declare a route starting with "/".`);
@@ -77,6 +91,13 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
     if (!VALID_AUDIENCES.has(audience)) {
       throw new Error(
         `Accessibility route crawl entry "${id}" has invalid audience "${audience}". Expected "public" or "admin".`
+      );
+    }
+
+    if (navigationWaitUntil && !VALID_NAVIGATION_WAIT_UNTIL.has(navigationWaitUntil.toLowerCase())) {
+      throw new Error(
+        `Accessibility route crawl entry "${id}" has invalid navigationWaitUntil "${navigationWaitUntil}". ` +
+          'Expected one of: load, domcontentloaded, networkidle, commit.'
       );
     }
 
@@ -97,6 +118,8 @@ export const normalizeAccessibilityRouteEntries = (entries) => {
       audience,
       readySelector,
       contextSelector,
+      navigationWaitUntil: navigationWaitUntil ? navigationWaitUntil.toLowerCase() : null,
+      navigationTimeoutMs,
     };
   });
 };

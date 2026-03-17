@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
-import { FormSection, FormField, Card } from '@/shared/ui';
+import { FormSection, FormField, Card, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 import { RangeField, SelectField } from '../shared-fields';
@@ -293,7 +293,7 @@ export function VisualEffectsSection(): React.ReactNode {
           className='border-border/40 bg-card/30 space-y-3'
         >
           <FormSection title='Shadow' variant='subtle-compact' className='p-0'>
-            <div className='grid gap-4 lg:grid-cols-2 mt-2'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-2 mt-2`}>
               <div className='space-y-3'>
                 <FormSection title='From' variant='subtle-compact' className='p-0'>
                   <div className='grid gap-3 sm:grid-cols-2 mt-2'>

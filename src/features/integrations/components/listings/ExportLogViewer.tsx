@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { useProductListingsLogs } from '@/features/integrations/context/ProductListingsContext';
 import type { LogListEntry } from '@/shared/contracts/ui';
-import { CopyButton, CollapsibleSection, LogList } from '@/shared/ui';
+import { CopyButton, CollapsibleSection, LogList, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;
@@ -47,7 +47,7 @@ export function ExportLogViewer({
   return (
     <CollapsibleSection
       title={
-        <div className='flex items-center gap-3'>
+        <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
           <span className='font-semibold'>Export Telemetry</span>
           <span className='rounded-full bg-black/30 px-2 py-0.5 text-[10px] text-gray-400'>
             {logs.length} events

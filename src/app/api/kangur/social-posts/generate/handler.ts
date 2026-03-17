@@ -17,6 +17,7 @@ const bodySchema = z.object({
   notes: z.string().trim().optional(),
   postId: z.string().trim().optional(),
   modelId: z.string().trim().optional(),
+  visionModelId: z.string().trim().optional(),
   imageAddonIds: z.array(z.string().trim().min(1)).optional(),
 });
 
@@ -41,6 +42,7 @@ export async function postKangurSocialPostGenerateHandler(
       docReferences: parsed.docReferences,
       notes: parsed.notes,
       modelId: parsed.modelId,
+      visionModelId: parsed.visionModelId,
       imageAddons,
     });
 
@@ -53,8 +55,12 @@ export async function postKangurSocialPostGenerateHandler(
         combinedBody: draft.combinedBody,
         generatedSummary: draft.summary,
         docReferences: draft.docReferences,
+        visualSummary: draft.visualSummary,
+        visualHighlights: draft.visualHighlights,
+        visualDocUpdates: draft.visualDocUpdates,
         imageAddonIds,
         ...(parsed.modelId ? { brainModelId: parsed.modelId } : {}),
+        ...(parsed.visionModelId ? { visionModelId: parsed.visionModelId } : {}),
         status: 'draft',
       });
 

@@ -15,6 +15,8 @@ import {
   useToast,
   ToggleRow,
   FormActions,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -181,9 +183,9 @@ export default function TraderaSettingsPage(): React.JSX.Element {
         description='Manage global listing behaviors, relist scheduling, and browser automation profiles.'
       />
 
-      <div className='grid gap-6'>
+      <div className={UI_GRID_ROOMY_CLASSNAME}>
         <FormSection title='Listing Defaults' className='p-6'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <FormField
               label='Default Duration (Hours)'
               description='Maximum time a listing remains active.'

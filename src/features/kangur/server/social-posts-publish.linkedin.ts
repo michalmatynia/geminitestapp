@@ -240,7 +240,7 @@ const resolveImageAsset = async (
     const lookup = mime.lookup(source);
     const inferredType = resolveContentType(typeof lookup === 'string' ? lookup : null);
     const contentType = headerType ?? inferredType;
-    if (!contentType || !contentType.startsWith('image/')) {
+    if (!contentType?.startsWith('image/')) {
       throw configurationError('LinkedIn publish supports image files only.');
     }
     return { buffer: Buffer.from(arrayBuffer), contentType };
@@ -250,7 +250,7 @@ const resolveImageAsset = async (
   const buffer = await fs.readFile(diskPath);
   const lookup = mime.lookup(diskPath);
   const inferredType = resolveContentType(typeof lookup === 'string' ? lookup : null);
-  if (!inferredType || !inferredType.startsWith('image/')) {
+  if (!inferredType?.startsWith('image/')) {
     throw configurationError('LinkedIn publish supports image files only.');
   }
   return { buffer, contentType: inferredType };

@@ -25,6 +25,8 @@ import {
   LoadingState,
   ToggleRow,
   DocumentationList,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -130,9 +132,9 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
-      <div className='grid gap-6 lg:grid-cols-3'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
         <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <ToggleRow
               id='database-engine-require-explicit-service-routing'
               label='Strict Service Routing'
@@ -210,7 +212,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         variant='flat'
       />
 
-      <div className='grid gap-6 md:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
         <FormSection title='Redis Overview' className='p-6'>
           {redisOverview ? (
             <div className='space-y-4'>

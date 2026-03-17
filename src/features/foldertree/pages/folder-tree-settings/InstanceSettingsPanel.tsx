@@ -12,6 +12,8 @@ import {
   SelectSimple,
   FormField,
   Card,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import {
   type FolderTreeInstance,
@@ -129,7 +131,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
     >
       <SectionHeader title={meta.title} description={meta.description} size='xs' />
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 xl:grid-cols-4`}>
         <FormField label='Placeholder Preset'>
           <SelectSimple
             size='sm'
@@ -215,7 +217,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
         })}
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormField label='Root Drop Label'>
           <Input
             value={profile.placeholders.rootDropLabel}
@@ -247,7 +249,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
         </FormField>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         {renderCheckboxCardField({
           id: `folder-tree-${meta.id}-allow-folder-to-folder`,
           checked: allowFolderToFolder,
@@ -293,7 +295,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
         })}
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormField label='Allowed Folder Kinds'>
           <Input
             value={listToValue(folderKinds)}
@@ -348,7 +350,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
          aria-label='Example: archive, locked' title='Example: archive, locked'/>
       </FormField>
 
-      <div className='grid gap-4 xl:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} xl:grid-cols-2`}>
         <FormField label='Folder Closed Icon'>
           <IconSelector
             value={profile.icons.slots.folderClosed}
@@ -480,7 +482,7 @@ export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.
         <p className='mb-3 text-xs font-medium uppercase tracking-wide text-gray-400'>
           Capabilities
         </p>
-        <div className='grid gap-6 lg:grid-cols-3'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
           {/* Keyboard Navigation */}
           <div className='space-y-2'>
             <p className='text-xs font-semibold text-gray-300'>Keyboard Navigation</p>

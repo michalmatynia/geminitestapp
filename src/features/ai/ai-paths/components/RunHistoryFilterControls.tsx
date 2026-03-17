@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Hint } from '@/shared/ui';
+import { Button, Hint, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import type { RunHistoryFilterView } from './run-history-panel';
 
 interface RunHistoryFilterControlsProps {
@@ -25,7 +25,7 @@ export function RunHistoryFilterControls(
   return (
     <>
       <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
-        <div className='flex items-center gap-3'>
+        <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
           <Hint size='xs' uppercase={false} className='font-semibold text-white'>
             Run History
           </Hint>

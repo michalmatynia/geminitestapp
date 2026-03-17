@@ -28,7 +28,7 @@ const splitSelectors = (selectorText: string): string[] => {
   let depthParen = 0;
   let depthBracket = 0;
   let depthBrace = 0;
-  let inString: '"' | "'" | null = null;
+  let inString: '"' | '\'' | null = null;
   let current = '';
 
   for (let i = 0; i < selectorText.length; i += 1) {
@@ -43,7 +43,7 @@ const splitSelectors = (selectorText: string): string[] => {
       continue;
     }
 
-    if (char === '"' || char === "'") {
+    if (char === '"' || char === '\'') {
       inString = char;
       current += char;
       continue;
@@ -98,7 +98,7 @@ const getAtRuleName = (header: string): string | null => {
 
 const readHeader = (css: string, start: number): { header: string; end: number; terminator: string | null } => {
   let i = start;
-  let inString: '"' | "'" | null = null;
+  let inString: '"' | '\'' | null = null;
   let inComment = false;
 
   while (i < css.length) {
@@ -129,7 +129,7 @@ const readHeader = (css: string, start: number): { header: string; end: number; 
       continue;
     }
 
-    if (char === '"' || char === "'") {
+    if (char === '"' || char === '\'') {
       inString = char;
       i += 1;
       continue;
@@ -148,7 +148,7 @@ const readHeader = (css: string, start: number): { header: string; end: number; 
 const readBlock = (css: string, start: number): { body: string; end: number } => {
   let i = start + 1;
   let depth = 1;
-  let inString: '"' | "'" | null = null;
+  let inString: '"' | '\'' | null = null;
   let inComment = false;
 
   while (i < css.length) {
@@ -179,7 +179,7 @@ const readBlock = (css: string, start: number): { body: string; end: number } =>
       continue;
     }
 
-    if (char === '"' || char === "'") {
+    if (char === '"' || char === '\'') {
       inString = char;
       i += 1;
       continue;

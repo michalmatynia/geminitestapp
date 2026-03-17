@@ -16,6 +16,7 @@ import {
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_CENTER_ROW_RELAXED_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_INLINE_CENTER_ROW_CLASSNAME,
   KANGUR_RELAXED_ROW_CLASSNAME,
@@ -102,7 +103,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         surface='mist'
       >
         <div className={`${KANGUR_RELAXED_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-          <div className='flex items-center gap-4'>
+          <div className={KANGUR_CENTER_ROW_RELAXED_CLASSNAME}>
             <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
               {selectedAvatar ? (
                 <img

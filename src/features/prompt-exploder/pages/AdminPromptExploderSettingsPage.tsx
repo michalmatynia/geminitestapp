@@ -28,6 +28,8 @@ import {
   SectionHeader,
   Button,
   SelectSimple,
+  UI_GRID_ROOMY_CLASSNAME,
+  ToggleRow,
   useToast,
 } from '@/shared/ui';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -35,7 +37,6 @@ import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 import { defaultPromptExploderSettings, parsePromptExploderSettingsResult } from '../settings';
 import {
@@ -451,15 +452,21 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 Back to Prompt Exploder
               </Link>
             </Button>
-            <PromptExploderDocsTooltipSwitch
-              docsTooltipsEnabled={docsTooltipsEnabled}
-              onDocsTooltipsChange={setDocsTooltipsEnabled}
+            <ToggleRow
+              id='prompt-exploder-docs-tooltips-toggle'
+              label='Docs Tooltips'
+              checked={docsTooltipsEnabled}
+              onCheckedChange={(checked: boolean) => {
+                setDocsTooltipsEnabled(checked);
+              }}
+              className='ml-1 border-border/60 bg-card/30 px-2 py-1'
+              data-doc-id='docs_tooltips_toggle'
             />
           </div>
         }
       />
 
-      <div className='grid gap-6'>
+      <div className={UI_GRID_ROOMY_CLASSNAME}>
         <FormSection
           title='AI Operations'
           description='AI Brain owns Prompt Exploder routing. Only the local operation mode remains configurable here.'

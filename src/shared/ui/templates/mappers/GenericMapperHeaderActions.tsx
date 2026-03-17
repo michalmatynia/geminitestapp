@@ -3,6 +3,7 @@ import React from 'react';
 
 import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui';
 import { Button } from '../../button';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '../../layout';
 
 export type { GenericMapperHeaderActionsProps };
 
@@ -12,7 +13,7 @@ export function GenericMapperHeaderActions(
   const { onFetch, isFetching, onSave, isSaving, pendingCount } = props;
 
   return (
-    <div className='flex items-center gap-3'>
+    <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
       <Button variant='outline' size='sm' onClick={onFetch} loading={isFetching}>
         <Download className='mr-2 h-3.5 w-3.5' />
         Fetch

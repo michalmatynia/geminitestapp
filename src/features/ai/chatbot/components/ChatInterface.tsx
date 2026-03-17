@@ -12,7 +12,7 @@ import {
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { ChatMessageContent } from './ChatMessageContent';
@@ -91,7 +91,7 @@ export function ChatInterface(): React.JSX.Element {
     <div className='flex h-full flex-col'>
       {activePersona ? (
         <div className='border-b border-border/60 bg-muted/30 px-4 py-3'>
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <AgentPersonaMoodAvatar
               className='h-10 w-10 border border-border/60 bg-slate-900/70'
               imgClassName='object-cover'

@@ -25,7 +25,7 @@ export const useKangurCanvasTouchLock = (
       canvas.style.touchAction = 'none';
     }
 
-    const preventDefault = (event: any): void => {
+    const preventDefault: EventListener = (event) => {
       if (event.cancelable) {
         event.preventDefault();
       }

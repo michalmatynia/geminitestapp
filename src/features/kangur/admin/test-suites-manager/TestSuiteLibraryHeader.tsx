@@ -5,6 +5,7 @@ import { cn } from '@/features/kangur/shared/utils/ui-utils';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
+import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 export function TestSuiteLibraryHeader() {
   const settingsStore = useSettingsStore();
@@ -22,7 +23,7 @@ export function TestSuiteLibraryHeader() {
 
   return (
     <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.95),rgba(19,38,61,0.86))] p-5 sm:p-6 shadow-[0_24px_90px_-52px_rgba(14,165,233,0.35)]'>
-      <div className='flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
+      <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} xl:flex-row xl:items-center xl:justify-between`}>
         <div className='max-w-3xl space-y-2'>
           <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/80'>
             Suite library

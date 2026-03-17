@@ -16,6 +16,7 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
   english_basics: {
     componentId: 'english_basics',
     subject: 'english',
+    ageGroup: 'ten_year_old',
     label: 'English Basics Lesson',
     title: 'Angielski: podstawy',
     description: 'Powitania i pierwsze zdania',
@@ -26,6 +27,7 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
   english_parts_of_speech: {
     componentId: 'english_parts_of_speech',
     subject: 'english',
+    ageGroup: 'ten_year_old',
     label: 'English Pronouns Lesson',
     title: 'English: Pronouns',
     description: 'Zaimki osobowe i dzierżawcze na przykładach z matematyki dla nastolatków',
@@ -36,6 +38,7 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
   english_sentence_structure: {
     componentId: 'english_sentence_structure',
     subject: 'english',
+    ageGroup: 'ten_year_old',
     label: 'English Sentence Structure Lesson',
     title: 'Angielski: składnia zdania',
     description: 'Szyk zdania, pytania i łączenie myśli',
@@ -46,6 +49,7 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
   english_subject_verb_agreement: {
     componentId: 'english_subject_verb_agreement',
     subject: 'english',
+    ageGroup: 'ten_year_old',
     label: 'English Agreement Lesson',
     title: 'Angielski: subject-verb agreement',
     description:
@@ -57,6 +61,7 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
   english_articles: {
     componentId: 'english_articles',
     subject: 'english',
+    ageGroup: 'ten_year_old',
     label: 'English Articles Lesson',
     title: 'English: Articles',
     description: 'A, an, the i brak przedimka w języku angielskim',
@@ -67,6 +72,7 @@ export const ENGLISH_LESSON_TEMPLATES: Record<EnglishLessonComponentId, KangurLe
   english_prepositions_time_place: {
     componentId: 'english_prepositions_time_place',
     subject: 'english',
+    ageGroup: 'ten_year_old',
     label: 'English Prepositions Lesson',
     title: 'English: Prepositions',
     description: 'Przyimki czasu i miejsca w praktyce nastolatków',

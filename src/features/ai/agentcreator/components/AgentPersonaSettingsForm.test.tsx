@@ -33,6 +33,7 @@ vi.mock('@/features/ai/agentcreator/components/AgentPersonaMoodEditor', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
+  __esModule: true,
   UI_GRID_RELAXED_CLASSNAME: 'ui-grid-relaxed',
   Button: ({
     asChild,

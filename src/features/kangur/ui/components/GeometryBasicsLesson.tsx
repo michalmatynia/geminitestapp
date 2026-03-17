@@ -26,6 +26,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
+  createLessonHubSelectHandler,
   buildLessonSectionLabels,
   buildLessonHubSectionsWithProgress,
   resolveLessonSectionHeader,
@@ -323,6 +324,12 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
     );
   }
 
+  const handleSelect = createLessonHubSelectHandler<SectionId>({
+    markSectionOpened,
+    onSelectSection: (sectionId) => setActiveSection(sectionId),
+    skipMarkFor: ['game'] as const,
+  });
+
   return (
     <LessonHub
       lessonEmoji='📐'
@@ -330,12 +337,7 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-cyan-300'
       sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={(id) => {
-        if (id !== 'game') {
-          markSectionOpened(id as Exclude<SectionId, 'game'>);
-        }
-        setActiveSection(id as SectionId);
-      }}
+      onSelect={handleSelect}
     />
   );
 }

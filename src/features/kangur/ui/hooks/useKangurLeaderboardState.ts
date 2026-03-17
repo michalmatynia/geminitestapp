@@ -98,17 +98,20 @@ const ENGLISH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> 
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
+const ALPHABET_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  alphabet_basics: { label: 'Alfabet', emoji: '🔤' },
+  alphabet_copy: { label: 'Przepisz litery', emoji: '📝' },
+  alphabet_syllables: { label: 'Sylaby', emoji: '🗣️' },
+};
+
 const OPERATION_LABELS_BY_SUBJECT: Record<
   KangurLessonSubject,
   Record<string, KangurLeaderboardOperationLabel>
 > = {
   maths: MATH_OPERATION_LABELS,
   english: ENGLISH_OPERATION_LABELS,
-  alphabet: {
-    all: { label: 'Wszystkie', emoji: '🏆' },
-    alphabet_basics: { label: 'Alfabet', emoji: '🔤' },
-    alphabet_syllables: { label: 'Sylaby', emoji: '🗣️' },
-  },
+  alphabet: ALPHABET_OPERATION_LABELS,
   web_development: {
     all: { label: 'Wszystkie', emoji: '🏆' },
     webdev_react_components: { label: 'React', emoji: '⚛️' },
@@ -118,6 +121,7 @@ const OPERATION_LABELS_BY_SUBJECT: Record<
 const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   ...MATH_OPERATION_LABELS,
   ...ENGLISH_OPERATION_LABELS,
+  ...ALPHABET_OPERATION_LABELS,
 };
 
 const buildOperationOptions = (subject: KangurLessonSubject): KangurLeaderboardOperationOption[] =>

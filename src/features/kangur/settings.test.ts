@@ -246,7 +246,8 @@ describe('kangur lesson settings', () => {
 
   it('does not duplicate geometry lessons when pack already exists', () => {
     const existing = createDefaultKangurLessons();
-    const result = appendMissingGeometryKangurLessons(existing);
+    const ageGroups = Array.from(new Set(existing.map((l) => l.ageGroup)));
+    const result = appendMissingGeometryKangurLessons(existing, ageGroups);
 
     expect(result.addedCount).toBe(0);
     expect(result.lessons).toHaveLength(existing.length);
@@ -263,7 +264,8 @@ describe('kangur lesson settings', () => {
         lesson.componentId !== 'logical_analogies'
     );
 
-    const result = appendMissingLogicalThinkingKangurLessons(legacyLike);
+    const ageGroups = Array.from(new Set(defaultLessons.map((l) => l.ageGroup)));
+    const result = appendMissingLogicalThinkingKangurLessons(legacyLike, ageGroups);
     const componentIds = result.lessons.map((lesson) => lesson.componentId);
 
     expect(result.addedCount).toBe(5);
@@ -276,7 +278,8 @@ describe('kangur lesson settings', () => {
 
   it('does not duplicate logical thinking lessons when pack already exists', () => {
     const existing = createDefaultKangurLessons();
-    const result = appendMissingLogicalThinkingKangurLessons(existing);
+    const ageGroups = Array.from(new Set(existing.map((l) => l.ageGroup)));
+    const result = appendMissingLogicalThinkingKangurLessons(existing, ageGroups);
 
     expect(result.addedCount).toBe(0);
     expect(result.lessons).toHaveLength(existing.length);

@@ -222,6 +222,10 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     explanation: 'Rysuj litery po kolorowym śladzie. To gra dla 6-latków.',
     triggerPhrases: ['alfabet', 'litery', 'pisanie'],
   },
+  alphabet_copy: {
+    explanation: 'Przepisuj litery pod wzorem i ucz sie pisania w liniach.',
+    triggerPhrases: ['przepisz', 'litery', 'pisanie', 'linia'],
+  },
   alphabet_syllables: {
     explanation: 'Buduj słowa z sylab. Gra dla 7-latków.',
     triggerPhrases: ['sylaby', 'slowa'],

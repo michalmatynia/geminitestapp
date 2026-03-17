@@ -9,7 +9,9 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -319,26 +321,20 @@ export default function DivisionLesson(): React.JSX.Element {
     );
   }
 
+  const handleSelect = createLessonHubSelectHandler<SectionId>({
+    markSectionOpened,
+    onSelectSection: (sectionId) => setActiveSection(sectionId),
+    skipMarkFor: ['game'] as const,
+  });
+
   return (
     <LessonHub
       lessonEmoji='➗'
       lessonTitle='Dzielenie'
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-blue-300'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-            ...section,
-            progress: sectionProgress[section.id as keyof typeof SLIDES],
-          }
-      )}
-      onSelect={(id) => {
-        if (id !== 'game') {
-          markSectionOpened(id as keyof typeof SLIDES);
-        }
-        setActiveSection(id as SectionId);
-      }}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
+      onSelect={handleSelect}
     />
   );
 }

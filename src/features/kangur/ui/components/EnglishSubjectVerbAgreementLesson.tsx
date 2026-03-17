@@ -9,7 +9,9 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -542,20 +544,19 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
     );
   }
 
+  const handleSelect = createLessonHubSelectHandler<SectionId>({
+    markSectionOpened,
+    onSelectSection: (sectionId) => setActiveSection(sectionId),
+  });
+
   return (
     <LessonHub
       lessonEmoji='⚖️'
       lessonTitle='Angielski: subject-verb agreement'
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
-      onSelect={(id) => {
-        markSectionOpened(id as SectionId);
-        setActiveSection(id as SectionId);
-      }}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
+      onSelect={handleSelect}
     />
   );
 }

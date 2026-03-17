@@ -34,6 +34,8 @@ import {
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   buildLessonSectionLabels,
+  buildLessonHubSectionsWithProgress,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -724,21 +726,19 @@ export default function ClockLesson(): React.JSX.Element {
     (sectionProgress.combined?.viewedCount ?? 0) >= (sectionProgress.combined?.totalCount ?? 0);
   const isCombinedUnlocked = isHoursComplete && isMinutesComplete;
   const isClockLessonComplete = isHoursComplete && isMinutesComplete && isCombinedComplete;
-  const lessonHubSections = HUB_SECTIONS.map((section) =>
-    section.isGame
-      ? section
-      : section.id === 'combined' && !isCombinedUnlocked
-        ? {
+  const lessonHubSections = buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress).map(
+    (section) => {
+      if (!section.isGame && section.id === 'combined' && !isCombinedUnlocked) {
+        return {
           ...section,
           description: 'Odblokuj po ukończeniu Godzin i Minut.',
           locked: true,
           lockedLabel: 'Zablokowane',
-          progress: sectionProgress[section.id as SectionId],
-        }
-        : {
-          ...section,
-          progress: sectionProgress[section.id as SectionId],
-        }
+        };
+      }
+
+      return section;
+    }
   );
 
   useEffect(() => {
@@ -1142,6 +1142,19 @@ export default function ClockLesson(): React.JSX.Element {
     };
   });
 
+  const hubHandlers: Partial<Record<ClockHubId, () => void>> = {
+    game_hours: () => handleStartTraining('hours'),
+    game_minutes: () => handleStartTraining('minutes'),
+    game_combined: () => handleStartTraining('combined'),
+  };
+  const handleSelect = createLessonHubSelectHandler<ClockHubId>({
+    markSectionOpened: (sectionId) => markSectionOpened(sectionId as SectionId),
+    onSelectSection: (sectionId) =>
+      setView({ kind: 'lesson', sectionId: sectionId as SectionId }),
+    skipMarkFor: ['game_hours', 'game_minutes', 'game_combined'] as const,
+    handlers: hubHandlers,
+  });
+
   return (
     <LessonHub
       lessonEmoji='🕐'
@@ -1149,22 +1162,7 @@ export default function ClockLesson(): React.JSX.Element {
       gradientClass='kangur-gradient-accent-indigo-reverse'
       progressDotClassName='bg-indigo-200'
       sections={lessonHubSectionsWithGameProgress}
-      onSelect={(sectionId) => {
-        if (sectionId === 'game_hours') {
-          handleStartTraining('hours');
-          return;
-        }
-        if (sectionId === 'game_minutes') {
-          handleStartTraining('minutes');
-          return;
-        }
-        if (sectionId === 'game_combined') {
-          handleStartTraining('combined');
-          return;
-        }
-        markSectionOpened(sectionId as SectionId);
-        setView({ kind: 'lesson', sectionId: sectionId as SectionId });
-      }}
+      onSelect={handleSelect}
     />
   );
 }

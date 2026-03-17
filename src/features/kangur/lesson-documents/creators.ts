@@ -407,6 +407,7 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   logical_reasoning: 'article',
   logical_analogies: 'article',
   alphabet_basics: 'article',
+  alphabet_copy: 'article',
   alphabet_syllables: 'article',
   alphabet_words: 'article',
   alphabet_matching: 'article',

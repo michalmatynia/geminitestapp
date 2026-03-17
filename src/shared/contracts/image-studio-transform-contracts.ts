@@ -313,6 +313,88 @@ export const imageStudioCenterLayoutConfigSchema = z.object({
 });
 export type ImageStudioCenterLayoutConfig = z.infer<typeof imageStudioCenterLayoutConfigSchema>;
 
+export const imageStudioObjectDetectionUsedSchema = z.enum([
+  'alpha_bbox',
+  'white_bg_first_colored_pixel',
+]);
+
+export type ImageStudioObjectDetectionUsed = z.infer<typeof imageStudioObjectDetectionUsedSchema>;
+
+export { imageStudioWhitespaceMetricsSchema } from './image-studio/whitespace';
+export type { ImageStudioWhitespaceMetrics } from './image-studio/whitespace';
+
+export const imageStudioNormalizedCenterLayoutSchema = z.object({
+  paddingPercent: z.number().finite(),
+  paddingXPercent: z.number().finite(),
+  paddingYPercent: z.number().finite(),
+  fillMissingCanvasWhite: z.boolean(),
+  targetCanvasWidth: z.number().int().positive().nullable(),
+  targetCanvasHeight: z.number().int().positive().nullable(),
+  whiteThreshold: z.number().int().finite(),
+  chromaThreshold: z.number().int().finite(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema,
+  detection: imageStudioCenterDetectionModeSchema,
+});
+
+export type ImageStudioNormalizedCenterLayout = z.infer<
+  typeof imageStudioNormalizedCenterLayoutSchema
+>;
+
+export const imageStudioDetectionCandidateScoreSchema = z.object({
+  confidence: z.number().finite().min(0).max(1),
+  area: z.number().int().positive(),
+});
+
+export type ImageStudioDetectionCandidateScore = z.infer<
+  typeof imageStudioDetectionCandidateScoreSchema
+>;
+
+export const imageStudioDetectionCandidateSummarySchema = z.object({
+  alpha_bbox: imageStudioDetectionCandidateScoreSchema.nullable(),
+  white_bg_first_colored_pixel: imageStudioDetectionCandidateScoreSchema.nullable(),
+});
+
+export type ImageStudioDetectionCandidateSummary = z.infer<
+  typeof imageStudioDetectionCandidateSummarySchema
+>;
+
+export const imageStudioDetectionDetailsSchema = z.object({
+  shadowPolicyRequested: imageStudioCenterShadowPolicySchema,
+  shadowPolicyApplied: imageStudioCenterShadowPolicySchema,
+  componentCount: z.number().int().nonnegative(),
+  coreComponentCount: z.number().int().nonnegative(),
+  selectedComponentPixels: z.number().int().nonnegative(),
+  selectedComponentCoverage: z.number().finite().min(0).max(1),
+  foregroundPixels: z.number().int().nonnegative(),
+  corePixels: z.number().int().nonnegative(),
+  touchesBorder: z.boolean(),
+  maskSource: z.enum(['foreground', 'core']),
+  policyVersion: z.string().trim().min(1).optional(),
+  policyReason: z.string().trim().min(1).optional(),
+  fallbackApplied: z.boolean().optional(),
+  candidateDetections: imageStudioDetectionCandidateSummarySchema.optional(),
+});
+
+export type ImageStudioDetectionDetails = z.infer<typeof imageStudioDetectionDetailsSchema>;
+
+export const imageStudioCenterLayoutMetadataSchema = z.object({
+  paddingPercent: z.number().finite().optional(),
+  paddingXPercent: z.number().finite().optional(),
+  paddingYPercent: z.number().finite().optional(),
+  fillMissingCanvasWhite: z.boolean().optional(),
+  targetCanvasWidth: z.number().int().positive().nullable().optional(),
+  targetCanvasHeight: z.number().int().positive().nullable().optional(),
+  whiteThreshold: z.number().int().finite().optional(),
+  chromaThreshold: z.number().int().finite().optional(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
+  layoutPolicyVersion: z.string().trim().min(1).nullable().optional(),
+  detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
+  detectionUsed: imageStudioCenterDetectionModeSchema.nullable().optional(),
+  scale: z.number().finite().nullable().optional(),
+});
+
+export type ImageStudioCenterLayoutMetadata = z.infer<typeof imageStudioCenterLayoutMetadataSchema>;
+
 export const imageStudioCenterRequestSchema = z.object({
   mode: imageStudioCenterModeSchema,
   dataUrl: z.string().trim().min(1).optional(),

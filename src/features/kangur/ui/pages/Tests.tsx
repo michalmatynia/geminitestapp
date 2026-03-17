@@ -37,7 +37,6 @@ import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRou
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
-import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
@@ -92,7 +91,7 @@ export default function Tests(): React.JSX.Element {
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');
   const settingsStore = useSettingsStore();
   const { ageGroup } = useKangurAgeGroupFocus();
-  const isAdultFocus = ageGroup !== DEFAULT_KANGUR_AGE_GROUP;
+  const isAdultFocus = ageGroup === 'grown_ups';
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [activeSuiteId, setActiveSuiteId] = useState<string | null>(null);
   const testsListIntroRef = useRef<HTMLDivElement | null>(null);

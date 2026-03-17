@@ -36,6 +36,7 @@ export const KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY =
 
 export const kangurLessonComponentIdSchema = z.enum([
   'alphabet_basics',
+  'alphabet_copy',
   'alphabet_syllables',
   'alphabet_words',
   'alphabet_matching',

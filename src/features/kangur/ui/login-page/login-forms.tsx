@@ -5,6 +5,7 @@ import { useKangurLoginPageProps } from './login-context';
 import {
   KANGUR_LEARNER_LOGIN_PATTERN,
 } from './login-constants';
+import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 type LoginFormProps = {
   onSubmit: (identifier: string, password?: string) => void;
@@ -64,7 +65,7 @@ export function LoginForm({
     <form
       ref={loginFormRef}
       onSubmit={handleSubmit}
-      className='flex w-full flex-col gap-4'
+      className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
       aria-label='Formularz logowania'
     >
       <div className='flex flex-col gap-1'>
@@ -137,7 +138,7 @@ export function SocialLogins({
   isLoading: boolean;
 }): JSX.Element {
   return (
-    <div className='mt-6 flex flex-col gap-4'>
+    <div className={`mt-6 ${KANGUR_STACK_RELAXED_CLASSNAME}`}>
       <div className='relative flex items-center justify-center'>
         <div className='absolute inset-0 flex items-center'>
           <div className='w-full border-t border-slate-200' />

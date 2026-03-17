@@ -20,6 +20,7 @@ import {
 import {
   KANGUR_INLINE_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { cn } from '@/features/kangur/shared/utils';
@@ -140,7 +141,7 @@ export default function SocialUpdates(): React.JSX.Element {
           icon={<CalendarClock className='h-5 w-5' />}
         />
       ) : (
-        <KangurInfoCard padding='lg' className='flex flex-col gap-4'>
+        <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
           {latestPost.imageAssets?.[0]?.url ? (
             <div className='overflow-hidden rounded-2xl border border-white/10 bg-black/10'>
               <img

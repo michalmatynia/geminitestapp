@@ -26,7 +26,7 @@ import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
-import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   Badge,
   Button,

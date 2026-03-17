@@ -18,6 +18,7 @@ export type CmsStorefrontAppearanceProviderProps = {
   children: React.ReactNode;
   initialMode?: CmsStorefrontAppearanceMode;
   storageKey?: string;
+  persistMode?: boolean;
 };
 
 export type CmsStorefrontAppearanceButtonsProps = {

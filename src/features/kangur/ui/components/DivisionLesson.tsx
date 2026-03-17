@@ -23,6 +23,7 @@ import {
   KangurDisplayEmoji,
   KangurEquationDisplay,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
@@ -81,7 +82,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             Każde mnożenie ma swoje dzielenie!
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='max-w-xs'>
-            <div className='flex flex-col gap-2 text-center'>
+            <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} text-center`}>
               <p className='[color:var(--kangur-page-text)]'>
                 4 × 3 = <b>12</b>
               </p>

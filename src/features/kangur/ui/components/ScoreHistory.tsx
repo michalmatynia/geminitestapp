@@ -19,7 +19,11 @@ import {
   KangurMetricCard,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
@@ -385,7 +389,7 @@ export default function ScoreHistory({
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
         <KangurPanelSectionHeading tone='slate'>Wyniki wg operacji</KangurPanelSectionHeading>
-        <div className='flex flex-col gap-2'>
+        <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
           {Object.entries(opBreakdown).map(([operation, data]) => {
             const percent = Math.round((data.correct / data.total) * 100);
             const info = OP_LABELS[operation] ?? { label: operation, emoji: '❓' };
@@ -417,7 +421,7 @@ export default function ScoreHistory({
         <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
           Ostatnie gry
         </p>
-        <div className='flex flex-col gap-2 max-h-64 overflow-y-auto'>
+        <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} max-h-64 overflow-y-auto`}>
           {subjectScores.map((score) => {
             const info = OP_LABELS[score.operation] ?? { label: score.operation, emoji: '❓' };
             const percent = Math.round(

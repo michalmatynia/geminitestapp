@@ -4,11 +4,20 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { settingsStoreGetMock } = vi.hoisted(() => ({
   settingsStoreGetMock: vi.fn<(key: string) => string | undefined>(),
 }));
+
+const originalPersistEnv = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
+const setEnvValue = (key: string, value: string | undefined) => {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+};
 
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
@@ -35,6 +44,11 @@ describe('KangurStorefrontAppearanceProvider', () => {
     settingsStoreGetMock.mockReset();
     settingsStoreGetMock.mockReturnValue(undefined);
     window.localStorage.clear();
+    setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', originalPersistEnv);
+  });
+
+  afterEach(() => {
+    setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', originalPersistEnv);
   });
 
   it('defaults to the daily appearance mode', () => {
@@ -83,6 +97,27 @@ describe('KangurStorefrontAppearanceProvider', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
+    });
+  });
+
+  it('ignores local override when persistence is disabled', async () => {
+    setEnvValue('NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST', 'false');
+    settingsStoreGetMock.mockImplementation((key: string) => {
+      if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
+        return 'sunset';
+      }
+      return undefined;
+    });
+    window.localStorage.setItem('kangur-storefront-appearance-mode', 'dark');
+
+    render(
+      <KangurStorefrontAppearanceProvider>
+        <ModeProbe />
+      </KangurStorefrontAppearanceProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('sunset');
     });
   });
 });

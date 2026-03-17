@@ -22,6 +22,7 @@ import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurLesson,
@@ -108,7 +109,7 @@ export function LessonsCatalog() {
           data-testid='lessons-list-transition'
         >
           <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
-            <div className='flex flex-col gap-3'>
+            <div className={KANGUR_STACK_SPACED_CLASSNAME}>
               <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div>
                   <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>Grupa wiekowa</div>

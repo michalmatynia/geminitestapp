@@ -63,8 +63,24 @@ export async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }
 ): Promise<Response> {
+  const startedAt = Date.now();
+  let stage:
+    | 'init'
+    | 'validate'
+    | 'exchange'
+    | 'profile'
+    | 'update'
+    | 'redirect' = 'init';
   let integrationId: string | null = null;
   let connectionId: string | null = null;
+  let tokenStatus: number | null = null;
+  let tokenContentType: string | null = null;
+  let tokenError: string | null = null;
+  let expiresIn: number | null = null;
+  let resolvedScope: string | null = null;
+  let hasRefreshToken = false;
+  let profileResolved = false;
+  let profileHasVanity = false;
   const requestUrl = new URL(req.url);
   const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
@@ -72,16 +88,43 @@ export async function GET_handler(
     const { id, connectionId: connId } = params;
     integrationId = id;
     connectionId = connId;
+    stage = 'validate';
 
     const errorParam = query.error ?? null;
     if (errorParam) {
       const description = query.error_description ?? errorParam;
+      void logSystemEvent({
+        level: 'warn',
+        message: 'LinkedIn OAuth callback returned an error',
+        source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+        request: req,
+        context: {
+          integrationId,
+          connectionId,
+          error: errorParam,
+          description,
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return NextResponse.redirect(toErrorRedirect(requestUrl.origin, description));
     }
 
     const code = query.code ?? null;
     const state = query.state ?? null;
     if (!code || !state) {
+      void logSystemEvent({
+        level: 'warn',
+        message: 'LinkedIn OAuth callback missing parameters',
+        source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+        request: req,
+        context: {
+          integrationId,
+          connectionId,
+          hasCode: Boolean(code),
+          hasState: Boolean(state),
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return NextResponse.redirect(
         toErrorRedirect(requestUrl.origin, 'Missing authorization code.')
       );
@@ -89,12 +132,35 @@ export async function GET_handler(
 
     const expectedState = req.cookies.get(`linkedin_oauth_state_${connId}`)?.value;
     if (!expectedState || expectedState !== state) {
+      void logSystemEvent({
+        level: 'warn',
+        message: 'LinkedIn OAuth callback state mismatch',
+        source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+        request: req,
+        context: {
+          integrationId,
+          connectionId,
+          hasExpectedState: Boolean(expectedState),
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return NextResponse.redirect(toErrorRedirect(requestUrl.origin, 'Invalid OAuth state.'));
     }
 
     const repo = await getIntegrationRepository();
     const integration = await repo.getIntegrationById(id);
     if (integration?.['slug'] !== 'linkedin') {
+      void logSystemEvent({
+        level: 'warn',
+        message: 'LinkedIn integration not found during OAuth callback',
+        source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+        request: req,
+        context: {
+          integrationId,
+          connectionId,
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return NextResponse.redirect(
         toErrorRedirect(requestUrl.origin, 'LinkedIn integration not found.')
       );
@@ -103,6 +169,19 @@ export async function GET_handler(
     const connection = await repo.getConnectionByIdAndIntegration(connId, id);
 
     if (!connection?.username || !connection.password) {
+      void logSystemEvent({
+        level: 'warn',
+        message: 'LinkedIn OAuth callback missing credentials',
+        source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+        request: req,
+        context: {
+          integrationId,
+          connectionId,
+          hasClientId: Boolean(connection?.username),
+          hasClientSecret: Boolean(connection?.password),
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return NextResponse.redirect(
         toErrorRedirect(requestUrl.origin, 'Missing LinkedIn credentials.')
       );
@@ -112,6 +191,7 @@ export async function GET_handler(
     const clientSecret = decryptSecret(connection.password);
     const redirectUri = `${requestUrl.origin}/api/v2/integrations/${id}/connections/${connId}/linkedin/callback`;
 
+    stage = 'exchange';
     const tokenRes = await fetch(TOKEN_URL, {
       method: 'POST',
       headers: {
@@ -127,15 +207,34 @@ export async function GET_handler(
     });
 
     let payload: LinkedInTokenResponse;
-    const contentType = tokenRes.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
+    tokenContentType = tokenRes.headers.get('content-type') || '';
+    tokenStatus = tokenRes.status;
+    if (tokenContentType.includes('application/json')) {
       payload = (await tokenRes.json()) as LinkedInTokenResponse;
     } else {
       payload = { error_description: await tokenRes.text() };
     }
+    tokenError = payload.error_description || payload.error || null;
+    expiresIn = typeof payload.expires_in === 'number' ? payload.expires_in : null;
+    resolvedScope = payload.scope ?? DEFAULT_SCOPE ?? null;
+    hasRefreshToken = Boolean(payload.refresh_token);
 
     if (!tokenRes.ok || payload.error || !payload.access_token) {
-      const reason = payload.error_description || payload.error || 'Token exchange failed.';
+      const reason = tokenError || 'Token exchange failed.';
+      void logSystemEvent({
+        level: 'warn',
+        message: 'LinkedIn OAuth token exchange failed',
+        source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+        request: req,
+        context: {
+          integrationId,
+          connectionId,
+          tokenStatus,
+          tokenContentType,
+          tokenError,
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return NextResponse.redirect(toErrorRedirect(requestUrl.origin, reason));
     }
 
@@ -144,23 +243,28 @@ export async function GET_handler(
         ? new Date(Date.now() + payload.expires_in * 1000)
         : null;
 
+    stage = 'profile';
     const profile = await fetchLinkedInProfile(payload.access_token);
+    profileResolved = Boolean(profile?.id);
+    profileHasVanity = Boolean(profile?.vanityName);
     const personUrn = profile?.id ? `urn:li:person:${profile.id}` : null;
     const profileUrl = profile?.vanityName
       ? `https://www.linkedin.com/in/${profile.vanityName}`
       : null;
 
+    stage = 'update';
     await repo.updateConnection(connId, {
       linkedinAccessToken: encryptSecret(payload.access_token),
       linkedinRefreshToken: payload.refresh_token ? encryptSecret(payload.refresh_token) : null,
       linkedinTokenType: payload.token_type ?? null,
-      linkedinScope: payload.scope ?? DEFAULT_SCOPE ?? null,
+      linkedinScope: resolvedScope,
       linkedinExpiresAt: expiresAt ? expiresAt.toISOString() : null,
       linkedinTokenUpdatedAt: new Date().toISOString(),
       linkedinPersonUrn: personUrn,
       linkedinProfileUrl: profileUrl,
     });
 
+    stage = 'redirect';
     const successUrl = new URL('/admin/integrations', requestUrl.origin);
     successUrl.searchParams.set('linkedin', 'connected');
 
@@ -174,9 +278,42 @@ export async function GET_handler(
       });
     }
 
+    void logSystemEvent({
+      level: 'info',
+      message: 'LinkedIn OAuth callback succeeded',
+      source: 'integrations.[id].connections.[connectionId].linkedin.callback.GET',
+      request: req,
+      context: {
+        integrationId,
+        connectionId,
+        tokenStatus,
+        expiresIn,
+        scope: resolvedScope,
+        hasRefreshToken,
+        profileResolved,
+        profileHasVanity,
+        durationMs: Date.now() - startedAt,
+      },
+    });
+
     return response;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    void ErrorSystem.captureException(error, {
+      service: 'integrations.linkedin',
+      action: 'oauthCallback',
+      stage,
+      integrationId,
+      connectionId,
+      tokenStatus,
+      tokenContentType,
+      tokenError,
+      expiresIn,
+      scope: resolvedScope,
+      hasRefreshToken,
+      profileResolved,
+      profileHasVanity,
+      durationMs: Date.now() - startedAt,
+    });
     const mapped = mapErrorToAppError(error, 'LinkedIn authorization failed.');
     const message = mapped?.message ?? 'LinkedIn OAuth callback failed';
     void logSystemEvent({
@@ -188,14 +325,24 @@ export async function GET_handler(
       context: {
         integrationId,
         connectionId,
+        stage,
+        tokenStatus,
+        tokenContentType,
+        tokenError,
+        expiresIn,
+        scope: resolvedScope,
+        hasRefreshToken,
+        profileResolved,
+        profileHasVanity,
+        durationMs: Date.now() - startedAt,
         ...(mapped
           ? {
-            code: mapped.code,
-            httpStatus: mapped.httpStatus,
-            expected: mapped.expected,
-            critical: mapped.critical,
-            retryable: mapped.retryable,
-          }
+              code: mapped.code,
+              httpStatus: mapped.httpStatus,
+              expected: mapped.expected,
+              critical: mapped.critical,
+              retryable: mapped.retryable,
+            }
           : {}),
       },
     });

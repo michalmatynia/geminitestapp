@@ -291,8 +291,10 @@ export function KangurParentDashboardHeroWidget({
                 href={getKangurHomeHref(basePath)}
                 size='sm'
                 targetPageKey='Game'
-                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                transitionSourceId='parent-dashboard-nav:home'
+                transition={{
+                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
+                  sourceId: 'parent-dashboard-nav:home',
+                }}
                 variant='navigation'
               >
                 <Home className='h-4 w-4' /> Gra
@@ -302,8 +304,10 @@ export function KangurParentDashboardHeroWidget({
                 href={createPageUrl('Lessons', basePath)}
                 size='sm'
                 targetPageKey='Lessons'
-                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                transitionSourceId='parent-dashboard-nav:lessons'
+                transition={{
+                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
+                  sourceId: 'parent-dashboard-nav:lessons',
+                }}
                 variant='navigation'
               >
                 <BookOpen className='h-4 w-4' /> Lekcje
@@ -313,8 +317,10 @@ export function KangurParentDashboardHeroWidget({
                 href={createPageUrl('LearnerProfile', basePath)}
                 size='sm'
                 targetPageKey='LearnerProfile'
-                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                transitionSourceId='parent-dashboard-nav:profile'
+                transition={{
+                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
+                  sourceId: 'parent-dashboard-nav:profile',
+                }}
                 variant='navigation'
               >
                 <UserRound className='h-4 w-4' /> Profil
@@ -324,8 +330,10 @@ export function KangurParentDashboardHeroWidget({
                 href={createPageUrl('ParentDashboard', basePath)}
                 size='sm'
                 targetPageKey='ParentDashboard'
-                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                transitionSourceId='parent-dashboard-nav:dashboard'
+                transition={{
+                  acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
+                  sourceId: 'parent-dashboard-nav:dashboard',
+                }}
                 variant='navigationActive'
               >
                 <LayoutGrid className='h-4 w-4' /> Rodzic

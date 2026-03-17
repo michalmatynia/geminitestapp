@@ -42,19 +42,27 @@ export function KangurFeaturePageShell(): JSX.Element {
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
   const classOverrides = useKangurClassOverrides();
+  const customCssEnabled = useMemo(() => {
+    const raw = process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'];
+    if (process.env['NODE_ENV'] !== 'production') {
+      return raw !== 'false';
+    }
+    return raw === 'true';
+  }, []);
   const shellClassOverride = cn(
     classOverrides.globals.shell,
     classOverrides.components['kangur-feature-page-shell']?.['root']
   );
-  const customCssSelectors = kangurAppearance.theme?.customCssSelectors ?? '';
+  const customCssSelectors = customCssEnabled
+    ? (kangurAppearance.theme?.customCssSelectors ?? '')
+    : '';
   const customCssScope = useMemo(
     () => resolveKangurCustomCssScopeSelector(customCssSelectors),
     [customCssSelectors]
   );
-  const customCss = buildKangurScopedCustomCss(
-    kangurAppearance.theme?.customCss,
-    customCssSelectors
-  );
+  const customCss = customCssEnabled
+    ? buildKangurScopedCustomCss(kangurAppearance.theme?.customCss, customCssSelectors)
+    : '';
   const debugRef = useRef<string | null>(null);
   const shellStyle: CSSProperties = {
     background: kangurAppearance.background,
@@ -69,12 +77,13 @@ export function KangurFeaturePageShell(): JSX.Element {
       customCssScope,
       customCssSelectors: customCssSelectors || null,
       hasCustomCss: Boolean(customCss),
+      customCssEnabled,
     };
     const signature = JSON.stringify(payload);
     if (debugRef.current === signature) return;
     debugRef.current = signature;
     console.info('[KangurThemeDebug]', payload);
-  }, [appearanceMode, customCss, customCssScope, customCssSelectors]);
+  }, [appearanceMode, customCss, customCssEnabled, customCssScope, customCssSelectors]);
 
   useEffect(() => {
     setKangurClientObservabilityContext({

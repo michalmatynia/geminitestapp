@@ -24,6 +24,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_SPACED_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -249,7 +250,7 @@ export default function EnglishPronounsGame({
           </KangurStatusChip>
         </div>
 
-        <div className='flex flex-col gap-3'>
+        <div className={KANGUR_STACK_SPACED_CLASSNAME}>
           <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>
             {round.question}
           </div>

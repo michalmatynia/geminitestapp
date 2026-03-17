@@ -6,6 +6,7 @@ import {
   KangurStatusChip,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { BADGES } from '@/features/kangur/ui/services/progress';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -100,7 +101,7 @@ export default function XpToast({
               key={badge.id}
               padding='md'
             >
-              <div className='flex flex-col gap-2'>
+              <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                 <div className='flex items-center kangur-panel-gap'>
                   <KangurStatusChip accent='amber' className='text-sm font-bold'>
                     {badge.emoji} Nowa odznaka

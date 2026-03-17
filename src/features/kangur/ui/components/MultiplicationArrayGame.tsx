@@ -24,6 +24,7 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_ROW_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -277,7 +278,7 @@ export default function MultiplicationArrayGame({
             </div>
 
             {/* Groups grid */}
-            <div className='flex flex-col gap-2 w-full'>
+            <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
               {Array.from({ length: a }).map((_, groupIndex) => {
                 const isCollected = collected.has(groupIndex);
                 const color = ROW_COLORS[groupIndex % ROW_COLORS.length];

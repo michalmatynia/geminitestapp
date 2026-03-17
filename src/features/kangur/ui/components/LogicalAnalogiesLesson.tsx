@@ -22,6 +22,7 @@ import {
   PartWholeAnimation,
   ShapeTransformAnimation,
 } from '@/features/kangur/ui/components/LogicalAnalogiesAnimations';
+import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'intro' | 'liczby_ksztalty' | 'relacje' | 'game_relacje' | 'podsumowanie';
@@ -80,7 +81,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Analogie słowne korzystają z relacji między słowami: kategoria, przeciwieństwo, część
             całości, czynność i inne.
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               {
                 pair: 'Pies : szczekać = kot : ❓',
@@ -118,7 +119,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead>
             W analogiach liczbowych szukasz tej samej operacji matematycznej w obu parach.
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               {
                 pair: '2 : 4 = 5 : ❓',
@@ -227,7 +228,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Relacja część–całość to jedna z najczęstszych w analogiach.
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               { pair: 'Strona : książka = cegła : ❓', answer: 'mur / budynek 🧱' },
               { pair: 'Nuta : melodia = litera : ❓', answer: 'słowo / zdanie 🔤' },
@@ -268,7 +269,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Przyczyna powoduje skutek. Analogia przenosi tę samą zależność na inną parę.
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               {
                 pair: 'Deszcz : mokra ziemia = słońce : ❓',

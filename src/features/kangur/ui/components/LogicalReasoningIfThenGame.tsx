@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
@@ -411,7 +412,7 @@ export default function LogicalReasoningIfThenGame({
                     <p className='mb-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
                       {zoneHints[zoneId]}
                     </p>
-                    <div className='flex flex-col gap-2'>
+                    <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                       {state[zoneId].map((item, index) => (
                         <DraggableCase
                           key={item.id}
@@ -478,7 +479,7 @@ export default function LogicalReasoningIfThenGame({
               <p className='mb-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
                 {zoneHints.pool}
               </p>
-              <div className='flex flex-col gap-2'>
+              <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                   {state.pool.map((item, index) => (
                     <DraggableCase
                       key={item.id}

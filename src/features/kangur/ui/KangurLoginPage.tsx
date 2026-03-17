@@ -9,6 +9,10 @@ import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKang
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_STACK_RELAXED_CLASSNAME,
+  KANGUR_STACK_SPACED_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
@@ -570,7 +574,7 @@ function KangurLoginPageContent(): React.JSX.Element {
             data-tutor-anchor='login_form'
             aria-busy={isLoading ? 'true' : 'false'}
             onSubmit={handleSubmit}
-            className='flex flex-col gap-4'
+            className={KANGUR_STACK_RELAXED_CLASSNAME}
             noValidate
           >
             <div className='flex flex-col gap-1'>
@@ -645,7 +649,7 @@ function KangurLoginPageContent(): React.JSX.Element {
           </form>
 
           {verificationState ? (
-            <div className='flex flex-col gap-3 rounded-2xl border px-4 py-4'>
+            <div className={`${KANGUR_STACK_SPACED_CLASSNAME} rounded-2xl border px-4 py-4`}>
               <div className='text-sm font-semibold'>
                 Sprawdź skrzynkę: {verificationState.email}
               </div>

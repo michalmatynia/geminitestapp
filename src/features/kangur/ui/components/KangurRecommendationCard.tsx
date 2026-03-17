@@ -6,7 +6,10 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_STACK_TIGHT_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/utils/cn';
 
 // ── Recommendation Card Sub-components ───────────────────────────────────────
@@ -136,7 +139,7 @@ export default function KangurRecommendationCard(
       padding='md'
       tone='accent'
     >
-      <div className={cn('flex flex-col gap-2 text-left', contentClassName)}>
+      <div className={cn(KANGUR_STACK_TIGHT_CLASSNAME, 'text-left', contentClassName)}>
         <KangurRecommendationCardHeader
           accent={accent}
           className={headerClassName}

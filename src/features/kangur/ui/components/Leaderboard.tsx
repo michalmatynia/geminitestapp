@@ -12,6 +12,7 @@ import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   useKangurLeaderboardState,
@@ -51,7 +52,7 @@ export default function Leaderboard(): React.JSX.Element {
         </h3>
       </div>
 
-      <div className='mb-4 flex flex-col gap-2'>
+      <div className={`mb-4 ${KANGUR_STACK_TIGHT_CLASSNAME}`}>
         <div
           className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
           data-testid='leaderboard-operation-filter-group'

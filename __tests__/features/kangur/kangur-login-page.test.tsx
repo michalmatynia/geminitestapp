@@ -4,27 +4,28 @@
 
 import { render, screen, waitFor } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { setStoredActiveLearnerId } from '@/features/kangur/services/kangur-active-learner';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
 const {
+  trackKangurClientEventMock,
+  withKangurClientError,
+  withKangurClientErrorSync,
+  routerPushMock,
   useRouterMock,
   useSearchParamsMock,
   usePathnameMock,
-  routerPushMock,
-  trackKangurClientEventMock,
-  setStoredActiveLearnerIdMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => {
-  return {
-    useRouterMock: vi.fn(),
-    useSearchParamsMock: vi.fn(),
-    usePathnameMock: vi.fn(),
-    routerPushMock: vi.fn(),
-    setStoredActiveLearnerIdMock: vi.fn(),
-    ...globalThis.__kangurClientErrorMocks(),
-  };
-});
+} = vi.hoisted(() => ({
+  trackKangurClientEventMock: vi.fn(),
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
+  routerPushMock: vi.fn(),
+  useRouterMock: vi.fn(),
+  useSearchParamsMock: vi.fn(),
+  usePathnameMock: vi.fn(),
+}));
 
 vi.mock('next/link', () => ({
   default: ({
@@ -55,8 +56,9 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 vi.mock('@/features/kangur/services/kangur-active-learner', () => ({
-  setStoredActiveLearnerId: setStoredActiveLearnerIdMock,
+  setStoredActiveLearnerId: vi.fn(),
 }));
+const setStoredActiveLearnerIdMock = vi.mocked(setStoredActiveLearnerId);
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useOptionalKangurAuth: () => null,

@@ -516,6 +516,7 @@ export function KangurPageContentEntryEditor(
             </div>
           </div>
           <Switch
+            aria-label='Entry enabled'
             checked={entry.enabled}
             onCheckedChange={(checked: boolean) =>
               onUpdateEntry((e) => ({

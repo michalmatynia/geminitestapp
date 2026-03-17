@@ -26,6 +26,7 @@ const lesson: KangurLesson = {
   componentId: 'clock',
   contentMode: 'document',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Lesson One',
   description: 'Intro lesson',
   emoji: '🕐',

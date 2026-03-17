@@ -58,6 +58,7 @@ const arithmeticLesson: KangurLesson = {
   componentId: 'adding',
   contentMode: 'document',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Dodawanie',
   description: 'Ćwicz dodawanie krok po kroku.',
   emoji: '➕',

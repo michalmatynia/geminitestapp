@@ -10,7 +10,7 @@ vi.mock('@/features/auth/', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/app/(frontend)/FrontendPublicOwnerShell', () => ({
+vi.mock('@/shared/components/FrontendPublicOwnerShell', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

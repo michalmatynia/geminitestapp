@@ -10,7 +10,8 @@ import type { KangurLessonListInput, KangurLessonRepository } from './types';
 
 const COLLECTION = 'kangur_lessons';
 const SUBJECT_SORT_INDEX = 'kangur_lessons_subject_sort_idx';
-const COMPONENT_UNIQUE_INDEX = 'kangur_lessons_component_unique_idx';
+const COMPONENT_UNIQUE_INDEX = 'kangur_lessons_component_age_group_unique_idx';
+const LEGACY_COMPONENT_UNIQUE_INDEX = 'kangur_lessons_component_unique_idx';
 
 type MongoKangurLessonDocument = Document &
   KangurLesson & {
@@ -30,13 +31,18 @@ const ensureIndexes = async (db: Db): Promise<void> => {
   }
   indexesInFlight = (async (): Promise<void> => {
     const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
+    const existingIndexes = await collection.indexes();
+    const legacyIndex = existingIndexes.find((index) => index.name === LEGACY_COMPONENT_UNIQUE_INDEX);
+    if (legacyIndex) {
+      await collection.dropIndex(LEGACY_COMPONENT_UNIQUE_INDEX);
+    }
     await Promise.all([
       collection.createIndex(
         { subject: 1, sortOrder: 1, id: 1 },
         { name: SUBJECT_SORT_INDEX }
       ),
       collection.createIndex(
-        { componentId: 1 },
+        { componentId: 1, ageGroup: 1 },
         { name: COMPONENT_UNIQUE_INDEX, unique: true }
       ),
     ]);
@@ -55,6 +61,9 @@ const buildFilter = (input?: KangurLessonListInput): Filter<MongoKangurLessonDoc
   if (input.subject) {
     filter.subject = input.subject;
   }
+  if (input.ageGroup) {
+    filter.ageGroup = input.ageGroup;
+  }
   if (input.enabledOnly) {
     filter.enabled = true;
   }
@@ -66,6 +75,7 @@ const toLesson = (doc: MongoKangurLessonDocument): KangurLesson => ({
   componentId: doc.componentId,
   contentMode: doc.contentMode,
   subject: doc.subject,
+  ageGroup: doc.ageGroup,
   title: doc.title,
   description: doc.description,
   emoji: doc.emoji,
@@ -86,12 +96,17 @@ export const mongoKangurLessonRepository: KangurLessonRepository = {
       if (input?.subject) {
         fallbackFilter.subject = input.subject;
       }
+      if (input?.ageGroup) {
+        fallbackFilter.ageGroup = input.ageGroup;
+      }
       const existingCount = await collection.countDocuments(fallbackFilter);
       if (existingCount === 0) {
         const defaults = createDefaultKangurLessons();
-        const scopedDefaults = input?.subject
-          ? defaults.filter((lesson) => lesson.subject === input.subject)
-          : defaults;
+        const scopedDefaults = defaults.filter((lesson) => {
+          if (input?.subject && lesson.subject !== input.subject) return false;
+          if (input?.ageGroup && lesson.ageGroup !== input.ageGroup) return false;
+          return true;
+        });
         return input?.enabledOnly
           ? scopedDefaults.filter((lesson) => lesson.enabled)
           : scopedDefaults;

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 import { useOptionalCmsStorefrontAppearance, type CmsStorefrontAppearanceMode } from '@/features/cms/public';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 
 
 const KANGUR_ACTIVE_SURFACE_CLASSNAME = 'kangur-surface-active';
@@ -180,6 +181,7 @@ export function KangurSurfaceClassSync({
   const kangurAppearance = useKangurStorefrontAppearance();
   const classOverrides = useKangurClassOverrides();
   const appearanceMode = appearance?.mode ?? 'default';
+  const debugRef = useRef<string | null>(null);
 
   useEffect(() => {
     const targets = getKangurSurfaceTargets();
@@ -193,6 +195,19 @@ export function KangurSurfaceClassSync({
       );
       applyKangurSurfaceClassOverrides(element, classOverrides.globals[slot]);
     });
+
+    if (isKangurThemeDebugEnabled()) {
+      const payload = {
+        mode: appearanceMode,
+        targets: targets.map((target) => target.slot),
+        background: kangurAppearance.background,
+      };
+      const signature = JSON.stringify(payload);
+      if (debugRef.current !== signature) {
+        debugRef.current = signature;
+        console.info('[KangurThemeDebug]', payload);
+      }
+    }
 
     return () => {
       targets.forEach(({ element }) => {

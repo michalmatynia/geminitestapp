@@ -7,7 +7,8 @@ import type {
   ChatbotContextItem as ContextItem,
   ChatbotContextDraft as ContextDraft,
 } from '@/shared/contracts/chatbot';
-import { useToast, type FileUploadHelpers } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import { useToast } from '@/shared/ui';
 
 import {
   useChatbotContextSettingsQuery,

@@ -28,6 +28,7 @@ import {
   KangurCardDescription,
   KangurCardTitle,
   KangurPanelIntro,
+  KangurPanelRow,
   KangurPanelStack,
   KangurSelectField,
   KangurSectionEyebrow,
@@ -83,8 +84,7 @@ const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'ind
   celebrating: 'rose',
 };
 
-// TODO: Re-enable once parent dashboard AI Tutor controls are ready to ship.
-const PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED = true;
+const PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED = false;
 
 const formatTutorMoodTimestamp = (value: string | null, fallback: string): string => {
   if (!value) {
@@ -406,7 +406,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         className='w-full'
       >
         <KangurPanelStack>
-          <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
+          <KangurPanelRow className='items-start sm:items-center'>
             <BrainCircuit className='h-5 w-5 text-orange-500' />
             <KangurPanelIntro
               className='min-w-0'
@@ -417,7 +417,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
               title={tutorContent.parentDashboard.noActiveLearner}
               titleClassName='mt-1 text-sm font-bold'
             />
-          </div>
+          </KangurPanelRow>
           {isTutorHidden ? (
             <KangurButton
               className='w-full border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 sm:w-auto'
@@ -446,7 +446,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       className='w-full'
     >
       <KangurPanelStack>
-        <div className='flex flex-col items-start sm:flex-row sm:items-center kangur-panel-gap'>
+        <KangurPanelRow className='items-start sm:items-center'>
           <BrainCircuit className='h-5 w-5 text-orange-500' />
           <KangurPanelIntro
             className='min-w-0'
@@ -457,13 +457,13 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             title={learnerHeaderTitle}
             titleClassName='mt-1 text-sm font-bold'
           />
-        </div>
+        </KangurPanelRow>
 
         <div
           className='rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3'
           data-testid='parent-dashboard-ai-tutor-mood'
         >
-          <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+          <KangurPanelRow className='sm:items-start sm:justify-between'>
             <div className='min-w-0'>
               <KangurSectionEyebrow className='text-xs tracking-wide text-emerald-700'>
                 {tutorContent.parentDashboard.moodTitle}
@@ -485,7 +485,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             >
               {currentMoodPreset.label}
             </KangurStatusChip>
-          </div>
+          </KangurPanelRow>
 
           <div className='mt-3 grid kangur-panel-gap text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
             <KangurLabeledValueSummary
@@ -514,7 +514,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
 
       {isUsageEnabled ? (
         <div className='rounded-2xl border border-amber-100 bg-amber-50/75 px-4 py-3'>
-          <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+          <KangurPanelRow className='items-start sm:justify-between'>
             <div className='min-w-0'>
               <KangurSectionEyebrow className='text-xs tracking-wide text-amber-700'>
                 {tutorContent.parentDashboard.usageTitle}
@@ -526,7 +526,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
                 {usageBadgeText}
               </div>
             ) : null}
-          </div>
+          </KangurPanelRow>
           <KangurCardDescription as='p' className='mt-2 leading-relaxed' size='xs'>
             {tutorContent.parentDashboard.usageHelp}
           </KangurCardDescription>
@@ -541,7 +541,16 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         </span>
         <KangurButton
           className='w-full sm:w-auto'
-          onClick={() => setEnabled((current) => !current)}
+          onClick={() => {
+            setEnabled((current) => {
+              const nextEnabled = !current;
+              if (nextEnabled) {
+                persistTutorVisibilityHidden(false);
+                setIsTutorHidden(false);
+              }
+              return nextEnabled;
+            });
+          }}
           size='sm'
           variant={enabled ? 'surface' : 'primary'}
           disabled={isTemporarilyDisabled}
@@ -580,7 +589,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           <KangurSelectField
             id={testAccessModeFieldId}
             value={testAccessMode}
-            onChange={(event) => setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode)}
+            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setTestAccessMode(event.target.value as KangurAiTutorTestAccessMode)}
             accent='amber'
             size='md'
             disabled={controlsDisabled}
@@ -606,7 +615,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             <KangurSelectField
               id={hintDepthFieldId}
               value={hintDepth}
-              onChange={(event) => setHintDepth(event.target.value as KangurAiTutorHintDepth)}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setHintDepth(event.target.value as KangurAiTutorHintDepth)}
               accent='amber'
               size='md'
               disabled={controlsDisabled}
@@ -631,7 +640,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             <KangurSelectField
               id={proactiveNudgesFieldId}
               value={proactiveNudges}
-              onChange={(event) =>
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
                 setProactiveNudges(event.target.value as KangurAiTutorProactiveNudges)}
               accent='amber'
               size='md'
@@ -695,7 +704,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         <KangurSelectField
           id={uiModeFieldId}
           value={uiMode}
-          onChange={(event) => setUiMode(event.target.value as KangurAiTutorUiMode)}
+          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setUiMode(event.target.value as KangurAiTutorUiMode)}
           accent='amber'
           size='md'
           disabled={controlsDisabled}

@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 type MockCollection = {
   createIndex: ReturnType<typeof vi.fn>;
+  indexes: ReturnType<typeof vi.fn>;
+  dropIndex: ReturnType<typeof vi.fn>;
   find: ReturnType<typeof vi.fn>;
   countDocuments: ReturnType<typeof vi.fn>;
 };
@@ -15,6 +17,8 @@ const buildDb = (docs: unknown[], count: number) => {
   const sort = vi.fn().mockReturnValue({ toArray });
   const collection: MockCollection = {
     createIndex: vi.fn().mockResolvedValue('ok'),
+    indexes: vi.fn().mockResolvedValue([]),
+    dropIndex: vi.fn().mockResolvedValue('ok'),
     find: vi.fn().mockReturnValue({ sort }),
     countDocuments: vi.fn().mockResolvedValue(count),
   };

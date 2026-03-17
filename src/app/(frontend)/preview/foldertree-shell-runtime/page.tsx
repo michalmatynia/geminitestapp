@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import FolderTreeShellRuntimePreviewClient from './FolderTreeShellRuntimePreviewClient';
+import FolderTreeShellRuntimePreviewClient from '@/features/foldertree/pages/FolderTreeShellRuntimePreviewClient';
 
 export const dynamic = 'force-dynamic';
 

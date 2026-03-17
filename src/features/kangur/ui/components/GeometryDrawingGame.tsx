@@ -34,6 +34,8 @@ import {
   resolveKangurCanvasPoint,
   syncKangurCanvasContext,
 } from '@/features/kangur/ui/services/drawing-canvas';
+import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
 import type { Point2d } from '@/shared/contracts/geometry';
 import {
@@ -183,7 +185,10 @@ const KEYBOARD_CURSOR_START = {
   x: Math.round(CANVAS_WIDTH / 2),
   y: Math.round(CANVAS_HEIGHT / 2),
 } as const;
-const MIN_DRAWING_POINTS = loosenMinInt(14);
+const BASE_MIN_DRAWING_POINTS = loosenMinInt(14);
+
+const distance = (a: Point2d, b: Point2d): number =>
+  Math.hypot(a.x - b.x, a.y - b.y);
 
 const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
   strokes.flatMap((stroke) => stroke);
@@ -208,6 +213,7 @@ export default function GeometryDrawingGame({
   const [keyboardStatus, setKeyboardStatus] = useState(
     'Plansza gotowa do rysowania klawiaturą.'
   );
+  const isCoarsePointer = useKangurCoarsePointer();
   const sessionStartedAtRef = useRef(Date.now());
   const handleFinishSession = (): void => {
     onFinish();
@@ -220,6 +226,11 @@ export default function GeometryDrawingGame({
   const currentRound = rounds[roundIndex];
   const totalRounds = rounds.length;
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
+  const minPointDistance = isCoarsePointer ? 5 : 2;
+  const minDrawingPoints = isCoarsePointer
+    ? Math.max(8, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
+    : BASE_MIN_DRAWING_POINTS;
+  const strokeWidth = isCoarsePointer ? 7 : 5;
 
   const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
     const canvas = canvasRef.current;
@@ -247,7 +258,7 @@ export default function GeometryDrawingGame({
     }
 
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = strokeWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     for (const stroke of nextStrokes) {
@@ -263,12 +274,13 @@ export default function GeometryDrawingGame({
       }
       ctx.stroke();
     }
-  }, []);
+  }, [strokeWidth]);
 
   useKangurCanvasRedraw({
     canvasRef,
     redraw: () => redrawCanvas(strokes),
   });
+  useKangurCanvasTouchLock(canvasRef);
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -319,6 +331,10 @@ export default function GeometryDrawingGame({
       if (current.length === 0) return current;
       const next = [...current];
       const lastStroke = next[next.length - 1] ?? [];
+      const lastPoint = lastStroke[lastStroke.length - 1];
+      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
+        return current;
+      }
       next[next.length - 1] = [...lastStroke, point];
       return next;
     });
@@ -493,7 +509,7 @@ export default function GeometryDrawingGame({
 
   const handleCheck = (): void => {
     if (done || feedback || !currentRound) return;
-    if (points.length < MIN_DRAWING_POINTS) {
+    if (points.length < minDrawingPoints) {
       setFeedback({
         kind: 'info',
         text: 'Narysuj figurę trochę dłużej, żeby można było ją ocenić.',

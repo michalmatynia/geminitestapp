@@ -90,11 +90,11 @@ describe('AdminKangurPageShell', () => {
     kangurFeaturePageProps.embedded = false;
   });
 
-  it('renders menu toggle and configures KangurFeaturePage for admin base path', () => {
+  it('renders menu toggle and configures KangurFeaturePage for admin base path', async () => {
     render(<AdminKangurPageShell slug={['parent-dashboard']} />);
 
     expect(screen.getByTestId('kangur-admin-menu-toggle')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-feature-page')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-feature-page')).toBeInTheDocument();
     expect(kangurPageSpy).toHaveBeenCalledWith({
       slug: ['parent-dashboard'],
       basePath: '/admin/kangur',

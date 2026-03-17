@@ -1,9 +1,8 @@
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home-helpers';
-import FrontendPublicOwnerShell from '@/app/(frontend)/FrontendPublicOwnerShell';
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { getCmsThemeSettings } from '@/features/cms/server';
+import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
-import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
+import { FrontendLayoutClient } from '@/shared/components/FrontendLayoutClient';
 
 import type { JSX } from 'react';
 
@@ -21,6 +20,8 @@ export default async function FrontendLayout({
     ? getFrontPagePublicOwner(frontPageSetting)
     : 'cms';
   const storefrontAppearanceMode = themeSettings.darkMode ? 'dark' : 'default';
+  const kangurInitialMode =
+    publicOwner === 'kangur' ? await getKangurStorefrontDefaultMode() : undefined;
 
   return (
     <main
@@ -28,11 +29,13 @@ export default async function FrontendLayout({
       tabIndex={-1}
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
     >
-      <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
-        <QueryErrorBoundary>
-          <FrontendPublicOwnerShell publicOwner={publicOwner}>{children}</FrontendPublicOwnerShell>
-        </QueryErrorBoundary>
-      </CmsStorefrontAppearanceProvider>
+      <FrontendLayoutClient
+        publicOwner={publicOwner}
+        storefrontAppearanceMode={storefrontAppearanceMode}
+        kangurInitialMode={kangurInitialMode}
+      >
+        {children}
+      </FrontendLayoutClient>
     </main>
   );
 }

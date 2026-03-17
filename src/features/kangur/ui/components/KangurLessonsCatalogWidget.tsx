@@ -86,7 +86,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                       lessonAssignment={lessonAssignment}
                       masteryPresentation={masteryPresentation}
                       onSelect={() => selectLesson(lesson.id)}
-                      statusGroupClassName='w-full flex-row items-start sm:w-auto sm:flex-col sm:items-end'
+                      statusGroupClassName='w-full items-start max-[360px]:flex-col sm:w-auto sm:flex-col sm:items-end'
                     />
                   </div>
                 );

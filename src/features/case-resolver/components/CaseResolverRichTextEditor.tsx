@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useMemo } from 'react';
-
-import { DocumentWysiwygEditor } from '@/features/document-editor';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
+const LazyDocumentWysiwygEditor = React.lazy(() =>
+  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+    default: mod.DocumentWysiwygEditor,
+  }))
+);
 
 type CaseResolverRichTextEditorProps = {
   value: string;
@@ -31,15 +35,23 @@ const {
 function CaseResolverRichTextEditorRuntime(): React.JSX.Element {
   const { value, onChange, placeholder, appearance } = useCaseResolverRichTextEditorRuntime();
   return (
-    <DocumentWysiwygEditor
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      appearance={appearance}
-      allowFontFamily
-      allowTextAlign
-      enableAdvancedTools
-    />
+    <React.Suspense
+      fallback={
+        <div className='min-h-[220px] rounded-lg border border-border/40 bg-card/20 p-4 text-sm text-muted-foreground'>
+          Loading editor...
+        </div>
+      }
+    >
+      <LazyDocumentWysiwygEditor
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        appearance={appearance}
+        allowFontFamily
+        allowTextAlign
+        enableAdvancedTools
+      />
+    </React.Suspense>
   );
 }
 

@@ -10,6 +10,7 @@ import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/Kangu
 import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 import {
   KangurIconBadge,
+  KangurPanelRow,
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
@@ -143,7 +144,7 @@ export default function OperationSelector({
                           size='sm'
                         />
                       ) : null}
-                      <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+                      <KangurPanelRow className='sm:items-start sm:justify-between'>
                         <KangurIconBadge
                           accent={operation.accent}
                           data-testid={`operation-icon-${operation.id}`}
@@ -168,11 +169,11 @@ export default function OperationSelector({
                               id={recommendedElementId ?? undefined}
                               size='sm'
                             >
-                              {operation.recommendedLabel}
-                            </KangurStatusChip>
-                          ) : null}
-                        </div>
+                            {operation.recommendedLabel}
+                          </KangurStatusChip>
+                        ) : null}
                       </div>
+                      </KangurPanelRow>
                       <div className='space-y-1 text-left'>
                         <span className='block text-lg font-extrabold [color:var(--kangur-page-text)]'>
                           {operation.label}

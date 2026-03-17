@@ -282,6 +282,7 @@ export function KangurPageContentFragmentEditor(): React.JSX.Element {
                   </div>
                 </div>
                 <Switch
+                  aria-label='Fragment enabled'
                   checked={selectedFragment.enabled}
                   onCheckedChange={(checked: boolean) =>
                     onUpdateFragment((fragment) => ({

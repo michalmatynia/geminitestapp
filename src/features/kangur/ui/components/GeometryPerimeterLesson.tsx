@@ -40,7 +40,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             <strong>Obwód</strong> to długosc całej krawędzi figury. Dodajemy wszystkie boki.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber'>
-            <div className='mx-auto h-20 w-32'>
+            <div className='mx-auto h-20 w-32 max-w-full'>
               <GeometryPerimeterTraceAnimation />
             </div>
             <p className='mt-2 text-sm text-amber-700'>Idziemy dookoła figury i sumujemy.</p>
@@ -58,7 +58,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack className='kangur-panel-gap text-center' gap='sm'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
-            <div className='mx-auto h-20 w-32'>
+            <div className='mx-auto h-20 w-32 max-w-full'>
               <GeometryPerimeterTraceAnimation />
             </div>
             <p className='[color:var(--kangur-page-text)]'>Każdy bok ma 3 cm</p>
@@ -88,7 +88,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack className='kangur-panel-gap text-center' gap='sm'>
           <KangurLessonCallout accent='slate' className='border-amber-200/85 text-center'>
-            <div className='mx-auto h-20 w-32'>
+            <div className='mx-auto h-20 w-32 max-w-full'>
               <GeometryPerimeterTraceAnimation />
             </div>
             <p className='[color:var(--kangur-page-text)]'>Boki: 6 cm, 4 cm, 6 cm, 4 cm</p>
@@ -109,7 +109,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Przykład: a=6, b=4 → O = 2 × (6+4) = 20 cm
           </KangurLessonCaption>
           <KangurLessonCallout accent='amber'>
-            <div className='mx-auto h-20 w-32'>
+            <div className='mx-auto h-20 w-32 max-w-full'>
               <GeometryPerimeterOppositeSidesAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -117,7 +117,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonCallout accent='amber'>
-            <div className='mx-auto h-20 w-36'>
+            <div className='mx-auto h-20 w-36 max-w-full'>
               <GeometryPerimeterSumAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -157,7 +157,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='amber' padding='sm'>
-            <div className='mx-auto h-24 w-36'>
+            <div className='mx-auto h-24 w-36 max-w-full'>
               <GeometryPerimeterTraceAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -172,7 +172,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='amber' padding='sm'>
-            <div className='mx-auto h-24 w-36'>
+            <div className='mx-auto h-24 w-36 max-w-full'>
               <GeometryPerimeterSidesAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>

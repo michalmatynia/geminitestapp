@@ -49,3 +49,9 @@ export const trackReadFailure = (
     ...context,
   });
 };
+
+export const createKangurClientFallback = (action: string): (() => never) => {
+  return () => {
+    throw new Error(`Kangur client fallback invoked for ${action}.`);
+  };
+};

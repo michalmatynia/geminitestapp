@@ -8,6 +8,7 @@ import type {
   KangurAssignmentCreateInput,
   KangurAssignmentSnapshot,
 } from '@/features/kangur/services/ports';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type {
   KangurDifficulty,
@@ -43,7 +44,7 @@ export type KangurAssignmentListItem = {
   createdAt: string;
   subject: KangurLessonSubject;
   subjectLabel: string;
-  subjectAccent: 'sky' | 'violet';
+  subjectAccent: KangurAccent;
   priority: KangurAssignmentSnapshot['priority'];
   status: KangurAssignmentSnapshot['progress']['status'];
   priorityLabel: string;
@@ -68,9 +69,11 @@ const ASSIGNMENT_PRIORITY_ORDER = {
   low: 2,
 } as const;
 
-const ASSIGNMENT_SUBJECT_ACCENTS: Record<KangurLessonSubject, 'sky' | 'violet'> = {
+const ASSIGNMENT_SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
+  alphabet: 'amber',
   english: 'sky',
   maths: 'violet',
+  web_development: 'teal',
 };
 
 const MIXED_TRAINING_PRESET_CATEGORIES: KangurOperation[] = [

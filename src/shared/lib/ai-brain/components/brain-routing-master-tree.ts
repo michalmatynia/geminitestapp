@@ -54,6 +54,11 @@ export const ROUTING_FEATURES: BrainRoutingFeatureConfig[] = [
     description: 'Tutor chat routing for StudiQ, managed directly through Brain.',
   },
   {
+    key: 'kangur_social',
+    label: 'Kangur Social',
+    description: 'Social post generation for Kangur updates and release notes.',
+  },
+  {
     key: 'products',
     label: 'Products',
     description: 'Product description, translation, and validation AI execution.',

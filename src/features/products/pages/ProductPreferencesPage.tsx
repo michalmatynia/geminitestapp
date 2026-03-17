@@ -30,7 +30,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   currencyCode: 'PLN',
   pageSize: 50,
   thumbnailSource: 'file',
-  filtersCollapsedByDefault: false,
+  filtersCollapsedByDefault: true,
   showTriggerRunFeedback: true,
   advancedFilterPresets: [],
   appliedAdvancedFilter: '',

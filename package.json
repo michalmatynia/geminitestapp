@@ -8,7 +8,7 @@
     "predev": "node scripts/runtime/check-node-version.cjs",
     "dev": "node --max-old-space-size=8192 server.cjs",
     "predev:playwright-broker": "node scripts/runtime/check-node-version.cjs",
-    "dev:playwright-broker": "node --max-old-space-size=12288 server.cjs",
+    "dev:playwright-broker": "node --max-old-space-size=16384 server.cjs",
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",
     "prebuild": "node scripts/build/prebuild-cleanup.cjs",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",

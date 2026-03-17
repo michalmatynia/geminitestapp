@@ -36,6 +36,7 @@ type KangurScoreDocument = {
 };
 
 const ENGLISH_OPERATION_REGEX = /^english_/i;
+const ALPHABET_OPERATION_REGEX = /^alphabet_/i;
 
 const toDto = (doc: KangurScoreDocument): KangurScore => ({
   id: doc._id.toString(),
@@ -87,6 +88,11 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
       query.$and = Array.isArray(query.$and)
         ? [...query.$and, subjectMatch, operationMatch]
         : [subjectMatch, operationMatch];
+    } else if (filters.subject === 'alphabet') {
+      query.$or = [
+        { subject: filters.subject },
+        { operation: { $regex: ALPHABET_OPERATION_REGEX } },
+      ];
     } else if (filters.subject === 'english') {
       query.$or = [
         { subject: filters.subject },

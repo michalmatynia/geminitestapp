@@ -6,23 +6,16 @@ import * as React from 'react';
 import { getTextContent } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import type {
+  FileUploadButtonProps as FileUploadButtonBaseProps,
+  FileUploadHelpers,
+} from '@/shared/contracts/ui';
 import { Button, type ButtonProps } from './button';
 import { Input } from './input';
 
-export type FileUploadButtonProps = Omit<ButtonProps, 'type' | 'onClick'> & {
-  accept?: string;
-  multiple?: boolean;
-  enableDrop?: boolean;
-  enablePaste?: boolean;
-  showProgress?: boolean;
-  onFilesSelected: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
-  onError?: (error: unknown) => void;
-};
-
-export type FileUploadHelpers = {
-  setProgress: (value: number) => void;
-  reportProgress: (loaded: number, total?: number) => void;
-};
+export type FileUploadButtonProps = FileUploadButtonBaseProps &
+  Omit<ButtonProps, 'type' | 'onClick'>;
+export type { FileUploadHelpers };
 
 const normalizeFiles = (files: File[], multiple?: boolean): File[] =>
   multiple ? files : files.slice(0, 1);

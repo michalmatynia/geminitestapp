@@ -1,20 +1,27 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 const {
-  usePathnameMock,
-  useSearchParamsMock,
-  kangurRoutingProviderMock,
   setKangurClientObservabilityContextMock,
   clearKangurClientObservabilityContextMock,
   withKangurClientError,
   withKangurClientErrorSync,
-} = vi.hoisted(() => ({
-  usePathnameMock: vi.fn<() => string | null>(),
-  useSearchParamsMock: vi.fn<() => URLSearchParams>(),
-  kangurRoutingProviderMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
-}));
+  usePathnameMock,
+  useSearchParamsMock,
+} = vi.hoisted(() => {
+  const mocks = globalThis.__kangurClientErrorMocks();
+  return {
+    setKangurClientObservabilityContextMock: mocks.setKangurClientObservabilityContextMock,
+    clearKangurClientObservabilityContextMock: mocks.clearKangurClientObservabilityContextMock,
+    withKangurClientError: mocks.withKangurClientError,
+    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    usePathnameMock: vi.fn<() => string | null>(),
+    useSearchParamsMock: vi.fn<() => URLSearchParams>(),
+  };
+});
+
+const kangurRoutingProviderMock = vi.fn();
 
 const mockKangurRoutingState = {
   pageKey: null as string | null,
@@ -24,8 +31,8 @@ const mockKangurRoutingState = {
 };
 
 vi.mock('next/navigation', () => ({
-  usePathname: usePathnameMock,
-  useSearchParams: useSearchParamsMock,
+  usePathname: () => usePathnameMock(),
+  useSearchParams: () => useSearchParamsMock(),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({

@@ -7,6 +7,7 @@ import {
   ThemeProvider,
 } from '@/features/cms/public';
 import { KangurPublicApp } from '@/features/kangur/public';
+import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';
@@ -44,7 +45,8 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   if (shouldApplyFrontPageAppSelection()) {
     const frontPageSetting = await getFrontPageSetting();
     if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      return <KangurPublicApp slug={slug} basePath='/' />;
+      const initialMode = await getKangurStorefrontDefaultMode();
+      return <KangurPublicApp slug={slug} basePath='/' initialMode={initialMode} />;
     }
   }
   const page = await resolveSlugToPage(slug);

@@ -6,13 +6,19 @@ import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 const {
   setKangurClientObservabilityContextMock,
   clearKangurClientObservabilityContextMock,
-  kangurRoutingProviderMock,
   withKangurClientError,
   withKangurClientErrorSync,
-} = vi.hoisted(() => ({
-  kangurRoutingProviderMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
-}));
+} = vi.hoisted(() => {
+  const mocks = globalThis.__kangurClientErrorMocks();
+  return {
+    setKangurClientObservabilityContextMock: mocks.setKangurClientObservabilityContextMock,
+    clearKangurClientObservabilityContextMock: mocks.clearKangurClientObservabilityContextMock,
+    withKangurClientError: mocks.withKangurClientError,
+    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+  };
+});
+
+const kangurRoutingProviderMock = vi.fn();
 
 const mockKangurRoutingState = {
   pageKey: null as string | null,

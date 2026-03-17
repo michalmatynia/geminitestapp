@@ -6,7 +6,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 interface RenamePathModalProps extends EntityModalProps<{ name: string }> {
   setDraftName: (value: string) => void;

@@ -14,6 +14,7 @@ import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswer
 import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
   KangurInfoCard,
+  KangurPanelRow,
   KangurPanelIntro,
   KangurSectionEyebrow,
   KangurStatusChip,
@@ -176,7 +177,7 @@ export function KangurTestQuestionRenderer({
       ) : null}
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
-        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+        <KangurPanelRow className='sm:items-start sm:justify-between'>
           <KangurSectionEyebrow as='span' className='pt-2 text-xs tracking-wide'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </KangurSectionEyebrow>
@@ -193,7 +194,7 @@ export function KangurTestQuestionRenderer({
               {question.pointValue} {question.pointValue === 1 ? 'pt' : 'pts'}
             </KangurStatusChip>
           </div>
-        </div>
+        </KangurPanelRow>
       ) : null}
 
       {/* Prompt */}

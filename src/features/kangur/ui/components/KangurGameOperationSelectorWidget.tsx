@@ -644,6 +644,12 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       : null;
   const shouldRender = screen === 'operation' || screen === 'training';
   const showMathSections = subject === 'maths';
+  const gameIntroDescription =
+    subject === 'maths'
+      ? 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+      : subject === 'alphabet'
+        ? 'Wybierz literową zabawę i ćwicz alfabet.'
+        : 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.';
 
   useEffect(() => {
     if (!lessonsQuery.data) {
@@ -720,9 +726,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       <KangurPageIntroCard
         className='max-w-md'
         description={
-          subject === 'english'
-            ? 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.'
-            : 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+          gameIntroDescription
         }
         headingSize='lg'
         onBack={handleHome}

@@ -1,21 +1,13 @@
 import { type VariantProps } from 'class-variance-authority';
 import React, { ReactNode } from 'react';
 
+import type { StatusVariant } from '@/shared/contracts/ui';
+
 import { cn } from '@/shared/utils';
 
 import { Badge, badgeVariants } from './badge';
 
-export type StatusVariant =
-  | 'pending'
-  | 'active'
-  | 'failed'
-  | 'removed'
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'processing';
+export type { StatusVariant };
 
 interface StatusBadgeProps {
   status: string;

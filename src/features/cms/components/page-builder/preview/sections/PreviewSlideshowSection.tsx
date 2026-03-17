@@ -17,6 +17,7 @@ import {
 import { PreviewNodeSelectionButton } from '@/features/cms/components/page-builder/preview/PreviewNodeSelectionButton';
 import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import type { BlockInstance } from '@/shared/contracts/cms';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { CompactEmptyState, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -96,8 +97,8 @@ export function PreviewSlideshowSection() {
     if (!slideshowAutoplay || slideshowPaused || slideCount <= 1 || slideshowAutoplaySpeed <= 0) {
       return undefined;
     }
-    const interval = window.setInterval(goToNextSlideshow, slideshowAutoplaySpeed);
-    return (): void => window.clearInterval(interval);
+    const interval = safeSetInterval(goToNextSlideshow, slideshowAutoplaySpeed);
+    return (): void => safeClearInterval(interval);
   }, [slideshowAutoplay, slideshowPaused, slideCount, slideshowAutoplaySpeed, goToNextSlideshow]);
 
   useEffect((): void => {

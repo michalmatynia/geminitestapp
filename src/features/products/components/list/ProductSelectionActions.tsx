@@ -403,14 +403,14 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
           </>
         }
         rightActions={
-          <div className='flex items-center gap-2'>
+          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto'>
             {activePreset ? (
               <Chip
                 label={activePreset.name}
                 active
                 onClick={() => setAdvancedFilterState('', null)}
                 icon={X}
-                className='h-8 max-w-[240px]'
+                className='h-8 max-w-[240px] w-full sm:w-auto'
               />
             ) : null}
             <ActionMenu
@@ -422,7 +422,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
                   <span className='text-xs font-medium'>Filter Presets</span>
                 </div>
               }
-              triggerClassName='h-8 px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white'
+              triggerClassName='h-8 w-full px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white sm:w-auto'
               variant='outline'
               size='sm'
             >

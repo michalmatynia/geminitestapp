@@ -2,13 +2,12 @@
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummary } from '@/shared/contracts';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SelectSimpleOption, SingleQuery } from '@/shared/contracts/ui';
 import type {
   BrainModelsResponse,
   BrainOperationsOverviewResponse,
   InsightsSnapshot,
 } from '@/shared/lib/ai-brain/hooks/useBrainQueries';
-import type { SelectSimpleOption } from '@/shared/ui';
 
 import type {
   AiBrainAssignment,

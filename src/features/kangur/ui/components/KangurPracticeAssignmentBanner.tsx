@@ -12,6 +12,7 @@ import {
   KangurCardDescription,
   KangurCardTitle,
   KangurGlassPanel,
+  KangurPanelRow,
   KangurMetaText,
   KangurProgressBar,
   KangurStatusChip,
@@ -132,7 +133,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
         surface='solid'
         variant='soft'
       >
-        <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+        <KangurPanelRow className='sm:items-start sm:justify-between'>
           <div className='min-w-0'>
             <KangurAssignmentPriorityChip
               accent='amber'
@@ -152,7 +153,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
           >
             {banner.progressPercent}%
           </KangurStatusChip>
-        </div>
+        </KangurPanelRow>
 
         <KangurSummaryPanel
           accent='amber'

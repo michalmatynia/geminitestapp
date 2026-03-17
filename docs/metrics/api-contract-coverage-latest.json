@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-16T19:06:36.890Z",
+  "generatedAt": "2026-03-17T09:57:58.262Z",
   "status": "passed",
   "summary": {
     "total": 20,
@@ -9,7 +9,7 @@
     "status": "passed",
     "routeFileCount": 280,
     "methodCount": 214,
-    "methodsWithTests": 184,
+    "methodsWithTests": 183,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -759,16 +759,14 @@
       "route": "auth/verify-credentials",
       "method": "POST",
       "expectedAccess": "public",
-      "hasTests": true,
+      "hasTests": false,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/auth/verify-credentials/route.ts",
-        "src/app/api/auth/verify-credentials/handler.ts"
+        "src/app/api/auth/verify-credentials/handler.impl.ts"
       ],
-      "testFiles": [
-        "src/app/api/auth/verify-credentials/handler.test.ts"
-      ]
+      "testFiles": []
     },
     {
       "route": "brain/models",
@@ -884,10 +882,10 @@
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/case-resolver/ocr/jobs/route.ts",
-        "src/app/api/case-resolver/ocr/jobs/handler.ts"
+        "src/app/api/case-resolver/ocr/jobs/handler.impl.ts"
       ],
       "testFiles": [
-        "src/app/api/case-resolver/ocr/jobs/handler.test.ts"
+        "src/app/api/case-resolver/ocr/jobs/route.test.ts"
       ]
     },
     {
@@ -3443,5 +3441,5 @@
       "infoCount": 20
     }
   ],
-  "durationMs": 336
+  "durationMs": 428
 }

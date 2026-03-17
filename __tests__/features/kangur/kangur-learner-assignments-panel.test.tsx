@@ -23,6 +23,8 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
     subject: 'maths',
     subjectKey: 'learner-1',
     setSubject: vi.fn(),
+    isLoading: false,
+    isError: false,
   }),
 }));
 

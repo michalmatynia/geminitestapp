@@ -35,6 +35,9 @@ export const KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY =
   'kangur_storefront_default_mode_v1';
 
 export const kangurLessonComponentIdSchema = z.enum([
+  'alphabet_basics',
+  'alphabet_syllables',
+  'alphabet_words',
   'clock',
   'calendar',
   'adding',
@@ -56,14 +59,23 @@ export const kangurLessonComponentIdSchema = z.enum([
   'english_subject_verb_agreement',
   'english_articles',
   'english_prepositions_time_place',
+  'webdev_react_components',
 ]);
 export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
 
 export const kangurLessonContentModeSchema = z.enum(['component', 'document']);
 export type KangurLessonContentMode = z.infer<typeof kangurLessonContentModeSchema>;
 
-export const kangurLessonSubjectSchema = z.enum(['maths', 'english']);
+export const kangurLessonSubjectSchema = z.enum([
+  'alphabet',
+  'maths',
+  'english',
+  'web_development',
+]);
 export type KangurLessonSubject = z.infer<typeof kangurLessonSubjectSchema>;
+
+export const kangurLessonAgeGroupSchema = z.enum(['six_year_old', 'ten_year_old', 'grown_ups']);
+export type KangurLessonAgeGroup = z.infer<typeof kangurLessonAgeGroupSchema>;
 
 export const kangurSubjectFocusSchema = z.object({
   subject: kangurLessonSubjectSchema,
@@ -120,6 +132,7 @@ export const kangurLessonSchema = z.object({
   componentId: kangurLessonComponentIdSchema,
   contentMode: kangurLessonContentModeSchema.default('component'),
   subject: kangurLessonSubjectSchema.default('maths'),
+  ageGroup: kangurLessonAgeGroupSchema.default('six_year_old'),
   title: nonEmptyTrimmedString.max(120),
   description: nonEmptyTrimmedString.max(240),
   emoji: nonEmptyTrimmedString.max(12),
@@ -851,6 +864,8 @@ export type KangurScoreLimit = z.infer<typeof kangurScoreLimitSchema>;
 
 const isEnglishScoreOperation = (operation: string): boolean =>
   operation.trim().toLowerCase().startsWith('english_');
+const isAlphabetScoreOperation = (operation: string): boolean =>
+  operation.trim().toLowerCase().startsWith('alphabet_');
 
 export const resolveKangurScoreSubject = (input: {
   operation: string;
@@ -858,6 +873,9 @@ export const resolveKangurScoreSubject = (input: {
 }): KangurLessonSubject => {
   if (isEnglishScoreOperation(input.operation)) {
     return 'english';
+  }
+  if (isAlphabetScoreOperation(input.operation)) {
+    return 'alphabet';
   }
   return input.subject ?? 'maths';
 };

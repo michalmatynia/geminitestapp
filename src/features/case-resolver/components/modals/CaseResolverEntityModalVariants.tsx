@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { type SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { type SettingsPanelField } from '@/shared/contracts/ui';
 
 import {
   CaseResolverEntitySettingsModal,

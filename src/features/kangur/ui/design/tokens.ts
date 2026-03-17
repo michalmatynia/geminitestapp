@@ -34,7 +34,7 @@ export const KANGUR_TOP_NAV_ITEM_CLASSNAME =
 export const KANGUR_TOP_NAV_ITEM_ACTIVE_CLASSNAME = 'kangur-nav-item-active';
 
 export const KANGUR_SEGMENTED_CONTROL_CLASSNAME =
-  'kangur-segmented-control flex w-full items-center gap-1.5 rounded-[28px] border p-1.5';
+  'kangur-segmented-control flex w-full flex-col items-stretch gap-1.5 rounded-[28px] border p-1.5 sm:flex-row sm:items-center';
 
 export const KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME =
   'kangur-segmented-control-item group relative inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[18px] border font-semibold tracking-[-0.02em] transition-all duration-200';

@@ -8,7 +8,8 @@ import type {
   AiPathRunRecord,
 } from '@/shared/lib/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths';
-import { Button, Tooltip, StatusBadge, Alert, type StatusVariant } from '@/shared/ui';
+import type { StatusVariant } from '@/shared/contracts/ui';
+import { Button, Tooltip, StatusBadge, Alert } from '@/shared/ui';
 
 import {
   buildRuntimeDurationRows,

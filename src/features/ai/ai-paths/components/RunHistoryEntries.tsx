@@ -1,6 +1,7 @@
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
 import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { StatusBadge, CompactEmptyState, Button, type StatusVariant } from '@/shared/ui';
+import type { StatusVariant } from '@/shared/contracts/ui';
+import { StatusBadge, CompactEmptyState, Button } from '@/shared/ui';
 
 import {
   resolveRunHistoryEntryAction,

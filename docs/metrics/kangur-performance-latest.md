@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Kangur Performance Baseline
 
-Generated at: 2026-03-16T20:07:36.482Z
+Generated at: 2026-03-17T09:39:38.918Z
 
 ## Execution Summary
 
-- Unit test suite status: FAIL
-- Unit test suite duration: 43.4s
+- Unit test suite status: PASS
+- Unit test suite duration: 19.1s
 - E2E suite: skipped
 
 ## Bundle Risk Snapshot

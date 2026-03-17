@@ -4,10 +4,10 @@ import {
   AdminDatabasePageLayout,
   Button,
   FileUploadButton,
-  type FileUploadHelpers,
   Alert,
   StandardDataTablePanel,
 } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { getDatabaseColumns } from '../components/DatabaseColumns';

@@ -28,7 +28,7 @@ export function KangurPracticeGameStage({
   return (
     <div
       className={cn(
-        'mx-auto flex w-full max-w-sm flex-col items-center',
+        'mx-auto flex w-full min-w-0 max-w-sm flex-col items-center',
         KANGUR_PANEL_GAP_CLASSNAME,
         className
       )}

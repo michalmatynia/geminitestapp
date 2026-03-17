@@ -93,7 +93,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Jednostka wzorca to najmniejszy fragment, który się powtarza.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-20 w-72'>
+            <div className='mx-auto h-20 w-72 max-w-full'>
               <PatternUnitAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -111,7 +111,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Gdy znasz jednostkę, możesz szybko uzupełnić brakujące miejsce.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-20 w-72'>
+            <div className='mx-auto h-20 w-72 max-w-full'>
               <PatternMissingAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -129,7 +129,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Czasem wzorzec ma trzy elementy, które powtarzają się w tej samej kolejności.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-20 w-72'>
+            <div className='mx-auto h-20 w-72 max-w-full'>
               <PatternCycleAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -179,7 +179,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             W ciągu arytmetycznym dodajemy tę samą liczbę na każdym kroku.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <ArithmeticStepAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -197,7 +197,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             W ciągu arytmetycznym możemy też odejmować stałą liczbę.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <ArithmeticReverseAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -337,7 +337,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Najpierw sprawdź różnicę, a jeśli nie działa, poszukaj stałego ilorazu.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-28 w-72'>
+            <div className='mx-auto h-28 w-72 max-w-full'>
               <RuleCheckAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -355,7 +355,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Zawsze przechodź po tych samych krokach, a reguła szybko się ujawni.
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-28 w-72'>
+            <div className='mx-auto h-28 w-72 max-w-full'>
               <RuleChecklistAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>

@@ -65,7 +65,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             ))}
           </div>
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <div className='mx-auto h-28 w-28'>
+            <div className='mx-auto h-28 w-28 max-w-full'>
               <GeometryShapesOrbitAnimation />
             </div>
             <div className='text-xs text-fuchsia-600'>Figury mogą się obracać i nadal są tym samym kształtem.</div>
@@ -77,7 +77,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Obrys figury',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-40'>
+          <div className='mx-auto h-28 w-40 max-w-full'>
             <GeometryPerimeterTraceAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>
@@ -90,7 +90,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Budowanie figury',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-36'>
+          <div className='mx-auto h-28 w-36 max-w-full'>
             <GeometryShapeBuildAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>
@@ -132,7 +132,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Policz boki',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-36'>
+          <div className='mx-auto h-28 w-36 max-w-full'>
             <GeometrySideHighlightAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>
@@ -145,7 +145,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Rogi figury',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-32'>
+          <div className='mx-auto h-28 w-32 max-w-full'>
             <GeometryVerticesAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>
@@ -158,7 +158,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Odcinek to bok',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-24 w-36'>
+          <div className='mx-auto h-24 w-36 max-w-full'>
             <GeometryPointSegmentAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>
@@ -171,7 +171,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Rysowanie boku',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-24 w-36'>
+          <div className='mx-auto h-24 w-36 max-w-full'>
             <GeometryMovingPointAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>
@@ -186,7 +186,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Podsumowanie w ruchu: obrót',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40'>
+          <div className='mx-auto h-32 w-40 max-w-full'>
             <GeometryShapesOrbitAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>Obrót nie zmienia figury.</div>
@@ -197,7 +197,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Podsumowanie w ruchu: boki',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40'>
+          <div className='mx-auto h-32 w-40 max-w-full'>
             <GeometryPolygonSidesAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>Boki i rogi opisują kształt.</div>
@@ -208,7 +208,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Podsumowanie w ruchu: wnętrze',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40'>
+          <div className='mx-auto h-32 w-40 max-w-full'>
             <GeometryShapeFillAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>Wnętrze figury to jej pole.</div>
@@ -219,7 +219,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       title: 'Podsumowanie w ruchu: budowa',
       content: (
         <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40'>
+          <div className='mx-auto h-32 w-40 max-w-full'>
             <GeometryShapeBuildAnimation />
           </div>
           <div className='text-xs text-fuchsia-600'>Łącz odcinki, aż figura się domknie.</div>

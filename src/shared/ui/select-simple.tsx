@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { SelectSimpleOption } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
 
@@ -16,11 +16,7 @@ import {
   SelectValue,
 } from './select';
 
-export interface SelectSimpleOption extends LabeledOptionDto<string> {
-  description?: string | undefined;
-  disabled?: boolean | undefined;
-  group?: string | undefined;
-}
+export type { SelectSimpleOption };
 
 interface SelectSimpleProps {
   value: string | undefined;

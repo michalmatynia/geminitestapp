@@ -3,6 +3,7 @@ import type {
   KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { kangurLessonSubjectSchema } from '@/features/kangur/shared/contracts/kangur';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 import type {
   KangurAssignmentPlan,
   KangurAssignmentQuestMetric,
@@ -160,7 +161,7 @@ const saveStoredDailyQuest = (quest: KangurDailyQuestStoredState): void => {
 
   const subject = kangurLessonSubjectSchema.safeParse(quest.subject).success
     ? (quest.subject as KangurLessonSubject)
-    : 'maths';
+    : DEFAULT_KANGUR_SUBJECT;
   const storageKey = buildDailyQuestStorageKey(subject);
 
   withKangurClientErrorSync(

@@ -2,6 +2,7 @@ import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { getProductListQueryKey } from '@/shared/lib/product-query-keys';
+import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface BackgroundSyncOptions {
@@ -18,7 +19,7 @@ export function useBackgroundSync({
   onUpdate,
 }: BackgroundSyncOptions): { forceSync: () => Promise<void> } {
   const queryClient = useQueryClient();
-  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const intervalRef = useRef<SafeTimerId | undefined>(undefined);
   const previousDataRef = useRef<unknown>(undefined);
   const isVisibleRef = useRef(true);
 
@@ -61,13 +62,13 @@ export function useBackgroundSync({
   useEffect(() => {
     if (!enabled) return;
 
-    intervalRef.current = setInterval(() => {
+    intervalRef.current = safeSetInterval(() => {
       void syncData();
     }, interval);
 
     return (): void => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        safeClearInterval(intervalRef.current);
       }
     };
   }, [queryKey, interval, enabled, onUpdate, queryClient]);

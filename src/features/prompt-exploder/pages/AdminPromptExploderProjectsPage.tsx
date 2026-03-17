@@ -12,9 +12,11 @@ import { useRouter } from 'next/navigation';
 import React, { useMemo, useState, useCallback } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   Button,
   ConfirmModal,
+  DocsTooltipEnhancer,
   PanelHeader,
   useToast,
   EmptyState,
@@ -24,10 +26,9 @@ import {
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
@@ -424,6 +425,8 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       <DocsTooltipEnhancer
         rootId='prompt-exploder-projects-docs-root'
         enabled={docsTooltipsEnabled}
+        moduleId={DOCUMENTATION_MODULE_IDS.promptExploder}
+        fallbackDocId='workflow_overview'
       />
     </div>
   );

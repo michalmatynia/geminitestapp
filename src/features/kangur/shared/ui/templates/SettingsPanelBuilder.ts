@@ -1,1 +1,1 @@
-export * from '@/shared/ui/templates/SettingsPanelBuilder';
+export * from '@/shared/contracts/ui';

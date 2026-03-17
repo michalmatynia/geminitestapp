@@ -19,7 +19,7 @@ import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Input, SelectSimple, Button, SectionHeader, FormSection } from '@/shared/ui';
-import { SettingsPanelField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsPanelField, SettingsFieldsRenderer } from '@/shared/contracts/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { useThemeSettingsValue } from './ThemeSettingsContext';

@@ -82,7 +82,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             (rogi).
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
-            <div className='mx-auto h-28 w-28'>
+            <div className='mx-auto h-28 w-28 max-w-full'>
               <GeometryVerticesAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -101,7 +101,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
         <KangurLessonStack className='text-center'>
           <KangurLessonLead>Obwiedź figurę i policz każdy bok.</KangurLessonLead>
           <KangurLessonCallout accent='slate' className='border-cyan-200/85'>
-            <div className='mx-auto h-28 w-28'>
+            <div className='mx-auto h-28 w-28 max-w-full'>
               <GeometrySideHighlightAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -121,7 +121,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             <strong>Kąt</strong> powstaje tam, gdzie spotykają się dwa odcinki.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky'>
-            <div className='mx-auto h-28 w-28'>
+            <div className='mx-auto h-28 w-28 max-w-full'>
               <GeometryRightAngleAnimation />
             </div>
             <p className='mt-2 text-sm text-cyan-700'>To kąt prosty (90°).</p>

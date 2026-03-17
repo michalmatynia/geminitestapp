@@ -4,21 +4,25 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 const {
-  listAssignmentsMock,
-  createAssignmentMock,
-  updateAssignmentMock,
-  reassignAssignmentMock,
   logKangurClientErrorMock,
   reportKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  listAssignmentsMock,
+  createAssignmentMock,
+  updateAssignmentMock,
+  reassignAssignmentMock,
 } = vi.hoisted(() => ({
+  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
+  reportKangurClientErrorMock: globalThis.__kangurClientErrorMocks().reportKangurClientErrorMock,
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   listAssignmentsMock: vi.fn(),
   createAssignmentMock: vi.fn(),
   updateAssignmentMock: vi.fn(),
   reassignAssignmentMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

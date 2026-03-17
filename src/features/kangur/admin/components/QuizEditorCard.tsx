@@ -1,6 +1,4 @@
 import React from 'react';
-
-import { DocumentWysiwygEditor } from '@/features/document-editor';
 import { createKangurLessonBlockId } from '@/features/kangur/lesson-documents';
 import type {
   KangurLessonQuizBlock,
@@ -8,6 +6,12 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import { Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+
+const LazyDocumentWysiwygEditor = React.lazy(() =>
+  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+    default: mod.DocumentWysiwygEditor,
+  }))
+);
 
 export function QuizEditorCard(props: {
   block: KangurLessonQuizBlock;
@@ -47,10 +51,18 @@ export function QuizEditorCard(props: {
   return (
     <div className='space-y-4'>
       <FormField label='Question'>
-        <DocumentWysiwygEditor
-          value={block.question}
-          onChange={(nextHtml): void => onChange({ ...block, question: nextHtml })}
-        />
+        <React.Suspense
+          fallback={
+            <div className='min-h-[220px] rounded-lg border border-border/40 bg-card/20 p-4 text-sm text-muted-foreground'>
+              Loading editor...
+            </div>
+          }
+        >
+          <LazyDocumentWysiwygEditor
+            value={block.question}
+            onChange={(nextHtml): void => onChange({ ...block, question: nextHtml })}
+          />
+        </React.Suspense>
       </FormField>
 
       <div>
@@ -117,10 +129,18 @@ export function QuizEditorCard(props: {
       </div>
 
       <FormField label='Explanation (optional, shown after answer)'>
-        <DocumentWysiwygEditor
-          value={block.explanation ?? ''}
-          onChange={(nextHtml): void => onChange({ ...block, explanation: nextHtml })}
-        />
+        <React.Suspense
+          fallback={
+            <div className='min-h-[220px] rounded-lg border border-border/40 bg-card/20 p-4 text-sm text-muted-foreground'>
+              Loading editor...
+            </div>
+          }
+        >
+          <LazyDocumentWysiwygEditor
+            value={block.explanation ?? ''}
+            onChange={(nextHtml): void => onChange({ ...block, explanation: nextHtml })}
+          />
+        </React.Suspense>
       </FormField>
 
       <FormField label='TTS narration override (optional)'>

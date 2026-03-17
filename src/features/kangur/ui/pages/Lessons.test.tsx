@@ -4,6 +4,7 @@
 
 import { act, render, screen } from '@testing-library/react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 
 const {
   useKangurSubjectFocusMock,
@@ -117,6 +118,9 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurEmptyState: ({ title }: { title: string }) => <div>{title}</div>,
+  KangurButton: ({ children, ...props }: { children: React.ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
   KangurGlassPanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurStatusChip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurSummaryPanel: ({ title }: { title: string }) => <div>{title}</div>,
@@ -125,6 +129,7 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
 vi.mock('@/features/kangur/ui/design/tokens', () => ({
   KANGUR_LESSON_PANEL_GAP_CLASSNAME: 'gap',
   KANGUR_PANEL_GAP_CLASSNAME: 'gap',
+  KANGUR_SEGMENTED_CONTROL_CLASSNAME: 'segmented',
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
@@ -192,6 +197,7 @@ const lessonsFixture = [
     id: 'lesson-maths',
     componentId: 'adding',
     subject: 'maths',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     enabled: true,
     sortOrder: 1,
     title: 'Dodawanie',
@@ -205,6 +211,7 @@ const lessonsFixture = [
     id: 'lesson-english',
     componentId: 'english_basics',
     subject: 'english',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     enabled: true,
     sortOrder: 2,
     title: 'English Basics',

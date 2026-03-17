@@ -71,7 +71,7 @@ const buildUserPreferencesResponse = (
   productListCurrencyCode: preferences?.productListCurrencyCode ?? 'PLN',
   productListPageSize: normalizeProductPageSize(preferences?.productListPageSize, 12),
   productListThumbnailSource: preferences?.productListThumbnailSource ?? 'file',
-  productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? false,
+  productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? true,
   productListShowTriggerRunFeedback: preferences?.productListShowTriggerRunFeedback ?? true,
   productListAdvancedFilterPresets: preferences?.productListAdvancedFilterPresets ?? [],
   productListAppliedAdvancedFilter: preferences?.productListAppliedAdvancedFilter ?? null,

@@ -49,7 +49,7 @@ export default function Leaderboard(): React.JSX.Element {
 
       <div className='mb-4 flex flex-col gap-2'>
         <div
-          className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start sm:w-auto`}
+          className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
           data-testid='leaderboard-operation-filter-group'
         >
           {operationFilters.map((filter) => (
@@ -73,7 +73,7 @@ export default function Leaderboard(): React.JSX.Element {
         </div>
 
         <div
-          className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} flex-wrap justify-start sm:w-auto`}
+          className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
           data-testid='leaderboard-user-filter-group'
         >
           {userFilters.map((filter) => (

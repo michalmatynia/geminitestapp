@@ -37,6 +37,8 @@ import {
   resolveKangurCanvasPoint,
   syncKangurCanvasContext,
 } from '@/features/kangur/ui/services/drawing-canvas';
+import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
 import {
   addXp,
@@ -89,7 +91,10 @@ const KEYBOARD_CURSOR_START = {
   x: Math.round(CANVAS_WIDTH / 2),
   y: Math.round(CANVAS_HEIGHT / 2),
 } as const;
-const MIN_DRAWING_POINTS = loosenMinInt(10);
+const BASE_MIN_DRAWING_POINTS = loosenMinInt(10);
+
+const distance = (a: Point2d, b: Point2d): number =>
+  Math.hypot(a.x - b.x, a.y - b.y);
 
 const VERTICAL_AXIS: SymmetryAxis = { orientation: 'vertical', position: CANVAS_WIDTH / 2 };
 const HORIZONTAL_AXIS: SymmetryAxis = { orientation: 'horizontal', position: CANVAS_HEIGHT / 2 };
@@ -531,10 +536,16 @@ export default function GeometrySymmetryGame({
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
   const [keyboardStatus, setKeyboardStatus] = useState('Plansza gotowa do rysowania.');
+  const isCoarsePointer = useKangurCoarsePointer();
 
   const totalRounds = ROUNDS.length;
   const currentRound = ROUNDS[roundIndex];
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
+  const minPointDistance = isCoarsePointer ? 5 : 2;
+  const minDrawingPoints = isCoarsePointer
+    ? Math.max(6, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
+    : BASE_MIN_DRAWING_POINTS;
+  const strokeWidth = isCoarsePointer ? 7 : 5;
 
   const redrawCanvas = useCallback(
     (nextStrokes: Point2d[][], round: SymmetryRound | undefined): void => {
@@ -564,7 +575,7 @@ export default function GeometrySymmetryGame({
       }
 
       ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 5;
+      ctx.lineWidth = strokeWidth;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       for (const stroke of nextStrokes) {
@@ -581,7 +592,7 @@ export default function GeometrySymmetryGame({
         ctx.stroke();
       }
     },
-    [showMirrorHint]
+    [showMirrorHint, strokeWidth]
   );
 
   useEffect(() => {
@@ -604,6 +615,7 @@ export default function GeometrySymmetryGame({
     canvasRef,
     redraw: () => redrawCanvas(strokes, currentRound),
   });
+  useKangurCanvasTouchLock(canvasRef);
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -654,6 +666,10 @@ export default function GeometrySymmetryGame({
       if (current.length === 0) return current;
       const next = [...current];
       const lastStroke = next[next.length - 1] ?? [];
+      const lastPoint = lastStroke[lastStroke.length - 1];
+      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
+        return current;
+      }
       next[next.length - 1] = [...lastStroke, point];
       return next;
     });
@@ -801,7 +817,7 @@ export default function GeometrySymmetryGame({
 
   const handleCheck = (): void => {
     if (done || feedback || !currentRound) return;
-    if (points.length < MIN_DRAWING_POINTS) {
+    if (points.length < minDrawingPoints) {
       setFeedback({
         kind: 'info',
         text: 'Zrób kilka ruchów, żeby powstała linia do sprawdzenia.',

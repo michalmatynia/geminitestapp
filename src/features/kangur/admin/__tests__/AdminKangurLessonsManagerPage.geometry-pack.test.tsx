@@ -4,39 +4,24 @@
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const {
-  mutateAsyncMock,
-  updateLessonDocumentsMock,
-  toastMock,
-  lessonsState,
-  lessonDocumentsState,
-  searchStateMock,
-  useMasterFolderTreeShellMock,
-  folderTreeViewportMock,
-  folderTreeSearchBarMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => {
-  return {
-    mutateAsyncMock: vi.fn(),
-    updateLessonDocumentsMock: vi.fn(),
-    toastMock: vi.fn(),
-    lessonsState: {
-      value: [] as Array<Record<string, unknown>>,
-    },
-    lessonDocumentsState: {
-      value: {} as Record<string, unknown>,
-    },
-    searchStateMock: {
-      isActive: false,
-      results: [],
-    },
-    useMasterFolderTreeShellMock: vi.fn(),
-    folderTreeViewportMock: vi.fn(),
-    folderTreeSearchBarMock: vi.fn(),
-    ...globalThis.__kangurClientErrorMocks(),
-  };
-});
+
+const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();
+const mutateAsyncMock = vi.fn();
+const updateLessonDocumentsMock = vi.fn();
+const toastMock = vi.fn();
+const lessonsState = {
+  value: [] as Array<Record<string, unknown>>,
+};
+const lessonDocumentsState = {
+  value: {} as Record<string, unknown>,
+};
+const searchStateMock = {
+  isActive: false,
+  results: [],
+};
+const useMasterFolderTreeShellMock = vi.fn();
+const folderTreeViewportMock = vi.fn();
+const folderTreeSearchBarMock = vi.fn();
 
 vi.mock('@/features/foldertree', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/foldertree')>();
@@ -124,8 +109,11 @@ vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
-  withKangurClientError,
-  withKangurClientErrorSync,
+  ...(() => {
+    const { withKangurClientError, withKangurClientErrorSync } =
+      globalThis.__kangurClientErrorMocks();
+    return { withKangurClientError, withKangurClientErrorSync };
+  })(),
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
@@ -139,6 +127,9 @@ const baseLessons = [
   {
     id: 'kangur-lesson-clock',
     componentId: 'clock',
+    contentMode: 'component',
+    subject: 'maths',
+    ageGroup: 'ten_year_old',
     title: 'Nauka zegara',
     description: 'Odczytuj godziny',
     emoji: '🕐',
@@ -150,6 +141,9 @@ const baseLessons = [
   {
     id: 'kangur-lesson-calendar',
     componentId: 'calendar',
+    contentMode: 'component',
+    subject: 'maths',
+    ageGroup: 'ten_year_old',
     title: 'Nauka kalendarza',
     description: 'Dni i miesiące',
     emoji: '📅',
@@ -244,6 +238,9 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
       ...geometryComponentIds.map((componentId, index) => ({
         id: `kangur-lesson-${componentId}`,
         componentId,
+        contentMode: 'component',
+        subject: 'maths',
+        ageGroup: 'ten_year_old',
         title: `Geometry ${componentId}`,
         description: 'Geometry lesson',
         emoji: '🔷',
@@ -286,6 +283,9 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
       ...logicalComponentIds.map((componentId, index) => ({
         id: `kangur-lesson-${componentId}`,
         componentId,
+        contentMode: 'component',
+        subject: 'maths',
+        ageGroup: 'ten_year_old',
         title: `Logic ${componentId}`,
         description: 'Logical lesson',
         emoji: '🧠',

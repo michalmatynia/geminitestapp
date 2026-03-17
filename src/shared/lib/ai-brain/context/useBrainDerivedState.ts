@@ -21,7 +21,7 @@ import {
   type BrainOperationsOverviewResponse,
   type InsightsSnapshot,
 } from '@/shared/lib/ai-brain/hooks/useBrainQueries';
-import { type SelectSimpleOption } from '@/shared/ui';
+import type { SelectSimpleOption } from '@/shared/contracts/ui';
 
 import {
   ALL_BRAIN_FEATURE_KEYS,

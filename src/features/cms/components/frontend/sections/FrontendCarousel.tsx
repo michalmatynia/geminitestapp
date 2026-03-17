@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 
+import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
@@ -75,7 +76,7 @@ export function FrontendCarousel(): React.ReactNode {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<SafeTimerId | null>(null);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const carouselId = React.useId();
 
@@ -140,16 +141,16 @@ export function FrontendCarousel(): React.ReactNode {
   useEffect(() => {
     if (!autoPlay || isPaused || frameCount <= 1) {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        safeClearInterval(intervalRef.current);
         intervalRef.current = null;
       }
       return;
     }
 
-    intervalRef.current = setInterval(goToNext, autoPlaySpeed);
+    intervalRef.current = safeSetInterval(goToNext, autoPlaySpeed);
     return (): void => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        safeClearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };

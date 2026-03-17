@@ -7,6 +7,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const {
   settingsStoreMock,
@@ -48,6 +49,10 @@ const {
 
 const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
+}));
+
+const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
+  useKangurAgeGroupFocusMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -168,6 +173,10 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => useKangurAgeGroupFocusMock(),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => ({ basePath: '/kangur' }),
   useOptionalKangurRouting: () => null,
@@ -255,17 +264,21 @@ import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/settings';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
-const renderLessonsPage = () =>
-  render(
+const renderLessonsPage = async () => {
+  const result = render(
     <KangurGuestPlayerProvider>
       <Lessons />
     </KangurGuestPlayerProvider>
   );
+  await screen.findByTestId('lessons-list-transition');
+  return result;
+};
 
 const createLesson = (overrides: Partial<Record<string, unknown>> = {}) => ({
   id: 'kangur-lesson-clock',
   componentId: 'clock',
   subject: 'maths',
+  ageGroup: DEFAULT_KANGUR_AGE_GROUP,
   contentMode: 'component',
   title: 'Nauka zegara',
   description: 'Odczytuj godziny',
@@ -334,6 +347,10 @@ describe('Lessons', () => {
       setSubject: vi.fn(),
       subjectKey: 'learner-1',
     });
+    useKangurAgeGroupFocusMock.mockReturnValue({
+      ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+      setAgeGroup: vi.fn(),
+    });
     useKangurPageContentEntryMock.mockImplementation(() => ({
       entry: null,
       data: undefined,
@@ -343,7 +360,7 @@ describe('Lessons', () => {
     }));
   });
 
-  it('renders stored document content when the lesson is explicitly in document mode', () => {
+  it('renders stored document content when the lesson is explicitly in document mode', async () => {
     setLessonState({
       lessons: [
         createLesson({
@@ -368,7 +385,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /shapes with svg/i }));
 
@@ -383,7 +400,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('renders each lesson component only once when persisted settings contain duplicates', () => {
+  it('renders each lesson component only once when persisted settings contain duplicates', async () => {
     setLessonState({
       lessons: [
         createLesson({
@@ -408,14 +425,14 @@ describe('Lessons', () => {
       ],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     expect(screen.getAllByRole('button', { name: /nauka zegara/i })).toHaveLength(1);
     expect(screen.queryByRole('button', { name: /nauka zegara duplicate/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /nauka kalendarza/i })).toBeInTheDocument();
   });
 
-  it('keeps only the lesson navigation button at the bottom and constrains its width', () => {
+  it('keeps only the lesson navigation button at the bottom and constrains its width', async () => {
     setLessonState({
       lessons: [
         createLesson(),
@@ -432,7 +449,7 @@ describe('Lessons', () => {
       ],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
@@ -449,7 +466,7 @@ describe('Lessons', () => {
     expect(bottomNavigationButton).toHaveClass('surface-cta');
   });
 
-  it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', () => {
+  it('keeps the secret lesson trigger hidden until every lesson has recorded mastery', async () => {
     setLessonState({
       lessons: [
         createLesson(),
@@ -471,7 +488,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
@@ -501,7 +518,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Open secret lesson' }));
@@ -533,7 +550,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     await waitFor(() =>
       expect(screen.getByRole('link', { name: 'Strona główna' })).toHaveAttribute(
@@ -551,7 +568,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('uses app-router navigation when the fallback back action has no browser history entry', () => {
+  it('uses app-router navigation when the fallback back action has no browser history entry', async () => {
     setLessonState({
       lessons: [createLesson()],
     });
@@ -564,7 +581,7 @@ describe('Lessons', () => {
     });
 
     try {
-      renderLessonsPage();
+      await renderLessonsPage();
 
       fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
 
@@ -581,7 +598,7 @@ describe('Lessons', () => {
     }
   });
 
-  it('keeps using the legacy component renderer when the lesson stays in component mode', () => {
+  it('keeps using the legacy component renderer when the lesson stays in component mode', async () => {
     setLessonState({
       lessons: [
         createLesson({
@@ -605,7 +622,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /classic clock/i }));
 
@@ -653,7 +670,7 @@ describe('Lessons', () => {
         ],
       });
 
-      renderLessonsPage();
+      await renderLessonsPage();
 
       fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
 
@@ -667,12 +684,12 @@ describe('Lessons', () => {
     }
   });
 
-  it('returns from an active lesson to the lessons library via the shared header back button', () => {
+  it('returns from an active lesson to the lessons library via the shared header back button', async () => {
     setLessonState({
       lessons: [createLesson()],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
@@ -681,7 +698,7 @@ describe('Lessons', () => {
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
   });
 
-  it('uses the smoother motion preset for lessons list and active lesson transitions', () => {
+  it('uses the smoother motion preset for lessons list and active lesson transitions', async () => {
     setLessonState({
       lessons: [
         createLesson(),
@@ -696,7 +713,7 @@ describe('Lessons', () => {
       ],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     expect(screen.getByTestId('lesson-library-motion-kangur-lesson-clock')).toHaveAttribute(
       'data-motion-transition',
@@ -727,7 +744,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('shows the empty-document warning when a document-mode lesson has no saved content', () => {
+  it('shows the empty-document warning when a document-mode lesson has no saved content', async () => {
     setLessonState({
       lessons: [
         createLesson({
@@ -752,7 +769,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
@@ -771,7 +788,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('uses shared chips for lesson library document and assignment states', () => {
+  it('uses shared chips for lesson library document and assignment states', async () => {
     authState.value = {
       user: {
         id: 'parent-1',
@@ -849,7 +866,7 @@ describe('Lessons', () => {
       },
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toHaveClass(
       'soft-card',
@@ -878,7 +895,7 @@ describe('Lessons', () => {
     expect(screen.queryByText('Skup się na odczytywaniu godzin.')).toBeNull();
   });
 
-  it('shows a compact completed parent-assignment pill in the active lesson header', () => {
+  it('shows a compact completed parent-assignment pill in the active lesson header', async () => {
     authState.value = {
       user: {
         id: 'parent-1',
@@ -930,7 +947,7 @@ describe('Lessons', () => {
       ],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /dodawanie/i }));
 
@@ -945,7 +962,7 @@ describe('Lessons', () => {
     expect(screen.queryByText('Wykonane wczoraj.')).toBeNull();
   });
 
-  it('hides parent assignment markers in local mode even if stale assignment data exists', () => {
+  it('hides parent assignment markers in local mode even if stale assignment data exists', async () => {
     assignmentsState.value = [
       {
         id: 'assignment-priority',
@@ -980,21 +997,21 @@ describe('Lessons', () => {
       lessons: [createLesson()],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     expect(screen.queryByText('Priorytet rodzica')).toBeNull();
     expect(screen.queryByText('Ukończone dla rodzica')).toBeNull();
     expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
   });
 
-  it('uses the shared empty-state surface when no lessons are enabled', () => {
+  it('uses the shared empty-state surface when no lessons are enabled', async () => {
     setLessonState({
       lessons: [createLesson({ enabled: false })],
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
-    const emptyTitle = screen.getByText(/Brak aktywnych lekcji/i);
+    const emptyTitle = screen.getByText('Brak aktywnych lekcji', { selector: 'div' });
     expect(emptyTitle).toBeInTheDocument();
     expect(emptyTitle.parentElement).toHaveClass(
       'soft-card',
@@ -1003,7 +1020,7 @@ describe('Lessons', () => {
     );
   });
 
-  it('uses Mongo-backed page-content copy for the lessons list intro and empty state when available', () => {
+  it('uses Mongo-backed page-content copy for the lessons list intro and empty state when available', async () => {
     setLessonState({
       lessons: [createLesson({ enabled: false })],
     });
@@ -1045,14 +1062,14 @@ describe('Lessons', () => {
       };
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     expect(screen.getByText('Mongo intro do lekcji.')).toBeInTheDocument();
     expect(screen.getByText('Brak gotowych lekcji')).toBeInTheDocument();
     expect(screen.getByText('Mongo pusty stan listy lekcji.')).toBeInTheDocument();
   });
 
-  it('keeps the selected lesson title in the active header while still using Mongo-backed copy for assignment and document sections', () => {
+  it('keeps the selected lesson title in the active header while still using Mongo-backed copy for assignment and document sections', async () => {
     authState.value = {
       user: {
         id: 'parent-1',
@@ -1192,7 +1209,7 @@ describe('Lessons', () => {
       };
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
@@ -1211,7 +1228,7 @@ describe('Lessons', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('falls back to the selected lesson title and description when the active header copy is blank', () => {
+  it('falls back to the selected lesson title and description when the active header copy is blank', async () => {
     setLessonState({
       lessons: [
         createLesson({
@@ -1247,7 +1264,7 @@ describe('Lessons', () => {
       };
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
 
@@ -1255,7 +1272,7 @@ describe('Lessons', () => {
     expect(screen.getByText('Odczytuj godziny')).toBeInTheDocument();
   });
 
-  it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', () => {
+  it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', async () => {
     setLessonState({
       lessons: [
         createLesson({
@@ -1303,7 +1320,7 @@ describe('Lessons', () => {
       };
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
 
@@ -1357,7 +1374,7 @@ describe('Lessons', () => {
       };
     });
 
-    renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Open secret lesson' }));
@@ -1368,12 +1385,12 @@ describe('Lessons', () => {
     expect(screen.getByText('Mongo opis ukrytego zakonczenia lekcji.')).toBeInTheDocument();
   });
 });
-it('renders the lessons wordmark without a duplicate visible text heading', () => {
+it('renders the lessons wordmark without a duplicate visible text heading', async () => {
   setLessonState({
     lessons: [createLesson()],
   });
 
-  renderLessonsPage();
+  await renderLessonsPage();
 
   const heading = screen.getByTestId('kangur-lessons-list-heading');
   const introCard = screen.getByTestId('lessons-list-intro-card');

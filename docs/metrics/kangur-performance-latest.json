@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-16T20:07:36.482Z",
+  "generatedAt": "2026-03-17T09:39:38.918Z",
   "strictMode": true,
   "includeE2E": false,
   "allowInfraE2EFail": false,
@@ -7,10 +7,10 @@
   "unit": {
     "id": "kangur-unit",
     "command": "npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts",
-    "status": "fail",
-    "exitCode": 1,
-    "durationMs": 43384,
-    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 1727ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  1254ms\n     ✓ keeps lessons list view when focus query does not map to a lesson  469ms\n ❯ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (0 test)\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 288ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 148ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (9 tests) 23ms\n ✓ |unit| src/features/kangur/settings.test.ts (16 tests) 21ms\n\n⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx [ __tests__/features/kangur/learner-profile.page.test.tsx ]\nError: [vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n ❯ src/features/kangur/ui/context/KangurAiTutorContentContext.tsx:19:1\n     17| } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';\n     18| import { api } from '@/shared/lib/api-client';\n     19| import { withKangurClientError } from '@/features/kangur/observability…\n       | ^\n     20| \n     21| \n\nCaused by: ReferenceError: Cannot access 'withKangurClientError' before initialization\n ❯ __tests__/features/kangur/learner-profile.page.test.tsx:142:3\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 5 passed (6)\n      Tests  39 passed (39)\n   Start at  21:06:54\n   Duration  41.74s (transform 17.26s, setup 1.46s, import 31.09s, tests 2.21s, environment 3.24s)"
+    "status": "pass",
+    "exitCode": 0,
+    "durationMs": 19098,
+    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests) 616ms\n     ✓ loads user scores and renders profile metrics  365ms\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 672ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  538ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 134ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 119ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (9 tests) 14ms\n ✓ |unit| src/features/kangur/settings.test.ts (16 tests) 13ms\n\n Test Files  6 passed (6)\n      Tests  43 passed (43)\n   Start at  10:39:20\n   Duration  18.09s (transform 4.56s, setup 746ms, import 13.05s, tests 1.57s, environment 2.09s)"
   },
   "e2e": null,
   "bundleRisk": {
@@ -50,7 +50,7 @@
     "totalLines": 3194
   },
   "summary": {
-    "failedRuns": 1,
+    "failedRuns": 0,
     "infraFailures": 0
   }
 }

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsPanelField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';
 

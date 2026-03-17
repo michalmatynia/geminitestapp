@@ -50,6 +50,7 @@ import { KangurParentDashboardRuntimeBoundary } from '@/features/kangur/ui/conte
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
+import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import type { PageZone } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { Badge, Button } from '@/features/kangur/shared/ui';
@@ -65,6 +66,7 @@ import {
 } from './project';
 
 const KANGUR_BUILDER_BASE_PATH = '/admin/kangur';
+const KANGUR_CUSTOM_CSS_SCOPE_SELECTOR = '[data-kangur-custom-css-scope="true"]';
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 
 function KangurCmsPreviewCanvasSections({
@@ -166,6 +168,15 @@ export function KangurCmsPreviewPanel({
   const colorSchemes = useMemo(
     () => (theme.colorSchemes.length > 0 ? buildColorSchemeMap(theme) : undefined),
     [theme]
+  );
+  const scopedCustomCss = useMemo(
+    () =>
+      buildKangurScopedCustomCss(
+        theme.customCss,
+        theme.customCssSelectors,
+        KANGUR_CUSTOM_CSS_SCOPE_SELECTOR
+      ),
+    [theme.customCss, theme.customCssSelectors]
   );
   const mediaVars = useMemo(() => getMediaStyleVars(theme), [theme]);
   const mediaStyles = useMemo(() => getMediaInlineStyles(theme), [theme]);
@@ -608,6 +619,7 @@ export function KangurCmsPreviewPanel({
           <div className='p-0' style={scaledCanvasWrapperStyle}>
             <div
               data-cms-canvas='true'
+              data-kangur-custom-css-scope='true'
               ref={canvasRef}
               className={`relative mx-auto ${previewWidthClass} ${previewFrameClass} ${previewFrameClass ? 'p-3' : ''} ${
                 state.inspectorEnabled ? 'cursor-crosshair' : ''
@@ -619,7 +631,7 @@ export function KangurCmsPreviewPanel({
                 ...scaledCanvasStyle,
               }}
             >
-              {theme.customCss?.trim() ? <style>{theme.customCss}</style> : null}
+              {scopedCustomCss ? <style>{scopedCustomCss}</style> : null}
               <div style={contentStyle} className={isVectorOverlayOpen ? 'pointer-events-none' : ''}>
                 <MediaStylesProvider value={mediaStyles ?? null}>
                   <CmsPageProvider colorSchemes={colorSchemes ?? {}} layout={previewLayout}>

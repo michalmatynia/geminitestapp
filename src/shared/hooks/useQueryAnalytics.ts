@@ -3,6 +3,7 @@
 import { useQueryClient, type Query } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -321,8 +322,8 @@ export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
   useEffect((): (() => void) | void => {
     if (process.env['NODE_ENV'] !== 'development') return;
 
-    const interval = setInterval(logPerformanceReport, QUERY_PERF_REPORT_INTERVAL_MS);
-    return (): void => clearInterval(interval);
+    const interval = safeSetInterval(logPerformanceReport, QUERY_PERF_REPORT_INTERVAL_MS);
+    return (): void => safeClearInterval(interval);
   }, [logPerformanceReport]);
 
   return analytics;

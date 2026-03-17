@@ -4,6 +4,7 @@ import React from 'react';
 import {
   KangurCardDescription,
   KangurCardTitle,
+  KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -147,7 +148,7 @@ export function KangurDailyQuestHighlightCardContent(
   } = props;
 
   return (
-    <div className={cn('flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between', className)}>
+    <KangurPanelRow className={cn('sm:items-start sm:justify-between', className)}>
       <div className='min-w-0'>
         <KangurDailyQuestHighlightChips
           chipLabelStyle={chipLabelStyle}
@@ -170,7 +171,7 @@ export function KangurDailyQuestHighlightCardContent(
         />
       </div>
       {action}
-    </div>
+    </KangurPanelRow>
   );
 }
 

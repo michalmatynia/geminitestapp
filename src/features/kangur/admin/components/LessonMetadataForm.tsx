@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import { FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
 
@@ -16,6 +17,13 @@ export function LessonMetadataForm(props: {
   const selectedComponentLabel =
     KANGUR_LESSON_COMPONENT_OPTIONS.find((option) => option.value === formData.componentId)
       ?.label ?? formData.componentId;
+  const ageGroupOptions = KANGUR_AGE_GROUPS.map((group) => ({
+    value: group.id,
+    label: group.label,
+  }));
+  const selectedAgeGroupLabel =
+    ageGroupOptions.find((option) => option.value === formData.ageGroup)?.label ??
+    formData.ageGroup;
   const selectedContentModeLabel =
     LESSON_CONTENT_MODE_OPTIONS.find((option) => option.value === formData.contentMode)?.label ??
     formData.contentMode;
@@ -34,12 +42,18 @@ export function LessonMetadataForm(props: {
             This editor keeps the learner-facing label, rendering strategy, and visibility state in
             one place so new lessons are easier to create consistently.
           </div>
-          <div className='mt-4 grid gap-3 md:grid-cols-3'>
+          <div className='mt-4 grid gap-3 md:grid-cols-4'>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
                 Lesson type
               </div>
               <div className='mt-1 text-sm font-medium text-white'>{selectedComponentLabel}</div>
+            </div>
+            <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
+              <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
+                Age group
+              </div>
+              <div className='mt-1 text-sm font-medium text-white'>{selectedAgeGroupLabel}</div>
             </div>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
@@ -58,7 +72,7 @@ export function LessonMetadataForm(props: {
           </div>
         </div>
 
-        <div className='grid gap-4 md:grid-cols-2'>
+        <div className='grid gap-4 md:grid-cols-3'>
           <div className='rounded-3xl border border-border/50 bg-card/30 p-4'>
             <FormField label='Lesson Type'>
               <SelectSimple
@@ -68,6 +82,20 @@ export function LessonMetadataForm(props: {
                 options={KANGUR_LESSON_COMPONENT_OPTIONS}
                 triggerClassName='h-10'
                ariaLabel='Lesson Type' title='Lesson Type'/>
+            </FormField>
+          </div>
+          <div className='rounded-3xl border border-border/50 bg-card/30 p-4'>
+            <FormField label='Age Group'>
+              <SelectSimple
+                size='sm'
+                value={formData.ageGroup}
+                onValueChange={(value: string): void => {
+                  if (!KANGUR_AGE_GROUPS.some((group) => group.id === value)) return;
+                  setFormData((current) => ({ ...current, ageGroup: value as any }));
+                }}
+                options={ageGroupOptions}
+                triggerClassName='h-10'
+               ariaLabel='Age Group' title='Age Group'/>
             </FormField>
           </div>
           <div className='rounded-3xl border border-border/50 bg-card/30 p-4'>

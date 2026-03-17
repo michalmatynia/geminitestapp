@@ -3,6 +3,7 @@
 import { ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 
+import type { MultiSelectOption } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -15,11 +16,7 @@ import {
 import { Label } from './label';
 import { SearchInput } from './search-input';
 
-export interface MultiSelectOption {
-  value: string;
-  label: string;
-  disabled?: boolean | undefined;
-}
+export type { MultiSelectOption };
 
 interface MultiSelectProps {
   options: ReadonlyArray<MultiSelectOption>;

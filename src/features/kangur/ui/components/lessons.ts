@@ -1,5 +1,8 @@
 
 import AddingLessonView from '@/features/kangur/ui/components/AddingLesson';
+import AlphabetBasicsLessonView from '@/features/kangur/ui/components/AlphabetBasicsLesson';
+import AlphabetSyllablesLessonView from '@/features/kangur/ui/components/AlphabetSyllablesLesson';
+import AlphabetWordsLessonView from '@/features/kangur/ui/components/AlphabetWordsLesson';
 import CalendarLessonView from '@/features/kangur/ui/components/CalendarLesson';
 import CalendarTrainingGameView from '@/features/kangur/ui/components/CalendarTrainingGame';
 import ClockLessonView from '@/features/kangur/ui/components/ClockLesson';
@@ -35,6 +38,9 @@ type CalendarTrainingGameProps = {
 export const ClockLesson = ClockLessonView as ComponentType<LessonProps>;
 export const CalendarLesson = CalendarLessonView as ComponentType<LessonProps>;
 export const AddingLesson = AddingLessonView as ComponentType<LessonProps>;
+export const AlphabetBasicsLesson = AlphabetBasicsLessonView as ComponentType<LessonProps>;
+export const AlphabetSyllablesLesson = AlphabetSyllablesLessonView as ComponentType<LessonProps>;
+export const AlphabetWordsLesson = AlphabetWordsLessonView as ComponentType<LessonProps>;
 export const SubtractingLesson = SubtractingLessonView as ComponentType<LessonProps>;
 export const MultiplicationLesson = MultiplicationLessonView as ComponentType<LessonProps>;
 export const DivisionLesson = DivisionLessonView as ComponentType<LessonProps>;

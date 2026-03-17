@@ -7,41 +7,39 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
 
-const {
-  authMeMock,
-  scoreFilterMock,
-  logKangurClientErrorMock,
-  useKangurPageContentEntryMock,
-  useKangurSubjectFocusMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => ({
-  authMeMock: vi.fn<() => Promise<KangurUser>>(),
-  scoreFilterMock: vi.fn<() => Promise<KangurScoreRecord[]>>(),
-  useKangurPageContentEntryMock: vi.fn(),
-  useKangurSubjectFocusMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
-}));
+const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
+  globalThis.__kangurClientErrorMocks();
+const authMeMock = vi.fn<() => Promise<KangurUser>>();
+const scoreFilterMock = vi.fn<() => Promise<KangurScoreRecord[]>>();
+const useKangurPageContentEntryMock = vi.fn();
+const useKangurSubjectFocusMock = vi.fn();
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({
     auth: {
-      me: authMeMock,
+      me: (...args: Parameters<typeof authMeMock>) => authMeMock(...args),
     },
     score: {
-      filter: scoreFilterMock,
+      filter: (...args: Parameters<typeof scoreFilterMock>) => scoreFilterMock(...args),
     },
   }),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
-  logKangurClientError: logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
+  ...(() => {
+    const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
+      globalThis.__kangurClientErrorMocks();
+    return {
+      logKangurClientError: logKangurClientErrorMock,
+      withKangurClientError,
+      withKangurClientErrorSync,
+    };
+  })(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: useKangurPageContentEntryMock,
+  useKangurPageContentEntry: (...args: Parameters<typeof useKangurPageContentEntryMock>) =>
+    useKangurPageContentEntryMock(...args),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({

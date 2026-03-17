@@ -41,7 +41,12 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
   const hasSelection = selectedCount > 0;
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2 sm:gap-3', className)}>
+    <div
+      className={cn(
+        'flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3',
+        className
+      )}
+    >
       <ActionMenu
         align='start'
         className='w-56'
@@ -57,7 +62,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
             )}
           </div>
         }
-        triggerClassName='h-8 px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white'
+        triggerClassName='h-8 w-full px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white sm:w-auto'
         variant='outline'
         size='sm'
       >
@@ -96,7 +101,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
               <span className='text-xs font-medium'>Batch Actions</span>
             </div>
           }
-          triggerClassName='h-8 px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white'
+          triggerClassName='h-8 w-full px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white sm:w-auto'
           variant='outline'
           size='sm'
         >
@@ -114,7 +119,11 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
         </ActionMenu>
       )}
 
-      {rightActions ? <div className='ml-auto flex items-center gap-2'>{rightActions}</div> : null}
+      {rightActions ? (
+        <div className='flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto'>
+          {rightActions}
+        </div>
+      ) : null}
     </div>
   );
 }

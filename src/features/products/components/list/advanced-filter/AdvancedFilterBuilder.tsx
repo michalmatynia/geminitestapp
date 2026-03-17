@@ -13,7 +13,7 @@ import {
 } from '@/shared/contracts/products';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Checkbox, Input, Label, SelectSimple } from '@/shared/ui';
-import type { SelectSimpleOption } from '@/shared/ui/select-simple';
+import type { SelectSimpleOption } from '@/shared/contracts/ui';
 
 import {
   ADVANCED_BOOLEAN_OPTIONS,

@@ -66,7 +66,7 @@ describe('KangurStorefrontAppearanceProvider', () => {
     });
   });
 
-  it('ignores any local override and stays on the daily mode', () => {
+  it('respects local override when present', async () => {
     settingsStoreGetMock.mockImplementation((key: string) => {
       if (key === KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY) {
         return 'default';
@@ -81,6 +81,8 @@ describe('KangurStorefrontAppearanceProvider', () => {
       </KangurStorefrontAppearanceProvider>
     );
 
-    expect(screen.getByTestId('mode-probe')).toHaveTextContent('default');
+    await waitFor(() => {
+      expect(screen.getByTestId('mode-probe')).toHaveTextContent('dark');
+    });
   });
 });

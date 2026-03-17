@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,14 +8,14 @@ canonical: true
 ---
 # API Contract Coverage Report
 
-Generated at: 2026-03-16T19:06:36.890Z
+Generated at: 2026-03-17T09:57:58.262Z
 
 ## Summary
 
 - Status: PASSED
 - Route files scanned: 280
 - Route methods scanned: 214
-- Methods with adjacent tests: 184
+- Methods with adjacent tests: 183
 - Mutations with body validation: 37
 - Query routes with validation: 10
 - Errors: 0
@@ -109,7 +109,7 @@ Generated at: 2026-03-16T19:06:36.890Z
 | auth/users/[id]/security | GET | protected | yes | - | - |
 | auth/users/[id]/security | PATCH | protected | yes | yes | - |
 | auth/users | GET | protected | no | - | - |
-| auth/verify-credentials | POST | public | yes | yes | - |
+| auth/verify-credentials | POST | public | no | yes | - |
 | brain/models | GET | protected | yes | - | - |
 | brain/operations/overview | GET | protected | yes | - | - |
 | case-resolver/assets/extract-pdf | POST | protected | yes | yes | - |

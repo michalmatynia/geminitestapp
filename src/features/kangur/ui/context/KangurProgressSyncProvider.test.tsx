@@ -13,21 +13,22 @@ import {
 } from '@/features/kangur/ui/services/progress';
 
 const {
-  useKangurAuthMock,
-  progressGetMock,
-  progressUpdateMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  useKangurAuthMock,
+  progressGetMock,
+  progressUpdateMock,
+  useKangurSubjectFocusMock,
 } = vi.hoisted(() => ({
+  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
+  trackKangurClientEventMock: globalThis.__kangurClientErrorMocks().trackKangurClientEventMock,
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   useKangurAuthMock: vi.fn(),
   progressGetMock: vi.fn(),
   progressUpdateMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
-}));
-
-const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
@@ -36,7 +37,7 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+  useKangurSubjectFocus: useKangurSubjectFocusMock,
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

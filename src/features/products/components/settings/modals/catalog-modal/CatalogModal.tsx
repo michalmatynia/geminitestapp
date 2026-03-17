@@ -9,7 +9,7 @@ import { Alert } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
 import { CatalogPriceGroupsSection } from './CatalogPriceGroupsSection';

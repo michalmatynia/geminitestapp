@@ -44,7 +44,11 @@ export default function LessonHub({
   };
 
   return (
-    <div className='flex w-full max-w-md flex-col items-center' role='region' aria-label={hubLabel}>
+    <div
+      className='flex w-full max-w-full flex-col items-center sm:max-w-md'
+      role='region'
+      aria-label={hubLabel}
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

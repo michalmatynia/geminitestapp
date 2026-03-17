@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-16T18:13:34.195Z",
+  "generatedAt": "2026-03-17T09:54:56.435Z",
   "status": "passed",
   "summary": {
     "total": 7,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 7,
     "status": "passed",
-    "fileCount": 5153
+    "fileCount": 5182
   },
   "scope": {
     "root": "src",
@@ -16,9 +16,9 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 1,
+    "anyCount": 2,
     "eslintDisableCount": 1,
-    "nonNullAssertionCount": 5,
+    "nonNullAssertionCount": 4,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
@@ -39,6 +39,16 @@
     },
     {
       "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/app/api/kangur/duels/lobby/handler.ts",
+      "line": 49,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/features/cms/context-registry/page-builder.ts",
@@ -51,18 +61,8 @@
       "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
-      "file": "src/features/kangur/admin/test-suites-manager/test-suites-manager.logic.ts",
-      "line": 229,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "non-null-assertion",
-      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
-      "file": "src/features/kangur/duels/server.ts",
-      "line": 1143,
+      "file": "src/features/kangur/duels/server.db.ts",
+      "line": 541,
       "column": null,
       "snippet": null,
       "context": null
@@ -109,14 +109,14 @@
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 2
     },
     {
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 5
+      "infoCount": 4
     }
   ],
-  "durationMs": 1017
+  "durationMs": 1018
 }

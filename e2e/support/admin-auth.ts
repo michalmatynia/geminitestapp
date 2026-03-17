@@ -19,6 +19,17 @@ const isRecoverableNavigationAbort = (error: unknown): boolean => {
   return message.includes('net::ERR_ABORTED') || message.includes('frame was detached');
 };
 
+const isRecoverableAuthRequestError = (error: unknown): boolean => {
+  const message =
+    error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  return (
+    message.includes('ECONNRESET') ||
+    message.includes('ECONNREFUSED') ||
+    message.includes('ERR_CONNECTION_RESET') ||
+    message.includes('socket hang up')
+  );
+};
+
 const credentialCandidates = [
   {
     email: process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'],
@@ -105,15 +116,37 @@ export async function ensureAdminSession(
       );
     }
   };
+  const withAuthRequestRetry = async <T>(task: () => Promise<T>, attemptLimit = 3): Promise<T> => {
+    let lastError: unknown = null;
+
+    for (let attempt = 1; attempt <= attemptLimit; attempt += 1) {
+      try {
+        return await task();
+      } catch (error) {
+        lastError = error;
+        if (!isRecoverableAuthRequestError(error) || attempt === attemptLimit) {
+          throw error;
+        }
+
+        await page.waitForTimeout(250 * attempt);
+      }
+    }
+
+    throw lastError ?? new Error('Unable to complete auth request.');
+  };
   const fetchCsrfToken = async (): Promise<{
     csrfToken: string;
     origin: string;
     signInUrl: string;
   }> => {
-    const response = await page.context().request.get('/api/auth/csrf', {
-      failOnStatusCode: false,
-      timeout: authRequestTimeoutMs,
-    });
+    const response = await withAuthRequestRetry(
+      () =>
+        page.context().request.get('/api/auth/csrf', {
+          failOnStatusCode: false,
+          timeout: authRequestTimeoutMs,
+        }),
+      3
+    );
 
     if (!response.ok()) {
       throw new Error(`Unable to load auth CSRF token for ${destination}: ${response.status()}.`);
@@ -138,22 +171,26 @@ export async function ensureAdminSession(
   };
   const signInWithCandidate = async (candidate: { email: string; password: string }): Promise<boolean> => {
     const { csrfToken, origin, signInUrl } = await fetchCsrfToken();
-    await page.context().request.post('/api/auth/callback/credentials', {
-      failOnStatusCode: false,
-      form: {
-        email: candidate.email,
-        password: candidate.password,
-        csrfToken,
-        callbackUrl: destination,
-      },
-      headers: {
-        Origin: origin,
-        Referer: signInUrl,
-        'X-Auth-Return-Redirect': '1',
-        'X-CSRF-Token': csrfToken,
-      },
-      timeout: authRequestTimeoutMs,
-    });
+    await withAuthRequestRetry(
+      () =>
+        page.context().request.post('/api/auth/callback/credentials', {
+          failOnStatusCode: false,
+          form: {
+            email: candidate.email,
+            password: candidate.password,
+            csrfToken,
+            callbackUrl: destination,
+          },
+          headers: {
+            Origin: origin,
+            Referer: signInUrl,
+            'X-Auth-Return-Redirect': '1',
+            'X-CSRF-Token': csrfToken,
+          },
+          timeout: authRequestTimeoutMs,
+        }),
+      3
+    );
 
     return waitForSessionCookie();
   };

@@ -34,6 +34,12 @@ const pageSummary = {
   slugs: [{ slug: { id: slug.id, slug: slug.slug } }],
 };
 
+const themeSummary = {
+  id: 'theme-1',
+  name: 'Builder Theme',
+  isDefault: true,
+};
+
 const textBlock = {
   id: 'block-text-1',
   type: 'Text',
@@ -121,17 +127,18 @@ export async function mockCmsBuilderApis(page: Page): Promise<void> {
     });
   });
 
-  await page.route(/\/api\/settings\?scope=light$/, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify([domainSettingsRecord]),
-    });
-  });
-
-  await page.route('**/api/settings', async (route) => {
+  await page.route(/\/api\/settings(\?.*)?$/, async (route) => {
     const request = route.request();
     if (request.method() === 'GET') {
+      const url = new URL(request.url());
+      if (url.searchParams.get('scope') === 'light') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([domainSettingsRecord]),
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -186,7 +193,7 @@ export async function mockCmsBuilderApis(page: Page): Promise<void> {
     });
   });
 
-  await page.route('**/api/cms/domains', async (route) => {
+  await page.route(/\/api\/cms\/domains(\?.*)?$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -212,7 +219,7 @@ export async function mockCmsBuilderApis(page: Page): Promise<void> {
     });
   });
 
-  await page.route('**/api/cms/pages/page-1', async (route) => {
+  await page.route(/\/api\/cms\/pages\/[^/?]+(\?.*)?$/, async (route) => {
     const request = route.request();
     if (request.method() === 'GET') {
       await route.fulfill({
@@ -230,11 +237,29 @@ export async function mockCmsBuilderApis(page: Page): Promise<void> {
     });
   });
 
-  await page.route(/\/api\/cms\/slugs(\?.*)?$/, async (route) => {
+  await page.route(/\/api\/cms\/slugs(\/[^/?]+(?:\/domains)?)?(\?.*)?$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify([slug]),
+    });
+  });
+
+  await page.route(/\/api\/cms\/themes(\/[^/?]+)?(\?.*)?$/, async (route) => {
+    const request = route.request();
+    if (request.method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([themeSummary]),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(themeSummary),
     });
   });
 }

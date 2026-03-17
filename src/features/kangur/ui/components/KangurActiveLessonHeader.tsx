@@ -13,6 +13,7 @@ import {
   KangurGlassPanel,
   KangurGradientIconTile,
   KangurHeadline,
+  KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
@@ -78,8 +79,8 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
     useKangurActiveLessonHeaderContext();
 
   return (
-    <div
-      className='flex w-full flex-col kangur-panel-gap sm:flex-row sm:flex-wrap sm:items-center'
+    <KangurPanelRow
+      className='w-full sm:flex-wrap sm:items-center'
       data-testid={headerActionsTestId}
     >
       {onBack ? (
@@ -106,7 +107,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
       />
       <KangurActiveLessonHeaderBody />
       <KangurActiveLessonHeaderIcon />
-    </div>
+    </KangurPanelRow>
   );
 }
 

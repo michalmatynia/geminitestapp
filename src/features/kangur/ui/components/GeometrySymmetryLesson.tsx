@@ -54,7 +54,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Oś działa jak lustro: prawa strona odbija lewą.
           </p>
           <KangurLessonCallout accent='emerald'>
-            <div className='mx-auto h-28 w-40'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
               <GeometrySymmetryMirrorAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -75,7 +75,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             części.
           </p>
           <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
-            <div className='mx-auto h-28 w-40'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
               <GeometrySymmetryFoldAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -96,7 +96,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Linia osi pokazuje, gdzie figura się „zgina”.
           </p>
           <KangurLessonCallout accent='slate' className='border-emerald-200/85'>
-            <div className='mx-auto h-28 w-40'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
               <GeometrySymmetryFoldAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -142,7 +142,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald'>
-            <div className='mx-auto h-28 w-48'>
+            <div className='mx-auto h-28 w-48 max-w-full'>
               <GeometrySymmetryCheckAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -157,7 +157,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald'>
-            <div className='mx-auto h-28 w-28'>
+            <div className='mx-auto h-28 w-28 max-w-full'>
               <GeometrySymmetryRotationAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -196,7 +196,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
-            <div className='mx-auto h-28 w-40'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
               <GeometrySymmetryFoldAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -211,7 +211,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
-            <div className='mx-auto h-28 w-40'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
               <GeometrySymmetryAxesAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -226,7 +226,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
-            <div className='mx-auto h-28 w-40'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
               <GeometrySymmetryMirrorAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>
@@ -241,7 +241,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <div className='flex flex-col kangur-panel-gap text-center'>
           <KangurLessonCallout accent='emerald' padding='sm'>
-            <div className='mx-auto h-28 w-28'>
+            <div className='mx-auto h-28 w-28 max-w-full'>
               <GeometrySymmetryRotationAnimation />
             </div>
             <p className='mt-2 text-sm [color:var(--kangur-page-muted-text)]'>

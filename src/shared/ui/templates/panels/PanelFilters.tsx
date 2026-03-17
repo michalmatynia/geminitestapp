@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { FilterField } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
@@ -108,11 +108,18 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
   const [localSearch, setLocalSearch] = useState(externalSearch);
   const searchInputId = React.useId().replace(/:/g, '');
+  const userToggledRef = useRef(false);
 
   // Sync local search with external search (e.g. on reset)
   useEffect(() => {
     setLocalSearch(externalSearch);
   }, [externalSearch]);
+
+  useEffect(() => {
+    if (defaultExpanded === undefined) return;
+    if (userToggledRef.current) return;
+    setIsExpanded(defaultExpanded);
+  }, [defaultExpanded]);
 
   // Debounce search changes
   useEffect(() => {
@@ -126,6 +133,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
   }, [localSearch, externalSearch, onSearchChange]);
 
   const handleReset = useCallback(() => {
+    userToggledRef.current = true;
     onReset?.();
     setLocalSearch('');
     setIsExpanded(false);
@@ -178,16 +186,21 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
             </div>
           )}
 
-          {actions && <div className='flex items-center gap-2 shrink-0'>{actions}</div>}
+          {actions && (
+            <div className='flex w-full items-center gap-2 sm:w-auto sm:shrink-0'>{actions}</div>
+          )}
 
           {showToggleButton ? (
             <Button
               type='button'
               size='xs'
               variant={hasActiveFilters ? 'default' : 'outline'}
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => {
+                userToggledRef.current = true;
+                setIsExpanded(!isExpanded);
+              }}
               className={cn(
-                'h-8 px-2 shrink-0 sm:ml-auto',
+                'h-8 w-full px-2 sm:ml-auto sm:w-auto',
                 hasActiveFilters && 'bg-blue-600 text-white hover:bg-blue-500'
               )}
             >
@@ -252,6 +265,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
   );
   const containerStyle: React.CSSProperties = {
     ...(field.width ? { width: field.width } : {}),
+    maxWidth: '100%',
   };
 
   const [localValue, setLocalValue] = useState<string | number | undefined>(
@@ -323,7 +337,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             onValueChange={(val) => onChange(val)}
             options={options}
             placeholder={field.placeholder}
-            triggerClassName='h-8 min-w-[9rem]'
+            triggerClassName='h-8 w-full min-w-[9rem]'
             ariaLabel={field.label}
            title={field.placeholder}/>
         </div>
@@ -385,7 +399,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             value={localValue ?? ''}
             onChange={(e) => setLocalValue(e.target.value ? Number(e.target.value) : undefined)}
-            className='h-8 text-sm'
+            className='h-8 w-full text-sm'
            aria-label={field.placeholder} title={field.placeholder}/>
         </div>
       );
@@ -405,7 +419,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             type='date'
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
-            className='h-8 text-sm'
+            className='h-8 w-full text-sm'
            aria-label={inputId} title={inputId}/>
         </div>
       );
@@ -433,7 +447,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
                   from: e.target.value || undefined,
                 })
               }
-              className='h-8 text-sm'
+              className='h-8 w-full text-sm'
              title='From'/>
             <Input
               type='date'
@@ -447,7 +461,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
                   to: e.target.value || undefined,
                 })
               }
-              className='h-8 text-sm'
+              className='h-8 w-full text-sm'
              title='To'/>
           </div>
         </div>
@@ -471,7 +485,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
             placeholder={field.placeholder}
             value={(localValue as string) || ''}
             onChange={(e) => setLocalValue(e.target.value || undefined)}
-            className='h-8 text-sm'
+            className='h-8 w-full text-sm'
            aria-label={field.placeholder} title={field.placeholder}/>
         </div>
       );

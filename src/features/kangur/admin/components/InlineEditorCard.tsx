@@ -4,7 +4,6 @@ import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
 import { MediaLibraryPanel } from '@/features/cms/public';
-import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
   isSvgImageSource,
   normalizeSvgImageSource,
@@ -16,6 +15,12 @@ import { cn } from '@/features/kangur/shared/utils';
 import { ALIGNMENT_OPTIONS, MEDIA_FIT_OPTIONS } from '../constants';
 import { clamp, parseNumberInput } from '../utils';
 import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';
+
+const LazyDocumentWysiwygEditor = React.lazy(() =>
+  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+    default: mod.DocumentWysiwygEditor,
+  }))
+);
 
 const SVG_IMAGE_SOURCE_HELPER_TEXT = 'Only SVG files can be used in Kangur lesson image blocks.';
 
@@ -102,13 +107,21 @@ export function InlineEditorCard(props: {
           </FormField>
 
           <FormField label='Text Content'>
-            <DocumentWysiwygEditor
-              value={block.html}
-              onChange={(nextValue): void => {
-                onChange({ ...block, html: nextValue });
-              }}
-              placeholder='Write the lesson text here...'
-            />
+            <React.Suspense
+              fallback={
+                <div className='min-h-[200px] rounded-lg border border-border/40 bg-card/20 p-4 text-sm text-muted-foreground'>
+                  Loading editor...
+                </div>
+              }
+            >
+              <LazyDocumentWysiwygEditor
+                value={block.html}
+                onChange={(nextValue): void => {
+                  onChange({ ...block, html: nextValue });
+                }}
+                placeholder='Write the lesson text here...'
+              />
+            </React.Suspense>
           </FormField>
 
           <FormField label='Narration Override'>

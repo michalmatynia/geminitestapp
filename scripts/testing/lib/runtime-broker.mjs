@@ -765,6 +765,10 @@ const buildBrokerServerEnv = ({
   leaseKey,
   preferredBrowserNodeBinDir,
 }) => {
+  const maxOldSpaceSize =
+    env['PLAYWRIGHT_RUNTIME_NODE_MAX_OLD_SPACE_SIZE']?.trim() ||
+    env['NODE_MAX_OLD_SPACE_SIZE']?.trim() ||
+    '16384';
   const nextEnv = {
     ...env,
     PORT: String(port),
@@ -778,6 +782,15 @@ const buildBrokerServerEnv = ({
     TEMP: runtimeTmpDir,
     PATH: prependBinToPath(preferredBrowserNodeBinDir, env['PATH']),
   };
+
+  if (maxOldSpaceSize) {
+    const existingNodeOptions = nextEnv['NODE_OPTIONS'] ?? '';
+    if (!existingNodeOptions.includes('--max-old-space-size=')) {
+      nextEnv['NODE_OPTIONS'] = [existingNodeOptions, `--max-old-space-size=${maxOldSpaceSize}`]
+        .filter(Boolean)
+        .join(' ');
+    }
+  }
 
   if (typeof host === 'string' && host.length > 0) {
     nextEnv.HOST = host;

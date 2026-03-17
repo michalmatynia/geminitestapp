@@ -62,7 +62,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             W analogii porównujesz dwie pary, które mają tę samą relację.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-20 w-72'>
+            <div className='mx-auto h-20 w-72 max-w-full'>
               <AnalogyBridgeAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -190,7 +190,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Działanie musi być takie samo po obu stronach analogii.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <NumberOperationAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -208,7 +208,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Jeśli jeden kształt obraca się, drugi musi zmienić się tak samo.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <ShapeTransformAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -251,7 +251,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Części łączą się w jedną całość, tak jak w analogii.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <PartWholeAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -297,7 +297,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             To, co się dzieje najpierw, wywołuje kolejne zdarzenie.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-24 w-72'>
+            <div className='mx-auto h-24 w-72 max-w-full'>
               <CauseEffectAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
@@ -349,7 +349,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Zobacz, jak analogia łączy dwie pary w jedną regułę.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='w-full text-center' padding='sm'>
-            <div className='mx-auto h-20 w-72'>
+            <div className='mx-auto h-20 w-72 max-w-full'>
               <AnalogyBridgeAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>

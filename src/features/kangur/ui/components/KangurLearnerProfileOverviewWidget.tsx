@@ -124,7 +124,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           ) : null}
         </div>
         <div
-          className='grid grid-cols-5 gap-3 sm:grid-cols-8'
+          className='grid grid-cols-3 gap-3 min-[360px]:grid-cols-4 sm:grid-cols-5'
           role='radiogroup'
           aria-label='Wybierz avatar'
         >
@@ -141,7 +141,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
                 onClick={() => {
                   void handleAvatarSelect(option.id);
                 }}
-                className={`relative h-12 w-12 overflow-hidden rounded-full border transition ${
+                className={`relative h-11 w-11 overflow-hidden rounded-full border transition sm:h-12 sm:w-12 ${
                   isSelected
                     ? 'border-amber-400 shadow-[0_0_0_3px_rgba(251,191,36,0.25)]'
                     : 'border-white/80 hover:border-amber-200'

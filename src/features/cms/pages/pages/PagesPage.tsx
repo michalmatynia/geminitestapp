@@ -27,7 +27,7 @@ import {
   FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
-import type { FilterField } from '@/shared/ui/templates/panels';
+import type { FilterField } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

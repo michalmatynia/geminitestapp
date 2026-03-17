@@ -23,7 +23,7 @@ import {
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { ValidatorListTree } from './validator-lists/ValidatorListTree';

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { Label, Textarea } from '@/shared/ui';
-import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsFieldsRenderer } from '@/shared/contracts/ui';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 

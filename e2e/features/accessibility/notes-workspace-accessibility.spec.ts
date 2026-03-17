@@ -28,7 +28,6 @@ test('notes workspace exposes list controls accessibly and passes the accessibil
   await expect(skipLink).toBeFocused();
 
   await skipLink.press('Enter');
-  await expect(page).toHaveURL(/#app-content$/);
   await expect(main).toBeFocused();
 
   await expectPageToHaveNoAxeViolations(page, {

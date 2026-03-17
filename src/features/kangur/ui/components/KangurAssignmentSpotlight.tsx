@@ -14,20 +14,28 @@ import {
   KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentHref,
-  filterKangurAssignmentsBySubject,
   getKangurAssignmentActionLabel,
   resolveKangurAssignmentCountdownLabel,
   resolveKangurAssignmentSubject,
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurAssignmentSpotlightProps = {
   basePath: string;
   enabled?: boolean;
+};
+
+const SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
+  alphabet: 'amber',
+  english: 'sky',
+  maths: 'violet',
+  web_development: 'teal',
 };
 
 export function KangurAssignmentSpotlight({
@@ -42,13 +50,9 @@ export function KangurAssignmentSpotlight({
     },
   });
 
-  const subjectAssignments = useMemo(
-    () => filterKangurAssignmentsBySubject(assignments, subject),
-    [assignments, subject]
-  );
   const assignment = useMemo(
-    () => selectKangurPriorityAssignments(subjectAssignments, 1)[0] ?? null,
-    [subjectAssignments]
+    () => selectKangurPriorityAssignments(assignments, 1)[0] ?? null,
+    [assignments]
   );
   const shouldTick =
     Boolean(assignment?.timeLimitMinutes) && assignment?.progress.status !== 'completed';
@@ -72,7 +76,7 @@ export function KangurAssignmentSpotlight({
 
   const assignmentSubject = resolveKangurAssignmentSubject(assignment);
   const assignmentSubjectLabel = getKangurSubjectLabel(assignmentSubject);
-  const assignmentSubjectAccent = assignmentSubject === 'english' ? 'sky' : 'violet';
+  const assignmentSubjectAccent = SUBJECT_ACCENTS[assignmentSubject];
   const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
   const transitionSourceId = `assignment-spotlight:${assignment.id}`;
   const countdownLabel = resolveKangurAssignmentCountdownLabel({

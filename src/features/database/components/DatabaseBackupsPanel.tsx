@@ -4,12 +4,12 @@ import { DatabaseIcon, ServerIcon, UploadIcon, EyeIcon, PlusIcon } from 'lucide-
 
 import type { IdLabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import {
   AdminDatabaseBreadcrumbs,
   Badge,
   Button,
   FileUploadButton,
-  type FileUploadHelpers,
   Alert,
   SimpleSettingsList,
   StandardDataTablePanel,

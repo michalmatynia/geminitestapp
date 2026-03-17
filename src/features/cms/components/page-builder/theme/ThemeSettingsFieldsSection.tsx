@@ -6,7 +6,7 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   SettingsFieldsRenderer,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';
 

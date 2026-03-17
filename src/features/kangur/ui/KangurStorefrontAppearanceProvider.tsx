@@ -3,7 +3,9 @@
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
+  KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   parseKangurStorefrontAppearanceMode,
+  type KangurStorefrontAppearanceMode,
 } from '@/features/kangur/storefront-appearance-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
@@ -11,8 +13,10 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 export function KangurStorefrontAppearanceProvider({
   children,
+  initialMode,
 }: {
   children: ReactNode;
+  initialMode?: KangurStorefrontAppearanceMode;
 }): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [hydrated, setHydrated] = useState(false);
@@ -21,14 +25,17 @@ export function KangurStorefrontAppearanceProvider({
     () => parseKangurStorefrontAppearanceMode(storedMode),
     [storedMode]
   );
-  const defaultMode = hydrated ? resolvedMode : 'default';
+  const defaultMode = hydrated ? resolvedMode : (initialMode ?? 'default');
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
   return (
-    <CmsStorefrontAppearanceProvider initialMode={defaultMode}>
+    <CmsStorefrontAppearanceProvider
+      initialMode={defaultMode}
+      storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
+    >
       {children}
     </CmsStorefrontAppearanceProvider>
   );

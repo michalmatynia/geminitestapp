@@ -5,10 +5,14 @@ import { expectPageToHaveNoAxeViolations } from '../../support/accessibility';
 import { accessibilityRouteCrawlRoutes } from '../../../scripts/testing/config/accessibility-route-crawl.config.mjs';
 import {
   buildAccessibilityRouteCrawlTitle,
+  filterAccessibilityRouteEntries,
   normalizeAccessibilityRouteEntries,
 } from '../../../scripts/testing/lib/accessibility-route-crawl.mjs';
 
-const routes = normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes);
+const routes = filterAccessibilityRouteEntries(
+  normalizeAccessibilityRouteEntries(accessibilityRouteCrawlRoutes),
+  { env: process.env }
+);
 
 test.describe.configure({ mode: 'serial' });
 

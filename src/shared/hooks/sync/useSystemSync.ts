@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 
 import { useOfflineSync } from '../offline/useOfflineMutation';
 
@@ -115,8 +116,8 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
       setLastSync(new Date());
     };
 
-    const intervalId = setInterval(syncCriticalData, interval);
-    return (): void => clearInterval(intervalId);
+    const intervalId = safeSetInterval(syncCriticalData, interval);
+    return (): void => safeClearInterval(intervalId);
   }, [enabled, isOnline, interval, queryClient]);
 
   return {

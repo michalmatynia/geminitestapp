@@ -1,11 +1,10 @@
 'use client';
 
-import * as DialogPrimitive from '@radix-ui/react-dialog';
-
-import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
+import KangurLoginPage from '@/features/kangur/ui/KangurLoginPage';
+import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
-import { cn } from '@/features/kangur/shared/utils';
 
 import { memo, useCallback } from 'react';
 import type { JSX } from 'react';
@@ -23,48 +22,32 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
   );
 
   return (
-    <DialogPrimitive.Root
+    <KangurDialog
       open={isOpen}
       modal={!isRouteDriven}
       onOpenChange={handleOpenChange}
-    >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay
-          className={cn(
-            'fixed inset-0 z-50 backdrop-blur-[2px]',
-            'data-[state=open]:animate-in data-[state=closed]:animate-out',
-            'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
-          )}
-          style={{
-            background:
-              'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 14%, rgba(2,6,23,0.72))',
-          }}
-        />
-        <DialogPrimitive.Content
-          className={cn(
-            'fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),42rem)]',
-            'kangur-max-h-screen-2 -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
-            'outline-none'
-          )}
-          data-testid='kangur-login-modal'
-          onEscapeKeyDown={(event) => {
-            if (!isRouteDriven) {
-              return;
-            }
+      overlayVariant='soft'
+      contentSize='md'
+      contentProps={{
+        'data-testid': 'kangur-login-modal',
+        onEscapeKeyDown: (event: KeyboardEvent) => {
+          if (!isRouteDriven) {
+            return;
+          }
+          event.preventDefault();
+          closeLoginModal();
+        },
+        onInteractOutside: (event: Event) => {
+          if (isRouteDriven) {
             event.preventDefault();
-            closeLoginModal();
-          }}
-          onInteractOutside={(event) => {
-            if (isRouteDriven) {
-              event.preventDefault();
-            }
-          }}
-        >
-          <DialogPrimitive.Title className='sr-only'>Zaloguj się</DialogPrimitive.Title>
-          <DialogPrimitive.Description className='sr-only'>
-            Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.
-          </DialogPrimitive.Description>
-
+          }
+        },
+      } as any}
+    >
+      <KangurDialogHeader
+        title='Zaloguj się'
+        description='Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.'
+        closeButton={
           <KangurPanelCloseButton
             aria-label='Zamknij logowanie'
             className='absolute right-3 top-3 z-10 sm:right-4 sm:top-4'
@@ -73,15 +56,15 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
             onClick={closeLoginModal}
             variant='login'
           />
+        }
+      />
 
-          <KangurLoginPage
-            defaultCallbackUrl={callbackUrl}
-            onClose={dismissLoginModal}
-            parentAuthMode={authMode}
-            showParentAuthModeTabs={false}
-          />
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+      <KangurLoginPage
+        defaultCallbackUrl={callbackUrl}
+        onClose={dismissLoginModal}
+        parentAuthMode={authMode}
+        showParentAuthModeTabs={false}
+      />
+    </KangurDialog>
   );
 });

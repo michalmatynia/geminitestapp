@@ -18,8 +18,6 @@ import {
   Copy,
 } from 'lucide-react';
 import React, { useMemo } from 'react';
-
-import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
@@ -60,6 +58,12 @@ import {
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/utils/docs';
 export type { EditorDetailsTab };
+
+const LazyDocumentWysiwygEditor = React.lazy(() =>
+  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+    default: mod.DocumentWysiwygEditor,
+  }))
+);
 
 const formatHistoryTimestamp = (value: string): string => {
   const parsed = Date.parse(value);
@@ -434,17 +438,25 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 </CaseResolverPartyFieldRuntimeProvider>
               </div>
 
-              <DocumentWysiwygEditor
-                key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
-                value={editingDocumentDraft.documentContentHtml ?? ''}
-                onChange={handleUpdateDraftDocumentContent}
-                disabled={isEditingDocumentLocked}
-                allowFontFamily
-                allowTextAlign
-                enableAdvancedTools
-                surfaceClassName='min-h-[400px]'
-                editorContentClassName='[&_.ProseMirror]:!min-h-[400px]'
-              />
+              <React.Suspense
+                fallback={
+                  <div className='min-h-[400px] rounded-lg border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
+                    Loading editor...
+                  </div>
+                }
+              >
+                <LazyDocumentWysiwygEditor
+                  key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
+                  value={editingDocumentDraft.documentContentHtml ?? ''}
+                  onChange={handleUpdateDraftDocumentContent}
+                  disabled={isEditingDocumentLocked}
+                  allowFontFamily
+                  allowTextAlign
+                  enableAdvancedTools
+                  surfaceClassName='min-h-[400px]'
+                  editorContentClassName='[&_.ProseMirror]:!min-h-[400px]'
+                />
+              </React.Suspense>
 
               <div className='flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/40'>
                 <div className='flex flex-wrap items-center gap-x-6 gap-y-2'>

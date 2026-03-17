@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type { UndefinedInitialDataOptions, UseQueryResult } from '@tanstack/react-query';
@@ -65,12 +66,12 @@ export function useQueryPerformance(): QueryPerformanceHookResult {
   );
 
   useEffect((): (() => void) => {
-    const interval = setInterval((): void => {
+    const interval = safeSetInterval((): void => {
       setMetrics([...performanceMonitor.getMetrics()]);
     }, 5000);
 
     return (): void => {
-      clearInterval(interval);
+      safeClearInterval(interval);
     };
   }, []);
 

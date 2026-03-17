@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/__tests__/test-utils';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const {
@@ -31,6 +32,10 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
+  useKangurAgeGroupFocusMock: vi.fn(),
+}));
+
 let requestAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 let cancelAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 
@@ -46,6 +51,10 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => useKangurAgeGroupFocusMock(),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -111,6 +120,7 @@ const lessonsSettingsValue = JSON.stringify([
     id: 'kangur-lesson-adding',
     componentId: 'adding',
     subject: 'maths',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     title: 'Dodawanie',
     description: 'Opis',
     emoji: '➕',
@@ -123,6 +133,7 @@ const lessonsSettingsValue = JSON.stringify([
     id: 'kangur-lesson-division',
     componentId: 'division',
     subject: 'maths',
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     title: 'Dzielenie',
     description: 'Opis',
     emoji: '➗',
@@ -155,6 +166,10 @@ describe('Lessons page focus query support', () => {
       subject: 'maths',
       setSubject: vi.fn(),
       subjectKey: 'learner-1',
+    });
+    useKangurAgeGroupFocusMock.mockReturnValue({
+      ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+      setAgeGroup: vi.fn(),
     });
     useSessionMock.mockReturnValue({
       data: null,

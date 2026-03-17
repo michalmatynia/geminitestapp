@@ -21,6 +21,7 @@ import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/a
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { parseJsonSetting, serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Filter } from 'mongodb';
 
@@ -249,13 +250,22 @@ const ensureMongoLearnerIndexes = async (): Promise<void> => {
   if (!ensureMongoLearnerIndexesPromise) {
     ensureMongoLearnerIndexesPromise = (async () => {
       const collection = await getMongoLearnerCollection();
-      await collection.createIndex(
-        { loginName: 1 },
-        {
-          name: KANGUR_LEARNERS_LOGIN_NAME_UNIQUE_INDEX,
-          unique: true,
+      try {
+        await collection.createIndex(
+          { loginName: 1 },
+          {
+            name: KANGUR_LEARNERS_LOGIN_NAME_UNIQUE_INDEX,
+            unique: true,
+            partialFilterExpression: { loginName: { $type: 'string' } },
+          }
+        );
+      } catch (error) {
+        if (isMongoDuplicateKeyError(error)) {
+          void ErrorSystem.captureException(error);
+          return;
         }
-      );
+        throw error;
+      }
     })().catch((error) => {
       ensureMongoLearnerIndexesPromise = null;
       throw error;

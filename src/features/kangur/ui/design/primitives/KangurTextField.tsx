@@ -100,7 +100,7 @@ export type KangurSelectFieldProps = Omit<
   'size'
 > &
   VariantProps<typeof kangurTextFieldVariants> &
-  DataAttributes;
+  DataAttributesDto;
 
 export const KangurSelectField = React.forwardRef<HTMLSelectElement, KangurSelectFieldProps>(
   (

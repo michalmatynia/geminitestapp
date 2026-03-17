@@ -1,11 +1,9 @@
 import * as React from 'react';
 
+import type { AdminBreadcrumbNode } from '@/shared/contracts/ui';
 import { PageLayout } from './PageLayout';
 
-export type AdminPageBreadcrumbNode = {
-  label: string;
-  href?: string;
-};
+export type AdminPageBreadcrumbNode = AdminBreadcrumbNode;
 
 type AdminPageBreadcrumbsProps = {
   current: string;

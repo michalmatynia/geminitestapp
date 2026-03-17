@@ -11,7 +11,7 @@ import {
 import type { TagRecord } from '@/shared/contracts/notes';
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/ui/templates/panels';
+import type { FilterField } from '@/shared/contracts/ui';
 
 /**
  * REFACTORED: NotesFilters using FilterPanel

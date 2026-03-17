@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-17'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,38 +8,38 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-16T17:59:36.769Z
+Generated at: 2026-03-17T12:18:32.254Z
 
 ## Snapshot
 
-- Source files: 6392
-- Source lines: 1037472
-- use client files: 1621
-- Files >= 1000 LOC: 28
-- Files >= 1500 LOC: 4
-- Largest file: `src/features/kangur/ui/pages/Duels.tsx` (3551 LOC)
-- API routes: 280
-- API delegated server routes: 0
-- API routes without apiHandler/delegation: 155
-- API explicit cache policy coverage: 125/280 (44.6%)
-- Cross-feature dependency pairs: 25
-- Shared -> features imports: 30
-- setInterval occurrences: 29
-- Prop-drilling chains (depth >= 3): 11
+- Source files: 6511
+- Source lines: 1044407
+- use client files: 6
+- Files >= 1000 LOC: 0
+- Files >= 1500 LOC: 0
+- Largest file: `src/app/(frontend)/products/[id]/ProductPublicPage.tsx` (273 LOC)
+- API routes: 29
+- API delegated server routes: 155
+- API routes without apiHandler/delegation: 0
+- API explicit cache policy coverage: 280/29 (965.5%)
+- Cross-feature dependency pairs: 6
+- Shared -> features imports: 7
+- setInterval occurrences: 1
+- Prop-drilling chains (depth >= 3): 2
 - Prop-drilling chains (depth >= 4): 0
 
 ## Top API Hotspots (by LOC)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/kangur/[[...path]]/route.ts` | 968 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 357 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 275 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 254 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 232 |
-| `src/app/api/databases/[[...path]]/route.ts` | 189 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 187 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 148 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 1047 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 383 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 325 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 289 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 256 |
+| `src/app/api/databases/[[...path]]/route.ts` | 229 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 214 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 172 |
 | `src/app/api/agent/leases/route.ts` | 122 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 | `src/app/api/agent/approval-gates/route.ts` | 50 |
@@ -52,43 +52,34 @@ Generated at: 2026-03-16T17:59:36.769Z
 
 | Edge | References |
 | --- | ---: |
-| `kangur -> cms` | 28 |
-| `cms -> gsap` | 20 |
-| `case-resolver -> case-resolver-capture` | 18 |
-| `case-resolver -> foldertree` | 15 |
-| `case-resolver -> filemaker` | 13 |
-| `case-resolver -> document-editor` | 12 |
-| `drafter -> products` | 11 |
-| `kangur -> foldertree` | 11 |
-| `case-resolver -> ai` | 9 |
-| `cms -> viewer3d` | 8 |
-| `products -> internationalization` | 8 |
-| `products -> foldertree` | 7 |
-| `prompt-exploder -> foldertree` | 7 |
-| `admin -> foldertree` | 5 |
-| `cms -> foldertree` | 5 |
+| `kangur -> cms` | 10 |
+| `products -> internationalization` | 4 |
+| `admin -> foldertree` | 2 |
+| `admin -> observability` | 1 |
+| `admin -> prompt-engine` | 1 |
+| `cms -> admin` | 1 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/pages/Duels.tsx` | 3551 |
-| `src/features/kangur/duels/server.ts` | 1672 |
-| `src/features/kangur/observability/summary.ts` | 1550 |
-| `src/features/kangur/ui/KangurLoginPage.tsx` | 1539 |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
-| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1414 |
-| `src/features/kangur/ui/pages/Lessons.tsx` | 1239 |
-| `src/features/kangur/server/ai-tutor-adaptive.ts` | 1224 |
 | `src/features/kangur/ui/components/AddingBallGame.tsx` | 1196 |
 | `src/shared/contracts/kangur-ai-tutor-content.ts` | 1189 |
 | `src/features/kangur/cms-builder/defaults/game-defaults.ts` | 1188 |
-| `src/features/kangur/admin/AdminKangurSettingsPage.tsx` | 1179 |
 | `src/features/kangur/ui/components/ClockLesson.tsx` | 1170 |
 | `src/shared/contracts/image-studio.ts` | 1162 |
+| `src/features/kangur/services/local-kangur-platform-duels.ts` | 1141 |
+| `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 1123 |
 | `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1112 |
-| `src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts` | 1086 |
-| `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 1083 |
-| `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 1080 |
+| `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 1098 |
+| `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 1091 |
+| `src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts` | 1084 |
+| `src/shared/contracts/kangur.ts` | 1081 |
 | `src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx` | 1077 |
-| `src/shared/contracts/kangur.ts` | 1064 |
+| `src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx` | 1055 |
+| `src/features/kangur/themes/others.ts` | 1054 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 1047 |
+| `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
+| `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
+| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1035 |

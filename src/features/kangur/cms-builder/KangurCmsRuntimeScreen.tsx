@@ -11,6 +11,7 @@ import {
   KANGUR_DEFAULT_THEME,
   parseKangurThemeSettings,
 } from '@/features/kangur/theme-settings';
+import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
@@ -28,6 +29,8 @@ import {
 } from './project';
 
 import type { CSSProperties, ReactNode } from 'react';
+
+const KANGUR_CUSTOM_CSS_SCOPE_SELECTOR = '[data-kangur-custom-css-scope="true"]';
 
 const buildThemeVars = (theme: ThemeSettings): CSSProperties => ({
   ['--cms-font-heading' as keyof CSSProperties]: theme.headingFont,
@@ -110,6 +113,15 @@ export function KangurCmsRuntimeScreen({
   const theme = useMemo(() => {
     return parseKangurThemeSettings(rawTheme) ?? KANGUR_DEFAULT_THEME;
   }, [rawTheme]);
+  const scopedCustomCss = useMemo(
+    () =>
+      buildKangurScopedCustomCss(
+        theme.customCss,
+        theme.customCssSelectors,
+        KANGUR_CUSTOM_CSS_SCOPE_SELECTOR
+      ),
+    [theme.customCss, theme.customCssSelectors]
+  );
 
   const screen = screenKey ? project?.screens[screenKey] ?? null : null;
   const colorSchemes = useMemo(
@@ -125,8 +137,11 @@ export function KangurCmsRuntimeScreen({
   }
 
   return (
-    <div style={{ ...themeVars, ...shellStyle, ...getMediaStyleVars(theme) }}>
-      {theme.customCss?.trim() ? <style>{theme.customCss}</style> : null}
+    <div
+      data-kangur-custom-css-scope='true'
+      style={{ ...themeVars, ...shellStyle, ...getMediaStyleVars(theme) }}
+    >
+      {scopedCustomCss ? <style>{scopedCustomCss}</style> : null}
       <div style={contentStyle}>
         <KangurGameRuntimeBoundary enabled={screenKey === 'Game'}>
           <KangurLessonsRuntimeBoundary enabled={screenKey === 'Lessons'}>

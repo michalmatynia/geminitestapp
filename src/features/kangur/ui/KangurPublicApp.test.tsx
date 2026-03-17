@@ -1,40 +1,35 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const {
-  kangurFeaturePageMock,
-  logKangurClientErrorMock,
-  kangurFeaturePageState,
-  KangurFeaturePageMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => {
-  const kangurFeaturePageMock = vi.fn();
-  const kangurFeaturePageState = {
-    slug: [] as string[],
-    basePath: '/',
-    embedded: false,
-  };
 
-  const KangurFeaturePageMock = (props: {
-    slug?: string[];
-    basePath?: string;
-    embedded?: boolean;
-  }) => {
-    if (props.slug?.[0] === 'broken') {
-      throw new Error('Kaboom');
-    }
-    kangurFeaturePageMock(props);
-    return <div data-testid='kangur-feature-page' />;
-  };
+const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
+  vi.hoisted(() => {
+    const mocks = globalThis.__kangurClientErrorMocks();
+    return {
+      logKangurClientErrorMock: mocks.logKangurClientErrorMock,
+      withKangurClientError: mocks.withKangurClientError,
+      withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    };
+  });
 
-  return {
-    kangurFeaturePageMock,
-    kangurFeaturePageState,
-    KangurFeaturePageMock,
-    ...globalThis.__kangurClientErrorMocks(),
-  };
-});
+const kangurFeaturePageMock = vi.fn();
+const kangurFeaturePageState = {
+  slug: [] as string[],
+  basePath: '/',
+  embedded: false,
+};
+
+function KangurFeaturePageMock(props: {
+  slug?: string[];
+  basePath?: string;
+  embedded?: boolean;
+}): React.ReactElement {
+  if (props.slug?.[0] === 'broken') {
+    throw new Error('Kaboom');
+  }
+  kangurFeaturePageMock(props);
+  return <div data-testid='kangur-feature-page' />;
+}
 
 vi.mock('next/link', () => ({
   default: ({

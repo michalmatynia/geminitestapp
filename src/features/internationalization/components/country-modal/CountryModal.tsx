@@ -12,7 +12,7 @@ import { LoadingState } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { useCountryForm } from './hooks/useCountryForm';
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';

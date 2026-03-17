@@ -19,7 +19,7 @@ import {
   EmptyState,
   Card,
 } from '@/shared/ui';
-import { PanelHeader } from '@/shared/ui/templates/panels';
+import { PanelHeader } from '@/shared/contracts/ui';
 
 import {
   useCaseResolverPageActions,

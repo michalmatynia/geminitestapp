@@ -21,6 +21,7 @@ const buildLesson = (overrides: Partial<KangurLesson> = {}): KangurLesson => ({
   componentId: 'clock',
   contentMode: 'component',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Lesson One',
   description: 'Intro lesson',
   emoji: '🕐',

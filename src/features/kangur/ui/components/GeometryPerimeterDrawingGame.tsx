@@ -37,6 +37,8 @@ import {
   resolveKangurCanvasPoint,
   syncKangurCanvasContext,
 } from '@/features/kangur/ui/services/drawing-canvas';
+import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
+import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { loosenMax, loosenMin, loosenMinInt } from '@/features/kangur/ui/services/drawing-leniency';
 import {
   addXp,
@@ -170,23 +172,26 @@ const toGridUnits = (value: number): number =>
 const withinTolerance = (value: number, target: number, tolerance = 0): boolean =>
   Math.abs(value - target) <= tolerance;
 
-const MIN_DRAWING_POINTS = loosenMinInt(14);
-const MIN_GRID_UNITS = loosenMin(2);
-const GRID_SNAP_TOLERANCE = loosenMax(6);
-const MIN_GRID_ALIGNMENT_RATIO = loosenMin(0.8);
+const BASE_MIN_DRAWING_POINTS = loosenMinInt(14);
+const BASE_MIN_GRID_UNITS = loosenMin(2);
+const BASE_GRID_SNAP_TOLERANCE = loosenMax(6);
+const BASE_MIN_GRID_ALIGNMENT_RATIO = loosenMin(0.8);
+
+const distance = (a: Point2d, b: Point2d): number =>
+  Math.hypot(a.x - b.x, a.y - b.y);
 
 const distanceToNearestGridLine = (value: number): number => {
   const snapped = Math.round(value / GRID_STEP) * GRID_STEP;
   return Math.abs(value - snapped);
 };
 
-const gridAlignmentRatio = (points: Point2d[]): number => {
+const gridAlignmentRatio = (points: Point2d[], tolerance: number): number => {
   if (points.length === 0) return 0;
   let aligned = 0;
   for (const point of points) {
     const xDist = distanceToNearestGridLine(point.x);
     const yDist = distanceToNearestGridLine(point.y);
-    if (Math.min(xDist, yDist) <= GRID_SNAP_TOLERANCE) {
+    if (Math.min(xDist, yDist) <= tolerance) {
       aligned += 1;
     }
   }
@@ -219,6 +224,7 @@ export default function GeometryPerimeterDrawingGame({
   const [keyboardStatus, setKeyboardStatus] = useState(
     'Plansza gotowa do rysowania klawiaturą.'
   );
+  const isCoarsePointer = useKangurCoarsePointer();
   const sessionStartedAtRef = useRef(Date.now());
 
   const currentRound = ROUNDS[roundIndex] ?? null;
@@ -232,7 +238,18 @@ export default function GeometryPerimeterDrawingGame({
     [perimeter, roundIndex]
   );
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
-  const isDrawingReady = points.length >= MIN_DRAWING_POINTS;
+  const minPointDistance = isCoarsePointer ? 5 : 2;
+  const minDrawingPoints = isCoarsePointer
+    ? Math.max(8, Math.round(BASE_MIN_DRAWING_POINTS * 0.7))
+    : BASE_MIN_DRAWING_POINTS;
+  const gridSnapTolerance = isCoarsePointer
+    ? BASE_GRID_SNAP_TOLERANCE + 2
+    : BASE_GRID_SNAP_TOLERANCE;
+  const minGridAlignmentRatio = isCoarsePointer
+    ? Math.max(0.65, BASE_MIN_GRID_ALIGNMENT_RATIO - 0.1)
+    : BASE_MIN_GRID_ALIGNMENT_RATIO;
+  const strokeWidth = isCoarsePointer ? 7 : 5;
+  const isDrawingReady = points.length >= minDrawingPoints;
   const isLocked = feedback?.kind === 'success' || feedback?.kind === 'error';
   const revealAnswers = feedback?.kind === 'success' || feedback?.kind === 'error';
 
@@ -271,7 +288,7 @@ export default function GeometryPerimeterDrawingGame({
     }
 
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = strokeWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     for (const stroke of nextStrokes) {
@@ -287,7 +304,7 @@ export default function GeometryPerimeterDrawingGame({
       }
       ctx.stroke();
     }
-  }, []);
+  }, [strokeWidth]);
 
   useEffect(() => {
     strokesRef.current = strokes;
@@ -301,6 +318,7 @@ export default function GeometryPerimeterDrawingGame({
     canvasRef,
     redraw: () => redrawCanvas(strokes),
   });
+  useKangurCanvasTouchLock(canvasRef);
 
   const updateStrokes = useCallback(
     (updater: (current: Point2d[][]) => Point2d[][]): void => {
@@ -353,6 +371,10 @@ export default function GeometryPerimeterDrawingGame({
       if (current.length === 0) return current;
       const next = [...current];
       const lastStroke = next[next.length - 1] ?? [];
+      const lastPoint = lastStroke[lastStroke.length - 1];
+      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
+        return current;
+      }
       next[next.length - 1] = [...lastStroke, point];
       return next;
     });
@@ -517,7 +539,7 @@ export default function GeometryPerimeterDrawingGame({
     if (!currentRound) {
       return { accepted: false, message: 'Brak zadania do oceny.' };
     }
-    if (points.length < MIN_DRAWING_POINTS) {
+    if (points.length < minDrawingPoints) {
       return {
         accepted: false,
         message: 'Narysuj figurę trochę dłużej, żeby można było ją ocenić.',
@@ -534,12 +556,12 @@ export default function GeometryPerimeterDrawingGame({
     const widthUnits = toGridUnits(width);
     const heightUnits = toGridUnits(height);
     const minUnits = Math.min(widthUnits, heightUnits);
-    if (minUnits < MIN_GRID_UNITS) {
+    if (minUnits < BASE_MIN_GRID_UNITS) {
       return { accepted: false, message: 'Narysuj większą figurę na kratkach.' };
     }
 
-    const alignmentRatio = gridAlignmentRatio(points);
-    if (alignmentRatio < MIN_GRID_ALIGNMENT_RATIO) {
+    const alignmentRatio = gridAlignmentRatio(points, gridSnapTolerance);
+    if (alignmentRatio < minGridAlignmentRatio) {
       return {
         accepted: false,
         message: 'Rysuj dokładnie po liniach kratki.',
@@ -551,8 +573,8 @@ export default function GeometryPerimeterDrawingGame({
         withinTolerance(widthUnits, currentRound.a) &&
         withinTolerance(heightUnits, currentRound.a);
       const pixelMatch =
-        Math.abs(width - currentRound.a * GRID_STEP) <= GRID_SNAP_TOLERANCE &&
-        Math.abs(height - currentRound.a * GRID_STEP) <= GRID_SNAP_TOLERANCE;
+        Math.abs(width - currentRound.a * GRID_STEP) <= gridSnapTolerance &&
+        Math.abs(height - currentRound.a * GRID_STEP) <= gridSnapTolerance;
       if (!matches) {
         return {
           accepted: false,
@@ -572,10 +594,10 @@ export default function GeometryPerimeterDrawingGame({
         (withinTolerance(widthUnits, a) && withinTolerance(heightUnits, b)) ||
         (withinTolerance(widthUnits, b) && withinTolerance(heightUnits, a));
       const pixelMatch =
-        (Math.abs(width - a * GRID_STEP) <= GRID_SNAP_TOLERANCE &&
-          Math.abs(height - b * GRID_STEP) <= GRID_SNAP_TOLERANCE) ||
-        (Math.abs(width - b * GRID_STEP) <= GRID_SNAP_TOLERANCE &&
-          Math.abs(height - a * GRID_STEP) <= GRID_SNAP_TOLERANCE);
+        (Math.abs(width - a * GRID_STEP) <= gridSnapTolerance &&
+          Math.abs(height - b * GRID_STEP) <= gridSnapTolerance) ||
+        (Math.abs(width - b * GRID_STEP) <= gridSnapTolerance &&
+          Math.abs(height - a * GRID_STEP) <= gridSnapTolerance);
       if (!matches) {
         return {
           accepted: false,

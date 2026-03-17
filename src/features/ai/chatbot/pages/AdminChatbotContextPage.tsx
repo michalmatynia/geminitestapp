@@ -8,7 +8,6 @@ import {
   Button,
   Tag,
   FileUploadTrigger,
-  type FileUploadHelpers,
   StandardDataTablePanel,
   StatusToggle,
   useToast,
@@ -17,6 +16,7 @@ import {
   LoadingState,
   Hint,
 } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { ChatbotContextModal } from '../components/ChatbotContextModal';

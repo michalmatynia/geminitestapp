@@ -4,6 +4,7 @@ import {
   BookOpen,
   BookCheck,
   BrainCircuit,
+  Users,
   LayoutGrid,
   LogIn,
   LogOut,
@@ -12,7 +13,6 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -29,28 +29,31 @@ import {
   subscribeToTutorVisibilityChanges,
 } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
+import { KangurChoiceDialog } from '@/features/kangur/ui/components/KangurChoiceDialog';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
-import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import {
   KangurButton,
-  KangurGlassPanel,
-  KangurHeadline,
   KangurPageTopBar,
   KangurTextField,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_PANEL_GAP_CLASSNAME,
-  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
+  DEFAULT_KANGUR_AGE_GROUP,
+  DEFAULT_KANGUR_SUBJECT,
+  KANGUR_AGE_GROUPS,
+  KANGUR_SUBJECTS,
+  getKangurAgeGroupLabel,
+  getKangurSubjectLabel,
+} from '@/features/kangur/lessons/lesson-catalog';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -128,69 +131,8 @@ const isTransitionSourceActive = ({
   );
 
 const renderNavAction = (config: KangurNavActionConfig): React.JSX.Element => {
-  const {
-    active = false,
-    ariaLabel,
-    className,
-    content,
-    docId,
-    elementRef,
-    href,
-    onClick,
-    targetPageKey,
-    testId,
-    title,
-    transitionActive = false,
-    transitionAcknowledgeMs,
-    transitionSourceId,
-  } = config;
-  const variant = active || transitionActive ? 'navigationActive' : 'navigation';
-
-  if (href) {
-    return (
-      <KangurButton
-        asChild
-        aria-current={active ? 'page' : undefined}
-        aria-label={ariaLabel}
-        className={className}
-        data-doc-id={docId}
-        data-nav-state={transitionActive ? 'transitioning' : 'idle'}
-        data-testid={testId}
-        onClick={onClick}
-        size='md'
-        title={title}
-        variant={variant}
-      >
-        <Link
-          href={href}
-          targetPageKey={targetPageKey}
-          transitionAcknowledgeMs={transitionAcknowledgeMs}
-          transitionSourceId={transitionSourceId}
-        >
-          {content}
-        </Link>
-      </KangurButton>
-    );
-  }
-
-  return (
-    <KangurButton
-      aria-current={active ? 'page' : undefined}
-      aria-label={ariaLabel}
-      className={className}
-      data-doc-id={docId}
-      data-nav-state={transitionActive ? 'transitioning' : 'idle'}
-      data-testid={testId}
-      onClick={onClick}
-      ref={elementRef}
-      size='md'
-      title={title}
-      type='button'
-      variant={variant}
-    >
-      {content}
-    </KangurButton>
-  );
+  const { content, ...action } = config;
+  return <KangurNavAction {...action}>{content}</KangurNavAction>;
 };
 
 export function KangurPrimaryNavigation({
@@ -258,7 +200,9 @@ export function KangurPrimaryNavigation({
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
   const { subject, setSubject } = useKangurSubjectFocus();
+  const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const enableTutorLabel =
     tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel;
   const disableTutorLabel = tutorContent.common.disableTutorAria ?? 'Wyłącz AI Tutora';
@@ -283,8 +227,21 @@ export function KangurPrimaryNavigation({
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
   const subjectChoiceLabel = getKangurSubjectLabel(subject);
+  const ageGroupChoiceLabel = getKangurAgeGroupLabel(ageGroup);
+  const defaultSubjectLabel =
+    KANGUR_SUBJECTS.find((item) => item.default)?.label ??
+    getKangurSubjectLabel(DEFAULT_KANGUR_SUBJECT);
+  const defaultAgeGroupLabel =
+    KANGUR_AGE_GROUPS.find((group) => group.default)?.label ??
+    getKangurAgeGroupLabel(DEFAULT_KANGUR_AGE_GROUP);
+  const availableSubjects =
+    ageGroup === 'grown_ups'
+      ? KANGUR_SUBJECTS
+      : KANGUR_SUBJECTS.filter((subjectOption) => subjectOption.id !== 'web_development');
   const yellowPillActionClassName =
     `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
+  const amberPillActionClassName =
+    `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`;
   const closeMobileMenu = (): void => setIsMobileMenuOpen(false);
   const toggleMobileMenu = (): void => setIsMobileMenuOpen((prev) => !prev);
 
@@ -674,6 +631,20 @@ export function KangurPrimaryNavigation({
     testId: 'kangur-primary-nav-subject',
     title: `Aktualny przedmiot: ${subjectChoiceLabel}`,
   };
+  const ageGroupAction: KangurNavActionConfig = {
+    ariaLabel: 'Wybierz grupę wiekową',
+    className: amberPillActionClassName,
+    content: (
+      <>
+        <Users className={ICON_CLASSNAME} strokeWidth={2.15} />
+        <span className='truncate'>Wiek: {ageGroupChoiceLabel}</span>
+      </>
+    ),
+    docId: 'top_nav_age_group_choice',
+    onClick: () => setIsAgeGroupModalOpen(true),
+    testId: 'kangur-primary-nav-age-group',
+    title: `Aktualna grupa: ${ageGroupChoiceLabel}`,
+  };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
     className: mobileNavItemClassName,
@@ -782,7 +753,7 @@ export function KangurPrimaryNavigation({
       <div
         className={
           wrapperClassName ??
-          'grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
+          'grid w-full min-w-0 grid-cols-2 gap-2 max-[360px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
         }
         data-testid='kangur-primary-nav-primary-actions'
       >
@@ -791,6 +762,7 @@ export function KangurPrimaryNavigation({
         {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
         {renderNavAction(buildActionWithClose(subjectAction, onActionClick))}
+        {renderNavAction(buildActionWithClose(ageGroupAction, onActionClick))}
         {tutorRow}
       </div>
     );
@@ -831,11 +803,6 @@ export function KangurPrimaryNavigation({
         {shouldRenderProfileMenu ? (
           <KangurProfileMenu
             avatar={profileAvatar}
-            isTransitionActive={isTransitionSourceActive({
-              activeTransitionSourceId,
-              transitionPhase,
-              transitionSourceId: profileTransitionSourceId,
-            })}
             label={profileLabel}
             profile={{ href: profileHref, isActive: learnerProfileIsActive }}
             transitionAcknowledgeMs={NAVIGATION_TRANSITION_ACKNOWLEDGE_MS}
@@ -852,14 +819,12 @@ export function KangurPrimaryNavigation({
   const mobileMenuId = 'kangur-mobile-menu';
   const mobileMenuTitleId = 'kangur-mobile-menu-title';
   const mobileMenuCloseButton = (
-    <div className='flex w-full justify-end'>
-      <KangurPanelCloseButton
-        id='kangur-mobile-menu-close'
-        aria-label='Zamknij menu'
-        onClick={closeMobileMenu}
-        variant='chat'
-      />
-    </div>
+    <KangurPanelCloseButton
+      id='kangur-mobile-menu-close'
+      aria-label='Zamknij menu'
+      onClick={closeMobileMenu}
+      variant='chat'
+    />
   );
   const mobileNav = (
     <KangurTopNavGroup label={navigationLabel} className='border-0 p-0'>
@@ -887,6 +852,8 @@ export function KangurPrimaryNavigation({
     </KangurTopNavGroup>
   );
   const leftContent = isMobile ? mobileNav : desktopNav;
+  const shouldRenderMobileAppearanceHeader = Boolean(appearanceControlsInline);
+  const shouldHideMobileAppearanceControls = shouldRenderMobileAppearanceHeader;
   const mobileMenuOverlay = isMobile ? (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-200 ${
@@ -914,92 +881,61 @@ export function KangurPrimaryNavigation({
           Menu Kangur
         </h2>
         <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
+          <div className='flex w-full items-center' data-testid='kangur-primary-nav-mobile-header'>
+            {shouldRenderMobileAppearanceHeader ? (
+              <div className='flex items-center'>{appearanceControlsInline}</div>
+            ) : null}
+            <div className='ml-auto flex items-center'>{mobileMenuCloseButton}</div>
+          </div>
           {renderPrimaryActions({
             onActionClick: closeMobileMenu,
             wrapperClassName: 'flex w-full flex-col gap-2',
-            inlineAppearanceWithTutor: true,
-            leading: mobileMenuCloseButton,
+            inlineAppearanceWithTutor: false,
           })}
           {renderUtilityActions({
             onActionClick: closeMobileMenu,
             wrapperClassName: 'flex w-full flex-col gap-2',
-            hideAppearanceControls: true,
+            hideAppearanceControls: shouldHideMobileAppearanceControls,
           })}
         </KangurTopNavGroup>
       </div>
     </div>
   ) : null;
   const subjectModal = (
-    <DialogPrimitive.Root open={isSubjectModalOpen} onOpenChange={setIsSubjectModalOpen}>
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className='fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0' />
-        <DialogPrimitive.Content className='fixed left-[50%] top-[50%] z-50 w-[92vw] max-w-sm translate-x-[-50%] translate-y-[-50%] border-0 bg-transparent p-0 shadow-none outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95'>
-          <DialogPrimitive.Title className='sr-only'>Wybierz przedmiot</DialogPrimitive.Title>
-          <DialogPrimitive.Description className='sr-only'>
-            Wybierz, czy chcesz pracować z matematyką czy angielskim.
-          </DialogPrimitive.Description>
-          <KangurGlassPanel
-            className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
-            padding='lg'
-            surface='playField'
-          >
-            <div className='flex items-start justify-between gap-3'>
-              <div className='min-w-0'>
-                <KangurHeadline accent='indigo' as='h2' size='sm'>
-                  Wybierz przedmiot
-                </KangurHeadline>
-                <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
-                  Domyślnie: Matematyka.
-                </p>
-              </div>
-              <KangurPanelCloseButton
-                aria-label='Zamknij wybór przedmiotu'
-                onClick={() => setIsSubjectModalOpen(false)}
-                variant='chat'
-              />
-            </div>
-            <div
-              className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full items-center justify-center`}
-              role='group'
-              aria-label='Wybór przedmiotu'
-            >
-              <KangurButton
-                className='h-10 flex-1 text-xs sm:text-sm'
-                onClick={() => setSubject('maths')}
-                size='sm'
-                type='button'
-                variant={subject === 'maths' ? 'segmentActive' : 'segment'}
-                aria-pressed={subject === 'maths'}
-              >
-                Matematyka
-              </KangurButton>
-              <KangurButton
-                className='h-10 flex-1 text-xs sm:text-sm'
-                onClick={() => setSubject('english')}
-                size='sm'
-                type='button'
-                variant={subject === 'english' ? 'segmentActive' : 'segment'}
-                aria-pressed={subject === 'english'}
-              >
-                Angielski
-              </KangurButton>
-            </div>
-            <div className='flex w-full flex-col gap-2 text-xs [color:var(--kangur-page-muted-text)]'>
-              <span>Aktualny wybór: {subjectChoiceLabel}.</span>
-              <KangurButton
-                className='w-full'
-                onClick={() => setIsSubjectModalOpen(false)}
-                size='sm'
-                type='button'
-                variant='surface'
-              >
-                Gotowe
-              </KangurButton>
-            </div>
-          </KangurGlassPanel>
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+    <KangurChoiceDialog
+      open={isSubjectModalOpen}
+      onOpenChange={setIsSubjectModalOpen}
+      title='Wybierz przedmiot'
+      description='Wybierz przedmiot, na którym chcesz się teraz skupić.'
+      defaultChoiceLabel={defaultSubjectLabel}
+      currentChoiceLabel={subjectChoiceLabel}
+      closeAriaLabel='Zamknij wybór przedmiotu'
+      groupAriaLabel='Wybór przedmiotu'
+      options={availableSubjects.map((item) => ({
+        id: item.id,
+        label: item.label,
+        isActive: subject === item.id,
+        onSelect: () => setSubject(item.id),
+      }))}
+    />
+  );
+  const ageGroupModal = (
+    <KangurChoiceDialog
+      open={isAgeGroupModalOpen}
+      onOpenChange={setIsAgeGroupModalOpen}
+      title='Wybierz grupę wiekową'
+      description='Wybierz, dla kogo mają być dopasowane lekcje.'
+      defaultChoiceLabel={defaultAgeGroupLabel}
+      currentChoiceLabel={ageGroupChoiceLabel}
+      closeAriaLabel='Zamknij wybór grupy wiekowej'
+      groupAriaLabel='Wybór grupy wiekowej'
+      options={KANGUR_AGE_GROUPS.map((group) => ({
+        id: group.id,
+        label: group.label,
+        isActive: ageGroup === group.id,
+        onSelect: () => setAgeGroup(group.id),
+      }))}
+    />
   );
 
   return (
@@ -1011,6 +947,7 @@ export function KangurPrimaryNavigation({
       />
       {mobileMenuOverlay}
       {subjectModal}
+      {ageGroupModal}
     </>
   );
 }

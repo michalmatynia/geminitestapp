@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { FilterPanel } from '@/shared/ui';
-import type { FilterField } from '@/shared/ui/templates/panels';
+import type { FilterField } from '@/shared/contracts/ui';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {

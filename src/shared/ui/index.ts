@@ -32,6 +32,7 @@ export * from './card';
 export * from './client-only';
 export * from './checkbox';
 export * from './collapsible';
+export * from './DocsTooltipEnhancer';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './input';
@@ -57,6 +58,7 @@ export * from './filters-container';
 export * from './vector-canvas';
 export * from './tree';
 export * from './FolderTreePanel';
+export * from './FocusModeTogglePortal';
 export * from './MasterTreeSettingsButton';
 
 export * from './badge';

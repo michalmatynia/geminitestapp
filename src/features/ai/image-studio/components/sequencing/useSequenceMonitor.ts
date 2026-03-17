@@ -3,6 +3,7 @@
 import { useCallback, useRef } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 
 import type { SequenceRunStatus, SequenceRunDetailResponse } from './sequencing-types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -22,12 +23,12 @@ export function useSequenceMonitor({
   onSetActiveSequenceStatus,
   onSetSequenceError,
 }: UseSequenceMonitorProps) {
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimerRef = useRef<SafeTimerId | null>(null);
   const streamRef = useRef<EventSource | null>(null);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current) {
-      clearInterval(pollTimerRef.current);
+      safeClearInterval(pollTimerRef.current);
       pollTimerRef.current = null;
     }
   }, []);
@@ -73,7 +74,7 @@ export function useSequenceMonitor({
       };
 
       void tick();
-      pollTimerRef.current = setInterval(() => {
+      pollTimerRef.current = safeSetInterval(() => {
         void tick();
       }, POLL_INTERVAL_MS);
     },

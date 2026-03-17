@@ -4,7 +4,7 @@ import Image from 'next/image';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import { Card, Hint, Button, FileUploadTrigger, FileUploadButton } from '@/shared/ui';
-import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsFieldsRenderer } from '@/shared/contracts/ui';
 
 type LogoWidthSettings = {
   logoWidth: number;

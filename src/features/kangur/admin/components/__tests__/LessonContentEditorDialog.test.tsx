@@ -78,6 +78,7 @@ const lesson: KangurLesson = {
   componentId: 'geometry_basics',
   contentMode: 'document',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Lesson One',
   description: 'Intro lesson',
   emoji: '*',

@@ -29,7 +29,12 @@ export function KangurLessonLibraryCardAside({
   const assignmentPriority = lessonAssignment?.priority;
 
   return (
-    <div className={cn('flex flex-wrap items-start gap-2 sm:flex-col sm:items-end', className)}>
+    <div
+      className={cn(
+        'flex flex-wrap items-start gap-2 max-[360px]:flex-col sm:flex-col sm:items-end',
+        className
+      )}
+    >
       <KangurStatusChip
         accent={masteryAccent}
         className='uppercase tracking-[0.14em]'

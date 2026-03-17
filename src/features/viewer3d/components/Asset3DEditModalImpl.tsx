@@ -9,7 +9,7 @@ import { Button, Input, Alert, Tag, MetadataItem } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 import { formatFileSize } from '@/shared/utils';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';

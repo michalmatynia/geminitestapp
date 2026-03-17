@@ -4,6 +4,8 @@ import {
   type KangurLessonTtsVoice,
 } from '@/features/kangur/tts/contracts';
 import {
+  DEFAULT_KANGUR_AGE_GROUP,
+  DEFAULT_KANGUR_SUBJECT,
   KANGUR_LESSON_COMPONENT_ORDER,
   KANGUR_LESSON_LIBRARY,
 } from '@/features/kangur/lessons/lesson-catalog';
@@ -12,10 +14,12 @@ import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared
 import {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  kangurLessonAgeGroupSchema,
   kangurLessonContentModeSchema,
   kangurLessonComponentIdSchema,
   kangurLessonSubjectSchema,
   type KangurLesson,
+  type KangurLessonAgeGroup,
   type KangurLessonComponentId,
   type KangurLessonContentMode,
   type KangurLessonSubject,
@@ -63,8 +67,8 @@ export const KANGUR_NARRATOR_ENGINE_OPTIONS = [
   },
 ] as const satisfies ReadonlyArray<LabeledOptionWithDescriptionDto<KangurNarratorEngine>>;
 
-const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN = 1;
-const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
+export const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MIN = 1;
+export const KANGUR_PARENT_VERIFICATION_RESEND_COOLDOWN_SECONDS_MAX = 3600;
 const KANGUR_PARENT_VERIFICATION_COOLDOWN_FALLBACK_SECONDS =
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS;
 
@@ -76,6 +80,10 @@ export const KANGUR_GEOMETRY_LESSON_COMPONENT_IDS = [
 ] as const satisfies readonly KangurLessonComponentId[];
 
 const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> = {
+  alphabet_basics: 'alphabet_basics',
+  alphabet_syllables: 'alphabet_syllables',
+  alphabet_words: 'alphabet_words',
+  alphabet_matching: 'alphabet_matching',
   clock: 'clock',
   calendar: 'calendar',
   adding: 'adding',
@@ -97,6 +105,7 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   english_subject_verb_agreement: 'english_subject_verb_agreement',
   english_articles: 'english_articles',
   english_prepositions_time_place: 'english_prepositions_time_place',
+  webdev_react_components: 'webdev_react_components',
 };
 
 export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<
@@ -121,6 +130,7 @@ export type KangurLessonDraft = Pick<
   | 'componentId'
   | 'contentMode'
   | 'subject'
+  | 'ageGroup'
   | 'title'
   | 'description'
   | 'emoji'
@@ -224,8 +234,21 @@ const resolveKangurLessonSubject = (
   return parsed.success ? parsed.data : fallback;
 };
 
+const resolveKangurLessonAgeGroup = (
+  value: unknown,
+  fallback: KangurLessonAgeGroup
+): KangurLessonAgeGroup => {
+  if (typeof value !== 'string') return fallback;
+  const parsed = kangurLessonAgeGroupSchema.safeParse(value.trim().toLowerCase());
+  return parsed.success ? parsed.data : fallback;
+};
+
 const resolveKangurLessonTemplateSubject = (template: KangurLessonTemplate): KangurLessonSubject =>
-  template.subject ?? 'maths';
+  template.subject ?? DEFAULT_KANGUR_SUBJECT;
+
+const resolveKangurLessonTemplateAgeGroup = (
+  template: KangurLessonTemplate
+): KangurLessonAgeGroup => template.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP;
 
 const resolveKangurNarratorEngine = (value: unknown): KangurNarratorEngine => {
   if (typeof value !== 'string') return 'server';
@@ -298,6 +321,7 @@ export const createKangurLessonDraft = (
     componentId,
     contentMode: 'component',
     subject: resolveKangurLessonTemplateSubject(template),
+    ageGroup: resolveKangurLessonTemplateAgeGroup(template),
     title: template.title,
     description: template.description,
     emoji: template.emoji,
@@ -310,11 +334,13 @@ export const createKangurLessonDraft = (
 export const createDefaultKangurLessons = (): KangurLesson[] =>
   KANGUR_LESSON_COMPONENT_ORDER.map((componentId, index) => {
     const template = getKangurLessonTemplate(componentId);
+    const ageGroup = resolveKangurLessonTemplateAgeGroup(template);
     return {
       id: `kangur-lesson-${componentId}`,
       componentId,
       contentMode: 'component',
       subject: resolveKangurLessonTemplateSubject(template),
+      ageGroup,
       title: template.title,
       description: template.description,
       emoji: template.emoji,
@@ -422,6 +448,10 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
           entry['subject'],
           resolveKangurLessonTemplateSubject(template)
         ),
+        ageGroup: resolveKangurLessonAgeGroup(
+          entry['ageGroup'],
+          resolveKangurLessonTemplateAgeGroup(template)
+        ),
         title: normalizeText(entry['title'], template.title, 120),
         description: normalizeText(entry['description'], template.description, 240),
         emoji: normalizeText(entry['emoji'], template.emoji, 12),
@@ -440,20 +470,18 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
     return createDefaultKangurLessons();
   }
 
-  const dedupedByComponent = new Map<
-    KangurLessonComponentId,
-    { index: number; lesson: KangurLesson }
-  >();
+  const dedupedByComponent = new Map<string, { index: number; lesson: KangurLesson }>();
 
   normalized.forEach((lesson, index) => {
-    const existing = dedupedByComponent.get(lesson.componentId);
+    const dedupeKey = `${lesson.componentId}:${lesson.ageGroup}`;
+    const existing = dedupedByComponent.get(dedupeKey);
     if (!existing) {
-      dedupedByComponent.set(lesson.componentId, { index, lesson });
+      dedupedByComponent.set(dedupeKey, { index, lesson });
       return;
     }
 
     if (shouldPreferNormalizedKangurLesson(lesson, index, existing.lesson, existing.index)) {
-      dedupedByComponent.set(lesson.componentId, { index, lesson });
+      dedupedByComponent.set(dedupeKey, { index, lesson });
     }
   });
 
@@ -509,9 +537,12 @@ export type AppendMissingKangurLessonsResult = {
 
 export const appendMissingKangurLessonsByComponent = (
   lessons: KangurLesson[],
-  componentIds: readonly KangurLessonComponentId[]
+  componentIds: readonly KangurLessonComponentId[],
+  ageGroups: readonly KangurLessonAgeGroup[] = [DEFAULT_KANGUR_AGE_GROUP]
 ): AppendMissingKangurLessonsResult => {
-  const existingComponentIds = new Set(lessons.map((lesson) => lesson.componentId));
+  const existingLessonKeys = new Set(
+    lessons.map((lesson) => `${lesson.componentId}:${lesson.ageGroup}`)
+  );
   const usedIds = new Set(lessons.map((lesson) => lesson.id));
   let nextSortOrder =
     lessons.reduce((maxSortOrder, lesson) => Math.max(maxSortOrder, lesson.sortOrder), 0) +
@@ -519,25 +550,33 @@ export const appendMissingKangurLessonsByComponent = (
 
   const additions: KangurLesson[] = [];
 
-  for (const componentId of componentIds) {
-    if (existingComponentIds.has(componentId)) continue;
-    const template = getKangurLessonTemplate(componentId);
-    const lessonId = ensureUniqueAppendedLessonId(`kangur-lesson-${componentId}`, usedIds);
-    additions.push({
-      id: lessonId,
-      componentId,
-      contentMode: 'component',
-      subject: resolveKangurLessonTemplateSubject(template),
-      title: template.title,
-      description: template.description,
-      emoji: template.emoji,
-      color: template.color,
-      activeBg: template.activeBg,
-      enabled: true,
-      sortOrder: nextSortOrder,
-    });
-    existingComponentIds.add(componentId);
-    nextSortOrder += KANGUR_LESSON_SORT_ORDER_GAP;
+  for (const ageGroup of ageGroups) {
+    for (const componentId of componentIds) {
+      const lessonKey = `${componentId}:${ageGroup}`;
+      if (existingLessonKeys.has(lessonKey)) continue;
+      const template = getKangurLessonTemplate(componentId);
+      const baseId =
+        ageGroup === DEFAULT_KANGUR_AGE_GROUP
+          ? `kangur-lesson-${componentId}`
+          : `kangur-lesson-${componentId}-${ageGroup}`;
+      const lessonId = ensureUniqueAppendedLessonId(baseId, usedIds);
+      additions.push({
+        id: lessonId,
+        componentId,
+        contentMode: 'component',
+        subject: resolveKangurLessonTemplateSubject(template),
+        ageGroup,
+        title: template.title,
+        description: template.description,
+        emoji: template.emoji,
+        color: template.color,
+        activeBg: template.activeBg,
+        enabled: ageGroup === DEFAULT_KANGUR_AGE_GROUP,
+        sortOrder: nextSortOrder,
+      });
+      existingLessonKeys.add(lessonKey);
+      nextSortOrder += KANGUR_LESSON_SORT_ORDER_GAP;
+    }
   }
 
   if (additions.length === 0) {

@@ -17,6 +17,7 @@ import { KangurAiTutorContentProvider } from '@/features/kangur/ui/context/Kangu
 import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
+import { KangurAgeGroupFocusProvider } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
@@ -268,21 +269,23 @@ export function KangurFeatureApp(): JSX.Element {
           <KangurLoginModalProvider>
             <KangurAuthProvider>
               <KangurSubjectFocusProvider>
-                <KangurProgressSyncProvider>
-                  <KangurScoreSyncProvider>
-                    <KangurContextRegistryPageBoundary>
-                      <KangurAiTutorContentProvider>
-                        <KangurAiTutorProvider>
-                          <KangurTutorAnchorProvider>
-                            <AuthenticatedApp />
-                            <KangurAiTutorWidget />
-                            <KangurLoginModal />
-                          </KangurTutorAnchorProvider>
-                        </KangurAiTutorProvider>
-                      </KangurAiTutorContentProvider>
-                    </KangurContextRegistryPageBoundary>
-                  </KangurScoreSyncProvider>
-                </KangurProgressSyncProvider>
+                <KangurAgeGroupFocusProvider>
+                  <KangurProgressSyncProvider>
+                    <KangurScoreSyncProvider>
+                      <KangurContextRegistryPageBoundary>
+                        <KangurAiTutorContentProvider>
+                          <KangurAiTutorProvider>
+                            <KangurTutorAnchorProvider>
+                              <AuthenticatedApp />
+                              <KangurAiTutorWidget />
+                              <KangurLoginModal />
+                            </KangurTutorAnchorProvider>
+                          </KangurAiTutorProvider>
+                        </KangurAiTutorContentProvider>
+                      </KangurContextRegistryPageBoundary>
+                    </KangurScoreSyncProvider>
+                  </KangurProgressSyncProvider>
+                </KangurAgeGroupFocusProvider>
               </KangurSubjectFocusProvider>
             </KangurAuthProvider>
           </KangurLoginModalProvider>

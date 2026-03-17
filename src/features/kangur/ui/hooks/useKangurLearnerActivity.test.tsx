@@ -4,15 +4,19 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 const {
-  learnerActivityGetMock,
   logKangurClientErrorMock,
   reportKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  learnerActivityGetMock,
 } = vi.hoisted(() => ({
+  logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
+  reportKangurClientErrorMock: globalThis.__kangurClientErrorMocks().reportKangurClientErrorMock,
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
   learnerActivityGetMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({

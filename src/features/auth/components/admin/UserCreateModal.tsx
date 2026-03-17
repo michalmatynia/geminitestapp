@@ -6,7 +6,7 @@ import { useToast } from '@/shared/ui';
 import {
   SettingsPanelBuilder,
   type SettingsPanelField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+} from '@/shared/contracts/ui';
 
 import { useUsersData, useUsersDialogs } from '../../context/UsersContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

@@ -197,6 +197,11 @@ export const REWARD_PROFILE_CONFIG: Record<KangurRewardProfile, KangurRewardProf
 };
 
 export const ACTIVITY_LABELS: Record<string, string> = {
+  alphabet: 'Alphabet',
+  alphabet_basics: 'Alphabet',
+  alphabet_syllables: 'Sylaby i slowa',
+  alphabet_words: 'Pierwsze slowa',
+  alphabet_matching: 'Dopasuj litery',
   addition: 'Dodawanie',
   subtraction: 'Odejmowanie',
   multiplication: 'Mnożenie',
@@ -222,6 +227,10 @@ export const ACTIVITY_LABELS: Record<string, string> = {
 };
 
 export const LESSON_KEY_TO_OPERATION: Record<string, string> = {
+  alphabet_basics: 'alphabet',
+  alphabet_syllables: 'alphabet',
+  alphabet_words: 'alphabet',
+  alphabet_matching: 'alphabet',
   adding: 'addition',
   subtracting: 'subtraction',
   multiplication: 'multiplication',

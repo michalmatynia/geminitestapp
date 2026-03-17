@@ -19,13 +19,12 @@ import {
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/ui';
-import { useToast } from '@/shared/ui';
+import { FocusModeTogglePortal, useToast } from '@/shared/ui';
 
 import {
   CenterPreviewProvider,
   useCenterPreviewContext,
 } from './center-preview/CenterPreviewContext';
-import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
 import { useCenterPreviewVariants } from './center-preview/useCenterPreviewVariants';
 import {
   deleteVariantFromCenterPreview,
@@ -74,11 +73,13 @@ const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
 export function CenterPreviewInner(): React.JSX.Element {
   const queryClient = useQueryClient();
-  const { maskPreviewEnabled, previewCanvasSize, pendingSequenceThumbnail } = useUiState();
+  const { isFocusMode, maskPreviewEnabled, previewCanvasSize, pendingSequenceThumbnail } =
+    useUiState();
   const {
     registerPreviewCanvasViewportCropResolver,
     registerPreviewCanvasImageFrameResolver,
     resetCanvasImageOffset,
+    toggleFocusMode,
   } = useUiActions();
   const { projectId, projectsQuery } = useProjectsState();
   const {
@@ -799,7 +800,7 @@ export function CenterPreviewInner(): React.JSX.Element {
       <CenterPreviewHeaderSectionProvider value={centerPreviewHeaderContextValue}>
         <CenterPreviewHeader />
       </CenterPreviewHeaderSectionProvider>
-      <FocusModeTogglePortal />
+      <FocusModeTogglePortal isFocusMode={isFocusMode} onToggleFocusMode={toggleFocusMode} />
       <VariantTooltipPortal />
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
         <div className='grid content-start gap-3' style={previewGridStyle}>

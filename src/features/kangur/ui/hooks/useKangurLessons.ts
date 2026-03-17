@@ -1,7 +1,15 @@
 'use client';
 
-import type { KangurLesson, KangurLessonDocumentStore, KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
-import { kangurLessonsSchema, kangurLessonDocumentStoreSchema } from '@/features/kangur/shared/contracts/kangur';
+import type {
+  KangurLesson,
+  KangurLessonAgeGroup,
+  KangurLessonDocumentStore,
+  KangurLessonSubject,
+} from '@/features/kangur/shared/contracts/kangur';
+import {
+  kangurLessonsSchema,
+  kangurLessonDocumentStoreSchema,
+} from '@/features/kangur/shared/contracts/kangur';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -12,6 +20,7 @@ import { withKangurClientError } from '@/features/kangur/observability/client';
 
 type LessonsQueryOptions = {
   subject?: KangurLessonSubject;
+  ageGroup?: KangurLessonAgeGroup;
   enabledOnly?: boolean;
   enabled?: boolean;
 };
@@ -27,6 +36,9 @@ const filterLessons = (
   if (options?.subject) {
     next = next.filter((lesson) => lesson.subject === options.subject);
   }
+  if (options?.ageGroup) {
+    next = next.filter((lesson) => lesson.ageGroup === options.ageGroup);
+  }
   return next;
 };
 
@@ -41,12 +53,14 @@ const fetchLessons = async (options?: LessonsQueryOptions): Promise<KangurLesson
       description: 'Loads Kangur lessons from the API.',
       context: {
         subject: options?.subject ?? null,
+        ageGroup: options?.ageGroup ?? null,
         enabledOnly: options?.enabledOnly ?? null,
       },
     }),
     async () => {
       const params: Record<string, string | boolean | undefined> = {
         subject: options?.subject,
+        ageGroup: options?.ageGroup,
         enabledOnly: options?.enabledOnly,
       };
       const payload = await api.get<KangurLesson[]>('/api/kangur/lessons', { params });
@@ -76,7 +90,11 @@ export const useKangurLessons = (
   createListQueryV2<KangurLesson, KangurLesson[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessons(),
-      { subject: options?.subject ?? null, enabledOnly: options?.enabledOnly ?? null },
+      {
+        subject: options?.subject ?? null,
+        ageGroup: options?.ageGroup ?? null,
+        enabledOnly: options?.enabledOnly ?? null,
+      },
     ],
     queryFn: async (): Promise<KangurLesson[]> => await fetchLessons(options),
     select: (lessons) => filterLessons(lessons, options),

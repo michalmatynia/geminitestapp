@@ -17,6 +17,10 @@ vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
+vi.mock('next/headers', () => ({
+  headers: vi.fn().mockReturnValue(new Headers()),
+}));
+
 import { GET_handler, clearLiteSettingsServerCache } from './handler';
 
 const createRequestContext = (query: Record<string, unknown> = {}): ApiHandlerContext =>

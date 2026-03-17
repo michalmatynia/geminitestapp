@@ -4,15 +4,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
+import type { BreadcrumbItem } from '@/shared/contracts/ui';
 import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { Button } from './button';
 
-export interface BreadcrumbItem {
-  label: string;
-  href?: string;
-  onClick?: (e: React.MouseEvent) => void;
-}
+export type { BreadcrumbItem };
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];

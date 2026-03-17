@@ -13,6 +13,7 @@ import { type RefObject, useMemo } from 'react';
 import { getKangurHomeHref, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
+import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
@@ -281,46 +282,50 @@ export function KangurParentDashboardHeroWidget({
         <div className='flex flex-col items-center gap-2'>
           <div className='flex w-full justify-center'>
             <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
-              <KangurButton asChild size='sm' variant='navigation'>
-                <Link
-                  href={getKangurHomeHref(basePath)}
-                  targetPageKey='Game'
-                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                  transitionSourceId='parent-dashboard-nav:home'
-                >
-                  <Home className='h-4 w-4' /> Gra
-                </Link>
-              </KangurButton>
-              <KangurButton asChild size='sm' variant='navigation'>
-                <Link
-                  href={createPageUrl('Lessons', basePath)}
-                  targetPageKey='Lessons'
-                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                  transitionSourceId='parent-dashboard-nav:lessons'
-                >
-                  <BookOpen className='h-4 w-4' /> Lekcje
-                </Link>
-              </KangurButton>
-              <KangurButton asChild size='sm' variant='navigation'>
-                <Link
-                  href={createPageUrl('LearnerProfile', basePath)}
-                  targetPageKey='LearnerProfile'
-                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                  transitionSourceId='parent-dashboard-nav:profile'
-                >
-                  <UserRound className='h-4 w-4' /> Profil
-                </Link>
-              </KangurButton>
-              <KangurButton asChild size='sm' variant='navigationActive'>
-                <Link
-                  href={createPageUrl('ParentDashboard', basePath)}
-                  targetPageKey='ParentDashboard'
-                  transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
-                  transitionSourceId='parent-dashboard-nav:dashboard'
-                >
-                  <LayoutGrid className='h-4 w-4' /> Rodzic
-                </Link>
-              </KangurButton>
+              <KangurNavAction
+                docId='top_nav_home'
+                href={getKangurHomeHref(basePath)}
+                size='sm'
+                targetPageKey='Game'
+                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                transitionSourceId='parent-dashboard-nav:home'
+                variant='navigation'
+              >
+                <Home className='h-4 w-4' /> Gra
+              </KangurNavAction>
+              <KangurNavAction
+                docId='top_nav_lessons'
+                href={createPageUrl('Lessons', basePath)}
+                size='sm'
+                targetPageKey='Lessons'
+                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                transitionSourceId='parent-dashboard-nav:lessons'
+                variant='navigation'
+              >
+                <BookOpen className='h-4 w-4' /> Lekcje
+              </KangurNavAction>
+              <KangurNavAction
+                docId='top_nav_profile'
+                href={createPageUrl('LearnerProfile', basePath)}
+                size='sm'
+                targetPageKey='LearnerProfile'
+                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                transitionSourceId='parent-dashboard-nav:profile'
+                variant='navigation'
+              >
+                <UserRound className='h-4 w-4' /> Profil
+              </KangurNavAction>
+              <KangurNavAction
+                docId='top_nav_parent_dashboard'
+                href={createPageUrl('ParentDashboard', basePath)}
+                size='sm'
+                targetPageKey='ParentDashboard'
+                transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
+                transitionSourceId='parent-dashboard-nav:dashboard'
+                variant='navigationActive'
+              >
+                <LayoutGrid className='h-4 w-4' /> Rodzic
+              </KangurNavAction>
             </KangurTopNavGroup>
           </div>
           <KangurButton

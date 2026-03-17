@@ -1,15 +1,13 @@
 'use client';
-
 import React, { useMemo } from 'react';
-
-import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
-import {
-  AdminCaseResolverPageProvider,
-  useAdminCaseResolverPageActionsContext,
-  useAdminCaseResolverPageStateContext,
-} from '../context/AdminCaseResolverPageContext';
+import { AdminCaseResolverPageProvider, useAdminCaseResolverPageActionsContext, useAdminCaseResolverPageStateContext } from '../context/AdminCaseResolverPageContext';
 
+const LazyCaseResolverPageView = React.lazy(() =>
+  import('../components/CaseResolverPageView').then((mod) => ({
+    default: mod.CaseResolverPageView,
+  }))
+);
 function AdminCaseResolverPageInner(): React.JSX.Element {
   const state = useAdminCaseResolverPageStateContext();
   const actions = useAdminCaseResolverPageActionsContext();
@@ -17,7 +15,15 @@ function AdminCaseResolverPageInner(): React.JSX.Element {
 
   return (
     <CaseResolverViewProvider value={contextValue}>
-      <CaseResolverPageView />
+      <React.Suspense
+        fallback={
+          <div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
+            Loading case resolver...
+          </div>
+        }
+      >
+        <LazyCaseResolverPageView />
+      </React.Suspense>
     </CaseResolverViewProvider>
   );
 }

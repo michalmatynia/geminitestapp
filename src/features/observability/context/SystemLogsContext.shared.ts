@@ -14,7 +14,7 @@ import type {
 } from '@/shared/contracts/observability';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Toast as ToastFn } from '@/shared/contracts/ui';
-import type { FilterField } from '@/shared/ui';
+import type { FilterField } from '@/shared/contracts/ui';
 
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type { ComponentType, Dispatch, SetStateAction } from 'react';

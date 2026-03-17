@@ -5,26 +5,16 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const {
-  settingsStoreMock,
-  apiGetMock,
-  apiPostMock,
-  useAgentPersonasMock,
-  useOptionalKangurAuthMock,
-  trackKangurClientEventMock,
-  logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-} = vi.hoisted(() => ({
-  settingsStoreMock: {
-    get: vi.fn<(key: string) => string | undefined>(),
-  },
-  apiGetMock: vi.fn(),
-  apiPostMock: vi.fn(),
-  useAgentPersonasMock: vi.fn(),
-  useOptionalKangurAuthMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
-}));
+
+const { trackKangurClientEventMock, logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
+  globalThis.__kangurClientErrorMocks();
+const settingsStoreMock = {
+  get: vi.fn<(key: string) => string | undefined>(),
+};
+const apiGetMock = vi.fn();
+const apiPostMock = vi.fn();
+const useAgentPersonasMock = vi.fn();
+const useOptionalKangurAuthMock = vi.fn();
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
@@ -35,25 +25,37 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   return {
     ...actual,
     api: {
-      get: apiGetMock,
-      post: apiPostMock,
+      get: (...args: Parameters<typeof apiGetMock>) => apiGetMock(...args),
+      post: (...args: Parameters<typeof apiPostMock>) => apiPostMock(...args),
     },
   };
 });
 
 vi.mock('@/shared/hooks/useAgentPersonaVisuals', () => ({
-  useAgentPersonaVisuals: useAgentPersonasMock,
+  useAgentPersonaVisuals: (...args: Parameters<typeof useAgentPersonasMock>) =>
+    useAgentPersonasMock(...args),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useOptionalKangurAuth: useOptionalKangurAuthMock,
+  useOptionalKangurAuth: (...args: Parameters<typeof useOptionalKangurAuthMock>) =>
+    useOptionalKangurAuthMock(...args),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
-  trackKangurClientEvent: trackKangurClientEventMock,
-  logKangurClientError: logKangurClientErrorMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
+  ...(() => {
+    const {
+      trackKangurClientEventMock,
+      logKangurClientErrorMock,
+      withKangurClientError,
+      withKangurClientErrorSync,
+    } = globalThis.__kangurClientErrorMocks();
+    return {
+      trackKangurClientEvent: trackKangurClientEventMock,
+      logKangurClientError: logKangurClientErrorMock,
+      withKangurClientError,
+      withKangurClientErrorSync,
+    };
+  })(),
 }));
 
 import {

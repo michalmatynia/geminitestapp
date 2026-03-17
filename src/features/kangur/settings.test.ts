@@ -67,6 +67,7 @@ describe('kangur lesson settings', () => {
       {
         id: 'clock-disabled',
         componentId: 'clock',
+        ageGroup: 'ten_year_old',
         title: 'Nauka zegara (archiwum)',
         enabled: false,
         sortOrder: 2000,
@@ -74,6 +75,7 @@ describe('kangur lesson settings', () => {
       {
         id: 'clock-active',
         componentId: 'clock',
+        ageGroup: 'ten_year_old',
         title: 'Nauka zegara',
         enabled: true,
         sortOrder: 1000,

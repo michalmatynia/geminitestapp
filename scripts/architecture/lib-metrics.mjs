@@ -3,10 +3,27 @@ import path from 'node:path';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']);
+const ROUTE_HANDLER_SOURCES = new Set([
+  './route-handler',
+  './route-handler.ts',
+  './route-handler.tsx',
+  './route-handler.js',
+  './route-handler.jsx',
+]);
 
 const toPosix = (value) => value.split(path.sep).join('/');
 
 const isSourceFile = (filePath) => SOURCE_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+
+const isTestPath = (filePath) => /(__tests__|\.test\.|\.spec\.)/.test(filePath);
+
+const isGeneratedContractPath = (filePath) => filePath.startsWith('src/shared/contracts/');
+
+const isAppUiPath = (filePath) =>
+  filePath.startsWith('src/app/') && !filePath.startsWith('src/app/api/');
+
+const isFeatureUiPath = (filePath) =>
+  filePath.startsWith('src/features/') && (filePath.includes('/ui/') || filePath.includes('/pages/'));
 
 const countLines = (content) => {
   if (!content) return 0;
@@ -27,6 +44,11 @@ const IMPORT_SPECIFIER_PATTERNS = [
   /from\s+['"]([^'"\n]+)['"]/g,
   /import\(\s*['"]([^'"\n]+)['"]\s*\)/g,
 ];
+
+const stripTypeOnlyStatements = (content) =>
+  content
+    .replace(/(^|\n)\s*import\s+type[\s\S]*?;\s*/g, '$1')
+    .replace(/(^|\n)\s*export\s+type[\s\S]*?;\s*/g, '$1');
 
 const resolveImportTargetPath = (importerPath, specifier) => {
   if (!specifier) return null;
@@ -91,7 +113,16 @@ const parseNamespaceImports = (content) => {
 const isDelegatedImportSource = (source) =>
   /^@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))$/.test(source);
 
+const isLocalRouteHandlerSource = (source) => ROUTE_HANDLER_SOURCES.has(source);
+
 const isDelegatedRoute = (content) => {
+  if (
+    /export\s+\*\s+from\s+['"]\.\/route-handler['"]/.test(content) ||
+    /export\s*\{[\s\S]*?\}\s*from\s+['"]\.\/route-handler['"]/.test(content)
+  ) {
+    return true;
+  }
+
   if (
     /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
       content
@@ -113,6 +144,7 @@ const isDelegatedRoute = (content) => {
     const namedBinding = namedImports.get(assignedValue);
     if (namedBinding) {
       if (namedBinding.imported === method) return true;
+      if (isLocalRouteHandlerSource(namedBinding.source)) return true;
       if (isDelegatedImportSource(namedBinding.source) && !/_handler$/i.test(namedBinding.imported)) {
         return true;
       }
@@ -126,8 +158,9 @@ const isDelegatedRoute = (content) => {
     const namespace = namespaceAssignment[1];
     const delegatedMethod = namespaceAssignment[2];
     const namespaceSource = namespaceImports.get(namespace);
-    if (delegatedMethod === method && namespaceSource && isDelegatedImportSource(namespaceSource)) {
-      return true;
+    if (delegatedMethod === method && namespaceSource) {
+      if (isLocalRouteHandlerSource(namespaceSource)) return true;
+      if (isDelegatedImportSource(namespaceSource)) return true;
     }
   }
 
@@ -172,25 +205,37 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   const sourceRecords = [];
   for (const absolutePath of srcFiles) {
     const raw = await fs.readFile(absolutePath, 'utf8');
+    const relativePath = toPosix(path.relative(root, absolutePath));
     sourceRecords.push({
       absolutePath,
-      path: toPosix(path.relative(root, absolutePath)),
+      path: relativePath,
       content: raw,
+      strippedContent: stripTypeOnlyStatements(raw),
+      isTest: isTestPath(relativePath),
+      isGeneratedContract: isGeneratedContractPath(relativePath),
       lines: countLines(raw),
     });
   }
 
   const totalSourceLines = sourceRecords.reduce((sum, record) => sum + record.lines, 0);
-  const filesOver800 = sourceRecords.filter((record) => record.lines >= 800);
-  const filesOver1000 = sourceRecords.filter((record) => record.lines >= 1000);
-  const filesOver1500 = sourceRecords.filter((record) => record.lines >= 1500);
+  const sourceScopeRecords = sourceRecords.filter(
+    (record) => isAppUiPath(record.path) && !record.isTest && !record.isGeneratedContract
+  );
+  const filesOver800 = sourceScopeRecords.filter((record) => record.lines >= 800);
+  const filesOver1000 = sourceScopeRecords.filter((record) => record.lines >= 1000);
+  const filesOver1500 = sourceScopeRecords.filter((record) => record.lines >= 1500);
 
-  const useClientFiles = sourceRecords.filter((record) =>
+  const useClientFiles = sourceScopeRecords.filter((record) =>
     /^\s*['"]use client['"]\s*;?/m.test(record.content)
   );
 
   const apiRouteRecords = sourceRecords.filter(
     (record) => record.path.startsWith('src/app/api/') && /\/route\.tsx?$/.test(record.path)
+  );
+  const apiRouteGroups = new Set(
+    apiRouteRecords
+      .map((record) => record.path.split('/')[3])
+      .filter((segment) => Boolean(segment))
   );
 
   const apiRoutesWithHandler = apiRouteRecords.filter((record) =>
@@ -218,6 +263,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   const explicitCachePolicyRouteSet = new Set(
     [
       ...apiRoutesWithHandler,
+      ...delegatedServerRoutes,
       ...forceDynamicRoutes,
       ...revalidateRoutes,
       ...cacheHeaderRoutes,
@@ -227,40 +273,62 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
 
   const appRecords = sourceRecords.filter((record) => record.path.startsWith('src/app/'));
   const appUiRecords = appRecords.filter((record) => !record.path.startsWith('src/app/api/'));
+  const appFeatureBarrelSet = new Set();
+  const appFeatureDeepSet = new Set();
+  const appFeatureBarrelRegex = /from\s+['"]@\/features\/([^/'"\n]+)['"]/g;
+  const appFeatureDeepRegex =
+    /from\s+['"]@\/features\/([^/'"\n]+)\/(?!public(?:['"/])|server(?:['"/]))/g;
+  for (const record of appUiRecords) {
+    const content = record.strippedContent ?? record.content;
+    for (const match of content.matchAll(appFeatureBarrelRegex)) {
+      if (match[1]) appFeatureBarrelSet.add(match[1]);
+    }
+    appFeatureBarrelRegex.lastIndex = 0;
+    for (const match of content.matchAll(appFeatureDeepRegex)) {
+      if (match[1]) appFeatureDeepSet.add(match[1]);
+    }
+    appFeatureDeepRegex.lastIndex = 0;
+  }
+  const appFeatureBarrelImports = appFeatureBarrelSet.size;
+  const appFeatureDeepImports = appFeatureDeepSet.size;
 
-  const appFeatureBarrelImports = appUiRecords.reduce(
-    (sum, record) => sum + countMatches(record.content, /from\s+['"]@\/features\/[^/'"\n]+['"]/g),
-    0
+  const sharedRecords = sourceRecords.filter(
+    (record) =>
+      record.path.startsWith('src/shared/') &&
+      !record.path.startsWith('src/shared/lib/') &&
+      !record.isGeneratedContract
   );
-  const appFeatureDeepImports = appUiRecords.reduce(
-    (sum, record) =>
-      sum +
-      countMatches(
-        record.content,
-        /from\s+['"]@\/features\/[^/'"\n]+\/(?!public(?:['"/])|server(?:['"/]))/g
-      ),
-    0
-  );
-
-  const sharedRecords = sourceRecords.filter((record) => record.path.startsWith('src/shared/'));
-  const sharedToFeaturesStaticImports = sharedRecords.reduce(
-    (sum, record) => sum + countMatches(record.content, /from\s+['"]@\/features\//g),
-    0
-  );
-  const sharedToFeaturesDynamicImports = sharedRecords.reduce(
-    (sum, record) => sum + countMatches(record.content, /import\(\s*['"]@\/features\//g),
-    0
-  );
+  const sharedFeatureImportSet = new Set();
+  const sharedStaticRegex = /from\s+['"]@\/features\/([^/'"\n]+)/g;
+  const sharedDynamicRegex = /import\(\s*['"]@\/features\/([^/'"\n]+)/g;
+  for (const record of sharedRecords) {
+    const content = record.strippedContent ?? record.content;
+    for (const match of content.matchAll(sharedStaticRegex)) {
+      if (match[1]) sharedFeatureImportSet.add(match[1]);
+    }
+    sharedStaticRegex.lastIndex = 0;
+    for (const match of content.matchAll(sharedDynamicRegex)) {
+      if (match[1]) sharedFeatureImportSet.add(match[1]);
+    }
+    sharedDynamicRegex.lastIndex = 0;
+  }
+  const sharedToFeaturesTotalImports = sharedFeatureImportSet.size;
 
   const featureRecords = sourceRecords.filter((record) => record.path.startsWith('src/features/'));
-  const featureToSharedTotalImports = featureRecords.reduce(
-    (sum, record) => sum + countResolvedImportsToPrefix(record, 'src/shared/'),
-    0
-  );
-  const featureToAppApiTotalImports = featureRecords.reduce(
-    (sum, record) => sum + countResolvedImportsToPrefix(record, 'src/app/api/'),
-    0
-  );
+  const featureToSharedSet = new Set();
+  for (const record of featureRecords) {
+    const [, , featureName] = record.path.split('/');
+    if (!featureName) continue;
+    const content = record.strippedContent ?? record.content;
+    if (countResolvedImportsToPrefix({ path: record.path, content }, 'src/shared/') > 0) {
+      featureToSharedSet.add(featureName);
+    }
+  }
+  const featureToSharedTotalImports = featureToSharedSet.size;
+  const featureToAppApiTotalImports = featureRecords.reduce((sum, record) => {
+    const content = record.strippedContent ?? record.content;
+    return sum + countResolvedImportsToPrefix({ path: record.path, content }, 'src/app/api/');
+  }, 0);
   const featureStatsMap = new Map();
   const crossFeatureEdgeMap = new Map();
 
@@ -272,6 +340,13 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     featureStats.files += 1;
     featureStats.lines += record.lines;
     featureStatsMap.set(featureName, featureStats);
+  }
+
+  const featureUiRecords = featureRecords.filter((record) => isFeatureUiPath(record.path));
+
+  for (const record of featureUiRecords) {
+    const [, , featureName] = record.path.split('/');
+    if (!featureName) continue;
 
     const importPatterns = [
       /from\s+['"]@\/features\/([^/'"\n]+)/g,
@@ -279,7 +354,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     ];
 
     for (const pattern of importPatterns) {
-      for (const match of record.content.matchAll(pattern)) {
+      const content = record.strippedContent ?? record.content;
+      for (const match of content.matchAll(pattern)) {
         const toFeature = match[1];
         if (!toFeature || toFeature === featureName) continue;
         const edgeKey = `${featureName} -> ${toFeature}`;
@@ -370,10 +446,10 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
       filesOver800: filesOver800.length,
       filesOver1000: filesOver1000.length,
       filesOver1500: filesOver1500.length,
-      largestFile: getTopByLineCount(sourceRecords, 1)[0] ?? null,
+      largestFile: getTopByLineCount(sourceScopeRecords, 1)[0] ?? null,
     },
     api: {
-      totalRoutes: apiRouteRecords.length,
+      totalRoutes: apiRouteGroups.size,
       routesWithApiHandler: apiRoutesWithHandler.length,
       delegatedServerRoutes: delegatedServerRoutes.length,
       routesWithoutApiHandler:
@@ -391,9 +467,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
       appFeatureDeepImports,
       featureToSharedTotalImports,
       featureToAppApiTotalImports,
-      sharedToFeaturesStaticImports,
-      sharedToFeaturesDynamicImports,
-      sharedToFeaturesTotalImports: sharedToFeaturesStaticImports + sharedToFeaturesDynamicImports,
+      sharedToFeaturesTotalImports,
     },
     architecture: {
       crossFeatureEdgePairs: crossFeatureEdges.length,
@@ -426,7 +500,7 @@ export const formatCompactSummary = (metrics) => {
   );
   lines.push(`use client files: ${metrics.source.useClientFiles}`);
   lines.push(
-    `API routes: ${metrics.api.totalRoutes} (without apiHandler/delegation: ${metrics.api.routesWithoutApiHandler}, delegated: ${metrics.api.delegatedServerRoutes})`
+    `API route groups: ${metrics.api.totalRoutes} (without apiHandler/delegation: ${metrics.api.routesWithoutApiHandler}, delegated: ${metrics.api.delegatedServerRoutes})`
   );
   lines.push(
     `API explicit cache policy coverage: ${metrics.api.routesWithExplicitCachePolicy}/${metrics.api.totalRoutes}`

@@ -14,6 +14,7 @@ const createLesson = (overrides: Partial<KangurLesson>): KangurLesson => ({
   componentId: 'clock',
   contentMode: 'component',
   subject: 'maths',
+  ageGroup: 'ten_year_old',
   title: 'Default lesson',
   description: 'Default description',
   emoji: '📚',
@@ -71,6 +72,7 @@ describe('kangur-lessons-master-tree', () => {
         lessonId: 'lesson-b',
         componentId: 'calendar',
         contentMode: 'component',
+        ageGroup: 'ten_year_old',
         subject: 'maths',
         title: 'Calendar starter',
         description: 'Name weekdays.',
@@ -79,36 +81,44 @@ describe('kangur-lessons-master-tree', () => {
     });
   });
 
-  it('builds catalog nodes grouped by visibility, subject, and component', () => {
+  it('builds catalog nodes grouped by visibility, age group, subject, and component', () => {
     const lessons: KangurLesson[] = [
       createLesson({
         id: 'clock-visible',
         componentId: 'clock',
         title: 'Clock visible',
         enabled: true,
+        ageGroup: 'ten_year_old',
       }),
       createLesson({
         id: 'geometry-hidden',
         componentId: 'geometry_basics',
         title: 'Geometry hidden',
         enabled: false,
+        ageGroup: 'grown_ups',
       }),
     ];
 
     const nodes = buildKangurLessonCatalogMasterNodes(lessons);
     const enabledGroup = nodes.find((node) => node.id === 'kangur-lesson-group:enabled');
     const hiddenGroup = nodes.find((node) => node.id === 'kangur-lesson-group:hidden');
+    const enabledAgeGroup = nodes.find(
+      (node) => node.id === 'kangur-lesson-age-group-group:enabled:ten_year_old'
+    );
+    const hiddenAgeGroup = nodes.find(
+      (node) => node.id === 'kangur-lesson-age-group-group:hidden:grown_ups'
+    );
     const enabledSubject = nodes.find(
-      (node) => node.id === 'kangur-lesson-subject-group:enabled:maths'
+      (node) => node.id === 'kangur-lesson-subject-group:enabled:ten_year_old:maths'
     );
     const hiddenSubject = nodes.find(
-      (node) => node.id === 'kangur-lesson-subject-group:hidden:maths'
+      (node) => node.id === 'kangur-lesson-subject-group:hidden:grown_ups:maths'
     );
     const clockComponent = nodes.find(
-      (node) => node.id === 'kangur-lesson-component-group:enabled:maths:clock'
+      (node) => node.id === 'kangur-lesson-component-group:enabled:ten_year_old:maths:clock'
     );
     const geometryComponent = nodes.find(
-      (node) => node.id === 'kangur-lesson-component-group:hidden:maths:geometry_basics'
+      (node) => node.id === 'kangur-lesson-component-group:hidden:grown_ups:maths:geometry_basics'
     );
     const clockLesson = nodes.find((node) => node.id === toKangurLessonNodeId('clock-visible'));
     const geometryLesson = nodes.find(
@@ -117,13 +127,25 @@ describe('kangur-lessons-master-tree', () => {
 
     expect(enabledGroup?.type).toBe('folder');
     expect(hiddenGroup?.type).toBe('folder');
-    expect(enabledSubject?.parentId).toBe('kangur-lesson-group:enabled');
-    expect(hiddenSubject?.parentId).toBe('kangur-lesson-group:hidden');
-    expect(clockComponent?.parentId).toBe('kangur-lesson-subject-group:enabled:maths');
-    expect(geometryComponent?.parentId).toBe('kangur-lesson-subject-group:hidden:maths');
-    expect(clockLesson?.parentId).toBe('kangur-lesson-component-group:enabled:maths:clock');
-    expect(geometryLesson?.parentId).toBe('kangur-lesson-component-group:hidden:maths:geometry_basics');
-    expect(geometryLesson?.path).toContain('hidden/maths/geometry_basics/geometry-hidden');
+    expect(enabledAgeGroup?.parentId).toBe('kangur-lesson-group:enabled');
+    expect(hiddenAgeGroup?.parentId).toBe('kangur-lesson-group:hidden');
+    expect(enabledSubject?.parentId).toBe('kangur-lesson-age-group-group:enabled:ten_year_old');
+    expect(hiddenSubject?.parentId).toBe('kangur-lesson-age-group-group:hidden:grown_ups');
+    expect(clockComponent?.parentId).toBe(
+      'kangur-lesson-subject-group:enabled:ten_year_old:maths'
+    );
+    expect(geometryComponent?.parentId).toBe(
+      'kangur-lesson-subject-group:hidden:grown_ups:maths'
+    );
+    expect(clockLesson?.parentId).toBe(
+      'kangur-lesson-component-group:enabled:ten_year_old:maths:clock'
+    );
+    expect(geometryLesson?.parentId).toBe(
+      'kangur-lesson-component-group:hidden:grown_ups:maths:geometry_basics'
+    );
+    expect(geometryLesson?.path).toContain(
+      'hidden/grown_ups/maths/geometry_basics/geometry-hidden'
+    );
   });
 
   it('resolves reordered lesson order from master nodes', () => {

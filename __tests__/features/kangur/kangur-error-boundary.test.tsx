@@ -61,7 +61,7 @@ describe('Kangur error boundary', () => {
     render(<KangurErrorBoundary error={error} reset={vi.fn()} />);
 
     expect(logKangurClientErrorMock).toHaveBeenCalledWith(error, {
-      source: 'kangur-error-boundary',
+      source: 'kangur-error-page',
       action: 'render',
       digest: 'digest-123',
       homeHref: '/kangur',

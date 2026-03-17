@@ -12,6 +12,11 @@ import Link from 'next/link';
 import { type JSX } from 'react';
 
 import { Button, Card, CompactEmptyState, FormSection, MetadataItem, StatusBadge } from '@/features/kangur/shared/ui';
+import {
+  KANGUR_GRID_RELAXED_CLASSNAME,
+  KANGUR_GRID_ROOMY_CLASSNAME,
+  KANGUR_STACK_RELAXED_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurRouteMetrics } from '@/shared/contracts';
 
 import {
@@ -176,7 +181,7 @@ export function SummaryContent(): JSX.Element {
     <div className='space-y-8'>
       <FormSection title='Operational Snapshot' variant='subtle'>
         <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+          <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} lg:flex-row lg:items-start lg:justify-between`}>
             <div className='space-y-3'>
               <div className='flex flex-wrap items-center gap-3'>
                 <StatusBadge status={summary.overallStatus} />
@@ -214,7 +219,9 @@ export function SummaryContent(): JSX.Element {
       </FormSection>
 
       <FormSection title='Key Metrics' variant='subtle'>
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
+        <div
+          className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-2 xl:grid-cols-5`}
+        >
           <MetricCard
             title='Server Error Rate'
             value={formatPercent(summary.keyMetrics.serverErrorRatePercent)}
@@ -265,7 +272,7 @@ export function SummaryContent(): JSX.Element {
               />
             ))}
           </div>
-          <div className='mt-4 grid gap-4 lg:grid-cols-2'>
+          <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-2`}>
             <Card variant='subtle' padding='md' className='border-border/60 bg-card/30'>
               <div className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
                 Guest Activity
@@ -347,7 +354,7 @@ export function SummaryContent(): JSX.Element {
               </div>
             </Card>
           </div>
-          <div className='mt-4 grid gap-4 lg:grid-cols-4'>
+          <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-4`}>
             <Card variant='subtle' padding='md' className='border-border/60 bg-card/30'>
               <div className='text-xs font-semibold uppercase tracking-wider text-gray-400'>
                 Filter Distribution
@@ -477,9 +484,11 @@ export function SummaryContent(): JSX.Element {
         </div>
       </FormSection>
 
-      <div className='grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]'>
+      <div
+        className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]`}
+      >
         <FormSection title='Route Health' variant='subtle'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             {ROUTE_ENTRIES.map((entry) => (
               <RouteMetricCard
                 key={entry.key}
@@ -495,12 +504,14 @@ export function SummaryContent(): JSX.Element {
         {/* <PerformanceBaselineCard /> */}
       </div>
 
-      <div className='grid gap-6 xl:grid-cols-2'>
+      <div className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-2`}>
         <RecentAnalyticsEvents />
         <RecentServerLogs />
       </div>
 
-      <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]'>
+      <div
+        className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,1fr)_320px]`}
+      >
         <FormSection title='Degraded Dependencies' variant='subtle'>
           {!summary.errors || Object.keys(summary.errors).length === 0 ? (
             <CompactEmptyState

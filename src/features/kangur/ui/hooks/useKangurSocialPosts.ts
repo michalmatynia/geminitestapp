@@ -107,6 +107,7 @@ export type KangurSocialPostGenerationPayload = {
   docReferences?: string[];
   notes?: string;
   modelId?: string;
+  visionModelId?: string;
   imageAddonIds?: string[];
 };
 

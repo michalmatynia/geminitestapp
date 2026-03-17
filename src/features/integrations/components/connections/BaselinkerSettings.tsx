@@ -17,6 +17,7 @@ import {
   MetadataItem,
   Card,
   Hint,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -78,7 +79,7 @@ export function BaselinkerSettings(): React.JSX.Element {
       ) : (
         <div className='space-y-6'>
           {/* Connection Status */}
-          <div className='grid gap-6 md:grid-cols-2'>
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
             <Card variant='glass' padding='md' className='bg-white/5 space-y-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-sm font-medium text-white'>Connection status</span>

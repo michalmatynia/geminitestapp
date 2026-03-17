@@ -17,6 +17,10 @@ import {
   FormSection,
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import {
+  KANGUR_GRID_RELAXED_CLASSNAME,
+  KANGUR_GRID_ROOMY_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 import { SettingsChoiceCard } from './SettingsChoiceCard';
@@ -72,9 +76,14 @@ export function KangurNarratorSettingsPanel({
       description='This applies globally to every learner-facing Kangur lesson and exercise.'
       className={className}
     >
-      <div className='grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)]'>
+      <div
+        className={cn(
+          KANGUR_GRID_ROOMY_CLASSNAME,
+          'xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)]'
+        )}
+      >
         <div className='space-y-6'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={cn(KANGUR_GRID_RELAXED_CLASSNAME, 'md:grid-cols-2')}>
             {KANGUR_NARRATOR_ENGINE_OPTIONS.map((option) => {
               const checked = engine === option.value;
               const optionId = `kangur-narrator-engine-${option.value}`;

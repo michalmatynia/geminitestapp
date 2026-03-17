@@ -2,6 +2,7 @@ import React from 'react';
 
 import ProductCard from '@/features/products/components/ProductCard';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { UI_GRID_RELAXED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { impactStats } from './home-fallback-content.data';
 
@@ -47,7 +48,7 @@ export function HomeFallbackSignature({
               ))}
             </div>
           </div>
-          <div className='grid gap-4 sm:grid-cols-2 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:delay-150'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:delay-150`}>
             {featuredProducts.length ? (
               featuredProducts.map((product) => (
                 <ProductCard
@@ -61,7 +62,7 @@ export function HomeFallbackSignature({
                 {['Curated set', 'Limited release'].map((label) => (
                   <div
                     key={label}
-                    className='cms-appearance-subtle-surface flex flex-col gap-4 rounded-3xl border p-5'
+                    className={`cms-appearance-subtle-surface ${UI_STACK_RELAXED_CLASSNAME} rounded-3xl border p-5`}
                   >
                     <div className='rounded-2xl border border-[var(--cms-appearance-page-border)]/60 bg-[color-mix(in srgb,var(--cms-appearance-page-background) 80%, transparent)] p-6 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--cms-appearance-muted-text)]'>
                       {label}

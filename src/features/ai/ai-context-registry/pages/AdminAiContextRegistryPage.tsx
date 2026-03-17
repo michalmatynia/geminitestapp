@@ -32,6 +32,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 
 import {
@@ -279,7 +280,9 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
         </TabsList>
 
         <TabsContent value='catalog' className='space-y-6'>
-          <div className='grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]'>
+          <div
+            className={`${UI_GRID_ROOMY_CLASSNAME} xl:grid-cols-[360px_minmax(0,1fr)]`}
+          >
             <ListPanel
               filters={
                 <div className='space-y-4'>
@@ -398,7 +401,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
                     ))}
                   </div>
 
-                  <div className='grid gap-6 lg:grid-cols-2'>
+                  <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
                     <div className='space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4'>
                       <div className='text-sm font-medium text-gray-100'>Relationships</div>
                       {selectedNode.relationships?.length ? (
@@ -447,7 +450,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
                 />
               )}
 
-              <div className='grid gap-6 lg:grid-cols-2'>
+              <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
                 <Card className='space-y-4 border-white/10 bg-black/20 p-6'>
                   <div className='flex items-center gap-2'>
                     <SearchIcon className='size-4 text-sky-300' />
@@ -505,7 +508,9 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
                   <NetworkIcon className='size-4 text-sky-300' />
                   <h3 className='text-sm font-semibold text-gray-100'>Bundle Preview</h3>
                 </div>
-                <div className='grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]'>
+                <div
+                  className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]`}
+                >
                   <div className='space-y-3'>
                     <div className='text-sm text-gray-300'>
                       Add runtime refs to preview live documents next to the selected static node.
@@ -603,7 +608,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
         </TabsContent>
 
         <TabsContent value='packs' className='space-y-6'>
-          <div className='grid gap-6 lg:grid-cols-2'>
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
             {packPreviews.map((pack) => (
               <Card key={pack.id} className='space-y-4 border-white/10 bg-black/20 p-6'>
                 <div className='flex items-start justify-between gap-3'>
@@ -641,7 +646,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
         </TabsContent>
 
         <TabsContent value='tools' className='space-y-6'>
-          <div className='grid gap-6 lg:grid-cols-2'>
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
             {tools.map((tool) => (
               <Card key={tool.function.name} className='space-y-4 border-white/10 bg-black/20 p-6'>
                 <div className='flex items-center gap-2'>

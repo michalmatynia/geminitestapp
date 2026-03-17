@@ -19,6 +19,7 @@ import {
   LoadingState,
   MetadataItem,
   SelectSimple,
+  UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -83,7 +84,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
       current='Typography'
       description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
     >
-      <div className='grid gap-6 lg:grid-cols-3'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
         <div className='lg:col-span-2 space-y-6'>
           <FormSection title='Typography Settings' className='p-6'>
             <FormField

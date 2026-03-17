@@ -18,6 +18,7 @@ import {
   CardContent,
   CardFooter,
   FormField,
+  UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -152,7 +153,9 @@ function SignInPageLoader(): React.JSX.Element {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className='flex flex-col gap-4 border-t border-white/5 pt-6'>
+        <CardFooter
+          className={`${UI_STACK_RELAXED_CLASSNAME} border-t border-white/5 pt-6`}
+        >
           {allowSignup && (
             <p className='text-sm text-gray-400'>
               Don&apos;t have an account?{' '}

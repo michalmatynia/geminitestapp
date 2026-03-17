@@ -25,6 +25,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   clock: {
     componentId: 'clock',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Clock Lesson',
     title: 'Nauka zegara',
     description: 'Godziny, minuty i pełny czas na zegarze analogowym',
@@ -35,6 +36,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   calendar: {
     componentId: 'calendar',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Calendar Lesson',
     title: 'Nauka kalendarza',
     description: 'Dni, miesiące, daty i pory roku',
@@ -45,6 +47,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   adding: {
     componentId: 'adding',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Adding Lesson',
     title: 'Dodawanie',
     description: 'Jednocyfrowe, dwucyfrowe i gra z piłkami!',
@@ -55,6 +58,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   subtracting: {
     componentId: 'subtracting',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Subtracting Lesson',
     title: 'Odejmowanie',
     description: 'Jednocyfrowe, dwucyfrowe i reszta',
@@ -65,6 +69,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   multiplication: {
     componentId: 'multiplication',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Multiplication Lesson',
     title: 'Mnożenie',
     description: 'Tabliczka mnożenia i algorytmy',
@@ -75,6 +80,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   division: {
     componentId: 'division',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Division Lesson',
     title: 'Dzielenie',
     description: 'Proste dzielenie i reszta z dzielenia',
@@ -85,6 +91,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   geometry_basics: {
     componentId: 'geometry_basics',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Geometry Basics Lesson',
     title: 'Podstawy geometrii',
     description: 'Punkt, odcinek, bok i kąt',
@@ -95,6 +102,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   geometry_shapes: {
     componentId: 'geometry_shapes',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Geometry Shapes Lesson',
     title: 'Figury geometryczne',
     description: 'Poznaj figury i narysuj je w grze',
@@ -105,6 +113,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   geometry_symmetry: {
     componentId: 'geometry_symmetry',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Geometry Symmetry Lesson',
     title: 'Symetria',
     description: 'Oś symetrii i odbicia lustrzane',
@@ -115,6 +124,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   geometry_perimeter: {
     componentId: 'geometry_perimeter',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Geometry Perimeter Lesson',
     title: 'Obwód figur',
     description: 'Liczenie długości boków krok po kroku',
@@ -125,6 +135,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   logical_thinking: {
     componentId: 'logical_thinking',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Logical Thinking Lesson',
     title: 'Myślenie logiczne',
     description: 'Porządek, zasady i obserwacje',
@@ -135,6 +146,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   logical_patterns: {
     componentId: 'logical_patterns',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Logical Patterns Lesson',
     title: 'Wzory',
     description: 'Powtarzalne schematy i rytmy',
@@ -145,6 +157,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   logical_classification: {
     componentId: 'logical_classification',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Logical Classification Lesson',
     title: 'Klasyfikacja',
     description: 'Grupuj, sortuj i znajdź intruza',
@@ -155,6 +168,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   logical_reasoning: {
     componentId: 'logical_reasoning',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Logical Reasoning Lesson',
     title: 'Wnioskowanie',
     description: 'Jeśli... to... — myśl krok po kroku',
@@ -165,6 +179,7 @@ export const MATHS_LESSON_TEMPLATES: Record<MathsLessonComponentId, KangurLesson
   logical_analogies: {
     componentId: 'logical_analogies',
     subject: 'maths',
+    ageGroup: 'ten_year_old',
     label: 'Logical Analogies Lesson',
     title: 'Analogie',
     description: 'Znajdź tę samą relację w nowym kontekście',

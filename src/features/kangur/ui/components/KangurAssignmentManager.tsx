@@ -638,7 +638,7 @@ export function KangurAssignmentManager({
           onEscapeKeyDown: handleCloseTimeLimitModal,
           onInteractOutside: handleCloseTimeLimitModal,
           onPointerDownOutside: handleCloseTimeLimitModal,
-        } as any}
+        }}
       >
         <KangurDialogHeader
           title='Czas na wykonanie'

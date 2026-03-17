@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AdminFilemakerBreadcrumbs, FormActions } from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs, FormActions, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 type FilemakerPartyEditPageLayoutParent = {
   label: string;
@@ -34,7 +34,7 @@ export function FilemakerPartyEditPageLayout(
         <AdminFilemakerBreadcrumbs parent={parent} current={itemName} />
       </div>
 
-      <div className='grid gap-6 lg:grid-cols-3'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
         <div className='space-y-6 lg:col-span-2'>{children}</div>
         <div className='space-y-6'>{/* Sidebar sections will be added here */}</div>
       </div>

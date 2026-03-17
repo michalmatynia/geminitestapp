@@ -3,6 +3,7 @@ import React from 'react';
 
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Badge, Button } from '@/features/kangur/shared/ui';
+import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurTestSuiteHealth } from '../test-suite-health';
 
 interface KangurQuestionsHeaderProps {
@@ -57,7 +58,7 @@ export function KangurQuestionsHeader(
   } = props;
   return (
     <div className='overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(9,16,32,0.96),rgba(10,30,55,0.88))] p-5 sm:p-6 shadow-[0_24px_80px_-44px_rgba(14,165,233,0.42)]'>
-      <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
+      <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} xl:flex-row xl:items-start xl:justify-between`}>
         <div className='max-w-3xl space-y-2'>
           <div className='text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/78'>
             Suite question workspace

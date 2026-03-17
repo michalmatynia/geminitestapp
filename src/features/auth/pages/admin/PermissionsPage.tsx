@@ -25,6 +25,7 @@ import {
   SectionHeader,
   LoadingState,
   FormField,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -241,7 +242,7 @@ function AuthPermissionsForm({
         />
       </Card>
 
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
         <Card className='bg-card border-border'>
           <CardHeader>
             <CardTitle className='text-white text-lg'>Permissions Library</CardTitle>

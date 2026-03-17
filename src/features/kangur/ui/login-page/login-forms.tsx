@@ -79,6 +79,7 @@ export function LoginForm({
           ref={identifierInputRef}
           id='identifier'
           type='text'
+          aria-label='Email lub nick ucznia'
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           disabled={isLoading}
@@ -98,6 +99,7 @@ export function LoginForm({
           <input
             id='password'
             type='password'
+            aria-label='Hasło'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}

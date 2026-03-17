@@ -3,7 +3,7 @@
 import { Layers } from 'lucide-react';
 import React from 'react';
 
-import { StatusBadge, MetadataItem } from '@/shared/ui';
+import { MetadataItem, StatusBadge, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { useViewer3DState } from '../context/Viewer3DContext';
 
@@ -20,7 +20,7 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
 
   return (
     <div className='flex items-center justify-between px-4 py-2 border-t border-gray-700 bg-gray-900/80 flex-shrink-0'>
-      <div className='flex items-center gap-4'>
+      <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
         <div className='flex items-center gap-2'>
           <Layers className='h-4 w-4 text-gray-500' />
           <MetadataItem

@@ -57,6 +57,7 @@ export * from './image-slot-manager';
 export * from './filters-container';
 export * from './vector-canvas';
 export * from './tree';
+export * from './layout';
 export * from './FolderTreePanel';
 export * from './FocusModeTogglePortal';
 export * from './MasterTreeSettingsButton';

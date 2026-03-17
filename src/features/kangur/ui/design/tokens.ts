@@ -64,6 +64,7 @@ export const KANGUR_STACK_COMPACT_CLASSNAME = 'flex flex-col gap-1';
 export const KANGUR_GRID_TIGHT_CLASSNAME = 'grid gap-2';
 export const KANGUR_GRID_SPACED_CLASSNAME = 'grid gap-3';
 export const KANGUR_GRID_RELAXED_CLASSNAME = 'grid gap-4';
+export const KANGUR_GRID_LOOSE_CLASSNAME = 'grid gap-5';
 export const KANGUR_GRID_ROOMY_CLASSNAME = 'grid gap-6';
 export const KANGUR_PANEL_GRID_TO_ROW_CLASSNAME = cn(
   'grid w-full',

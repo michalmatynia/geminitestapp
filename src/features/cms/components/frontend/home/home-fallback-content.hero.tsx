@@ -3,6 +3,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import type { CmsAppearanceTone } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_STACK_LOOSE_CLASSNAME } from '@/shared/ui';
 
 type HomeFallbackHeroProps = {
   appearanceTone?: CmsAppearanceTone;
@@ -42,7 +43,7 @@ export function HomeFallbackHero({
         />
       </div>
       <div className='container grid gap-8 px-4 py-14 md:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:py-20'>
-        <div className='flex flex-col justify-center gap-5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4'>
+        <div className={`${UI_STACK_LOOSE_CLASSNAME} justify-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4`}>
           <span className='cms-appearance-subtle-surface inline-flex w-fit items-center gap-2 rounded-full border border-[var(--cms-appearance-page-border)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--hero-text)]'>
             Launch-ready
           </span>
@@ -119,9 +120,9 @@ export function HomeFallbackHero({
             ))}
           </div>
         </div>
-        <div className='flex flex-col gap-5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150'>
+        <div className={`${UI_STACK_LOOSE_CLASSNAME} motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:delay-150`}>
           <div className='cms-appearance-subtle-surface rounded-3xl border p-6 shadow-sm'>
-            <div className='flex items-center gap-3'>
+            <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
               <span className='cms-appearance-surface inline-flex size-10 items-center justify-center rounded-2xl border'>
                 <Sparkles className='size-5' aria-hidden='true' />
               </span>

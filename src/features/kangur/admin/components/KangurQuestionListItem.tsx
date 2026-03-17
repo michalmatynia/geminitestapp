@@ -3,6 +3,7 @@ import React from 'react';
 
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Badge, Button } from '@/features/kangur/shared/ui';
+import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import {
   hasIllustration,
@@ -46,7 +47,7 @@ export function KangurQuestionListItem(
   const workflowLabel = getQuestionWorkflowLabel(question.editorial.workflowStatus);
 
   return (
-    <div className='group flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/35 p-4 transition hover:border-cyan-400/30 hover:bg-card/50 sm:flex-row sm:items-start sm:p-5'>
+    <div className={`${KANGUR_STACK_RELAXED_CLASSNAME} group rounded-2xl border border-border/50 bg-card/35 p-4 transition hover:border-cyan-400/30 hover:bg-card/50 sm:flex-row sm:items-start sm:p-5`}>
       <div className='flex shrink-0 flex-row gap-1.5 rounded-xl border border-border/50 bg-background/25 p-1 sm:flex-col'>
         <Button
           type='button'

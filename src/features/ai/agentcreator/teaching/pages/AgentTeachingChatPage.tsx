@@ -24,6 +24,8 @@ import {
   CompactEmptyState,
   Card,
   PageLayout,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -131,7 +133,7 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
       description='Chat with a learner agent. The response is generated with retrieved embedded sources.'
     >
 
-      <div className='grid gap-6 lg:grid-cols-3'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
         <FormSection title='Learner Agents' className='p-4 lg:col-span-1 space-y-4'>
           {loadingAgents ? (
             <LoadingState message='Loading agents…' className='py-8' size='sm' />
@@ -178,7 +180,7 @@ function AgentTeachingChatPageContent(): React.JSX.Element {
           description={selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'}
           className='p-4 lg:col-span-2 space-y-4'
         >
-          <div className='flex items-center justify-between gap-3'>
+          <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'justify-between')}>
             <div className='text-sm font-semibold text-white'>Chat</div>
             <Button
               type='button'

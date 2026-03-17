@@ -20,6 +20,7 @@ import {
   ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
@@ -89,7 +90,7 @@ function Admin3DAssetsContent(): React.JSX.Element {
         accessorKey: 'name',
         header: 'Name',
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
+          <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
             <button
               type='button'
               className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'

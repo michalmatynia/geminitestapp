@@ -8,6 +8,7 @@ import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 import { Badge, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import { validateKangurLessonDocumentDraft } from '../content-creator-insights';
 import {
@@ -573,7 +574,9 @@ function LessonMetadataWorkspacePanel({
       description='Editing content here also saves the lesson title, description, emoji, visibility, and lesson type.'
       badge='Document workspace'
     >
-      <div className='mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]'>
+      <div
+        className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]`}
+      >
         <div className='space-y-2'>
           <label
             htmlFor={titleId}
@@ -638,7 +641,9 @@ function LessonMetadataWorkspacePanel({
         </div>
       </div>
 
-      <div className='mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]'>
+      <div
+        className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-[minmax(0,1fr)_220px]`}
+      >
         <div className='space-y-2'>
           <label
             htmlFor={descriptionId}

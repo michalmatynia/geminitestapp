@@ -13,6 +13,7 @@ import {
   MetadataItem,
   SelectSimple,
   Tooltip,
+  UI_GRID_ROOMY_CLASSNAME,
   useToast,
   useToastSettings,
 } from '@/shared/ui';
@@ -90,7 +91,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
       current='Notifications'
       description='Customize toast position, accent color, and preview behavior.'
     >
-      <div className='grid gap-6 lg:grid-cols-3'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-3`}>
         {/* Settings Panel */}
         <div className='lg:col-span-2 space-y-6'>
           <FormSection title='Notification Preferences' className='p-6'>

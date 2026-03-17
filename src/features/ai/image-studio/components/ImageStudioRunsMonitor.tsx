@@ -12,6 +12,7 @@ import {
   StandardDataTablePanel,
   Checkbox,
   PanelFilters,
+  UI_CENTER_ROW_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -156,7 +157,7 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
           if (key === 'status') setStatusFilter(value as typeof statusFilter);
         }}
         actions={
-          <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+          <div className={`${UI_CENTER_ROW_RELAXED_CLASSNAME} text-xs text-muted-foreground`}>
             <span className='whitespace-nowrap'>
               Runs: {stats.total} (Queued {stats.queuedCount}, Running {stats.runningCount})
             </span>

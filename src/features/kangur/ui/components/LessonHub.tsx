@@ -88,12 +88,12 @@ export default function LessonHub({
                   }
                 }}
               >
-                <KangurIconSummaryCardContent
-                  aside={
-                    <div className='flex flex-col items-end gap-2'>
-                      <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
-                        {section.locked
-                          ? (section.lockedLabel ?? 'Zablokowane')
+                  <KangurIconSummaryCardContent
+                    aside={
+                      <div className='flex flex-col items-end gap-2'>
+                        <KangurStatusChip accent={accent} className='uppercase tracking-[0.14em]' size='sm'>
+                          {section.locked
+                            ? (section.lockedLabel ?? 'Zablokowane')
                           : section.isGame
                             ? 'Gra'
                             : 'Lekcja'}
@@ -111,8 +111,8 @@ export default function LessonHub({
                       ) : null}
                     </div>
                   }
-                  asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start'
-                  className='w-full items-center'
+                  asideClassName='ml-auto flex shrink-0 flex-col items-end gap-2 self-start max-[420px]:ml-0 max-[420px]:items-start max-[420px]:self-stretch'
+                  className='w-full items-center max-[420px]:flex-col max-[420px]:items-start'
                   contentClassName='flex-1'
                   description={section.description}
                   descriptionClassName='text-slate-500'

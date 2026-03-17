@@ -34,6 +34,7 @@ export const accessibilityRouteCrawlRoutes = [
     name: 'Kangur Game',
     route: '/kangur/game',
     audience: 'public',
+    navigationWaitUntil: 'commit',
   },
   {
     id: 'kangur-lessons',

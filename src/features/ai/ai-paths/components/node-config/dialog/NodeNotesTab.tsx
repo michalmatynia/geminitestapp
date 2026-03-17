@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { Checkbox, FormField, Input, Label, Textarea } from '@/shared/ui';
+import { Checkbox, FormField, Input, Label, Textarea, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -51,7 +51,7 @@ export function NodeNotesTab(): React.JSX.Element | null {
          aria-label='Add notes about this node...' title='Add notes about this node...'/>
       </FormField>
 
-      <div className='flex items-center gap-3 py-1'>
+      <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} py-1`}>
         <Checkbox
           id='showNoteOnCanvas'
           checked={showOnCanvas}

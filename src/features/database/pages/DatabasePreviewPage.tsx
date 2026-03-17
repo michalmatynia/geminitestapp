@@ -47,6 +47,9 @@ import {
   LoadingState,
   CompactEmptyState,
   Hint,
+  UI_CENTER_ROW_RELAXED_CLASSNAME,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -91,7 +94,7 @@ const { Context: TableDetailCardRuntimeContext, useStrictContext: useTableDetail
 function TableDetailCardTitle(): React.JSX.Element {
   const { detail } = useTableDetailCardRuntime();
   return (
-    <div className='flex flex-1 items-center gap-3'>
+    <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} flex-1`}>
       <TableIcon className='size-4 text-emerald-300' />
       <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
       <Hint size='xxs' uppercase className='text-gray-500'>
@@ -483,7 +486,7 @@ function DatabasePreviewContent(): React.JSX.Element {
       }}
     >
       {error && (
-        <Alert variant='error' className='flex items-center gap-3 mb-6'>
+        <Alert variant='error' className={`${UI_CENTER_ROW_SPACED_CLASSNAME} mb-6`}>
           <ShieldCheckIcon className='size-4 shrink-0' />
           {error}
         </Alert>
@@ -494,7 +497,7 @@ function DatabasePreviewContent(): React.JSX.Element {
       ) : (
         <div className='space-y-6'>
           {/* ── Database Metrics ── */}
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-5`}>
             {databaseSize && (
               <MetadataItem
                 label='Total Size'
@@ -540,7 +543,7 @@ function DatabasePreviewContent(): React.JSX.Element {
               title='Table Browser'
               description={`${filteredTableDetails.length} items`}
               actions={
-                <div className='flex items-center gap-4'>
+                <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
                   <SearchInput
                     size='sm'
                     value={tableQuery}

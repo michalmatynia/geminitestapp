@@ -25,6 +25,7 @@ import { cn } from '@/features/kangur/shared/utils';
 import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_CENTER_ROW_SPACED_CLASSNAME,
+  KANGUR_GRID_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
@@ -289,7 +290,7 @@ export function KangurAiTutorSettingsPanel(props: KangurAiTutorSettingsPanelProp
         description='These settings apply to the whole Kangur app. Parent profiles only manage learner-specific access and guardrails, while model routing stays in AI Brain.'
         className={className}
       >
-        <div className='grid gap-4 xl:grid-cols-2'>
+        <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} xl:grid-cols-2`}>
           <div className='space-y-4'>
             <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
               <div className='flex items-center gap-2'>

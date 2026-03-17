@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { DocumentSearchPageProps } from '@/shared/contracts/ui';
-import { ListPanel, LoadingState } from '@/shared/ui';
+import { ListPanel, LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export type { DocumentSearchPageProps };
@@ -27,7 +27,7 @@ export function DocumentSearchPage(props: DocumentSearchPageProps): React.JSX.El
       variant='flat'
       className={cn('flex min-h-0 flex-1 flex-col', className)}
       header={
-        <div className='flex items-center gap-3'>
+        <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
           {startAdornment}
           <h1 className='text-3xl font-bold text-white'>{title}</h1>
           {titleAdornment}

@@ -6,6 +6,7 @@ import { KANGUR_PARENT_CAPTCHA_SITE_KEY } from './login-constants';
 import {
   KANGUR_STACK_RELAXED_CLASSNAME,
   KANGUR_STACK_COMPACT_CLASSNAME,
+  KANGUR_STACK_ROOMY_CLASSNAME,
   KANGUR_STACK_SPACED_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -67,7 +68,7 @@ export function SignupForm({
       aria-label='Formularz rejestracji rodzica'
     >
       <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <label className='text-sm font-medium text-slate-700'>Email rodzica</label>
+        <div className='text-sm font-medium text-slate-700'>Email rodzica</div>
         <div className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500'>
           {email}
         </div>
@@ -80,6 +81,7 @@ export function SignupForm({
         <input
           id='new-password'
           type='password'
+          aria-label='Ustaw hasło'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isLoading}
@@ -148,7 +150,7 @@ export function VerificationView({
   debugUrl?: string | null;
 }): JSX.Element {
   return (
-    <div className='flex w-full flex-col gap-6 text-center'>
+    <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full text-center`}>
       <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
         <h3 className='text-xl font-bold text-slate-900'>Sprawdź skrzynkę</h3>
         <p className='text-sm text-slate-600'>

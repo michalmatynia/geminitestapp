@@ -14,6 +14,7 @@ import {
   Input,
   FormSection,
   FormField,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
 import { useInspectorAiActions, useInspectorAiState } from '../context/InspectorAiContext';
@@ -311,7 +312,7 @@ function CssAiSection(): React.JSX.Element {
              title='Textarea'/>
             <div className='rounded border border-border/40 bg-gray-900/40 p-2'>
               <div className='flex items-center justify-between text-[11px] text-gray-400'>
-                <div className='flex items-center gap-3'>
+                <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
                   <span>Diff</span>
                   <span className='text-emerald-300'>+{cssDiffStats.added}</span>
                   <span className='text-rose-300'>-{cssDiffStats.removed}</span>

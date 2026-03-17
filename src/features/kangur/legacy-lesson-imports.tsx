@@ -71,6 +71,7 @@ import {
   HUB_SECTIONS as SUBTRACTING_HUB_SECTIONS,
   SLIDES as SUBTRACTING_SLIDES,
 } from './ui/components/SubtractingLesson';
+import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { JSX } from 'react';
 
@@ -156,7 +157,7 @@ const createLessonOverviewHtml = (
   const interactiveSections = sections?.filter((section) => Boolean(section.activityId)) ?? [];
 
   return sanitizeHtml(`
-    <div class="flex flex-col gap-4">
+    <div class="${KANGUR_STACK_RELAXED_CLASSNAME}">
       <div class="rounded-3xl border border-sky-200 bg-sky-50 px-5 py-4 text-center">
         <div class="text-4xl">${escapeHtml(lesson.emoji)}</div>
         <h2 class="mt-2 text-2xl font-extrabold text-slate-800">${escapeHtml(lesson.title)}</h2>

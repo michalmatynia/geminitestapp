@@ -63,7 +63,7 @@ export function ActiveLessonView() {
   const isSecretLessonUnlocked =
     orderedLessons.length > 0 &&
     orderedLessons.every((lesson) => (masteryByComponent[lesson.componentId]?.completions ?? 0) > 0);
-  const isSecretLessonHostActive = isSecretLessonActive && Boolean(secretHostLesson && activeLesson?.id === secretHostLesson.id);
+  const isSecretLessonHostActive = isSecretLessonActive && Boolean(activeLesson?.id === secretHostLesson?.id);
   const handleOpenSecretLesson = () => {
     if (!secretHostLesson) return;
     handleSelectLesson(secretHostLesson.id, { secret: true });

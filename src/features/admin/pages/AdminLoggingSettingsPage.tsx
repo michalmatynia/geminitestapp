@@ -10,6 +10,7 @@ import {
   FormField,
   FormSection,
   Textarea,
+  UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -68,7 +69,7 @@ function LoggingSettingsForm({
         description='Provide feature flags and tags attached to client errors.'
         className='p-6'
       >
-        <div className='grid gap-6 md:grid-cols-2'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
           <FormField
             label='Feature flags (JSON)'
             description='Key-value pairs representing active experiment flags.'

@@ -4,7 +4,14 @@ import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/shared/contracts/cms';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal, FormField, LoadingState, SearchableList, Button } from '@/shared/ui';
+import {
+  FormModal,
+  FormField,
+  LoadingState,
+  SearchableList,
+  Button,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+} from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -139,7 +146,7 @@ export function AttachSlugModal({
                 searchPlaceholder='Filter slugs...'
                 maxHeight='max-h-60'
                 extraActions={
-                  <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
+                  <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} text-[10px] uppercase font-bold`}>
                     <Button
                       variant='link'
                       className='h-auto p-0 text-[10px] uppercase font-bold text-primary hover:text-primary/80 transition-colors'

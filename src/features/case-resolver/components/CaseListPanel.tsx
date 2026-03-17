@@ -28,6 +28,7 @@ import {
   MasterTreeSettingsButton,
   Skeleton,
   StandardDataTablePanel,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -69,7 +70,7 @@ const CaseListLoadingSkeleton = memo(function CaseListLoadingSkeleton(): React.J
         (_, index): React.JSX.Element => (
           <div
             key={`case-list-loading-row-${index}`}
-            className='flex items-center gap-3 rounded-md border border-border/50 bg-card/30 px-3 py-2'
+            className={`${UI_CENTER_ROW_SPACED_CLASSNAME} rounded-md border border-border/50 bg-card/30 px-3 py-2`}
           >
             <Skeleton className='size-4 rounded-sm' />
             <Skeleton className='h-4 flex-1 max-w-[420px]' />

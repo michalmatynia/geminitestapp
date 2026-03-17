@@ -10,6 +10,7 @@ import { cn } from '@/shared/utils';
 import { Button } from './button';
 import { Label } from './label';
 import { SelectSimple } from './select-simple';
+import { UI_STACK_RELAXED_CLASSNAME } from './layout';
 
 export type { PaginationContextValue, PaginationProps };
 
@@ -206,7 +207,8 @@ export function Pagination(props: PaginationProps): React.JSX.Element | null {
     <PaginationContext.Provider value={contextValue}>
       <nav
         className={cn(
-          'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
+          UI_STACK_RELAXED_CLASSNAME,
+          'sm:flex-row sm:items-center sm:justify-between',
           isPanel && 'rounded-lg border border-border/60 bg-card/40 px-4 py-3',
           className
         )}

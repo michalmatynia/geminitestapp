@@ -2,10 +2,14 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PromptExploderHierarchyTreeProvider } from '@/features/prompt-exploder/components/PromptExploderHierarchyTreeContext';
-import { PromptExploderHierarchyTreeEditor } from '@/features/prompt-exploder/components/PromptExploderHierarchyTreeEditor';
-import { PromptExploderTreeNodeRuntimeProvider } from '@/features/prompt-exploder/components/tree/PromptExploderTreeNodeRuntimeContext';
-import { PromptExploderSegmentsTreeEditor } from '@/features/prompt-exploder/components/tree/PromptExploderSegmentsTreeEditor';
+import {
+  PromptExploderHierarchyTreeEditor,
+  PromptExploderHierarchyTreeProvider,
+} from '@/features/prompt-exploder/components/PromptExploderHierarchyTreeEditor';
+import {
+  PromptExploderSegmentsTreeEditor,
+  PromptExploderTreeNodeRuntimeProvider,
+} from '@/features/prompt-exploder/components/tree/PromptExploderSegmentsTreeEditor';
 import { PromptExploderSubsectionsTreeEditor } from '@/features/prompt-exploder/components/tree/PromptExploderSubsectionsTreeEditor';
 import { toPromptExploderTreeNodeId } from '@/features/prompt-exploder/tree/types';
 import type {

@@ -8,6 +8,10 @@ import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { cn } from '@/shared/utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  UI_STACK_RELAXED_CLASSNAME,
+  UI_START_ROW_SPACED_CLASSNAME,
+} from '@/shared/ui/layout';
 
 
 interface PanelHeaderProps {
@@ -121,13 +125,14 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-lg border border-border/60 bg-card/40 px-4 py-3',
+        UI_STACK_RELAXED_CLASSNAME,
+        'rounded-lg border border-border/60 bg-card/40 px-4 py-3',
         compact && 'py-2',
         className
       )}
     >
       {/* Title and Description Section */}
-      <div className='flex items-start gap-3'>
+      <div className={UI_START_ROW_SPACED_CLASSNAME}>
         {icon && (
           <div className='mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-muted/40 text-muted-foreground'>
             {icon}

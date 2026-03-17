@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+
 import { highlightItems } from './home-fallback-content.data';
 
 export function HomeFallbackHighlights(): React.JSX.Element {
@@ -26,7 +28,7 @@ export function HomeFallbackHighlights(): React.JSX.Element {
             your CMS pages are still coming together.
           </p>
         </div>
-        <div className='mt-10 grid gap-6 md:grid-cols-3'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} mt-10 md:grid-cols-3`}>
           {highlightItems.map(({ title, description, Icon }) => (
             <div
               key={title}

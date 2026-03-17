@@ -20,6 +20,7 @@ import {
   CardFooter,
   FormField,
   Hint,
+  UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -178,7 +179,9 @@ function RegisterForm(): React.JSX.Element {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className='flex flex-col gap-4 border-t border-white/5 pt-6'>
+        <CardFooter
+          className={`${UI_STACK_RELAXED_CLASSNAME} border-t border-white/5 pt-6`}
+        >
           <p className='text-sm text-gray-400'>
             Already have an account?{' '}
             <Link href='/auth/signin' className='text-primary font-medium hover:underline'>

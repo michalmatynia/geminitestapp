@@ -8,7 +8,7 @@ import { buildAgentPersonaSettings } from '@/features/ai/agentcreator/utils/pers
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
-import { Button, FormField, FormSection, Input, ToggleRow } from '@/shared/ui';
+import { Button, FormField, FormSection, Input, ToggleRow, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 type ModelField = {
   label: string;
@@ -174,7 +174,7 @@ export function AgentPersonaSettingsForm({
           ) : null
         }
       >
-        <div className='grid gap-4 md:grid-cols-2 mt-4'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
           <FormField label='Default search limit'>
             <Input
               type='number'
@@ -218,7 +218,7 @@ export function AgentPersonaSettingsForm({
         </div>
       </FormSection>
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         {MODEL_FIELDS.map((field: ModelField) => (
           <BrainManagedModelField key={field.capability} capability={field.capability} />
         ))}

@@ -2,7 +2,14 @@
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Input, SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui';
+import {
+  Input,
+  SelectSimple,
+  FormSection,
+  FormField,
+  ToggleRow,
+  UI_GRID_RELAXED_CLASSNAME,
+} from '@/shared/ui';
 
 const AGENT_BROWSER_OPTIONS = [
   { value: 'chromium', label: 'Chromium' },
@@ -41,7 +48,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
       {agentModeEnabled && (
         <div className='space-y-4 mt-4'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <FormField label='Browser'>
               <SelectSimple
                 size='sm'

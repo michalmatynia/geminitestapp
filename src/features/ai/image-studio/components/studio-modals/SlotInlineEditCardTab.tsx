@@ -10,6 +10,7 @@ import {
   TabsContent,
   LoadingState,
   Hint,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -212,7 +213,7 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
               return (
                 <div
                   key={variant.key}
-                  className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
+                  className={`${UI_CENTER_ROW_SPACED_CLASSNAME} rounded border border-border/60 bg-card/50 p-2`}
                 >
                   <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
                     <img

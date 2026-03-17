@@ -2,7 +2,13 @@
 
 import React, { useMemo } from 'react';
 
-import { StandardDataTablePanel, PanelPagination, RefreshButton, FilterPanel } from '@/shared/ui';
+import {
+  FilterPanel,
+  PanelPagination,
+  RefreshButton,
+  StandardDataTablePanel,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+} from '@/shared/ui';
 import type { FilterField } from '@/shared/contracts/ui';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
@@ -124,7 +130,7 @@ export function FileUploadEventsTable(): React.JSX.Element {
   );
 
   const actions = (
-    <div className='flex items-center gap-3'>
+    <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
       <div className='text-[11px] text-gray-500'>
         Total: <span className='text-gray-300'>{total}</span>
       </div>

@@ -2,7 +2,15 @@
 
 import React from 'react';
 
-import { Button, FormField, FormSection, Input, Label, ToggleRow } from '@/shared/ui';
+import {
+  Button,
+  FormField,
+  FormSection,
+  Input,
+  Label,
+  ToggleRow,
+  UI_GRID_RELAXED_CLASSNAME,
+} from '@/shared/ui';
 
 import {
   useImageStudioSettingsActions,
@@ -31,7 +39,7 @@ export function MaintenanceSettingsTab(): React.JSX.Element {
         description='Heuristically update card properties based on available metadata.'
       >
         <div className='space-y-4'>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <FormField
               label='Project ID (Optional)'
               description='Limit backfill to a single project.'

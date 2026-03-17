@@ -9,6 +9,7 @@ import {
 import { type JSX } from 'react';
 
 import { FormSection } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
 import { formatNumber, formatPercent } from './utils';
@@ -32,7 +33,7 @@ export function AiTutorBridgeMetrics(): JSX.Element {
   return (
     <div id='ai-tutor-bridge'>
       <FormSection title='AI Tutor Bridge Snapshot' variant='subtle'>
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-2 xl:grid-cols-3`}>
           <MetricCard
             title='Tutor Replies'
             value={formatNumber(aiTutor.messageSucceededCount)}

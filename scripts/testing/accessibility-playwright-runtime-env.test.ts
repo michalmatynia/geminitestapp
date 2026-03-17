@@ -10,6 +10,7 @@ describe('buildAccessibilityPlaywrightRuntimeEnv', () => {
   it('disables queue workers by default for accessibility runtimes', () => {
     expect(buildAccessibilityPlaywrightRuntimeEnv({ env: {} })).toEqual({
       DISABLE_QUEUE_WORKERS: 'true',
+      SKIP_HEALTH_DB_CHECK: 'true',
     });
   });
 
@@ -24,6 +25,7 @@ describe('buildAccessibilityPlaywrightRuntimeEnv', () => {
     ).toEqual({
       DISABLE_QUEUE_WORKERS: 'false',
       PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: ' FALSE ',
+      SKIP_HEALTH_DB_CHECK: 'true',
     });
   });
 
@@ -38,6 +40,7 @@ describe('buildAccessibilityPlaywrightRuntimeEnv', () => {
     ).toEqual({
       DISABLE_QUEUE_WORKERS: 'false',
       PATH: '/usr/bin',
+      SKIP_HEALTH_DB_CHECK: 'true',
     });
   });
 
@@ -52,6 +55,7 @@ describe('buildAccessibilityPlaywrightRuntimeEnv', () => {
     ).toEqual({
       DISABLE_QUEUE_WORKERS: 'true',
       PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: '',
+      SKIP_HEALTH_DB_CHECK: 'true',
     });
   });
 });
@@ -69,6 +73,7 @@ describe('buildAccessibilityPlaywrightRuntimeContext', () => {
       shouldStopRuntime: true,
       runtimeEnv: {
         DISABLE_QUEUE_WORKERS: 'true',
+        SKIP_HEALTH_DB_CHECK: 'true',
       },
     });
   });
@@ -94,6 +99,7 @@ describe('buildAccessibilityPlaywrightRuntimeContext', () => {
         PLAYWRIGHT_RUNTIME_KEEP_ALIVE: 'true',
         PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS: 'false',
         DISABLE_QUEUE_WORKERS: 'false',
+        SKIP_HEALTH_DB_CHECK: 'true',
       },
     });
   });

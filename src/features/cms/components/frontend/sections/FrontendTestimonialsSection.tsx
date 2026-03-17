@@ -1,7 +1,7 @@
 'use client';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
-import { CompactEmptyState, Card } from '@/shared/ui';
+import { CompactEmptyState, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
@@ -32,7 +32,7 @@ export function FrontendTestimonialsSection(): React.ReactNode {
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-        <div className='grid gap-6' style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+        <div className={UI_GRID_ROOMY_CLASSNAME} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
           {blocks.map((block: BlockInstance) => (
             <Card
               key={block.id}

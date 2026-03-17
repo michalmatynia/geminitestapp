@@ -1,6 +1,6 @@
-export { AdminPromptExploderPage } from './pages/AdminPromptExploderPage';
-export { AdminPromptExploderProjectsPage } from './pages/AdminPromptExploderProjectsPage';
-export { AdminPromptExploderSettingsPage } from './pages/AdminPromptExploderSettingsPage';
+export { default as AdminPromptExploderPage } from './pages/AdminPromptExploderPage';
+export { AdminPromptExploderProjectsPage } from '@/features/prompt-exploder/pages/AdminPromptExploderProjectsPage';
+export { AdminPromptExploderSettingsPage } from '@/features/prompt-exploder/pages/AdminPromptExploderSettingsPage';
 export * from './bridge';
 export { PROMPT_EXPLODER_PATTERN_PACK, ensurePromptExploderPatternPack } from './pattern-pack';
 export {

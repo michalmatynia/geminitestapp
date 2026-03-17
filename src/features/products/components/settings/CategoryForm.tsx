@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Input, Textarea, Label, FormModal, SelectSimple } from '@/shared/ui';
+import { Input, Textarea, Label, FormModal, SelectSimple, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 
 import { useCategoryFormContext } from './CategoryFormContext';
 
@@ -142,7 +142,7 @@ export function CategoryForm(): React.JSX.Element | null {
 
         <div>
           <Label className='text-xs text-gray-400'>Color</Label>
-          <div className='mt-2 flex items-center gap-3'>
+          <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} mt-2`}>
             <Input
               type='color'
               id={colorPickerId}

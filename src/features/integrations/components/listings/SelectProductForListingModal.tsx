@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useIntegrationProductsWithCount } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal } from '@/shared/ui';
+import { FormModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
 import { SelectProductForListingModalProvider } from './select-product-modal/context/SelectProductForListingModalContext';
@@ -63,7 +63,7 @@ function SelectProductForListingModalContent(): React.JSX.Element {
         setProductSearch={setProductSearch}
         error={error}
       >
-        <div className='grid gap-6 md:grid-cols-2'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
           <div className='space-y-4'>
             <ProductListSection />
           </div>

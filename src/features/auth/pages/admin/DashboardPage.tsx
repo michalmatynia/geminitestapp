@@ -17,6 +17,7 @@ import {
   Alert,
   MetadataItem,
   LoadingState,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -93,7 +94,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
         />
       </Card>
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-4`}>
         <MetadataItem
           label='Total Users'
           hint='All accounts'

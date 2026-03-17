@@ -3,7 +3,14 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
 
-import { Button, Input, Textarea, FormSection, FormField } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Textarea,
+  FormSection,
+  FormField,
+  UI_GRID_RELAXED_CLASSNAME,
+} from '@/shared/ui';
 
 export type DocumentAddFormProps = {
   title: string;
@@ -39,7 +46,7 @@ export function DocumentAddForm(props: DocumentAddFormProps): React.JSX.Element 
   return (
     <FormSection title='Add Document' variant='subtle' className='p-6'>
       <div className='space-y-4'>
-        <div className='grid gap-4 md:grid-cols-2'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
           <FormField label='Title (optional)'>
             <Input
               value={title}

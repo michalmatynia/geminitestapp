@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { FunctionConfig } from '@/shared/lib/ai-paths';
-import { Textarea, Label, Input, SelectSimple } from '@/shared/ui';
+import { Textarea, Label, Input, SelectSimple, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -191,7 +191,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           mismatch.
         </p>
       </div>
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400'>Max execution time (ms, optional)</Label>
           <Input

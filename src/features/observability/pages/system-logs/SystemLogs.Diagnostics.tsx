@@ -13,7 +13,7 @@ import {
   StandardDataTablePanel,
   StatusBadge,
 } from '@/shared/ui';
-import { formatTimestamp } from '../utils/formatTimestamp';
+import { formatTimestamp } from '../../utils/formatTimestamp';
 
 export function LogDiagnostics(): React.JSX.Element {
   const { diagnostics, diagnosticsUpdatedAt, mongoDiagnosticsQuery } = useSystemLogsState();

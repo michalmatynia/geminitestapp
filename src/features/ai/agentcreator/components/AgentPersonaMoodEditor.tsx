@@ -28,6 +28,7 @@ import {
   FormField,
   Textarea,
   useToast,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -341,7 +342,7 @@ export function AgentPersonaMoodEditor({
                 className='space-y-3 rounded-xl border border-border/60 bg-card/35 p-4'
               >
                 <div className='flex flex-wrap items-start justify-between gap-3'>
-                  <div className='flex items-center gap-3'>
+                  <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
                     <AgentPersonaMoodAvatar
                       svgContent={mood.svgContent}
                       avatarImageUrl={mood.avatarImageUrl}

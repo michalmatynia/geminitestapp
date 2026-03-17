@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { AppModal } from '@/shared/ui';
+import { AppModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 export interface FilePreviewData {
   id?: string;
@@ -28,7 +28,7 @@ export default function FilePreviewModal(props: FilePreviewModalProps) {
 
   return (
     <AppModal open={true} onClose={onClose} title={file.filename} size='lg'>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 md:grid-cols-2`}>
         <div>
           <h2 className='text-2xl font-bold mb-4'>{file.filename}</h2>
           <div className='relative w-full h-64'>

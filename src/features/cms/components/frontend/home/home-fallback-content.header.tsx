@@ -6,6 +6,7 @@ import {
   CmsStorefrontAppearanceButtons,
   type CmsAppearanceTone,
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { UI_CENTER_ROW_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 
 function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -43,7 +44,7 @@ export function HomeFallbackHeader({
       style={headerStyle}
     >
       <div className='container flex h-16 items-center justify-between px-4 md:px-6'>
-        <Link href='/' className='flex items-center gap-3' prefetch={false}>
+        <Link href='/' className={UI_CENTER_ROW_SPACED_CLASSNAME} prefetch={false}>
           <span className='cms-appearance-subtle-surface flex size-10 items-center justify-center rounded-full border'>
             <MountainIcon className='size-5' />
           </span>
@@ -66,7 +67,7 @@ export function HomeFallbackHeader({
             Admin
           </Link>
         </nav>
-        <div className='flex items-center gap-3'>
+        <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
           <CmsStorefrontAppearanceButtons
             label='Homepage appearance'
             tone={appearanceToneValue}
@@ -83,7 +84,7 @@ export function HomeFallbackHeader({
       </div>
       <div className='border-t border-[var(--cms-appearance-page-border)]/60 md:hidden'>
         <nav
-          className='container flex items-center gap-2 overflow-x-auto px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em]'
+          className={`${UI_CENTER_ROW_CLASSNAME} container overflow-x-auto px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em]`}
           aria-label='Section navigation'
         >
           <Link href='#signature' prefetch={false} className='rounded-full border px-3 py-1'>

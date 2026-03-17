@@ -12,7 +12,8 @@ import {
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
-import { Card } from '@/shared/ui';
+import { Card, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useBlockContext, BlockContextProvider } from './context/BlockContext';
 import { usePreviewEditorState } from './context/PreviewEditorContext';
@@ -76,7 +77,11 @@ export function PreviewImageWithTextBlock({
 
   return (
     <div
-      className={`flex flex-col gap-4 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${stretchClass}`}
+      className={cn(
+        UI_STACK_RELAXED_CLASSNAME,
+        imageFirst ? 'md:flex-row' : 'md:flex-row-reverse',
+        stretchClass
+      )}
       style={stretchStyle}
     >
       <div className='cms-media relative w-full md:w-2/5' style={mediaStyles ?? undefined}>

@@ -3,6 +3,7 @@
 import { AnimatePresence } from 'framer-motion';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { useLessons, LessonsProvider } from './lessons/LessonsContext';
@@ -39,7 +40,7 @@ function LessonsContent() {
     assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
   };
 
-  const navigation = {
+  const navigation: KangurPrimaryNavigationProps = {
     basePath,
     canManageLearners: Boolean(user?.canManageLearners),
     currentPage: 'Lessons' as const,
@@ -63,7 +64,7 @@ function LessonsContent() {
         skipLinkTargetId='kangur-lessons-main'
         docsRootId='kangur-lessons-page'
         docsTooltipsEnabled={docsTooltipsEnabled}
-        navigation={<KangurTopNavigationController navigation={navigation as any} />}
+        navigation={<KangurTopNavigationController navigation={navigation} />}
         containerProps={{
           as: 'section',
           'data-kangur-route-main': true,

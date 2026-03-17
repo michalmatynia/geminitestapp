@@ -142,9 +142,9 @@ export function KangurGameHomeDuelsInvitesWidget({
       data-testid='kangur-home-duels-invites'
     >
       <div className={`${KANGUR_SPACED_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-        <div className='space-y-1'>
+        <div className='min-w-0 flex-1 space-y-1'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
-            <h3 id={headingId} className='text-base font-semibold text-slate-900'>
+            <h3 id={headingId} className='break-words text-base font-semibold text-slate-900'>
               Zaproszenia do pojedynku
             </h3>
             {visibleInvites.length > 0 ? (
@@ -161,7 +161,7 @@ export function KangurGameHomeDuelsInvitesWidget({
           asChild
           size='sm'
           variant='secondary'
-          className='w-full sm:w-auto'
+          className='w-full sm:w-auto sm:shrink-0'
           data-doc-id='home_duels_invite'
         >
           <Link
@@ -202,11 +202,11 @@ export function KangurGameHomeDuelsInvitesWidget({
                   role='group'
                   aria-label={`Zaproszenie od ${entry.host.displayName}`}
                 >
-                  <div className='space-y-1'>
-                    <div className='text-sm font-semibold text-slate-800'>
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <div className='break-words text-sm font-semibold text-slate-800'>
                       {entry.host.displayName}
                     </div>
-                    <div className='text-xs text-slate-500'>
+                    <div className='break-words text-xs text-slate-500'>
                       {operationLabel} • {difficultyLabel} • {entry.questionCount} pytań •{' '}
                       {entry.timePerQuestionSec}s / pytanie •{' '}
                       {formatRelativeAge(entry.updatedAt, nowMs)}
@@ -216,7 +216,7 @@ export function KangurGameHomeDuelsInvitesWidget({
                     asChild
                     size='sm'
                     variant='primary'
-                    className='w-full sm:w-auto'
+                    className='w-full sm:w-auto sm:shrink-0'
                   >
                     <Link
                       href={buildJoinHref(entry.sessionId)}

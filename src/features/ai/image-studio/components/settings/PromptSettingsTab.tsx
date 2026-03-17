@@ -17,6 +17,8 @@ import {
   Switch,
   Card,
   Hint,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -56,7 +58,7 @@ export function PromptSettingsTab(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
         <FormSection
           title='GPT Prompt Extraction'
           description='Define which AI model interprets raw image prompts.'
@@ -179,7 +181,7 @@ export function PromptSettingsTab(): React.JSX.Element {
                     !enabled && 'opacity-50 grayscale'
                   )}
                 >
-                  <div className='flex items-center gap-3'>
+                  <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
                     <StatusBadge
                       status={index >= 0 ? `#${index + 1}` : 'N/A'}
                       variant={enabled ? 'info' : 'neutral'}

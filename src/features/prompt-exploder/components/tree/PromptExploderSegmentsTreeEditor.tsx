@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Folder,
+  GripVertical,
+  ListTree,
+  Waypoints,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
@@ -7,11 +16,12 @@ import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
   useMasterFolderTreeShell,
+  type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
-import { Button, Card } from '@/shared/ui';
+import { internalError } from '@/shared/errors/app-error';
+import { Badge, Button, Card } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
-import { PromptExploderTreeNode } from './PromptExploderTreeNode';
-import { PromptExploderTreeNodeRuntimeProvider } from './PromptExploderTreeNodeRuntimeContext';
 import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
 import { useSegmentEditorActions } from '../../context/hooks/useSegmentEditor';
 import {
@@ -22,7 +32,168 @@ import {
   buildPromptExploderTreeRevision,
   usePromptExploderHandleOnlyDrag,
 } from '../../tree/shared';
-import { parsePromptExploderTreeNodeId, toPromptExploderTreeNodeId } from '../../tree/types';
+import {
+  parsePromptExploderTreeNodeId,
+  readPromptExploderTreeMetadata,
+  toPromptExploderTreeNodeId,
+  type PromptExploderTreeNodeKind,
+} from '../../tree/types';
+
+type PromptExploderTreeNodeRuntimeContextValue = {
+  armDragHandle: (nodeId: string) => void;
+  releaseDragHandle: () => void;
+};
+
+const PromptExploderTreeNodeRuntimeContext =
+  React.createContext<PromptExploderTreeNodeRuntimeContextValue | null>(null);
+
+export function PromptExploderTreeNodeRuntimeProvider({
+  value,
+  children,
+}: {
+  value: PromptExploderTreeNodeRuntimeContextValue;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <PromptExploderTreeNodeRuntimeContext.Provider value={value}>
+      {children}
+    </PromptExploderTreeNodeRuntimeContext.Provider>
+  );
+}
+
+export function usePromptExploderTreeNodeRuntimeContext(): PromptExploderTreeNodeRuntimeContextValue {
+  const context = React.useContext(PromptExploderTreeNodeRuntimeContext);
+  if (!context) {
+    throw internalError(
+      'usePromptExploderTreeNodeRuntimeContext must be used within a PromptExploderTreeNodeRuntimeProvider'
+    );
+  }
+  return context;
+}
+
+type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput;
+
+const resolveNodeIcon = (kind: PromptExploderTreeNodeKind | null) => {
+  switch (kind) {
+    case 'segment':
+      return FileText;
+    case 'subsection':
+      return Folder;
+    case 'subsection_item':
+      return ListTree;
+    case 'list_item':
+    case 'hierarchy_item':
+      return Waypoints;
+    default:
+      return Folder;
+  }
+};
+
+function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isMultiSelected,
+    isDragging,
+    dropPosition,
+    select,
+    toggleExpand,
+  } = props;
+
+  const { armDragHandle, releaseDragHandle } = usePromptExploderTreeNodeRuntimeContext();
+  const metadata = readPromptExploderTreeMetadata(node);
+  const Icon = resolveNodeIcon(metadata?.kind ?? null);
+  const stateClassName = isSelected
+    ? 'bg-blue-600/20 text-white ring-1 ring-inset ring-blue-400/40 shadow-sm'
+    : isMultiSelected
+      ? 'bg-blue-500/15 text-blue-100 ring-1 ring-inset ring-blue-400/25'
+      : dropPosition === 'before'
+        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+        : dropPosition === 'after'
+          ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+          : isDragging
+            ? 'opacity-50'
+            : 'text-gray-300 hover:bg-muted/40';
+
+  const badgeLabel =
+    metadata?.kind === 'segment'
+      ? (metadata.segmentType?.replaceAll('_', ' ') ?? 'segment')
+      : metadata?.kind === 'subsection'
+        ? metadata.code?.trim() || 'subsection'
+        : metadata?.kind === 'subsection_item'
+          ? metadata.logicalOperator?.replaceAll('_', ' ') || 'item'
+          : metadata?.kind === 'list_item' || metadata?.kind === 'hierarchy_item'
+            ? metadata.logicalOperator?.replaceAll('_', ' ') || 'item'
+            : null;
+
+  return (
+    <div
+      className={cn(
+        'group flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-all',
+        stateClassName
+      )}
+      style={{ paddingLeft: `${depth * 16 + 8}px` }}
+    >
+      <button
+        type='button'
+        aria-label='Drag node'
+        data-master-tree-drag-handle='true'
+        onPointerDown={(): void => {
+          armDragHandle(node.id);
+        }}
+        onPointerUp={releaseDragHandle}
+        onPointerCancel={releaseDragHandle}
+        onMouseDown={(): void => {
+          armDragHandle(node.id);
+        }}
+        onMouseUp={releaseDragHandle}
+        className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-white/10 hover:text-gray-100 active:cursor-grabbing'
+        title='Drag node'
+      >
+        <GripVertical className='size-3.5' />
+      </button>
+      {hasChildren ? (
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
+          onClick={(event): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleExpand();
+          }}
+          aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          title={isExpanded ? 'Collapse' : 'Expand'}
+        >
+          {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
+        </Button>
+      ) : (
+        <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+      )}
+      <button
+        type='button'
+        onClick={select}
+        aria-pressed={isSelected}
+        aria-label={`Select ${node.name}`}
+        className='flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+      >
+        <Icon className='size-4 shrink-0 text-sky-200/80' />
+        <span className='min-w-0 flex-1 truncate'>{node.name}</span>
+        {badgeLabel ? (
+          <Badge
+            variant='neutral'
+            className='shrink-0 border-border/60 bg-card/40 text-[10px] h-4 px-1 uppercase tracking-wider'
+          >
+            {badgeLabel}
+          </Badge>
+        ) : null}
+      </button>
+    </div>
+  );
+}
 
 export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
   const { documentState, selectedSegmentId } = useDocumentState();

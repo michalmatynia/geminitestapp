@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { useCategoryMapperData } from '@/features/integrations/context/CategoryMapperContext';
 import type { CatalogRecord } from '@/shared/contracts/products';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
-import { Label } from '@/shared/ui';
+import { Label, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
@@ -26,7 +26,7 @@ export function CategoryMapperCatalogSelector(): React.JSX.Element {
   );
 
   return (
-    <div className='flex items-center gap-4'>
+    <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
       <Label className='text-sm text-gray-400'>Target Catalog:</Label>
       <div className='w-[200px]'>
         <GenericPickerDropdown

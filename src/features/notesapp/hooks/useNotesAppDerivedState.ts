@@ -8,6 +8,8 @@ import type {
   TagRecord,
   UndoAction,
 } from '@/shared/contracts/notes';
+import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_SPACED_CLASSNAME } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import type { NotesAppStateValue } from './NotesAppContext.types';
 
@@ -66,12 +68,15 @@ export function useNotesAppDerivedState({
 
   const noteLayoutClassName = useMemo((): string => {
     if (settings.viewMode === 'list') {
-      return 'grid grid-cols-1 gap-3';
+      return cn(UI_GRID_SPACED_CLASSNAME, 'grid-cols-1');
     }
     if (settings.gridDensity === 8) {
-      return 'grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8';
+      return cn(
+        UI_GRID_SPACED_CLASSNAME,
+        'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8'
+      );
     }
-    return 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+    return cn(UI_GRID_RELAXED_CLASSNAME, 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4');
   }, [settings.viewMode, settings.gridDensity]);
 
   const availableTagsInScope = useMemo((): TagRecord[] => {

@@ -12,6 +12,16 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 
 const toastMock = vi.fn();
 
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-react')>();
+  return {
+    ...actual,
+    ArrowLeft: () => null,
+    RefreshCcw: () => null,
+    Settings2: () => null,
+  };
+});
+
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
@@ -46,11 +56,17 @@ vi.mock('@/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch',
   PromptExploderDocsTooltipSwitch: () => null,
 }));
 
+vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
+  SettingsFieldsRenderer: () => null,
+}));
+
 vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui')>();
   return {
     ...actual,
     useToast: () => ({ toast: toastMock }),
+    AdminAiEyebrow: ({ section }: { section: string }) => <span>{section}</span>,
+    Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     SectionHeader: ({ title, description, actions }: { title: string; description?: string; actions?: React.ReactNode }) => (
       <section>
         <h1>{title}</h1>
@@ -124,6 +140,34 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         ))}
       </select>
     ),
+    FormActions: ({
+      children,
+      onSave,
+      onCancel,
+      saveText,
+      cancelText,
+      isDisabled,
+      isSaving,
+    }: {
+      children?: React.ReactNode;
+      onSave?: () => void;
+      onCancel?: () => void;
+      saveText?: string;
+      cancelText?: string;
+      isDisabled?: boolean;
+      isSaving?: boolean;
+    }) => (
+      <div>
+        <button type='button' onClick={onSave} disabled={isDisabled || isSaving}>
+          {saveText ?? 'Save'}
+        </button>
+        <button type='button' onClick={onCancel}>
+          {cancelText ?? 'Cancel'}
+        </button>
+        {children}
+      </div>
+    ),
+    DocsTooltipEnhancer: () => null,
     SettingsFieldsRenderer: () => null,
   };
 });

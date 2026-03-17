@@ -46,7 +46,7 @@ export async function getKangurDuelLobbyHandler(
     : await listKangurPublicDuelLobby({
         ...(Number.isFinite(limit) ? { limit } : {}),
       });
-  const inviteCount = response.entries.filter((entry: any) => entry.visibility === 'private').length;
+  const inviteCount = response.entries.filter((entry) => entry.visibility === 'private').length;
   const publicCount = response.entries.length - inviteCount;
 
   void logKangurServerEvent({

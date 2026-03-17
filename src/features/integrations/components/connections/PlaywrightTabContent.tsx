@@ -8,7 +8,7 @@ import {
 } from '@/features/integrations/context/IntegrationsContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { Button, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, FormSection, FormField, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 
@@ -53,7 +53,7 @@ export function PlaywrightTabContent(): React.JSX.Element {
         ) : playwrightPersonas.length === 0 ? (
           <p className='mt-4 text-xs text-gray-500'>No personas yet. Create one in settings.</p>
         ) : (
-          <div className='mt-4 grid gap-4 md:grid-cols-2'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-4 md:grid-cols-2`}>
             <FormField
               label='Persona'
               description='Selecting a persona overwrites the settings below.'

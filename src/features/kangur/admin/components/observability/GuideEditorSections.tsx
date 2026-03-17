@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Badge, Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import type { KangurAiTutorOnboardingValidationField, KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import { useKangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditorContext';
 import { SURFACE_OPTIONS, FOCUS_KIND_OPTIONS, stringifyLineList, parseLineList } from './guide-editor-utils';
@@ -105,7 +106,7 @@ export function IdentitySection(): React.JSX.Element | null {
   if (!selectedEntry) return null;
 
   return (
-    <div className='grid gap-4 md:grid-cols-2'>
+    <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
       <FormField label='Entry title'>
         <FieldValidationWrapper field='title'>
           <Input
@@ -144,7 +145,7 @@ export function SurfaceFocusSection(): React.JSX.Element | null {
   if (!selectedEntry) return null;
 
   return (
-    <div className='grid gap-4 md:grid-cols-4'>
+    <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-4`}>
       <FormField label='Surface'>
         <select
           value={selectedEntry.surface ?? ''}
@@ -272,7 +273,7 @@ export function KnowledgeSourceSection(): React.JSX.Element | null {
   if (!selectedEntry) return null;
 
   return (
-    <div className='grid gap-4 lg:grid-cols-2'>
+    <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
       <FormField label='Hints' description='One hint per line. Keep them non-spoiler.'>
         <FieldValidationWrapper field='hints'>
           <Textarea
@@ -315,7 +316,7 @@ export function MatchingSection(): React.JSX.Element | null {
   if (!selectedEntry) return null;
 
   return (
-    <div className='grid gap-4 lg:grid-cols-2'>
+    <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
       <FormField
         label='Focus id prefixes'
         description='One focus anchor id prefix per line. Use these for exact section matching.'
@@ -357,7 +358,7 @@ export function RelatedContentSection(): React.JSX.Element | null {
   if (!selectedEntry) return null;
 
   return (
-    <div className='grid gap-4 lg:grid-cols-2'>
+    <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
       <FormField label='Related games' description='One game hint or game label per line.'>
         <FieldValidationWrapper field='relatedGames'>
           <Textarea

@@ -379,9 +379,9 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           onOpenChange={setCreateLearnerModalOpen}
           overlayVariant='standard'
           contentSize='md'
-          contentProps={{
+        contentProps={{
           'data-testid': 'parent-create-learner-modal',
-        } as any}
+        }}
         >
           <KangurDialogHeader
             title='Nowy profil ucznia'
@@ -514,7 +514,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           onEscapeKeyDown: () => setIsProfileMetricsModalOpen(false),
           onInteractOutside: () => setIsProfileMetricsModalOpen(false),
           onPointerDownOutside: () => setIsProfileMetricsModalOpen(false),
-        } as any}
+        }}
       >
         <KangurDialogHeader
           title='Szczegóły profilu ucznia'
@@ -698,7 +698,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           onEscapeKeyDown: () => setIsEditLearnerModalOpen(false),
           onInteractOutside: () => setIsEditLearnerModalOpen(false),
           onPointerDownOutside: () => setIsEditLearnerModalOpen(false),
-        } as any}
+        }}
       >
         <KangurDialogHeader
           title='Edytuj profil ucznia'

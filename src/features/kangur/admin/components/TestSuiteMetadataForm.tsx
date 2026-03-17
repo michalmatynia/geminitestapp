@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { FormField, Input, Switch, Textarea } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { TestSuiteFormData } from '../../test-suites';
 
@@ -30,7 +31,7 @@ export function TestSuiteMetadataForm(props: {
          aria-label='Optional description of this test suite' title='Optional description of this test suite'/>
       </FormField>
 
-      <div className='grid gap-4 sm:grid-cols-3'>
+      <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} sm:grid-cols-3`}>
         <FormField label='Year'>
           <Input
             value={formData.year}

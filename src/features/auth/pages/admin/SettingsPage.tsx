@@ -23,6 +23,7 @@ import {
   Checkbox,
   Alert,
   SelectSimple,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -270,7 +271,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
           </Button>
         }
       >
-        <div className='grid gap-4 md:grid-cols-2 mt-4'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
           <FormField label='Minimum password length'>
             <Input
               type='number'

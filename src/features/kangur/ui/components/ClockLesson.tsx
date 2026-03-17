@@ -29,6 +29,7 @@ import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primit
 import {
   KANGUR_PENDING_STEP_PILL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
+  KANGUR_WRAP_ROW_ROOMY_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
@@ -196,7 +197,7 @@ const HOURS_SLIDES: LessonSlide[] = [
     tts: 'Krótka wskazówka pokazuje godzinę. Na tej sekcji patrzymy tylko na nią.',
     content: (
       <KangurLessonStack className='text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
+        <div className={cn(KANGUR_WRAP_ROW_ROOMY_CLASSNAME, 'justify-center')}>
           <AnalogClock
             hours={3}
             minutes={0}
@@ -232,7 +233,7 @@ const HOURS_SLIDES: LessonSlide[] = [
     tts: 'Gdy jest pełna godzina, odczytujemy tylko godzinę z krótkiej wskazówki.',
     content: (
       <KangurLessonStack className='text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
+        <div className={cn(KANGUR_WRAP_ROW_ROOMY_CLASSNAME, 'justify-center')}>
           <AnalogClock
             hours={1}
             minutes={0}
@@ -336,7 +337,7 @@ const MINUTES_SLIDES: LessonSlide[] = [
     tts: 'Każdy numer to kolejne pięć minut: 1 to 5, 2 to 10, 3 to 15 i tak dalej.',
     content: (
       <KangurLessonStack className='text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
+        <div className={cn(KANGUR_WRAP_ROW_ROOMY_CLASSNAME, 'justify-center')}>
           <AnalogClock
             hours={12}
             minutes={15}
@@ -440,7 +441,7 @@ const COMBINED_SLIDES: LessonSlide[] = [
     tts: 'Długa wskazówka na 3 to kwadrans po, a na 9 to kwadrans do następnej godziny.',
     content: (
       <KangurLessonStack className='text-center'>
-        <div className='flex gap-6 justify-center flex-wrap'>
+        <div className={cn(KANGUR_WRAP_ROW_ROOMY_CLASSNAME, 'justify-center')}>
           <AnalogClock hours={5} minutes={15} label='5:15 - kwadrans po 5' />
           <AnalogClock hours={5} minutes={45} label='5:45 - kwadrans do 6' />
         </div>

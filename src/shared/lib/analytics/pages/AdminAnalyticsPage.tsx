@@ -25,6 +25,8 @@ import {
   SelectSimple,
   StandardDataTablePanel,
   StatusBadge,
+  UI_GRID_RELAXED_CLASSNAME,
+  UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -71,7 +73,7 @@ function AnalyticsMetricsGrid(): React.JSX.Element {
   ] as const;
 
   return (
-    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+    <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 lg:grid-cols-4`}>
       {metrics.map((metric) => (
         <MetadataItem
           key={metric.label}
@@ -140,7 +142,7 @@ function AnalyticsTopStats(): React.JSX.Element {
   const summary = summaryQuery.data;
 
   return (
-    <div className='mt-6 grid gap-6 lg:grid-cols-2'>
+    <div className={`${UI_GRID_ROOMY_CLASSNAME} mt-6 lg:grid-cols-2`}>
       <AnalyticsStatCard
         title='Top Pages'
         rows={(summary?.topPages ?? []).map((item) => ({
@@ -352,7 +354,9 @@ function AnalyticsEventDetails({ event }: AnalyticsEventDetailsProps): React.JSX
   ];
 
   return (
-    <div className='grid gap-4 text-xs text-gray-300 md:grid-cols-2 lg:grid-cols-3'>
+    <div
+      className={`${UI_GRID_RELAXED_CLASSNAME} text-xs text-gray-300 md:grid-cols-2 lg:grid-cols-3`}
+    >
       {detailItems.map((detail) => (
         <DetailItem key={detail.label} label={detail.label} value={detail.value} />
       ))}

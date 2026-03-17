@@ -10,7 +10,7 @@ import { memo, useCallback } from 'react';
 import type { JSX } from 'react';
 
 export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
-  const { authMode, callbackUrl, closeLoginModal, dismissLoginModal, isOpen, isRouteDriven } =
+  const { closeLoginModal, isOpen, isRouteDriven } =
     useKangurLoginModal();
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -30,19 +30,19 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
       contentSize='md'
       contentProps={{
         'data-testid': 'kangur-login-modal',
-        onEscapeKeyDown: (event: KeyboardEvent) => {
+        onEscapeKeyDown: (event) => {
           if (!isRouteDriven) {
             return;
           }
           event.preventDefault();
           closeLoginModal();
         },
-        onInteractOutside: (event: Event) => {
+        onInteractOutside: (event) => {
           if (isRouteDriven) {
             event.preventDefault();
           }
         },
-      } as any}
+      }}
     >
       <KangurDialogHeader
         title='Zaloguj się'
@@ -59,12 +59,7 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
         }
       />
 
-      <KangurLoginPage
-        defaultCallbackUrl={callbackUrl}
-        onClose={dismissLoginModal}
-        parentAuthMode={authMode}
-        showParentAuthModeTabs={false}
-      />
+      <KangurLoginPage />
     </KangurDialog>
   );
 });

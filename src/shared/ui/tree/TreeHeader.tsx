@@ -1,6 +1,7 @@
 import { cn } from '@/shared/utils';
 
 import { SectionHeader } from '../section-header';
+import { UI_STACK_RELAXED_CLASSNAME } from '../layout';
 
 import type { TreeHeaderProps } from '@/shared/contracts/ui';
 
@@ -15,7 +16,8 @@ export function TreeHeader(props: TreeHeaderProps): React.JSX.Element {
     return (
       <div
         className={cn(
-          'flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between',
+          UI_STACK_RELAXED_CLASSNAME,
+          'lg:flex-row lg:items-center lg:justify-between',
           className
         )}
       >

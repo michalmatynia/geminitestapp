@@ -4,6 +4,7 @@ import type { SectionHeaderRefreshConfig } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { RefreshButton } from './RefreshButton';
+import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from './layout';
 
 
 type SectionHeaderSize = 'lg' | 'md' | 'sm' | 'xs' | 'xxs';
@@ -62,7 +63,8 @@ export function SectionHeader({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between',
+        UI_STACK_RELAXED_CLASSNAME,
+        'lg:flex-row lg:items-center lg:justify-between',
         className
       )}
     >
@@ -70,7 +72,7 @@ export function SectionHeader({
         {' '}
         {/* Added flex-1 and min-w-0 for better flex behavior */}
         {eyebrow ? <div className='text-sm text-muted-foreground'>{eyebrow}</div> : null}
-        <div className='flex items-center gap-3'>
+        <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
           {icon ? <div className='shrink-0'>{icon}</div> : null}
           {typeof title === 'string' ? (
             <h1

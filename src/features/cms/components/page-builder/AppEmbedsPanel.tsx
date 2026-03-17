@@ -12,6 +12,8 @@ import {
   LoadingState,
   SectionHeader,
   SimpleSettingsList,
+  UI_CENTER_ROW_CLASSNAME,
+  UI_CENTER_ROW_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 export function AppEmbedsPanel({
@@ -55,8 +57,8 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
             const isEnabled = enabled.has(item.id);
             const checkboxId = `app-embed-enabled-${item.id}`;
             return (
-              <div className='flex items-center gap-4'>
-                <div className='flex items-center gap-2 text-xs text-gray-300'>
+              <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
+                <div className={`${UI_CENTER_ROW_CLASSNAME} text-xs text-gray-300`}>
                   <Checkbox
                     id={checkboxId}
                     checked={isEnabled}

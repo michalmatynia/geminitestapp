@@ -11,6 +11,7 @@ import {
   FormSection,
   CompactEmptyState,
   Card,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
@@ -77,7 +78,7 @@ export function MetricsTab(): React.JSX.Element {
         description='Auto-refreshing telemetry from analytics, system logs, and AI insight runs.'
       />
 
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormSection
           title='General Analytics'
           titleIcon={<Activity className='size-4 text-emerald-400' />}
@@ -152,7 +153,7 @@ export function MetricsTab(): React.JSX.Element {
         title='AI Insight Runs'
         description='Recent results from scheduled Brain audits.'
       >
-        <div className='grid gap-4 md:grid-cols-3 mt-2'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-3 mt-2`}>
           <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
             <div className='flex items-center justify-between'>
               <span className='text-[11px] font-medium text-emerald-300 uppercase'>

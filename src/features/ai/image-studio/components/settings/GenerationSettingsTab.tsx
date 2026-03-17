@@ -4,7 +4,15 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { FormField, FormSection, Input, SelectSimple, Textarea, Hint } from '@/shared/ui';
+import {
+  FormField,
+  FormSection,
+  Hint,
+  Input,
+  SelectSimple,
+  Textarea,
+  UI_GRID_ROOMY_CLASSNAME,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -100,7 +108,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
             </div>
           </div>
 
-          <div className='grid gap-6 lg:grid-cols-2'>
+          <div className={`${UI_GRID_ROOMY_CLASSNAME} lg:grid-cols-2`}>
             <div className='space-y-4'>
               <FormField
                 label='Target Generation Model'

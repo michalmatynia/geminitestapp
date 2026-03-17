@@ -1,0 +1,141 @@
+'use client';
+
+import React from 'react';
+import { createPortal } from 'react-dom';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { cn } from '@/features/kangur/shared/utils';
+import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
+import type { DraggableBallProps, BallProps, SlotZoneProps } from './types';
+import { getRectDropZoneSurface } from './utils';
+
+const dragPortal = typeof document === 'undefined' ? null : document.body;
+
+export function Ball({ ball, small = false, isSelected = false }: BallProps & { isSelected?: boolean }): React.JSX.Element {
+  const sizeClass = small ? 'w-9 h-9 text-sm' : 'w-14 h-14 text-lg';
+
+  return (
+    <div
+      className={cn(
+        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none`,
+        isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
+      )}
+    >
+      <span className='text-white font-extrabold'>{ball.num}</span>
+    </div>
+  );
+}
+
+export function DraggableBall({
+  ball,
+  index,
+  isDragDisabled = false,
+  small = false,
+  isSelected = false,
+  onSelect,
+}: DraggableBallProps): React.ReactElement | React.ReactPortal {
+  const draggableBall = ball;
+  const dragDisabled = isDragDisabled;
+  const selected = isSelected;
+  const compact = small;
+
+  return (
+    <Draggable
+      draggableId={draggableBall.id}
+      index={index}
+      isDragDisabled={dragDisabled}
+      disableInteractiveElementBlocking
+    >
+      {(draggableProvided, snapshot) => {
+        const content = (
+          <button
+            type='button'
+            ref={draggableProvided.innerRef}
+            {...draggableProvided.draggableProps}
+            {...draggableProvided.dragHandleProps}
+            className={cn(
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              selected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white',
+              dragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+            )}
+            aria-label={`Piłka: ${draggableBall.num}`}
+            aria-pressed={selected}
+            disabled={dragDisabled}
+            onClick={(event) => {
+              event.preventDefault();
+              if (dragDisabled || !onSelect) return;
+              onSelect();
+            }}
+          >
+            <Ball ball={draggableBall} small={compact} isSelected={selected} />
+          </button>
+        );
+
+        if (snapshot.isDragging && dragPortal) {
+          return createPortal(content, dragPortal);
+        }
+
+        return content;
+      }}
+    </Draggable>
+  );
+}
+
+export function SlotZone({
+  id,
+  items,
+  label,
+  checked,
+  correct,
+  selectedBallId,
+  onSelectBall,
+}: SlotZoneProps): React.JSX.Element {
+  const slotZoneTestId = `adding-ball-${id}`;
+  const dragDisabled = checked;
+  const selectedId = selectedBallId;
+  const handleSelectBall = onSelectBall;
+
+  return (
+    <Droppable droppableId={id} direction='horizontal'>
+      {(provided, snapshot) => {
+        const surface = getRectDropZoneSurface({
+          isDraggingOver: snapshot.isDraggingOver,
+          checked,
+          correct,
+        });
+
+        return (
+          <div>
+            <p className='mb-1 text-center text-xs [color:var(--kangur-page-muted-text)]'>
+              {label}
+            </p>
+            <KangurInfoCard
+              ref={provided.innerRef}
+              accent={surface.accent}
+              className={cn(
+                surface.className,
+                'min-h-[52px] min-w-[60px] w-full max-w-[160px]'
+              )}
+              data-testid={slotZoneTestId}
+              padding='sm'
+              tone={surface.tone}
+              {...provided.droppableProps}
+            >
+              {items.map((ball, i) => (
+                <DraggableBall
+                  key={ball.id}
+                  ball={ball}
+                  index={i}
+                  isDragDisabled={dragDisabled}
+                  small
+                  isSelected={selectedId === ball.id}
+                  onSelect={handleSelectBall ? () => handleSelectBall(ball.id) : undefined}
+                />
+              ))}
+              {provided.placeholder}
+            </KangurInfoCard>
+          </div>
+        );
+      }}
+    </Droppable>
+  );
+}

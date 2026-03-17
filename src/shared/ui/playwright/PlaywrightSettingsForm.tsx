@@ -19,6 +19,7 @@ import {
   Input,
   SelectSimple,
   ToggleRow,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
 export type {
@@ -150,7 +151,7 @@ function EmulationSection(): ReactElement {
 function TimeoutsSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <div className='grid gap-4 md:grid-cols-3'>
+    <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-3`}>
       <FormSection variant='subtle-compact' className='p-3'>
         <FormField label='SlowMo (ms)'>
           <Input
@@ -245,7 +246,7 @@ function DelayInputs(props: {
   const { settings, setSettings } = usePlaywrightSettings();
 
   return (
-    <div className='grid gap-4 md:grid-cols-2'>
+    <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
       <FormSection variant='subtle-compact' className='p-3'>
         <FormField label={`${label} min`}>
           <Input
@@ -313,7 +314,7 @@ function ProxySection(): ReactElement {
               }
              aria-label='http://host:port' title='http://host:port'/>
           </FormField>
-          <div className='grid gap-4 md:grid-cols-2'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
             <FormField label='Proxy username'>
               <Input
                 type='text'

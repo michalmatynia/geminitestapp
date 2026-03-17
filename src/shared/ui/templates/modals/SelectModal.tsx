@@ -5,6 +5,7 @@ import { useState, useCallback, useMemo } from 'react';
 import type { SelectOption } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { FormModal } from '@/shared/ui/FormModal';
+import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 import { SearchInput } from '@/shared/ui/search-input';
 import { cn } from '@/shared/utils';
 
@@ -107,7 +108,7 @@ function SelectModalRuntime(): React.JSX.Element {
       isSaveDisabled={selectedIds.size === 0}
       isSaving={loading}
     >
-      <div className='flex flex-col gap-4'>
+      <div className={UI_STACK_RELAXED_CLASSNAME}>
         {searchable && (
           <SearchInput
             placeholder='Search options...'

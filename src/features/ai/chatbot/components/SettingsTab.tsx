@@ -20,6 +20,7 @@ import {
   FormField,
   ToggleRow,
   FormActions,
+  UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -136,7 +137,7 @@ export function SettingsTab(): React.JSX.Element {
   return (
     <div className='space-y-6 p-4'>
       <FormSection title='General Settings' variant='subtle' className='p-4'>
-        <div className='grid gap-4 md:grid-cols-2 mt-4'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
           <FormField label='AI Routing'>
             <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2'>
               <div className='text-xs font-medium text-gray-200'>
@@ -196,7 +197,7 @@ export function SettingsTab(): React.JSX.Element {
             No agent personas yet. Create one in Agent Creator.
           </p>
         ) : (
-          <div className='grid gap-4 md:grid-cols-2 mt-4'>
+          <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
             <FormField
               label='Persona'
               description='The selected persona is saved with new chat sessions and can retrieve its own memory bank.'
@@ -249,7 +250,7 @@ export function SettingsTab(): React.JSX.Element {
           ) : playwrightPersonas.length === 0 ? (
             <p className='text-xs text-gray-500 mt-4'>No personas yet. Create one in settings.</p>
           ) : (
-            <div className='grid gap-4 md:grid-cols-2 mt-4'>
+            <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 mt-4`}>
               <FormField
                 label='Persona'
                 description='Selecting a persona updates the headless setting.'

@@ -35,9 +35,13 @@ for (const routeEntry of routes) {
       await page.waitForLoadState('domcontentloaded');
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     } else {
+      const navigationWaitUntil =
+        routeEntry.navigationWaitUntil ?? 'domcontentloaded';
+      const navigationTimeoutMs =
+        routeEntry.navigationTimeoutMs ?? PUBLIC_ROUTE_TIMEOUT_MS;
       await page.goto(routeEntry.route, {
-        waitUntil: 'domcontentloaded',
-        timeout: PUBLIC_ROUTE_TIMEOUT_MS,
+        waitUntil: navigationWaitUntil,
+        timeout: navigationTimeoutMs,
       });
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     }

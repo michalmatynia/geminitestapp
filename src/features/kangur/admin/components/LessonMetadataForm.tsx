@@ -3,6 +3,12 @@ import React from 'react';
 import { KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog';
 import { KANGUR_LESSON_COMPONENT_OPTIONS } from '@/features/kangur/settings';
 import { FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
+import {
+  KANGUR_CENTER_ROW_RELAXED_CLASSNAME,
+  KANGUR_GRID_LOOSE_CLASSNAME,
+  KANGUR_GRID_RELAXED_CLASSNAME,
+  KANGUR_GRID_SPACED_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 import { LESSON_CONTENT_MODE_OPTIONS } from '../constants';
 
@@ -14,6 +20,8 @@ export function LessonMetadataForm(props: {
   onComponentChange: (componentId: string) => void;
 }): React.JSX.Element {
   const { formData, setFormData, onComponentChange } = props;
+  const isAgeGroup = (value: string): value is LessonFormData['ageGroup'] =>
+    KANGUR_AGE_GROUPS.some((group) => group.id === value);
   const selectedComponentLabel =
     KANGUR_LESSON_COMPONENT_OPTIONS.find((option) => option.value === formData.componentId)
       ?.label ?? formData.componentId;
@@ -29,7 +37,9 @@ export function LessonMetadataForm(props: {
     formData.contentMode;
 
   return (
-    <div className='grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]'>
+    <div
+      className={`${KANGUR_GRID_LOOSE_CLASSNAME} xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]`}
+    >
       <div className='space-y-5'>
         <div className='overflow-hidden rounded-3xl border border-border/60 bg-[linear-gradient(135deg,rgba(12,18,32,0.96),rgba(17,38,68,0.86))] p-5 shadow-[0_18px_55px_-32px_rgba(34,197,94,0.38)]'>
           <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200/80'>
@@ -42,7 +52,7 @@ export function LessonMetadataForm(props: {
             This editor keeps the learner-facing label, rendering strategy, and visibility state in
             one place so new lessons are easier to create consistently.
           </div>
-          <div className='mt-4 grid gap-3 md:grid-cols-4'>
+          <div className={`${KANGUR_GRID_SPACED_CLASSNAME} mt-4 md:grid-cols-4`}>
             <div className='rounded-2xl border border-white/10 bg-white/5 p-3'>
               <div className='text-[11px] font-semibold uppercase tracking-wide text-slate-400'>
                 Lesson type
@@ -72,7 +82,7 @@ export function LessonMetadataForm(props: {
           </div>
         </div>
 
-        <div className='grid gap-4 md:grid-cols-3'>
+        <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} md:grid-cols-3`}>
           <div className='rounded-3xl border border-border/50 bg-card/30 p-4'>
             <FormField label='Lesson Type'>
               <SelectSimple
@@ -90,8 +100,8 @@ export function LessonMetadataForm(props: {
                 size='sm'
                 value={formData.ageGroup}
                 onValueChange={(value: string): void => {
-                  if (!KANGUR_AGE_GROUPS.some((group) => group.id === value)) return;
-                  setFormData((current) => ({ ...current, ageGroup: value as any }));
+                  if (!isAgeGroup(value)) return;
+                  setFormData((current) => ({ ...current, ageGroup: value }));
                 }}
                 options={ageGroupOptions}
                 triggerClassName='h-10'
@@ -115,7 +125,7 @@ export function LessonMetadataForm(props: {
         </div>
 
         <div className='rounded-3xl border border-border/50 bg-card/25 p-5'>
-          <div className='grid gap-4'>
+          <div className={KANGUR_GRID_RELAXED_CLASSNAME}>
             <FormField label='Title'>
               <Input
                 value={formData.title}
@@ -146,7 +156,7 @@ export function LessonMetadataForm(props: {
           <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground'>
             Lesson badge
           </div>
-          <div className='mt-4 flex items-center gap-4'>
+          <div className={`${KANGUR_CENTER_ROW_RELAXED_CLASSNAME} mt-4`}>
             <div className='flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-400/25 bg-emerald-500/10 text-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'>
               {formData.emoji?.trim() || '📘'}
             </div>

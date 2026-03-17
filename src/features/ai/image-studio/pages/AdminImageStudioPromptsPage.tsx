@@ -9,7 +9,17 @@ import {
   type ImageStudioPromptEntry,
 } from '@/features/ai/image-studio/utils/prompt-library';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Textarea, useToast, EmptyState, CompactEmptyState, Card } from '@/shared/ui';
+import {
+  Button,
+  Card,
+  CompactEmptyState,
+  EmptyState,
+  Input,
+  Label,
+  Textarea,
+  UI_GRID_RELAXED_CLASSNAME,
+  useToast,
+} from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -167,7 +177,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
           </div>
         </div>
 
-        <div className='grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]'>
+        <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-[320px_minmax(0,1fr)]`}>
           <Card variant='subtle-compact' padding='sm' className='space-y-2 bg-card/30'>
             <div className='px-1 text-[11px] text-gray-500'>
               {promptEntries.length} prompt{promptEntries.length === 1 ? '' : 's'}

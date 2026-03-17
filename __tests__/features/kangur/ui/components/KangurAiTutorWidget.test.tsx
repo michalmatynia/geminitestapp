@@ -71,7 +71,10 @@ const {
   },
   audioPlayMock: vi.fn().mockResolvedValue(undefined),
   audioPauseMock: vi.fn(),
-  ...globalThis.__kangurClientErrorMocks(),
+  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
+  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
+  trackKangurClientEventMock: globalThis.__kangurClientErrorMocks().trackKangurClientEventMock,
+  reportKangurClientErrorMock: globalThis.__kangurClientErrorMocks().reportKangurClientErrorMock,
 }));
 
 vi.mock('framer-motion', () => ({

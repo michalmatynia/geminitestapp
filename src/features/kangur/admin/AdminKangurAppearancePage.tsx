@@ -15,6 +15,7 @@ import {
   SelectSimple,
   Alert,
 } from '@/features/kangur/shared/ui';
+import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
@@ -170,7 +171,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
           </Card>
 
           <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
-            <div className='flex flex-col gap-4'>
+            <div className={KANGUR_STACK_RELAXED_CLASSNAME}>
               <p className='text-sm font-medium text-foreground'>
                 Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}”</span> do slotu
               </p>

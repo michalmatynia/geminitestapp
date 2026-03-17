@@ -29,6 +29,7 @@ import {
   ActionMenu,
   DropdownMenuItem,
   FilterPanel,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -206,7 +207,7 @@ export default function SlugsPage(): React.JSX.Element {
           : 'Global route management. Domain zoning is currently disabled.'
       }
       headerActions={
-        <div className='flex items-center gap-3'>
+        <div className={UI_CENTER_ROW_SPACED_CLASSNAME}>
           <ToggleRow
             label='Zoning'
             checked={zoningToggleValue}

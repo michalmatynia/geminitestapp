@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FormSection, FormField, Input } from '@/shared/ui';
+import { FormSection, FormField, Input, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import {
   useAdminFilemakerPersonEditPageActionsContext,
@@ -15,7 +15,7 @@ export function PersonBasicInfoSection(): React.JSX.Element {
 
   return (
     <FormSection title='Basic Information' className='space-y-4 p-4'>
-      <div className='grid gap-4 md:grid-cols-2'>
+      <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
         <FormField label='First Name'>
           <Input
             value={personDraft.firstName ?? ''}

@@ -117,4 +117,98 @@ describe('parseKangurThemeSettings', () => {
       })
     ).toBeNull();
   });
+
+  it('selects the matching slot theme for each appearance mode', () => {
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'default',
+        dailyThemeRaw: 'daily-theme',
+        dawnThemeRaw: 'dawn-theme',
+        sunsetThemeRaw: 'sunset-theme',
+        nightlyThemeRaw: 'nightly-theme',
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('daily-theme');
+
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'dawn',
+        dailyThemeRaw: 'daily-theme',
+        dawnThemeRaw: 'dawn-theme',
+        sunsetThemeRaw: 'sunset-theme',
+        nightlyThemeRaw: 'nightly-theme',
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('dawn-theme');
+
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'sunset',
+        dailyThemeRaw: 'daily-theme',
+        dawnThemeRaw: 'dawn-theme',
+        sunsetThemeRaw: 'sunset-theme',
+        nightlyThemeRaw: 'nightly-theme',
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('sunset-theme');
+
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'dark',
+        dailyThemeRaw: 'daily-theme',
+        dawnThemeRaw: 'dawn-theme',
+        sunsetThemeRaw: 'sunset-theme',
+        nightlyThemeRaw: 'nightly-theme',
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('nightly-theme');
+  });
+
+  it('does not reuse legacy or daily themes when slots are partially configured', () => {
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'dark',
+        dailyThemeRaw: 'daily-theme',
+        dawnThemeRaw: null,
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: null,
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBeNull();
+
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'default',
+        dailyThemeRaw: null,
+        dawnThemeRaw: 'dawn-theme',
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: null,
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBeNull();
+  });
+
+  it('prefers slot themes over legacy payloads when both exist', () => {
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'default',
+        dailyThemeRaw: 'daily-theme',
+        dawnThemeRaw: null,
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: null,
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('daily-theme');
+
+    expect(
+      resolveKangurThemeSettingsRawForMode({
+        mode: 'dark',
+        dailyThemeRaw: null,
+        dawnThemeRaw: null,
+        sunsetThemeRaw: null,
+        nightlyThemeRaw: 'nightly-theme',
+        legacyThemeRaw: 'legacy-theme',
+      })
+    ).toBe('nightly-theme');
+  });
 });

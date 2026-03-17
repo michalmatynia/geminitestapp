@@ -12,6 +12,7 @@ import {
   type KangurPageContentPageKey,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { Badge, Button, Card, FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import {
   KangurPageContentFragmentEditor,
@@ -206,7 +207,7 @@ export function KangurPageContentEntryEditor(
           </div>
         </div>
 
-        <div className='grid gap-4 lg:grid-cols-2'>
+        <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
           <FormField
             label='Canonical section id'
             description='Stable record id used in knowledgeReference.sourceRecordId.'

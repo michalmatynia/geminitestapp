@@ -27,6 +27,7 @@ import {
   KANGUR_STACK_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
@@ -495,7 +496,7 @@ export default function LogicalAnalogiesRelationGame({
             Przeciągnij relację na kartę pary albo kliknij relację i potem kliknij parę. Ikony
             relacji podpowiadają typy zależności.
           </p>
-          <div className='mt-3 flex flex-col gap-2'>
+          <div className={`mt-3 ${KANGUR_STACK_TIGHT_CLASSNAME}`}>
             <p className='text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-600'>
               Ikony relacji
             </p>

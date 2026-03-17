@@ -25,7 +25,11 @@ import {
   KangurInfoCard,
   KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
@@ -824,7 +828,7 @@ export default function DivisionGroupsGame({
                     padding='sm'
                     tone='neutral'
                   >
-                    <div className='flex flex-col gap-2'>
+                    <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                       <p
                         className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
                         role='status'

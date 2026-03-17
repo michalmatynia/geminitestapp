@@ -26,6 +26,13 @@ export function KangurStorefrontAppearanceProvider({
     [storedMode]
   );
   const defaultMode = hydrated ? resolvedMode : (initialMode ?? 'default');
+  const shouldPersistMode = useMemo(() => {
+    const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
+    if (process.env['NODE_ENV'] !== 'production') {
+      return raw !== 'false';
+    }
+    return raw === 'true';
+  }, []);
 
   useEffect(() => {
     setHydrated(true);
@@ -35,6 +42,7 @@ export function KangurStorefrontAppearanceProvider({
     <CmsStorefrontAppearanceProvider
       initialMode={defaultMode}
       storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
+      persistMode={shouldPersistMode}
     >
       {children}
     </CmsStorefrontAppearanceProvider>

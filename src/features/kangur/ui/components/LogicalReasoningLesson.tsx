@@ -21,7 +21,7 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_STACK_TIGHT_CLASSNAME, KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'wnioskowanie' | 'kwantyfikatory' | 'zagadki' | 'podsumowanie' | 'gra';
@@ -114,7 +114,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Zdanie <b>„Jeśli P, to Q"</b> znaczy: gdy P jest prawdziwe, Q też musi być prawdziwe.
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               {
                 rule: 'Jeśli pada deszcz → wezmę parasol.',
@@ -205,7 +205,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead>
             Kwantyfikatory mówią o <b>zasięgu</b> twierdzenia.
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               {
                 icon: '✅',
@@ -245,7 +245,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Zdanie logiczne musi być albo prawdziwe, albo fałszywe. Sprawdzaj każde twierdzenie
             osobno!
           </KangurLessonLead>
-          <div className='flex flex-col gap-2 w-full'>
+          <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} w-full`}>
             {[
               { stmt: '4 + 3 = 7', answer: true, explain: 'Poprawne obliczenie.' },
               { stmt: 'Trójkąt ma 4 boki.', answer: false, explain: 'Trójkąt ma 3 boki.' },

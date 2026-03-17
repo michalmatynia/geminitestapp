@@ -12,7 +12,11 @@ import {
   KangurPanelIntro,
 } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
   addition: 'amber',
@@ -86,7 +90,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
               title='Brak rozegranych sesji.'
             />
           ) : (
-            <div className='flex flex-col gap-2'>
+            <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
               {snapshot.recentSessions.map((session) => {
                 const sessionAccent = resolveSessionAccent(session.operation);
                 return (

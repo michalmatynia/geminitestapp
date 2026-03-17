@@ -10,7 +10,7 @@ import {
   normalizeAiPathsValidationRules,
 } from './defaults';
 
-import type { AiPathsDocAssertion, AiPathsDocsSnapshot } from './docs-registry-adapter';
+import type { AiPathsDocAssertion, AiPathsDocsSnapshot } from './docs-registry-adapter.types';
 
 export const DOCS_INFERENCE_COMPILER_VERSION = '2026-02-19.v1';
 

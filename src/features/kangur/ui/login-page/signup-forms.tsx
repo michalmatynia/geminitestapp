@@ -3,6 +3,11 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useTurnstile } from './use-turnstile';
 import { KANGUR_PARENT_CAPTCHA_SITE_KEY } from './login-constants';
+import {
+  KANGUR_STACK_RELAXED_CLASSNAME,
+  KANGUR_STACK_SPACED_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 type SignupFormProps = {
   email: string;
@@ -57,7 +62,7 @@ export function SignupForm({
     <form
       ref={formRef}
       onSubmit={handleSubmit}
-      className='flex w-full flex-col gap-4'
+      className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
       aria-label='Formularz rejestracji rodzica'
     >
       <div className='flex flex-col gap-1'>
@@ -87,7 +92,7 @@ export function SignupForm({
       </div>
 
       {isCaptchaRequired && KANGUR_PARENT_CAPTCHA_SITE_KEY && (
-        <div className='flex flex-col gap-2'>
+        <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
           <div
             ref={captchaContainerRef}
             className='min-h-[65px] self-center'
@@ -143,7 +148,7 @@ export function VerificationView({
 }): JSX.Element {
   return (
     <div className='flex w-full flex-col gap-6 text-center'>
-      <div className='flex flex-col gap-2'>
+      <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
         <h3 className='text-xl font-bold text-slate-900'>Sprawdź skrzynkę</h3>
         <p className='text-sm text-slate-600'>
           Wysłaliśmy link potwierdzający na adres:
@@ -164,7 +169,7 @@ export function VerificationView({
         </div>
       )}
 
-      <div className='flex flex-col gap-3'>
+      <div className={KANGUR_STACK_SPACED_CLASSNAME}>
         <button
           type='button'
           onClick={onResend}

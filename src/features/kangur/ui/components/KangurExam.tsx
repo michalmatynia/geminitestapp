@@ -40,6 +40,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
@@ -234,7 +235,7 @@ function ExamQuestion({
       <div
         aria-describedby={descriptionId}
         aria-labelledby={headingId}
-        className='flex flex-col gap-2'
+        className={KANGUR_STACK_TIGHT_CLASSNAME}
         role='group'
       >
         {q.choices.map((choice, index) => {
@@ -374,7 +375,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           )}
         </KangurInfoCard>
 
-        <div className='flex flex-col gap-2'>
+        <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
           {question.choices.map((choice, index) => {
             let accent: KangurAccent = 'slate';
             let emphasis: 'neutral' | 'accent' = 'neutral';

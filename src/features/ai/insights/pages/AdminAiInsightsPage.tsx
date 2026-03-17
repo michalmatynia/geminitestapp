@@ -10,16 +10,127 @@ import {
   AI_INSIGHTS_CONTEXT_ROOT_IDS,
   buildAiInsightsWorkspaceContextBundle,
 } from '@/features/ai/insights/context-registry/workspace';
-import { Button, SectionHeader } from '@/shared/ui';
+import type { AiInsightRecord } from '@/shared/contracts';
+import {
+  Button,
+  CompactEmptyState,
+  FormSection,
+  LoadingState,
+  SectionHeader,
+} from '@/shared/ui';
 
-import { AnalyticsInsightsPanel } from '../components/AnalyticsInsightsPanel';
-import { LogInsightsPanel } from '../components/LogInsightsPanel';
-import { RuntimeAnalyticsInsightsPanel } from '../components/RuntimeAnalyticsInsightsPanel';
+import { InsightCard } from '../components/InsightCard';
 import {
   InsightsProvider,
   useInsightsActions,
   useInsightsState,
 } from '../context/InsightsContext';
+
+type InsightQueryLike = {
+  isLoading: boolean;
+  error: Error | null;
+  data?: {
+    insights?: AiInsightRecord[] | null;
+  } | null;
+};
+
+type RunMutationLike = {
+  mutate: () => void;
+  isPending: boolean;
+};
+
+interface InsightsResultPanelProps {
+  title: string;
+  description: string;
+  emptyDescription: string;
+  query: InsightQueryLike;
+  runMutation: RunMutationLike;
+}
+
+function InsightsResultPanel(props: InsightsResultPanelProps): React.JSX.Element {
+  const { title, description, emptyDescription, query, runMutation } = props;
+
+  return (
+    <FormSection
+      title={title}
+      description={description}
+      className='p-4'
+      actions={
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => runMutation.mutate()}
+          disabled={runMutation.isPending}
+        >
+          {runMutation.isPending ? 'Running...' : 'Run'}
+        </Button>
+      }
+    >
+      <div className='mt-3 space-y-3'>
+        {query.isLoading ? (
+          <LoadingState message='Loading insights...' size='sm' className='py-4' />
+        ) : query.error ? (
+          <div className='text-xs text-red-400'>{query.error.message}</div>
+        ) : (query.data?.insights?.length ?? 0) === 0 ? (
+          <CompactEmptyState
+            title='No insights yet'
+            description={emptyDescription}
+            className='py-8'
+          />
+        ) : (
+          query.data?.insights?.map((insight: AiInsightRecord) => (
+            <InsightCard key={insight.id} insight={insight} />
+          ))
+        )}
+      </div>
+    </FormSection>
+  );
+}
+
+function AnalyticsInsightsPanel(): React.JSX.Element {
+  const { analyticsQuery } = useInsightsState();
+  const { runAnalyticsMutation } = useInsightsActions();
+
+  return (
+    <InsightsResultPanel
+      title='Analytics Insights'
+      description='Interaction anomalies, traffic changes, and warnings.'
+      emptyDescription='Run analytics analysis to identify traffic changes and anomalies.'
+      query={analyticsQuery}
+      runMutation={runAnalyticsMutation}
+    />
+  );
+}
+
+function RuntimeAnalyticsInsightsPanel(): React.JSX.Element {
+  const { runtimeAnalyticsQuery } = useInsightsState();
+  const { runRuntimeAnalyticsMutation } = useInsightsActions();
+
+  return (
+    <InsightsResultPanel
+      title='Runtime Insights'
+      description='AI Paths runtime performance, migration parity, and rollout risks.'
+      emptyDescription='Run runtime analysis to inspect execution quality and kernel parity risks.'
+      query={runtimeAnalyticsQuery}
+      runMutation={runRuntimeAnalyticsMutation}
+    />
+  );
+}
+
+function LogInsightsPanel(): React.JSX.Element {
+  const { logsQuery } = useInsightsState();
+  const { runLogsMutation } = useInsightsActions();
+
+  return (
+    <InsightsResultPanel
+      title='Log Insights'
+      description='Error patterns, regressions, and suggested fixes.'
+      emptyDescription='Run log analysis to identify error patterns and suggested fixes.'
+      query={logsQuery}
+      runMutation={runLogsMutation}
+    />
+  );
+}
 
 function AiInsightsContextRegistrySource(): React.JSX.Element {
   const { analyticsQuery, runtimeAnalyticsQuery, logsQuery } = useInsightsState();

@@ -82,9 +82,11 @@ type KangurNavActionConfig = {
   targetPageKey?: KangurPrimaryNavigationPage;
   testId?: string;
   title?: string;
-  transitionActive?: boolean;
-  transitionAcknowledgeMs?: number;
-  transitionSourceId?: string;
+  transition?: {
+    active?: boolean;
+    acknowledgeMs?: number;
+    sourceId?: string;
+  };
 };
 
 type KangurPrimaryNavigationProps = {
@@ -571,6 +573,7 @@ export function KangurPrimaryNavigation({
     },
     testId: 'kangur-ai-tutor-toggle',
     title: isTutorHidden ? enableTutorLabel : disableTutorLabel,
+    transition: {},
   };
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
@@ -591,13 +594,15 @@ export function KangurPrimaryNavigation({
     onClick: onHomeClick,
     targetPageKey: 'Game',
     testId: 'kangur-primary-nav-home',
-    transitionActive: isTransitionSourceActive({
-      activeTransitionSourceId,
-      transitionPhase,
-      transitionSourceId: homeTransitionSourceId,
-    }),
-    transitionAcknowledgeMs: onHomeClick ? undefined : NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
-    transitionSourceId: onHomeClick ? undefined : homeTransitionSourceId,
+    transition: {
+      active: isTransitionSourceActive({
+        activeTransitionSourceId,
+        transitionPhase,
+        transitionSourceId: homeTransitionSourceId,
+      }),
+      acknowledgeMs: onHomeClick ? undefined : NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+      sourceId: onHomeClick ? undefined : homeTransitionSourceId,
+    },
   };
   const lessonsAction: KangurNavActionConfig = {
     active: currentPage === 'Lessons',
@@ -612,13 +617,15 @@ export function KangurPrimaryNavigation({
     href: lessonsHref,
     targetPageKey: 'Lessons',
     testId: 'kangur-primary-nav-lessons',
-    transitionActive: isTransitionSourceActive({
-      activeTransitionSourceId,
-      transitionPhase,
-      transitionSourceId: lessonsTransitionSourceId,
-    }),
-    transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
-    transitionSourceId: lessonsTransitionSourceId,
+    transition: {
+      active: isTransitionSourceActive({
+        activeTransitionSourceId,
+        transitionPhase,
+        transitionSourceId: lessonsTransitionSourceId,
+      }),
+      acknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+      sourceId: lessonsTransitionSourceId,
+    },
   };
   const subjectAction: KangurNavActionConfig = {
     ariaLabel: 'Wybierz przedmiot',
@@ -661,13 +668,15 @@ export function KangurPrimaryNavigation({
     href: duelsHref,
     targetPageKey: 'Duels',
     testId: 'kangur-primary-nav-duels',
-    transitionActive: isTransitionSourceActive({
-      activeTransitionSourceId,
-      transitionPhase,
-      transitionSourceId: duelsTransitionSourceId,
-    }),
-    transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
-    transitionSourceId: duelsTransitionSourceId,
+    transition: {
+      active: isTransitionSourceActive({
+        activeTransitionSourceId,
+        transitionPhase,
+        transitionSourceId: duelsTransitionSourceId,
+      }),
+      acknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+      sourceId: duelsTransitionSourceId,
+    },
   };
   const parentDashboardAction: KangurNavActionConfig | null = effectiveShowParentDashboard
     ? {
@@ -683,13 +692,15 @@ export function KangurPrimaryNavigation({
       targetPageKey: 'ParentDashboard',
       className: mobileNavItemClassName,
       testId: 'kangur-primary-nav-parent-dashboard',
-      transitionActive: isTransitionSourceActive({
-        activeTransitionSourceId,
-        transitionPhase,
-        transitionSourceId: parentDashboardTransitionSourceId,
-      }),
-      transitionAcknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
-      transitionSourceId: parentDashboardTransitionSourceId,
+      transition: {
+        active: isTransitionSourceActive({
+          activeTransitionSourceId,
+          transitionPhase,
+          transitionSourceId: parentDashboardTransitionSourceId,
+        }),
+        acknowledgeMs: NAVIGATION_TRANSITION_ACKNOWLEDGE_MS,
+        sourceId: parentDashboardTransitionSourceId,
+      },
     }
     : null;
   const kangurAppearanceModes = ['default', 'dawn', 'sunset', 'dark'] as const;

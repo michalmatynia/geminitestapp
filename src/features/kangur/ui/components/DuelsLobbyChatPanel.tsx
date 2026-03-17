@@ -12,6 +12,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_SPACED_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   KANGUR_START_ROW_SPACED_CLASSNAME,
@@ -280,7 +282,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
         aria-busy={isLoading}
       >
         {isLoading && !hasMessages ? (
-          <div className='flex flex-col gap-3'>
+          <div className={KANGUR_STACK_SPACED_CLASSNAME}>
             {Array.from({ length: 3 }, (_, index) => (
               <div
                 key={`chat-skeleton-${index}`}
@@ -294,7 +296,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             Brak wiadomości. Napisz pierwszą, aby rozpocząć rozmowę.
           </div>
         ) : (
-          <div className='flex flex-col gap-3'>
+          <div className={KANGUR_STACK_SPACED_CLASSNAME}>
             {canLoadOlder ? (
               <div className='flex justify-center'>
                 <KangurButton
@@ -309,7 +311,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                 </KangurButton>
               </div>
             ) : null}
-            <ul className='flex flex-col gap-3' role='list'>
+            <ul className={KANGUR_STACK_SPACED_CLASSNAME} role='list'>
               {groupedMessages.map(({ message, isGrouped, isOwn }) => {
                 const avatar = getKangurAvatarById(message.senderAvatarId);
                 const avatarLabel = `${message.senderName} avatar`;
@@ -402,7 +404,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
         </KangurInfoCard>
       ) : null}
 
-      <div className='flex flex-col gap-2'>
+      <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
         <KangurPanelRow className='sm:items-center'>
           <KangurTextField
             value={draft}

@@ -20,6 +20,7 @@ import {
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_LG_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
   type KangurAccent,
@@ -526,7 +527,7 @@ export default function AddingSynthesisGame({
               />
             ) : null}
 
-            <div className='flex flex-col gap-2'>
+            <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
               <h2 className='text-3xl font-extrabold tracking-[-0.03em] [color:var(--kangur-page-text)] sm:text-4xl'>
                 Wynik {summary.score}/{summary.totalNotes}
               </h2>

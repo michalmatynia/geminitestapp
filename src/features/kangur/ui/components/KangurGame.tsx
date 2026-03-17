@@ -45,6 +45,7 @@ import {
   KANGUR_ACCENT_STYLES,
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -175,7 +176,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
           })()}
       </KangurGlassPanel>
 
-      <div className='flex flex-col gap-2'>
+      <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
         {choices.map((choice, index) => {
           let accent: KangurAccent = 'slate';
           let emphasis: 'neutral' | 'accent' = 'neutral';

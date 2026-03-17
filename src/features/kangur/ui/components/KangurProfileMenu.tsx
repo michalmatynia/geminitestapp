@@ -72,9 +72,11 @@ export function KangurProfileMenu({
       href={resolvedHref}
       size='md'
       targetPageKey='LearnerProfile'
-      transitionActive={isTransitionActive}
-      transitionAcknowledgeMs={transitionMs}
-      transitionSourceId={transitionSource ?? undefined}
+      transition={{
+        active: isTransitionActive,
+        acknowledgeMs: transitionMs,
+        sourceId: transitionSource ?? undefined,
+      }}
     >
       {shouldRenderAvatar ? (
         <span className='relative h-[18px] w-[18px] overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm sm:h-5 sm:w-5'>

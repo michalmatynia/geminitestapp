@@ -24,6 +24,7 @@ import {
 import {
   KANGUR_COMPACT_ROW_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -580,7 +581,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
               </div>
             </div>
             <div className='grid kangur-panel-gap sm:grid-cols-3'>
-              <div className='flex flex-col gap-2'>
+              <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                 <KangurMetaText tone='slate'>Data od</KangurMetaText>
                 <KangurTextField
                   type='date'
@@ -590,7 +591,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                   size='sm'
                 />
               </div>
-              <div className='flex flex-col gap-2'>
+              <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                 <KangurMetaText tone='slate'>Data do</KangurMetaText>
                 <KangurTextField
                   type='date'

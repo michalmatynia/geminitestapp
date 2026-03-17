@@ -149,10 +149,13 @@ export function useLessonsLogic() {
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
-  const handleSelectLesson = useCallback((lessonId: string | null): void => {
-    setIsSecretLessonActive(false);
-    setActiveLessonId(lessonId);
-  }, []);
+  const handleSelectLesson = useCallback(
+    (lessonId: string | null, options?: { secret?: boolean }): void => {
+      setIsSecretLessonActive(Boolean(options?.secret));
+      setActiveLessonId(lessonId);
+    },
+    []
+  );
 
   useEffect((): void => {
     if (!activeLessonId) return;

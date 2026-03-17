@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui';
 
 import { AllegroSettings } from '../AllegroSettings';
 import { BaselinkerSettings } from '../BaselinkerSettings';
+import { LinkedInSettings } from '../LinkedInSettings';
 import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
 type SessionMeta = {
@@ -38,6 +39,7 @@ const resolveSessionMeta = (connection: unknown): SessionMeta => {
 export function IntegrationSettingsContent(): React.JSX.Element {
   const {
     isAllegro,
+    isLinkedIn,
     isBaselinker,
     isTradera,
     showPlaywright,
@@ -50,6 +52,8 @@ export function IntegrationSettingsContent(): React.JSX.Element {
     <div>
       {isAllegro ? (
         <AllegroSettings />
+      ) : isLinkedIn ? (
+        <LinkedInSettings />
       ) : isBaselinker ? (
         <BaselinkerSettings />
       ) : (

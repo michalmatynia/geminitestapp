@@ -19,6 +19,7 @@ import {
   KangurPageContainer,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_INLINE_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import {
   withKangurClientError,
@@ -143,7 +144,7 @@ export function PageNotFound(): React.JSX.Element {
                 data-testid='page-not-found-admin-note'
                 description='This could mean that the AI has not implemented this page yet.'
                 label={
-                  <span className='inline-flex items-center gap-2'>
+                  <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
                     <KangurAccentDot
                       accent='amber'
                       aria-hidden='true'

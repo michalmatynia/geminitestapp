@@ -5,7 +5,8 @@ import {
   useIntegrationsApiConsole,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import { GenericApiConsole, type ApiPreset } from '@/shared/ui';
+import type { ApiPreset } from '@/shared/contracts/ui';
+import { GenericApiConsole } from '@/shared/ui';
 
 export function BaseApiConsole(): React.JSX.Element {
   const { connections } = useIntegrationsData();

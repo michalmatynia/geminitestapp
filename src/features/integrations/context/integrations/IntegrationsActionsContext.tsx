@@ -22,6 +22,8 @@ export interface IntegrationsActions {
   handleAllegroDisconnect: () => Promise<void>;
   handleAllegroSandboxToggle: (value: boolean) => Promise<void>;
   handleAllegroSandboxConnect: () => Promise<void>;
+  handleLinkedInAuthorize: () => void;
+  handleLinkedInDisconnect: () => Promise<void>;
   handleBaseApiRequest: () => Promise<void>;
   handleAllegroApiRequest: () => Promise<void>;
   onCloseModal: () => void;

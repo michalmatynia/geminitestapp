@@ -38,6 +38,8 @@ export const kangurLessonComponentIdSchema = z.enum([
   'alphabet_basics',
   'alphabet_syllables',
   'alphabet_words',
+  'alphabet_matching',
+  'alphabet_sequence',
   'clock',
   'calendar',
   'adding',
@@ -98,6 +100,18 @@ export const KANGUR_LESSON_ACTIVITY_IDS = [
 ] as const;
 export const kangurLessonActivityIdSchema = z.enum(KANGUR_LESSON_ACTIVITY_IDS);
 export type KangurLessonActivityId = z.infer<typeof kangurLessonActivityIdSchema>;
+
+export const KANGUR_LESSON_ACTIVITY_TYPES = [
+  'practice-drag-drop',
+  'practice-rhythm',
+  'practice-multiple-choice',
+  'practice-tap-select',
+  'practice-calendar-interactive',
+  'training-drawing',
+  'training-clock',
+] as const;
+export const kangurLessonActivityTypeSchema = z.enum(KANGUR_LESSON_ACTIVITY_TYPES);
+export type KangurLessonActivityType = z.infer<typeof kangurLessonActivityTypeSchema>;
 
 export const kangurLessonNarrationVoiceSchema = z.enum([
   'alloy',

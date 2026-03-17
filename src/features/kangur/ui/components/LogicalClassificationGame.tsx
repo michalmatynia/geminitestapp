@@ -21,7 +21,14 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_ACCENT_STYLES, type KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_STACK_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
   createLessonPracticeReward,
@@ -525,7 +532,7 @@ export default function LogicalClassificationGame({
               : 'Dobra próba! Jeszcze kilka rund i będzie perfekcyjnie.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
@@ -648,8 +655,8 @@ export default function LogicalClassificationGame({
                             }
                           }}
                         >
-                          <div className='flex items-center justify-between mb-2'>
-                            <div className='flex items-center gap-2 text-sm font-bold text-slate-700'>
+                          <div className={`mb-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:justify-between`}>
+                            <div className={`${KANGUR_CENTER_ROW_CLASSNAME} text-sm font-bold text-slate-700`}>
                               <span className='text-lg'>{bin.emoji}</span>
                               {bin.label}
                             </div>
@@ -659,7 +666,7 @@ export default function LogicalClassificationGame({
                               </KangurStatusChip>
                             ) : null}
                           </div>
-                          <div className='flex flex-wrap gap-2'>
+                          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                             {items.map((item, index) => (
                               <DraggableToken
                                 key={item.id}
@@ -697,7 +704,7 @@ export default function LogicalClassificationGame({
           </>
         ) : (
           <KangurInfoCard accent='teal' className='w-full' padding='md' tone='neutral'>
-            <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-3'>
+            <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3'>
               {round.items.map((item) => {
                 const isSelected = selectedIntruderId === item.id;
                 const isCorrect = checked && item.id === round.intruderId;
@@ -742,7 +749,7 @@ export default function LogicalClassificationGame({
         )}
 
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
-          <div className='flex flex-wrap gap-2'>
+          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             {round.type === 'sort' ? (
               <KangurButton size='sm' type='button' variant='surface' onClick={resetRound} disabled={checked}>
                 Wyczyść rundę

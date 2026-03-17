@@ -8,7 +8,7 @@ import type { CmsTheme } from '@/shared/contracts/cms';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { Button, SectionHeader, FormSection } from '@/shared/ui';
-import { SettingsFieldsRenderer } from '@/shared/contracts/ui';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { THEME_SECTIONS, toSectionId, SAVED_THEME_PREFIX } from './theme/theme-constants';
 import { ThemeBrandSection } from './theme/ThemeBrandSection';

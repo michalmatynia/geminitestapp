@@ -2,7 +2,7 @@ import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(fr
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
-import { FrontendLayoutClient } from '@/shared/components/FrontendLayoutClient';
+import { FrontendLayoutClient } from './_components/FrontendLayoutClient';
 
 import type { JSX } from 'react';
 

@@ -5,10 +5,8 @@ import React, { useCallback, useMemo } from 'react';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Input, Tag } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import type { ContextDraft } from '../hooks/useChatbotContextState';
 

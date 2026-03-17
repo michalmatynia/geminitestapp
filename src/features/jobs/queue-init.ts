@@ -120,6 +120,7 @@ export const initializeQueues = (): void => {
       import('@/server/queues/product-sync'),
       import('@/server/queues/case-resolver-ocr'),
       import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
+      import('@/server/queues/kangur'),
     ]);
 
     // Call specialized startup functions if they exist (to enqueue repeat jobs, etc.)
@@ -140,6 +141,11 @@ export const initializeQueues = (): void => {
     )?.();
     (
       (queueModules[14] as Record<string, unknown>)['startSystemLogAlertsQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+    (
+      (queueModules[15] as Record<string, unknown>)['startKangurSocialSchedulerQueue'] as
         | (() => void)
         | undefined
     )?.();

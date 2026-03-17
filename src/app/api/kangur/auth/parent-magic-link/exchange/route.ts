@@ -4,11 +4,15 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
 export const POST = apiHandler(
   async () => {
-    await auth().catch(() => null);
+    await auth().catch((error) => {
+      void ErrorSystem.captureException(error);
+      return null;
+    });
     return NextResponse.json(
       {
         ok: false,

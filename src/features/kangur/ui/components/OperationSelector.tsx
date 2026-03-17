@@ -17,6 +17,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurOperationSelectorState } from '@/features/kangur/ui/hooks/useKangurOperationSelectorState';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
@@ -152,7 +153,12 @@ export default function OperationSelector({
                         >
                           {operation.emoji}
                         </KangurIconBadge>
-                        <div className='flex w-full flex-row flex-wrap items-start gap-2 sm:w-auto sm:flex-col sm:items-end'>
+                        <div
+                          className={cn(
+                            KANGUR_WRAP_START_ROW_CLASSNAME,
+                            'w-full flex-row sm:w-auto sm:flex-col sm:items-end'
+                          )}
+                        >
                           <KangurStatusChip
                             accent={operation.hasPriorityAssignment ? operation.accent : 'slate'}
                             className='text-[11px] font-semibold'

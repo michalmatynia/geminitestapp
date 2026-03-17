@@ -22,10 +22,13 @@ import {
   KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_COMPACT_ROW_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ActivityTypes } from '@/shared/constants/observability';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
@@ -436,7 +439,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         }
         setInteractionHistory(history);
       })
-      .catch(() => {
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
         if (!isActive) {
           return;
         }
@@ -489,7 +493,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                 padding='lg'
               >
                 <div className='flex flex-col kangur-panel-gap'>
-                  <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
+                  <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
                     <div>
                       <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                         {entry.lesson.title}
@@ -551,7 +555,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       >
         <div className='mt-3 rounded-[18px] border border-indigo-100/80 bg-white/70 p-4'>
           <div className='flex flex-col kangur-panel-gap'>
-            <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+            <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
               <KangurMetaText tone='slate'>Filtry</KangurMetaText>
               <div
                 className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
@@ -652,7 +656,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                 className='rounded-[18px] border border-indigo-200/70 bg-white/80 px-4 py-3'
                 data-testid={`parent-monitoring-interaction-${entry.id}`}
               >
-                <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
+                <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
                   <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
                     {entry.label}
                   </div>

@@ -23,6 +23,7 @@ import {
 import { KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 import { runNeo4jStatements } from '@/shared/lib/neo4j/client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import {
   cosineSimilarity,
@@ -60,8 +61,6 @@ import {
   resolveGraphQueryMode,
 } from './retrieval/retrieval.logic';
 import { GRAPH_QUERY, VECTOR_GRAPH_QUERY } from './retrieval/retrieval.queries';
-import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-
 
 export type {
   GraphFollowUpAction,
@@ -360,12 +359,30 @@ const hydrateKnowledgeGraphHits = async (
   );
 
   const [tutorContent, nativeGuideStore, pageContentStore, cmsPages] = await Promise.all([
-    needsTutorContent ? getKangurAiTutorContent(locale).catch(() => null) : Promise.resolve(null),
-    needsNativeGuideStore
-      ? getKangurAiTutorNativeGuideStore(locale).catch(() => null)
+    needsTutorContent
+      ? getKangurAiTutorContent(locale).catch((error) => {
+        void ErrorSystem.captureException(error);
+        return null;
+      })
       : Promise.resolve(null),
-    needsPageContentStore ? getKangurPageContentStore(locale).catch(() => null) : Promise.resolve(null),
-    needsCmsPages ? cmsService.getPages().catch(() => [] as Page[]) : Promise.resolve([] as Page[]),
+    needsNativeGuideStore
+      ? getKangurAiTutorNativeGuideStore(locale).catch((error) => {
+        void ErrorSystem.captureException(error);
+        return null;
+      })
+      : Promise.resolve(null),
+    needsPageContentStore
+      ? getKangurPageContentStore(locale).catch((error) => {
+        void ErrorSystem.captureException(error);
+        return null;
+      })
+      : Promise.resolve(null),
+    needsCmsPages
+      ? cmsService.getPages().catch((error) => {
+        void ErrorSystem.captureException(error);
+        return [] as Page[];
+      })
+      : Promise.resolve([] as Page[]),
   ]);
 
   const nativeGuideEntriesById = new Map(
@@ -496,7 +513,10 @@ const resolveCmsPagesFallback = async (
     return [];
   }
 
-  const pages = await cmsService.getPages().catch(() => [] as Page[]);
+  const pages = await cmsService.getPages().catch((error) => {
+    void ErrorSystem.captureException(error);
+    return [] as Page[];
+  });
   const hits: HydratedKnowledgeGraphHit[] = [];
 
   for (const page of pages) {
@@ -824,7 +844,10 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
 
   const queryEmbedding =
     queryMode === 'semantic'
-      ? await generateKangurKnowledgeGraphQueryEmbedding(normalizedQuerySeed).catch(() => null)
+      ? await generateKangurKnowledgeGraphQueryEmbedding(normalizedQuerySeed).catch((error) => {
+        void ErrorSystem.captureException(error);
+        return null;
+      })
       : null;
 
   const lexicalLimit = queryMode === 'website_help' ? 8 : 8;

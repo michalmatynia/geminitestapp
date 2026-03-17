@@ -11,6 +11,8 @@ import {
   type AgentPersonaMoodId,
   type AgentPersonaSettings,
 } from '@/shared/contracts/agents';
+
+export type { AgentPersona, AgentPersonaMood, AgentPersonaMoodId, AgentPersonaSettings };
 import { validationError } from '@/shared/errors/app-error';
 import { sanitizeSvg } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

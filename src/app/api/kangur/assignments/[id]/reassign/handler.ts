@@ -140,7 +140,9 @@ export async function postKangurAssignmentReassignHandler(
     void ErrorSystem.captureException(error);
     await assignmentRepository
       .updateAssignment(assignmentLearnerKey, assignment.id, { archived: false })
-      .catch(() => {});
+      .catch((updateError) => {
+        void ErrorSystem.captureException(updateError);
+      });
     throw error;
   }
 }

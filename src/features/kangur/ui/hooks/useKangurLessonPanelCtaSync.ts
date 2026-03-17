@@ -6,6 +6,7 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurProgressUpdateContext } from '@/features/kangur/services/ports';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { loadProgress } from '@/features/kangur/ui/services/progress';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -36,7 +37,8 @@ export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
           : CTA_PROGRESS_CONTEXT;
       void kangurPlatform.progress
         .update(progress, context)
-        .catch(() => {
+        .catch((error) => {
+          void ErrorSystem.captureException(error);
           // Avoid throwing on CTA-triggered sync failures.
         });
     },

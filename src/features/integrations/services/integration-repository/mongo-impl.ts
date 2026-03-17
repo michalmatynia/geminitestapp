@@ -67,6 +67,14 @@ type IntegrationConnectionDocument = {
   allegroExpiresAt?: Date | null;
   allegroTokenUpdatedAt?: Date | null;
   allegroUseSandbox?: boolean;
+  linkedinAccessToken?: string | null;
+  linkedinRefreshToken?: string | null;
+  linkedinTokenType?: string | null;
+  linkedinScope?: string | null;
+  linkedinExpiresAt?: Date | null;
+  linkedinTokenUpdatedAt?: Date | null;
+  linkedinPersonUrn?: string | null;
+  linkedinProfileUrl?: string | null;
   baseApiToken?: string | null;
   baseTokenUpdatedAt?: Date | null;
   baseLastInventoryId?: string | null;

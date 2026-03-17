@@ -4,9 +4,14 @@ import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/Ka
 import {
   KangurInfoCard,
   KangurIconBadge,
+  KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  type KangurAccent,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/utils/cn';
 
 // ── Session History Sub-components ───────────────────────────────────────────
@@ -33,7 +38,7 @@ export function KangurSessionHistoryAside({
   const xpChipTestId = xpTestId;
 
   return (
-    <div className='flex flex-wrap items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right'>
+    <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right`}>
       <KangurStatusChip accent={scoreChipAccent} data-testid={scoreChipTestId} size='sm'>
         {scoreText}
       </KangurStatusChip>
@@ -114,33 +119,34 @@ export function KangurSessionHistoryRow(props: KangurSessionHistoryRowProps): Re
   return (
     <KangurInfoCard
       accent={accent}
-      className='flex flex-col kangur-panel-gap sm:flex-row sm:items-center'
       data-testid={dataTestId}
       padding='sm'
       tone='accent'
     >
-      <KangurIconSummaryCardContent
-        aside={
-          <KangurSessionHistoryAside
-            durationClassName={durationClassName}
-            durationText={durationText}
-            scoreAccent={scoreAccent}
-            scoreTestId={scoreTestId}
-            scoreText={scoreText}
-            xpTestId={xpTestId}
-            xpText={xpText}
-          />
-        }
-        asideClassName='w-full sm:ml-auto sm:w-auto'
-        className='w-full items-center'
-        contentClassName='flex-1'
-        description={subtitle}
-        descriptionClassName={subtitleClassName}
-        headerClassName='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'
-        icon={<KangurSessionHistoryIcon accent={iconAccent} icon={icon} testId={iconTestId} />}
-        title={title}
-        titleClassName={titleClassName}
-      />
+      <KangurPanelRow className='sm:items-center'>
+        <KangurIconSummaryCardContent
+          aside={
+            <KangurSessionHistoryAside
+              durationClassName={durationClassName}
+              durationText={durationText}
+              scoreAccent={scoreAccent}
+              scoreTestId={scoreTestId}
+              scoreText={scoreText}
+              xpTestId={xpTestId}
+              xpText={xpText}
+            />
+          }
+          asideClassName='w-full sm:ml-auto sm:w-auto'
+          className='w-full items-center'
+          contentClassName='flex-1'
+          description={subtitle}
+          descriptionClassName={subtitleClassName}
+          headerClassName={cn(KANGUR_TIGHT_ROW_CLASSNAME, 'sm:items-start sm:justify-between')}
+          icon={<KangurSessionHistoryIcon accent={iconAccent} icon={icon} testId={iconTestId} />}
+          title={title}
+          titleClassName={titleClassName}
+        />
+      </KangurPanelRow>
     </KangurInfoCard>
   );
 }

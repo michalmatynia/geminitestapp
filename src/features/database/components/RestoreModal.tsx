@@ -3,10 +3,8 @@
 import React, { useMemo, useState } from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 interface RestoreModalProps extends ModalStateProps {
   backupName: string;
@@ -65,7 +63,7 @@ export const RestoreModal = (props: RestoreModalProps): React.JSX.Element | null
       title={title}
       fields={fields}
       values={values}
-      onChange={(vals) => setValues((prev) => ({ ...prev, ...vals }))}
+      onChange={(vals: Partial<RestoreFormState>) => setValues((prev) => ({ ...prev, ...vals }))}
       onSave={handleSave}
       saveText='Restore'
       size={size}

@@ -5,8 +5,9 @@ import {
   useIntegrationsApiConsole,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
+import type { ApiPreset } from '@/shared/contracts/ui';
 import type { IntegrationAllegroApiMethod } from '@/shared/contracts/integrations';
-import { GenericApiConsole, type ApiPreset } from '@/shared/ui';
+import { GenericApiConsole } from '@/shared/ui';
 
 export function AllegroApiConsole(): React.JSX.Element {
   const { connections } = useIntegrationsData();

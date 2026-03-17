@@ -16,6 +16,7 @@ export const kangurPageContentPageKeySchema = z.enum([
   'Tests',
   'LearnerProfile',
   'ParentDashboard',
+  'SocialUpdates',
   'Login',
   'SharedChrome',
 ]);

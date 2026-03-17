@@ -41,7 +41,13 @@ export const withKangurServerError = async <T>(
     const resolvedReport = typeof report === 'function' ? report(error) : report;
     const shouldReport = options.shouldReport?.(error) ?? true;
     if (shouldReport) {
-      reportKangurServerError(error, resolvedReport);
+      void ErrorSystem.captureException(error, {
+        service: resolvedReport.service ?? resolvedReport.source,
+        source: resolvedReport.source,
+        action: resolvedReport.action,
+        description: resolvedReport.description,
+        ...(resolvedReport.context ?? {}),
+      });
     }
     options.onError?.(error);
     if (options.shouldRethrow?.(error)) {
@@ -64,7 +70,13 @@ export const withKangurServerErrorSync = <T>(
     const resolvedReport = typeof report === 'function' ? report(error) : report;
     const shouldReport = options.shouldReport?.(error) ?? true;
     if (shouldReport) {
-      reportKangurServerError(error, resolvedReport);
+      void ErrorSystem.captureException(error, {
+        service: resolvedReport.service ?? resolvedReport.source,
+        source: resolvedReport.source,
+        action: resolvedReport.action,
+        description: resolvedReport.description,
+        ...(resolvedReport.context ?? {}),
+      });
     }
     options.onError?.(error);
     if (options.shouldRethrow?.(error)) {

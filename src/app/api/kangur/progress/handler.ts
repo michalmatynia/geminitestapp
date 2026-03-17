@@ -307,7 +307,8 @@ export async function patchKangurProgressHandler(
         source: ctaSource,
         cta: ctaId ?? null,
       },
-    }).catch(() => {
+    }).catch((error) => {
+      void ErrorSystem.captureException(error);
       // Avoid failing the progress write on activity log issues.
     });
   }
@@ -354,7 +355,8 @@ export async function patchKangurProgressHandler(
     ];
 
     if (activityWrites.length > 0) {
-      void Promise.all(activityWrites).catch(() => {
+      void Promise.all(activityWrites).catch((error) => {
+        void ErrorSystem.captureException(error);
         // Avoid failing the progress write on activity log issues.
       });
     }

@@ -3,7 +3,8 @@
 import { useMemo } from 'react';
 
 import { useProductListingsLogs } from '@/features/integrations/context/ProductListingsContext';
-import { CopyButton, CollapsibleSection, LogList, type LogListEntry } from '@/shared/ui';
+import type { LogListEntry } from '@/shared/contracts/ui';
+import { CopyButton, CollapsibleSection, LogList } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;

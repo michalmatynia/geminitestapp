@@ -517,7 +517,10 @@ export const ensureKangurLessonNarrationAudio = async (input: {
         errorStatus: getErrorStatus(error),
         errorCode: getErrorCode(error),
       },
-    }).catch(() => undefined);
+    }).catch((error) => {
+      void ErrorSystem.captureException(error);
+      return undefined;
+    });
 
     return {
       mode: 'fallback',

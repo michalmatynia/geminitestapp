@@ -9,6 +9,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type {
   FileUploadButtonProps as FileUploadButtonBaseProps,
   FileUploadHelpers,
+  FileUploadTriggerProps,
 } from '@/shared/contracts/ui';
 import { Button, type ButtonProps } from './button';
 import { Input } from './input';
@@ -16,6 +17,7 @@ import { Input } from './input';
 export type FileUploadButtonProps = FileUploadButtonBaseProps &
   Omit<ButtonProps, 'type' | 'onClick'>;
 export type { FileUploadHelpers };
+export type { FileUploadTriggerProps };
 
 const normalizeFiles = (files: File[], multiple?: boolean): File[] =>
   multiple ? files : files.slice(0, 1);
@@ -265,21 +267,6 @@ export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Elemen
     </span>
   );
 }
-
-export type FileUploadTriggerProps = {
-  accept?: string;
-  multiple?: boolean;
-  disabled?: boolean;
-  asChild?: boolean;
-  preserveChildSemantics?: boolean;
-  className?: string;
-  enableDrop?: boolean;
-  enablePaste?: boolean;
-  showProgress?: boolean;
-  onFilesSelected: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
-  onError?: (error: unknown) => void;
-  children: React.ReactNode;
-};
 
 export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Element {
   const {

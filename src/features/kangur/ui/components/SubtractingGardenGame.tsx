@@ -22,8 +22,9 @@ import {
   KangurEquationDisplay,
   KangurGlassPanel,
   KangurInfoCard,
+  KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
@@ -584,7 +585,7 @@ export default function SubtractingGardenGame({
                             ? `Wybrany obiekt: ${selectedToken.emoji}`
                             : 'Wybierz obiekt, aby przenieść go klawiaturą.'}
                         </p>
-                        <div className='flex flex-wrap gap-2'>
+                        <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                           <KangurButton
                             size='sm'
                             type='button'
@@ -607,7 +608,7 @@ export default function SubtractingGardenGame({
                       </div>
                     </KangurInfoCard>
                   </div>
-                  <div className='flex flex-col items-center kangur-panel-gap sm:flex-row sm:justify-between'>
+                  <KangurPanelRow className='items-center sm:justify-between'>
                     <KangurButton
                       className='w-full sm:w-auto sm:min-w-[180px]'
                       onClick={handleCheck}
@@ -633,7 +634,7 @@ export default function SubtractingGardenGame({
                     >
                       {feedbackMessage}
                     </p>
-                  </div>
+                  </KangurPanelRow>
                 </motion.div>
               </AnimatePresence>
             </DragDropContext>

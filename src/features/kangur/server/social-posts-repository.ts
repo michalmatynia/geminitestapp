@@ -9,6 +9,7 @@ import {
   type UpdateKangurSocialPostInput,
 } from '@/shared/contracts/kangur-social-posts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 type KangurSocialPostDoc = Omit<KangurSocialPost, 'createdAt' | 'updatedAt'> & {
   createdAt: Date;
@@ -36,7 +37,14 @@ const ensureIndexes = async (): Promise<void> => {
       collection.createIndex({ publishedAt: -1 }),
       collection.createIndex({ updatedAt: -1 }),
     ]);
-  })();
+  })().catch((error) => {
+    void ErrorSystem.captureException(error, {
+      service: 'kangur.social-posts.repository',
+      action: 'ensureIndexes',
+    });
+    indexesEnsured = null;
+    throw error;
+  });
 
   return indexesEnsured;
 };
@@ -172,7 +180,7 @@ export async function upsertKangurSocialPost(post: KangurSocialPost): Promise<Ka
     { upsert: true, returnDocument: 'after' }
   );
 
-  if (!result.value) {
+  if (!result) {
     return {
       ...normalized,
       createdAt: normalized.createdAt ?? now.toISOString(),
@@ -180,7 +188,7 @@ export async function upsertKangurSocialPost(post: KangurSocialPost): Promise<Ka
     };
   }
 
-  return toSocialPost(result.value);
+  return toSocialPost(result);
 }
 
 export async function updateKangurSocialPost(

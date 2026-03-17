@@ -19,7 +19,6 @@ export const getKangurLessonDocumentRepository =
         try {
           return await repository.listLessonDocuments();
         } catch (error) {
-          void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'listLessonDocuments',
@@ -32,7 +31,6 @@ export const getKangurLessonDocumentRepository =
         try {
           return await repository.replaceLessonDocuments(store);
         } catch (error) {
-          void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'replaceLessonDocuments',
@@ -47,7 +45,6 @@ export const getKangurLessonDocumentRepository =
           await repository.saveLessonDocument(lessonId, document);
           return;
         } catch (error) {
-          void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'saveLessonDocument',
@@ -62,7 +59,6 @@ export const getKangurLessonDocumentRepository =
           await repository.removeLessonDocument(lessonId);
           return;
         } catch (error) {
-          void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
             service: KANGUR_LESSON_DOCUMENT_REPOSITORY_SERVICE,
             action: 'removeLessonDocument',

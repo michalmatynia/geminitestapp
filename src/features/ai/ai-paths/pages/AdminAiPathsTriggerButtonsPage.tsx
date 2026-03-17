@@ -39,10 +39,8 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';

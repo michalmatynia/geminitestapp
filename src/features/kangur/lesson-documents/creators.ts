@@ -410,6 +410,7 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   alphabet_syllables: 'article',
   alphabet_words: 'article',
   alphabet_matching: 'article',
+  alphabet_sequence: 'article',
   english_basics: 'article',
   english_parts_of_speech: 'article',
   english_sentence_structure: 'article',

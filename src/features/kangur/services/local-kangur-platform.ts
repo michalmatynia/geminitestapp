@@ -30,6 +30,7 @@ import {
   type KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import {
   createAssignmentViaApi,
@@ -372,7 +373,9 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
           method: 'POST',
           headers: withCsrfHeaders(),
           credentials: 'same-origin',
-        }).catch(() => {});
+        }).catch((error) => {
+          void ErrorSystem.captureException(error);
+        });
         if (returnUrl) {
           window.location.assign(returnUrl);
           return;

@@ -12,6 +12,7 @@ import {
   KangurSummaryPanel,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurLessonActivityBlock as KangurLessonActivityBlockType } from '@/features/kangur/shared/contracts/kangur';
 
 import AddingBallGame from './AddingBallGame';
@@ -105,7 +106,7 @@ export function KangurLessonActivityBlock(
         padding='lg'
       >
         <KangurLessonActivityHeader
-          badgeRowClassName='mb-3 flex flex-wrap items-center gap-2'
+          badgeRowClassName={`mb-3 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
           description={description}
           label={definition.label}
           title={title}
@@ -128,7 +129,7 @@ export function KangurLessonActivityBlock(
       padding='lg'
     >
       <KangurLessonActivityHeader
-        badgeRowClassName='mb-4 flex flex-wrap items-center gap-2'
+        badgeRowClassName={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
         description={description}
         label={definition.label}
         title={title}

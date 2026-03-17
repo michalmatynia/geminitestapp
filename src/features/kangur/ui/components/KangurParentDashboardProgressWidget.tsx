@@ -34,6 +34,10 @@ import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/de
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  KANGUR_COMPACT_ROW_CLASSNAME,
+  KANGUR_PANEL_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 
 const ACTIVE_ASSIGNMENTS_TITLE = 'Aktywne zadania';
@@ -299,7 +303,7 @@ export function KangurParentDashboardProgressWidget({
               return (
                 <li
                   key={`${task.kind}-${task.href}-${task.openedAt}`}
-                  className='flex flex-col kangur-panel-gap rounded-[24px] border border-indigo-200/70 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
+                  className={`${KANGUR_PANEL_ROW_CLASSNAME} rounded-[24px] border border-indigo-200/70 bg-white/80 px-4 py-3 sm:items-center sm:justify-between`}
                 >
                   <div className='min-w-0'>
                     <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
@@ -409,7 +413,7 @@ export function KangurParentDashboardProgressWidget({
               <li key={entry.lesson.componentId}>
                 <KangurInfoCard className='rounded-[26px]' padding='lg'>
                   <div className='flex flex-col kangur-panel-gap'>
-                    <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
                       <div>
                         <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
                           {entry.lesson.title}

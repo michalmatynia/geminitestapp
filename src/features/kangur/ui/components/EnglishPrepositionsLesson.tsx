@@ -25,6 +25,7 @@ import {
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -62,7 +63,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             poleceniach z lekcji pojawiają się cały czas.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
-            <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
               <KangurLessonChip accent='rose'>⏰ at 7:30</KangurLessonChip>
               <KangurLessonChip accent='rose'>📅 on Monday</KangurLessonChip>
               <KangurLessonChip accent='rose'>🗓️ in May</KangurLessonChip>
@@ -151,7 +152,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Szybka ściąga, gdy masz wątpliwość w zadaniu.
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
-            <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
               <KangurLessonChip accent='rose'>at + exact time</KangurLessonChip>
               <KangurLessonChip accent='rose'>on + day/date</KangurLessonChip>
               <KangurLessonChip accent='rose'>in + month/year</KangurLessonChip>
@@ -299,7 +300,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonCallout accent='rose' padding='sm'>
             <div className='space-y-3 text-sm text-slate-700'>
               <p>Przykładowe rozsypanki:</p>
-              <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+              <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
                 <KangurLessonChip accent='rose'>at · We · 8:00 · start</KangurLessonChip>
                 <KangurLessonChip accent='amber'>desk · the · notes · are · on · The</KangurLessonChip>
                 <KangurLessonChip accent='violet'>between · P · A · and · Point · is · B</KangurLessonChip>
@@ -330,7 +331,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               <li>Pytaj: kiedy? gdzie? na czym? w czym?</li>
             </ul>
           </KangurLessonCallout>
-          <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
             <KangurLessonChip accent='rose'>⏰ at</KangurLessonChip>
             <KangurLessonChip accent='rose'>📅 on</KangurLessonChip>
             <KangurLessonChip accent='rose'>🗓️ in</KangurLessonChip>

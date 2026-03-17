@@ -16,6 +16,7 @@ import {
   reportKangurClientError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
@@ -81,6 +82,7 @@ export const createLearnerViaApi = async (
                 errorDetails = payload['details'];
               }
             } catch (error) {
+              void ErrorSystem.captureException(error);
               reportKangurClientError(error, {
                 source: 'kangur.local-platform',
                 action: 'learners.create',
@@ -95,6 +97,7 @@ export const createLearnerViaApi = async (
             }
           }
         } catch (error) {
+          void ErrorSystem.captureException(error);
           reportKangurClientError(error, {
             source: 'kangur.local-platform',
             action: 'learners.create',

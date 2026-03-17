@@ -17,6 +17,7 @@ import {
   buildKangurLessonDocumentNarrationSignature,
   hasKangurLessonNarrationContent,
 } from '@/features/kangur/tts/script';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
@@ -270,7 +271,8 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
           });
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
         if (!active) return;
         setCacheStatus(null);
       })

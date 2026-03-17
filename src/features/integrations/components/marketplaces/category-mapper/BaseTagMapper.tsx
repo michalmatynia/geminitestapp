@@ -17,7 +17,8 @@ import {
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { type TagMapping, type ExternalTag } from '@/shared/contracts/integrations';
 import { type ProductTag } from '@/shared/contracts/products';
-import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
+import type { GenericItemMapperConfig } from '@/shared/contracts/ui';
+import { GenericMapper } from '@/shared/ui';
 
 export function BaseTagMapper(): React.JSX.Element {
   const { connectionId, connectionName } = useCategoryMapperConfig();

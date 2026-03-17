@@ -26,6 +26,11 @@ import {
   resolveKangurAssignmentCountdownLabel,
   type KangurAssignmentListItem,
 } from '@/features/kangur/ui/services/delegated-assignments';
+import {
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 const ASSIGNMENTS_LIST_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -139,7 +144,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
       className='relative'
       padding='lg'
     >
-      <div className='mb-4 flex flex-wrap items-center gap-2 sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:justify-end'>
+      <div className={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:justify-end`}>
         <KangurStatusChip accent={item.subjectAccent} labelStyle='compact'>
           {item.subjectLabel}
         </KangurStatusChip>
@@ -200,13 +205,13 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           </KangurButton>
         </KangurPanelRow>
         {countdownLabel ? (
-          <KangurMetaText className='flex items-center gap-2'>
+          <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
             <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
             {countdownLabel}
           </KangurMetaText>
         ) : null}
         {item.timeLimitLabel ? (
-          <KangurMetaText className='flex items-center gap-2'>
+          <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
             <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
             {item.timeLimitLabel}
           </KangurMetaText>
@@ -244,7 +249,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
             {item.description}
           </KangurCardDescription>
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
+        <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
           <KangurStatusChip accent={item.subjectAccent} labelStyle='compact' size='sm'>
             {item.subjectLabel}
           </KangurStatusChip>
@@ -278,13 +283,13 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         {countdownLabel || item.timeLimitLabel || item.lastActivityLabel ? (
           <div className='mt-3 space-y-2'>
             {countdownLabel ? (
-              <KangurMetaText className='flex items-center gap-2'>
+              <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
                 <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
                 {countdownLabel}
               </KangurMetaText>
             ) : null}
             {item.timeLimitLabel ? (
-              <KangurMetaText className='flex items-center gap-2'>
+              <KangurMetaText className={KANGUR_CENTER_ROW_CLASSNAME}>
                 <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
                 {item.timeLimitLabel}
               </KangurMetaText>
@@ -296,7 +301,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         ) : null}
       </KangurSummaryPanel>
 
-      <div className='mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center'>
+      <div className={`mt-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:flex-wrap sm:items-center`}>
         <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
           <Link
             href={item.actionHref}
@@ -407,7 +412,7 @@ export function KangurAssignmentsList({
             surface='mist'
             variant='soft'
           >
-            <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+            <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
               <KangurPanelIntro
                 description={panelSummary}
                 eyebrow='Szybki podgląd'
@@ -451,7 +456,7 @@ export function KangurAssignmentsList({
             surface='mistStrong'
             variant='soft'
           >
-            <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+            <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
               <KangurPanelIntro
                 description={panelSummary}
                 eyebrow='Przydzielone zadania'

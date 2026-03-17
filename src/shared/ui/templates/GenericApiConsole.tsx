@@ -3,6 +3,12 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type {
+  ApiPreset,
+  GenericApiConsoleConfig,
+  GenericApiConsoleState,
+  GenericApiConsoleProps,
+} from '@/shared/contracts/ui';
 import {
   Button,
   Input,
@@ -15,47 +21,12 @@ import {
   FormField,
 } from '@/shared/ui';
 
-export interface ApiPreset {
-  label: string;
-  method: string;
-  path?: string;
-  params?: Record<string, unknown> | string;
-  body?: string;
-}
-
-export interface GenericApiConsoleConfig {
-  title: string;
-  description: string;
-  baseUrl: string;
-  methodType?: 'select' | 'input';
-  bodyOrParamsLabel?: string;
-  connectionWarning?: string;
-}
-
-export interface GenericApiConsoleState {
-  method: string;
-  path?: string;
-  bodyOrParams: string;
-  loading: boolean;
-  error: string | null;
-  response: {
-    status?: number;
-    statusText?: string;
-    data: unknown;
-    refreshed?: boolean;
-  } | null;
-}
-
-export interface GenericApiConsoleProps {
-  config: GenericApiConsoleConfig;
-  state: GenericApiConsoleState;
-  presets: ApiPreset[];
-  isConnected?: boolean;
-  onSetMethod: (value: string) => void;
-  onSetPath?: (value: string) => void;
-  onSetBodyOrParams: (value: string) => void;
-  onRequest: () => void;
-}
+export type {
+  ApiPreset,
+  GenericApiConsoleConfig,
+  GenericApiConsoleState,
+  GenericApiConsoleProps,
+};
 
 const METHOD_OPTIONS = [
   { value: 'GET', label: 'GET' },

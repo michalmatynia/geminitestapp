@@ -19,7 +19,6 @@ export const getKangurLearnerActivityRepository =
         try {
           return await repository.getActivity(learnerId);
         } catch (error) {
-          void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
             service: KANGUR_LEARNER_ACTIVITY_REPOSITORY_SERVICE,
             action: 'getActivity',
@@ -33,7 +32,6 @@ export const getKangurLearnerActivityRepository =
         try {
           return await repository.saveActivity(learnerId, input);
         } catch (error) {
-          void ErrorSystem.captureException(error);
           void ErrorSystem.captureException(error, {
             service: KANGUR_LEARNER_ACTIVITY_REPOSITORY_SERVICE,
             action: 'saveActivity',

@@ -38,6 +38,7 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
@@ -487,7 +488,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
             </KangurStatusChip>
           </KangurPanelRow>
 
-          <div className='mt-3 grid kangur-panel-gap text-xs [color:var(--kangur-page-muted-text)] min-[360px]:grid-cols-2 lg:grid-cols-3'>
+          <div className='mt-3 grid kangur-panel-gap text-xs [color:var(--kangur-page-muted-text)] min-[420px]:grid-cols-2 lg:grid-cols-3'>
             <KangurLabeledValueSummary
               label={tutorContent.parentDashboard.baselineLabel}
               labelClassName='text-xs tracking-wide'
@@ -533,7 +534,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         </div>
       ) : null}
 
-      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+      <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
         <span className='text-sm font-medium [color:var(--kangur-page-text)]'>
           {enabled
             ? tutorContent.parentDashboard.toggleEnabledLabel

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { createServiceLogger } from '@/features/kangur/shared/utils/logger';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 type TurnstileVerifyResponse = {
   success: boolean;
@@ -75,7 +76,10 @@ export const verifyKangurParentCaptcha = async ({
       body: form,
       signal: controller.signal,
     });
-    const payload = (await response.json().catch(() => null)) as TurnstileVerifyResponse | null;
+    const payload = (await response.json().catch((error) => {
+      void ErrorSystem.captureException(error);
+      return null;
+    })) as TurnstileVerifyResponse | null;
 
     if (!response.ok || !payload?.success) {
       const errorCodes = payload?.['error-codes']?.filter(Boolean) ?? [];
@@ -92,6 +96,7 @@ export const verifyKangurParentCaptcha = async ({
 
     return { ok: true, required: true };
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logger.error('[kangur.captcha] verification error', error);
     return { ok: false, required: true, reason: 'verification_error' };
   } finally {

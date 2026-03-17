@@ -14,7 +14,7 @@ import {
   KangurResultBadge,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
   buildKangurAssignmentHref,
@@ -117,7 +117,7 @@ export function KangurAssignmentSpotlight({
         </KangurResultBadge>
 
         <div className='sm:pr-24'>
-          <div className='flex flex-wrap items-center gap-2'>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <KangurAssignmentPriorityChip
               accent='amber'
               className='text-[11px] uppercase tracking-[0.18em]'

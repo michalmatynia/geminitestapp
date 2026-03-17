@@ -126,6 +126,7 @@ const ensureMongoScoreIndexes = async (): Promise<void> => {
         }
       );
     })().catch((error) => {
+      void ErrorSystem.captureException(error);
       ensureMongoScoreIndexesPromise = null;
       throw error;
     });

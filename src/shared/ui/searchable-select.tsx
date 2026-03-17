@@ -2,22 +2,12 @@
 
 import * as React from 'react';
 
+import type { SearchableSelectProps } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { MultiSelect, type MultiSelectOption } from './multi-select';
 
-export interface SearchableSelectProps {
-  options: ReadonlyArray<MultiSelectOption>;
-  value: string | null | undefined;
-  onChange: (value: string | null) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  label?: string;
-  disabled?: boolean;
-  className?: string;
-  loading?: boolean;
-  emptyMessage?: string;
-}
+export type { SearchableSelectProps };
 
 type SearchableSelectRuntimeValue = {
   options: ReadonlyArray<MultiSelectOption>;

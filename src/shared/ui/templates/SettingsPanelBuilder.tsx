@@ -4,8 +4,6 @@ import { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
-  FieldType,
-  SettingsFieldRenderProps,
   SettingsFieldsRendererProps,
   SettingsPanelField,
 } from '@/shared/contracts/ui';
@@ -28,11 +26,10 @@ const normalizeSelectOptions = (
   (options ?? []).map((option) => ({ label: option.label, value: String(option.value) }));
 
 export type {
-  FieldType,
-  SettingsFieldRenderProps,
   SettingsFieldsRendererProps,
   SettingsPanelField,
 } from '@/shared/contracts/ui';
+export type { FieldType, SettingsFieldRenderProps } from '@/shared/contracts/ui';
 
 /**
  * Renders a list of settings fields based on configuration.

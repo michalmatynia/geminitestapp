@@ -16,7 +16,12 @@ const AUTH_SESSION_COOKIE_NAMES = new Set([
 const isRecoverableNavigationAbort = (error: unknown): boolean => {
   const message =
     error instanceof Error ? error.message : typeof error === 'string' ? error : '';
-  return message.includes('net::ERR_ABORTED') || message.includes('frame was detached');
+  return (
+    message.includes('net::ERR_ABORTED') ||
+    message.includes('frame was detached') ||
+    message.includes('Timeout') ||
+    message.includes('timed out')
+  );
 };
 
 const isRecoverableAuthRequestError = (error: unknown): boolean => {
@@ -26,7 +31,9 @@ const isRecoverableAuthRequestError = (error: unknown): boolean => {
     message.includes('ECONNRESET') ||
     message.includes('ECONNREFUSED') ||
     message.includes('ERR_CONNECTION_RESET') ||
-    message.includes('socket hang up')
+    message.includes('socket hang up') ||
+    message.includes('Timeout') ||
+    message.includes('timed out')
   );
 };
 
@@ -66,7 +73,10 @@ export async function ensureAdminSession(
     destinationNavigationTimeoutMs = 60_000,
     transitionTimeoutMs = 30_000,
   } = options;
-  const authRequestTimeoutMs = Math.max(initialNavigationTimeoutMs, transitionTimeoutMs);
+  const authRequestTimeoutMs = Math.min(
+    Math.max(initialNavigationTimeoutMs, transitionTimeoutMs),
+    90_000
+  );
   const destinationUrl = new URL(destination, 'http://localhost');
   const matchesDestination = (url: URL): boolean =>
     url.pathname === destinationUrl.pathname &&
@@ -95,15 +105,25 @@ export async function ensureAdminSession(
   };
   const navigateToDestination = async (): Promise<void> => {
     if (!matchesDestination(getCurrentUrl())) {
-      try {
-        await page.goto(destination, {
-          waitUntil: 'domcontentloaded',
-          timeout: destinationNavigationTimeoutMs,
-        });
-      } catch (error) {
-        if (!isRecoverableNavigationAbort(error)) {
-          throw error;
+      let lastError: unknown = null;
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          await page.goto(destination, {
+            waitUntil: 'domcontentloaded',
+            timeout: destinationNavigationTimeoutMs,
+          });
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (!isRecoverableNavigationAbort(error) || attempt === 2) {
+            throw error;
+          }
+          await page.waitForTimeout(500 * attempt);
         }
+      }
+      if (lastError) {
+        throw lastError;
       }
     }
 

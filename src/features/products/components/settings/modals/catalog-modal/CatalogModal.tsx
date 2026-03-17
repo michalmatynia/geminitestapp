@@ -6,10 +6,8 @@ import { useInternationalizationData } from '@/features/internationalization';
 import type { Catalog, PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Alert } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
 import { CatalogPriceGroupsSection } from './CatalogPriceGroupsSection';

@@ -18,6 +18,7 @@ import {
   logKangurClientError,
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import type {
   KangurAiTutorAppSettings,
   KangurAiTutorLearnerSettings,
@@ -660,6 +661,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           return;
         }
 
+        void ErrorSystem.captureException(error);
         logKangurClientError(error, {
           source: 'KangurAiTutorContext',
           action: 'loadUsage',
@@ -945,6 +947,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           usageSummary: result.usage ?? currentState.usageSummary,
         }));
       } catch (error) {
+        void ErrorSystem.captureException(error);
         trackKangurClientEvent('kangur_ai_tutor_message_failed', telemetryContext);
         logKangurClientError(error, {
           source: 'KangurAiTutorContext',

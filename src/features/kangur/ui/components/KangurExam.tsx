@@ -34,11 +34,13 @@ import {
   KangurButton,
   KangurInfoCard,
   KangurInlineFallback,
+  KangurPanelRow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
@@ -182,7 +184,7 @@ function ExamQuestion({
         padding='lg'
         tone='neutral'
       >
-        <div className='mb-1 flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+        <KangurPanelRow className='mb-1 sm:items-start sm:justify-between'>
           <p
             id={headingId}
             className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'
@@ -209,7 +211,7 @@ function ExamQuestion({
               </KangurStatusChip>
             ) : null}
           </div>
-        </div>
+        </KangurPanelRow>
         <p
           id={descriptionId}
           className='break-words font-semibold leading-relaxed [color:var(--kangur-page-text)]'
@@ -322,7 +324,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           progressLabel={`${reviewing + 1}/${reviewQuestionCount}`}
           progressAriaLabel={`Pytanie ${reviewing + 1} z ${reviewQuestionCount}`}
         />
-        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+        <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
           <KangurButton
             onClick={handleExitReview}
             size='sm'
@@ -342,7 +344,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           padding='lg'
           tone='neutral'
         >
-          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+          <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
             <p className='break-words text-sm font-bold uppercase tracking-wide text-orange-500'>
               Pytanie {reviewing + 1}
             </p>
@@ -500,7 +502,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
 
       <div
         aria-label='Przegląd pytań testowych'
-        className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:grid-cols-4'
+        className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-4'
         role='list'
       >
         {questions.map((question, index) => {

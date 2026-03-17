@@ -1,4 +1,4 @@
-import React, { type ReactNode, type ReactElement } from 'react';
+import { type ReactNode, type ReactElement } from 'react';
 
 import { Badge, Card } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';

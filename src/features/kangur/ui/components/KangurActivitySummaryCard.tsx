@@ -7,6 +7,7 @@ import {
   KangurSectionEyebrow,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_PANEL_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurProgressActivitySummary } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -33,7 +34,10 @@ export function KangurActivitySummaryCard({
 
   return (
     <KangurInfoCard
-      className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:items-center sm:justify-between'
+      className={cn(
+        KANGUR_PANEL_ROW_CLASSNAME,
+        'items-start sm:items-center sm:justify-between'
+      )}
       data-testid={summaryTestId}
       padding='md'
     >

@@ -1,13 +1,9 @@
 import React from 'react';
 
+import type { GenericMapperStatsProps } from '@/shared/contracts/ui';
 import { MetadataItem } from '../../metadata-item';
 
-export type GenericMapperStatsProps = {
-  total: number;
-  mapped: number;
-  pending: number;
-  itemLabel?: string;
-};
+export type { GenericMapperStatsProps };
 
 export function GenericMapperStats(props: GenericMapperStatsProps): React.JSX.Element {
   const { total, mapped, pending, itemLabel = 'Items' } = props;

@@ -12,6 +12,11 @@ import { useEffect, useRef } from 'react';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -287,7 +292,9 @@ export function KangurAiTutorPanelChrome({
   const isHeaderSectionDragEnabled = !isAskModalMode && !isPanelDraggable;
   const isPanelBodySectionDragEnabled = isHeaderSectionDragEnabled;
   const panelHeaderClassName = cn(
-    'relative flex flex-col items-start kangur-panel-gap border-b kangur-chat-header-surface sm:flex-row sm:justify-between',
+    'relative',
+    KANGUR_PANEL_ROW_CLASSNAME,
+    'items-start border-b kangur-chat-header-surface sm:justify-between',
     shouldUseMinimalPanelShell ? 'kangur-chat-header-padding-lg' : 'kangur-chat-header-padding-md',
     isAskModalMode ? 'pt-5' : null,
     isCompactDockedTutorPanel ? 'kangur-chat-header-padding-sm' : null,
@@ -654,7 +661,7 @@ export function KangurAiTutorPanelChrome({
                     >
                       AI Tutor
                     </KangurAiTutorChromeKicker>
-                    <div className='mt-1 flex flex-wrap items-center gap-2 sm:flex-nowrap'>
+                    <div className={`mt-1 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:flex-nowrap`}>
                       <span
                         data-testid='kangur-ai-tutor-display-name'
                         className={cn(
@@ -722,12 +729,15 @@ export function KangurAiTutorPanelChrome({
                     ) : null}
                   </div>
                 ) : null}
-                  <div className={cn(
-                    'flex items-center gap-2 pt-0.5',
-                    shouldUseMinimalPanelShell
-                      ? 'ml-auto'
-                      : 'w-full flex-wrap sm:ml-3 sm:w-auto sm:justify-end'
-                  )}>
+                  <div
+                    className={cn(
+                      KANGUR_CENTER_ROW_CLASSNAME,
+                      'pt-0.5',
+                      shouldUseMinimalPanelShell
+                        ? 'ml-auto'
+                        : 'w-full flex-wrap sm:ml-3 sm:w-auto sm:justify-end'
+                    )}
+                  >
                     {shouldUseMinimalPanelShell ? (
                       <KangurNarratorControl
                         className='w-auto'

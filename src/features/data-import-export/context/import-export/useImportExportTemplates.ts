@@ -10,7 +10,7 @@ import {
   normalizeBaseImportParameterImportSettings,
   type ImportTemplateParameterImport,
 } from '@/shared/contracts/integrations';
-import type { useToast } from '@/shared/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -27,7 +27,7 @@ export function useImportExportTemplates({
   exportTemplates,
   setTemplateScope,
 }: {
-  toast: ReturnType<typeof useToast>['toast'];
+  toast: Toast;
   importTemplates: Template[];
   exportTemplates: Template[];
   setTemplateScope: (scope: 'import' | 'export') => void;

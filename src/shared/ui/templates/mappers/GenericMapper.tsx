@@ -3,12 +3,16 @@
 import { useEffect, useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type {
+  GenericItemMapperConfig,
+  PendingExternalMappingsState,
+} from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { GenericMapperExternalCell } from './GenericMapperExternalCell';
 import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
 import { GenericMapperStats } from './GenericMapperStats';
-import { usePendingMappings, type PendingExternalMappingsState } from './usePendingMappings';
+import { usePendingMappings } from './usePendingMappings';
 import { CompactEmptyState } from '../../empty-state';
 import { useToast } from '../../toast';
 import { StandardDataTablePanel } from '../StandardDataTablePanel';
@@ -20,48 +24,7 @@ const UNMAPPED_EXTERNAL_OPTION: LabeledOptionDto<string> = {
   label: '— Not mapped —',
 };
 
-export type { PendingExternalMappingsState };
-
-export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
-  // Context
-  connectionId?: string | null;
-  connectionName?: string | null;
-
-  // UI Labels
-  title: string;
-  internalColumnHeader: string;
-  externalColumnHeader: string;
-  additionalColumnsHeader?: string;
-
-  // Data
-  internalItems: TInternal[];
-  externalItems: TExternal[];
-  currentMappings: TMapping[];
-
-  // Callbacks for extracting/transforming data
-  getInternalId: (item: TInternal) => string;
-  getInternalLabel: (item: TInternal) => string;
-  getExternalId: (item: TExternal) => string;
-  getExternalLabel: (item: TExternal) => string;
-  getInternalAdditionalLabel?: (item: TInternal) => string | null;
-
-  // Mapping accessors
-  getMappingInternalId: (mapping: TMapping) => string;
-  getMappingExternalId: (mapping: TMapping) => string | null;
-
-  // Async operations
-  onFetch: () => Promise<{ message: string }>;
-  onSave: (
-    mappings: Array<{ internalId: string; externalId: string | null }>
-  ) => Promise<{ message: string }>;
-
-  // Loading states
-  isLoadingInternal?: boolean;
-  isLoadingExternal?: boolean;
-  isLoadingMappings?: boolean;
-  isFetching?: boolean;
-  isSaving?: boolean;
-}
+export type { GenericItemMapperConfig, PendingExternalMappingsState };
 
 interface GenericItemMapperProps<TInternal, TExternal, TMapping> {
   config: GenericItemMapperConfig<TInternal, TExternal, TMapping>;
@@ -157,8 +120,8 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
     }
 
     try {
-      const mappings = Array.from(pendingMappings.entries()).map(
-        ([internalId, externalId]: [string, string | null]) => ({
+      const mappings = Array.from<[string, string | null]>(pendingMappings.entries() as any).map(
+        ([internalId, externalId]) => ({
           internalId,
           externalId,
         })
@@ -211,7 +174,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
         return (
           <GenericMapperExternalCell
             value={currentMapping}
-            onChange={(value) => handleMappingChange(internalId, value)}
+            onChange={(value: string | null) => handleMappingChange(internalId, value)}
             options={externalOptions}
             disabled={isLoadingExternal}
           />

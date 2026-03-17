@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import type { JSX, PointerEvent as ReactPointerEvent } from 'react';
 
@@ -102,7 +103,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
     () => (isCoarsePointer ? STROKE_WIDTHS.map((width) => width + 2) : [...STROKE_WIDTHS]),
     [isCoarsePointer]
   );
-  const [selectedWidth, setSelectedWidth] = useState<number>(strokeWidths[1]);
+  const [selectedWidth, setSelectedWidth] = useState<number>(strokeWidths[1] ?? 8);
   const [isEraser, setIsEraser] = useState(false);
   const isDrawingRef = useRef(false);
   const minPointDistance = isCoarsePointer ? 4 : 2;
@@ -125,7 +126,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
 
   useEffect(() => {
     setSelectedWidth((current) =>
-      strokeWidths.includes(current) ? current : strokeWidths[1]
+      strokeWidths.includes(current) ? current : (strokeWidths[1] ?? 8)
     );
   }, [strokeWidths]);
   useKangurCanvasTouchLock(canvasRef);
@@ -232,7 +233,7 @@ export function KangurAiTutorDrawingCanvas({ onComplete, onCancel }: Props): JSX
         />
       </div>
 
-      <div className='flex flex-wrap items-center gap-2 border-t kangur-chat-divider kangur-chat-padding-sm'>
+      <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} border-t kangur-chat-divider kangur-chat-padding-sm`}>
         <div className='flex items-center gap-1'>
           {COLORS.map((color) => (
             <button

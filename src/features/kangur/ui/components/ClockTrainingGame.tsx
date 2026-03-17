@@ -15,6 +15,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
+  KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   addXp,
@@ -429,7 +430,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         </KangurInfoCard>
       ) : null}
       {gameMode === 'challenge' ? (
-        <div className='inline-flex flex-wrap items-center gap-2'>
+        <div className={KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME}>
           <KangurStatusChip
             accent='amber'
             className='text-xs font-bold uppercase tracking-[0.16em]'
@@ -453,7 +454,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           </KangurStatusChip>
         </div>
       ) : (
-        <div className='inline-flex flex-wrap items-center gap-2'>
+        <div className={KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME}>
           <KangurStatusChip
             accent='indigo'
             className='gap-2 text-xs font-bold'

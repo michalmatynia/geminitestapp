@@ -91,7 +91,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Rozmiar to prosta cecha — duże i małe elementy tworzą różne zbiory.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
             <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
               <p className='font-bold text-green-700 text-xs mb-1'>Zwierzęta latające</p>
               <p className='text-2xl'>🦅 🦆 🐝 🦋</p>
@@ -137,7 +137,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               Koła i kwadraty trafiają do różnych pojemników.
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2'>
+          <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
             <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
               <p className='font-bold text-violet-700 text-xs mb-1'>Koła</p>
               <p className='text-2xl'>⚪ ⚪ ⚪</p>
@@ -209,7 +209,7 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             <p className='text-sm font-semibold text-teal-700 mb-3 text-center'>
               Figury: duże/małe × czerwone/niebieskie
             </p>
-            <div className='grid grid-cols-1 gap-2 text-center text-sm min-[360px]:grid-cols-2'>
+            <div className='grid grid-cols-1 gap-2 text-center text-sm min-[420px]:grid-cols-2'>
               {[
                 ['Duże czerwone', '🔴🔴'],
                 ['Duże niebieskie', '🔵🔵'],

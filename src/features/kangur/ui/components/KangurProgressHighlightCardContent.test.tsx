@@ -11,20 +11,21 @@ import {
   KangurProgressHighlightChip,
   KangurProgressHighlightBar,
 } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
+import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 
 describe('KangurProgressHighlightCardContent', () => {
   it('renders the shared progress highlight structure', () => {
     render(
       <div data-testid='wrapper'>
         <KangurProgressHighlightCardContent>
-          <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+          <KangurPanelRow className='items-start sm:justify-between'>
             <KangurProgressHighlightHeader
               description='Jeszcze chwila do kolejnego progu.'
               eyebrow='Następna odznaka'
               title='⭐ Start wyzwan'
             />
             <KangurProgressHighlightChip accent='amber' label='2/4 zadania' />
-          </div>
+          </KangurPanelRow>
           <KangurProgressHighlightBar
             accent='amber'
             testId='highlight-bar'
@@ -44,7 +45,7 @@ describe('KangurProgressHighlightCardContent', () => {
   it('supports styling overrides used by hero milestone surfaces', () => {
     render(
       <KangurProgressHighlightCardContent>
-        <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+        <KangurPanelRow className='items-start sm:justify-between'>
           <KangurProgressHighlightHeader
             description='Do odznaki Trzymam kierunek: 2/3 rundy'
             descriptionStyle={{ color: 'rgb(1 2 3)' }}
@@ -57,7 +58,7 @@ describe('KangurProgressHighlightCardContent', () => {
             className='text-[11px]'
             label='2/3 rundy'
           />
-        </div>
+        </KangurPanelRow>
         <KangurProgressHighlightBar
           accent='sky'
           testId='highlight-bar'

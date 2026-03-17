@@ -23,8 +23,9 @@ import {
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
+  KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   addXp,
@@ -834,7 +835,7 @@ export default function DivisionGroupsGame({
                           ? `Wybrany element: ${selectedToken.emoji}`
                           : 'Wybierz element, aby przenieść go klawiaturą.'}
                       </p>
-                      <div className='flex flex-wrap gap-2'>
+                      <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                         <KangurButton
                           size='sm'
                           type='button'
@@ -868,7 +869,7 @@ export default function DivisionGroupsGame({
                       </div>
                     </div>
                   </KangurInfoCard>
-                  <div className='flex flex-col items-center kangur-panel-gap sm:flex-row sm:justify-between'>
+                  <KangurPanelRow className='items-center sm:justify-between'>
                     <KangurButton
                       className='w-full sm:w-auto sm:min-w-[180px]'
                       onClick={handleCheck}
@@ -894,7 +895,7 @@ export default function DivisionGroupsGame({
                     >
                       {feedbackMessage}
                     </p>
-                  </div>
+                  </KangurPanelRow>
                 </motion.div>
               </AnimatePresence>
             </DragDropContext>

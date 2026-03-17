@@ -3,11 +3,12 @@
 import { Slot } from '@radix-ui/react-slot';
 import React from 'react';
 
+import type { TreeRowProps, TreeRowTone } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { useTreeNodeState } from './TreeContext';
 
-export type TreeRowTone = 'primary' | 'subtle' | 'neutral' | 'none';
+export type { TreeRowProps, TreeRowTone };
 
 const TONE_CLASSES: Record<TreeRowTone, { base: string; selected: string; dragOver: string }> = {
   primary: {
@@ -31,20 +32,6 @@ const TONE_CLASSES: Record<TreeRowTone, { base: string; selected: string; dragOv
     dragOver: '',
   },
 };
-
-export interface TreeRowProps extends React.HTMLAttributes<HTMLDivElement> {
-  asChild?: boolean;
-  nodeId?: string;
-  depth?: number;
-  baseIndent?: number;
-  indent?: number;
-  disableIndent?: boolean;
-  tone?: TreeRowTone;
-  selected?: boolean;
-  dragOver?: boolean;
-  selectedClassName?: string;
-  dragOverClassName?: string;
-}
 
 export function TreeRow({
   asChild = false,

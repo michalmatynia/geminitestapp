@@ -160,7 +160,7 @@ export default function KangurBadgeTrackHighlights({
 
   return (
     <div
-      className={cn('grid kangur-panel-gap min-[360px]:grid-cols-2 lg:grid-cols-3', className)}
+      className={cn('grid kangur-panel-gap min-[420px]:grid-cols-2 lg:grid-cols-3', className)}
       data-testid={`${trackTestIdPrefix}-grid`}
     >
       {items.map((item, index) => {

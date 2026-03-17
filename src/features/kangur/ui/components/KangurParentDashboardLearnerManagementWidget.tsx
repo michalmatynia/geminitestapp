@@ -27,6 +27,8 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 
 const kangurPlatform = getKangurPlatform();
@@ -223,7 +225,8 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         }
         setSessionHistory(history);
       })
-      .catch(() => {
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
         if (!isActive) {
           return;
         }
@@ -322,7 +325,10 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     </div>
                   }
                   footerClassName='mt-2'
-                  headerClassName='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'
+                  headerClassName={cn(
+                    KANGUR_TIGHT_ROW_CLASSNAME,
+                    'sm:items-start sm:justify-between'
+                  )}
                   icon={
                     <KangurIconBadge
                       accent={isActiveLearner ? 'indigo' : 'slate'}
@@ -793,7 +799,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                     Uwaga: usunięcie profilu ucznia usuwa jego login i dostęp do danych. Tej
                     operacji nie da się cofnąć.
                   </p>
-                  <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-center'>
+                  <div className={`mt-3 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center`}>
                     <KangurButton
                       className='w-full sm:w-auto'
                       disabled={isSubmitting}

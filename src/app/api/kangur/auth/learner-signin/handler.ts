@@ -8,6 +8,7 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { parseKangurLearnerSignInPayload } from '@/shared/validations/kangur';
 
 import { readKangurAuthJsonBody } from '../shared';
@@ -70,6 +71,8 @@ export async function postKangurLearnerSignInHandler(
       learnerDisplayName: learner.displayName,
       loginMethod: 'password',
     },
-  }).catch(() => {});
+  }).catch((error) => {
+    void ErrorSystem.captureException(error);
+  });
   return response;
 }

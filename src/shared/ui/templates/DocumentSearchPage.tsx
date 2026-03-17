@@ -1,22 +1,10 @@
 import React from 'react';
 
+import type { DocumentSearchPageProps } from '@/shared/contracts/ui';
 import { ListPanel, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-export type DocumentSearchPageProps = {
-  title: string;
-  startAdornment?: React.ReactNode;
-  titleAdornment?: React.ReactNode;
-  endAdornment?: React.ReactNode;
-  filters?: React.ReactNode;
-  breadcrumb?: React.ReactNode;
-  loading: boolean;
-  hasResults: boolean;
-  emptyState: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
-};
+export type { DocumentSearchPageProps };
 
 export function DocumentSearchPage(props: DocumentSearchPageProps): React.JSX.Element {
   const {

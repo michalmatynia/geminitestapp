@@ -19,12 +19,14 @@ import {
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
+  KangurPanelRow,
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   evaluateGeometryDrawing,
@@ -581,7 +583,7 @@ export default function GeometryDrawingGame({
                 : 'Ćwicz dalej. Każda kolejna figura będzie lepsza.'}
           </KangurPracticeGameSummaryMessage>
           <KangurPracticeGameSummaryActions
-            className='flex-col sm:flex-row'
+            className={KANGUR_STACK_ROW_CLASSNAME}
             finishButtonClassName='w-full sm:flex-1'
             finishLabel='Wróć'
             onFinish={handleFinishSession}
@@ -616,7 +618,7 @@ export default function GeometryDrawingGame({
             </div>
             <div
               aria-label='Poziom trudności figur'
-              className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'
+              className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'
               role='group'
             >
               {(['starter', 'pro'] as const).map((mode) => (
@@ -743,7 +745,7 @@ export default function GeometryDrawingGame({
                 kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.
               </p>
 
-              <div className='flex w-full flex-col kangur-panel-gap sm:flex-row'>
+              <KangurPanelRow className='w-full'>
                 <KangurButton
                   className='w-full sm:flex-1'
                   disabled={feedback !== null || points.length === 0}
@@ -774,7 +776,7 @@ export default function GeometryDrawingGame({
                 >
                   Sprawdź
                 </KangurButton>
-              </div>
+              </KangurPanelRow>
 
               {feedback && (
                 <p

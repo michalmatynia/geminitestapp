@@ -38,6 +38,7 @@ import {
 } from '@/features/kangur/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logClientError } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import {
   searchKangurLearners,
 } from '@/features/kangur/services/kangur-learner-repository';
@@ -191,6 +192,7 @@ const toIsoString = (value: Date | string | null | undefined): string | null => 
   try {
     return new Date(value).toISOString();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logClientError(error);
     return null;
   }

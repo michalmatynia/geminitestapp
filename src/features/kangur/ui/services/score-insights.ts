@@ -7,6 +7,8 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   alphabet_basics: { label: 'Alfabet', emoji: '🔤' },
   alphabet_syllables: { label: 'Sylaby', emoji: '🔤' },
   alphabet_words: { label: 'Pierwsze slowa', emoji: '📖' },
+  alphabet_matching: { label: 'Dopasuj litery', emoji: '🔤' },
+  alphabet_sequence: { label: 'Kolejnosc liter', emoji: '🔤' },
   addition: { label: 'Dodawanie', emoji: '➕' },
   subtraction: { label: 'Odejmowanie', emoji: '➖' },
   multiplication: { label: 'Mnożenie', emoji: '✖️' },

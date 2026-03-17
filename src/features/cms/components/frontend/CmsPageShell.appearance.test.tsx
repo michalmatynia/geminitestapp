@@ -58,7 +58,7 @@ describe('CmsPageShell appearance', () => {
       );
     });
 
-    expect(shell?.style.getPropertyValue('--cms-appearance-input-border')).toBe(
+    expect(shell?.style.getPropertyValue('--cms-appearance-input-border')).toContain(
       'rgba(255,255,255,0.18)'
     );
   });

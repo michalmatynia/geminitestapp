@@ -6,6 +6,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 
 import { auth } from '@/features/auth/server';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import {
   kangurLearnerSignInInputSchema,
@@ -131,6 +132,23 @@ import {
   getKangurLessonDocumentsHandler,
   postKangurLessonDocumentsHandler,
 } from '../lesson-documents/handler';
+import {
+  getKangurSocialPostsHandler,
+  postKangurSocialPostsHandler,
+  querySchema as socialPostsQuerySchema,
+} from '../social-posts/handler';
+import {
+  getKangurSocialImageAddonsHandler,
+  postKangurSocialImageAddonsHandler,
+  querySchema as socialImageAddonsQuerySchema,
+} from '../social-image-addons/handler';
+import {
+  getKangurSocialPostHandler,
+  patchKangurSocialPostHandler,
+} from '../social-posts/[id]/handler';
+import { postKangurSocialPostPublishHandler } from '../social-posts/[id]/publish/handler';
+import { postKangurSocialPostGenerateHandler } from '../social-posts/generate/handler';
+import { postKangurSocialPostsPublishScheduledHandler } from '../social-posts/publish-scheduled/handler';
 import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '../knowledge-graph/status/handler';
 import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '../knowledge-graph/sync/handler';
 import { postNumberBalanceCreateHandler } from '../number-balance/create/handler';
@@ -246,7 +264,10 @@ const handlePostOnly = (
 const createMagicLinkHandler = (source: string): SimpleRouteHandler =>
   apiHandler(
     async () => {
-      await auth().catch(() => null);
+      await auth().catch((error) => {
+        void ErrorSystem.captureException(error);
+        return null;
+      });
       return NextResponse.json(
         {
           ok: false,
@@ -757,6 +778,71 @@ const lessonDocumentsPostHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+const socialPostsGetHandler: SimpleRouteHandler = apiHandler(getKangurSocialPostsHandler, {
+  source: 'kangur.social-posts.GET',
+  service: 'kangur.api',
+  querySchema: socialPostsQuerySchema,
+});
+
+const socialImageAddonsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurSocialImageAddonsHandler,
+  {
+    source: 'kangur.social-image-addons.GET',
+    service: 'kangur.api',
+    querySchema: socialImageAddonsQuerySchema,
+  }
+);
+
+const socialPostsPostHandler: SimpleRouteHandler = apiHandler(postKangurSocialPostsHandler, {
+  source: 'kangur.social-posts.POST',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
+const socialImageAddonsPostHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialImageAddonsHandler,
+  {
+    source: 'kangur.social-image-addons.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+const socialPostGetHandler: ParamRouteHandler = apiHandler(getKangurSocialPostHandler, {
+  source: 'kangur.social-posts.[id].GET',
+  service: 'kangur.api',
+});
+
+const socialPostPatchHandler: ParamRouteHandler = apiHandler(patchKangurSocialPostHandler, {
+  source: 'kangur.social-posts.[id].PATCH',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
+const socialPostPublishHandler: ParamRouteHandler = apiHandler(postKangurSocialPostPublishHandler, {
+  source: 'kangur.social-posts.[id].publish.POST',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
+const socialPostGenerateHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPostGenerateHandler,
+  {
+    source: 'kangur.social-posts.generate.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+const socialPostsPublishScheduledHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPostsPublishScheduledHandler,
+  {
+    source: 'kangur.social-posts.publish-scheduled.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
 const observabilitySummaryHandler: SimpleRouteHandler = apiHandler(
   getKangurObservabilitySummaryHandler,
   {
@@ -883,6 +969,53 @@ const handleAssignments = (
   return methodNotAllowed(request, ['PATCH'], method);
 };
 
+const handleSocialPosts = (
+  method: string,
+  request: NextRequest,
+  segments: string[]
+): Promise<Response> => {
+  const [id, action, ...rest] = segments;
+  if (rest.length > 0) {
+    return notFound(request, method);
+  }
+  if (!id) {
+    if (method === 'GET') return socialPostsGetHandler(request);
+    if (method === 'POST') return socialPostsPostHandler(request);
+    return methodNotAllowed(request, ['GET', 'POST'], method);
+  }
+  if (id === 'generate') {
+    if (method === 'POST') return socialPostGenerateHandler(request);
+    return methodNotAllowed(request, ['POST'], method);
+  }
+  if (id === 'publish-scheduled') {
+    if (method === 'POST') return socialPostsPublishScheduledHandler(request);
+    return methodNotAllowed(request, ['POST'], method);
+  }
+  if (action === 'publish') {
+    if (method === 'POST') return socialPostPublishHandler(request, { params: { id } });
+    return methodNotAllowed(request, ['POST'], method);
+  }
+  if (action) {
+    return notFound(request, method);
+  }
+  if (method === 'GET') return socialPostGetHandler(request, { params: { id } });
+  if (method === 'PATCH') return socialPostPatchHandler(request, { params: { id } });
+  return methodNotAllowed(request, ['GET', 'PATCH'], method);
+};
+
+const handleSocialImageAddons = (
+  method: string,
+  request: NextRequest,
+  segments: string[]
+): Promise<Response> => {
+  if (segments.length > 0) {
+    return notFound(request, method);
+  }
+  if (method === 'GET') return socialImageAddonsGetHandler(request);
+  if (method === 'POST') return socialImageAddonsPostHandler(request);
+  return methodNotAllowed(request, ['GET', 'POST'], method);
+};
+
 const handleLearners = (
   method: string,
   request: NextRequest,
@@ -989,6 +1122,10 @@ const routeKangur = (
       return handleAiTutor(method, request, rest);
     case 'assignments':
       return handleAssignments(method, request, rest);
+    case 'social-posts':
+      return handleSocialPosts(method, request, rest);
+    case 'social-image-addons':
+      return handleSocialImageAddons(method, request, rest);
     case 'learners':
       return handleLearners(method, request, rest);
     case 'observability':

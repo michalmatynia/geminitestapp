@@ -18,7 +18,13 @@ import {
   KangurSelectField,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_TIGHT_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   LOBBY_MODE_ACCENTS,
   LOBBY_MODE_LABELS,
@@ -150,9 +156,9 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           role='region'
           aria-labelledby={inviteHeadingId}
         >
-          <div className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between kangur-panel-gap'>
+          <KangurPanelRow className='sm:flex-wrap sm:items-center sm:justify-between'>
             <div className='space-y-1'>
-              <div className='flex flex-wrap items-center gap-2'>
+              <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                 <h3 id={inviteHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
                   Zaproszenia
                 </h3>
@@ -164,7 +170,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 Prywatne pojedynki, do których zostałeś zaproszony.
               </p>
             </div>
-          </div>
+          </KangurPanelRow>
 
           <ul
             className='grid kangur-panel-gap sm:grid-cols-2'
@@ -198,7 +204,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     role='group'
                     aria-label={`Prywatne zaproszenie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                   >
-                    <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between kangur-panel-gap'>
+                    <KangurPanelRow className='sm:items-start sm:justify-between'>
                       <div className='flex items-center kangur-panel-gap min-w-0'>
                         <div
                           className='flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-base font-extrabold text-indigo-700 sm:h-12 sm:w-12 sm:text-lg'
@@ -250,8 +256,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                       >
                         {canJoinLobby ? (isJoining ? 'Łączymy…' : 'Dołącz') : 'Zaloguj się, aby dołączyć'}
                       </KangurButton>
-                    </div>
-                    <div className='flex flex-wrap gap-2'>
+                    </KangurPanelRow>
+                    <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                       <KangurStatusChip accent={resolveSessionAccent(entry.status)} size='sm'>
                         {SESSION_STATUS_LABELS[entry.status]}
                       </KangurStatusChip>
@@ -278,7 +284,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                         Prywatny
                       </KangurStatusChip>
                     </div>
-                    <div className='flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500'>
+                    <div className={`${KANGUR_WRAP_ROW_TIGHT_CLASSNAME} text-xs text-slate-500`}>
                       <span>{entry.questionCount} pytań</span>
                       <span>{entry.timePerQuestionSec}s / pytanie</span>
                       <span>≈ {formatDurationLabel(estimatedDurationSec)}</span>
@@ -300,9 +306,9 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
         aria-describedby={lobbyDescriptionId}
         aria-busy={isLobbyLoading}
       >
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between kangur-panel-gap'>
+        <KangurPanelRow className='sm:items-center sm:justify-between'>
           <div className='space-y-1 min-w-0'>
-            <div className='flex flex-wrap items-center gap-2' aria-live='polite' aria-atomic='true'>
+            <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME} aria-live='polite' aria-atomic='true'>
               <h3 id={lobbyHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
                 Lobby pojedynków
               </h3>
@@ -317,8 +323,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               Wybierz ucznia, który czeka na pojedynek albo dodaj własne wyzwanie.
             </p>
           </div>
-          <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end'>
-            <div className='flex flex-wrap items-center gap-2'>
+          <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center sm:justify-end`}>
+            <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               {showPausedChip ? (
                 <KangurStatusChip accent='amber' size='sm'>
                   Odświeżanie wstrzymane
@@ -377,7 +383,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               {isLobbyLoading ? 'Odświeżamy…' : 'Odśwież'}
             </KangurButton>
           </div>
-        </div>
+        </KangurPanelRow>
 
         {!canJoinLobby ? (
           <KangurInfoCard
@@ -573,7 +579,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     <div className='h-2 w-24 rounded-full bg-slate-200/70' />
                   </div>
                 </div>
-                <div className='flex flex-wrap gap-2'>
+                <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                   <div className='h-5 w-16 rounded-full bg-slate-200/70' />
                   <div className='h-5 w-20 rounded-full bg-slate-200/70' />
                   <div className='h-5 w-24 rounded-full bg-slate-200/70' />
@@ -675,7 +681,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     role='group'
                     aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
                   >
-                    <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between kangur-panel-gap'>
+                    <KangurPanelRow className='sm:items-start sm:justify-between'>
                       <div className='flex items-center kangur-panel-gap'>
                         <div
                           className='flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg font-extrabold text-indigo-700'
@@ -727,8 +733,8 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                       >
                         {canJoinLobby ? (isJoining ? 'Łączymy…' : 'Dołącz') : 'Zaloguj się, aby dołączyć'}
                       </KangurButton>
-                    </div>
-                    <div className='flex flex-wrap gap-2'>
+                    </KangurPanelRow>
+                    <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                       <KangurStatusChip accent={resolveSessionAccent(entry.status)} size='sm'>
                         {SESSION_STATUS_LABELS[entry.status]}
                       </KangurStatusChip>
@@ -755,7 +761,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                         Publiczny
                       </KangurStatusChip>
                     </div>
-                    <div className='flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-500'>
+                    <div className={`${KANGUR_WRAP_ROW_TIGHT_CLASSNAME} text-xs text-slate-500`}>
                       <span>{entry.questionCount} pytań</span>
                       <span>{entry.timePerQuestionSec}s / pytanie</span>
                       <span>≈ {formatDurationLabel(estimatedDurationSec)}</span>

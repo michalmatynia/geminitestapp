@@ -4,6 +4,7 @@ import {
   TURNSTILE_SCRIPT_ID,
   TURNSTILE_SCRIPT_SRC,
 } from './login-constants';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 type TurnstileRenderOptions = {
   sitekey: string;
@@ -63,6 +64,7 @@ const ensureTurnstileScript = (): Promise<void> => {
     script.onerror = () => reject(new Error('Turnstile script failed.'));
     document.head.appendChild(script);
   }).catch((error) => {
+    void ErrorSystem.captureException(error);
     turnstileScriptPromise = null;
     throw error;
   });
@@ -86,7 +88,8 @@ export const useTurnstile = (options: {
       .then(() => {
         if (mounted) setIsReady(true);
       })
-      .catch(() => {
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
         // Silent catch for script load failures
       });
 
@@ -109,6 +112,7 @@ export const useTurnstile = (options: {
         theme: 'light',
       });
     } catch (err) {
+      void ErrorSystem.captureException(err);
       // Ignore render errors
     }
 
@@ -117,6 +121,7 @@ export const useTurnstile = (options: {
         try {
           window.turnstile?.remove(widgetIdRef.current);
         } catch (err) {
+          void ErrorSystem.captureException(err);
           // Ignore cleanup errors
         }
         widgetIdRef.current = null;

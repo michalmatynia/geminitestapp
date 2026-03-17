@@ -19,6 +19,11 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_STACK_ROW_LG_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurAssignmentPlan } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
@@ -94,9 +99,9 @@ export function KangurGameHomeQuestWidget({
       surface='mistStrong'
       variant='soft'
     >
-      <KangurPanelStack className='lg:flex-row lg:items-start lg:justify-between'>
+      <KangurPanelStack className={`${KANGUR_STACK_ROW_LG_CLASSNAME} lg:items-start lg:justify-between`}>
         <div className='min-w-0 flex-1'>
-          <div className='flex flex-wrap items-center gap-2'>
+          <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <KangurStatusChip
               accent='violet'
               data-testid='kangur-home-quest-label'
@@ -152,7 +157,7 @@ export function KangurGameHomeQuestWidget({
             {assignment.description}
           </KangurCardDescription>
 
-          <div className='mt-4 flex flex-wrap gap-2'>
+          <div className={`mt-4 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
             <KangurStatusChip
               accent='amber'
               data-testid='kangur-home-quest-target'
@@ -176,7 +181,7 @@ export function KangurGameHomeQuestWidget({
           visibleLeadingTrack ||
           guidedMomentum.completedSessions > 0 ? (
               <div
-                className='mt-4 flex flex-wrap gap-2'
+                className={`mt-4 ${KANGUR_WRAP_ROW_CLASSNAME}`}
                 data-testid='kangur-home-quest-momentum'
               >
                 {currentWinStreak > 0 ? (

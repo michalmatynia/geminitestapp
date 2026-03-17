@@ -6,10 +6,8 @@ import React from 'react';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Input, Alert, Tag, MetadataItem } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { formatFileSize } from '@/shared/utils';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';

@@ -17,10 +17,12 @@ import {
   KangurButton,
   KangurEmptyState,
   KangurInfoCard,
+  KangurPanelRow,
   KangurPanelIntro,
   KangurProgressBar,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -400,7 +402,7 @@ export function KangurTestSuitePlayer({
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className='flex flex-col kangur-panel-gap pt-2 sm:flex-row sm:items-center sm:justify-between'>
+          <KangurPanelRow className='pt-2 sm:items-center sm:justify-between'>
             <KangurButton
               type='button'
               onClick={handlePrev}
@@ -414,7 +416,7 @@ export function KangurTestSuitePlayer({
               Previous
             </KangurButton>
 
-            <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end'>
+            <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:flex-wrap sm:items-center sm:justify-end`}>
               {canAskAboutSelectedChoice ? (
                 <KangurButton
                   type='button'
@@ -452,7 +454,7 @@ export function KangurTestSuitePlayer({
                 <div className='text-xs text-slate-400'>Select an answer to continue</div>
               )}
             </div>
-          </div>
+          </KangurPanelRow>
         </div>
       </KangurTestSuiteRuntimeProvider>
     </>

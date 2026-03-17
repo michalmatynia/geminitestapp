@@ -3,6 +3,7 @@ import {
   logClientError,
   setClientErrorBaseContext,
 } from '@/features/kangur/shared/utils/observability/client-error-logger';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 type KangurClientErrorContext = Record<string, unknown>;
 type KangurClientEventContext = Record<string, unknown>;
@@ -72,6 +73,7 @@ const getTimeZone = (): string | null => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logClientError(error);
     return null;
   }
@@ -133,6 +135,7 @@ export const withKangurClientError = async <T>(
   try {
     return await task();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const resolvedReport = typeof report === 'function' ? report(error) : report;
     const shouldReport = options.shouldReport?.(error) ?? true;
     if (shouldReport) {
@@ -156,6 +159,7 @@ export const withKangurClientErrorSync = <T>(
   try {
     return task();
   } catch (error) {
+    void ErrorSystem.captureException(error);
     const resolvedReport = typeof report === 'function' ? report(error) : report;
     const shouldReport = options.shouldReport?.(error) ?? true;
     if (shouldReport) {
@@ -262,6 +266,7 @@ export const trackKangurClientEvent = (
       }
     }
   } catch (error) {
+    void ErrorSystem.captureException(error);
     logClientError(error);
   
     // Fall back to fetch when sendBeacon is unavailable or fails.
@@ -273,7 +278,8 @@ export const trackKangurClientEvent = (
     body,
     credentials: 'include',
     keepalive: true,
-  }).catch(() => {
+  }).catch((error) => {
+    void ErrorSystem.captureException(error);
     // Keep analytics non-blocking for the learner experience.
   });
 };

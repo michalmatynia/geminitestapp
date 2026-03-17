@@ -155,7 +155,7 @@ export function KangurLearnerAssignmentsPanel({
       <KangurGlassPanel padding='lg' surface='mistStrong' variant='soft'>
         <KangurPanelIntro description={sectionSummary} eyebrow={sectionTitle} />
 
-        <div className='mt-4 grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 xl:grid-cols-4'>
+        <div className='mt-4 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
           <KangurMetricCard
             accent='slate'
             data-testid='learner-assignments-active'

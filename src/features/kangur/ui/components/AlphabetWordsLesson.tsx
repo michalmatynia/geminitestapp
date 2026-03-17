@@ -108,7 +108,16 @@ const AlphabetFirstLetterGame = (): React.JSX.Element => {
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
 
-  const round = GAME_ROUNDS[roundIndex] ?? GAME_ROUNDS[0];
+  if (GAME_ROUNDS.length === 0) {
+    return (
+      <KangurGlassPanel className='w-full max-w-lg' padding='lg' surface='playField'>
+        <div className='text-sm text-slate-500'>Brak rund do zagrania.</div>
+      </KangurGlassPanel>
+    );
+  }
+
+  const safeIndex = Math.min(roundIndex, GAME_ROUNDS.length - 1);
+  const round = GAME_ROUNDS[safeIndex]!;
   const isLast = roundIndex >= GAME_ROUNDS.length - 1;
   const isCorrect = selected ? selected === round.correct : null;
 
@@ -146,7 +155,7 @@ const AlphabetFirstLetterGame = (): React.JSX.Element => {
           Punkty {score}/{GAME_ROUNDS.length}
         </KangurStatusChip>
       </div>
-      <div className='mt-4 flex flex-col items-center gap-4 text-center'>
+        <div className='mt-4 flex flex-col items-center gap-4 text-center'>
         <div className='text-5xl' aria-hidden='true'>
           {round.emoji}
         </div>

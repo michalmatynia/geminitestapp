@@ -226,6 +226,18 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     explanation: 'Buduj slowa z sylab. Gra dla 7-latkow.',
     triggerPhrases: ['sylaby', 'slowa'],
   },
+  alphabet_words: {
+    explanation: 'Rozpoznawaj litery na poczatku slow. Gra dla 6-latkow.',
+    triggerPhrases: ['slowa', 'litery'],
+  },
+  alphabet_matching: {
+    explanation: 'Lacz duze i male litery w pary. Gra dla 6-latkow.',
+    triggerPhrases: ['dopasowanie', 'pary'],
+  },
+  alphabet_sequence: {
+    explanation: 'Uloz litery w poprawnej kolejnosci. Gra dla 6-latkow.',
+    triggerPhrases: ['kolejnosc', 'alfabet'],
+  },
   webdev_react_components: {
     explanation: 'Buduj interaktywne komponenty w React. Lekcja dla doroslych.',
     triggerPhrases: ['react', 'komponenty', 'programowanie'],

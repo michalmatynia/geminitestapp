@@ -93,7 +93,7 @@ function DuelsContent(): React.JSX.Element {
       <KangurPageContainer
         id='kangur-duels-main'
         className={cn(
-          'w-full max-w-5xl px-4 pb-10 pt-6 sm:px-6 lg:px-10',
+          'w-full max-w-5xl pb-10 pt-6',
           KANGUR_PANEL_GAP_CLASSNAME
         )}
       >

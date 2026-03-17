@@ -5,6 +5,7 @@ import React from 'react';
 import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
+  isLinkedInIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
@@ -34,15 +35,20 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
+  const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
+    : isLinkedIn
+      ? 'Integration name (e.g. LinkedIn Main)'
     : isBaselinker
       ? 'Integration name (e.g. Main Baselinker)'
       : 'Integration name (e.g. John\'s Tradera)';
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'
+    : isLinkedIn
+      ? 'LinkedIn client ID'
     : isBaselinker
       ? 'Account name (optional)'
       : isTraderaApi
@@ -51,6 +57,8 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
 
   const usernamePlaceholder = isAllegro
     ? 'Allegro client ID'
+    : isLinkedIn
+      ? 'LinkedIn client ID'
     : isBaselinker
       ? 'Account name (for reference)'
       : isTraderaApi
@@ -59,6 +67,8 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
 
   const passwordLabel = isAllegro
     ? 'Allegro client secret'
+    : isLinkedIn
+      ? 'LinkedIn client secret'
     : isBaselinker
       ? 'Baselinker API token'
       : isTraderaApi
@@ -68,6 +78,8 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const passwordPlaceholder = isCreateMode
     ? isAllegro
       ? 'Allegro client secret'
+      : isLinkedIn
+        ? 'LinkedIn client secret'
       : isBaselinker
         ? 'Baselinker API token'
         : isTraderaApi
@@ -75,6 +87,8 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           : 'Tradera password'
     : isAllegro
       ? 'New client secret (leave blank to keep)'
+      : isLinkedIn
+        ? 'New client secret (leave blank to keep)'
       : isTraderaApi
         ? 'New fallback secret (leave blank to keep)'
         : 'New password (leave blank to keep)';

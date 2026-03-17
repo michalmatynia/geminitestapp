@@ -28,7 +28,11 @@ export const kangurSocialPostSchema = z.object({
   publishedAt: z.string().datetime().nullable().default(null),
   linkedinPostId: trimmedString.max(200).nullable().default(null),
   linkedinUrl: trimmedString.max(500).nullable().default(null),
+  linkedinConnectionId: trimmedString.max(160).nullable().default(null),
+  brainModelId: trimmedString.max(160).nullable().default(null),
+  publishError: trimmedString.max(1000).nullable().default(null),
   imageAssets: z.array(imageFileSelectionSchema).max(12).default([]),
+  imageAddonIds: z.array(trimmedString.max(160)).max(30).default([]),
   docReferences: z.array(trimmedString.max(240)).max(80).default([]),
   generatedSummary: trimmedString.max(8000).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
@@ -37,6 +41,9 @@ export const kangurSocialPostSchema = z.object({
   updatedAt: z.string().datetime().optional(),
 });
 export type KangurSocialPost = z.infer<typeof kangurSocialPostSchema>;
+
+export const kangurSocialPostsSchema = z.array(kangurSocialPostSchema);
+export type KangurSocialPosts = z.infer<typeof kangurSocialPostsSchema>;
 
 export const kangurSocialPostStoreSchema = z.object({
   version: z.number().int().positive().default(1),
@@ -52,7 +59,11 @@ export type CreateKangurSocialPostInput = Omit<
   updatedAt?: string;
 };
 
-export type UpdateKangurSocialPostInput = Partial<CreateKangurSocialPostInput>;
+export type UpdateKangurSocialPostInput = Partial<CreateKangurSocialPostInput> & {
+  publishedAt?: string | null;
+  linkedinPostId?: string | null;
+  linkedinUrl?: string | null;
+};
 
 export const buildKangurSocialPostCombinedBody = (
   bodyPl: string,

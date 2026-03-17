@@ -44,7 +44,7 @@ export function DriveImportModal(): React.JSX.Element | null {
   const localUploadTrigger = (
     <FileUploadTrigger
       accept='image/*'
-      onFilesSelected={(files) => {
+      onFilesSelected={(files: File[]) => {
         void handleLocalUpload(files);
       }}
       disabled={uploadPending}

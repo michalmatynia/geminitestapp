@@ -2,13 +2,9 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-export interface TreeContextValue {
-  selectedIds?: Set<string> | string[];
-  expandedIds?: Set<string> | string[];
-  onToggleExpand?: (id: string) => void;
-  onSelect?: (id: string, options?: { multi?: boolean; toggle?: boolean }) => void;
-  isProcessing?: boolean;
-}
+import type { TreeContextValue } from '@/shared/contracts/ui';
+
+export type { TreeContextValue };
 
 const TreeContext = createContext<TreeContextValue | null>(null);
 

@@ -5,10 +5,8 @@ import React, { useMemo } from 'react';
 import { useInternationalizationData } from '@/features/internationalization';
 import type { PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 

@@ -34,7 +34,7 @@ function ProductImageManagerGrid() {
     <div data-preserve-slot-selection='true'>
       <ProductImageManagerHeader />
       <div className={gridClass}>
-        {imageSlots.map((_, index) => (
+        {imageSlots.map((_: unknown, index: number) => (
           <ProductImageSlot key={`slot-${index}`} index={index} />
         ))}
       </div>

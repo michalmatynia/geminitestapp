@@ -3,25 +3,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import type { TreeContextMenuItem, TreeContextMenuProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
-export type TreeContextMenuItem = {
-  id: string;
-  label?: string | undefined;
-  onSelect?: (() => void) | undefined;
-  disabled?: boolean | undefined;
-  tone?: ('default' | 'danger') | undefined;
-  icon?: React.ReactNode | undefined;
-  separator?: boolean | undefined;
-};
-
-export interface TreeContextMenuProps {
-  items: TreeContextMenuItem[];
-  align?: 'start' | 'center' | 'end';
-  sideOffset?: number;
-  className?: string;
-  children: React.ReactNode;
-}
+export type { TreeContextMenuItem, TreeContextMenuProps };
 
 export function TreeContextMenu({
   items,

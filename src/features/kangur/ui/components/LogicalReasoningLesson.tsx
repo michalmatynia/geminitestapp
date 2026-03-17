@@ -21,6 +21,7 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'wnioskowanie' | 'kwantyfikatory' | 'zagadki' | 'podsumowanie' | 'gra';
@@ -261,7 +262,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
                 className='text-sm'
                 padding='sm'
               >
-                <div className='flex items-start gap-2'>
+                <div className={KANGUR_START_ROW_CLASSNAME}>
                   <span className='text-lg'>{answer ? '✅' : '❌'}</span>
                   <div>
                     <p className='font-bold [color:var(--kangur-page-text)]'>{stmt}</p>

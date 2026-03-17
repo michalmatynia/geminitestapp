@@ -18,6 +18,7 @@ import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-cont
 import { api } from '@/shared/lib/api-client';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 
 type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
@@ -257,7 +258,8 @@ export function KangurNarratorControl({
       setCurrentIndex(nextIndex);
       audio.src = nextSegment.audioUrl;
       audio.playbackRate = DEFAULT_PLAYBACK_RATE;
-      void audio.play().catch(() => {
+      void audio.play().catch((error) => {
+        void ErrorSystem.captureException(error);
         setStatus('error');
         setErrorMessage('The next narration segment could not start.');
       });

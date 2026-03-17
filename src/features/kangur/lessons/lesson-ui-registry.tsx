@@ -51,6 +51,9 @@ const AlphabetWordsLesson = loadLessonComponent(
 const AlphabetMatchingLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AlphabetMatchingLesson')
 );
+const AlphabetSequenceLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AlphabetSequenceLesson')
+);
 const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
 const CalendarLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/CalendarLesson')
@@ -119,6 +122,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   alphabet_syllables: AlphabetSyllablesLesson,
   alphabet_words: AlphabetWordsLesson,
   alphabet_matching: AlphabetMatchingLesson,
+  alphabet_sequence: AlphabetSequenceLesson,
   clock: ClockLesson,
   calendar: CalendarLesson,
   adding: AddingLesson,
@@ -173,6 +177,11 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   uppercase: 'alphabet_matching',
   lowercase: 'alphabet_matching',
   alphabet_matching: 'alphabet_matching',
+  sequence: 'alphabet_sequence',
+  kolejnosc: 'alphabet_sequence',
+  order: 'alphabet_sequence',
+  alfabet_order: 'alphabet_sequence',
+  alphabet_sequence: 'alphabet_sequence',
   adding: 'adding',
   addition: 'adding',
   subtracting: 'subtracting',

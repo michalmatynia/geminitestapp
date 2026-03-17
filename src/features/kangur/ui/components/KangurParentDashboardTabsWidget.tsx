@@ -149,7 +149,7 @@ export function KangurParentDashboardTabsWidget({
       <div
         className={cn(
           KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-          'grid grid-cols-2 max-[360px]:grid-cols-1 sm:w-auto sm:grid-cols-none sm:flex'
+          'grid grid-cols-2 max-[420px]:grid-cols-1 sm:w-auto sm:grid-cols-none sm:flex'
         )}
         role='tablist'
         aria-orientation='horizontal'
@@ -180,7 +180,7 @@ export function KangurParentDashboardTabsWidget({
               tabIndex={isActive ? 0 : -1}
               className={cn(
                 'min-w-0 flex-1 justify-center gap-1.5 px-2 text-center sm:px-4',
-                isLastOdd && 'col-span-2 max-[360px]:col-span-1 sm:col-span-1'
+                isLastOdd && 'col-span-2 max-[420px]:col-span-1 sm:col-span-1'
               )}
               size='sm'
               type='button'

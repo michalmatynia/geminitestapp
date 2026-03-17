@@ -23,6 +23,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_STACK_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
@@ -473,7 +474,7 @@ export default function CalendarInteractiveGame({
           {getCalendarInteractiveSummaryMessage(section, percent)}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          className='flex-col sm:flex-row'
+          className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel='Wróć'
           onFinish={handleFinishSession}
@@ -719,7 +720,7 @@ export default function CalendarInteractiveGame({
       )}
 
       {task.type === 'click_weekday_name' && (
-        <div className='mx-auto grid w-full max-w-lg grid-cols-1 gap-2 min-[360px]:grid-cols-2 md:grid-cols-3'>
+        <div className='mx-auto grid w-full max-w-lg grid-cols-1 gap-2 min-[420px]:grid-cols-2 md:grid-cols-3'>
           {DAY_LABELS_FULL.map((dayLabel, idx) => {
             const isCorrectTarget = feedback !== null && idx === task.targetIdx;
             const isWrongSelection =

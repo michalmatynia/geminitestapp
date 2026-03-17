@@ -19,6 +19,7 @@ import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
 } from '@/features/cms/public';
+import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
@@ -32,6 +33,7 @@ import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjec
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { KangurChoiceDialog } from '@/features/kangur/ui/components/KangurChoiceDialog';
+import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
@@ -65,7 +67,8 @@ type KangurPrimaryNavigationPage =
   | 'Tests'
   | 'LearnerProfile'
   | 'ParentDashboard'
-  | 'Duels';
+  | 'Duels'
+  | 'SocialUpdates';
 
 type KangurNavActionConfig = {
   active?: boolean;
@@ -753,7 +756,7 @@ export function KangurPrimaryNavigation({
       <div
         className={
           wrapperClassName ??
-          'grid w-full min-w-0 grid-cols-2 gap-2 max-[360px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
+          'grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
         }
         data-testid='kangur-primary-nav-primary-actions'
       >
@@ -791,7 +794,7 @@ export function KangurPrimaryNavigation({
       <div
         className={
           wrapperClassName ??
-          'ml-auto flex w-full flex-col items-stretch justify-end gap-2 max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-row sm:flex-wrap sm:items-center'
+          `ml-auto ${KANGUR_TIGHT_ROW_CLASSNAME} items-stretch justify-end max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-wrap sm:items-center`
         }
         data-testid='kangur-primary-nav-utility-actions'
       >
@@ -870,7 +873,7 @@ export function KangurPrimaryNavigation({
         aria-modal='true'
         aria-labelledby={mobileMenuTitleId}
         id={mobileMenuId}
-        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 ${
+        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
           isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
         }`}
         style={{ backgroundColor: kangurAppearance.tone.background, color: kangurAppearance.tone.text }}
@@ -905,8 +908,13 @@ export function KangurPrimaryNavigation({
     <KangurChoiceDialog
       open={isSubjectModalOpen}
       onOpenChange={setIsSubjectModalOpen}
+      header={
+        <KangurDialogHeader
+          title='Wybierz przedmiot'
+          description='Wybierz przedmiot, na którym chcesz się teraz skupić.'
+        />
+      }
       title='Wybierz przedmiot'
-      description='Wybierz przedmiot, na którym chcesz się teraz skupić.'
       defaultChoiceLabel={defaultSubjectLabel}
       currentChoiceLabel={subjectChoiceLabel}
       closeAriaLabel='Zamknij wybór przedmiotu'
@@ -923,8 +931,13 @@ export function KangurPrimaryNavigation({
     <KangurChoiceDialog
       open={isAgeGroupModalOpen}
       onOpenChange={setIsAgeGroupModalOpen}
+      header={
+        <KangurDialogHeader
+          title='Wybierz grupę wiekową'
+          description='Wybierz, dla kogo mają być dopasowane lekcje.'
+        />
+      }
       title='Wybierz grupę wiekową'
-      description='Wybierz, dla kogo mają być dopasowane lekcje.'
       defaultChoiceLabel={defaultAgeGroupLabel}
       currentChoiceLabel={ageGroupChoiceLabel}
       closeAriaLabel='Zamknij wybór grupy wiekowej'

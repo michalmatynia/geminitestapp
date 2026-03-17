@@ -373,8 +373,8 @@ export function AgentPersonaMoodEditor({
                       accept='.svg,image/svg+xml,image/*'
                       multiple={false}
                       enablePaste
-                      onFilesSelected={(files) => handleMoodAssetUpload(mood.id, files)}
-                      onError={(error) => {
+                      onFilesSelected={(files: File[]) => handleMoodAssetUpload(mood.id, files)}
+                      onError={(error: unknown) => {
                         logClientError(error, {
                           context: { source: 'AgentPersonaMoodEditor', action: 'uploadAvatar', moodId: mood.id },
                         });

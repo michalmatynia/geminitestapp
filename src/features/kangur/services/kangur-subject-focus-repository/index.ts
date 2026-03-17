@@ -18,7 +18,6 @@ export const getKangurSubjectFocusRepository = async (): Promise<KangurSubjectFo
       try {
         return await repository.getSubjectFocus(learnerId);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_SUBJECT_FOCUS_REPOSITORY_SERVICE,
           action: 'getSubjectFocus',
@@ -32,7 +31,6 @@ export const getKangurSubjectFocusRepository = async (): Promise<KangurSubjectFo
       try {
         return await repository.saveSubjectFocus(learnerId, subject);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_SUBJECT_FOCUS_REPOSITORY_SERVICE,
           action: 'saveSubjectFocus',

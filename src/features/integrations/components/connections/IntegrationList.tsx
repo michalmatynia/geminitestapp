@@ -15,6 +15,7 @@ export function IntegrationList(): React.JSX.Element {
     traderaApiDefinition,
     allegroDefinition,
     baselinkerDefinition,
+    linkedinDefinition,
   } = useIntegrationList();
 
   return (
@@ -78,6 +79,14 @@ export function IntegrationList(): React.JSX.Element {
                   variant: 'processing' as const,
                   color: 'active' as const,
                   definition: baselinkerDefinition,
+                },
+                {
+                  slug: 'linkedin',
+                  label: 'LinkedIn',
+                  type: 'Social',
+                  variant: 'info' as const,
+                  color: 'info' as const,
+                  definition: linkedinDefinition,
                 },
               ].map((item) => {
                 if (!integrationSlugs.includes(item.slug)) return null;

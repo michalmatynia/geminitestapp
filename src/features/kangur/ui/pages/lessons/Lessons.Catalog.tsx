@@ -95,7 +95,9 @@ export function LessonsCatalog() {
         <KangurPageIntroCard
           description={lessonListIntroDescription}
           headingAs='h1'
+          headingTestId='kangur-lessons-list-heading'
           onBack={handleGoBack}
+          testId='lessons-list-intro-card'
           title={lessonListIntroContent?.title ?? 'Lekcje'}
           visualTitle={<KangurLessonsWordmark className='mx-auto' data-testid='kangur-lessons-heading-art' />}
         />
@@ -152,9 +154,17 @@ export function LessonsCatalog() {
                     {isExpanded && (
                       <div className={`mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
                         {group.lessons.map((lesson, index) => (
-                          <motion.div key={lesson.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}>
+                          <motion.div
+                            key={lesson.id}
+                            data-testid={`lesson-library-motion-${lesson.id}`}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}
+                          >
                             <KangurLessonLibraryCard
                               lesson={lesson}
+                              dataDocId='lessons_library_entry'
+                              iconTestId={`lesson-library-icon-${lesson.id}`}
                               onSelect={() => handleSelectLesson(lesson.id)}
                               masteryPresentation={getLessonMasteryPresentation(lesson, progress)}
                               lessonAssignment={lessonAssignmentsByComponent.get(lesson.componentId) ?? null}
@@ -173,9 +183,17 @@ export function LessonsCatalog() {
           ) : (
             <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
               {orderedLessons.map((lesson, index) => (
-                <motion.div key={lesson.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}>
+                <motion.div
+                  key={lesson.id}
+                  data-testid={`lesson-library-motion-${lesson.id}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}
+                >
                   <KangurLessonLibraryCard
                     lesson={lesson}
+                    dataDocId='lessons_library_entry'
+                    iconTestId={`lesson-library-icon-${lesson.id}`}
                     onSelect={() => handleSelectLesson(lesson.id)}
                     masteryPresentation={getLessonMasteryPresentation(lesson, progress)}
                     lessonAssignment={lessonAssignmentsByComponent.get(lesson.componentId) ?? null}

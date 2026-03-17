@@ -274,7 +274,7 @@ export default function ScoreHistory({
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <div className='grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 md:grid-cols-3'>
+      <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 md:grid-cols-3'>
         <KangurMetricCard
           accent='sky'
           align='center'

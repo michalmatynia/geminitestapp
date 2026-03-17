@@ -9,10 +9,8 @@ import {
 } from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
 import { LoadingState } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { useCountryForm } from './hooks/useCountryForm';
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';

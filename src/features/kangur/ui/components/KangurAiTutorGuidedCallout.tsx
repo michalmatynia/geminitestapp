@@ -5,10 +5,14 @@ import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { cn } from '@/features/kangur/shared/utils';
+import {
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 import {
   KangurAiTutorChromeBadge,
@@ -345,7 +349,7 @@ export function KangurAiTutorGuidedCallout({
             )}
           >
             <div className={selectionKeepoutClassName}>
-              <div className='flex flex-col items-start kangur-panel-gap sm:flex-row sm:justify-between'>
+              <KangurPanelRow className='items-start sm:justify-between'>
                 <KangurAiTutorChromeKicker>
                   {headerLabel}
                 </KangurAiTutorChromeKicker>
@@ -357,7 +361,7 @@ export function KangurAiTutorGuidedCallout({
                     className='self-start sm:self-auto'
                   />
                 ) : null}
-              </div>
+              </KangurPanelRow>
               {stepLabel ? (
                 <div
                   className={cn(
@@ -401,7 +405,7 @@ export function KangurAiTutorGuidedCallout({
                   tone='panel'
                   className='mt-3 px-3 py-3'
                 >
-                  <div className='flex flex-wrap items-center gap-2'>
+                  <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                     {selectedKnowledgeTitle ? (
                       <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px] normal-case tracking-normal'>
                         {selectedKnowledgeTitle}
@@ -491,7 +495,9 @@ export function KangurAiTutorGuidedCallout({
               ) : null}
               <div
                 className={cn(
-                  'mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end',
+                  'mt-3',
+                  KANGUR_TIGHT_ROW_CLASSNAME,
+                  'sm:flex-wrap sm:justify-end',
                   isMobileHomeOnboardingSheet && 'mt-2'
                 )}
               >

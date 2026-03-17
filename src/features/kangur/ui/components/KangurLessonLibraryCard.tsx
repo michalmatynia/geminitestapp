@@ -9,6 +9,11 @@ import {
   KangurGradientIconTile,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+  KANGUR_WRAP_START_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { cn } from '@/features/kangur/utils/cn';
 
@@ -31,7 +36,8 @@ export function KangurLessonLibraryCardAside({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-start gap-2 max-[360px]:flex-col sm:flex-col sm:items-end',
+        KANGUR_WRAP_START_ROW_CLASSNAME,
+        'max-[420px]:flex-col sm:flex-col sm:items-end',
         className
       )}
     >
@@ -105,7 +111,7 @@ export function KangurLessonLibraryCardFooter({
 
   return (
     <>
-      {footerChips.length > 0 ? <div className='flex flex-wrap gap-2'>{footerChips}</div> : null}
+      {footerChips.length > 0 ? <div className={KANGUR_WRAP_ROW_CLASSNAME}>{footerChips}</div> : null}
       <div className='mt-3 break-words text-xs font-medium [color:var(--kangur-page-muted-text)]'>
         {masteryPresentation.summaryLabel}
       </div>
@@ -191,7 +197,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
             masteryPresentation={masteryPresentation}
           />
         }
-        headerClassName='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'
+        headerClassName={cn(KANGUR_PANEL_ROW_CLASSNAME, 'sm:items-start sm:justify-between')}
         icon={
           <KangurGradientIconTile
             data-testid={iconTestId}

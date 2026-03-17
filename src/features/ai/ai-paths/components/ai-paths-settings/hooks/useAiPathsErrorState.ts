@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import type { Toast } from '@/shared/ui';
+import type { Toast } from '@/shared/contracts/ui';
 
 import { useAiPathsValidationActions } from './useAiPathsValidationActions';
 

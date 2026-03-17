@@ -35,6 +35,7 @@ export {
   enqueueTraderaListingJob,
 } from '@/server/queues/integrations';
 export { startTraderaRelistSchedulerQueue } from '@/server/queues/integrations';
+export { startKangurSocialSchedulerQueue } from '@/server/queues/kangur';
 
 export {
   getQueueHealth as getGenericQueueStatus,

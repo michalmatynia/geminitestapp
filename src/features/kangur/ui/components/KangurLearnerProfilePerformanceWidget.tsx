@@ -13,7 +13,12 @@ import {
   KangurProgressBar,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
@@ -41,7 +46,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         variant='soft'
       >
         <KangurPanelSectionHeading>Aktywność 7 dni</KangurPanelSectionHeading>
-        <div className='mb-4 flex flex-wrap gap-2'>
+        <div className={`mb-4 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
           <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
             Dziś: +{snapshot.todayXpEarned} XP
           </KangurStatusChip>
@@ -97,11 +102,11 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
           ) : (
             snapshot.operationPerformance.map((item) => (
               <div key={item.operation}>
-                <div className='mb-1 flex flex-col gap-2 text-sm [color:var(--kangur-page-muted-text)] sm:flex-row sm:items-center sm:justify-between'>
+                <div className={`mb-1 ${KANGUR_TIGHT_ROW_CLASSNAME} text-sm [color:var(--kangur-page-muted-text)] sm:items-center sm:justify-between`}>
                   <span className='font-semibold'>
                     {item.emoji} {item.label}
                   </span>
-                  <div className='flex flex-wrap items-center gap-2'>
+                  <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                     <span>{item.averageAccuracy}%</span>
                     <KangurButton asChild className='w-full sm:w-auto' size='sm' variant='surface'>
                       <Link

@@ -9,6 +9,7 @@ import {
   KangurGlassPanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_COMPACT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import {
@@ -119,7 +120,7 @@ export function KangurPriorityAssignments({
         surface='mist'
         variant='soft'
       >
-        <div className='mb-5 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between'>
+        <div className={`mb-5 ${KANGUR_COMPACT_ROW_CLASSNAME} items-start sm:items-center sm:justify-between`}>
           <div className='text-2xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
             {assignmentsTitle}
           </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { SimpleSettingsListItem } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import { ActionMenu } from '../ActionMenu';
@@ -9,14 +10,7 @@ import { DropdownMenuItem } from '../dropdown-menu';
 import { CompactEmptyState } from '../empty-state';
 import { LoadingState } from '../LoadingState';
 
-
-export interface SimpleSettingsListItem {
-  id: string;
-  title: React.ReactNode;
-  subtitle?: React.ReactNode;
-  icon?: React.ReactNode;
-  description?: React.ReactNode;
-}
+export type { SimpleSettingsListItem };
 
 interface SimpleSettingsListProps<T extends SimpleSettingsListItem> {
   items: T[];

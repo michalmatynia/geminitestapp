@@ -42,16 +42,16 @@ vi.mock('@/features/foldertree', async (importOriginal) => {
 });
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => ({
+  useKangurLessons: vi.fn(() => ({
     data: lessonsState.value,
     isLoading: false,
     error: null,
-  }),
-  useKangurLessonDocuments: () => ({
+  })),
+  useKangurLessonDocuments: vi.fn(() => ({
     data: lessonDocumentsState.value,
     isLoading: false,
     error: null,
-  }),
+  })),
   useUpdateKangurLessons: () => ({
     mutateAsync: mutateAsyncMock,
     isPending: false,

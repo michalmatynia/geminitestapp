@@ -23,6 +23,7 @@ import {
 } from './adaptive.recommendations';
 import {
   buildKangurAiTutorCoachingFrame,
+  appendCoachingFrameInstructions,
 } from '../ai-tutor-coaching-frame';
 import type { KangurLessonFocusCandidate } from './adaptive.contracts';
 import type { KangurRoutePage } from '@/features/kangur/shared/contracts/kangur';
@@ -322,7 +323,71 @@ export const buildAdaptiveGuidanceFromRegistry = (input: {
     completedFollowUp,
   });
   
-  // Implementation details... (truncated for brevity in write_file)
+  const repeatedQuestionCount = input.context?.repeatedQuestionCount ?? 0;
+  const recentHintRecoverySignal = input.context?.recentHintRecoverySignal ?? null;
+
+  if (repeatedQuestionCount > 0) {
+    lines.push(
+      `Repeat signal: the learner has repeated essentially the same question ${repeatedQuestionCount + 1} times in this tutor thread, so change strategy instead of repeating the same hint.`
+    );
+  }
+
+  if (recentHintRecoverySignal === 'answer_revealed') {
+    lines.push(
+      'Hint recovery signal: the learner reached review after the previous hint. Reflect on what happened, then name one specific adjustment.'
+    );
+  } else if (recentHintRecoverySignal === 'focus_advanced') {
+    lines.push(
+      'Hint recovery signal: the learner moved forward after the previous hint. Confirm the progress and point to one concrete next step.'
+    );
+  }
+
+  if (previousCoachingMode && repeatedQuestionCount > 0) {
+    lines.push(
+      `Previous coaching mode was ${previousCoachingMode}, so do not reuse it unchanged while the learner is still stuck.`
+    );
+  }
+
+  if (completedFollowUp) {
+    lines.push(
+      'Completed tutor follow-up in this thread: the learner already carried out the previous recommended action, so avoid repeating the same next step unless there is a clear new reason.'
+    );
+    if (bridgeAction) {
+      lines.push(
+        `Successful follow-up signal: build on that completion with one adjacent next move: ${bridgeAction.label}${bridgeAction.reason ? ` (${bridgeAction.reason})` : ''}.`
+      );
+    }
+  }
+
+  if (averageAccuracy < 70 || weakMasteryPercent < 60) {
+    lines.push(
+      'Adaptive tutoring stance: use smaller reasoning steps, ask one checkpoint question at a time, and confirm understanding before moving on.'
+    );
+  } else if (averageAccuracy >= 85) {
+    lines.push(
+      'Adaptive tutoring stance: keep hints concise, let the learner do more of the work, and use challenge-style follow-up questions.'
+    );
+  }
+
+  appendCoachingFrameInstructions(lines, coachingFrame);
+
+  if (input.context?.interactionIntent === 'next_step') {
+    lines.push(
+      bridgeAction
+        ? 'When suggesting the next step, build on the completed tutor follow-up and give exactly one adjacent Kangur action.'
+        : assignmentSummary
+          ? 'When suggesting the next step, anchor it to the active assignment summary and give exactly one concrete Kangur action.'
+          : topRecommendation
+            ? 'When suggesting the next step, anchor it to the top recommendation and give exactly one concrete Kangur action.'
+            : 'When suggesting the next step, give exactly one concrete Kangur action that targets the weakest area.'
+    );
+  }
+
+  if (input.context?.interactionIntent === 'review' && latestSession) {
+    lines.push(
+      `When reviewing mistakes, connect the explanation to the learner's recent ${String(latestSession['operationLabel'] ?? '')} result and point out one thing to retry next.`
+    );
+  }
   
   return {
     instructions: lines.join('\n'),

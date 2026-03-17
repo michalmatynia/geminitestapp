@@ -23,6 +23,7 @@ import {
 import {
   KangurEquationDisplay,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -43,7 +44,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
             odróżnić <strong>przykład</strong> od <strong>konkretu</strong>.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' padding='sm'>
-            <div className='flex flex-wrap gap-2 text-sm'>
+            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-sm`}>
               <KangurLessonChip accent='amber'>a triangle</KangurLessonChip>
               <KangurLessonChip accent='amber'>an equation</KangurLessonChip>
               <KangurLessonChip accent='amber'>the solution</KangurLessonChip>

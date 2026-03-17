@@ -20,10 +20,8 @@ import {
   SelectSimple,
   useToast,
 } from '@/shared/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { ValidatorListTree } from './validator-lists/ValidatorListTree';

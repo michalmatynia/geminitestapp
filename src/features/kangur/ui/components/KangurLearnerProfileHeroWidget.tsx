@@ -9,6 +9,10 @@ import {
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_PANEL_GRID_TO_ROW_CLASSNAME,
+  KANGUR_SPACED_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const { user, progress } = useKangurLearnerProfileRuntime();
@@ -40,7 +44,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       title='Profil ucznia'
     >
       {user ? (
-        <div className='mb-4 flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4'>
+        <div className={`mb-4 w-full ${KANGUR_SPACED_ROW_CLASSNAME} items-center sm:justify-center sm:gap-4`}>
           <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
             {selectedAvatar ? (
               <img
@@ -70,7 +74,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       />
 
       {!user ? (
-        <div className='grid w-full kangur-panel-gap sm:flex sm:w-auto sm:flex-row'>
+        <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
           <KangurButton
             className='w-full sm:w-auto'
             onClick={() => {

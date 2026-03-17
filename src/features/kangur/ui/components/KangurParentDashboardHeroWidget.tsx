@@ -28,6 +28,10 @@ import { useKangurLearnerActivityStatus } from '@/features/kangur/ui/hooks/useKa
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { buildKangurLearnerLiveState } from '@/features/kangur/ui/services/learner-live-state';
+import {
+  KANGUR_PANEL_GRID_TO_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 const PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS = 110;
 const LEARNER_ACTIVITY_REFRESH_MS = 10_000;
@@ -118,7 +122,7 @@ export function KangurParentDashboardHeroWidget({
         testId='kangur-parent-dashboard-hero'
         title={guestHeroContent?.title ?? 'Panel Rodzica / Nauczyciela'}
       >
-        <div className='grid w-full kangur-panel-gap sm:flex sm:w-auto sm:flex-row'>
+        <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
           <KangurButton
             className='w-full sm:w-auto'
             onClick={() => {
@@ -263,7 +267,7 @@ export function KangurParentDashboardHeroWidget({
       ) : null}
 
       {hasActiveLearner ? (
-        <div className='mt-3 flex flex-wrap items-center gap-2'>
+        <div className={`mt-3 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
           <KangurButton asChild size='sm' variant='surface'>
             <Link
               href={createPageUrl('LearnerProfile', basePath)}

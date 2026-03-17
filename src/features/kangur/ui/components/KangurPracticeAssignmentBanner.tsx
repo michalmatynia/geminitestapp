@@ -19,6 +19,7 @@ import {
   KangurSummaryPanel,
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   buildKangurAssignmentListItem,
   formatKangurAssignmentOperationLabel,
@@ -172,7 +173,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
           />
         </KangurSummaryPanel>
         {countdownLabel ? (
-          <KangurMetaText className='mt-3 flex items-center gap-2 text-sm'>
+          <KangurMetaText className={`mt-3 ${KANGUR_CENTER_ROW_CLASSNAME} text-sm`}>
             <Clock className='h-4 w-4 text-slate-400' aria-hidden='true' />
             {countdownLabel}
           </KangurMetaText>

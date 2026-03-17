@@ -176,6 +176,30 @@ export function useDisconnectAllegro() {
   });
 }
 
+export function useDisconnectLinkedIn() {
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createMutationV2<IntegrationDisconnectResponse, IntegrationConnectionActionTarget>({
+    mutationFn: ({ integrationId, connectionId }): Promise<IntegrationDisconnectResponse> =>
+      api.post<IntegrationDisconnectResponse>(
+        `/api/v2/integrations/${integrationId}/connections/${connectionId}/linkedin/disconnect`,
+        { integrationId, connectionId }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useDisconnectLinkedIn',
+      operation: 'action',
+      resource: 'integrations.connections.linkedin.disconnect',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'linkedin', 'disconnect'],
+      description: 'Runs integrations connections linkedin disconnect.',
+    },
+    invalidate: (queryClient, _data, variables) => {
+      void invalidateIntegrationConnections(queryClient, variables.integrationId);
+    },
+  });
+}
+
 export function useBaseApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createMutationV2<IntegrationBaseApiResponse, IntegrationBaseApiRequest>({

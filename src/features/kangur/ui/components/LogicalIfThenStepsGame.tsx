@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 type SlotId = 'fact' | 'rule' | 'conclusion';
@@ -209,7 +209,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
 
       <KangurInfoCard accent='slate' tone='neutral' padding='sm' className='w-full'>
         <p className='text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2'>Karty</p>
-        <div className='flex flex-wrap gap-2'>
+        <div className={KANGUR_WRAP_ROW_CLASSNAME}>
           {poolCards.map((card) => (
             <button
               key={card.id}
@@ -243,7 +243,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
         </KangurInfoCard>
       ) : null}
 
-      <div className='flex flex-wrap gap-2'>
+      <div className={KANGUR_WRAP_ROW_CLASSNAME}>
         <KangurButton
           onClick={handleCheck}
           size='sm'

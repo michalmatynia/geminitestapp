@@ -11,6 +11,7 @@ import {
   useUpsertConnection,
   useDeleteConnection,
   useDisconnectAllegro,
+  useDisconnectLinkedIn,
   useTestConnection,
   useBaseApiRequest,
   useAllegroApiRequest,
@@ -86,6 +87,7 @@ export function useIntegrationsActionsImpl(args: {
   const upsertConnectionMutation = useUpsertConnection();
   const deleteConnectionMutation = useDeleteConnection();
   const disconnectAllegroMutation = useDisconnectAllegro();
+  const disconnectLinkedInMutation = useDisconnectLinkedIn();
   const testConnectionMutation = useTestConnection();
   const baseApiRequestMutation = useBaseApiRequest();
   const allegroApiRequestMutation = useAllegroApiRequest();
@@ -475,6 +477,31 @@ export function useIntegrationsActionsImpl(args: {
     }
   };
 
+  const handleLinkedInAuthorize = (): void => {
+    if (!args.activeIntegration || !activeConnection) {
+      toast('Create a LinkedIn connection first.', { variant: 'error' });
+      return;
+    }
+    window.location.href = `/api/v2/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/linkedin/authorize`;
+  };
+
+  const handleLinkedInDisconnect = async (): Promise<void> => {
+    if (!args.activeIntegration || !activeConnection) return;
+    try {
+      await disconnectLinkedInMutation.mutateAsync({
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+      });
+      toast('LinkedIn disconnected.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      logClientError(error, {
+        context: { source: 'IntegrationsContext', action: 'disconnectLinkedIn' },
+      });
+      toast('Failed to disconnect LinkedIn.', { variant: 'error' });
+    }
+  };
+
   const handleBaseApiRequest = async (): Promise<void> => {
     if (!args.activeIntegration || !activeConnection) {
       toast('Create a Base.com connection first.', { variant: 'error' });
@@ -561,6 +588,8 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroDisconnect,
     handleAllegroSandboxToggle,
     handleAllegroSandboxConnect,
+    handleLinkedInAuthorize,
+    handleLinkedInDisconnect,
     handleBaseApiRequest,
     handleAllegroApiRequest,
     onCloseModal,

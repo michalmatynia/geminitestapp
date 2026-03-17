@@ -326,7 +326,7 @@ export default function EnglishPrepositionsGame({
           <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700'>
             {round.question}
           </div>
-          <div className='grid grid-cols-1 gap-2 min-[360px]:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
             {round.options.map((option) => {
               const isSelected = selection === option;
               return (

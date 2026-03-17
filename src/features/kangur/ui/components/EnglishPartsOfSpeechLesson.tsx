@@ -24,6 +24,10 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_START_ROW_SPACED_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -119,7 +123,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               x + 4 = 10
             </KangurEquationDisplay>
           </KangurLessonVisual>
-          <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
             <KangurLessonChip accent='sky'>I solve</KangurLessonChip>
             <KangurLessonChip accent='sky'>He solves</KangurLessonChip>
             <KangurLessonChip accent='sky'>They solve</KangurLessonChip>
@@ -211,7 +215,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonVisual accent='teal' caption='mine / yours / theirs'>
             <EnglishPossessivePronounAnimation />
           </KangurLessonVisual>
-          <div className='flex flex-wrap gap-2 text-xs font-semibold'>
+          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
             {POSSESSIVE_PRONOUNS.slice(0, 6).map((item) => (
               <KangurLessonChip key={item.word} accent='teal'>
                 {item.word}
@@ -257,14 +261,14 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' padding='sm'>
             <div className='space-y-3 text-sm text-slate-700'>
-              <div className='flex items-start gap-3'>
+              <div className={KANGUR_START_ROW_SPACED_CLASSNAME}>
                 <span className='text-xs font-semibold text-slate-500'>A</span>
                 <div>
                   <p className='font-semibold'>I solved the system. Is this your graph?</p>
                   <p className='text-xs text-slate-500'>Rozwiązałem układ. Czy to twój wykres?</p>
                 </div>
               </div>
-              <div className='flex items-start gap-3'>
+              <div className={KANGUR_START_ROW_SPACED_CLASSNAME}>
                 <span className='text-xs font-semibold text-slate-500'>B</span>
                 <div>
                   <p className='font-semibold'>Yes, it&apos;s mine. Your answer matches ours.</p>

@@ -3,21 +3,12 @@
 import { type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
+import type { ChipProps } from '@/shared/contracts/ui';
 import { cn, getTextContent } from '@/shared/utils';
 
 import { Badge, badgeVariants } from './badge';
 
-export interface ChipProps {
-  label: React.ReactNode;
-  active?: boolean;
-  onClick?: () => void;
-  icon?: React.ComponentType<{ className?: string }>;
-  className?: string;
-  activeClassName?: string;
-  size?: 'xs' | 'sm';
-  variant?: 'default' | 'cyan' | 'amber' | 'emerald';
-  ariaLabel?: string;
-}
+export type { ChipProps };
 
 /**
  * Chip - An interactive, clickable badge-like component.

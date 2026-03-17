@@ -322,7 +322,7 @@ function LearnerProfileContent(): React.JSX.Element {
         <div
           className={cn(
             KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-            'grid grid-cols-2 max-[360px]:grid-cols-1 sm:w-auto sm:grid-cols-none sm:flex'
+            'grid grid-cols-2 max-[420px]:grid-cols-1 sm:w-auto sm:grid-cols-none sm:flex'
           )}
           role='tablist'
           aria-orientation='horizontal'

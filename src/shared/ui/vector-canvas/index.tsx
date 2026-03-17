@@ -8,6 +8,7 @@ import {
   type VectorShapeType,
   type VectorToolMode,
 } from '@/shared/contracts/vector';
+import type { VectorCanvasProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -29,6 +30,7 @@ import {
 
 export { type VectorPoint, type VectorShape, type VectorShapeType, type VectorToolMode };
 export type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect };
+export type { VectorCanvasProps };
 export {
   DEFAULT_VECTOR_VIEWBOX,
   resolveRectDragPoints,
@@ -38,40 +40,6 @@ export {
   vectorShapeToPathWithBounds,
   vectorShapesToPathWithBounds,
 } from '../vector-canvas.geometry';
-
-export interface VectorCanvasProps {
-  src?: string | null;
-  tool?: VectorToolMode;
-  selectionEnabled?: boolean;
-  shapes?: VectorShape[];
-  activeShapeId?: string | null;
-  selectedPointIndex?: number | null;
-  onChange?: (nextShapes: VectorShape[]) => void;
-  onSelectShape?: (id: string | null) => void;
-  onSelectPoint?: (index: number | null) => void;
-  brushRadius?: number;
-  allowWithoutImage?: boolean;
-  showEmptyState?: boolean;
-  emptyStateLabel?: string;
-  maskPreviewEnabled?: boolean;
-  maskPreviewShapes?: VectorShape[];
-  maskPreviewInvert?: boolean;
-  maskPreviewOpacity?: number;
-  maskPreviewFeather?: number;
-  showCenterGuides?: boolean;
-  enableTwoFingerRotate?: boolean;
-  baseCanvasWidthPx?: number | null;
-  baseCanvasHeightPx?: number | null;
-  onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
-  onImageContentFrameChange?: (frame: VectorCanvasImageContentFrame | null) => void;
-  showCanvasGrid?: boolean;
-  imageMoveEnabled?: boolean;
-  imageOffset?: { x: number; y: number };
-  onImageOffsetChange?: (offset: { x: number; y: number }) => void;
-  backgroundLayerEnabled?: boolean;
-  backgroundColor?: string;
-  className?: string;
-}
 
 const MIN_VIEW_SCALE = 0.25;
 const MAX_VIEW_SCALE = 8;

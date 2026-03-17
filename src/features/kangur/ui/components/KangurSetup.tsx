@@ -13,7 +13,12 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_PANEL_ROW_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import type { KangurMode } from '@/features/kangur/ui/types';
 
 type KangurSet = {
@@ -160,14 +165,14 @@ export default function KangurSetup({
 
           <div aria-labelledby={editionsHeadingId} className='flex w-full flex-col kangur-panel-gap' role='list'>
             {EDITIONS.map((edition) => (
-              <KangurAnswerChoiceCard
-                accent='amber'
-                aria-describedby={`kangur-setup-edition-status-${edition.year}`}
-                aria-label={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
-                buttonClassName='flex w-full flex-col items-start kangur-panel-gap rounded-[28px] px-5 py-4 text-left sm:flex-row sm:items-center'
-                data-testid={`kangur-setup-edition-${edition.year}`}
-                disabled={!edition.available}
-                emphasis={edition.available ? 'accent' : 'neutral'}
+                <KangurAnswerChoiceCard
+                  accent='amber'
+                  aria-describedby={`kangur-setup-edition-status-${edition.year}`}
+                  aria-label={`${edition.label}. ${edition.available ? 'Dostępna.' : 'Niedostępna, wkrótce dostępna.'}`}
+                  buttonClassName={`${KANGUR_PANEL_ROW_CLASSNAME} w-full items-start rounded-[28px] px-5 py-4 text-left sm:items-center`}
+                  data-testid={`kangur-setup-edition-${edition.year}`}
+                  disabled={!edition.available}
+                  emphasis={edition.available ? 'accent' : 'neutral'}
                 key={edition.year}
                 onClick={() => {
                   if (edition.available) {
@@ -200,7 +205,7 @@ export default function KangurSetup({
                   </span>
                   <span
                     id={`kangur-setup-edition-status-${edition.year}`}
-                    className='mt-1 flex flex-wrap items-center gap-2'
+                    className={`mt-1 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}
                   >
                     <KangurStatusChip accent='amber' size='sm'>
                       {edition.year}
@@ -296,7 +301,7 @@ export default function KangurSetup({
                 whileTap={setItem.available ? { scale: 0.97 } : {}}
                 wrapperRole='listitem'
               >
-                <span className='flex flex-wrap items-center gap-2'>
+                <span className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                   <KangurStatusChip accent={setItem.isExam ? 'indigo' : 'amber'} size='sm'>
                     {setItem.isExam ? 'Tryb konkursowy' : 'Trening'}
                   </KangurStatusChip>
@@ -315,7 +320,7 @@ export default function KangurSetup({
                     </KangurStatusChip>
                   ) : null}
                 </span>
-                <span className='flex items-center gap-2 text-base font-extrabold [color:var(--kangur-page-text)]'>
+                <span className={`${KANGUR_CENTER_ROW_CLASSNAME} text-base font-extrabold [color:var(--kangur-page-text)]`}>
                   {setItem.label}
                   {!setItem.available && <Lock className='h-3.5 w-3.5' />}
                 </span>

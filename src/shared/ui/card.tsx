@@ -1,6 +1,7 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import * as React from 'react';
 
+import type { CardPadding, CardVariant } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
 const cardVariants = cva('rounded-lg border text-card-foreground shadow-sm transition-colors', {
@@ -32,8 +33,10 @@ const cardVariants = cva('rounded-lg border text-card-foreground shadow-sm trans
   },
 });
 
-export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: CardVariant;
+  padding?: CardPadding;
+}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, padding, ...props }, ref) => (

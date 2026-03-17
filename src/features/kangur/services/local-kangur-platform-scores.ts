@@ -11,6 +11,7 @@ import type { KangurScoreCreateInput, KangurScoreRecord } from '@/features/kangu
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurScoreSchema, type KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import { reportKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import { KANGUR_SCORES_ENDPOINT } from './local-kangur-platform-endpoints';
 import { resolveSessionUser } from './local-kangur-platform-auth';
@@ -127,6 +128,7 @@ export const requestMergedScores = async (params: {
     try {
       await syncGuestScoresToApiIfAuthenticated();
     } catch (error: unknown) {
+      void ErrorSystem.captureException(error);
       reportKangurClientError(error, {
         source: 'kangur.local-platform',
         action: 'score.syncGuest',
@@ -158,6 +160,7 @@ export const requestMergedScores = async (params: {
       limit: params.limit,
     });
   } catch (error: unknown) {
+    void ErrorSystem.captureException(error);
     reportKangurClientError(error, {
       source: 'kangur.local-platform',
       action: 'score.list',

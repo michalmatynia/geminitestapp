@@ -4,8 +4,10 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import {
   KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
+  KANGUR_LESSON_COMPONENT_ORDER,
   KANGUR_LESSON_LIBRARY,
 } from '@/features/kangur/settings';
+import type { KangurLessonTemplate } from '@/features/kangur/lessons/lesson-types';
 import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurGameSetupMomentumCard';
 import { KangurGrajmyWordmark } from '@/features/kangur/ui/components/KangurGrajmyWordmark';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
@@ -23,11 +25,15 @@ import {
   KangurButton,
   KangurInfoCard,
   KangurIconBadge,
+  KangurPanelRow,
   KangurSectionHeading,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_RELAXED_ROW_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WRAP_START_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
@@ -585,6 +591,16 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     const lessonsByComponentId = new Map(
       enabledLessons.map((lesson) => [lesson.componentId, lesson] as const)
     );
+    const componentSortOrder = new Map(
+      KANGUR_LESSON_COMPONENT_ORDER.map((componentId, index) => [componentId, index] as const)
+    );
+    const resolveFallbackSortOrder = (componentIds: readonly KangurLessonComponentId[]): number => {
+      const orders = componentIds
+        .map((componentId) => componentSortOrder.get(componentId))
+        .filter((order): order is number => typeof order === 'number');
+
+      return orders.length > 0 ? Math.min(...orders) : Number.MAX_SAFE_INTEGER;
+    };
 
     const options = LESSON_QUIZ_DEFINITIONS.flatMap((definition) => {
       const activeLessons = definition.lessonComponentIds
@@ -592,7 +608,22 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         .filter((lesson): lesson is KangurLesson => Boolean(lesson));
 
       if (activeLessons.length === 0) {
-        return [];
+        const fallbackLessons = definition.lessonComponentIds
+          .map((componentId) => KANGUR_LESSON_LIBRARY[componentId])
+          .filter((lesson): lesson is KangurLessonTemplate => Boolean(lesson));
+
+        if (fallbackLessons.length === 0) {
+          return [];
+        }
+
+        const primaryLesson = fallbackLessons[0]!;
+        return [
+          {
+            ...definition,
+            subject: primaryLesson.subject,
+            sortOrder: resolveFallbackSortOrder(definition.lessonComponentIds),
+          },
+        ];
       }
 
       const primaryLesson = activeLessons[0]!;
@@ -757,7 +788,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
           padding='md'
           tone='accent'
         >
-          <div className='flex flex-col kangur-panel-gap sm:flex-row sm:items-start sm:justify-between'>
+          <KangurPanelRow className='sm:items-start sm:justify-between'>
             <div className='min-w-0'>
               <KangurStatusChip
                 accent={recommendation.accent}
@@ -787,10 +818,10 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
               type='button'
               variant='surface'
               onClick={handleRecommendationSelect}
-            >
-              {recommendation.actionLabel}
-            </KangurButton>
-          </div>
+              >
+                {recommendation.actionLabel}
+              </KangurButton>
+          </KangurPanelRow>
         </KangurInfoCard>
       ) : null}
       {showMathSections ? (
@@ -859,12 +890,12 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                             ) : null}
                           </>
                         }
-                        asideClassName='flex w-full flex-wrap items-start gap-2 sm:w-auto sm:flex-col sm:items-end sm:gap-2'
-                        className='w-full flex-col items-start gap-4 sm:flex-row sm:items-center'
+                        asideClassName={`${KANGUR_WRAP_START_ROW_CLASSNAME} w-full sm:w-auto sm:flex-col sm:items-end sm:gap-2`}
+                        className={`w-full ${KANGUR_RELAXED_ROW_CLASSNAME} items-start sm:items-center`}
                         contentClassName='w-full sm:flex-1'
                         description={option.description}
                         descriptionClassName='text-slate-500'
-                        headerClassName='flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between'
+                        headerClassName={`${KANGUR_TIGHT_ROW_CLASSNAME} items-start sm:items-start sm:justify-between`}
                         icon={
                           <KangurIconBadge
                             accent={option.accent}

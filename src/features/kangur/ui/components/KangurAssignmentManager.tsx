@@ -26,7 +26,9 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_PANEL_ROW_LG_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
@@ -697,7 +699,7 @@ export function KangurAssignmentManager({
             ) : null}
           </div>
 
-          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'>
+          <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-end`}>
             <KangurButton
               className='w-full sm:w-auto'
               size='sm'
@@ -727,7 +729,7 @@ export function KangurAssignmentManager({
           surface='neutral'
           variant='soft'
         >
-          <div className='flex flex-col kangur-panel-gap lg:flex-row lg:items-start lg:justify-between'>
+          <div className={`${KANGUR_PANEL_ROW_LG_CLASSNAME} lg:items-start lg:justify-between`}>
             <div className='max-w-2xl'>
               <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
                 Przydziel nowe zadanie
@@ -780,7 +782,7 @@ export function KangurAssignmentManager({
                         <KangurStatusChip accent='slate' className='w-fit' labelStyle='compact'>
                           {item.badge}
                         </KangurStatusChip>
-                        <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'>
+                        <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center`}>
                           {isAssigned ? (
                             <KangurButton
                               className='w-full sm:w-auto'
@@ -931,7 +933,7 @@ export function KangurAssignmentManager({
                       labelStyle='compact'
                       priority={item.createInput.priority}
                     />
-                    <div className='flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'>
+                    <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center`}>
                       {isAssigned ? (
                         <KangurButton
                           type='button'
@@ -1020,7 +1022,7 @@ export function KangurAssignmentManager({
             </KangurCardDescription>
           </div>
 
-          <div className='mt-5 grid grid-cols-1 kangur-panel-gap min-[360px]:grid-cols-2 xl:grid-cols-4'>
+          <div className='mt-5 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
             <KangurMetricCard
               accent='slate'
               description='zadania wymagające dalszej pracy'

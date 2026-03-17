@@ -22,6 +22,7 @@ import {
   reportKangurClientError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
   KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
@@ -332,6 +333,7 @@ export function KangurParentDashboardRuntimeProvider({
               );
               didSelect = true;
             } catch (error) {
+              void ErrorSystem.captureException(error);
               // Best-effort: make sure the parent session refreshes even if select fails.
               reportKangurClientError(error, {
                 source: 'kangur-parent-dashboard',
@@ -349,6 +351,7 @@ export function KangurParentDashboardRuntimeProvider({
                 'Odświeżanie panelu trwa zbyt długo.'
               );
             } catch (error) {
+              void ErrorSystem.captureException(error);
               reportKangurClientError(error, {
                 source: 'kangur-parent-dashboard',
                 action: 'refresh-after-create',
@@ -465,6 +468,7 @@ export function KangurParentDashboardRuntimeProvider({
                 'Odświeżanie panelu trwa zbyt długo.'
               );
             } catch (error) {
+              void ErrorSystem.captureException(error);
               reportKangurClientError(error, {
                 source: 'kangur-parent-dashboard',
                 action: 'refresh-after-save',
@@ -517,6 +521,7 @@ export function KangurParentDashboardRuntimeProvider({
                 'Odświeżanie panelu trwa zbyt długo.'
               );
             } catch (error) {
+              void ErrorSystem.captureException(error);
               reportKangurClientError(error, {
                 source: 'kangur-parent-dashboard',
                 action: 'refresh-after-delete',

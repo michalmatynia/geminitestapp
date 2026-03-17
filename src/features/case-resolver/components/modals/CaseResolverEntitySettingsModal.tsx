@@ -3,10 +3,8 @@
 import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 export interface CaseResolverEntitySettingsModalRuntimeValue<TItem, TForm extends object> {
   isOpen: boolean | undefined;

@@ -44,7 +44,7 @@ import {
   KangurButton,
   KangurEmptyState,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -665,7 +665,7 @@ function GameContent(): React.JSX.Element {
           'data-kangur-route-main': true,
           id: GAME_MAIN_ID,
           'aria-labelledby': GAME_TITLE_ID,
-          className: `flex flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:px-6 sm:pt-10 lg:px-8 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+          className: `flex flex-col items-center pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
         }}
       >
         <h1 id={GAME_TITLE_ID} className='sr-only'>
@@ -716,7 +716,7 @@ function GameContent(): React.JSX.Element {
           'data-kangur-route-main': true,
           id: GAME_MAIN_ID,
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
-          className: `flex flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:px-6 sm:pt-10 lg:px-8 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+          className: `flex flex-col items-center pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
         }}
       >
           <h1 id={GAME_TITLE_ID} className='sr-only'>
@@ -756,7 +756,7 @@ function GameContent(): React.JSX.Element {
                         title='Brak profilu ucznia'
                         description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
                       >
-                        <div className='flex w-full flex-col gap-2 sm:flex-row sm:items-center'>
+                        <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
                           <KangurButton
                             asChild
                             className='w-full sm:w-auto'

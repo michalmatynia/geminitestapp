@@ -13,6 +13,7 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 import {
   KANGUR_LEARNER_LOGIN_PATTERN,
@@ -181,6 +182,7 @@ function KangurLoginPageContent(): React.JSX.Element {
         setActiveAuthMode('sign-in');
         await auth?.checkAppState?.();
       } catch (error) {
+        void ErrorSystem.captureException(error);
         setFormError('Nie udało się potwierdzić e-maila rodzica.');
       } finally {
         setIsLoading(false);
@@ -308,6 +310,7 @@ function KangurLoginPageContent(): React.JSX.Element {
         })
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       setFormError('Nie udało się utworzyć konta rodzica.');
     } finally {
       setIsLoading(false);
@@ -357,6 +360,7 @@ function KangurLoginPageContent(): React.JSX.Element {
         })
       );
     } catch (error) {
+      void ErrorSystem.captureException(error);
       setFormError('Nie udało się wysłać e-maila.');
     } finally {
       setIsLoading(false);
@@ -433,6 +437,7 @@ function KangurLoginPageContent(): React.JSX.Element {
         callbackUrl: callbackPayload?.url ?? resolvedCallbackUrl,
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       setFormError('Nie udało się zalogować rodzica.');
     } finally {
       setIsLoading(false);
@@ -475,6 +480,7 @@ function KangurLoginPageContent(): React.JSX.Element {
         callbackUrl: resolvedCallbackUrl,
       });
     } catch (error) {
+      void ErrorSystem.captureException(error);
       setFormError('Nie udało się zalogować ucznia.');
     } finally {
       setIsLoading(false);
@@ -521,7 +527,7 @@ function KangurLoginPageContent(): React.JSX.Element {
     (activeAuthMode === 'create-account' && isCaptchaRequired && !captchaToken);
 
   return (
-    <div className='flex min-h-screen w-full items-center justify-center px-4 py-12'>
+    <div className='flex min-h-screen min-h-[100svh] min-h-[100dvh] w-full items-center justify-center px-4 py-8 sm:py-12'>
       <KangurGlassPanel
         data-testid='kangur-login-shell'
         padding='xl'

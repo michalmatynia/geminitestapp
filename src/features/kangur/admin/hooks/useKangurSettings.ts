@@ -6,6 +6,7 @@ import {
   parseKangurParentVerificationEmailSettings,
   parseKangurNarratorSettings,
   type KangurNarratorEngine,
+  type KangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/features/auth/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { verifyKangurParentCaptcha } from '@/features/kangur/server/parent-account-captcha';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import {
   buildKangurParentAccountCreateDebugPayload,
   createKangurParentAccount,
@@ -23,7 +24,10 @@ export async function postKangurParentAccountCreateHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  await auth().catch(() => null);
+  await auth().catch((error) => {
+    void ErrorSystem.captureException(error);
+    return null;
+  });
   const body = ctx.body as KangurParentAccountCreate | undefined;
   if (!body) {
     throw badRequestError('Invalid payload.');

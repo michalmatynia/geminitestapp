@@ -3,10 +3,8 @@
 import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 interface RenamePathModalProps extends EntityModalProps<{ name: string }> {
   setDraftName: (value: string) => void;

@@ -4,7 +4,8 @@ import Link from 'next/link';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { SettingsFieldsRenderer } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import {
   Badge,
   Breadcrumbs,
@@ -215,7 +216,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
               <SettingsFieldsRenderer
                 fields={section.fields}
                 values={draft}
-                onChange={(vals) => {
+                onChange={(vals: Partial<ThemeSettings>) => {
                   setDraft((prev) => ({ ...prev, ...vals }));
                 }}
                 disabled={isSaving || isReadOnly}

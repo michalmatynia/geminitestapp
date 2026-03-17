@@ -2,17 +2,9 @@ import { cn } from '@/shared/utils';
 
 import { SectionHeader } from '../section-header';
 
-import type { ReactNode } from 'react';
+import type { TreeHeaderProps } from '@/shared/contracts/ui';
 
-export type TreeHeaderProps = {
-  title?: string;
-  subtitle?: string;
-  actions?: ReactNode;
-  className?: string;
-  titleClassName?: string;
-  actionsClassName?: string;
-  children?: ReactNode;
-};
+export type { TreeHeaderProps };
 
 export function TreeHeader(props: TreeHeaderProps): React.JSX.Element {
   const { title, subtitle, actions, className, titleClassName, actionsClassName, children } = props;

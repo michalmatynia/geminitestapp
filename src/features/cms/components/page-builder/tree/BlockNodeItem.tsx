@@ -7,12 +7,12 @@ import { useDragStateExtract } from '@/features/cms/hooks/useDragStateExtract';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-builder-dnd';
+import type { TreeContextMenuItem } from '@/shared/contracts/ui';
 import {
   TreeRow,
   TreeActionButton,
   TreeActionSlot,
   TreeContextMenu,
-  type TreeContextMenuItem,
 } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 

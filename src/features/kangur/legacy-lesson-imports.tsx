@@ -295,6 +295,14 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  alphabet_matching: {
+    kind: 'flat',
+    slides: [],
+  },
+  alphabet_sequence: {
+    kind: 'flat',
+    slides: [],
+  },
   english_basics: {
     kind: 'flat',
     slides: [],

@@ -43,6 +43,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
@@ -121,7 +122,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
 
   return (
     <div className={`flex flex-col w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <div className='flex items-center gap-2'>
+      <div className={KANGUR_CENTER_ROW_CLASSNAME}>
         <KangurProgressBar
           accent='amber'
           className='flex-1'

@@ -15,7 +15,11 @@ import {
   KangurPanelIntro,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_INLINE_CENTER_ROW_CLASSNAME,
+  KANGUR_RELAXED_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
@@ -97,7 +101,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         padding='lg'
         surface='mist'
       >
-        <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className={`${KANGUR_RELAXED_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
           <div className='flex items-center gap-4'>
             <div className='h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm'>
               {selectedAvatar ? (
@@ -124,7 +128,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           ) : null}
         </div>
         <div
-          className='grid grid-cols-3 gap-3 min-[360px]:grid-cols-4 sm:grid-cols-5'
+          className='grid grid-cols-3 gap-3 min-[420px]:grid-cols-4 sm:grid-cols-5'
           role='radiogroup'
           aria-label='Wybierz avatar'
         >
@@ -158,14 +162,14 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         </div>
       </KangurGlassPanel>
       <div
-        className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} min-[360px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6`}
+        className={`grid grid-cols-1 ${KANGUR_PANEL_GAP_CLASSNAME} min-[420px]:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6`}
       >
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'
         description={`Najlepsza sesja: ${snapshot.bestAccuracy}%`}
         label={
-          <span className='inline-flex items-center gap-2'>
+          <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
             <BarChart2 className='h-4 w-4' /> Średnia skuteczność
           </span>
         }
@@ -177,7 +181,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-streak'
         description={`Najdłuższa: ${snapshot.longestStreakDays} dni`}
         label={
-          <span className='inline-flex items-center gap-2'>
+          <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
             <Flame className='h-4 w-4' /> Seria dni
           </span>
         }
@@ -189,7 +193,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-xp-today'
         description={`7 dni: +${snapshot.weeklyXpEarned} XP · średnio ${snapshot.averageXpPerSession} XP na sesję`}
         label={
-          <span className='inline-flex items-center gap-2'>
+          <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
             <Sparkles className='h-4 w-4' /> XP dzisiaj
           </span>
         }
@@ -206,7 +210,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
               : 'Wszystkie odznaki polecanego kierunku odblokowane.'
           }
           label={
-            <span className='inline-flex items-center gap-2'>
+            <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
               <Compass className='h-4 w-4' /> Polecone rundy
             </span>
           }
@@ -238,7 +242,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
               : 'Trwa ładowanie misji dnia...'
         }
         label={
-          <span className='inline-flex items-center gap-2'>
+          <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
             <Target className='h-4 w-4' /> Misja dnia
           </span>
         }
@@ -265,7 +269,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-daily-goal'
         description={`Wypełnienie: ${snapshot.dailyGoalPercent}%`}
         label={
-          <span className='inline-flex items-center gap-2'>
+          <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
             <Target className='h-4 w-4' /> Cel dzienny
           </span>
         }
@@ -281,7 +285,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
             : 'Wszystkie odznaki odblokowane'
         }
         label={
-          <span className='inline-flex items-center gap-2'>
+          <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
             <Award className='h-4 w-4' /> Odznaki
           </span>
         }

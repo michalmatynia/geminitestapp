@@ -3,6 +3,11 @@
 import React, { ChangeEvent, ReactElement, useMemo } from 'react';
 
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+import type {
+  PlaywrightSettingsContextType,
+  PlaywrightSettingsFormProps,
+  PlaywrightSettingsProviderProps,
+} from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
 import {
@@ -16,20 +21,13 @@ import {
   ToggleRow,
 } from '@/shared/ui';
 
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
-
-export type PlaywrightSettingsContextType = {
-  settings: PlaywrightSettings;
-  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
+export type {
+  PlaywrightSettingsContextType,
+  PlaywrightSettingsFormProps,
+  PlaywrightSettingsProviderProps,
 };
 
 const PlaywrightSettingsContext = React.createContext<PlaywrightSettingsContextType | null>(null);
-
-export type PlaywrightSettingsProviderProps = {
-  settings: PlaywrightSettings;
-  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
-  children: ReactNode;
-};
 
 export function PlaywrightSettingsProvider({
   settings,
@@ -87,16 +85,6 @@ function usePlaywrightSettingsFormView(): PlaywrightSettingsFormViewContextValue
   }
   return context;
 }
-
-export type PlaywrightSettingsFormProps = {
-  settings: PlaywrightSettings;
-  setSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
-  onSave?: () => void;
-  saveLabel?: string;
-  showSave?: boolean;
-  title?: string;
-  description?: string;
-};
 
 const toNumber = (value: string, fallback: number): number => {
   if (value.trim() === '') return fallback;

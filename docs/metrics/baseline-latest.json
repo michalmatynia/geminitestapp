@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-17T12:18:32.254Z",
+  "generatedAt": "2026-03-17T13:50:54.318Z",
   "source": {
-    "totalFiles": 6511,
-    "totalLines": 1044407,
-    "useClientFiles": 6,
+    "totalFiles": 6553,
+    "totalLines": 1050296,
+    "useClientFiles": 0,
     "filesOver800": 0,
     "filesOver1000": 0,
     "filesOver1500": 0,
@@ -15,18 +15,18 @@
   "api": {
     "totalRoutes": 29,
     "routesWithApiHandler": 125,
-    "delegatedServerRoutes": 155,
+    "delegatedServerRoutes": 158,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 38,
     "revalidateRoutes": 12,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 280,
+    "routesWithExplicitCachePolicy": 283,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
         "path": "src/app/api/kangur/[[...path]]/route.ts",
-        "lines": 1047
+        "lines": 1146
       },
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
@@ -34,7 +34,7 @@
       },
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
-        "lines": 325
+        "lines": 339
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
@@ -74,11 +74,11 @@
       },
       {
         "path": "src/app/api/kangur/auth/parent-magic-link/exchange/route.ts",
-        "lines": 29
+        "lines": 33
       },
       {
         "path": "src/app/api/kangur/auth/parent-magic-link/request/route.ts",
-        "lines": 29
+        "lines": 33
       },
       {
         "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
@@ -111,7 +111,7 @@
     "appFeatureDeepImports": 22,
     "featureToSharedTotalImports": 28,
     "featureToAppApiTotalImports": 0,
-    "sharedToFeaturesTotalImports": 7
+    "sharedToFeaturesTotalImports": 4
   },
   "architecture": {
     "crossFeatureEdgePairs": 6,
@@ -144,38 +144,38 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1040,
-        "lines": 234559
+        "files": 1057,
+        "lines": 239133
       },
       {
         "feature": "ai",
         "files": 1030,
-        "lines": 208007
+        "lines": 208005
       },
       {
         "feature": "case-resolver",
         "files": 288,
-        "lines": 63017
+        "lines": 63013
       },
       {
         "feature": "cms",
         "files": 329,
-        "lines": 53015
+        "lines": 53037
       },
       {
         "feature": "products",
         "files": 225,
-        "lines": 44401
+        "lines": 44395
       },
       {
         "feature": "integrations",
-        "files": 204,
-        "lines": 28638
+        "files": 205,
+        "lines": 28846
       },
       {
         "feature": "prompt-exploder",
         "files": 151,
-        "lines": 26344
+        "lines": 26340
       },
       {
         "feature": "notesapp",
@@ -185,7 +185,7 @@
       {
         "feature": "foldertree",
         "files": 78,
-        "lines": 9677
+        "lines": 9678
       },
       {
         "feature": "filemaker",
@@ -195,12 +195,12 @@
       {
         "feature": "admin",
         "files": 39,
-        "lines": 7751
+        "lines": 7757
       },
       {
         "feature": "auth",
         "files": 43,
-        "lines": 6797
+        "lines": 6791
       },
       {
         "feature": "data-import-export",
@@ -210,12 +210,12 @@
       {
         "feature": "database",
         "files": 29,
-        "lines": 6071
+        "lines": 6070
       },
       {
         "feature": "viewer3d",
         "files": 30,
-        "lines": 5081
+        "lines": 5079
       },
       {
         "feature": "prompt-engine",
@@ -229,8 +229,8 @@
       },
       {
         "feature": "observability",
-        "files": 19,
-        "lines": 3046
+        "files": 20,
+        "lines": 3107
       },
       {
         "feature": "product-sync",
@@ -255,12 +255,12 @@
       {
         "feature": "internationalization",
         "files": 20,
-        "lines": 1939
+        "lines": 1933
       },
       {
         "feature": "jobs",
         "files": 4,
-        "lines": 492
+        "lines": 499
       },
       {
         "feature": "gsap",
@@ -495,32 +495,36 @@
         "lines": 1162
       },
       {
+        "path": "src/app/api/kangur/[[...path]]/route.ts",
+        "lines": 1146
+      },
+      {
         "path": "src/features/kangur/services/local-kangur-platform-duels.ts",
-        "lines": 1141
+        "lines": 1144
       },
       {
         "path": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
-        "lines": 1123
+        "lines": 1130
+      },
+      {
+        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
+        "lines": 1115
+      },
+      {
+        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
+        "lines": 1113
       },
       {
         "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
         "lines": 1112
       },
       {
-        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
-        "lines": 1098
-      },
-      {
-        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
-        "lines": 1091
+        "path": "src/shared/contracts/kangur.ts",
+        "lines": 1097
       },
       {
         "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
-        "lines": 1084
-      },
-      {
-        "path": "src/shared/contracts/kangur.ts",
-        "lines": 1081
+        "lines": 1087
       },
       {
         "path": "src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx",
@@ -533,10 +537,6 @@
       {
         "path": "src/features/kangur/themes/others.ts",
         "lines": 1054
-      },
-      {
-        "path": "src/app/api/kangur/[[...path]]/route.ts",
-        "lines": 1047
       },
       {
         "path": "src/features/kangur/ui/components/animations/AddingAnimations.tsx",
@@ -571,6 +571,14 @@
         "lines": 987
       },
       {
+        "path": "src/features/kangur/server/knowledge-graph/retrieval.ts",
+        "lines": 984
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
+        "lines": 976
+      },
+      {
         "path": "src/shared/contracts/cms.ts",
         "lines": 974
       },
@@ -579,16 +587,8 @@
         "lines": 973
       },
       {
-        "path": "src/features/kangur/server/knowledge-graph/retrieval.ts",
-        "lines": 961
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
-        "lines": 958
-      },
-      {
         "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-        "lines": 954
+        "lines": 966
       }
     ],
     "topPagesByLines": [
@@ -675,8 +675,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 2,
+    "candidateChains": 0,
     "depthGte4Chains": 0,
-    "forwardingComponents": 26
+    "forwardingComponents": 27
   }
 }

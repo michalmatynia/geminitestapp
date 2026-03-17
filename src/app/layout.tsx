@@ -1,4 +1,4 @@
-import { RootClientShell } from '@/shared/providers/RootClientShell';
+import { RootClientShell } from './_providers/RootClientShell';
 import { cn } from '@/shared/utils';
 
 import type { Metadata, Viewport } from 'next';

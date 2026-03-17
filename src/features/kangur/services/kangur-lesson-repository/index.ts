@@ -18,7 +18,6 @@ export const getKangurLessonRepository = async (): Promise<KangurLessonRepositor
       try {
         return await repository.listLessons(input);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_LESSON_REPOSITORY_SERVICE,
           action: 'listLessons',
@@ -34,7 +33,6 @@ export const getKangurLessonRepository = async (): Promise<KangurLessonRepositor
       try {
         return await repository.replaceLessons(lessons);
       } catch (error) {
-        void ErrorSystem.captureException(error);
         void ErrorSystem.captureException(error, {
           service: KANGUR_LESSON_REPOSITORY_SERVICE,
           action: 'replaceLessons',

@@ -108,6 +108,9 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
   KangurButton: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+  KangurPanelRow: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
+    <div {...props}>{children}</div>
+  ),
 }));
 
 vi.mock('./KangurAiTutorChrome', () => ({

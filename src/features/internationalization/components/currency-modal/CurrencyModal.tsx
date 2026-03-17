@@ -6,10 +6,8 @@ import {
   useInternationalizationActions,
   useInternationalizationUi,
 } from '@/features/internationalization/context/InternationalizationContext';
-import {
-  SettingsPanelBuilder,
-  type SettingsPanelField,
-} from '@/shared/contracts/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { useCurrencyForm } from './hooks/useCurrencyForm';
 

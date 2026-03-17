@@ -14,6 +14,7 @@ import {
   KangurSurfacePanel,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
+import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurLessonActivityBlock,
   KangurLessonCalloutBlock,
@@ -370,7 +371,7 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
       }}
     >
       <div
-        className='mb-1 flex items-center gap-2 break-words text-sm font-semibold'
+        className={`mb-1 ${KANGUR_CENTER_ROW_CLASSNAME} break-words text-sm font-semibold`}
         style={{ color: style.text }}
       >
         <span aria-hidden>{style.icon}</span>

@@ -24,7 +24,10 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -512,7 +515,7 @@ export default function EnglishPrepositionsSortGame({
                       aria-label={`${bin.label} bin`}
                     >
                       <div className='flex items-center justify-between gap-2'>
-                        <div className='flex items-center gap-2 text-sm font-bold text-slate-700'>
+                        <div className={`${KANGUR_CENTER_ROW_CLASSNAME} text-sm font-bold text-slate-700`}>
                           <span className='text-lg' aria-hidden='true'>
                             {bin.emoji}
                           </span>
@@ -525,7 +528,7 @@ export default function EnglishPrepositionsSortGame({
                         ) : null}
                       </div>
                       <p className='mt-1 text-xs text-slate-500'>{bin.description}</p>
-                      <div className='mt-3 flex flex-wrap gap-2'>
+                      <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
                         {items.map((item, index) => (
                           <DraggableToken
                             key={item.id}
@@ -556,7 +559,7 @@ export default function EnglishPrepositionsSortGame({
           ) : null}
 
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
-            <div className='flex flex-wrap items-center gap-2'>
+            <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton size='sm' type='button' variant='surface' onClick={handleReset} disabled={checked}>
                 Wyczyść rundę
               </KangurButton>

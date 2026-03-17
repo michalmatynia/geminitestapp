@@ -95,7 +95,7 @@ function LearnerProfileContent(): React.JSX.Element {
     );
   }
 
-  if (scoresError || (isAuthenticated && !user)) {
+  if (isAuthenticated && !user) {
     return (
       <div className='flex h-[60vh] flex-col items-center justify-center gap-4 text-center'>
         <p className='text-orange-200/60'>Nie udało się załadować profilu.</p>

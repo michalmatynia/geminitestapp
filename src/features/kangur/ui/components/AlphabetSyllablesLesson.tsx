@@ -6,7 +6,10 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
-import { resolveLessonSectionHeader } from '@/features/kangur/ui/components/lesson-utils';
+import {
+  buildLessonHubSectionsWithProgress,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -256,10 +259,7 @@ export default function AlphabetSyllablesLesson(): React.JSX.Element {
       lessonTitle='Sylaby i slowa'
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         markSectionOpened(id as SectionId);
         setActiveSection(id as SectionId);

@@ -8,21 +8,18 @@ import {
   Badge,
   Button,
   Card,
-  FormSection,
-  Input,
   SelectSimple,
-  Textarea,
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import {
   BRAIN_MODEL_DEFAULT_VALUE,
-  PIPELINE_STEP_LABELS,
 } from './admin-kangur-social/AdminKangurSocialPage.Constants';
 import { useAdminKangurSocialPage } from './admin-kangur-social/AdminKangurSocialPage.hooks';
 import { SocialPostList } from './admin-kangur-social/SocialPost.List';
-import { SocialPostVisuals } from './admin-kangur-social/SocialPost.Visuals';
+import { SocialPostEditor } from './admin-kangur-social/SocialPost.Editor';
+import { SocialPostPipeline } from './admin-kangur-social/SocialPost.Pipeline';
 
 export function AdminKangurSocialPage(): React.JSX.Element {
   const {
@@ -48,13 +45,13 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     brainModelId,
     visionModelId,
     docUpdatesResult,
+    recentAddons,
     batchCaptureBaseUrl,
     setBatchCaptureBaseUrl,
     batchCapturePresetIds,
     batchCaptureResult,
     linkedinIntegration,
     linkedinConnections,
-    recentAddons,
     brainModelOptions,
     visionModelOptions,
     addonsQuery,
@@ -83,6 +80,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     handleBrainModelChange,
     handleVisionModelChange,
     handleLinkedInConnectionChange,
+    resolveDocReferences,
     pipelineStep,
     handleRunFullPipeline,
   } = useAdminKangurSocialPage();
@@ -158,14 +156,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           : 'ok'
       : null;
 
-  const docsUsed = React.useMemo(() => {
-    const fromPost = activePost?.docReferences ?? [];
-    if (fromPost.length > 0) return fromPost;
-    return docReferenceInput
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
-  }, [activePost?.docReferences, docReferenceInput]);
+  const docsUsed = React.useMemo(() => resolveDocReferences(), [resolveDocReferences]);
 
   const selectedAddonSet = React.useMemo(() => new Set(imageAddonIds), [imageAddonIds]);
   const hasVisualDocUpdates = (activePost?.visualDocUpdates?.length ?? 0) > 0;
@@ -175,7 +166,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     docUpdatesResult?.post?.docUpdatesAppliedBy ?? activePost?.docUpdatesAppliedBy ?? null;
   const docUpdatesPlan = docUpdatesResult?.plan ?? null;
   const docUpdatesAppliedCount = docUpdatesPlan
-    ? docUpdatesPlan.items.filter((item) => item.applied).length
+    ? docUpdatesPlan.items.filter((item: any) => item.applied).length
     : 0;
   const docUpdatesSkippedCount = docUpdatesPlan
     ? docUpdatesPlan.items.length - docUpdatesAppliedCount
@@ -201,22 +192,6 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           >
             New draft
           </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              void handleRunFullPipeline();
-            }}
-            disabled={
-              !activePost ||
-              pipelineStep === 'capturing' ||
-              pipelineStep === 'saving' ||
-              pipelineStep === 'generating' ||
-              pipelineStep === 'previewing'
-            }
-          >
-            {PIPELINE_STEP_LABELS[pipelineStep]}
-          </Button>
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/brain?tab=routing'>AI Brain routing</Link>
           </Button>
@@ -236,6 +211,12 @@ export function AdminKangurSocialPage(): React.JSX.Element {
         />
 
         <div className='space-y-6'>
+          <SocialPostPipeline
+            activePostId={activePostId}
+            pipelineStep={pipelineStep}
+            handleRunFullPipeline={handleRunFullPipeline}
+          />
+
           <Card
             variant='subtle'
             padding='md'
@@ -289,20 +270,6 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                 title='Vision model override'
                 disabled={visionModelOptions.isLoading}
               />
-              {!visionModelOptions.effectiveModelId && !visionModelOptions.isLoading ? (
-                <div className='text-xs text-muted-foreground'>
-                  For local vision analysis, install Gemma 3 via Ollama:{' '}
-                  <code className='rounded bg-muted px-1 py-0.5 text-[11px]'>
-                    ollama pull gemma3
-                  </code>
-                  . It will be auto-discovered and available in the dropdown. Or configure a vision
-                  model in{' '}
-                  <Link href='/admin/brain?tab=routing' className='underline'>
-                    AI Brain routing
-                  </Link>
-                  .
-                </div>
-              ) : null}
             </div>
           </Card>
 
@@ -326,166 +293,66 @@ export function AdminKangurSocialPage(): React.JSX.Element {
             padding='md'
             className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
           >
-            <div className='space-y-4'>
-              <div className='text-sm font-semibold text-foreground'>Post editor</div>
-
-              <FormSection title='Polish' className='space-y-3'>
-                <Input
-                  placeholder='Polish title'
-                  value={editorState.titlePl}
-                  onChange={(event) =>
-                    setEditorState((prev) => ({ ...prev, titlePl: event.target.value }))
-                  }
-                />
-                <Textarea
-                  placeholder='Polish body'
-                  rows={5}
-                  value={editorState.bodyPl}
-                  onChange={(event) =>
-                    setEditorState((prev) => ({ ...prev, bodyPl: event.target.value }))
-                  }
-                />
-              </FormSection>
-
-              <FormSection title='English' className='space-y-3'>
-                <Input
-                  placeholder='English title'
-                  value={editorState.titleEn}
-                  onChange={(event) =>
-                    setEditorState((prev) => ({ ...prev, titleEn: event.target.value }))
-                  }
-                />
-                <Textarea
-                  placeholder='English body'
-                  rows={5}
-                  value={editorState.bodyEn}
-                  onChange={(event) =>
-                    setEditorState((prev) => ({ ...prev, bodyEn: event.target.value }))
-                  }
-                />
-              </FormSection>
-
-              <SocialPostVisuals
-                activePost={activePost}
-                addonForm={addonForm}
-                setAddonForm={setAddonForm}
-                handleCreateAddon={handleCreateAddon}
-                createAddonPending={createAddonMutation.isPending}
-                batchCaptureBaseUrl={batchCaptureBaseUrl}
-                setBatchCaptureBaseUrl={setBatchCaptureBaseUrl}
-                batchCapturePresetIds={batchCapturePresetIds}
-                handleToggleCapturePreset={handleToggleCapturePreset}
-                selectAllCapturePresets={selectAllCapturePresets}
-                clearCapturePresets={clearCapturePresets}
-                handleBatchCapture={handleBatchCapture}
-                batchCapturePending={batchCaptureMutation.isPending}
-                batchCaptureResult={batchCaptureResult}
-                recentAddons={recentAddons}
-                recentAddonsLoading={addonsQuery.isLoading}
-                selectedAddonSet={selectedAddonSet}
-                handleSelectAddon={handleSelectAddon}
-                handleRemoveAddon={handleRemoveAddon}
-                imageAssets={imageAssets}
-                handleRemoveImage={handleRemoveImage}
-                setShowMediaLibrary={setShowMediaLibrary}
-                showMediaLibrary={showMediaLibrary}
-                handleAddImages={handleAddImages}
-                docReferenceInput={docReferenceInput}
-                setDocReferenceInput={setDocReferenceInput}
-                generationNotes={generationNotes}
-                setGenerationNotes={setGenerationNotes}
-                handleGenerate={handleGenerate}
-                docsUsed={docsUsed}
-                hasVisualDocUpdates={hasVisualDocUpdates}
-                handlePreviewDocUpdates={handlePreviewDocUpdates}
-                previewDocUpdatesPending={previewDocUpdatesMutation.isPending}
-                handleApplyDocUpdates={handleApplyDocUpdates}
-                applyDocUpdatesPending={applyDocUpdatesMutation.isPending}
-                docUpdatesResult={docUpdatesResult}
-                docUpdatesAppliedAt={docUpdatesAppliedAt}
-                docUpdatesAppliedBy={docUpdatesAppliedBy}
-                docUpdatesAppliedCount={docUpdatesAppliedCount}
-                docUpdatesSkippedCount={docUpdatesSkippedCount}
-                docUpdatesPlan={docUpdatesPlan}
-                scheduledAt={scheduledAt}
-                setScheduledAt={setScheduledAt}
-              />
-
-              <FormSection title='LinkedIn connection' className='space-y-3'>
-                <SelectSimple
-                  value={linkedinConnectionId ?? undefined}
-                  onValueChange={handleLinkedInConnectionChange}
-                  options={linkedInOptions}
-                  placeholder={
-                    linkedinIntegration
-                      ? 'Select LinkedIn connection'
-                      : 'Create LinkedIn integration first'
-                  }
-                  disabled={!linkedinIntegration || linkedInOptions.length === 0}
-                  size='sm'
-                  ariaLabel='LinkedIn connection'
-                  title='LinkedIn connection'
-                />
-                {!linkedinIntegration ? (
-                  <div className='text-xs text-muted-foreground'>
-                    Create the LinkedIn integration in Admin &gt; Integrations to enable publishing.
-                  </div>
-                ) : linkedInOptions.length === 0 ? (
-                  <div className='text-xs text-muted-foreground'>
-                    Add a LinkedIn connection in Admin &gt; Integrations to select it here.
-                  </div>
-                ) : selectedLinkedInConnection && !selectedLinkedInConnection.hasLinkedInAccessToken ? (
-                  <div className='text-xs text-red-500'>
-                    Selected connection is not authorized. Reconnect in Admin &gt; Integrations.
-                  </div>
-                ) : linkedInExpiryStatus === 'expired' ? (
-                  <div className='text-xs text-red-500'>
-                    LinkedIn token expired{linkedInExpiryLabel ? ` on ${linkedInExpiryLabel}` : ''}.
-                  </div>
-                ) : linkedInExpiryStatus === 'warning' ? (
-                  <div className='text-xs text-amber-500'>
-                    LinkedIn token expires in {linkedInDaysRemaining} day
-                    {linkedInDaysRemaining === 1 ? '' : 's'}
-                    {linkedInExpiryLabel ? ` (${linkedInExpiryLabel})` : ''}.
-                  </div>
-                ) : null}
-              </FormSection>
-
-              <div className='flex flex-wrap items-center gap-2'>
-                <Button
-                  type='button'
-                  size='sm'
-                  onClick={() => {
-                    void handleSave('draft');
-                  }}
-                  disabled={!activePost || saveMutation.isPending}
-                >
-                  {saveMutation.isPending ? 'Saving...' : 'Save draft'}
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => {
-                    void handleSave('scheduled');
-                  }}
-                  disabled={!activePost || !scheduledAt || patchMutation.isPending}
-                >
-                  {patchMutation.isPending ? 'Scheduling...' : 'Schedule'}
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => {
-                    void handlePublish();
-                  }}
-                  disabled={!activePost || publishMutation.isPending}
-                >
-                  {publishMutation.isPending ? 'Publishing...' : 'Publish to LinkedIn'}
-                </Button>
-              </div>
-            </div>
+            <SocialPostEditor
+              activePost={activePost}
+              editorState={editorState}
+              setEditorState={setEditorState}
+              scheduledAt={scheduledAt}
+              setScheduledAt={setScheduledAt}
+              docReferenceInput={docReferenceInput}
+              setDocReferenceInput={setDocReferenceInput}
+              generationNotes={generationNotes}
+              setGenerationNotes={setGenerationNotes}
+              handleGenerate={handleGenerate}
+              imageAssets={imageAssets}
+              handleRemoveImage={handleRemoveImage}
+              setShowMediaLibrary={setShowMediaLibrary}
+              showMediaLibrary={showMediaLibrary}
+              handleAddImages={handleAddImages}
+              addonForm={addonForm}
+              setAddonForm={setAddonForm}
+              handleCreateAddon={handleCreateAddon}
+              createAddonPending={createAddonMutation.isPending}
+              batchCaptureBaseUrl={batchCaptureBaseUrl}
+              setBatchCaptureBaseUrl={setBatchCaptureBaseUrl}
+              batchCapturePresetIds={batchCapturePresetIds}
+              handleToggleCapturePreset={handleToggleCapturePreset}
+              selectAllCapturePresets={selectAllCapturePresets}
+              clearCapturePresets={clearCapturePresets}
+              handleBatchCapture={handleBatchCapture}
+              batchCapturePending={batchCaptureMutation.isPending}
+              batchCaptureResult={batchCaptureResult}
+              recentAddons={recentAddons}
+              recentAddonsLoading={addonsQuery.isLoading}
+              selectedAddonSet={selectedAddonSet}
+              handleSelectAddon={handleSelectAddon}
+              handleRemoveAddon={handleRemoveAddon}
+              hasVisualDocUpdates={hasVisualDocUpdates}
+              handlePreviewDocUpdates={handlePreviewDocUpdates}
+              previewDocUpdatesPending={previewDocUpdatesMutation.isPending}
+              handleApplyDocUpdates={handleApplyDocUpdates}
+              applyDocUpdatesPending={applyDocUpdatesMutation.isPending}
+              docUpdatesResult={docUpdatesResult}
+              docUpdatesAppliedAt={docUpdatesAppliedAt}
+              docUpdatesAppliedBy={docUpdatesAppliedBy}
+              docUpdatesAppliedCount={docUpdatesAppliedCount}
+              docUpdatesSkippedCount={docUpdatesSkippedCount}
+              docUpdatesPlan={docUpdatesPlan}
+              linkedinConnectionId={linkedinConnectionId}
+              handleLinkedInConnectionChange={handleLinkedInConnectionChange}
+              linkedInOptions={linkedInOptions}
+              linkedinIntegration={linkedinIntegration}
+              selectedLinkedInConnection={selectedLinkedInConnection}
+              linkedInExpiryStatus={linkedInExpiryStatus}
+              linkedInExpiryLabel={linkedInExpiryLabel}
+              linkedInDaysRemaining={linkedInDaysRemaining}
+              handleSave={handleSave}
+              handlePublish={handlePublish}
+              saveMutationPending={saveMutation.isPending}
+              patchMutationPending={patchMutation.isPending}
+              publishMutationPending={publishMutation.isPending}
+              docsUsed={docsUsed}
+            />
           </Card>
         </div>
       </div>

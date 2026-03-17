@@ -26,7 +26,6 @@ import {
 import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
 import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
 
 export function LessonsCatalog() {
@@ -52,9 +51,7 @@ export function LessonsCatalog() {
   const lessonGroupDefinitions =
     subject === 'web_development'
       ? WEB_DEVELOPMENT_LESSON_GROUPS
-      : subject === 'alphabet'
-        ? ALPHABET_LESSON_GROUPS
-        : [];
+      : [];
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {

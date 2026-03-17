@@ -7,6 +7,7 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
@@ -294,10 +295,7 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
       lessonTitle='Angielski: składnia zdania'
       gradientClass='kangur-gradient-accent-violet'
       progressDotClassName='bg-violet-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      }))}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         markSectionOpened(id as SectionId);
         setActiveSection(id as SectionId);

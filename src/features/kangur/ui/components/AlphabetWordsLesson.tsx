@@ -8,6 +8,7 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   buildLessonSectionLabels,
+  buildLessonHubSectionsWithProgress,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -304,11 +305,7 @@ export default function AlphabetWordsLesson(): React.JSX.Element {
   };
 
   const sectionList = useMemo(
-    () =>
-      HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: sectionProgress[section.id as SectionId],
-      })),
+    () => buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress),
     [sectionProgress]
   );
 

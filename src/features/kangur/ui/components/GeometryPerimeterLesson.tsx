@@ -23,6 +23,7 @@ import {
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   buildLessonSectionLabels,
+  buildLessonHubSectionsWithProgress,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -264,10 +265,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
       lessonTitle='Obwód figur'
       gradientClass='kangur-gradient-accent-amber-reverse'
       progressDotClassName='bg-amber-300'
-      sections={HUB_SECTIONS.map((section) => ({
-        ...section,
-        progress: section.isGame ? undefined : sectionProgress[section.id as SlideSectionId],
-      }))}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
       onSelect={(id) => {
         if (id !== 'game_draw') {
           markSectionOpened(id as SlideSectionId);

@@ -1,253 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
+import {
+  useKangurLessonSubsectionProgress,
+  useLessonTimeTracking,
+} from '../learner-activity/hooks';
 import {
   buildLessonHubSectionsWithProgress,
+  LessonHub,
+  LessonSlideSection,
   resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
-import {
-  KangurLessonCallout,
-  KangurLessonCaption,
-  KangurLessonChip,
-  KangurLessonInset,
-  KangurLessonLead,
-  KangurLessonStack,
-} from '@/features/kangur/ui/design/lesson-primitives';
-import {
-  KangurDisplayEmoji,
-  KangurEquationDisplay,
-} from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+} from '../lessons/lesson-components';
 
-type SectionId = 'sounds' | 'syllables' | 'words' | 'summary';
+import { HUB_SECTIONS, SLIDES } from './AlphabetSyllablesLesson.data';
 
-type SlideSectionId = SectionId;
-
-const HUB_SECTIONS = [
-  {
-    id: 'sounds',
-    emoji: '🔊',
-    title: 'Dźwięki liter',
-    description: 'Poznaj brzmienie liter A, M i L.',
-  },
-  {
-    id: 'syllables',
-    emoji: '🧩',
-    title: 'Łączenie w sylaby',
-    description: 'Połącz litery w proste sylaby MA, LA, PA.',
-  },
-  {
-    id: 'words',
-    emoji: '📖',
-    title: 'Pierwsze słowa',
-    description: 'Czytaj łatwe słowa z dwóch sylab.',
-  },
-  {
-    id: 'summary',
-    emoji: '🎉',
-    title: 'Powtórka',
-    description: 'Utrwal litery i sylaby.',
-  },
-] as const;
-
-const SECTION_LABELS: Record<SectionId, string> = {
-  sounds: 'Dźwięki liter',
-  syllables: 'Sylaby',
-  words: 'Słowa',
-  summary: 'Powtórka',
-};
-
-const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
-  sounds: [
-    {
-      title: 'Litera i dźwięk',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Każda litera ma swój dźwięk. Powtórz głośno za mną.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
-            <div className='flex flex-wrap items-center justify-center gap-3'>
-              {['A', 'M', 'L'].map((letter) => (
-                <KangurLessonChip key={letter} accent='amber'>
-                  {letter}
-                </KangurLessonChip>
-              ))}
-            </div>
-            <KangurLessonCaption className='mt-2'>Powtarzaj: a, m, l.</KangurLessonCaption>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Litera w słowie',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Litery pojawiają się w słowach. Posłuchaj i powtórz.
-          </KangurLessonLead>
-          <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3'>
-            <KangurLessonInset accent='amber'>
-              <div className='text-2xl font-bold text-amber-700'>A</div>
-              <KangurLessonCaption className='mt-1'>A jak auto</KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='rose'>
-              <div className='text-2xl font-bold text-rose-700'>M</div>
-              <KangurLessonCaption className='mt-1'>M jak mama</KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='sky'>
-              <div className='text-2xl font-bold text-sky-700'>L</div>
-              <KangurLessonCaption className='mt-1'>L jak las</KangurLessonCaption>
-            </KangurLessonInset>
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  syllables: [
-    {
-      title: 'Łączymy litery',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Dwie litery mogą stworzyć sylabę. Spróbuj przeczytać.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
-            <KangurEquationDisplay accent='amber' size='md'>
-              M + A = MA
-            </KangurEquationDisplay>
-            <KangurLessonCaption className='mt-2'>Powiedz głośno: MA.</KangurLessonCaption>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Powtarzaj rytm',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Powtarzaj sylaby w rytmie: MA - LA - PA.
-          </KangurLessonLead>
-          <div className='flex flex-wrap items-center justify-center gap-4'>
-            {['MA', 'LA', 'PA'].map((syllable) => (
-              <KangurLessonChip key={syllable} accent='amber'>
-                {syllable}
-              </KangurLessonChip>
-            ))}
-          </div>
-          <KangurLessonCaption className='max-w-md'>
-            Zmieniaj tempo: powoli, średnio, szybko.
-          </KangurLessonCaption>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  words: [
-    {
-      title: 'Pierwsze słowa',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Dwie sylaby tworzą słowo. Spróbuj przeczytać:
-          </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
-            <div className='space-y-2 text-lg font-semibold text-amber-700'>
-              <div>MA-MA</div>
-              <div>LA-TO</div>
-              <div>PA-PA</div>
-            </div>
-            <KangurLessonCaption className='mt-2'>Dodaj gesty, aby zapamiętać.</KangurLessonCaption>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Skojarzenia',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Połącz słowo z obrazkiem. Powiedz je na głos.
-          </KangurLessonLead>
-          <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-3'>
-            <KangurLessonInset accent='amber'>
-              <KangurDisplayEmoji size='sm'>👩‍👧</KangurDisplayEmoji>
-              <KangurLessonCaption className='mt-1'>MA-MA</KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='sky'>
-              <KangurDisplayEmoji size='sm'>☀️</KangurDisplayEmoji>
-              <KangurLessonCaption className='mt-1'>LA-TO</KangurLessonCaption>
-            </KangurLessonInset>
-            <KangurLessonInset accent='rose'>
-              <KangurDisplayEmoji size='sm'>👋</KangurDisplayEmoji>
-              <KangurLessonCaption className='mt-1'>PA-PA</KangurLessonCaption>
-            </KangurLessonInset>
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  summary: [
-    {
-      title: 'Super robota!',
-      content: (
-        <KangurLessonStack>
-          <KangurLessonLead>
-            Potrafisz już łączyć litery w sylaby i czytać proste słowa.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='amber' className='max-w-md text-left' padding='sm'>
-            <ul className='list-disc pl-5 text-sm text-slate-700'>
-              <li>Litery mają swój dźwięk.</li>
-              <li>Sylaby powstają z dwóch liter.</li>
-              <li>Słowa składają się z sylab.</li>
-            </ul>
-          </KangurLessonCallout>
-          <KangurLessonCaption className='max-w-md'>
-            Wróć do literek i ćwicz codziennie po chwili.
-          </KangurLessonCaption>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-};
+type SectionId = (typeof HUB_SECTIONS)[number]['id'];
 
 export default function AlphabetSyllablesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'alphabet_syllables',
-      slideSections: SLIDES,
-      sectionLabels: SECTION_LABELS,
+
+  const { sectionProgress, markSectionOpened, markSectionViewedCount } =
+    useKangurLessonSubsectionProgress<SectionId>({
+      lessonId: 'alphabet-syllables',
+      sections: HUB_SECTIONS as any,
     });
 
+  const { recordPanelTime, recordComplete } = useLessonTimeTracking({
+    lessonId: 'alphabet-syllables',
+  });
+
   const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, 'alphabet_syllables', 100);
-    addXp(reward.xp, reward.progressUpdates);
+    void recordComplete();
   };
+
+  const sectionList = useMemo(
+    () => buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress),
+    [sectionProgress]
+  );
 
   if (activeSection) {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+        onProgressChange={(viewedCount: number) => markSectionViewedCount(activeSection, viewedCount)}
+        onPanelTimeUpdate={(panelIndex: number, panelTitle: string, seconds: number) =>
           recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
         }
-        dotActiveClass='bg-amber-500'
-        dotDoneClass='bg-amber-300'
+        dotActiveClass='bg-amber-400'
+        dotDoneClass='bg-amber-200'
         gradientClass='kangur-gradient-accent-amber'
       />
     );
@@ -255,14 +59,14 @@ export default function AlphabetSyllablesLesson(): React.JSX.Element {
 
   return (
     <LessonHub
-      lessonEmoji='🔤'
-      lessonTitle='Sylaby i slowa'
+      lessonEmoji='🔊'
+      lessonTitle='Sylaby'
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={(id) => {
-        markSectionOpened(id as SectionId);
-        setActiveSection(id as SectionId);
+      sections={sectionList as any}
+      onSelect={(id: any) => {
+        markSectionOpened(id as any);
+        setActiveSection(id as any);
       }}
     />
   );

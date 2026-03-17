@@ -4,17 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { getMongoDbMock, assertSettingsManageAccessMock } = vi.hoisted(() => ({
+const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
-  assertSettingsManageAccessMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
-}));
-
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
-  assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
 vi.mock('next/headers', () => ({
@@ -38,7 +33,6 @@ describe('settings lite handler', () => {
     vi.clearAllMocks();
     clearLiteSettingsServerCache();
     process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
-    assertSettingsManageAccessMock.mockResolvedValue(undefined);
   });
 
   it('returns lite settings without requiring admin access', async () => {

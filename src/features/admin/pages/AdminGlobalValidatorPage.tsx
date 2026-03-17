@@ -16,7 +16,7 @@ import { formatAdminAiEyebrow } from '@/shared/ui';
 import {
   ValidatorDocsTooltipsProvider,
   ValidatorSettings,
-} from '@/shared/lib/product-validator-admin';
+} from '@/features/products';
 import { Button, ClientOnly, FormSection, SectionHeader } from '@/shared/ui';
 
 

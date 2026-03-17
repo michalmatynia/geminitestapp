@@ -1,13 +1,5 @@
+import { getSearchProviderSettings } from '@/shared/lib/search/search-settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-const BRAVE_SEARCH_API_KEY = process.env['BRAVE_SEARCH_API_KEY'];
-const BRAVE_SEARCH_API_URL =
-  process.env['BRAVE_SEARCH_API_URL'] || 'https://api.search.brave.com/res/v1/web/search';
-const GOOGLE_SEARCH_API_KEY = process.env['GOOGLE_SEARCH_API_KEY'];
-const GOOGLE_SEARCH_ENGINE_ID = process.env['GOOGLE_SEARCH_ENGINE_ID'];
-const GOOGLE_SEARCH_API_URL =
-  process.env['GOOGLE_SEARCH_API_URL'] || 'https://www.googleapis.com/customsearch/v1';
-const SERPAPI_API_KEY = process.env['SERPAPI_API_KEY'];
-const SERPAPI_API_URL = process.env['SERPAPI_API_URL'] || 'https://serpapi.com/search.json';
 
 export const fetchDuckDuckGoResults = async (
   query: string
@@ -45,19 +37,20 @@ export const fetchSearchResults = async (
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>
 ): Promise<Array<{ title: string; url: string }>> => {
   const normalizedProvider = provider.toLowerCase();
+  const settings = await getSearchProviderSettings();
 
   if (normalizedProvider === 'brave') {
     try {
-      if (!BRAVE_SEARCH_API_KEY) {
+      if (!settings.brave.apiKey) {
         throw new Error('Brave search API key not configured.');
       }
-      const url = new URL(BRAVE_SEARCH_API_URL);
+      const url = new URL(settings.brave.apiUrl);
       url.searchParams.set('q', query);
       url.searchParams.set('count', '6');
       const res = await fetch(url.toString(), {
         headers: {
           Accept: 'application/json',
-          'X-Subscription-Token': BRAVE_SEARCH_API_KEY,
+          'X-Subscription-Token': settings.brave.apiKey,
         },
       });
       if (!res.ok) {
@@ -88,12 +81,12 @@ export const fetchSearchResults = async (
 
   if (normalizedProvider === 'google') {
     try {
-      if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
+      if (!settings.google.apiKey || !settings.google.engineId) {
         throw new Error('Google search API key/engine not configured.');
       }
-      const url = new URL(GOOGLE_SEARCH_API_URL);
-      url.searchParams.set('key', GOOGLE_SEARCH_API_KEY);
-      url.searchParams.set('cx', GOOGLE_SEARCH_ENGINE_ID);
+      const url = new URL(settings.google.apiUrl);
+      url.searchParams.set('key', settings.google.apiKey);
+      url.searchParams.set('cx', settings.google.engineId);
       url.searchParams.set('q', query);
       url.searchParams.set('num', '6');
       const res = await fetch(url.toString());
@@ -125,11 +118,11 @@ export const fetchSearchResults = async (
 
   if (normalizedProvider === 'serpapi') {
     try {
-      if (!SERPAPI_API_KEY) {
+      if (!settings.serpapi.apiKey) {
         throw new Error('SerpApi key not configured.');
       }
-      const url = new URL(SERPAPI_API_URL);
-      url.searchParams.set('api_key', SERPAPI_API_KEY);
+      const url = new URL(settings.serpapi.apiUrl);
+      url.searchParams.set('api_key', settings.serpapi.apiKey);
       url.searchParams.set('engine', 'google');
       url.searchParams.set('q', query);
       url.searchParams.set('num', '6');

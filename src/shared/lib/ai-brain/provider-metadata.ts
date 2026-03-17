@@ -12,12 +12,6 @@ export const BRAIN_PROVIDER_SETTINGS_PATHS = {
   gemini: 'ai_brain.providers.gemini_api_key',
 } as const satisfies Record<BrainProviderCredentialVendor, string>;
 
-export const BRAIN_PROVIDER_ENV_KEYS = {
-  openai: 'OPENAI_API_KEY',
-  anthropic: 'ANTHROPIC_API_KEY',
-  gemini: 'GEMINI_API_KEY',
-} as const satisfies Record<BrainProviderCredentialVendor, string>;
-
 export const BRAIN_PROVIDER_LABELS = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',

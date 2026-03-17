@@ -24,6 +24,7 @@ type SessionUserCacheEntry = {
 
 let sessionUserCache: SessionUserCacheEntry | null = null;
 let sessionUserInFlight: Promise<KangurUser> | null = null;
+let sessionUserCacheEpoch = 0;
 
 const unauthorizedError = (): Error & { status: number } => {
   const error = new Error('Authentication required') as Error & { status: number };
@@ -32,6 +33,7 @@ const unauthorizedError = (): Error & { status: number } => {
 };
 
 export const clearSessionUserCache = (): void => {
+  sessionUserCacheEpoch += 1;
   sessionUserCache = null;
   sessionUserInFlight = null;
 };
@@ -79,6 +81,7 @@ export const resolveSessionUser = async (): Promise<KangurUser> => {
     return sessionUserInFlight;
   }
 
+  const requestEpoch = sessionUserCacheEpoch;
   const fetchPromise = (async (): Promise<KangurUser> => {
     const response = await fetch(KANGUR_AUTH_ME_ENDPOINT, {
       cache: 'no-store',
@@ -91,7 +94,9 @@ export const resolveSessionUser = async (): Promise<KangurUser> => {
       const error = unauthorizedError();
       error.status = response.status;
       if (response.status === 401 || response.status === 403) {
-        cacheResolvedUser(null, true);
+        if (sessionUserCacheEpoch === requestEpoch) {
+          cacheResolvedUser(null, true);
+        }
       }
       throw error;
     }
@@ -104,7 +109,9 @@ export const resolveSessionUser = async (): Promise<KangurUser> => {
 
     const mappedUser = parsed.data;
     syncActiveLearnerStorage(mappedUser);
-    cacheResolvedUser(mappedUser, false);
+    if (sessionUserCacheEpoch === requestEpoch) {
+      cacheResolvedUser(mappedUser, false);
+    }
     return mappedUser;
   })();
 
@@ -113,6 +120,8 @@ export const resolveSessionUser = async (): Promise<KangurUser> => {
   try {
     return await fetchPromise;
   } finally {
-    sessionUserInFlight = null;
+    if (sessionUserInFlight === fetchPromise) {
+      sessionUserInFlight = null;
+    }
   }
 };

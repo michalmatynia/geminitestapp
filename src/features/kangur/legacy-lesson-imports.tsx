@@ -288,6 +288,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  alphabet_copy: {
+    kind: 'flat',
+    slides: [],
+  },
   alphabet_syllables: {
     kind: 'flat',
     slides: [],

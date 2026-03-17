@@ -24,6 +24,7 @@ import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp
 import { ActivityTypes } from '@/shared/constants/observability';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
+import { getAuthOAuthSecrets } from '@/shared/lib/auth/auth-secret-settings';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import { decryptAuthSecret } from '@/shared/lib/security/encryption';
 import { logActivity } from '@/shared/utils/observability/activity-service';
@@ -206,14 +207,15 @@ const credentialsProvider = Credentials({
   },
 });
 
-const buildProviders = (): Provider[] => {
+const buildProviders = async (): Promise<Provider[]> => {
   const providers: Provider[] = [credentialsProvider];
+  const oauthSecrets = await getAuthOAuthSecrets();
 
-  if (process.env['GOOGLE_CLIENT_ID'] && process.env['GOOGLE_CLIENT_SECRET']) {
+  if (oauthSecrets.google.clientId && oauthSecrets.google.clientSecret) {
     providers.push(
       Google({
-        clientId: process.env['GOOGLE_CLIENT_ID'],
-        clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
+        clientId: oauthSecrets.google.clientId,
+        clientSecret: oauthSecrets.google.clientSecret,
       })
     );
   } else {
@@ -227,11 +229,11 @@ const buildProviders = (): Provider[] => {
     );
   }
 
-  if (process.env['FACEBOOK_CLIENT_ID'] && process.env['FACEBOOK_CLIENT_SECRET']) {
+  if (oauthSecrets.facebook.clientId && oauthSecrets.facebook.clientSecret) {
     providers.push(
       Facebook({
-        clientId: process.env['FACEBOOK_CLIENT_ID'],
-        clientSecret: process.env['FACEBOOK_CLIENT_SECRET'],
+        clientId: oauthSecrets.facebook.clientId,
+        clientSecret: oauthSecrets.facebook.clientSecret,
       })
     );
   } else {
@@ -278,7 +280,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     return {
       ...authConfig,
       ...(adapter && { adapter }),
-      providers: buildProviders(),
+      providers: await buildProviders(),
       callbacks: {
         ...(authConfig.callbacks ?? {}),
         async jwt({ token, user }: { token: JWT; user?: User }): Promise<JWT> {

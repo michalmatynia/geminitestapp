@@ -30,3 +30,31 @@ export const buildLessonHubSectionsWithProgress = <
   sections.map((section) =>
     section.isGame ? section : { ...section, progress: sectionProgress[section.id] }
   );
+
+type LessonHubSelectHandlerOptions<SectionId extends string> = {
+  markSectionOpened?: (sectionId: SectionId) => void;
+  onSelectSection?: (sectionId: SectionId) => void;
+  skipMarkFor?: readonly SectionId[];
+  handlers?: Partial<Record<SectionId, () => void>>;
+};
+
+export const createLessonHubSelectHandler = <SectionId extends string>({
+  markSectionOpened,
+  onSelectSection,
+  skipMarkFor,
+  handlers,
+}: LessonHubSelectHandlerOptions<SectionId>) => {
+  return (sectionId: SectionId): void => {
+    const handler = handlers?.[sectionId];
+    if (handler) {
+      handler();
+      return;
+    }
+
+    if (markSectionOpened && !(skipMarkFor?.includes(sectionId) ?? false)) {
+      markSectionOpened(sectionId);
+    }
+
+    onSelectSection?.(sectionId);
+  };
+};

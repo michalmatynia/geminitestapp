@@ -42,6 +42,9 @@ const loadLessonComponent = (
 const AlphabetBasicsLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AlphabetBasicsLesson')
 );
+const AlphabetCopyLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AlphabetCopyLesson')
+);
 const AlphabetSyllablesLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AlphabetSyllablesLesson')
 );
@@ -119,6 +122,7 @@ const WebDevelopmentReactComponentsLesson = loadLessonComponent(
 
 export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
   alphabet_basics: AlphabetBasicsLesson,
+  alphabet_copy: AlphabetCopyLesson,
   alphabet_syllables: AlphabetSyllablesLesson,
   alphabet_words: AlphabetWordsLesson,
   alphabet_matching: AlphabetMatchingLesson,
@@ -159,6 +163,9 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   trace: 'alphabet_basics',
   rysowanie: 'alphabet_basics',
   alphabet_basics: 'alphabet_basics',
+  alphabet_copy: 'alphabet_copy',
+  copy: 'alphabet_copy',
+  przepisz: 'alphabet_copy',
   syllables: 'alphabet_syllables',
   sylaby: 'alphabet_syllables',
   sylaba: 'alphabet_syllables',

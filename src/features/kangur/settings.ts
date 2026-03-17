@@ -81,6 +81,7 @@ export const KANGUR_GEOMETRY_LESSON_COMPONENT_IDS = [
 
 const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> = {
   alphabet_basics: 'alphabet_basics',
+  alphabet_copy: 'alphabet_copy',
   alphabet_syllables: 'alphabet_syllables',
   alphabet_words: 'alphabet_words',
   alphabet_matching: 'alphabet_matching',

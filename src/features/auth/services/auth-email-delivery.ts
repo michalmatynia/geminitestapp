@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createTransport, type Transporter } from 'nodemailer';
 
+import { getAuthEmailSecrets } from '@/shared/lib/auth/auth-secret-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export type AuthEmailDeliveryRecord = {
@@ -16,44 +17,26 @@ export type AuthEmailDeliveryRecord = {
 
 const deliveredAuthEmails: AuthEmailDeliveryRecord[] = [];
 
-const getAuthEmailWebhookUrl = (): string | null =>
-  process.env['AUTH_EMAIL_WEBHOOK_URL']?.trim() || null;
-
-const getAuthEmailWebhookSecret = (): string | null =>
-  process.env['AUTH_EMAIL_WEBHOOK_SECRET']?.trim() || null;
-
-const getSmtpConfig = (): {
-  host: string;
-  port: number;
-  user: string;
-  pass: string;
-  from: string;
-} | null => {
-  const host = process.env['SMTP_HOST']?.trim();
-  const user = process.env['SMTP_USER']?.trim();
-  const pass = process.env['SMTP_PASS']?.trim();
-  if (!host || !user || !pass) return null;
-  return {
-    host,
-    port: parseInt(process.env['SMTP_PORT'] ?? '587', 10),
-    user,
-    pass,
-    from: process.env['SMTP_FROM']?.trim() || user,
-  };
-};
+type SmtpConfig = NonNullable<Awaited<ReturnType<typeof getAuthEmailSecrets>>['smtp']>;
 
 let smtpTransport: Transporter | null = null;
+let smtpTransportKey: string | null = null;
 
-const getSmtpTransport = (): Transporter | null => {
-  if (smtpTransport) return smtpTransport;
-  const config = getSmtpConfig();
-  if (!config) return null;
+const getSmtpTransport = (config: SmtpConfig | null): Transporter | null => {
+  if (!config) {
+    smtpTransport = null;
+    smtpTransportKey = null;
+    return null;
+  }
+  const nextKey = `${config.host}:${config.port}:${config.user}:${config.pass}:${config.from}`;
+  if (smtpTransport && smtpTransportKey === nextKey) return smtpTransport;
   smtpTransport = createTransport({
     host: config.host,
     port: config.port,
     secure: config.port === 465,
     auth: { user: config.user, pass: config.pass },
   });
+  smtpTransportKey = nextKey;
   return smtpTransport;
 };
 
@@ -87,15 +70,16 @@ export const sendAuthEmail = async (input: {
   }
 
   // Priority 1: Webhook delivery
-  const webhookUrl = getAuthEmailWebhookUrl();
+  const emailSecrets = await getAuthEmailSecrets();
+  const webhookUrl = emailSecrets.webhookUrl;
   if (webhookUrl) {
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(getAuthEmailWebhookSecret()
+        ...(emailSecrets.webhookSecret
           ? {
-            'x-auth-email-secret': getAuthEmailWebhookSecret() as string,
+            'x-auth-email-secret': emailSecrets.webhookSecret,
           }
           : {}),
       },
@@ -110,9 +94,9 @@ export const sendAuthEmail = async (input: {
   }
 
   // Priority 2: SMTP delivery (e.g. Gmail)
-  const transport = getSmtpTransport();
+  const transport = getSmtpTransport(emailSecrets.smtp);
   if (transport) {
-    const smtpConfig = getSmtpConfig()!;
+    const smtpConfig = emailSecrets.smtp!;
     await transport.sendMail({
       from: smtpConfig.from,
       to: record.to,
@@ -126,7 +110,8 @@ export const sendAuthEmail = async (input: {
   // No delivery provider configured
   await logSystemEvent({
     level: 'warn',
-    message: 'Auth email not sent — no delivery provider configured (set AUTH_EMAIL_WEBHOOK_URL or SMTP_HOST).',
+    message:
+      'Auth email not sent — no delivery provider configured (set auth_email_webhook_url or auth_smtp_host in Mongo settings).',
     source: 'auth.email',
     service: 'auth',
     context: {

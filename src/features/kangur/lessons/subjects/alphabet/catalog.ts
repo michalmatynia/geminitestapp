@@ -3,6 +3,7 @@ import type { KangurLessonTemplate } from '@/features/kangur/lessons/lesson-type
 
 export const ALPHABET_LESSON_COMPONENT_ORDER = [
   'alphabet_basics',
+  'alphabet_copy',
   'alphabet_syllables',
   'alphabet_words',
   'alphabet_matching',
@@ -22,6 +23,17 @@ export const ALPHABET_LESSON_TEMPLATES: Record<AlphabetLessonComponentId, Kangur
     emoji: '✍️',
     color: 'kangur-gradient-accent-amber',
     activeBg: 'bg-amber-500',
+  },
+  alphabet_copy: {
+    componentId: 'alphabet_copy',
+    subject: 'alphabet',
+    ageGroup: 'six_year_old',
+    label: 'Przepisz litery',
+    title: 'Przepisz litery',
+    description: 'Przepisuj litery pod wzorem i cwicz plynnosc pisania.',
+    emoji: '📝',
+    color: 'kangur-gradient-accent-rose',
+    activeBg: 'bg-rose-500',
   },
   alphabet_syllables: {
     componentId: 'alphabet_syllables',
@@ -74,7 +86,7 @@ export const ALPHABET_LESSON_GROUPS = [
     id: 'letter_tracing',
     label: 'Letter Tracing',
     typeLabel: 'Track',
-    componentIds: ['alphabet_basics'],
+    componentIds: ['alphabet_basics', 'alphabet_copy'],
   },
   {
     id: 'syllables',

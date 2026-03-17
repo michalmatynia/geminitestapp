@@ -53,7 +53,6 @@ import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 
 const GAME_BRAND_NAME = 'Sprycio';
 const GAME_MAIN_ID = 'kangur-game-main';
@@ -149,7 +148,7 @@ function GameContent(): React.JSX.Element {
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast } = runtime;
   const { ageGroup } = useKangurAgeGroupFocus();
-  const isAdultFocus = ageGroup !== DEFAULT_KANGUR_AGE_GROUP;
+  const isAdultFocus = ageGroup === 'grown_ups';
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);

@@ -10,6 +10,7 @@ import LessonSlideSection, {
 import {
   buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -234,6 +235,11 @@ export default function EnglishLesson(): React.JSX.Element {
     );
   }
 
+  const handleSelect = createLessonHubSelectHandler<SectionId>({
+    markSectionOpened,
+    onSelectSection: (sectionId) => setActiveSection(sectionId),
+  });
+
   return (
     <LessonHub
       lessonEmoji='🗣️'
@@ -241,10 +247,7 @@ export default function EnglishLesson(): React.JSX.Element {
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
       sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={(id) => {
-        markSectionOpened(id as SectionId);
-        setActiveSection(id as SectionId);
-      }}
+      onSelect={handleSelect}
     />
   );
 }

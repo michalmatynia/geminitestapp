@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-17'
 status: 'active'
 doc_type: 'index'
 scope: 'repo'
@@ -48,6 +48,7 @@ avoid becoming another dumping ground.
 - Case Resolver: [`docs/case-resolver/index.md`](./case-resolver/index.md)
 - Validator: [`docs/validator/README.md`](./validator/README.md)
 - Kangur: [`docs/kangur/README.md`](./kangur/README.md)
+- StudiQ app shell (Kangur integration): [`docs/kangur/studiq-application.md`](./kangur/studiq-application.md)
 - Prompt Exploder: canonical feature docs under
   [`docs/prompt-exploder/README.md`](./prompt-exploder/README.md)
 

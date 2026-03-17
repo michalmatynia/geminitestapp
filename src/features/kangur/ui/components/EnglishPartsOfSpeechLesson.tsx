@@ -8,7 +8,9 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import EnglishPartsOfSpeechGame from '@/features/kangur/ui/components/EnglishPartsOfSpeechGame';
@@ -431,26 +433,20 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
     );
   }
 
+  const handleSelect = createLessonHubSelectHandler<SectionId>({
+    markSectionOpened,
+    onSelectSection: (sectionId) => setActiveSection(sectionId),
+    skipMarkFor: ['game_parts_of_speech', 'game_pronouns_warmup'] as const,
+  });
+
   return (
     <LessonHub
       lessonEmoji='📝'
       lessonTitle='English: Pronouns'
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-sky-300'
-      sections={HUB_SECTIONS.map((section) =>
-        section.isGame
-          ? section
-          : {
-            ...section,
-            progress: sectionProgress[section.id as SlideSectionId],
-          }
-      )}
-      onSelect={(id) => {
-        if (id !== 'game_parts_of_speech' && id !== 'game_pronouns_warmup') {
-          markSectionOpened(id as SlideSectionId);
-        }
-        setActiveSection(id as SectionId);
-      }}
+      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
+      onSelect={handleSelect}
     />
   );
 }

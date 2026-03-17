@@ -13,6 +13,7 @@ import LessonSlideSection, {
 import {
   buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -504,6 +505,16 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
     );
   }
 
+  const handleSelect = createLessonHubSelectHandler<SectionId>({
+    markSectionOpened,
+    onSelectSection: (sectionId) => setActiveSection(sectionId),
+    skipMarkFor: [
+      'game_prepositions',
+      'game_prepositions_sort',
+      'game_prepositions_order',
+    ] as const,
+  });
+
   return (
     <LessonHub
       lessonEmoji='🧭'
@@ -511,12 +522,7 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
       gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-rose-300'
       sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={(id) => {
-        if (id !== 'game_prepositions' && id !== 'game_prepositions_sort' && id !== 'game_prepositions_order') {
-          markSectionOpened(id as SlideSectionId);
-        }
-        setActiveSection(id as SectionId);
-      }}
+      onSelect={handleSelect}
     />
   );
 }

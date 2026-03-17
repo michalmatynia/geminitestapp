@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-17'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -20,6 +20,8 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 4. `docs/documentation/README.md` when the task touches docs
 5. feature docs such as `docs/ai-paths/overview.md`, `docs/case-resolver/index.md`,
    or `docs/validator/README.md` when working in those areas
+6. Kangur/StudiQ work: start with `docs/kangur/README.md` and
+   `docs/kangur/studiq-application.md` before editing Kangur or StudiQ surfaces
 
 ## Repo Snapshot
 
@@ -236,6 +238,18 @@ Shared platform/runtime code lives under `src/shared/`, especially:
 - `src/shared/lib/security/`
 - `src/shared/providers/`
 - `src/shared/ui/`
+
+### Kangur + StudiQ quick map
+
+- Front page ownership and StudiQ routing: `src/shared/lib/front-page-app.ts`,
+  `src/app/(frontend)/page.tsx`, `src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx`
+- Kangur routing + embed params: `src/features/kangur/config/routing.ts`
+- Kangur learner pages: `src/features/kangur/ui/pages/`
+- Kangur admin pages: `src/features/kangur/admin/` (`AdminKangurPageShell`)
+- CMS app embed option (StudiQ): `src/shared/lib/app-embeds.ts`
+- AI Tutor content sources: `src/features/kangur/page-content-catalog.ts`,
+  `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts`
+- Canonical docs: `docs/kangur/README.md`, `docs/kangur/studiq-application.md`
 
 ## Runtime Reality
 

@@ -13,9 +13,6 @@ import { readBrainProviderCredential, resolveBrainProviderCredential } from '../
 describe('Brain provider credentials', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env['OPENAI_API_KEY'];
-    delete process.env['ANTHROPIC_API_KEY'];
-    delete process.env['GEMINI_API_KEY'];
   });
 
   it('prefers the global Brain provider key', async () => {
@@ -32,16 +29,15 @@ describe('Brain provider credentials', () => {
     });
   });
 
-  it('falls back to environment credentials when no stored Brain key exists', async () => {
-    process.env['OPENAI_API_KEY'] = 'env-openai-key';
+  it('reports missing when no stored Brain key exists', async () => {
     readStoredSettingValueMock.mockResolvedValue(null);
 
     const resolved = await readBrainProviderCredential('openai');
 
     expect(resolved).toEqual({
-      apiKey: 'env-openai-key',
-      source: 'env',
-      sourceKey: 'OPENAI_API_KEY',
+      apiKey: null,
+      source: 'missing',
+      sourceKey: null,
     });
   });
 

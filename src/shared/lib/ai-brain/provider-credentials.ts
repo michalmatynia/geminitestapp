@@ -3,14 +3,13 @@ import 'server-only';
 import { configurationError } from '@/shared/errors/app-error';
 
 import {
-  BRAIN_PROVIDER_ENV_KEYS,
   BRAIN_PROVIDER_LABELS,
   BRAIN_PROVIDER_SETTING_KEYS,
   type BrainProviderCredentialVendor,
 } from './provider-metadata';
 import { readStoredSettingValue } from './server';
 
-type ProviderCredentialResolutionSource = 'brain' | 'env' | 'missing';
+type ProviderCredentialResolutionSource = 'brain' | 'missing';
 
 export type BrainProviderCredentialResolution = {
   apiKey: string | null;
@@ -35,16 +34,6 @@ export const readBrainProviderCredential = async (
       apiKey: primaryValue,
       source: 'brain',
       sourceKey: primarySettingKey,
-    };
-  }
-
-  const envKey = BRAIN_PROVIDER_ENV_KEYS[vendor];
-  const envValue = normalizeConfiguredSecret(process.env[envKey]);
-  if (envValue) {
-    return {
-      apiKey: envValue,
-      source: 'env',
-      sourceKey: envKey,
     };
   }
 

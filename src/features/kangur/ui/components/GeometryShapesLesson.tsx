@@ -1,340 +1,72 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import { KangurLessonSubsectionSummarySync } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
-import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
 import {
-  buildLessonSectionLabels,
+  useKangurLessonSubsectionProgress,
+  useLessonTimeTracking,
+} from '../learner-activity/hooks';
+import {
   buildLessonHubSectionsWithProgress,
+  LessonHub,
+  LessonSlideSection,
   resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
-import {
-  GeometryMovingPointAnimation,
-  GeometryPolygonSidesAnimation,
-  GeometryPerimeterTraceAnimation,
-  GeometryPointSegmentAnimation,
-  GeometryShapeBuildAnimation,
-  GeometryShapeFillAnimation,
-  GeometryShapesOrbitAnimation,
-  GeometrySideHighlightAnimation,
-  GeometryVerticesAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
-import {
-  KangurButton,
-  KangurGlassPanel,
-} from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_CENTER_ROW_CLASSNAME,
-  KANGUR_PANEL_GAP_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+} from '../lessons/lesson-components';
 
-type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
+import { HUB_SECTIONS, SLIDES } from './GeometryShapesLesson.data';
 
-const SHAPE_CARDS = [
-  { emoji: '⚪', name: 'Koło', details: '0 boków i 0 rogów' },
-  { emoji: '🔺', name: 'Trójkąt', details: '3 boki i 3 rogi' },
-  { emoji: '🟦', name: 'Kwadrat', details: '4 równe boki i 4 rogi' },
-  { emoji: '▭', name: 'Prostokąt', details: '4 boki i 4 rogi' },
-  { emoji: '⬟', name: 'Pieciokąt', details: '5 boków i 5 rogów' },
-  { emoji: '⬢', name: 'Szesciokąt', details: '6 boków i 6 rogów' },
-] as const;
-
-export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
-  podstawowe: [
-    {
-      title: 'Poznaj figury',
-      content: (
-        <div className='space-y-3'>
-          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
-            {SHAPE_CARDS.slice(0, 4).map((shape) => (
-              <KangurLessonCallout
-                key={shape.name}
-                accent='violet'
-                className='text-center'
-                padding='sm'
-              >
-                <div className='text-3xl'>{shape.emoji}</div>
-                <div className='mt-1 text-sm font-bold text-fuchsia-700'>{shape.name}</div>
-                <div className='text-xs text-fuchsia-600'>{shape.details}</div>
-              </KangurLessonCallout>
-            ))}
-          </div>
-          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <div className='mx-auto h-28 w-28 max-w-full'>
-              <GeometryShapesOrbitAnimation />
-            </div>
-            <div className='text-xs text-fuchsia-600'>Figury mogą się obracać i nadal są tym samym kształtem.</div>
-          </KangurLessonCallout>
-        </div>
-      ),
-    },
-    {
-      title: 'Obrys figury',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-40 max-w-full'>
-            <GeometryPerimeterTraceAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Zamknięty obrys tworzy kształt figury.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Budowanie figury',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-36 max-w-full'>
-            <GeometryShapeBuildAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Laczymy odcinki, az figura się domknie.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-  ],
-  ile_bokow: [
-    {
-      title: 'Ile boków i rogów?',
-      content: (
-        <div className='space-y-2'>
-          {SHAPE_CARDS.map((shape) => (
-            <KangurLessonCallout
-              key={shape.name}
-              accent='slate'
-              className='border-fuchsia-200/85'
-              padding='sm'
-            >
-              <div className={KANGUR_CENTER_ROW_CLASSNAME}>
-                <span className='text-2xl'>{shape.emoji}</span>
-                <div>
-                  <p className='text-sm font-bold [color:var(--kangur-page-text)]'>
-                    {shape.name}
-                  </p>
-                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-                    {shape.details}
-                  </p>
-                </div>
-              </div>
-            </KangurLessonCallout>
-          ))}
-        </div>
-      ),
-    },
-    {
-      title: 'Policz boki',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-36 max-w-full'>
-            <GeometrySideHighlightAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Boki zapalają się po kolei — każdy to odcinek.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Rogi figury',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-32 max-w-full'>
-            <GeometryVerticesAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Wierzchołki to rogi, w których spotykają się boki.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Odcinek to bok',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-24 w-36 max-w-full'>
-            <GeometryPointSegmentAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Bok figury to odcinek między dwoma punktami.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Rysowanie boku',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-24 w-36 max-w-full'>
-            <GeometryMovingPointAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Punkt porusza się i zostawia odcinek.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-  ],
-  podsumowanie: [
-    {
-      title: 'Podsumowanie w ruchu: obrót',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryShapesOrbitAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Obrót nie zmienia figury.</div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Podsumowanie w ruchu: boki',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryPolygonSidesAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Boki i rogi opisują kształt.</div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Podsumowanie w ruchu: wnętrze',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryShapeFillAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Wnętrze figury to jej pole.</div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Podsumowanie w ruchu: budowa',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryShapeBuildAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Łącz odcinki, aż figura się domknie.</div>
-        </KangurLessonCallout>
-      ),
-    },
-  ],
-};
-
-export const HUB_SECTIONS = [
-  {
-    id: 'podstawowe',
-    emoji: '🔺',
-    title: 'Podstawowe figury',
-    description: 'Koło, trójkąt, kwadrat, prostokąt',
-  },
-  { id: 'ile_bokow', emoji: '🔢', title: 'Boki i rogi', description: 'Każda figura pod lupą' },
-  { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Najważniejsze informacje' },
-  {
-    id: 'game',
-    emoji: '✍️',
-    title: 'Rysuj figury',
-    description: 'Narysuj kształt i zdobadz XP',
-    isGame: true,
-  },
-];
-
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
+type SectionId = (typeof HUB_SECTIONS)[number]['id'];
 
 export default function GeometryShapesLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const [rewarded, setRewarded] = useState(false);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'geometry_shapes',
-      slideSections: SLIDES,
-      sectionLabels: SECTION_LABELS,
+
+  const { sectionProgress, markSectionOpened, markSectionViewedCount } =
+    useKangurLessonSubsectionProgress<SectionId>({
+      lessonId: 'geometry-shapes',
+      sections: HUB_SECTIONS as any,
     });
 
-  const handleGameStart = (): void => {
-    if (!rewarded) {
-      const progress = loadProgress();
-      const reward = createLessonCompletionReward(progress, 'geometry_shapes', 60);
-      addXp(reward.xp, reward.progressUpdates);
-      setRewarded(true);
-    }
-    setActiveSection('game');
+  const { recordPanelTime, recordComplete } = useLessonTimeTracking({
+    lessonId: 'geometry-shapes',
+  });
+
+  const handleComplete = (): void => {
+    void recordComplete();
   };
 
-  if (activeSection === 'game') {
-    return (
-      <div className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        <KangurButton
-          onClick={() => setActiveSection(null)}
-          className='self-start'
-          size='sm'
-          type='button'
-          variant='surface'
-        >
-          <ArrowLeft className='w-4 h-4' /> Wróć do tematów
-        </KangurButton>
-        <KangurLessonSubsectionSummarySync
-          summary={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
-        />
-        <KangurGlassPanel
-          data-testid='geometry-shapes-game-shell'
-          className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
-          padding='xl'
-          surface='solid'
-        >
-          <GeometryDrawingGame onFinish={() => setActiveSection(null)} />
-        </KangurGlassPanel>
-      </div>
-    );
-  }
+  const sectionList = useMemo(
+    () => buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress),
+    [sectionProgress]
+  );
 
   if (activeSection) {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any)}
         onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
+        onComplete={activeSection === 'podsumowanie' ? handleComplete : undefined}
+        onProgressChange={(viewedCount: number) => markSectionViewedCount(activeSection, viewedCount)}
+        onPanelTimeUpdate={(panelIndex: number, panelTitle: string, seconds: number) =>
           recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
         }
-        dotActiveClass='bg-fuchsia-500'
-        dotDoneClass='bg-fuchsia-300'
-        gradientClass='kangur-gradient-accent-violet-reverse'
+        dotActiveClass='bg-amber-400'
+        dotDoneClass='bg-amber-200'
+        gradientClass='kangur-gradient-accent-amber'
       />
     );
   }
 
   return (
     <LessonHub
-      lessonEmoji='🔷'
-      lessonTitle='Figury geometryczne'
-      gradientClass='kangur-gradient-accent-violet-reverse'
-      progressDotClassName='bg-fuchsia-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={(id) => {
-        if (id === 'game') {
-          handleGameStart();
-        } else {
-          markSectionOpened(id as keyof typeof SLIDES);
-          setActiveSection(id as SectionId);
-        }
+      lessonEmoji='📐'
+      lessonTitle='Kształty'
+      gradientClass='kangur-gradient-accent-amber'
+      progressDotClassName='bg-amber-300'
+      sections={sectionList as any}
+      onSelect={(id: any) => {
+        markSectionOpened(id as any);
+        setActiveSection(id as any);
       }}
     />
   );

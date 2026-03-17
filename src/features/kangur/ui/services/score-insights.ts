@@ -5,6 +5,7 @@ export const SCORE_INSIGHT_WINDOW_DAYS = 7;
 const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   alphabet: { label: 'Alfabet', emoji: '🔤' },
   alphabet_basics: { label: 'Alfabet', emoji: '🔤' },
+  alphabet_copy: { label: 'Przepisz litery', emoji: '📝' },
   alphabet_syllables: { label: 'Sylaby', emoji: '🔤' },
   alphabet_words: { label: 'Pierwsze slowa', emoji: '📖' },
   alphabet_matching: { label: 'Dopasuj litery', emoji: '🔤' },

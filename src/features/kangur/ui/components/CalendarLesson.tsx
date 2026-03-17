@@ -8,7 +8,9 @@ import LessonSlideSection, {
   type LessonSlide as LessonSlideSectionSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonHubSectionsWithProgress,
   buildLessonSectionLabels,
+  createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
 import {
@@ -493,14 +495,7 @@ export default function CalendarLesson(): React.JSX.Element {
     });
   const lessonCompletionAwardedRef = useRef(false);
 
-  const lessonHubSections = LIVE_HUB_SECTIONS.map((section) =>
-    section.isGame
-      ? section
-      : {
-        ...section,
-        progress: sectionProgress[section.id as LessonSectionId],
-      }
-  );
+  const lessonHubSections = buildLessonHubSectionsWithProgress(LIVE_HUB_SECTIONS, sectionProgress);
 
   const handleStartTraining = useCallback((sectionId: CalendarInteractiveSectionId) => {
     if (!lessonCompletionAwardedRef.current) {
@@ -564,6 +559,19 @@ export default function CalendarLesson(): React.JSX.Element {
     );
   }
 
+  const hubHandlers: Partial<Record<CalendarHubId, () => void>> = {
+    game_days: () => handleStartTraining('dni'),
+    game_months: () => handleStartTraining('miesiace'),
+    game_dates: () => handleStartTraining('data'),
+  };
+  const handleSelect = createLessonHubSelectHandler<CalendarHubId>({
+    markSectionOpened: (sectionId) => markSectionOpened(sectionId as LessonSectionId),
+    onSelectSection: (sectionId) =>
+      setView({ kind: 'lesson', sectionId: sectionId as LessonSectionId }),
+    skipMarkFor: ['game_days', 'game_months', 'game_dates'] as const,
+    handlers: hubHandlers,
+  });
+
   return (
     <LessonHub
       lessonEmoji='📅'
@@ -571,22 +579,7 @@ export default function CalendarLesson(): React.JSX.Element {
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-200'
       sections={lessonHubSections}
-      onSelect={(sectionId) => {
-        if (sectionId === 'game_days') {
-          handleStartTraining('dni');
-          return;
-        }
-        if (sectionId === 'game_months') {
-          handleStartTraining('miesiace');
-          return;
-        }
-        if (sectionId === 'game_dates') {
-          handleStartTraining('data');
-          return;
-        }
-        markSectionOpened(sectionId as LessonSectionId);
-        setView({ kind: 'lesson', sectionId: sectionId as LessonSectionId });
-      }}
+      onSelect={handleSelect}
     />
   );
 }

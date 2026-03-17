@@ -1,12 +1,27 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-
 import {
-  type PromptExploderSegmentationLibraryState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
+
+import type {
+  CaptureSegmentationRecordResult,
+  PromptExploderSegmentationLibraryState,
+  PromptExploderSegmentationRecord,
 } from '@/shared/contracts/prompt-exploder';
+import type { Toast } from '@/shared/contracts/ui';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
   buildPromptExploderLibraryItem,
@@ -18,29 +33,218 @@ import {
   removePromptExploderLibraryItemById,
   sortPromptExploderLibraryItemsByUpdated,
   upsertPromptExploderLibraryItems,
+  type PromptExploderLibraryItem,
 } from '../prompt-library';
 import {
+  appendPromptExploderSegmentationRecord,
   buildPromptExploderSegmentationAnalysisContextJson,
+  buildPromptExploderSegmentationRecord,
   hydratePromptExploderSegmentationRecordDocument,
   parsePromptExploderSegmentationLibrary,
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
+  PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
   removePromptExploderSegmentationRecordById,
   sortPromptExploderSegmentationRecordsByCapturedAt,
 } from '../segmentation-library';
-import { useBenchmarkActions } from './hooks/useBenchmark';
-import { useDocumentState, useDocumentActions } from './hooks/useDocument';
-import { useLibraryPersistence } from './hooks/useLibraryPersistence';
-import { useSegmentationRecordCapture } from './hooks/useSegmentationRecordCapture';
-import { useSettingsActions, useSettingsState } from './hooks/useSettings';
+import { useBenchmarkActions } from './BenchmarkContext';
+import {
+  useDocumentActions,
+  useDocumentState,
+  type DocumentState,
+} from './DocumentContext';
+import {
+  useSettingsActions,
+  useSettingsState,
+  type PromptExploderSettingsActions,
+  type PromptExploderSettingsState,
+} from './SettingsContext';
 
-import type { LibraryActions, LibraryState } from './LibraryContext.types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+// ── Types ────────────────────────────────────────────────────────────────────
 
+export interface LibraryState {
+  selectedLibraryItemId: string | null;
+  libraryNameDraft: string;
+  promptLibraryItems: PromptExploderLibraryItem[];
+  selectedLibraryItem: PromptExploderLibraryItem | null;
+  selectedSegmentationRecordId: string | null;
+  segmentationRecords: PromptExploderSegmentationRecord[];
+  selectedSegmentationRecord: PromptExploderSegmentationRecord | null;
+  segmentationLibraryState: PromptExploderSegmentationLibraryState;
+}
+
+export interface LibraryActions {
+  setSelectedLibraryItemId: Dispatch<SetStateAction<string | null>>;
+  setLibraryNameDraft: Dispatch<SetStateAction<string>>;
+  setSelectedSegmentationRecordId: Dispatch<SetStateAction<string | null>>;
+  handleNewLibraryEntry: () => void;
+  handleSaveLibraryItem: () => Promise<void>;
+  handleLoadLibraryItem: (itemId: string) => void;
+  handleDeleteLibraryItem: (itemId: string) => Promise<void>;
+  captureSegmentationRecordOnApply: () => Promise<CaptureSegmentationRecordResult>;
+  handleLoadSegmentationRecordIntoWorkspace: (recordId: string) => void;
+  handleDeleteSegmentationRecord: (recordId: string) => Promise<void>;
+  buildSegmentationAnalysisContextJsonForRecord: (recordId: string) => string | null;
+  buildSegmentationAnalysisContextJsonForAll: () => string;
+}
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
 const LibraryStateContext = createContext<LibraryState | null>(null);
 const LibraryActionsContext = createContext<LibraryActions | null>(null);
+
+// ── Hooks ────────────────────────────────────────────────────────────────────
+
+const useLibraryPersistence = ({
+  settingsMap,
+  updateSetting,
+}: {
+  settingsMap: PromptExploderSettingsState['settingsMap'];
+  updateSetting: PromptExploderSettingsActions['updateSetting'];
+}) => {
+  const persistPromptLibraryItems = useCallback(
+    async (items: PromptExploderLibraryItem[]): Promise<boolean> => {
+      const serialized = serializeSetting({ version: 1, items });
+      if (settingsMap.get(PROMPT_EXPLODER_LIBRARY_KEY) === serialized) {
+        return false;
+      }
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_LIBRARY_KEY,
+        value: serialized,
+      });
+      return true;
+    },
+    [settingsMap, updateSetting]
+  );
+
+  const persistSegmentationRecords = useCallback(
+    async (records: PromptExploderSegmentationRecord[]): Promise<boolean> => {
+      const serialized = serializeSetting({
+        version: 1,
+        records,
+      });
+      if (settingsMap.get(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY) === serialized) {
+        return false;
+      }
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
+        value: serialized,
+      });
+      return true;
+    },
+    [settingsMap, updateSetting]
+  );
+
+  return {
+    persistPromptLibraryItems,
+    persistSegmentationRecords,
+  };
+};
+
+const useSegmentationRecordCapture = ({
+  activeValidationRuleStackId,
+  activeValidationScope,
+  documentState,
+  parsedSegmentationRecords,
+  persistSegmentationRecords,
+  promptText,
+  returnTarget,
+  setSelectedSegmentationRecordId,
+  toast,
+}: {
+  activeValidationRuleStackId: string;
+  activeValidationScope: string;
+  documentState: DocumentState['documentState'];
+  parsedSegmentationRecords: PromptExploderSegmentationRecord[];
+  persistSegmentationRecords: (records: PromptExploderSegmentationRecord[]) => Promise<boolean>;
+  promptText: DocumentState['promptText'];
+  returnTarget: DocumentState['returnTarget'];
+  setSelectedSegmentationRecordId: Dispatch<SetStateAction<string | null>>;
+  toast: Toast;
+}) =>
+  useCallback(async (): Promise<CaptureSegmentationRecordResult> => {
+    if (!promptText.trim()) {
+      return {
+        ok: false,
+        captured: false,
+        persisted: false,
+        reason: 'missing_prompt',
+      };
+    }
+
+    if (!documentState) {
+      return {
+        ok: false,
+        captured: false,
+        persisted: false,
+        reason: 'missing_document',
+      };
+    }
+
+    const now = new Date().toISOString();
+    const nextRecord = buildPromptExploderSegmentationRecord({
+      promptText,
+      documentState,
+      now,
+      returnTarget,
+      validationScope: activeValidationScope,
+      validationRuleStack: activeValidationRuleStackId,
+    });
+    if (!nextRecord) {
+      return {
+        ok: false,
+        captured: false,
+        persisted: false,
+        reason: 'missing_document',
+      };
+    }
+
+    const nextRecords = appendPromptExploderSegmentationRecord({
+      records: parsedSegmentationRecords,
+      nextRecord,
+      maxRecords: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
+    });
+
+    try {
+      const persisted = await persistSegmentationRecords(nextRecords);
+      if (persisted) {
+        setSelectedSegmentationRecordId(nextRecord.id);
+      }
+
+      return {
+        ok: true,
+        captured: true,
+        persisted,
+        reason: 'manual_save' as const,
+        ...(persisted ? { recordId: nextRecord.id } : {}),
+      };
+    } catch (error) {
+      logClientError(error);
+      toast(
+        error instanceof Error
+          ? `Failed to capture segmentation context: ${error.message}`
+          : 'Failed to capture segmentation context.',
+        { variant: 'warning' }
+      );
+
+      return {
+        ok: false,
+        captured: true,
+        persisted: false,
+        reason: 'persist_failed',
+        recordId: nextRecord.id,
+      };
+    }
+  }, [
+    activeValidationRuleStackId,
+    activeValidationScope,
+    documentState,
+    parsedSegmentationRecords,
+    persistSegmentationRecords,
+    promptText,
+    returnTarget,
+    setSelectedSegmentationRecordId,
+    toast,
+  ]);
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -431,5 +635,19 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     </LibraryStateContext.Provider>
   );
 }
+
+// ── Hook exports ─────────────────────────────────────────────────────────────
+
+export const useLibraryState = (): LibraryState => {
+  const ctx = useContext(LibraryStateContext);
+  if (!ctx) throw new Error('useLibraryState must be used within LibraryProvider');
+  return ctx;
+};
+
+export const useLibraryActions = (): LibraryActions => {
+  const ctx = useContext(LibraryActionsContext);
+  if (!ctx) throw new Error('useLibraryActions must be used within LibraryProvider');
+  return ctx;
+};
 
 export { LibraryStateContext, LibraryActionsContext };

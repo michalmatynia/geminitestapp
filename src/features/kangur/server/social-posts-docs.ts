@@ -19,7 +19,7 @@ const MAX_EXCERPT_CHARS = 1200;
 const MAX_CONTEXT_CHARS = 6000;
 const DOCS_ROOT = path.resolve(process.cwd(), 'docs', 'kangur');
 
-const resolveDocAbsolutePath = (docPath: string): string | null => {
+export const resolveKangurDocAbsolutePath = (docPath: string): string | null => {
   const normalized = docPath.trim().replace(/^\/+/, '');
   if (!normalized) return null;
   let relative = normalized.startsWith('docs/') ? normalized.slice('docs/'.length) : normalized;
@@ -151,7 +151,7 @@ const readDocExcerpt = async (entry: KangurDocEntry): Promise<string | null> => 
   const docPath = entry.docPath?.trim();
   if (!docPath) return null;
   try {
-    const absolute = resolveDocAbsolutePath(docPath);
+    const absolute = resolveKangurDocAbsolutePath(docPath);
     if (!absolute) return null;
     const content = await fs.readFile(absolute, 'utf8');
     const keywords =

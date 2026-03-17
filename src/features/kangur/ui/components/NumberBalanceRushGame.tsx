@@ -100,6 +100,19 @@ const moveBetweenLists = <T,>(
   return { source: sourceNext, destination: destinationNext };
 };
 
+const removeTileById = <T extends { id: string }>(
+  items: T[],
+  tileId: string
+): { updated: T[]; tile?: T } => {
+  const index = items.findIndex((item) => item.id === tileId);
+  if (index === -1) {
+    return { updated: items };
+  }
+  const updated = [...items];
+  const [tile] = updated.splice(index, 1);
+  return { updated, tile };
+};
+
 const isZoneId = (value: string): value is ZoneId =>
   value === 'tray' || value === 'left' || value === 'right';
 
@@ -125,28 +138,46 @@ function NumberTile({
   tile,
   index,
   isDragDisabled,
+  isSelected,
+  onClick,
 }: {
   tile: NumberBalanceTile;
   index: number;
   isDragDisabled: boolean;
+  isSelected: boolean;
+  onClick: () => void;
 }): React.JSX.Element {
   return (
-    <Draggable draggableId={tile.id} index={index} isDragDisabled={isDragDisabled}>
+    <Draggable
+      draggableId={tile.id}
+      index={index}
+      isDragDisabled={isDragDisabled}
+      disableInteractiveElementBlocking
+    >
       {(provided, snapshot) => {
         const content = (
-          <div
+          <button
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            type='button'
             className={cn(
-              'flex h-16 w-16 items-center justify-center rounded-2xl border border-white/70 text-xl font-extrabold shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)] transition',
+              'flex h-16 w-16 items-center justify-center rounded-2xl border border-white/70 text-xl font-extrabold shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
               TILE_STYLES[index % TILE_STYLES.length],
-              snapshot.isDragging ? 'scale-105 shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)]' : ''
+              snapshot.isDragging ? 'scale-105 shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)]' : '',
+              isSelected ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white' : ''
             )}
             aria-label={`Liczba ${tile.value}`}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick();
+            }}
           >
             {tile.value}
-          </div>
+          </button>
         );
 
         if (snapshot.isDragging && dragPortal) {
@@ -175,6 +206,7 @@ export default function NumberBalanceRushGame(
   const [trayTiles, setTrayTiles] = useState<NumberBalanceTile[]>([]);
   const [leftTiles, setLeftTiles] = useState<NumberBalanceTile[]>([]);
   const [rightTiles, setRightTiles] = useState<NumberBalanceTile[]>([]);
+  const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [scores, setScores] = useState<NumberBalancePlayerScore[]>([]);
   const [playerCount, setPlayerCount] = useState(0);
@@ -210,6 +242,7 @@ export default function NumberBalanceRushGame(
       setTrayTiles([]);
       setLeftTiles([]);
       setRightTiles([]);
+      setSelectedTileId(null);
       lastLoadedPuzzleIndexRef.current = null;
       lastLoadedPuzzleStartRef.current = null;
       lastServerTimeRef.current = 0;
@@ -544,6 +577,60 @@ export default function NumberBalanceRushGame(
 
   const canInteract = phase === 'running' && !celebrating && !isSubmitting;
 
+  useEffect(() => {
+    if (!canInteract) {
+      setSelectedTileId(null);
+    }
+  }, [canInteract]);
+
+  useEffect(() => {
+    setSelectedTileId(null);
+  }, [puzzle?.id]);
+
+  const moveSelectedTileTo = (destination: ZoneId): void => {
+    if (!canInteract || !puzzle || !selectedTileId) return;
+
+    let nextTray = trayTiles;
+    let nextLeft = leftTiles;
+    let nextRight = rightTiles;
+
+    let movedTile: NumberBalanceTile | undefined;
+    const trayResult = removeTileById(nextTray, selectedTileId);
+    nextTray = trayResult.updated;
+    movedTile = trayResult.tile;
+
+    if (!movedTile) {
+      const leftResult = removeTileById(nextLeft, selectedTileId);
+      nextLeft = leftResult.updated;
+      movedTile = leftResult.tile;
+    }
+
+    if (!movedTile) {
+      const rightResult = removeTileById(nextRight, selectedTileId);
+      nextRight = rightResult.updated;
+      movedTile = rightResult.tile;
+    }
+
+    if (!movedTile) return;
+
+    if (destination === 'left' && nextLeft.length >= puzzle.slots.left) return;
+    if (destination === 'right' && nextRight.length >= puzzle.slots.right) return;
+
+    if (destination === 'tray') {
+      nextTray = [...nextTray, movedTile];
+    } else if (destination === 'left') {
+      nextLeft = [...nextLeft, movedTile];
+    } else {
+      nextRight = [...nextRight, movedTile];
+    }
+
+    setTrayTiles(nextTray);
+    setLeftTiles(nextLeft);
+    setRightTiles(nextRight);
+    setSelectedTileId(null);
+    void handleSolved(nextLeft, nextRight);
+  };
+
   const handleDragEnd = (result: DropResult): void => {
     if (!canInteract || !puzzle) return;
     if (!result.destination) return;
@@ -587,6 +674,7 @@ export default function NumberBalanceRushGame(
     setTrayTiles(nextTray);
     setLeftTiles(nextLeft);
     setRightTiles(nextRight);
+    setSelectedTileId(null);
     void handleSolved(nextLeft, nextRight);
   };
 
@@ -789,7 +877,7 @@ export default function NumberBalanceRushGame(
           surface='playField'
         >
           <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full`}>
-            <div className='flex items-end justify-center gap-6'>
+            <div className='flex flex-col items-center justify-center gap-6 md:flex-row md:items-end'>
               <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
                 <div className='text-sm font-semibold text-amber-900'>
                   Cel: {puzzle.targets.left}
@@ -803,6 +891,17 @@ export default function NumberBalanceRushGame(
                         'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition',
                         snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200'
                       )}
+                      onClick={() => moveSelectedTileTo('left')}
+                      role='button'
+                      tabIndex={canInteract ? 0 : -1}
+                      aria-disabled={!canInteract}
+                      aria-label='Lewa strona wagi'
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          moveSelectedTileTo('left');
+                        }
+                      }}
                     >
                       {leftTiles.map((tile, index) => (
                         <NumberTile
@@ -810,6 +909,11 @@ export default function NumberBalanceRushGame(
                           tile={tile}
                           index={index}
                           isDragDisabled={!canInteract}
+                          isSelected={selectedTileId === tile.id}
+                          onClick={() => {
+                            if (!canInteract) return;
+                            setSelectedTileId((current) => (current === tile.id ? null : tile.id));
+                          }}
                         />
                       ))}
                       {Array.from({
@@ -845,6 +949,17 @@ export default function NumberBalanceRushGame(
                         'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition',
                         snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/80' : 'border-amber-200'
                       )}
+                      onClick={() => moveSelectedTileTo('right')}
+                      role='button'
+                      tabIndex={canInteract ? 0 : -1}
+                      aria-disabled={!canInteract}
+                      aria-label='Prawa strona wagi'
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          moveSelectedTileTo('right');
+                        }
+                      }}
                     >
                       {rightTiles.map((tile, index) => (
                         <NumberTile
@@ -852,6 +967,11 @@ export default function NumberBalanceRushGame(
                           tile={tile}
                           index={index}
                           isDragDisabled={!canInteract}
+                          isSelected={selectedTileId === tile.id}
+                          onClick={() => {
+                            if (!canInteract) return;
+                            setSelectedTileId((current) => (current === tile.id ? null : tile.id));
+                          }}
                         />
                       ))}
                       {Array.from({
@@ -886,6 +1006,17 @@ export default function NumberBalanceRushGame(
                       'flex min-h-[88px] flex-wrap items-center justify-center kangur-panel-gap rounded-[28px] border-2 border-dashed p-3 transition',
                       snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-amber-200'
                     )}
+                    onClick={() => moveSelectedTileTo('tray')}
+                    role='button'
+                    tabIndex={canInteract ? 0 : -1}
+                    aria-disabled={!canInteract}
+                    aria-label='Taca z liczbami'
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        moveSelectedTileTo('tray');
+                      }
+                    }}
                   >
                     {trayTiles.map((tile, index) => (
                       <NumberTile
@@ -893,6 +1024,11 @@ export default function NumberBalanceRushGame(
                         tile={tile}
                         index={index}
                         isDragDisabled={!canInteract}
+                        isSelected={selectedTileId === tile.id}
+                        onClick={() => {
+                          if (!canInteract) return;
+                          setSelectedTileId((current) => (current === tile.id ? null : tile.id));
+                        }}
                       />
                     ))}
                     {provided.placeholder}

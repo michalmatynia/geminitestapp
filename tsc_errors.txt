@@ -2,3 +2,20 @@
 > libapp2@0.1.0 typecheck
 > tsc --noEmit --incremental false --incremental false
 
+src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx(8,3): error TS6133: 'Card' is declared but its value is never read.
+src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx(11,3): error TS6133: 'SelectSimple' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurSocialPage.tsx(57,5): error TS6133: 'postsQuery' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurSocialPage.tsx(62,5): error TS6133: 'generateMutation' is declared but its value is never read.
+src/features/kangur/admin/AdminKangurSocialPage.tsx(254,24): error TS2304: Cannot find name 'brainModelId'.
+src/features/kangur/admin/AdminKangurSocialPage.tsx(282,24): error TS2304: Cannot find name 'visionModelId'.
+src/features/kangur/admin/AdminKangurSocialPage.tsx(368,31): error TS2304: Cannot find name 'recentAddons'.
+src/features/kangur/server/social-image-addons-service.ts(215,51): error TS2345: Argument of type '{ id: `${string}-${string}-${string}-${string}-${string}`; title: string; description: string; sourceUrl: string; sourceLabel: string; imageAsset: { id: string; url?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; width?: number | ... 1 more ... |...' is not assignable to parameter of type '{ id: string; title: string; description: string; sourceUrl: string | null; sourceLabel: string | null; imageAsset: { id: string; url?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; width?: number | ... 1 more ... | undefined; height?: number | ....'.
+  Type '{ id: `${string}-${string}-${string}-${string}-${string}`; title: string; description: string; sourceUrl: string; sourceLabel: string; imageAsset: { id: string; url?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; width?: number | ... 1 more ... |...' is missing the following properties from type '{ id: string; title: string; description: string; sourceUrl: string | null; sourceLabel: string | null; imageAsset: { id: string; url?: string | undefined; filepath?: string | undefined; thumbnailUrl?: string | undefined; filename?: string | undefined; width?: number | ... 1 more ... | undefined; height?: number | ....': presetId, previousAddonId
+src/features/kangur/server/social-posts-vision.ts(10,1): error TS6133: 'findKangurSocialImageAddonsByIds' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(22,8): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.Header' or its corresponding type declarations.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(23,48): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.Constants' or its corresponding type declarations.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(24,39): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.Docs' or its corresponding type declarations.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(33,8): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.WorkspacePanels' or its corresponding type declarations.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(34,37): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.PatternRuntime' or its corresponding type declarations.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(35,37): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.ParserTuning' or its corresponding type declarations.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(36,38): error TS2307: Cannot find module './admin-prompt-exploder/PromptExploder.Benchmark' or its corresponding type declarations.

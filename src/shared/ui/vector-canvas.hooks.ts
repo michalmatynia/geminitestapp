@@ -8,8 +8,7 @@ import {
 } from '@/shared/contracts/vector';
 
 import {
-  type VectorCanvasImageContentFrame,
-  type VectorCanvasViewCropRect,
+  type VectorCanvasRect,
   type VectorViewTransform,
 } from './vector-canvas.geometry';
 
@@ -38,8 +37,8 @@ export interface UseVectorCanvasInteractionsProps {
   enableTwoFingerRotate: boolean;
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
-  onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
-  onImageContentFrameChange?: (frame: VectorCanvasImageContentFrame | null) => void;
+  onViewCropRectChange?: (cropRect: VectorCanvasRect | null) => void;
+  onImageContentFrameChange?: (frame: VectorCanvasRect | null) => void;
   imageMoveEnabled: boolean;
   onImageOffsetChange?: (offset: { x: number; y: number }) => void;
   minViewScale: number;

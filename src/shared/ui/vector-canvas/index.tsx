@@ -11,10 +11,7 @@ import {
 import type { VectorCanvasProps } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
-import {
-  type VectorCanvasImageContentFrame,
-  type VectorCanvasViewCropRect,
-} from '../vector-canvas.geometry';
+import { type VectorCanvasRect } from '../vector-canvas.geometry';
 import { useVectorCanvasInteractions } from '../vector-canvas.hooks';
 import { VectorToolbar, VectorShapeOverlay } from '../vector-canvas.rendering';
 import { CanvasBackgroundLayer } from './components/CanvasBackgroundLayer';
@@ -29,7 +26,7 @@ import {
 } from './VectorCanvasContext';
 
 export { type VectorPoint, type VectorShape, type VectorShapeType, type VectorToolMode };
-export type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect };
+export type { VectorCanvasRect };
 export type { VectorCanvasProps };
 export {
   DEFAULT_VECTOR_VIEWBOX,

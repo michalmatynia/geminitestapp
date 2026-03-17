@@ -94,10 +94,13 @@ export type IdDto = {
 };
 export type Id = IdDto;
 
-export type IdDataDto<TData = unknown> = {
-  id: string;
+type IdDataPayload<TData = unknown> = {
   data: TData;
 };
+
+export type IdDataDto<TData = unknown> = {
+  id: string;
+} & IdDataPayload<TData>;
 export type IdData<TData = unknown> = IdDataDto<TData>;
 
 export type IdInputDto<TInput = unknown> = {
@@ -108,8 +111,7 @@ export type IdInput<TInput = unknown> = IdInputDto<TInput>;
 
 export type OptionalIdDataDto<TData = unknown> = {
   id?: string;
-  data: TData;
-};
+} & IdDataPayload<TData>;
 export type OptionalIdData<TData = unknown> = OptionalIdDataDto<TData>;
 
 /**

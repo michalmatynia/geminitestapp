@@ -18,6 +18,7 @@ vi.mock('@/shared/ui', async () => {
   const mocks = await import('./rightSidebarRuntimeMockComponents');
   return {
     Button: mocks.MockButton,
+    UI_CENTER_ROW_RELAXED_CLASSNAME: mocks.UI_CENTER_ROW_RELAXED_CLASSNAME,
   };
 });
 

@@ -19,7 +19,7 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { LearningDraft } from './SettingsDraftsContext';
+import type { LearningDraft } from '../SettingsContext';
 import {
   validatePromptExploderParserTuningDrafts,
   applyPromptExploderParserTuningDrafts,

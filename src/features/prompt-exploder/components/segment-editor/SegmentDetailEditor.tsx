@@ -7,9 +7,13 @@ import type { PromptExploderParamEntry } from '@/shared/contracts/prompt-explode
 import { Button, Card, FormField, Input, Label, SelectSimple, StatusToggle, Textarea } from '@/shared/ui';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
-import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
-import { useSegmentEditorActions, useSegmentEditorState } from '../../context/hooks/useSegmentEditor';
-import { useSettingsState } from '../../context/hooks/useSettings';
+import {
+  useDocumentActions,
+  useDocumentState,
+  useSegmentEditorActions,
+  useSegmentEditorState,
+  useSettingsState,
+} from '../../context';
 import {
   promptExploderClampNumber,
   promptExploderInferParamTypeLabel,

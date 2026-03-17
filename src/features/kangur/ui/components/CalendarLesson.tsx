@@ -8,6 +8,10 @@ import LessonSlideSection, {
   type LessonSlide as LessonSlideSectionSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   CalendarDateFormatAnimation,
   CalendarDateHighlightAnimation,
   CalendarDaysStripAnimation,
@@ -469,11 +473,11 @@ const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = LIVE
   (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
 );
 
-const SECTION_LABELS: Partial<Record<LessonSectionId, string>> = Object.fromEntries(
-  LIVE_HUB_SECTIONS.filter((section) => !section.isGame).map((section) => [
-    section.id,
-    section.title,
-  ])
+const SECTION_LABELS: Partial<Record<LessonSectionId, string>> = buildLessonSectionLabels(
+  LIVE_HUB_SECTIONS.filter((section) => !section.isGame) as Array<{
+    id: LessonSectionId;
+    title: string;
+  }>
 );
 
 export default function CalendarLesson(): React.JSX.Element {
@@ -520,12 +524,14 @@ export default function CalendarLesson(): React.JSX.Element {
         icon='📅'
         maxWidthClassName='max-w-lg'
         onBack={() => setView({ kind: 'hub' })}
-        sectionHeader={{
-          description: currentTrainingSection.description,
-          emoji: currentTrainingSection.emoji,
-          isGame: true,
-          title: currentTrainingSection.title,
-        }}
+        sectionHeader={
+          resolveLessonSectionHeader(LIVE_HUB_SECTIONS, view.sectionId) ?? {
+            description: currentTrainingSection.description,
+            emoji: currentTrainingSection.emoji,
+            isGame: true,
+            title: currentTrainingSection.title,
+          }
+        }
         shellTestId='calendar-lesson-game-shell'
         title={currentTrainingSection.title}
       >
@@ -542,9 +548,7 @@ export default function CalendarLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SECTION_SLIDES[view.sectionId]}
-        sectionHeader={
-          LIVE_HUB_SECTIONS.find((section) => section.id === view.sectionId) ?? null
-        }
+        sectionHeader={resolveLessonSectionHeader(LIVE_HUB_SECTIONS, view.sectionId)}
         onBack={() => setView({ kind: 'hub' })}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>

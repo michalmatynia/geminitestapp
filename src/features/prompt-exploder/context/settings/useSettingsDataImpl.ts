@@ -22,7 +22,7 @@ import {
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { LearningDraft } from './SettingsDraftsContext';
+import type { LearningDraft } from '../SettingsContext';
 import { readPromptExploderDraftPayload, PROMPT_EXPLODER_DRAFT_PROMPT_KEY } from '../../bridge';
 import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 import {

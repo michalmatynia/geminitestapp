@@ -100,7 +100,7 @@ const mocks = vi.hoisted(() => ({
   actions: {} as ReturnType<typeof createDefaultActions>,
 }));
 
-vi.mock('@/features/prompt-exploder/context/hooks/useLibrary', () => ({
+vi.mock('@/features/prompt-exploder/context/LibraryContext', () => ({
   useLibraryState: () => mocks.state,
   useLibraryActions: () => mocks.actions,
 }));

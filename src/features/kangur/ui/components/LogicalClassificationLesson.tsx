@@ -7,6 +7,10 @@ import LessonHub from '@/features/kangur/ui/components/LessonHub';
 import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
+import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
 import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 import {
   ClassificationCategoryBinsAnimation,
@@ -539,9 +543,7 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  HUB_SECTIONS.map((section) => [section.id, section.title])
-);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 export default function LogicalClassificationLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -553,7 +555,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
     });
 
   if (activeSection === 'game') {
-    const gameSection = HUB_SECTIONS.find((section) => section.id === activeSection) ?? null;
+    const gameSection = resolveLessonSectionHeader(HUB_SECTIONS, activeSection);
     return (
       <LessonActivityStage
         accent='teal'
@@ -573,7 +575,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection as SlideSectionId]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) =>
           markSectionViewedCount(activeSection as SlideSectionId, viewedCount)

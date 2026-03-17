@@ -43,6 +43,8 @@ const basePost: KangurSocialPost = {
   visualSummary: null,
   visualHighlights: [],
   visualDocUpdates: [],
+  docUpdatesAppliedAt: null,
+  docUpdatesAppliedBy: null,
   createdBy: null,
   updatedBy: null,
   createdAt: new Date().toISOString(),

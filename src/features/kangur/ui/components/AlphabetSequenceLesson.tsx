@@ -7,6 +7,10 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   KangurLessonCallout,
   KangurLessonCaption,
   KangurLessonChip,
@@ -41,35 +45,30 @@ const HUB_SECTIONS = [
   {
     id: 'intro',
     emoji: '🧠',
-    title: 'Kolejnosc',
-    description: 'Poznaj kolejnosc liter w alfabecie.',
+    title: 'Kolejność',
+    description: 'Poznaj kolejność liter w alfabecie.',
   },
   {
     id: 'practice',
     emoji: '🧩',
-    title: 'Cwiczymy',
+    title: 'Ćwiczymy',
     description: 'Czytaj litery po kolei.',
   },
   {
     id: 'game',
     emoji: '🎲',
     title: 'Gra',
-    description: 'Wybierz brakujaca litere.',
+    description: 'Wybierz brakującą literę.',
   },
   {
     id: 'summary',
     emoji: '⭐',
     title: 'Podsumowanie',
-    description: 'Utrwal kolejnosc liter.',
+    description: 'Utrwal kolejność liter.',
   },
 ] as const;
 
-const SECTION_LABELS: Record<SectionId, string> = {
-  intro: 'Kolejnosc',
-  practice: 'Cwiczymy',
-  game: 'Gra',
-  summary: 'Podsumowanie',
-};
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 const SEQUENCE_ROUNDS: SequenceRound[] = [
   {
@@ -153,7 +152,7 @@ const AlphabetSequenceGame = (): React.JSX.Element => {
       <div className='mt-4 flex flex-col items-center gap-4 text-center'>
         <div className='text-2xl font-bold text-slate-800'>{round.sequence}</div>
         <div className='text-sm text-slate-600'>
-          Wybierz litere, ktora pasuje do przerwy.
+          Wybierz literę, która pasuje do przerwy.
         </div>
         <div className='flex flex-wrap items-center justify-center gap-3'>
           {round.options.map((option) => {
@@ -177,10 +176,10 @@ const AlphabetSequenceGame = (): React.JSX.Element => {
           <div className='text-sm font-semibold'>
             {isCorrect
               ? 'Brawo! To dobra litera.'
-              : `Prawidlowa litera to ${round.correct}.`}
+              : `Prawidłowa litera to ${round.correct}.`}
           </div>
         ) : (
-          <div className='text-sm text-slate-500'>Kliknij literke.</div>
+          <div className='text-sm text-slate-500'>Kliknij literkę.</div>
         )}
         <KangurButton
           size='sm'
@@ -203,7 +202,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Litery w alfabecie maja swoja kolejnosc. Czytaj po kolei.
+            Litery w alfabecie mają swoją kolejność. Czytaj po kolei.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-center' padding='sm'>
             <div className='flex flex-wrap items-center justify-center gap-3'>
@@ -225,16 +224,16 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Powiedz, jaka litera jest nastepna.
+            Powiedz, jaka litera jest następna.
           </KangurLessonLead>
           <div className='grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2'>
             <KangurLessonInset accent='amber'>
               <div className='text-xl font-bold text-amber-700'>A B C _</div>
-              <KangurLessonCaption className='mt-1'>Nastepna to D.</KangurLessonCaption>
+              <KangurLessonCaption className='mt-1'>Następna to D.</KangurLessonCaption>
             </KangurLessonInset>
             <KangurLessonInset accent='sky'>
               <div className='text-xl font-bold text-sky-700'>E F _</div>
-              <KangurLessonCaption className='mt-1'>Nastepna to G.</KangurLessonCaption>
+              <KangurLessonCaption className='mt-1'>Następna to G.</KangurLessonCaption>
             </KangurLessonInset>
           </div>
         </KangurLessonStack>
@@ -243,11 +242,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   game: [
     {
-      title: 'Brakujaca litera',
+      title: 'Brakująca litera',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Wybieraj litere, ktora pasuje do sekwencji.
+            Wybieraj literę, która pasuje do sekwencji.
           </KangurLessonLead>
           <AlphabetSequenceGame />
         </KangurLessonStack>
@@ -256,21 +255,21 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Swietnie',
+      title: 'Świetnie',
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Potrafisz znalezc brakujaca litere w kolejnosci.
+            Potrafisz znaleźć brakującą literę w kolejności.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-md text-left' padding='sm'>
             <ul className='list-disc pl-5 text-sm text-slate-700'>
-              <li>Litery maja ustalona kolejnosc.</li>
-              <li>Rozpoznajesz brakujaca litere.</li>
+              <li>Litery mają ustaloną kolejność.</li>
+              <li>Rozpoznajesz brakującą literę.</li>
               <li>Powtarzaj alfabet codziennie.</li>
             </ul>
           </KangurLessonCallout>
           <KangurLessonCaption className='max-w-md'>
-            Wroc do gry, aby cwiczyc dalej.
+            Wróć do gry, aby ćwiczyć dalej.
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
@@ -306,7 +305,7 @@ export default function AlphabetSequenceLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onComplete={activeSection === 'summary' ? handleComplete : undefined}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
@@ -323,7 +322,7 @@ export default function AlphabetSequenceLesson(): React.JSX.Element {
   return (
     <LessonHub
       lessonEmoji='🧠'
-      lessonTitle='Kolejnosc liter'
+      lessonTitle='Kolejność liter'
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
       sections={sectionList}

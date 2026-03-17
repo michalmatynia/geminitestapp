@@ -33,6 +33,7 @@ vi.mock('@/shared/ui', async () => {
   const shared = await import('./rightSidebarRuntimeMockComponents');
   return {
     Button: shared.MockButton,
+    UI_CENTER_ROW_RELAXED_CLASSNAME: shared.UI_CENTER_ROW_RELAXED_CLASSNAME,
     ValidatorFormatterToggle: ({
       formatterEnabled,
       onFormatterChange,

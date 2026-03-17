@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
+import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurParentDashboardAiTutorWidget } from '@/features/kangur/ui/components/KangurParentDashboardAiTutorWidget';
 import { KangurParentDashboardAssignmentsWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget';
 import { KangurParentDashboardAssignmentsMonitoringWidget } from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget';
@@ -23,10 +23,7 @@ import {
   type KangurParentDashboardTabId,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import {
-  KangurPageContainer,
-  KangurPageShell,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
@@ -355,133 +352,124 @@ function ParentDashboardContent(): React.JSX.Element {
 
   if (!canAccessDashboard) {
     return (
-      <KangurPageShell
+      <KangurStandardPageLayout
         tone='dashboard'
-        className='justify-center px-4'
         id='kangur-parent-dashboard-page'
+        shellClassName='justify-center px-4'
         skipLinkTargetId='kangur-parent-dashboard-guest-main'
+        docsRootId='kangur-parent-dashboard-page'
+        docsTooltipsEnabled={docsTooltipsEnabled}
+        containerProps={{
+          as: 'section',
+          id: 'kangur-parent-dashboard-guest-main',
+          className: 'flex w-full flex-1 items-center justify-center py-12',
+        }}
       >
-        <KangurDocsTooltipEnhancer
-          enabled={docsTooltipsEnabled}
-          rootId='kangur-parent-dashboard-page'
-        />
-        <KangurPageContainer
-          as='section'
-          data-kangur-route-main='true'
-          id='kangur-parent-dashboard-guest-main'
-          className='flex w-full flex-1 items-center justify-center py-12'
+        <motion.div
+          ref={guestHeroAnchorRef}
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          className='w-full max-w-lg'
         >
-          <motion.div
-            ref={guestHeroAnchorRef}
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            className='w-full max-w-lg'
-          >
-            <KangurParentDashboardHeroWidget />
-          </motion.div>
-        </KangurPageContainer>
-      </KangurPageShell>
+          <KangurParentDashboardHeroWidget />
+        </motion.div>
+      </KangurStandardPageLayout>
     );
   }
 
   return (
-    <KangurPageShell
+    <KangurStandardPageLayout
       tone='dashboard'
       id='kangur-parent-dashboard-page'
       skipLinkTargetId='kangur-parent-dashboard-main'
+      docsRootId='kangur-parent-dashboard-page'
+      docsTooltipsEnabled={docsTooltipsEnabled}
+      navigation={<KangurTopNavigationController navigation={navigation} />}
+      containerProps={{
+        as: 'section',
+        id: 'kangur-parent-dashboard-main',
+        className: `w-full max-w-2xl flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`,
+      }}
     >
-      <KangurDocsTooltipEnhancer
-        enabled={docsTooltipsEnabled}
-        rootId='kangur-parent-dashboard-page'
-      />
-      <KangurTopNavigationController navigation={navigation} />
+      <motion.div ref={heroAnchorRef} initial={false} animate={{ opacity: 1, y: 0 }}>
+        <KangurParentDashboardHeroWidget
+          showActions={false}
+          showLearnerManagement
+          learnerManagementAnchorRef={learnerManagementAnchorRef}
+        />
+      </motion.div>
+      {hasActiveLearner ? (
+        <>
+          <div ref={tabsAnchorRef}>
+            <KangurParentDashboardTabsWidget
+              onBeforeTabChange={reservePanelHeightBeforeTabChange}
+            />
+          </div>
 
-      <KangurPageContainer
-        as='section'
-        data-kangur-route-main='true'
-        id='kangur-parent-dashboard-main'
-        className={`max-w-2xl flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
-      >
-        <motion.div ref={heroAnchorRef} initial={false} animate={{ opacity: 1, y: 0 }}>
-          <KangurParentDashboardHeroWidget
-            showActions={false}
-            showLearnerManagement
-            learnerManagementAnchorRef={learnerManagementAnchorRef}
-          />
-        </motion.div>
-        {hasActiveLearner ? (
-          <>
-            <div ref={tabsAnchorRef}>
-              <KangurParentDashboardTabsWidget
-                onBeforeTabChange={reservePanelHeightBeforeTabChange}
-              />
-            </div>
-
-            <div
-              ref={tabPanelsRef}
-              style={
-                reservedTabPanelHeight !== null
-                  ? { minHeight: `${reservedTabPanelHeight}px` }
-                  : undefined
-              }
-            >
-              <div ref={tabPanelsContentRef}>
-                <div
-                  ref={scoresAnchorRef}
-                  id={scoresTabIds.panelId}
-                  role='tabpanel'
-                  aria-labelledby={scoresTabIds.tabId}
-                  hidden={activeTab !== 'scores'}
-                  tabIndex={activeTab === 'scores' ? 0 : -1}
-                >
-                  <KangurParentDashboardScoresWidget displayMode='active-tab' />
-                </div>
-                <div
-                  ref={progressAnchorRef}
-                  id={progressTabIds.panelId}
-                  role='tabpanel'
-                  aria-labelledby={progressTabIds.tabId}
-                  hidden={activeTab !== 'progress'}
-                  tabIndex={activeTab === 'progress' ? 0 : -1}
-                >
-                  <KangurParentDashboardProgressWidget displayMode='active-tab' />
-                </div>
-                <div
-                  ref={assignmentsAnchorRef}
-                  id={assignmentsTabIds.panelId}
-                  role='tabpanel'
-                  aria-labelledby={assignmentsTabIds.tabId}
-                  hidden={activeTab !== 'assign'}
-                  tabIndex={activeTab === 'assign' ? 0 : -1}
-                >
-                  <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
-                </div>
-                <div
-                  ref={monitoringAnchorRef}
-                  id={monitoringTabIds.panelId}
-                  role='tabpanel'
-                  aria-labelledby={monitoringTabIds.tabId}
-                  hidden={activeTab !== 'monitoring'}
-                  tabIndex={activeTab === 'monitoring' ? 0 : -1}
-                >
-                  <KangurParentDashboardAssignmentsMonitoringWidget displayMode='active-tab' />
-                </div>
-                <div
-                  ref={aiTutorAnchorRef}
-                  id={aiTutorTabIds.panelId}
-                  role='tabpanel'
-                  aria-labelledby={aiTutorTabIds.tabId}
-                  hidden={activeTab !== 'ai-tutor'}
-                  tabIndex={activeTab === 'ai-tutor' ? 0 : -1}
-                >
-                  <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
-                </div>
+          <div
+            ref={tabPanelsRef}
+            style={
+              reservedTabPanelHeight !== null
+                ? { minHeight: `${reservedTabPanelHeight}px` }
+                : undefined
+            }
+          >
+            <div ref={tabPanelsContentRef}>
+              <div
+                ref={scoresAnchorRef}
+                id={scoresTabIds.panelId}
+                role='tabpanel'
+                aria-labelledby={scoresTabIds.tabId}
+                hidden={activeTab !== 'scores'}
+                tabIndex={activeTab === 'scores' ? 0 : -1}
+              >
+                <KangurParentDashboardScoresWidget displayMode='active-tab' />
+              </div>
+              <div
+                ref={progressAnchorRef}
+                id={progressTabIds.panelId}
+                role='tabpanel'
+                aria-labelledby={progressTabIds.tabId}
+                hidden={activeTab !== 'progress'}
+                tabIndex={activeTab === 'progress' ? 0 : -1}
+              >
+                <KangurParentDashboardProgressWidget displayMode='active-tab' />
+              </div>
+              <div
+                ref={assignmentsAnchorRef}
+                id={assignmentsTabIds.panelId}
+                role='tabpanel'
+                aria-labelledby={assignmentsTabIds.tabId}
+                hidden={activeTab !== 'assign'}
+                tabIndex={activeTab === 'assign' ? 0 : -1}
+              >
+                <KangurParentDashboardAssignmentsWidget displayMode='active-tab' />
+              </div>
+              <div
+                ref={monitoringAnchorRef}
+                id={monitoringTabIds.panelId}
+                role='tabpanel'
+                aria-labelledby={monitoringTabIds.tabId}
+                hidden={activeTab !== 'monitoring'}
+                tabIndex={activeTab === 'monitoring' ? 0 : -1}
+              >
+                <KangurParentDashboardAssignmentsMonitoringWidget displayMode='active-tab' />
+              </div>
+              <div
+                ref={aiTutorAnchorRef}
+                id={aiTutorTabIds.panelId}
+                role='tabpanel'
+                aria-labelledby={aiTutorTabIds.tabId}
+                hidden={activeTab !== 'ai-tutor'}
+                tabIndex={activeTab === 'ai-tutor' ? 0 : -1}
+              >
+                <KangurParentDashboardAiTutorWidget displayMode='active-tab' />
               </div>
             </div>
-          </>
-        ) : null}
-      </KangurPageContainer>
-    </KangurPageShell>
+          </div>
+        </>
+      ) : null}
+    </KangurStandardPageLayout>
   );
 }
 

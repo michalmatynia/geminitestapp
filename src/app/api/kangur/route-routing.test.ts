@@ -23,10 +23,10 @@ describe('kangur route routing', () => {
       })
     );
 
-    const request = {
-      url: 'http://localhost/api/kangur/auth/me',
-      nextUrl: new URL('http://localhost/api/kangur/auth/me'),
-    } as Request;
+    const url = 'http://localhost/api/kangur/auth/me';
+    const request = Object.assign(new Request(url), {
+      nextUrl: new URL(url),
+    }) as Request;
 
     const response = await GET(request as unknown as Parameters<typeof GET>[0], {
       params: {},

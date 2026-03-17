@@ -6,6 +6,7 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurLearnerInteractionHistory } from '@/features/kangur/services/ports';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
@@ -162,7 +163,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
     progress,
   } = useKangurParentDashboardRuntime();
   const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
-  const lessonsQuery = useKangurLessons({ enabledOnly: true });
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};

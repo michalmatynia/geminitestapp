@@ -114,13 +114,25 @@ export type KangurProgressRequestOptions = {
   subject?: KangurLessonSubject;
 };
 
-export interface KangurProgressPort {
-  get: (options?: KangurProgressRequestOptions) => Promise<KangurProgressState>;
-  update: (
-    input: KangurProgressState,
-    context?: KangurProgressUpdateContext & KangurProgressRequestOptions
-  ) => Promise<KangurProgressState>;
+export interface KangurStatePort<
+  TState,
+  TUpdateInput,
+  TUpdateResult = TState,
+  TUpdateContext = void,
+  TGetOptions = void
+> {
+  get: (options?: TGetOptions) => Promise<TState>;
+  update: (input: TUpdateInput, context?: TUpdateContext) => Promise<TUpdateResult>;
 }
+
+export interface KangurProgressPort
+  extends KangurStatePort<
+    KangurProgressState,
+    KangurProgressState,
+    KangurProgressState,
+    KangurProgressUpdateContext & KangurProgressRequestOptions,
+    KangurProgressRequestOptions
+  > {}
 
 export interface KangurAssignmentPort {
   list: (query?: KangurAssignmentListQuery) => Promise<KangurAssignmentSnapshot[]>;
@@ -129,24 +141,25 @@ export interface KangurAssignmentPort {
   reassign: (id: string) => Promise<KangurAssignmentSnapshot>;
 }
 
-export interface KangurLearnerActivityPort {
-  get: () => Promise<KangurLearnerActivityStatus>;
-  update: (input: KangurLearnerActivityUpdateInput) => Promise<KangurLearnerActivitySnapshot>;
-}
+export interface KangurLearnerActivityPort
+  extends KangurStatePort<
+    KangurLearnerActivityStatus,
+    KangurLearnerActivityUpdateInput,
+    KangurLearnerActivitySnapshot
+  > {}
 
-export interface KangurLearnerSessionsPort {
+export interface KangurLearnerHistoryPort<TResponse> {
   list: (
     learnerId: string,
     options?: { limit?: number; offset?: number }
-  ) => Promise<KangurLearnerSessionHistory>;
+  ) => Promise<TResponse>;
 }
 
-export interface KangurLearnerInteractionsPort {
-  list: (
-    learnerId: string,
-    options?: { limit?: number; offset?: number }
-  ) => Promise<KangurLearnerInteractionHistory>;
-}
+export interface KangurLearnerSessionsPort
+  extends KangurLearnerHistoryPort<KangurLearnerSessionHistory> {}
+
+export interface KangurLearnerInteractionsPort
+  extends KangurLearnerHistoryPort<KangurLearnerInteractionHistory> {}
 
 export interface KangurDuelsPort {
   create: (input: KangurDuelCreateInput) => Promise<KangurDuelStateResponse>;

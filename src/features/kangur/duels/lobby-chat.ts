@@ -59,7 +59,7 @@ const ensureLobbyChatIndexes = async (): Promise<void> => {
 const toIsoString = (value: Date): string => value.toISOString();
 
 const resolveLearnerDisplayName = (learner: KangurLearnerProfile): string =>
-  learner.loginName?.trim() || learner.displayName?.trim() || 'Uczen';
+  learner.loginName?.trim() || learner.displayName?.trim() || 'Uczeń';
 
 const normalizeChatMessage = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, ' ');

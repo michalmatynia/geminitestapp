@@ -33,6 +33,10 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   addXp,
   createLessonCompletionReward,
   loadProgress,
@@ -508,9 +512,7 @@ export const LESSON_SECTIONS: LessonSection[] = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  LESSON_SECTIONS.map((section) => [section.id, section.title])
-);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(LESSON_SECTIONS);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   hours: HOURS_SLIDES,
@@ -984,16 +986,14 @@ export default function ClockLesson(): React.JSX.Element {
         ? trainingPanels[currentTrainingPanelIndex + 1]!.id
         : null;
 
+    const currentTrainingHeaderId: ClockHubId =
+      view.sectionId === 'hours'
+        ? 'game_hours'
+        : view.sectionId === 'minutes'
+          ? 'game_minutes'
+          : 'game_combined';
     const currentTrainingHeader =
-      HUB_SECTIONS.find(
-        (section) =>
-          section.id ===
-          (view.sectionId === 'hours'
-            ? 'game_hours'
-            : view.sectionId === 'minutes'
-              ? 'game_minutes'
-              : 'game_combined')
-      ) ?? {
+      resolveLessonSectionHeader(HUB_SECTIONS, currentTrainingHeaderId) ?? {
         description: currentTrainingSection.description,
         emoji: currentTrainingSection.emoji,
         isGame: true,
@@ -1099,7 +1099,7 @@ export default function ClockLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={runtimeSlides.current[view.sectionId]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === view.sectionId) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, view.sectionId)}
         onBack={handleReturnToHub}
         onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>

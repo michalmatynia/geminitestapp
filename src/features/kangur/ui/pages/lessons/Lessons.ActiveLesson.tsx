@@ -44,6 +44,9 @@ export function ActiveLessonView() {
   const { entry: activeLessonSecretPanelContent } = useKangurPageContentEntry('lessons-active-secret-panel');
 
   const isMobile = useKangurMobileBreakpoint();
+  const mobileBottomSpacerClass = isMobile
+    ? 'pb-[calc(96px+env(safe-area-inset-bottom))]'
+    : '';
 
   if (!activeLesson) return null;
 
@@ -85,7 +88,7 @@ export function ActiveLessonView() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0.98, y: -4 }}
       transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-      className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
+      className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} ${mobileBottomSpacerClass}`}
     >
       <KangurLessonNavigationProvider
         onBack={() => handleSelectLesson(null)}
@@ -110,9 +113,11 @@ export function ActiveLessonView() {
             assignmentSectionSummary={activeLessonAssignmentContent?.summary ?? undefined}
           />
         </div>
-        <div ref={activeLessonNavigationRef} id={LESSON_NAV_ANCHOR_ID} className='w-full max-w-5xl'>
-          <KangurLessonNavigationWidget nextLesson={next} onSelectLesson={handleSelectLesson} prevLesson={prev} />
-        </div>
+        {!isMobile && (
+          <div ref={activeLessonNavigationRef} id={LESSON_NAV_ANCHOR_ID} className='w-full max-w-5xl'>
+            <KangurLessonNavigationWidget nextLesson={next} onSelectLesson={handleSelectLesson} prevLesson={prev} />
+          </div>
+        )}
         <div ref={activeLessonContentRef} className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
           {isSecretLessonHostActive ? (
             <KangurGlassPanel
@@ -168,8 +173,19 @@ export function ActiveLessonView() {
           ) : null}
         </div>
         {isMobile && (
-          <div className='w-full max-w-5xl'>
-            <KangurLessonNavigationWidget nextLesson={next} onSelectLesson={handleSelectLesson} prevLesson={prev} />
+          <div className='fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2 pointer-events-none'>
+            <KangurGlassPanel
+              className='mx-auto w-full max-w-5xl pointer-events-auto shadow-[0_-16px_36px_-24px_rgba(15,23,42,0.45)]'
+              padding='md'
+              surface='mistStrong'
+              variant='soft'
+            >
+              <KangurLessonNavigationWidget
+                nextLesson={next}
+                onSelectLesson={handleSelectLesson}
+                prevLesson={prev}
+              />
+            </KangurGlassPanel>
           </div>
         )}
       </KangurLessonNavigationProvider>

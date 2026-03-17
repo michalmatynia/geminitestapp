@@ -7,6 +7,10 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   LogicalAnalogyMapAnimation,
   LogicalAnalogiesAnimation,
   LogicalClassificationAnimation,
@@ -491,11 +495,8 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  HUB_SECTIONS.filter((section) => !section.isGame).map((section) => [
-    section.id,
-    section.title,
-  ])
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(
+  HUB_SECTIONS.filter((section) => !section.isGame)
 );
 
 export default function LogicalThinkingLesson(): React.JSX.Element {
@@ -511,7 +512,7 @@ export default function LogicalThinkingLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SECTION_SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>

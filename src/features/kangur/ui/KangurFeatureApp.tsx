@@ -28,6 +28,7 @@ import {
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurScoreSyncProvider } from '@/features/kangur/ui/context/KangurScoreSyncProvider';
 import { KangurSubjectFocusProvider } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { KangurSubjectAgeGroupSync } from '@/features/kangur/ui/context/KangurSubjectAgeGroupSync';
 import {
   KangurTopNavigationHost,
   KangurTopNavigationProvider,
@@ -270,6 +271,7 @@ export function KangurFeatureApp(): JSX.Element {
             <KangurAuthProvider>
               <KangurSubjectFocusProvider>
                 <KangurAgeGroupFocusProvider>
+                  <KangurSubjectAgeGroupSync />
                   <KangurProgressSyncProvider>
                     <KangurScoreSyncProvider>
                       <KangurContextRegistryPageBoundary>

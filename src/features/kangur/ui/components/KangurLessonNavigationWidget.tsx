@@ -42,7 +42,7 @@ export function KangurLessonNavigationWidget({
     align === 'start' ? 'kangur-lesson-nav-inline' : null
   );
   const buttonGroupClassName = cn(
-    'flex w-full items-center gap-2 max-[420px]:flex-col max-[420px]:items-stretch',
+    'flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center',
     align === 'start'
       ? 'justify-start'
       : 'justify-center sm:w-fit sm:self-center'
@@ -79,6 +79,7 @@ export function KangurLessonNavigationWidget({
           title={prevLesson ? `Poprzednia lekcja: ${prevLesson.title}` : 'Brak poprzedniej lekcji'}
         >
           <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+          <span className='text-xs font-semibold text-slate-600 sm:hidden'>Poprzednia</span>
           <span className='sr-only'>{prevLesson?.title ?? 'Brak poprzedniej lekcji'}</span>
         </KangurButton>
 
@@ -94,6 +95,7 @@ export function KangurLessonNavigationWidget({
           }
           title={nextLesson ? `Następna lekcja: ${nextLesson.title}` : 'Brak następnej lekcji'}
         >
+          <span className='text-xs font-semibold text-slate-600 sm:hidden'>Następna</span>
           <span className='sr-only'>{nextLesson?.title ?? 'Brak następnej lekcji'}</span>
           <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
         </KangurButton>

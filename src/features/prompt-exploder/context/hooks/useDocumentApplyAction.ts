@@ -16,8 +16,7 @@ import {
 } from '../../utils/case-resolver-extraction';
 
 import type { PromptExploderCaseResolverContext } from '../../bridge';
-import type { DocumentCoreState } from '../document/DocumentCoreContext';
-import type { DocumentPromptState } from '../document/DocumentPromptContext';
+import type { DocumentCoreState, DocumentPromptState } from '../DocumentContext';
 import type { PromptExploderSettingsState } from '../SettingsContext';
 
 export const useDocumentApplyAction = ({

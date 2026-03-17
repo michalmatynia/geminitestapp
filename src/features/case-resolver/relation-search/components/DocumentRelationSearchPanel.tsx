@@ -6,7 +6,7 @@ import type {
   DocumentRelationFileTypeFilter,
   DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { useFolderTreeProfile } from '@/features/foldertree';
 import { cn } from '@/shared/utils';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 

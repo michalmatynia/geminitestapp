@@ -96,7 +96,7 @@ export default function Tests(): React.JSX.Element {
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [activeSuiteId, setActiveSuiteId] = useState<string | null>(null);
   const testsListIntroRef = useRef<HTMLDivElement | null>(null);
-  const testsListRef = useRef<HTMLDivElement | null>(null);
+  const testsListRef = useRef<HTMLUListElement | null>(null);
   const testsActiveIntroRef = useRef<HTMLDivElement | null>(null);
   const testsPlayerRef = useRef<HTMLDivElement | null>(null);
 
@@ -385,7 +385,7 @@ export default function Tests(): React.JSX.Element {
                 title={emptyStateCopy.title}
               />
             ) : (
-              <div
+              <ul
                 className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
                 id='kangur-tests-list'
                 ref={testsListRef}
@@ -401,51 +401,52 @@ export default function Tests(): React.JSX.Element {
                   ].filter(Boolean);
 
                   return (
-                    <KangurInfoCard
-                      key={suite.id}
-                      className='flex w-full flex-col gap-3'
-                      data-testid={`kangur-test-suite-card-${suite.id}`}
-                      padding='lg'
-                    >
-                      <div className='flex flex-wrap items-start justify-between gap-3'>
-                        <div className='min-w-0'>
-                          <h3 className='text-lg font-semibold text-slate-800'>{suite.title}</h3>
-                          {suite.description ? (
-                            <p className='mt-1 text-sm text-slate-500'>{suite.description}</p>
-                          ) : null}
+                    <li key={suite.id} className='list-none' role='listitem'>
+                      <KangurInfoCard
+                        className='flex w-full flex-col gap-3'
+                        data-testid={`kangur-test-suite-card-${suite.id}`}
+                        padding='lg'
+                      >
+                        <div className='flex flex-wrap items-start justify-between gap-3'>
+                          <div className='min-w-0'>
+                            <h3 className='text-lg font-semibold text-slate-800'>{suite.title}</h3>
+                            {suite.description ? (
+                              <p className='mt-1 text-sm text-slate-500'>{suite.description}</p>
+                            ) : null}
+                          </div>
+                          <KangurStatusChip
+                            accent={publishedCount > 0 ? 'emerald' : 'amber'}
+                            className='whitespace-nowrap'
+                            size='sm'
+                          >
+                            {publishedCount > 0
+                              ? `${publishedCount} pytań`
+                              : 'Brak pytań'}
+                          </KangurStatusChip>
                         </div>
-                        <KangurStatusChip
-                          accent={publishedCount > 0 ? 'emerald' : 'amber'}
-                          className='whitespace-nowrap'
-                          size='sm'
-                        >
-                          {publishedCount > 0
-                            ? `${publishedCount} pytań`
-                            : 'Brak pytań'}
-                        </KangurStatusChip>
-                      </div>
-                      {summaryParts.length > 0 ? (
-                        <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs text-slate-500`}>
-                          {summaryParts.map((part) => (
-                            <span key={part}>{part}</span>
-                          ))}
+                        {summaryParts.length > 0 ? (
+                          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs text-slate-500`}>
+                            {summaryParts.map((part) => (
+                              <span key={part}>{part}</span>
+                            ))}
+                          </div>
+                        ) : null}
+                        <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
+                          <KangurButton
+                            className='w-full sm:w-auto'
+                            onClick={() => handleSelectSuite(suite.id)}
+                            size='sm'
+                            type='button'
+                            variant='primary'
+                          >
+                            Rozpocznij test
+                          </KangurButton>
                         </div>
-                      ) : null}
-                      <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
-                        <KangurButton
-                          className='w-full sm:w-auto'
-                          onClick={() => handleSelectSuite(suite.id)}
-                          size='sm'
-                          type='button'
-                          variant='primary'
-                        >
-                          Rozpocznij test
-                        </KangurButton>
-                      </div>
-                    </KangurInfoCard>
+                      </KangurInfoCard>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             )}
           </motion.div>
         ) : (

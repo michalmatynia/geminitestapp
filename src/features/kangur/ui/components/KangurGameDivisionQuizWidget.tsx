@@ -1,26 +1,17 @@
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
+import { KangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
 import DivisionGame from '@/features/kangur/ui/components/DivisionGame';
-import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameDivisionQuizWidget(): React.JSX.Element | null {
-  const { handleHome, screen, setScreen } = useKangurGameRuntime();
-
-  if (screen !== 'division_quiz') {
-    return null;
-  }
-
   return (
-    <LessonActivityStage
+    <KangurGameQuizStage
       accent='emerald'
-      backButtonLabel='Wróć do poprzedniej strony'
       description='Sprawdź dzielenie w szybkim quizie.'
       icon='➗'
-      onBack={() => setScreen('operation')}
-      shellClassName='items-center'
+      screen='division_quiz'
       shellTestId='kangur-division-quiz-top-section'
       title='Quiz dzielenia'
     >
-      <DivisionGame finishLabelVariant='play' onFinish={handleHome} />
-    </LessonActivityStage>
+      {({ handleHome }) => <DivisionGame finishLabelVariant='play' onFinish={handleHome} />}
+    </KangurGameQuizStage>
   );
 }

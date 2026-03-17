@@ -219,27 +219,27 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     triggerPhrases: ['odejmowanie', 'różnica', 'minus', 'odejmij'],
   },
   alphabet_basics: {
-    explanation: 'Rysuj litery po kolorowym sladzie. To gra dla 6-latkow.',
+    explanation: 'Rysuj litery po kolorowym śladzie. To gra dla 6-latków.',
     triggerPhrases: ['alfabet', 'litery', 'pisanie'],
   },
   alphabet_syllables: {
-    explanation: 'Buduj slowa z sylab. Gra dla 7-latkow.',
+    explanation: 'Buduj słowa z sylab. Gra dla 7-latków.',
     triggerPhrases: ['sylaby', 'slowa'],
   },
   alphabet_words: {
-    explanation: 'Rozpoznawaj litery na poczatku slow. Gra dla 6-latkow.',
+    explanation: 'Rozpoznawaj litery na początku słów. Gra dla 6-latków.',
     triggerPhrases: ['slowa', 'litery'],
   },
   alphabet_matching: {
-    explanation: 'Lacz duze i male litery w pary. Gra dla 6-latkow.',
+    explanation: 'Łącz duże i małe litery w pary. Gra dla 6-latków.',
     triggerPhrases: ['dopasowanie', 'pary'],
   },
   alphabet_sequence: {
-    explanation: 'Uloz litery w poprawnej kolejnosci. Gra dla 6-latkow.',
+    explanation: 'Ułóż litery w poprawnej kolejności. Gra dla 6-latków.',
     triggerPhrases: ['kolejnosc', 'alfabet'],
   },
   webdev_react_components: {
-    explanation: 'Buduj interaktywne komponenty w React. Lekcja dla doroslych.',
+    explanation: 'Buduj interaktywne komponenty w React. Lekcja dla dorosłych.',
     triggerPhrases: ['react', 'komponenty', 'programowanie'],
   },
   multiplication: {
@@ -550,7 +550,7 @@ const buildBody = (
     parts.push(`${guide.title}. ${guide.fullDescription}`);
 
     if (guide.hints.length > 0) {
-      parts.push(`Wskazowki: ${guide.hints.join(' ')}`);
+      parts.push(`Wskazówki: ${guide.hints.join(' ')}`);
     }
   }
 

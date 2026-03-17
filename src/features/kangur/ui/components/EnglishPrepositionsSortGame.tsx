@@ -220,6 +220,19 @@ const moveBetweenLists = <T,>(
   return { source: nextSource, destination: nextDestination };
 };
 
+const removeTokenById = <T extends { id: string }>(
+  items: T[],
+  tokenId: string
+): { updated: T[]; token?: T } => {
+  const index = items.findIndex((item) => item.id === tokenId);
+  if (index === -1) {
+    return { updated: items };
+  }
+  const updated = [...items];
+  const [token] = updated.splice(index, 1);
+  return { updated, token };
+};
+
 const resolveRoundVisual = (round: Round): React.JSX.Element => {
   if (round.visual === 'place') return <EnglishPrepositionsPlaceAnimation />;
   if (round.visual === 'relation') return <EnglishPrepositionsRelationsDiagram />;
@@ -245,6 +258,7 @@ export default function EnglishPrepositionsSortGame({
 }: EnglishPrepositionsSortGameProps): React.JSX.Element {
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState(ROUNDS[0]!));
+  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
@@ -262,9 +276,65 @@ export default function EnglishPrepositionsSortGame({
     setChecked(false);
     setRoundCorrect(0);
     setFeedback(null);
+    setSelectedTokenId(null);
   }, [round]);
 
   const isRoundComplete = roundState.pool.length === 0;
+
+  const handleAssignToken = (binId: PrepositionBinId): void => {
+    if (checked || !selectedTokenId) return;
+    setRoundState((prev) => {
+      let token: PrepositionToken | undefined;
+      const { updated: nextPool, token: poolToken } = removeTokenById(prev.pool, selectedTokenId);
+      token = poolToken;
+      const nextBins = { ...prev.bins };
+      if (!token) {
+        for (const [id, items] of Object.entries(prev.bins)) {
+          const { updated, token: binToken } = removeTokenById(items ?? [], selectedTokenId);
+          if (binToken) {
+            token = binToken;
+            nextBins[id as PrepositionBinId] = updated;
+            break;
+          }
+        }
+      }
+      if (!token) return prev;
+      return {
+        pool: nextPool,
+        bins: {
+          ...nextBins,
+          [binId]: [...(nextBins[binId] ?? []), token],
+        },
+      };
+    });
+    setSelectedTokenId(null);
+  };
+
+  const handleReturnToPool = (): void => {
+    if (checked || !selectedTokenId) return;
+    setRoundState((prev) => {
+      let token: PrepositionToken | undefined;
+      const { updated: nextPool, token: poolToken } = removeTokenById(prev.pool, selectedTokenId);
+      token = poolToken;
+      const nextBins = { ...prev.bins };
+      if (!token) {
+        for (const [id, items] of Object.entries(prev.bins)) {
+          const { updated, token: binToken } = removeTokenById(items ?? [], selectedTokenId);
+          if (binToken) {
+            token = binToken;
+            nextBins[id as PrepositionBinId] = updated;
+            break;
+          }
+        }
+      }
+      if (!token) return prev;
+      return {
+        pool: [...nextPool, token],
+        bins: nextBins,
+      };
+    });
+    setSelectedTokenId(null);
+  };
 
   const handleDragEnd = (result: DropResult): void => {
     const { source, destination } = result;
@@ -317,6 +387,7 @@ export default function EnglishPrepositionsSortGame({
         },
       };
     });
+    setSelectedTokenId(null);
   };
 
   const handleReset = (): void => {
@@ -324,6 +395,7 @@ export default function EnglishPrepositionsSortGame({
     setChecked(false);
     setRoundCorrect(0);
     setFeedback(null);
+    setSelectedTokenId(null);
   };
 
   const handleCheck = (): void => {
@@ -335,6 +407,7 @@ export default function EnglishPrepositionsSortGame({
       kind: isPerfect ? 'success' : 'error',
       text: isPerfect ? 'Perfekcyjnie! Wszystko na miejscu.' : 'Sprawdź oznaczone przyimki.',
     });
+    setSelectedTokenId(null);
     setChecked(true);
   };
 
@@ -474,10 +547,29 @@ export default function EnglishPrepositionsSortGame({
                     'mt-3 flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition',
                     snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-slate-200'
                   )}
+                  onClick={handleReturnToPool}
+                  role='button'
+                  tabIndex={checked ? -1 : 0}
+                  aria-disabled={checked}
                   aria-label='Pula zwrotów do sortowania'
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleReturnToPool();
+                    }
+                  }}
                 >
                   {roundState.pool.map((token, index) => (
-                    <DraggableToken key={token.id} token={token} index={index} isDragDisabled={checked} />
+                    <DraggableToken
+                      key={token.id}
+                      token={token}
+                      index={index}
+                      isDragDisabled={checked}
+                      isSelected={selectedTokenId === token.id}
+                      onClick={() =>
+                        setSelectedTokenId((current) => (current === token.id ? null : token.id))
+                      }
+                    />
                   ))}
                   {provided.placeholder}
                   {roundState.pool.length === 0 ? (
@@ -513,7 +605,17 @@ export default function EnglishPrepositionsSortGame({
                           ? KANGUR_ACCENT_STYLES[bin.accent].activeCard
                           : undefined
                       )}
+                      onClick={() => handleAssignToken(binId)}
+                      role='button'
+                      tabIndex={checked ? -1 : 0}
+                      aria-disabled={checked}
                       aria-label={`${bin.label} bin`}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handleAssignToken(binId);
+                        }
+                      }}
                     >
                       <div className='flex items-center justify-between gap-2'>
                         <div className={`${KANGUR_CENTER_ROW_CLASSNAME} text-sm font-bold text-slate-700`}>
@@ -536,6 +638,10 @@ export default function EnglishPrepositionsSortGame({
                             token={item}
                             index={index}
                             isDragDisabled={checked}
+                            isSelected={selectedTokenId === item.id}
+                            onClick={() =>
+                              setSelectedTokenId((current) => (current === item.id ? null : item.id))
+                            }
                             accent={bin.accent}
                             showStatus={checked}
                             isCorrect={item.answer === binId}
@@ -593,6 +699,8 @@ function DraggableToken({
   accent = 'slate',
   showStatus = false,
   isCorrect = true,
+  isSelected = false,
+  onClick,
 }: {
   token: PrepositionToken;
   index: number;
@@ -600,24 +708,45 @@ function DraggableToken({
   accent?: KangurAccent;
   showStatus?: boolean;
   isCorrect?: boolean;
+  isSelected?: boolean;
+  onClick?: () => void;
 }): React.JSX.Element {
   const statusClass = showStatus ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : '';
+  const selectedClass = isSelected
+    ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white'
+    : '';
   return (
-    <Draggable draggableId={token.id} index={index} isDragDisabled={isDragDisabled}>
+    <Draggable
+      draggableId={token.id}
+      index={index}
+      isDragDisabled={isDragDisabled}
+      disableInteractiveElementBlocking
+    >
       {(provided, snapshot) => (
-        <div
+        <button
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          type='button'
           className={cn(
-            'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition',
+            'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
             KANGUR_ACCENT_STYLES[accent].badge,
             snapshot.isDragging && 'scale-[1.02] shadow-lg',
-            statusClass
+            statusClass,
+            selectedClass
           )}
+          aria-label={token.label}
+          aria-disabled={isDragDisabled}
+          aria-pressed={isSelected}
+          title={token.label}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (snapshot.isDragging || isDragDisabled) return;
+            onClick?.();
+          }}
         >
           {token.label}
-        </div>
+        </button>
       )}
     </Draggable>
   );

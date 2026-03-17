@@ -244,7 +244,7 @@ const resolveSessionMinPlayersToStart = (session: MongoDuelSessionDocument): num
 };
 
 const resolveLearnerDisplayName = (learner: KangurLearnerProfile): string =>
-  learner.loginName?.trim() || learner.displayName?.trim() || 'Uczen';
+  learner.loginName?.trim() || learner.displayName?.trim() || 'Uczeń';
 
 const getSeriesWinTarget = (bestOf: number): number => Math.floor(bestOf / 2) + 1;
 
@@ -830,7 +830,7 @@ export async function listKangurDuelLeaderboard(
       const existing = stats.get(player.learnerId);
       const base = existing ?? {
         learnerId: player.learnerId,
-        displayName: player.displayName ?? 'Uczen',
+  displayName: player.displayName ?? 'Uczeń',
         wins: 0,
         losses: 0,
         ties: 0,

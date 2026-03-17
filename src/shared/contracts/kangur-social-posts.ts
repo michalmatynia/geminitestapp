@@ -13,6 +13,28 @@ export const kangurSocialDocUpdateSchema = z.object({
 });
 export type KangurSocialDocUpdate = z.infer<typeof kangurSocialDocUpdateSchema>;
 
+export type KangurSocialDocUpdateItemPlan = {
+  docPath: string;
+  section: string | null;
+  proposedText: string;
+  applied: boolean;
+  skipReason?: string;
+};
+
+export type KangurSocialDocUpdateFilePlan = {
+  docPath: string;
+  applied: boolean;
+  diff: string;
+  truncated: boolean;
+  before: string;
+  after: string;
+};
+
+export type KangurSocialDocUpdatePlan = {
+  items: KangurSocialDocUpdateItemPlan[];
+  files: KangurSocialDocUpdateFilePlan[];
+};
+
 export const KANGUR_SOCIAL_POSTS_COLLECTION = 'kangur_social_posts';
 export const KANGUR_SOCIAL_BILINGUAL_SEPARATOR = '\n---\n';
 
@@ -47,6 +69,8 @@ export const kangurSocialPostSchema = z.object({
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),
   visualDocUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
+  docUpdatesAppliedAt: z.string().datetime().nullable().default(null),
+  docUpdatesAppliedBy: trimmedString.max(120).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
   updatedBy: trimmedString.max(120).nullable().default(null),
   createdAt: z.string().datetime().optional(),
@@ -56,6 +80,12 @@ export type KangurSocialPost = z.infer<typeof kangurSocialPostSchema>;
 
 export const kangurSocialPostsSchema = z.array(kangurSocialPostSchema);
 export type KangurSocialPosts = z.infer<typeof kangurSocialPostsSchema>;
+
+export type KangurSocialDocUpdatesResponse = {
+  applied: boolean;
+  plan: KangurSocialDocUpdatePlan;
+  post: KangurSocialPost | null;
+};
 
 export const kangurSocialPostStoreSchema = z.object({
   version: z.number().int().positive().default(1),

@@ -22,8 +22,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { Badge, Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useDocumentActions, useDocumentState } from '../../context/hooks/useDocument';
-import { useSegmentEditorActions } from '../../context/hooks/useSegmentEditor';
+import { useDocumentActions, useDocumentState, useSegmentEditorActions } from '../../context';
 import {
   buildPromptExploderSegmentMasterNodes,
   rebuildPromptExploderSegmentsFromMasterNodes,

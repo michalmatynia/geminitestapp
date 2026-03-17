@@ -1,10 +1,8 @@
 import type { PositiveRectBoundsDto } from '../geometry';
 import type { VectorShape, VectorToolMode } from '../vector';
 
-export type VectorCanvasViewCropRectDto = PositiveRectBoundsDto;
-export type VectorCanvasViewCropRect = VectorCanvasViewCropRectDto;
-export type VectorCanvasImageContentFrameDto = PositiveRectBoundsDto;
-export type VectorCanvasImageContentFrame = VectorCanvasImageContentFrameDto;
+export type VectorCanvasRectDto = PositiveRectBoundsDto;
+export type VectorCanvasRect = VectorCanvasRectDto;
 
 export type VectorCanvasPropsDto = {
   src?: string | null;
@@ -29,8 +27,8 @@ export type VectorCanvasPropsDto = {
   enableTwoFingerRotate?: boolean;
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
-  onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
-  onImageContentFrameChange?: (frame: VectorCanvasImageContentFrame | null) => void;
+  onViewCropRectChange?: (cropRect: VectorCanvasRect | null) => void;
+  onImageContentFrameChange?: (frame: VectorCanvasRect | null) => void;
   showCanvasGrid?: boolean;
   imageMoveEnabled?: boolean;
   imageOffset?: { x: number; y: number };

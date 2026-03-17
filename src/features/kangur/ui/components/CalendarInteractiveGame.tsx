@@ -790,10 +790,11 @@ export default function CalendarInteractiveGame({
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cn(
-                            'bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg',
+                            'bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                             snapshot.isDragging ? 'scale-[1.02] shadow-xl' : undefined
                           )}
                           aria-label={`Miesiąc ${task.monthName}`}
+                          aria-disabled={feedback !== null}
                         >
                           📅 {task.monthName}
                         </div>
@@ -811,7 +812,7 @@ export default function CalendarInteractiveGame({
             </Droppable>
 
             <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-              Przeciągnij powyżej na właściwą porę roku ⬇️
+              Przeciągnij lub wybierz właściwą porę roku ⬇️
             </p>
 
             <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
@@ -863,7 +864,9 @@ export default function CalendarInteractiveGame({
                                 ? 'accent'
                                 : 'neutral'
                             }
-                            interactive={false}
+                            interactive={feedback === null}
+                            disabled={feedback !== null}
+                            onClick={() => handleDrop(season)}
                             type='button'
                           >
                             <span className='text-2xl'>{season.split(' ')[0]}</span>

@@ -6,11 +6,9 @@ import {
   LibraryProvider,
   type LibraryActions,
   type LibraryState,
-} from '@/features/prompt-exploder/context/LibraryContext';
-import {
   useLibraryActions,
   useLibraryState,
-} from '@/features/prompt-exploder/context/hooks/useLibrary';
+} from '@/features/prompt-exploder/context/LibraryContext';
 import {
   buildPromptExploderSegmentationRecord,
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
@@ -53,7 +51,7 @@ vi.mock('@/shared/ui', async () => {
   };
 });
 
-vi.mock('@/features/prompt-exploder/context/hooks/useSettings', () => ({
+vi.mock('@/features/prompt-exploder/context/SettingsContext', () => ({
   useSettingsState: () => ({
     settingsMap: mocks.settingsMap,
     activeValidationScope: mocks.activeValidationScope,
@@ -66,7 +64,7 @@ vi.mock('@/features/prompt-exploder/context/hooks/useSettings', () => ({
   }),
 }));
 
-vi.mock('@/features/prompt-exploder/context/hooks/useDocument', () => ({
+vi.mock('@/features/prompt-exploder/context/DocumentContext', () => ({
   useDocumentState: () => ({
     promptText: mocks.promptText,
     documentState: mocks.documentState,
@@ -80,7 +78,7 @@ vi.mock('@/features/prompt-exploder/context/hooks/useDocument', () => ({
   }),
 }));
 
-vi.mock('@/features/prompt-exploder/context/hooks/useBenchmark', () => ({
+vi.mock('@/features/prompt-exploder/context/BenchmarkContext', () => ({
   useBenchmarkActions: () => ({
     setBenchmarkReport: mocks.setBenchmarkReport,
     setDismissedBenchmarkSuggestionIds: mocks.setDismissedBenchmarkSuggestionIds,

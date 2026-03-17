@@ -10,6 +10,10 @@ import LessonSlideSection, {
   type LessonSlide,
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
+  buildLessonSectionLabels,
+  resolveLessonSectionHeader,
+} from '@/features/kangur/ui/components/lesson-utils';
+import {
   AddingAbacusAnimation,
   AddingAssociativeAnimation,
   AddingColumnAnimation,
@@ -725,9 +729,7 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = Object.fromEntries(
-  HUB_SECTIONS.map((section) => [section.id, section.title])
-);
+const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 export default function AddingLesson(): React.JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
@@ -746,7 +748,7 @@ export default function AddingLesson(): React.JSX.Element {
         icon='🎼'
         maxWidthClassName='max-w-[1120px]'
         onBack={() => setActiveSection(null)}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         shellClassName='!p-4 sm:!p-6 lg:!p-8'
         shellTestId='adding-lesson-synthesis-shell'
         title='Synteza dodawania'
@@ -764,7 +766,7 @@ export default function AddingLesson(): React.JSX.Element {
         icon='🎮'
         maxWidthClassName='max-w-2xl'
         onBack={() => setActiveSection(null)}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         shellTestId='adding-lesson-game-shell'
         title='Gra z piłkami!'
       >
@@ -780,7 +782,7 @@ export default function AddingLesson(): React.JSX.Element {
     return (
       <LessonSlideSection
         slides={SLIDES[activeSection]}
-        sectionHeader={HUB_SECTIONS.find((section) => section.id === activeSection) ?? null}
+        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
         onBack={() => setActiveSection(null)}
         onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
         onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>

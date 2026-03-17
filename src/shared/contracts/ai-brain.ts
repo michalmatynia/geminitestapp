@@ -47,6 +47,7 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'kangur_ai_tutor.drawing_analysis',
   'kangur_social.post_generation',
   'kangur_social.visual_analysis',
+  'kangur_social.doc_patching',
   'prompt_engine.prompt_exploder',
   'product.description.vision',
   'product.description.generation',

@@ -5,10 +5,7 @@ import React, { createContext, useContext } from 'react';
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import { internalError } from '@/shared/errors/app-error';
 
-import {
-  type VectorCanvasImageContentFrame,
-  type VectorCanvasViewCropRect,
-} from '../vector-canvas.geometry';
+import { type VectorCanvasRect } from '../vector-canvas.geometry';
 
 export interface VectorCanvasContextValue {
   // Props
@@ -34,8 +31,8 @@ export interface VectorCanvasContextValue {
   enableTwoFingerRotate?: boolean;
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
-  onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
-  onImageContentFrameChange?: (frame: VectorCanvasImageContentFrame | null) => void;
+  onViewCropRectChange?: (cropRect: VectorCanvasRect | null) => void;
+  onImageContentFrameChange?: (frame: VectorCanvasRect | null) => void;
   showCanvasGrid?: boolean;
   imageMoveEnabled?: boolean;
   imageOffset?: { x: number; y: number };

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { IdDto } from './base';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -302,8 +303,7 @@ export type RuntimeContextProviderResolveOptions = {
   maxDocuments?: number | undefined;
 };
 
-export interface RuntimeContextProvider {
-  id: string;
+export interface RuntimeContextProvider extends IdDto {
   canInferRefs(input: Record<string, unknown> | null): boolean;
   inferRefs(input: Record<string, unknown>): ContextRegistryRef[];
   canResolveRef(ref: ContextRegistryRef): boolean;

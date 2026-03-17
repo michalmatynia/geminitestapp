@@ -223,14 +223,29 @@ const moveBetweenLists = <T,>(
   return { source: nextSource, destination: nextDestination };
 };
 
+const removeTokenById = <T extends { id: string }>(
+  items: T[],
+  tokenId: string
+): { updated: T[]; token?: T } => {
+  const index = items.findIndex((item) => item.id === tokenId);
+  if (index === -1) {
+    return { updated: items };
+  }
+  const updated = [...items];
+  const [token] = updated.splice(index, 1);
+  return { updated, token };
+};
+
 const buildTokenClassName = ({
   isDragging,
   showStatus,
   isCorrect,
+  isSelected,
 }: {
   isDragging: boolean;
   showStatus: boolean;
   isCorrect: boolean;
+  isSelected: boolean;
 }): string =>
   cn(
     KANGUR_INLINE_CENTER_ROW_CLASSNAME,
@@ -238,6 +253,7 @@ const buildTokenClassName = ({
     KANGUR_ACCENT_STYLES.slate.badge,
     KANGUR_ACCENT_STYLES.slate.hoverCard,
     isDragging && 'scale-[1.02] shadow-[0_18px_40px_-26px_rgba(15,23,42,0.2)] cursor-grabbing',
+    isSelected && 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white',
     showStatus &&
       (isCorrect
         ? 'ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-transparent'
@@ -293,12 +309,16 @@ function DraggableToken({
   isDragDisabled,
   showStatus,
   isCorrect,
+  isSelected,
+  onClick,
 }: {
   token: SpeechToken;
   index: number;
   isDragDisabled: boolean;
   showStatus: boolean;
   isCorrect: boolean;
+  isSelected: boolean;
+  onClick: () => void;
 }): React.ReactElement | React.ReactPortal {
   return (
     <Draggable
@@ -309,7 +329,7 @@ function DraggableToken({
     >
       {(draggableProvided, snapshot) => {
         const content = (
-          <div
+          <button
             ref={draggableProvided.innerRef}
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
@@ -317,12 +337,21 @@ function DraggableToken({
               isDragging: snapshot.isDragging,
               showStatus,
               isCorrect,
+              isSelected,
             })}
             aria-label={token.label}
+            aria-pressed={isSelected}
+            aria-disabled={isDragDisabled}
+            type='button'
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick();
+            }}
           >
             <span aria-hidden='true'>{token.emoji}</span>
             <span>{token.label}</span>
-          </div>
+          </button>
         );
 
         if (snapshot.isDragging && dragPortal) {
@@ -343,6 +372,7 @@ export default function EnglishPartsOfSpeechGame({
   const [roundState, setRoundState] = useState<RoundState>(() =>
     buildRoundState(ROUNDS[0]!)
   );
+  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [score, setScore] = useState(0);
@@ -367,6 +397,61 @@ export default function EnglishPartsOfSpeechGame({
   }, [round.parts, round.tokens]);
 
   const isRoundComplete = roundState.pool.length === 0;
+
+  const handleAssignToken = (part: PartOfSpeech): void => {
+    if (checked || !selectedTokenId) return;
+    setRoundState((prev) => {
+      let token: SpeechToken | undefined;
+      const { updated: nextPool, token: poolToken } = removeTokenById(prev.pool, selectedTokenId);
+      token = poolToken;
+      const nextBins = { ...prev.bins };
+      if (!token) {
+        for (const [id, items] of Object.entries(prev.bins)) {
+          const { updated, token: binToken } = removeTokenById(items ?? [], selectedTokenId);
+          if (binToken) {
+            token = binToken;
+            nextBins[id as PartOfSpeech] = updated;
+            break;
+          }
+        }
+      }
+      if (!token) return prev;
+      return {
+        pool: nextPool,
+        bins: {
+          ...nextBins,
+          [part]: [...(nextBins[part] ?? []), token],
+        },
+      };
+    });
+    setSelectedTokenId(null);
+  };
+
+  const handleReturnToPool = (): void => {
+    if (checked || !selectedTokenId) return;
+    setRoundState((prev) => {
+      let token: SpeechToken | undefined;
+      const { updated: nextPool, token: poolToken } = removeTokenById(prev.pool, selectedTokenId);
+      token = poolToken;
+      const nextBins = { ...prev.bins };
+      if (!token) {
+        for (const [id, items] of Object.entries(prev.bins)) {
+          const { updated, token: binToken } = removeTokenById(items ?? [], selectedTokenId);
+          if (binToken) {
+            token = binToken;
+            nextBins[id as PartOfSpeech] = updated;
+            break;
+          }
+        }
+      }
+      if (!token) return prev;
+      return {
+        pool: [...nextPool, token],
+        bins: nextBins,
+      };
+    });
+    setSelectedTokenId(null);
+  };
 
   const resolveRoundVisual = (): React.JSX.Element => {
     switch (round.visual) {
@@ -399,6 +484,7 @@ export default function EnglishPartsOfSpeechGame({
           ? 'Perfekcyjnie! Wszystkie słowa na miejscu.'
           : `Masz ${correctCount}/${round.tokens.length} poprawnych. Sprawdź kolory i działaj dalej.`,
     });
+    setSelectedTokenId(null);
   };
 
   const handleNext = (): void => {
@@ -433,11 +519,13 @@ export default function EnglishPartsOfSpeechGame({
     setChecked(false);
     setRoundCorrect(0);
     setFeedback(null);
+    setSelectedTokenId(null);
   };
 
   const handleReset = (): void => {
     if (checked) return;
     setRoundState(buildRoundState(round));
+    setSelectedTokenId(null);
   };
 
   const handleDragEnd = (result: DropResult): void => {
@@ -508,6 +596,7 @@ export default function EnglishPartsOfSpeechGame({
         },
       };
     });
+    setSelectedTokenId(null);
   };
 
   if (done) {
@@ -614,7 +703,17 @@ export default function EnglishPartsOfSpeechGame({
                     'mt-3 flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition',
                     snapshot.isDraggingOver ? 'border-amber-300 bg-amber-50/70' : 'border-slate-200'
                   )}
+                  onClick={handleReturnToPool}
+                  role='button'
+                  tabIndex={checked ? -1 : 0}
+                  aria-disabled={checked}
                   aria-label='Pula słów do sortowania'
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleReturnToPool();
+                    }
+                  }}
                 >
                   {roundState.pool.map((token, index) => (
                     <DraggableToken
@@ -624,6 +723,10 @@ export default function EnglishPartsOfSpeechGame({
                       isDragDisabled={checked}
                       showStatus={false}
                       isCorrect={false}
+                      isSelected={selectedTokenId === token.id}
+                      onClick={() =>
+                        setSelectedTokenId((current) => (current === token.id ? null : token.id))
+                      }
                     />
                   ))}
                   {provided.placeholder}
@@ -656,7 +759,17 @@ export default function EnglishPartsOfSpeechGame({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={surface.className}
+                        onClick={() => handleAssignToken(bin.id)}
+                        role='button'
+                        tabIndex={checked ? -1 : 0}
+                        aria-disabled={checked}
                         aria-label={`${bin.label} bin`}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            handleAssignToken(bin.id);
+                          }
+                        }}
                       >
                         <div className='flex items-center justify-between gap-2'>
                           <div className={`${KANGUR_CENTER_ROW_CLASSNAME} text-sm font-bold text-slate-700`}>
@@ -681,6 +794,12 @@ export default function EnglishPartsOfSpeechGame({
                               isDragDisabled={checked}
                               showStatus={checked}
                               isCorrect={item.part === bin.id}
+                              isSelected={selectedTokenId === item.id}
+                              onClick={() =>
+                                setSelectedTokenId((current) =>
+                                  current === item.id ? null : item.id
+                                )
+                              }
                             />
                           ))}
                           {provided.placeholder}

@@ -117,6 +117,13 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'vision_extract',
   },
+  'kangur_social.doc_patching': {
+    key: 'kangur_social.doc_patching',
+    feature: 'kangur_social',
+    label: 'Kangur Social Doc Patching',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
   'prompt_engine.prompt_exploder': {
     key: 'prompt_engine.prompt_exploder',
     feature: 'prompt_engine',

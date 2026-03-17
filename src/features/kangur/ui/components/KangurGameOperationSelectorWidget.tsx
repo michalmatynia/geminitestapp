@@ -14,13 +14,14 @@ import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/Kan
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
-import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
 import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import {
   KangurButton,
   KangurInfoCard,
@@ -38,7 +39,9 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
-import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
+import {
+  getRecommendedTrainingSetup,
+} from '@/features/kangur/ui/services/game-setup-recommendations';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -51,7 +54,6 @@ import type {
   KangurGameScreen,
   KangurOperation,
   KangurProgressState,
-  KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
 import type {
   KangurLessonComponentId,
@@ -214,24 +216,6 @@ type KangurOperationSelectorRecommendation = {
   recommendedScreen: KangurRecommendedSelectorScreen | null;
   target: KangurOperationSelectorRecommendationTarget;
   title: string;
-};
-
-const hasMatchingTrainingSelection = (
-  selection: KangurTrainingSelection,
-  suggestedSelection: KangurTrainingSelection | null
-): boolean => {
-  if (!suggestedSelection) {
-    return false;
-  }
-
-  const selectedCategories = [...selection.categories].sort();
-  const suggestedCategories = [...suggestedSelection.categories].sort();
-  return (
-    selection.count === suggestedSelection.count &&
-    selection.difficulty === suggestedSelection.difficulty &&
-    selectedCategories.length === suggestedCategories.length &&
-    selectedCategories.every((category, index) => category === suggestedCategories[index])
-  );
 };
 
 const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
@@ -558,6 +542,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     setScreen,
   } = useKangurGameRuntime();
   const { subject } = useKangurSubjectFocus();
+  const { ageGroup } = useKangurAgeGroupFocus();
   const trainingSectionRef = useRef<HTMLElement | null>(null);
   const normalizedProgress = useMemo(() => {
     const defaults = createDefaultKangurProgressState();
@@ -584,7 +569,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     () => getRecommendedTrainingSetup(normalizedProgress),
     [normalizedProgress]
   );
-  const lessonsQuery = useKangurLessons({ subject, enabledOnly: true });
+  const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
   const lessonQuizOptions = useMemo<LessonQuizOption[]>(() => {
     const enabledLessons = lessonsQuery.data ?? [];
@@ -951,23 +936,9 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             </div>
           ) : null}
           <KangurGameSetupMomentumCard mode='training' progress={normalizedProgress} />
-          <TrainingSetup
-            onStart={(selection) =>
-              handleStartTraining(selection, {
-                recommendation: hasMatchingTrainingSelection(selection, suggestedTraining.selection)
-                  ? {
-                      description: suggestedTraining.description,
-                      label: suggestedTraining.label,
-                      source: 'training_setup',
-                      title: suggestedTraining.title,
-                    }
-                  : null,
-              })
-            }
-            suggestedSelection={suggestedTraining.selection}
-            suggestionDescription={suggestedTraining.description}
-            suggestionLabel={suggestedTraining.label}
-            suggestionTitle={suggestedTraining.title}
+          <KangurTrainingSetupPanel
+            onStart={(selection, options) => handleStartTraining(selection, options)}
+            suggestedTraining={suggestedTraining}
           />
         </section>
       ) : null}

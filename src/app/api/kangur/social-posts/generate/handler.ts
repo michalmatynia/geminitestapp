@@ -58,6 +58,8 @@ export async function postKangurSocialPostGenerateHandler(
         visualSummary: draft.visualSummary,
         visualHighlights: draft.visualHighlights,
         visualDocUpdates: draft.visualDocUpdates,
+        docUpdatesAppliedAt: null,
+        docUpdatesAppliedBy: null,
         imageAddonIds,
         ...(parsed.modelId ? { brainModelId: parsed.modelId } : {}),
         ...(parsed.visionModelId ? { visionModelId: parsed.visionModelId } : {}),

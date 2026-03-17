@@ -50,10 +50,10 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   DEFAULT_KANGUR_AGE_GROUP,
-  DEFAULT_KANGUR_SUBJECT,
   KANGUR_AGE_GROUPS,
-  KANGUR_SUBJECTS,
   getKangurAgeGroupLabel,
+  getKangurDefaultSubjectForAgeGroup,
+  getKangurSubjectsForAgeGroup,
   getKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
@@ -233,16 +233,13 @@ export function KangurPrimaryNavigation({
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
   const subjectChoiceLabel = getKangurSubjectLabel(subject);
   const ageGroupChoiceLabel = getKangurAgeGroupLabel(ageGroup);
-  const defaultSubjectLabel =
-    KANGUR_SUBJECTS.find((item) => item.default)?.label ??
-    getKangurSubjectLabel(DEFAULT_KANGUR_SUBJECT);
+  const defaultSubjectLabel = getKangurSubjectLabel(
+    getKangurDefaultSubjectForAgeGroup(ageGroup)
+  );
   const defaultAgeGroupLabel =
     KANGUR_AGE_GROUPS.find((group) => group.default)?.label ??
     getKangurAgeGroupLabel(DEFAULT_KANGUR_AGE_GROUP);
-  const availableSubjects =
-    ageGroup === 'grown_ups'
-      ? KANGUR_SUBJECTS
-      : KANGUR_SUBJECTS.filter((subjectOption) => subjectOption.id !== 'web_development');
+  const availableSubjects = getKangurSubjectsForAgeGroup(ageGroup);
   const yellowPillActionClassName =
     `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
   const amberPillActionClassName =

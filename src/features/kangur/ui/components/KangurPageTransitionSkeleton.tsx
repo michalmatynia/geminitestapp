@@ -1,9 +1,6 @@
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import {
-  KangurPageContainer,
-  KangurPageShell,
-  KangurPanelRow,
-} from '@/features/kangur/ui/design/primitives';
+import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   resolveKangurRouteTransitionSkeletonVariant,
@@ -423,14 +420,13 @@ export function KangurPageTransitionSkeleton({
       <div className='sr-only' role='status' aria-live='polite'>
         {reason === 'boot' ? 'Loading Kangur app' : 'Loading Kangur page'}
       </div>
-      <KangurPageShell
-        aria-hidden='true'
-        className='pointer-events-none'
+      <KangurStandardPageLayout
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}
-      >
-        <KangurPageContainer
-          as='div'
-          className={cn(
+        shellClassName='pointer-events-none'
+        shellProps={{ 'aria-hidden': true }}
+        containerProps={{
+          as: 'div',
+          className: cn(
             'flex flex-col items-center',
             KANGUR_PANEL_GAP_CLASSNAME,
             resolvedPageKey === 'Lessons'
@@ -438,11 +434,12 @@ export function KangurPageTransitionSkeleton({
               : resolvedPageKey === 'Game'
                 ? 'pt-[calc(var(--kangur-top-bar-height,88px)+12px)]'
                 : 'pt-24 sm:pt-28'
-          )}
-        >
-          {renderSkeletonVariant(resolvedVariant)}
-        </KangurPageContainer>
-      </KangurPageShell>
+          ),
+          'data-kangur-route-main': false,
+        }}
+      >
+        {renderSkeletonVariant(resolvedVariant)}
+      </KangurStandardPageLayout>
     </div>
   );
 }

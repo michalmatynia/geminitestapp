@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } fro
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
@@ -209,7 +210,8 @@ export function KangurAssignmentManager({
   view = 'full',
 }: KangurAssignmentManagerProps): React.JSX.Element {
   const progress = useKangurProgressState();
-  const lessonsQuery = useKangurLessons({ enabledOnly: true });
+  const { ageGroup } = useKangurAgeGroupFocus();
+  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const catalog = useMemo(() => buildKangurAssignmentCatalog(lessons), [lessons]);
   const suggestedCatalog = useMemo(

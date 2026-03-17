@@ -15,7 +15,7 @@ import {
   resolveManualBindingSubsectionIds,
   type PromptExploderManualBindingDraft,
 } from '../manual-bindings';
-import { useDocumentState, useDocumentActions } from './hooks/useDocument';
+import { useDocumentState, useDocumentActions } from './DocumentContext';
 
 import type { PromptExploderSubsection } from '../types';
 
@@ -205,5 +205,19 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
     </BindingsStateContext.Provider>
   );
 }
+
+// ── Hook exports ─────────────────────────────────────────────────────────────
+
+export const useBindingsState = (): BindingsState => {
+  const ctx = React.useContext(BindingsStateContext);
+  if (!ctx) throw new Error('useBindingsState must be used within BindingsProvider');
+  return ctx;
+};
+
+export const useBindingsActions = (): BindingsActions => {
+  const ctx = React.useContext(BindingsActionsContext);
+  if (!ctx) throw new Error('useBindingsActions must be used within BindingsProvider');
+  return ctx;
+};
 
 export { BindingsStateContext, BindingsActionsContext };

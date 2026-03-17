@@ -224,6 +224,7 @@ export default function EnglishPrepositionsOrderGame({
 }: EnglishPrepositionsOrderGameProps): React.JSX.Element {
   const [roundIndex, setRoundIndex] = useState(0);
   const [orderTokens, setOrderTokens] = useState<OrderToken[]>(() => buildRoundState(ROUNDS[0]!));
+  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
@@ -241,7 +242,23 @@ export default function EnglishPrepositionsOrderGame({
     setChecked(false);
     setRoundCorrect(0);
     setFeedback(null);
+    setSelectedTokenId(null);
   }, [round]);
+
+  const moveTokenByOffset = (tokenId: string, offset: number): void => {
+    let nextIndex = -1;
+    setOrderTokens((prev) => {
+      const currentIndex = prev.findIndex((token) => token.id === tokenId);
+      if (currentIndex < 0) return prev;
+      const targetIndex = Math.min(Math.max(currentIndex + offset, 0), prev.length - 1);
+      if (targetIndex === currentIndex) return prev;
+      nextIndex = targetIndex;
+      return reorderWithinList(prev, currentIndex, targetIndex);
+    });
+    if (nextIndex >= 0) {
+      setSelectedTokenId(tokenId);
+    }
+  };
 
   const handleDragEnd = (result: DropResult): void => {
     const { destination, source } = result;
@@ -250,6 +267,7 @@ export default function EnglishPrepositionsOrderGame({
     if (destination.index === source.index) return;
 
     setOrderTokens((prev) => reorderWithinList(prev, source.index, destination.index));
+    setSelectedTokenId(null);
   };
 
   const handleReset = (): void => {
@@ -257,6 +275,7 @@ export default function EnglishPrepositionsOrderGame({
     setChecked(false);
     setRoundCorrect(0);
     setFeedback(null);
+    setSelectedTokenId(null);
   };
 
   const handleCheck = (): void => {
@@ -269,6 +288,7 @@ export default function EnglishPrepositionsOrderGame({
       kind: isPerfect ? 'success' : 'error',
       text: isPerfect ? 'Perfekcyjnie! Zdanie gotowe.' : `Poprawne zdanie: ${answerLabel}`,
     });
+    setSelectedTokenId(null);
     setChecked(true);
   };
 
@@ -314,6 +334,7 @@ export default function EnglishPrepositionsOrderGame({
     setDone(false);
     setXpEarned(0);
     setXpBreakdown([]);
+    setSelectedTokenId(null);
     sessionStartedAtRef.current = Date.now();
   };
 
@@ -416,6 +437,11 @@ export default function EnglishPrepositionsOrderGame({
                       showStatus={checked}
                       isCorrect={round.answer[index] === token.id}
                       isDragDisabled={checked}
+                      isSelected={selectedTokenId === token.id}
+                      onSelect={() =>
+                        setSelectedTokenId((current) => (current === token.id ? null : token.id))
+                      }
+                      onMove={(offset) => moveTokenByOffset(token.id, offset)}
                     />
                   ))}
                   {provided.placeholder}
@@ -464,6 +490,9 @@ function DraggableToken({
   showStatus,
   isCorrect,
   isDragDisabled,
+  isSelected,
+  onSelect,
+  onMove,
 }: {
   token: OrderToken;
   index: number;
@@ -471,25 +500,57 @@ function DraggableToken({
   showStatus: boolean;
   isCorrect: boolean;
   isDragDisabled: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  onMove: (offset: number) => void;
 }): React.JSX.Element {
   const statusClass = showStatus ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : '';
   return (
-    <Draggable draggableId={token.id} index={index} isDragDisabled={isDragDisabled}>
+    <Draggable
+      draggableId={token.id}
+      index={index}
+      isDragDisabled={isDragDisabled}
+      disableInteractiveElementBlocking
+    >
       {(provided, snapshot) => {
+        const selectedClass = isSelected
+          ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white'
+          : '';
         const content = (
-          <div
+          <button
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            type='button'
             className={cn(
-              'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition',
+              'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
               KANGUR_ACCENT_STYLES[accent].badge,
               snapshot.isDragging && 'scale-[1.02] shadow-lg',
-              statusClass
+              statusClass,
+              selectedClass
             )}
+            aria-label={token.label}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            title={token.label}
+            onClick={() => {
+              if (snapshot.isDragging || isDragDisabled) return;
+              onSelect();
+            }}
+            onKeyDown={(event) => {
+              if (isDragDisabled) return;
+              if (event.key === 'ArrowLeft' && isSelected) {
+                event.preventDefault();
+                onMove(-1);
+              }
+              if (event.key === 'ArrowRight' && isSelected) {
+                event.preventDefault();
+                onMove(1);
+              }
+            }}
           >
             {token.label}
-          </div>
+          </button>
         );
 
         if (snapshot.isDragging && dragPortal) {

@@ -1,11 +1,7 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import {
-  DEFAULT_KANGUR_AGE_GROUP,
-  KANGUR_AGE_GROUPS,
-  getKangurAgeGroupLabel,
-} from '@/features/kangur/lessons/lesson-catalog';
+import { getKangurAgeGroupLabel } from '@/features/kangur/lessons/lesson-catalog';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -15,14 +11,10 @@ import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLes
 import {
   KangurEmptyState,
   KangurGlassPanel,
-  KangurButton,
-  KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_LESSON_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
-  KANGUR_STACK_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurLesson,
@@ -41,7 +33,6 @@ export function LessonsCatalog() {
   const {
     subject,
     ageGroup,
-    setAgeGroup,
     orderedLessons,
     handleSelectLesson,
     isDeferredContentReady,
@@ -57,7 +48,6 @@ export function LessonsCatalog() {
   const { entry: lessonListEmptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
 
   const ageGroupLabel = getKangurAgeGroupLabel(ageGroup);
-  const defaultAgeGroupLabel = getKangurAgeGroupLabel(DEFAULT_KANGUR_AGE_GROUP);
 
   const lessonGroupDefinitions =
     subject === 'web_development'
@@ -108,31 +98,6 @@ export function LessonsCatalog() {
           className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
           data-testid='lessons-list-transition'
         >
-          <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
-            <div className={KANGUR_STACK_SPACED_CLASSNAME}>
-              <div className='flex flex-wrap items-start justify-between gap-3'>
-                <div>
-                  <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>Grupa wiekowa</div>
-                  <div className='mt-1 text-sm font-semibold text-slate-800'>Wybierz poziom, aby dopasować lekcje.</div>
-                  <div className='mt-1 text-xs text-slate-500'>Domyślnie: {defaultAgeGroupLabel}.</div>
-                </div>
-                <KangurStatusChip accent='indigo' size='sm'>{ageGroupLabel}</KangurStatusChip>
-              </div>
-              <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:items-center sm:justify-center`} role='group'>
-                {KANGUR_AGE_GROUPS.map((group) => (
-                  <KangurButton
-                    key={group.id}
-                    className='h-9 flex-1 text-xs sm:text-sm'
-                    onClick={() => setAgeGroup(group.id)}
-                    size='sm'
-                    variant={ageGroup === group.id ? 'segmentActive' : 'segment'}
-                  >
-                    {group.label}
-                  </KangurButton>
-                ))}
-              </div>
-            </div>
-          </KangurGlassPanel>
           {orderedLessons.length === 0 ? (
             <KangurEmptyState
               accent='indigo'

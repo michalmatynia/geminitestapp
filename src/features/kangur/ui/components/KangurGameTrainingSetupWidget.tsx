@@ -2,33 +2,12 @@
 
 import { useMemo } from 'react';
 
-import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurGameSetupMomentumCard';
-import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
-import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
-import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
-
-const hasMatchingTrainingSelection = (
-  selection: KangurTrainingSelection,
-  suggestedSelection: KangurTrainingSelection | null
-): boolean => {
-  if (!suggestedSelection) {
-    return false;
-  }
-
-  const selectedCategories = [...selection.categories].sort();
-  const suggestedCategories = [...suggestedSelection.categories].sort();
-  return (
-    selection.count === suggestedSelection.count &&
-    selection.difficulty === suggestedSelection.difficulty &&
-    selectedCategories.length === suggestedCategories.length &&
-    selectedCategories.every((category, index) => category === suggestedCategories[index])
-  );
-};
 
 export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   const { activePracticeAssignment, basePath, handleHome, handleStartTraining, progress, screen } =
@@ -40,50 +19,36 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   }
 
   return (
-    <div className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurPageIntroCard
-        className='max-w-md'
-        description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
-        headingSize='lg'
-        onBack={handleHome}
-        testId='kangur-game-training-top-section'
-        title='Trening'
-        visualTitle={
-          <KangurTreningWordmark
-            className='mx-auto'
-            data-testid='kangur-training-heading-art'
-            idPrefix='kangur-game-training-heading'
-          />
-        }
+    <KangurGameSetupStage
+      afterIntro={
+        activePracticeAssignment ? (
+          <div className='flex w-full justify-center px-4'>
+            <KangurPracticeAssignmentBanner
+              assignment={activePracticeAssignment}
+              basePath={basePath}
+              mode='active'
+            />
+          </div>
+        ) : null
+      }
+      description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+      momentumMode='training'
+      onBack={handleHome}
+      progress={progress}
+      testId='kangur-game-training-top-section'
+      title='Trening'
+      visualTitle={
+        <KangurTreningWordmark
+          className='mx-auto'
+          data-testid='kangur-training-heading-art'
+          idPrefix='kangur-game-training-heading'
+        />
+      }
+    >
+      <KangurTrainingSetupPanel
+        onStart={(selection, options) => handleStartTraining(selection, options)}
+        suggestedTraining={suggestedTraining}
       />
-      {activePracticeAssignment ? (
-        <div className='flex w-full justify-center px-4'>
-          <KangurPracticeAssignmentBanner
-            assignment={activePracticeAssignment}
-            basePath={basePath}
-            mode='active'
-          />
-        </div>
-      ) : null}
-      <KangurGameSetupMomentumCard mode='training' progress={progress} />
-      <TrainingSetup
-        onStart={(selection) =>
-          handleStartTraining(selection, {
-            recommendation: hasMatchingTrainingSelection(selection, suggestedTraining.selection)
-              ? {
-                description: suggestedTraining.description,
-                label: suggestedTraining.label,
-                source: 'training_setup',
-                title: suggestedTraining.title,
-              }
-              : null,
-          })
-        }
-        suggestedSelection={suggestedTraining.selection}
-        suggestionDescription={suggestedTraining.description}
-        suggestionLabel={suggestedTraining.label}
-        suggestionTitle={suggestedTraining.title}
-      />
-    </div>
+    </KangurGameSetupStage>
   );
 }

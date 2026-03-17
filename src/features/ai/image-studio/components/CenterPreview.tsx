@@ -10,7 +10,7 @@ import {
   type SlotGenerationMetadata,
 } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
-import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/contracts/ui';
+import type { VectorCanvasRect } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -124,11 +124,11 @@ export function CenterPreviewInner(): React.JSX.Element {
 
   const previewCanvasCropBindingRef = useRef<{
     slotId: string;
-    cropRect: VectorCanvasViewCropRect;
+    cropRect: VectorCanvasRect;
   } | null>(null);
   const previewCanvasImageFrameBindingRef = useRef<{
     slotId: string;
-    frame: VectorCanvasImageContentFrame;
+    frame: VectorCanvasRect;
   } | null>(null);
 
   const productImagesExternalBaseUrl =
@@ -369,7 +369,7 @@ export function CenterPreviewInner(): React.JSX.Element {
   );
 
   const handlePreviewCanvasCropRectChange = useCallback(
-    (cropRect: VectorCanvasViewCropRect | null): void => {
+    (cropRect: VectorCanvasRect | null): void => {
       const slotId = activeCanvasSlotId?.trim() ?? '';
       if (!slotId || !cropRect) {
         previewCanvasCropBindingRef.current = null;
@@ -384,7 +384,7 @@ export function CenterPreviewInner(): React.JSX.Element {
   );
 
   const handlePreviewCanvasImageFrameChange = useCallback(
-    (frame: VectorCanvasImageContentFrame | null): void => {
+    (frame: VectorCanvasRect | null): void => {
       const slotId = activeCanvasSlotId?.trim() ?? '';
       if (!slotId || !frame) {
         previewCanvasImageFrameBindingRef.current = null;

@@ -9,7 +9,7 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
 import { useMasterFolderTreeSearch } from '@/features/foldertree';
-import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
+import { useFolderTreeProfile } from '@/features/foldertree';
 import {
   resolveFolderTreeMultiSelectConfig,
   resolveFolderTreeSearchConfig,

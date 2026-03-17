@@ -111,7 +111,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   const strokeWidth = isCoarsePointer ? 14 : 10;
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
-  const drawHint = isCoarsePointer ? 'Rysuj palcem po sladzie' : 'Rysuj palcem lub myszka';
+  const drawHint = isCoarsePointer ? 'Rysuj palcem po śladzie' : 'Rysuj palcem lub myszką';
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
       ({
@@ -232,18 +232,18 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     if (points.length < minDrawingPoints) {
       return {
         kind: 'error',
-        text: 'Rysuj po sladzie litery i sproboj jeszcze raz.',
+        text: 'Rysuj po śladzie litery i spróbuj jeszcze raz.',
       };
     }
     if (strokeLength < minDrawingLength) {
       return {
         kind: 'error',
-        text: 'Super start! Dorysuj jeszcze kawalek litery.',
+        text: 'Super start! Dorysuj jeszcze kawałek litery.',
       };
     }
     return {
       kind: 'success',
-      text: `Swietnie! Litera ${currentRound.label} gotowa.`,
+      text: `Świetnie! Litera ${currentRound.label} gotowa.`,
     };
   };
 
@@ -270,7 +270,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               Alphabet
             </KangurHeadline>
             <p className='mt-2 text-sm text-slate-600'>
-              Track: Letter Tracing. Rysuj litery po kolorowym sladzie. To gra dla 6-latkow.
+              Track: Letter Tracing. Rysuj litery po kolorowym śladzie. To gra dla 6-latków.
             </p>
           </div>
           <div className='flex flex-col items-end gap-2'>
@@ -293,7 +293,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                Slad litery
+                Ślad litery
               </div>
               <p className='mt-1 text-sm text-slate-600'>
                 Litera {currentRound.label} jak {currentRound.word}.
@@ -368,8 +368,8 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
           </div>
 
           <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-            <span>Rysuj po grubych liniach i nie spiesz sie.</span>
-            <span>{points.length} punktow</span>
+            <span>Rysuj po grubych liniach i nie spiesz się.</span>
+            <span>{points.length} punktów</span>
           </div>
         </div>
       </KangurGlassPanel>
@@ -393,13 +393,13 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               </p>
             ) : (
               <p className='text-sm text-slate-600'>
-                Kliknij Sprawdz, gdy skonczysz rysowac.
+                Kliknij Sprawdź, gdy skończysz rysować.
               </p>
             )}
           </div>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             <KangurButton size='sm' type='button' variant='surface' onClick={clearDrawing}>
-              Wyczysc
+              Wyczyść
             </KangurButton>
             {feedback?.kind === 'success' ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
@@ -407,7 +407,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               </KangurButton>
             ) : (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck}>
-                Sprawdz
+                Sprawdź
               </KangurButton>
             )}
           </div>

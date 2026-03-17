@@ -11,7 +11,7 @@ import { explodePromptWithValidationRuntime } from '../../prompt-validation-orch
 import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../../runtime-load-shedder';
 
 import type { PromptExploderDocument, PromptExploderLearnedTemplate } from '../../types';
-import type { DocumentActions } from '../document/DocumentActionsContext';
+import type { DocumentActions } from '../DocumentContext';
 import type { PromptExploderSettingsState } from '../SettingsContext';
 
 export const useDocumentExplodeAction = ({

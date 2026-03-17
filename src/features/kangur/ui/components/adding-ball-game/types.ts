@@ -8,19 +8,19 @@ export type BallItem = {
 
 export type RoundMode = 'complete_equation' | 'group_sum' | 'pick_answer';
 
-export type CompleteEquationRound = {
-  mode: 'complete_equation';
+export type BinaryTargetRound = {
   a: number;
   b: number;
   target: number;
 };
 
+export type CompleteEquationRound = {
+  mode: 'complete_equation';
+} & BinaryTargetRound;
+
 export type GroupSumRound = {
   mode: 'group_sum';
-  a: number;
-  b: number;
-  target: number;
-};
+} & BinaryTargetRound;
 
 export type PickAnswerRound = {
   mode: 'pick_answer';

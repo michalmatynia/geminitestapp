@@ -21,7 +21,10 @@ import {
   KangurEquationDisplay,
   KangurIconBadge,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_START_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
@@ -507,7 +510,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             >
               9 − 4 = ?
             </KangurEquationDisplay>
-            <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
+            <div className={`mt-3 ${KANGUR_GRID_TIGHT_CLASSNAME} text-left text-sm [color:var(--kangur-page-text)]`}>
               <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   1
@@ -654,7 +657,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='amber'>47 − 23 = ?</KangurEquationDisplay>
-            <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
+            <div className={`mt-3 ${KANGUR_GRID_TIGHT_CLASSNAME} text-left text-sm [color:var(--kangur-page-text)]`}>
               <div className='flex items-center justify-between rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2'>
                 <span className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
                   Dziesiątki
@@ -838,7 +841,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
               Dodaj odjemnik do wyniku i zobacz, czy wracasz do odjemnej.
             </p>
-            <div className='mt-3 grid gap-2'>
+            <div className={`mt-3 ${KANGUR_GRID_TIGHT_CLASSNAME}`}>
               <KangurEquationDisplay accent='emerald' size='sm'>
                 8 − 5 = 3
               </KangurEquationDisplay>

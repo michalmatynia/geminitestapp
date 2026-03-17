@@ -20,6 +20,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SPACED_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
   formatDuelDifficultyLabel,
@@ -187,7 +188,7 @@ export function KangurGameHomeDuelsInvitesWidget({
       ) : null}
 
       {!isLoading && visibleInvites.length > 0 ? (
-        <ul className='grid gap-2' role='list' aria-label='Zaproszenia do pojedynku'>
+        <ul className={KANGUR_GRID_TIGHT_CLASSNAME} role='list' aria-label='Zaproszenia do pojedynku'>
           {visibleInvites.map((entry) => {
             const operationLabel = formatDuelOperationLabel(entry.operation);
             const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);

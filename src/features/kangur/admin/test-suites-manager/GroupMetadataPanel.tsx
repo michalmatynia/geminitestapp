@@ -1,5 +1,6 @@
 
 import { Button, Input } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useTestSuitesManager } from './test-suites-manager.context';
 import { useTestSuitesManagerLogic } from './test-suites-manager.logic';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
@@ -38,7 +39,9 @@ export function GroupMetadataPanel() {
         </div>
       </div>
 
-      <div className='mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]'>
+      <div
+        className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]`}
+      >
         <Input
           value={state.groupTitle}
           onChange={(event): void => state.setGroupTitle(event.target.value)}

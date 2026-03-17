@@ -8,6 +8,7 @@ import {
 } from '@/shared/lib/documentation/catalogs/kangur';
 import { Badge, Card, CompactEmptyState, ListPanel, PanelStats, SearchInput } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 type GroupedTooltipDocs = {
   section: string;
@@ -155,7 +156,12 @@ export function KangurDocumentationCenter(): React.JSX.Element {
         </div>
       </Card>
 
-      <div className='grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]'>
+      <div
+        className={cn(
+          KANGUR_GRID_RELAXED_CLASSNAME,
+          'xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]'
+        )}
+      >
         <ListPanel
           header={
             <div>

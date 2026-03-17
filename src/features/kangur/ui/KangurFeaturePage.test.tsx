@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
 
 const {
@@ -25,6 +25,32 @@ const mockKangurRoutingState = {
   requestedPath: '/',
   basePath: '/kangur',
   embedded: false,
+};
+
+const { kangurAppearanceMock } = vi.hoisted(() => ({
+  kangurAppearanceMock: {
+    background: '#ffffff',
+    tone: {
+      text: '#111827',
+      border: '#e2e8f0',
+      accent: '#6366f1',
+      background: '#ffffff',
+    },
+    vars: {},
+    theme: {
+      customCss: '.kangur-custom { color: red; }',
+      customCssSelectors: '.kangur-custom',
+    },
+  },
+}));
+
+const originalCustomCssEnv = process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'];
+const setEnvValue = (key: string, value: string | undefined) => {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
 };
 
 vi.mock('@/features/kangur/observability/client', () => ({
@@ -60,11 +86,20 @@ vi.mock('@/features/kangur/ui/KangurFeatureApp', () => ({
   KangurFeatureApp: () => <div data-testid='kangur-feature-app'>Kangur feature app</div>,
 }));
 
+vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
+  useKangurStorefrontAppearance: () => kangurAppearanceMock as any,
+}));
+
 import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
 
 describe('KangurFeaturePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
+  });
+
+  afterEach(() => {
+    setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
   });
 
   it('renders the persistent shell for embedded Kangur mounts', () => {
@@ -168,5 +203,23 @@ describe('KangurFeaturePage', () => {
     unmount();
 
     expect(clearKangurClientObservabilityContextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the scoped custom CSS when enabled', () => {
+    setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', 'true');
+
+    render(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
+
+    const styleTag = document.querySelector('style[data-kangur-custom-css]');
+    expect(styleTag).not.toBeNull();
+    expect(styleTag?.textContent).toContain('.kangur-custom');
+  });
+
+  it('skips custom CSS when disabled via env', () => {
+    setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', 'false');
+
+    render(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
+
+    expect(document.querySelector('style[data-kangur-custom-css]')).toBeNull();
   });
 });

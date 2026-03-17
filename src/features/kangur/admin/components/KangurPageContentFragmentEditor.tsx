@@ -5,6 +5,7 @@ import React from 'react';
 import type { KangurPageContentFragment } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { Badge, Button, Card, FormField, Input, Switch, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 interface KangurPageContentFragmentEditorContextValue {
   fragments: KangurPageContentFragment[];
@@ -128,7 +129,13 @@ export function KangurPageContentFragmentEditor(): React.JSX.Element {
       </div>
 
       {fragments.length > 0 ? (
-        <div className='mt-4 grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
+        <div
+          className={cn(
+            'mt-4',
+            KANGUR_GRID_RELAXED_CLASSNAME,
+            'xl:grid-cols-[280px_minmax(0,1fr)]'
+          )}
+        >
           <div className='space-y-2'>
             {fragments.map((fragment) => {
               const isSelected = fragment.id === selectedFragmentId;
@@ -172,7 +179,7 @@ export function KangurPageContentFragmentEditor(): React.JSX.Element {
 
           {selectedFragment ? (
             <div className='space-y-4'>
-              <div className='grid gap-4 lg:grid-cols-2'>
+              <div className={cn(KANGUR_GRID_RELAXED_CLASSNAME, 'lg:grid-cols-2')}>
                 <FormField
                   label='Fragment id'
                   description='Stable fragment key used inside the page-content source path.'

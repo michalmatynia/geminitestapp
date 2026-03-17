@@ -26,6 +26,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_ACCENT_STYLES,
+  KANGUR_GRID_SPACED_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
@@ -448,7 +450,7 @@ export default function EnglishSentenceStructureGame({
         <KangurHeadline className='text-xl sm:text-2xl'>{round.question}</KangurHeadline>
 
         {round.kind === 'choice' || round.kind === 'timed' ? (
-          <div className='grid gap-3 sm:grid-cols-2'>
+          <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-2`}>
             {round.options.map((option) => (
               <button
                 key={option}
@@ -469,7 +471,7 @@ export default function EnglishSentenceStructureGame({
         ) : null}
 
         {round.kind === 'fill' ? (
-          <div className='grid gap-3'>
+          <div className={KANGUR_GRID_SPACED_CLASSNAME}>
             <KangurTextField
               accent={round.accent}
               placeholder={round.placeholder ?? 'Wpisz odpowiedź'}
@@ -494,7 +496,7 @@ export default function EnglishSentenceStructureGame({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className='grid gap-2'
+                    className={KANGUR_GRID_TIGHT_CLASSNAME}
                   >
                     {orderTokens.map((token, index) => (
                       <Draggable

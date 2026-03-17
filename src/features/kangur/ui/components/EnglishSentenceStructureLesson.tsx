@@ -21,7 +21,10 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -73,7 +76,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
             </div>
             <KangurLessonCaption className='mt-2'>We solve the equation today in class.</KangurLessonCaption>
           </KangurLessonCallout>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'She checks the graph after class.',
               'They compare answers in the notebook.',
@@ -99,7 +102,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonVisual accent='violet' caption='Do you? / Does she?'>
             <EnglishQuestionFlipAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'Do you understand the graph?',
               'Does he use a calculator?',
@@ -125,7 +128,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonVisual accent='amber' caption='and / but / so / because'>
             <EnglishConnectorBridgeAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'I solved the equation, so I checked the graph.',
               'We repeated the task because the answer was wrong.',

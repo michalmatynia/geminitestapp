@@ -5,6 +5,7 @@ import { useTurnstile } from './use-turnstile';
 import { KANGUR_PARENT_CAPTCHA_SITE_KEY } from './login-constants';
 import {
   KANGUR_STACK_RELAXED_CLASSNAME,
+  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_SPACED_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -65,14 +66,14 @@ export function SignupForm({
       className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
       aria-label='Formularz rejestracji rodzica'
     >
-      <div className='flex flex-col gap-1'>
+      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
         <label className='text-sm font-medium text-slate-700'>Email rodzica</label>
         <div className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500'>
           {email}
         </div>
       </div>
 
-      <div className='flex flex-col gap-1'>
+      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
         <label htmlFor='new-password' className='text-sm font-medium text-slate-700'>
           Ustaw hasło
         </label>
@@ -180,7 +181,7 @@ export function VerificationView({
         </button>
         
         {debugUrl && process.env.NODE_ENV !== 'production' && (
-          <div className='mt-4 flex flex-col gap-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-left'>
+          <div className={`mt-4 ${KANGUR_STACK_COMPACT_CLASSNAME} rounded-lg border border-slate-200 bg-slate-50 p-3 text-left`}>
             <p className='text-xs font-bold text-slate-500 uppercase tracking-wider'>Debug Link (Dev Only)</p>
             <a 
               href={debugUrl} 

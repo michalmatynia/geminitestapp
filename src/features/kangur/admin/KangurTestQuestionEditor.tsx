@@ -5,6 +5,10 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { Badge, Button, SelectSimple, Textarea } from '@/features/kangur/shared/ui';
+import {
+  KANGUR_GRID_RELAXED_CLASSNAME,
+  KANGUR_GRID_ROOMY_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 
 import { hasIllustration } from '../test-questions';
@@ -164,7 +168,9 @@ function KangurTestQuestionEditorContent({
         : 'Wrong answer review';
 
   return (
-    <div className='grid items-start gap-6 2xl:grid-cols-[minmax(0,1.14fr)_minmax(340px,0.86fr)]'>
+    <div
+      className={`${KANGUR_GRID_ROOMY_CLASSNAME} items-start 2xl:grid-cols-[minmax(0,1.14fr)_minmax(340px,0.86fr)]`}
+    >
       {/* ── Editor column ───────────────────────────────────────────────── */}
       <div className='space-y-5'>
         <div className='overflow-hidden rounded-3xl border border-border/60 bg-[linear-gradient(135deg,rgba(9,16,32,0.97),rgba(12,34,59,0.86))] p-5 shadow-[0_24px_70px_-36px_rgba(8,145,178,0.55)]'>
@@ -268,7 +274,9 @@ function KangurTestQuestionEditorContent({
           </div>
         </div>
 
-        <div className='grid gap-4 rounded-3xl border border-border/50 bg-card/25 p-5'>
+        <div
+          className={`${KANGUR_GRID_RELAXED_CLASSNAME} rounded-3xl border border-border/50 bg-card/25 p-5`}
+        >
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='space-y-1'>
               <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>

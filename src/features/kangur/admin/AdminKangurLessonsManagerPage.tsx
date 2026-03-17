@@ -31,6 +31,10 @@ import {
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import {
+  KANGUR_GRID_ROOMY_CLASSNAME,
+  KANGUR_STACK_ROOMY_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import {
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
@@ -721,7 +725,7 @@ export function AdminKangurLessonsManagerPage({
   );
 
   const mainWorkspace = (
-    <div className='flex h-full flex-col gap-6 overflow-hidden'>
+    <div className={cn(KANGUR_STACK_ROOMY_CLASSNAME, 'h-full overflow-hidden')}>
       {standalone ? (
         <KangurAdminWorkspaceIntroCard
           title='Lessons workspace'
@@ -1033,7 +1037,12 @@ export function AdminKangurLessonsManagerPage({
   );
 
   const content = standalone ? (
-    <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+    <div
+      className={cn(
+        KANGUR_GRID_ROOMY_CLASSNAME,
+        'xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'
+      )}
+    >
       <div className='min-h-0'>{mainWorkspace}</div>
       <KangurAdminStatusCard
         title='Status'

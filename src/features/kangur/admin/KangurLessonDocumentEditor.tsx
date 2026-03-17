@@ -31,6 +31,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import { Badge, Button, FormField, Input, SelectSimple, Switch, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import { ActivityEditorCard } from './components/ActivityEditorCard';
 import { CalloutEditorCard } from './components/CalloutEditorCard';
@@ -122,7 +123,12 @@ export function KangurLessonDocumentEditor(): React.JSX.Element {
 
 
   return (
-    <div className='grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]'>
+    <div
+      className={cn(
+        KANGUR_GRID_ROOMY_CLASSNAME,
+        'xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]'
+      )}
+    >
       <div className='space-y-4'>
         <KangurAdminWorkspaceSectionCard
           title='Document workspace'

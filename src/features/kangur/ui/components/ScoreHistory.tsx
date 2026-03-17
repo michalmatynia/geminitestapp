@@ -21,6 +21,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
@@ -398,7 +399,7 @@ export default function ScoreHistory({
               <div key={operation} className='flex items-start kangur-panel-gap sm:items-center'>
                 <span className='text-lg w-6 text-center'>{info.emoji}</span>
                 <div className='flex-1'>
-                  <div className='mb-0.5 flex flex-col gap-1 text-xs text-slate-600 min-[420px]:flex-row min-[420px]:justify-between'>
+                  <div className={`mb-0.5 ${KANGUR_STACK_COMPACT_CLASSNAME} text-xs text-slate-600 min-[420px]:flex-row min-[420px]:justify-between`}>
                     <span className='font-semibold'>{info.label}</span>
                     <span>
                       {data.correct}/{data.total} ({percent}%)

@@ -19,7 +19,10 @@ import {
   KangurProgressBar,
   KangurSectionEyebrow,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_STACK_COMPACT_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   getCurrentLevel,
   getNextLevel,
@@ -95,7 +98,7 @@ export default function PlayerProgressCard({
         <div>
           <KangurMetaText
             as='div'
-            className='mb-1 flex flex-col gap-1 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between'
+            className={`mb-1 ${KANGUR_STACK_COMPACT_CLASSNAME} min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between`}
             size='xs'
           >
             <span>{xpIntoLevel} XP</span>

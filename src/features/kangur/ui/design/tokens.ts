@@ -48,14 +48,23 @@ export const KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME = 'inline-flex flex-wrap it
 export const KANGUR_WRAP_START_ROW_CLASSNAME = 'flex flex-wrap items-start gap-2';
 export const KANGUR_WRAP_ROW_TIGHT_CLASSNAME = 'flex flex-wrap gap-x-2 gap-y-1';
 export const KANGUR_WRAP_ROW_SPACED_CLASSNAME = 'flex flex-wrap gap-x-3 gap-y-2';
+export const KANGUR_WRAP_ROW_ROOMY_CLASSNAME = 'flex flex-wrap gap-6';
 export const KANGUR_START_ROW_CLASSNAME = 'flex items-start gap-2';
 export const KANGUR_START_ROW_SPACED_CLASSNAME = 'flex items-start gap-3';
 export const KANGUR_CENTER_ROW_CLASSNAME = 'flex items-center gap-2';
+export const KANGUR_CENTER_ROW_SPACED_CLASSNAME = 'flex items-center gap-3';
+export const KANGUR_CENTER_ROW_RELAXED_CLASSNAME = 'flex items-center gap-4';
 export const KANGUR_INLINE_CENTER_ROW_CLASSNAME = 'inline-flex items-center gap-2';
 export const KANGUR_WRAP_ROW_FINE_CLASSNAME = 'flex flex-wrap gap-1.5';
 export const KANGUR_STACK_TIGHT_CLASSNAME = 'flex flex-col gap-2';
 export const KANGUR_STACK_SPACED_CLASSNAME = 'flex flex-col gap-3';
 export const KANGUR_STACK_RELAXED_CLASSNAME = 'flex flex-col gap-4';
+export const KANGUR_STACK_ROOMY_CLASSNAME = 'flex flex-col gap-6';
+export const KANGUR_STACK_COMPACT_CLASSNAME = 'flex flex-col gap-1';
+export const KANGUR_GRID_TIGHT_CLASSNAME = 'grid gap-2';
+export const KANGUR_GRID_SPACED_CLASSNAME = 'grid gap-3';
+export const KANGUR_GRID_RELAXED_CLASSNAME = 'grid gap-4';
+export const KANGUR_GRID_ROOMY_CLASSNAME = 'grid gap-6';
 export const KANGUR_PANEL_GRID_TO_ROW_CLASSNAME = cn(
   'grid w-full',
   KANGUR_PANEL_GAP_CLASSNAME,

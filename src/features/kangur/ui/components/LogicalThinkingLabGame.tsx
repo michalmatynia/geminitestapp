@@ -4,7 +4,11 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
@@ -776,7 +780,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
           <KangurInfoCard accent='violet' tone='neutral' padding='sm' className='w-full text-center'>
             <p className='text-base font-bold text-violet-700'>{analogyRound.prompt}</p>
           </KangurInfoCard>
-          <div className='grid gap-2 sm:grid-cols-3'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
             {analogyRound.options.map((option) => {
               const isSelected = analogySelected === option.id;
               const isCorrect = analogyChecked && option.id === analogyRound.correctId;

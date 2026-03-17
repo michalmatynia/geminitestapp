@@ -27,7 +27,11 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientError } from '@/features/kangur/observability/client';
-import { KANGUR_STACK_TIGHT_CLASSNAME, KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_STACK_COMPACT_CLASSNAME,
+  KANGUR_STACK_TIGHT_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
 
@@ -402,7 +406,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   aria-label='Imię Ucznia'
                   title='Imię Ucznia'
                 />
-                <div className='flex flex-col gap-1'>
+                <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
                   <KangurTextField
                     accent='indigo'
                     inputMode='numeric'

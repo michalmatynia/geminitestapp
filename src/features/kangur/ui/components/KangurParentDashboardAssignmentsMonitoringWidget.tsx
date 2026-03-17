@@ -23,7 +23,9 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_COMPACT_ROW_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -507,7 +509,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                       {formatDuration(entry.totalSeconds)}
                     </div>
                   </div>
-                  <div className='grid gap-2 sm:grid-cols-2'>
+                  <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
                     {entry.sections.map((section) => (
                       <div
                         key={`${entry.lesson.componentId}-${section.id}`}
@@ -519,7 +521,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                         <KangurMetaText tone='slate'>
                           {formatDuration(section.totalSeconds)} łącznie
                         </KangurMetaText>
-                        <div className='mt-2 flex flex-col gap-1 text-xs'>
+                        <div className={`mt-2 ${KANGUR_STACK_COMPACT_CLASSNAME} text-xs`}>
                           {section.panels.map((panel) => (
                             <div
                               key={`${entry.lesson.componentId}-${section.id}-${panel.id}`}

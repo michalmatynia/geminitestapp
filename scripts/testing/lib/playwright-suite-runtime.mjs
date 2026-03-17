@@ -33,6 +33,13 @@ const probeCandidates = (baseUrl) => [
 
 const isSuccessfulProbeResponse = (response) => response.status >= 200 && response.status < 500;
 
+const resolveProbeTimeoutMs = (env = process.env) => {
+  const raw =
+    env['PLAYWRIGHT_RUNTIME_PROBE_TIMEOUT_MS'] ?? env['PLAYWRIGHT_PROBE_TIMEOUT_MS'] ?? '';
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1500;
+};
+
 export const detectExistingPlaywrightServer = async ({
   baseUrl,
   fetchImpl = globalThis.fetch,
@@ -44,10 +51,12 @@ export const detectExistingPlaywrightServer = async ({
   const [healthUrl, rootUrl] = probeCandidates(baseUrl);
   let healthReachable = false;
 
+  const timeoutMs = resolveProbeTimeoutMs();
+
   try {
     const response = await fetchImpl(healthUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: {
         accept: 'application/json,text/html,text/plain',
       },
@@ -64,7 +73,7 @@ export const detectExistingPlaywrightServer = async ({
   try {
     const response = await fetchImpl(rootUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: {
         accept: 'application/json,text/html,text/plain',
       },

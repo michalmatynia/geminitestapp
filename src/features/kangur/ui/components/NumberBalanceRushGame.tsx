@@ -19,7 +19,11 @@ import {
   KangurGlassPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_CENTER_ROW_CLASSNAME, KANGUR_WRAP_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_WRAP_CENTER_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   createNumberBalancePuzzle,
   evaluateNumberBalancePlacement,
@@ -748,7 +752,7 @@ export default function NumberBalanceRushGame(
         ) : null}
 
         {leaderboardEntries.length > 1 ? (
-          <div className='grid gap-2 sm:grid-cols-2'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
             {leaderboardEntries.map((entry) => (
               <div
                 key={entry.playerId}

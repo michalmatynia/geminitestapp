@@ -28,6 +28,7 @@ import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_PANEL_ROW_LG_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
@@ -1009,7 +1010,7 @@ export function KangurAssignmentManager({
           surface='neutral'
           variant='soft'
         >
-          <div className='flex flex-col gap-1'>
+          <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
             <KangurStatusChip
               accent='slate'
               className='w-fit'

@@ -33,6 +33,7 @@ import {
   SegmentedControl,
   StatusBadge,
 } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import {
   KnowledgeGraphObservabilityProvider,
@@ -414,7 +415,9 @@ export function AdminKangurObservabilityPage(): JSX.Element {
                 syncKnowledgeGraph,
               }}
             >
-              <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+              <div
+                className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]`}
+              >
                 <SummaryContent />
                 <KangurAdminStatusCard
                   title='Status'

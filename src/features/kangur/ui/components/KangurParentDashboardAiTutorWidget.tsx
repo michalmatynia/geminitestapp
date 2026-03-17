@@ -38,7 +38,10 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { KangurAiTutorUsageResponse } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_STACK_COMPACT_CLASSNAME,
+  KANGUR_TIGHT_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
   formatKangurAiTutorTemplate,
   getKangurAiTutorMoodCopy,
@@ -580,7 +583,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           description={tutorContent.parentDashboard.toggles.allowGamesDescription}
           onChange={setAllowGames}
         />
-        <div className='flex flex-col gap-1'>
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
           <label
             htmlFor={testAccessModeFieldId}
             className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
@@ -606,7 +609,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
           </p>
         </div>
         <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
-          <div className='flex flex-col gap-1'>
+          <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
             <label
               htmlFor={hintDepthFieldId}
               className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
@@ -631,7 +634,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
               {tutorContent.parentDashboard.selects.hintDepthDescription}
             </p>
           </div>
-          <div className='flex flex-col gap-1'>
+          <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
             <label
               htmlFor={proactiveNudgesFieldId}
               className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'
@@ -695,7 +698,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
         />
       </div>
 
-      <div className='flex flex-col gap-1'>
+      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
         <label
           htmlFor={uiModeFieldId}
           className='text-xs font-semibold [color:var(--kangur-page-muted-text)] uppercase tracking-wide'

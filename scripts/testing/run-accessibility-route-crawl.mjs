@@ -25,6 +25,10 @@ import {
   summarizeAccessibilityRouteCrawlReport,
 } from './lib/accessibility-route-crawl.mjs';
 
+if (!process.env['PLAYWRIGHT_RUNTIME_PROBE_TIMEOUT_MS']) {
+  process.env['PLAYWRIGHT_RUNTIME_PROBE_TIMEOUT_MS'] = '10000';
+}
+
 const root = process.cwd();
 
 const routeEntries = filterAccessibilityRouteEntries(

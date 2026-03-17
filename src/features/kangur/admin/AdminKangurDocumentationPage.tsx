@@ -13,6 +13,7 @@ import {
 } from '@/features/kangur/help-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 const DOCUMENTATION_CONTENT_ID = 'kangur-documentation-content';
 const DOCUMENTATION_WORKSPACE_TITLE_ID = 'kangur-documentation-workspace-title';
@@ -50,7 +51,9 @@ export function AdminKangurDocumentationPage(): React.JSX.Element {
           aria-describedby={DOCUMENTATION_WORKSPACE_DESCRIPTION_ID}
           className='space-y-8 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
         >
-          <div className='grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]'>
+          <div
+            className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]`}
+          >
             <div className='space-y-6'>
               <KangurDocumentationTooltipSettingsPanel />
             </div>

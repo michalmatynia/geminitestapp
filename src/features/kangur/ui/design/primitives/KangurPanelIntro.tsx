@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_STACK_COMPACT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 import {
   KangurSectionEyebrow,
@@ -33,7 +34,7 @@ export function KangurPanelIntro(props: KangurPanelIntroProps): React.JSX.Elemen
   } = props;
 
   return (
-    <div className={cn('flex flex-col gap-1', className)} {...restProps}>
+    <div className={cn(KANGUR_STACK_COMPACT_CLASSNAME, className)} {...restProps}>
       {eyebrow ? (
         <KangurSectionEyebrow className={eyebrowClassName} tone={eyebrowTone}>
           {eyebrow}

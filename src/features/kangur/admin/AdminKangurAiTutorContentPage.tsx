@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurAiTutorContentSettingsPanel } from '@/features/kangur/admin/components/KangurAiTutorContentSettingsPanel';
 import { Badge, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
+import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 const AI_TUTOR_CONTENT_ID = 'kangur-ai-tutor-content';
 const AI_TUTOR_CONTENT_TITLE_ID = 'kangur-ai-tutor-content-title';
@@ -38,7 +39,9 @@ export function AdminKangurAiTutorContentPage(): React.JSX.Element {
           aria-describedby={AI_TUTOR_CONTENT_DESCRIPTION_ID}
           className='space-y-8 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background'
         >
-          <div className='grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]'>
+          <div
+            className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]`}
+          >
             <div className='space-y-6'>
               <KangurAiTutorContentSettingsPanel />
             </div>

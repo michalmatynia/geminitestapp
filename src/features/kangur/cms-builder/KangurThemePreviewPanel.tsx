@@ -6,6 +6,7 @@ import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Badge } from '@/features/kangur/shared/ui';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
+import { KANGUR_CENTER_ROW_SPACED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 type KangurThemePreviewPanelProps = {
   section: string | null;
@@ -372,7 +373,7 @@ function LogoPreview(): React.JSX.Element {
   return (
     <PreviewCard title='Logo & Loader'>
       <PreviewScene className='space-y-2'>
-        <div className='flex items-center gap-3'>
+        <div className={KANGUR_CENTER_ROW_SPACED_CLASSNAME}>
           <div
             style={{
               width: 32,

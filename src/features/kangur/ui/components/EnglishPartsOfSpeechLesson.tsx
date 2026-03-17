@@ -26,6 +26,8 @@ import {
 import { KangurEquationDisplay } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_START_ROW_SPACED_CLASSNAME,
+  KANGUR_GRID_SPACED_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
@@ -86,7 +88,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             często uczeń, nauczyciel albo zespół.
           </KangurLessonLead>
           <KangurLessonCallout accent='sky' className='text-sm' padding='sm'>
-            <div className='grid gap-2 sm:grid-cols-2'>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
               {SUBJECT_PRONOUNS.map((item) => (
                 <div
                   key={item.pronoun}
@@ -147,7 +149,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           >
             <EnglishPossessiveAdjectiveAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 sm:grid-cols-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             {POSSESSIVE_ADJECTIVES.map((item) => (
               <KangurLessonInset key={item.word} accent='indigo' className='text-left'>
                 <p className='text-sm font-semibold text-indigo-700'>
@@ -188,7 +190,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             nich.
           </KangurLessonLead>
           <KangurLessonCallout accent='teal' padding='sm'>
-            <div className='grid gap-3 text-sm'>
+            <div className={`${KANGUR_GRID_SPACED_CLASSNAME} text-sm`}>
               <div className='rounded-2xl border border-teal-100/80 bg-teal-50/70 px-3 py-2'>
                 <p className='text-xs uppercase tracking-wide text-teal-600'>Z rzeczownikiem</p>
                 <p className='font-semibold text-teal-700'>This is my solution.</p>
@@ -222,7 +224,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               </KangurLessonChip>
             ))}
           </div>
-          <div className='grid gap-2 text-xs text-slate-600'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-xs text-slate-600`}>
             {POSSESSIVE_PRONOUNS.slice(0, 3).map((item) => (
               <span key={item.word}>{item.example}</span>
             ))}

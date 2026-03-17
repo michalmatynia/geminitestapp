@@ -21,7 +21,19 @@ const pingMongo = async (uri: string): Promise<void> => {
   }
 };
 
+const normalizeProviderFromEnv = (): AppDbProvider | 'unknown' => {
+  const envProvider = process.env['APP_DB_PROVIDER']?.toLowerCase();
+  if (envProvider === 'mongodb') return 'mongodb';
+  if (process.env['MONGODB_URI']) return 'mongodb';
+  return 'unknown';
+};
+
+const shouldSkipDbCheck = process.env['SKIP_HEALTH_DB_CHECK'] === 'true';
+
 const resolveProvider = async (): Promise<AppDbProvider | 'unknown'> => {
+  if (shouldSkipDbCheck) {
+    return normalizeProviderFromEnv();
+  }
   try {
     return await getAppDbProvider();
   } catch (error) {
@@ -41,16 +53,18 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   };
 
   try {
-    if (provider === 'mongodb') {
+    if (shouldSkipDbCheck) {
+      db.ok = true;
+    } else if (provider === 'mongodb') {
       const uri = process.env['MONGODB_URI'];
       if (!uri) {
         throw configurationError('MONGODB_URI missing');
       }
       await pingMongo(uri);
+      db.ok = true;
     } else {
       throw configurationError('No database provider configured.');
     }
-    db.ok = true;
   } catch (error) {
     void ErrorSystem.captureException(error);
     db.error = error instanceof Error ? error.message : 'Database ping failed';

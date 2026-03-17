@@ -26,6 +26,7 @@ import {
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_GRID_SPACED_CLASSNAME,
   KANGUR_INLINE_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
@@ -587,7 +588,7 @@ export default function EnglishPartsOfSpeechGame({
                   Drag & Drop
                 </KangurStatusChip>
               </div>
-              <div className='grid gap-3 sm:grid-cols-[1.1fr_0.9fr] sm:items-center'>
+              <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-[1.1fr_0.9fr] sm:items-center`}>
                 <div>
                   <p className='text-lg font-bold text-slate-800'>{round.title}</p>
                   <p className='text-sm text-slate-600'>{round.prompt}</p>

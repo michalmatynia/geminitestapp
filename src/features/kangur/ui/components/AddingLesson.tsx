@@ -40,6 +40,7 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
@@ -136,7 +137,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             <KangurEquationDisplay accent='amber' data-testid='adding-lesson-single-digit-equation'>
               4 + 3 = ?
             </KangurEquationDisplay>
-            <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
+            <div className={`mt-3 ${KANGUR_GRID_TIGHT_CLASSNAME} text-left text-sm [color:var(--kangur-page-text)]`}>
               <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='amber' size='sm'>
                   1
@@ -350,7 +351,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='emerald'>24 + 13 = ?</KangurEquationDisplay>
-            <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
+            <div className={`mt-3 ${KANGUR_GRID_TIGHT_CLASSNAME} text-left text-sm [color:var(--kangur-page-text)]`}>
               <div className='rounded-lg border border-emerald-200/70 bg-emerald-50/70 px-3 py-2'>
                 <p className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
                   Dziesiątki
@@ -369,7 +370,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </KangurEquationDisplay>
           </KangurLessonCallout>
           <KangurLessonInset accent='emerald' className='max-w-md text-left' padding='sm'>
-            <div className='grid gap-2 text-sm'>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
               <div className='flex items-center justify-between'>
                 <span className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
                   Schemat
@@ -467,7 +468,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game' | 'synthesis'>, LessonSlid
             </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonInset accent='slate' className='max-w-md text-left' padding='sm'>
-            <div className='grid gap-2 text-sm'>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
               <div className='grid grid-cols-1 items-center gap-2 text-center font-semibold sm:grid-cols-[1fr_auto_1fr] sm:text-left'>
                 <span>Dziesiątki</span>
                 <span className='text-slate-400'>+</span>

@@ -10,6 +10,7 @@ import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/Kangur
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_RELAXED_CLASSNAME,
   KANGUR_STACK_SPACED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -577,7 +578,7 @@ function KangurLoginPageContent(): React.JSX.Element {
             className={KANGUR_STACK_RELAXED_CLASSNAME}
             noValidate
           >
-            <div className='flex flex-col gap-1'>
+            <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
               <label htmlFor='kangur-login-identifier' className='text-sm font-semibold'>
                 {activeAuthMode === 'create-account' ? 'Email' : 'Email lub nick ucznia'}
               </label>
@@ -601,7 +602,7 @@ function KangurLoginPageContent(): React.JSX.Element {
               />
             </div>
 
-            <div className='flex flex-col gap-1'>
+            <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
               <label htmlFor='kangur-login-password' className='text-sm font-semibold'>
                 Hasło
               </label>
@@ -666,7 +667,7 @@ function KangurLoginPageContent(): React.JSX.Element {
                   Potwierdź e-mail teraz
                 </a>
               ) : null}
-              <div className='flex flex-col gap-1'>
+              <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
                 <button
                   type='button'
                   onClick={handleParentResend}

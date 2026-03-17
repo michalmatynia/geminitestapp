@@ -44,6 +44,7 @@ import {
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 const emptyEditorState = {
   titlePl: '',
@@ -582,7 +583,12 @@ export function AdminKangurSocialPage(): React.JSX.Element {
         </div>
       }
     >
-      <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'>
+      <div
+        className={cn(
+          KANGUR_GRID_ROOMY_CLASSNAME,
+          'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'
+        )}
+      >
         <ListPanel
           header={
             <div>

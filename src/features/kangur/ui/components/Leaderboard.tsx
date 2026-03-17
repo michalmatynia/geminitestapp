@@ -12,6 +12,7 @@ import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
+  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import {
@@ -119,7 +120,7 @@ export default function Leaderboard(): React.JSX.Element {
           title={emptyStateLabel}
         />
       ) : (
-        <div className='flex flex-col gap-1'>
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
           {items.map((item) => {
             return (
               <KangurInfoCard

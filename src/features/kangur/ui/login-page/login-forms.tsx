@@ -5,7 +5,10 @@ import { useKangurLoginPageProps } from './login-context';
 import {
   KANGUR_LEARNER_LOGIN_PATTERN,
 } from './login-constants';
-import { KANGUR_STACK_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_STACK_COMPACT_CLASSNAME,
+  KANGUR_STACK_RELAXED_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 type LoginFormProps = {
   onSubmit: (identifier: string, password?: string) => void;
@@ -68,7 +71,7 @@ export function LoginForm({
       className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
       aria-label='Formularz logowania'
     >
-      <div className='flex flex-col gap-1'>
+      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
         <label htmlFor='identifier' className='text-sm font-medium text-slate-700'>
           Email lub nick ucznia
         </label>
@@ -88,7 +91,7 @@ export function LoginForm({
       </div>
 
       {showPassword && (
-        <div className='flex flex-col gap-1'>
+        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
           <label htmlFor='password' className='text-sm font-medium text-slate-700'>
             Hasło
           </label>

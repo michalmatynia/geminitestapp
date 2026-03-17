@@ -26,6 +26,7 @@ import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-re
 import { api } from '@/shared/lib/api-client';
 import { Badge } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   withKangurClientError,
   withKangurClientErrorSync,
@@ -547,7 +548,13 @@ export function KangurLessonNarrationPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
+      <div
+        className={cn(
+          'mt-5',
+          KANGUR_GRID_RELAXED_CLASSNAME,
+          'xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'
+        )}
+      >
         <div className='rounded-2xl border border-border/60 bg-background/60 p-4 xl:col-span-2'>
           <div className='text-sm font-semibold text-foreground'>Page-by-page narration review</div>
           <div className='mt-1 text-xs text-muted-foreground'>

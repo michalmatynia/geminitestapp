@@ -18,6 +18,10 @@ import {
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import type { KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
 import {
+  KANGUR_GRID_ROOMY_CLASSNAME,
+  KANGUR_STACK_ROOMY_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
+import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   canonicalizeKangurTestSuites,
   KANGUR_TEST_SUITE_SORT_ORDER_GAP,
@@ -157,7 +161,7 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
   }
 
   const mainWorkspace = (
-    <div className='flex h-full flex-col gap-6 overflow-hidden'>
+    <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} h-full overflow-hidden`}>
       <KangurAdminWorkspaceIntroCard
         title='Question bank'
         description='Manage Kangur test suites with the same editorial health model used inside the question workspace. Review-fix pressure and live publish readiness are visible before you open each suite.'
@@ -215,7 +219,9 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
   );
 
   const content = standalone ? (
-    <div className='grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
+    <div
+      className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]`}
+    >
       <div className='min-h-0'>{mainWorkspace}</div>
       <LibraryStatusSidebar />
     </div>

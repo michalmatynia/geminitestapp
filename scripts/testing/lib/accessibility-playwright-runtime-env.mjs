@@ -13,6 +13,10 @@ export const buildAccessibilityPlaywrightRuntimeEnv = ({ env }) => ({
     normalizeQueueWorkerSetting(env['PLAYWRIGHT_RUNTIME_DISABLE_QUEUE_WORKERS']) ??
     normalizeQueueWorkerSetting(env['DISABLE_QUEUE_WORKERS']) ??
     'true',
+  SKIP_HEALTH_DB_CHECK:
+    normalizeQueueWorkerSetting(env['PLAYWRIGHT_RUNTIME_SKIP_HEALTH_DB_CHECK']) ??
+    normalizeQueueWorkerSetting(env['SKIP_HEALTH_DB_CHECK']) ??
+    'true',
 });
 
 export const buildAccessibilityPlaywrightRuntimeContext = ({ env, agentId }) => {

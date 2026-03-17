@@ -24,6 +24,8 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurIconBadge } from '@/features/kangur/ui/design/primitives';
 import {
+  KANGUR_GRID_SPACED_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_START_ROW_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
@@ -62,7 +64,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           >
             <EnglishAgreementBalanceAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 sm:grid-cols-2 text-sm w-full'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm w-full`}>
             <KangurLessonInset accent='teal' className='text-left'>
               <p className='text-xs uppercase tracking-wide text-teal-600'>Singular</p>
               <p className='font-semibold text-slate-900'>
@@ -90,7 +92,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             robi</strong> i dopasuj czasownik tylko do tego słowa.
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' padding='sm'>
-            <div className='grid gap-3 sm:grid-cols-3 text-sm text-slate-700'>
+            <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-3 text-sm text-slate-700`}>
               {[
                 'Skreśl dodatkowe frazy po “of”, “with”, “in”.',
                 'Zadaj pytanie “Who/What?”.',
@@ -157,7 +159,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           </div>
           <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
             <p className='font-semibold text-slate-700'>Kiedy -es i -ies?</p>
-            <div className='mt-2 grid gap-2 sm:grid-cols-2 text-slate-600'>
+            <div className={`mt-2 ${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-slate-600`}>
               <span>go → go<strong>es</strong></span>
               <span>watch → watch<strong>es</strong></span>
               <span>study → stud<strong>ies</strong></span>
@@ -174,7 +176,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             W pytaniach i przeczeniach ważne są formy <strong>do/does</strong> oraz <strong>have/has</strong>.
           </KangurLessonLead>
-          <div className='grid gap-2 sm:grid-cols-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             <KangurLessonInset accent='teal' className='text-left'>
               <p className='text-xs uppercase tracking-wide text-teal-600'>Third person</p>
               <p className='font-semibold text-slate-900'>Does she play?</p>
@@ -218,7 +220,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             po nim.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
-            <div className='grid gap-2 sm:grid-cols-2'>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
               <KangurLessonInset accent='amber' className='text-left'>
                 <p className='font-semibold'>There is a tournament tonight.</p>
                 <KangurLessonCaption align='left'>Jedno wydarzenie.</KangurLessonCaption>
@@ -371,7 +373,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Popraw zdania tak, aby czasownik pasował do podmiotu.
           </KangurLessonLead>
-          <div className='grid gap-2 sm:grid-cols-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             {[
               {
                 wrong: 'The list of players are long.',

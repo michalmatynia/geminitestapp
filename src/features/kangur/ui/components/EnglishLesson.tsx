@@ -15,6 +15,7 @@ import {
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -35,7 +36,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Zaczynamy od najprostszych zwrotów. Wystarczą, by przywitać się i podziękować.
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
-            <div className='grid gap-2 sm:grid-cols-2'>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
               <KangurLessonInset accent='emerald'>
                 <p className='font-semibold text-emerald-700'>Hello</p>
                 <KangurLessonCaption className='mt-1'>Cześć / Dzień dobry</KangurLessonCaption>

@@ -22,6 +22,10 @@ import {
   SelectSimple,
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import {
+  KANGUR_CENTER_ROW_CLASSNAME,
+  KANGUR_CENTER_ROW_SPACED_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';
@@ -207,10 +211,10 @@ function AgentPersonaSelect() {
         padding='sm'
         className={cn('mt-4', 'rounded-2xl border-border/60 bg-background/60 shadow-sm')}
       >
-        <div className='flex items-center gap-2'>
+        <div className={KANGUR_CENTER_ROW_CLASSNAME}>
           <Badge variant='outline'>Current persona</Badge>
         </div>
-        <div className='mt-3 flex items-center gap-3'>
+        <div className={cn('mt-3', KANGUR_CENTER_ROW_SPACED_CLASSNAME)}>
           <AgentPersonaMoodAvatar
             svgContent={selectedAgentPersonaMood.svgContent}
             avatarImageUrl={selectedAgentPersonaMood.avatarImageUrl}

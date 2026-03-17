@@ -20,6 +20,10 @@ import { KangurPageContentSettingsPanel } from './components/KangurPageContentSe
 import { KangurParentVerificationSettingsPanel } from './components/KangurParentVerificationSettingsPanel';
 import { useKangurSettings } from './hooks/useKangurSettings';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
+import {
+  KANGUR_GRID_RELAXED_CLASSNAME,
+  KANGUR_GRID_ROOMY_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
@@ -89,7 +93,7 @@ export function AdminKangurSettingsPage(): ReactElement {
       }
     >
       <div id='kangur-admin-settings-page' className='space-y-8'>
-        <div className='grid gap-6 xl:grid-cols-2'>
+        <div className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-2`}>
           <FormSection
             title='Storefront Theme'
             description='Edit daily and nightly Kangur themes. Changes auto-save to Mongo and apply immediately to the live app.'
@@ -204,7 +208,7 @@ export function AdminKangurSettingsPage(): ReactElement {
             description='Quick access to Kangur telemetry, summary health, and log triage surfaces.'
             className={SETTINGS_SECTION_CLASS_NAME}
           >
-            <div className='grid gap-4 lg:grid-cols-3'>
+            <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-3`}>
               <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
                 <div className='text-sm font-semibold text-foreground'>Observability dashboard</div>
                 <p className='mt-1 text-sm text-muted-foreground'>

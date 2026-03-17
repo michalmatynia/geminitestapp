@@ -36,6 +36,7 @@ import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangu
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
   KANGUR_COMPACT_ROW_CLASSNAME,
+  KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
@@ -432,7 +433,7 @@ export function KangurParentDashboardProgressWidget({
                       value={entry.percent}
                       aria-label={`Postęp lekcji ${entry.lesson.title}`}
                     />
-                    <div className='grid gap-2 sm:grid-cols-2'>
+                    <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
                       {entry.sections.map((section) => (
                         <div
                           key={`${entry.lesson.componentId}-${section.id}`}

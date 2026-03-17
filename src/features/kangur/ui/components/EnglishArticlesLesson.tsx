@@ -23,7 +23,10 @@ import {
 import {
   KangurEquationDisplay,
 } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -80,7 +83,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           >
             <EnglishArticleVowelAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 sm:grid-cols-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             {[
               'a unit (brzmi jak “yoo”)',
               'an angle',
@@ -130,7 +133,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           >
             <EnglishArticleFocusAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'The graph on the screen shows the parabola.',
               'The solution we found is correct.',
@@ -160,7 +163,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
           >
             <EnglishZeroArticleAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'We study math after class.',
               'Graphs show patterns.',

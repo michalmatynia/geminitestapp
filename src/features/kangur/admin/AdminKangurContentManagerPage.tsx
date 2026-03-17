@@ -22,6 +22,10 @@ import { KANGUR_TEST_SUITES_SETTING_KEY, parseKangurTestSuites } from '@/feature
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Card } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
+import {
+  KANGUR_GRID_ROOMY_CLASSNAME,
+  KANGUR_STACK_ROOMY_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 
 import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
@@ -143,9 +147,19 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
       panelClassName='flex h-full min-h-0 flex-col'
       contentClassName='flex min-h-0 flex-1 flex-col'
     >
-      <div className='grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'>
-        <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-hidden'>
-          <div className='grid gap-6 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'>
+      <div
+        className={cn(
+          KANGUR_GRID_ROOMY_CLASSNAME,
+          'min-h-0 flex-1 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]'
+        )}
+      >
+        <div className={cn(KANGUR_STACK_ROOMY_CLASSNAME, 'min-h-0 flex-1 overflow-hidden')}>
+          <div
+            className={cn(
+              KANGUR_GRID_ROOMY_CLASSNAME,
+              'xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'
+            )}
+          >
             <KangurAdminWorkspaceIntroCard
               title='Content workspace'
               description='Manage Kangur lessons and tests from one shared admin surface, with the same page structure, spacing, and support tools used across the rest of Kangur admin.'

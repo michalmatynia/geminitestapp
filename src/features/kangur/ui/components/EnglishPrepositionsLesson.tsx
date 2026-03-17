@@ -25,7 +25,10 @@ import {
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KANGUR_GRID_TIGHT_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
@@ -94,7 +97,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonVisual accent='rose' caption='at 7:30 · on Tuesday · in July'>
             <EnglishPrepositionsTimeAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 sm:grid-cols-3 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
             {[
               { title: 'AT', items: ['at 7:30', 'at noon', 'at midnight'] },
               { title: 'ON', items: ['on Monday', 'on 14 May', 'on my birthday'] },
@@ -128,7 +131,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           >
             <EnglishPrepositionsTimelineAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'Finish the homework before class.',
               'No phones during the test.',
@@ -184,7 +187,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           >
             <EnglishPrepositionsPlaceAnimation />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'Meet me at the bus stop.',
               'The calculator is in the backpack.',
@@ -232,7 +235,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
           <KangurLessonVisual accent='violet' caption='between · above · below'>
             <EnglishPrepositionsRelationsDiagram />
           </KangurLessonVisual>
-          <div className='grid gap-2 text-sm'>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
               'Point P is between A and B.',
               'The graph is above the axis.',
@@ -258,7 +261,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             Te zwroty często mylą. Zapamiętaj je jako gotowe bloki.
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' padding='sm'>
-            <div className='grid gap-2 sm:grid-cols-2 text-sm'>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
               <KangurLessonInset accent='emerald' className='text-left'>
                 <p className='font-semibold text-emerald-700'>at night</p>
                 <p className='text-xs text-slate-500'>noc jako moment</p>

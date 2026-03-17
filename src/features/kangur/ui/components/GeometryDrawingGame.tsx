@@ -51,7 +51,14 @@ import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 type GeometryDrawingGameProps = {
+  activityKey?: string;
+  difficultyLabelOverride?: string;
+  finishLabel?: string;
+  lessonKey?: string;
   onFinish: () => void;
+  operation?: string;
+  shapeIds?: GeometryShapeId[];
+  showDifficultySelector?: boolean;
 };
 
 type ShapeRound = {
@@ -196,7 +203,14 @@ const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
   strokes.flatMap((stroke) => stroke);
 
 export default function GeometryDrawingGame({
+  activityKey,
+  difficultyLabelOverride,
+  finishLabel = 'Wróć',
+  lessonKey = 'geometry_shapes',
   onFinish,
+  operation = 'geometry',
+  shapeIds,
+  showDifficultySelector,
 }: GeometryDrawingGameProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
@@ -221,12 +235,29 @@ export default function GeometryDrawingGame({
     onFinish();
   };
 
+  const customRounds = useMemo(
+    () =>
+      shapeIds && shapeIds.length > 0
+        ? shapeIds
+            .map((shapeId) => SHAPE_ROUND_LIBRARY[shapeId])
+            .filter((round): round is ShapeRound => Boolean(round))
+        : [],
+    [shapeIds]
+  );
   const rounds =
-    SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]?.length > 0
-      ? SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]
-      : LEGACY_SHAPE_ROUNDS;
+    customRounds.length > 0
+      ? customRounds
+      : SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]?.length > 0
+        ? SHAPE_ROUNDS_BY_DIFFICULTY[difficulty]
+        : LEGACY_SHAPE_ROUNDS;
   const currentRound = rounds[roundIndex];
   const totalRounds = rounds.length;
+  const resolvedActivityKey = activityKey ?? `training:${operation}:${difficulty}`;
+  const shouldShowDifficultySelector =
+    showDifficultySelector ?? (customRounds.length === 0);
+  const resolvedDifficultyLabel = shouldShowDifficultySelector
+    ? DIFFICULTY_LABELS[difficulty]
+    : difficultyLabelOverride ?? 'Podstawowy';
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
   const minPointDistance = isCoarsePointer ? 5 : 2;
   const minDrawingPoints = isCoarsePointer
@@ -356,8 +387,8 @@ export default function GeometryDrawingGame({
     (finalScore: number): void => {
       const progress = loadProgress();
       const reward = createTrainingReward(progress, {
-        activityKey: `training:geometry:${difficulty}`,
-        lessonKey: 'geometry_shapes',
+        activityKey: resolvedActivityKey,
+        lessonKey,
         correctAnswers: finalScore,
         totalQuestions: totalRounds,
         difficulty,
@@ -366,7 +397,7 @@ export default function GeometryDrawingGame({
       });
       addXp(reward.xp, reward.progressUpdates);
       void persistKangurSessionScore({
-        operation: 'geometry',
+        operation,
         score: finalScore,
         totalQuestions: totalRounds,
         correctAnswers: finalScore,
@@ -377,7 +408,7 @@ export default function GeometryDrawingGame({
       setXpBreakdown(reward.breakdown ?? []);
       setDone(true);
     },
-    [difficulty, totalRounds]
+    [difficulty, lessonKey, operation, resolvedActivityKey, totalRounds]
   );
 
   const resetRun = useCallback((): void => {
@@ -585,7 +616,7 @@ export default function GeometryDrawingGame({
           <KangurPracticeGameSummaryActions
             className={KANGUR_STACK_ROW_CLASSNAME}
             finishButtonClassName='w-full sm:flex-1'
-            finishLabel='Wróć'
+            finishLabel={finishLabel}
             onFinish={handleFinishSession}
             onRestart={handleRestart}
             restartButtonClassName='w-full sm:flex-1'
@@ -595,7 +626,7 @@ export default function GeometryDrawingGame({
         <>
           <div aria-live='polite' aria-atomic='true' className='sr-only'>
             Runda {roundIndex + 1} z {totalRounds}. Narysuj figurę {currentRound?.label}. Poziom{' '}
-            {DIFFICULTY_LABELS[difficulty]}.
+            {resolvedDifficultyLabel}.
           </div>
           <div
             aria-live='polite'
@@ -605,39 +636,41 @@ export default function GeometryDrawingGame({
           >
             {keyboardStatus}
           </div>
-          <KangurGlassPanel
-            className='w-full rounded-[26px] !p-3'
-            data-testid='geometry-difficulty-shell'
-            surface='solid'
-            variant='soft'
-          >
-            <div className='mb-3 flex justify-center'>
-              <KangurStatusChip accent='teal' size='sm'>
-                Poziom figur
-              </KangurStatusChip>
-            </div>
-            <div
-              aria-label='Poziom trudności figur'
-              className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'
-              role='group'
+          {shouldShowDifficultySelector ? (
+            <KangurGlassPanel
+              className='w-full rounded-[26px] !p-3'
+              data-testid='geometry-difficulty-shell'
+              surface='solid'
+              variant='soft'
             >
-              {(['starter', 'pro'] as const).map((mode) => (
-                <KangurButton
-                  key={mode}
-                  aria-pressed={difficulty === mode}
-                  data-testid={`geometry-difficulty-${mode}`}
-                  type='button'
-                  onClick={() => handleDifficultyChange(mode)}
-                  disabled={feedback !== null}
-                  className='min-h-10 px-4 text-xs'
-                  size='sm'
-                  variant={difficulty === mode ? 'surface' : 'secondary'}
-                >
-                  {DIFFICULTY_LABELS[mode]}
-                </KangurButton>
-              ))}
-            </div>
-          </KangurGlassPanel>
+              <div className='mb-3 flex justify-center'>
+                <KangurStatusChip accent='teal' size='sm'>
+                  Poziom figur
+                </KangurStatusChip>
+              </div>
+              <div
+                aria-label='Poziom trudności figur'
+                className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'
+                role='group'
+              >
+                {(['starter', 'pro'] as const).map((mode) => (
+                  <KangurButton
+                    key={mode}
+                    aria-pressed={difficulty === mode}
+                    data-testid={`geometry-difficulty-${mode}`}
+                    type='button'
+                    onClick={() => handleDifficultyChange(mode)}
+                    disabled={feedback !== null}
+                    className='min-h-10 px-4 text-xs'
+                    size='sm'
+                    variant={difficulty === mode ? 'surface' : 'secondary'}
+                  >
+                    {DIFFICULTY_LABELS[mode]}
+                  </KangurButton>
+                ))}
+              </div>
+            </KangurGlassPanel>
+          ) : null}
 
           <div className='w-full flex items-center kangur-panel-gap'>
             <KangurProgressBar
@@ -675,7 +708,7 @@ export default function GeometryDrawingGame({
                 tone='accent'
               >
                 <KangurStatusChip accent='teal' size='sm'>
-                  Figury • {DIFFICULTY_LABELS[difficulty]}
+                  Figury • {resolvedDifficultyLabel}
                 </KangurStatusChip>
                 <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
                 <KangurHeadline accent='violet' as='h3' id='geometry-drawing-heading' size='sm'>

@@ -1,17 +1,10 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import type * as React from 'react';
+import { useState } from 'react';
 
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -25,9 +18,9 @@ import {
   KangurGlassPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
-type SectionId = 'intro' | 'practice' | 'summary';
+type SectionId = 'intro' | 'practice' | 'draw' | 'summary';
 type ShapeId = 'circle' | 'square' | 'triangle' | 'rectangle' | 'oval' | 'diamond';
 
 type ShapeDefinition = {
@@ -90,14 +83,19 @@ const HUB_SECTIONS = [
     description: 'Nazwij kształt, który widzisz.',
   },
   {
+    id: 'draw',
+    emoji: '✍️',
+    title: 'Gra: Rysuj kształty',
+    description: 'Narysuj koło, trójkąt, kwadrat i prostokąt.',
+    isGame: true,
+  },
+  {
     id: 'summary',
     emoji: '⭐',
     title: 'Podsumowanie',
     description: 'Najważniejsze informacje.',
   },
 ] as const;
-
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
 
 const SHAPE_ROUNDS = [
   { id: 'circle', shape: 'circle', correct: 'Koło', options: ['Koło', 'Kwadrat', 'Trójkąt'] },
@@ -286,7 +284,7 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
   );
 };
 
-const SLIDES: Record<SectionId, LessonSlide[]> = {
+const SLIDES: Record<Exclude<SectionId, 'draw'>, LessonSlide[]> = {
   intro: [
     {
       title: 'Poznaj kształty',
@@ -328,53 +326,42 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
 };
 
 export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { sectionProgress, markSectionOpened, markSectionViewedCount, recordPanelTime } =
-    useKangurLessonPanelProgress<SectionId>({
-      lessonKey: 'geometry_shape_recognition',
-      slideSections: SLIDES,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const sectionList = useMemo(
-    () => buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress),
-    [sectionProgress]
-  );
-
-  const handleSelect = useMemo(
-    () =>
-      createLessonHubSelectHandler<SectionId>({
-        markSectionOpened,
-        onSelectSection: (sectionId) => setActiveSection(sectionId),
-      }),
-    [markSectionOpened]
-  );
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection)}
-        onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount: number) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex: number, panelTitle: string, seconds: number) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-emerald-400'
-        dotDoneClass='bg-emerald-200'
-        gradientClass='kangur-gradient-accent-emerald'
-      />
-    );
-  }
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='geometry_shape_recognition'
       lessonEmoji='🔷'
       lessonTitle='Geometria'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
-      sections={sectionList as any}
-      onSelect={handleSelect}
+      dotActiveClass='bg-emerald-400'
+      dotDoneClass='bg-emerald-200'
+      skipMarkFor={['draw']}
+      games={[
+        {
+          sectionId: 'draw',
+          stage: {
+            accent: 'emerald',
+            title: 'Gra: Rysuj kształty',
+            icon: '✍️',
+            maxWidthClassName: 'max-w-3xl',
+            shellTestId: 'geometry-shape-recognition-draw-shell',
+          },
+          render: ({ onFinish }) => (
+            <GeometryDrawingGame
+              activityKey='training:geometry_shape_recognition:draw'
+              difficultyLabelOverride='Podstawowe'
+              finishLabel='Wróć do tematów'
+              lessonKey='geometry_shape_recognition'
+              onFinish={onFinish}
+              shapeIds={['circle', 'triangle', 'square', 'rectangle']}
+              showDifficultySelector={false}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

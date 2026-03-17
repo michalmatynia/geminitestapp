@@ -1,19 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
 import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   DivisionEqualGroupsAnimation,
   DivisionInverseAnimation,
@@ -30,7 +18,7 @@ import {
   KangurEquationDisplay,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
 
@@ -273,68 +261,39 @@ export const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS);
-
 export default function DivisionLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'division',
-      slideSections: SLIDES,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  if (activeSection === 'game') {
-    return (
-      <LessonActivityStage
-        accent='sky'
-        headerTestId='division-lesson-game-header'
-        icon='🎮'
-        maxWidthClassName='max-w-none'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
-        shellTestId='division-lesson-game-shell'
-        title='Gra z dzieleniem!'
-      >
-        <DivisionGroupsGame
-          finishLabelVariant='topics'
-          onFinish={() => setActiveSection(null)}
-        />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={SLIDES[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS, activeSection)}
-        onBack={() => setActiveSection(null)}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-blue-500'
-        dotDoneClass='bg-blue-300'
-        gradientClass='kangur-gradient-accent-teal'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-    skipMarkFor: ['game'] as const,
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='division'
       lessonEmoji='➗'
       lessonTitle='Dzielenie'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-blue-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS, sectionProgress)}
-      onSelect={handleSelect}
+      dotActiveClass='bg-blue-500'
+      dotDoneClass='bg-blue-300'
+      skipMarkFor={['game']}
+      games={[
+        {
+          sectionId: 'game',
+          stage: {
+            accent: 'sky',
+            title: 'Gra z dzieleniem!',
+            icon: '🎮',
+            maxWidthClassName: 'max-w-none',
+            headerTestId: 'division-lesson-game-header',
+            shellTestId: 'division-lesson-game-shell',
+          },
+          render: ({ onFinish }) => (
+            <DivisionGroupsGame
+              finishLabelVariant='topics'
+              onFinish={onFinish}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

@@ -1,18 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonSlideSection, {
-  type LessonSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import EnglishPartsOfSpeechGame from '@/features/kangur/ui/components/EnglishPartsOfSpeechGame';
 import EnglishPronounsWarmupGame from '@/features/kangur/ui/components/EnglishPronounsWarmupGame';
 import {
@@ -36,12 +24,7 @@ import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
-import {
-  addXp,
-  createLessonCompletionReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId =
   | 'subject_pronouns'
@@ -358,95 +341,59 @@ const HUB_SECTIONS = [
   },
 ];
 
-const SECTION_LABELS: Partial<Record<SectionId, string>> = buildLessonSectionLabels(HUB_SECTIONS as any);
-
 export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'english_parts_of_speech',
-      slideSections: SLIDES as any,
-      sectionLabels: SECTION_LABELS,
-    });
-
-  const handleComplete = (): void => {
-    const progress = loadProgress();
-    const reward = createLessonCompletionReward(progress, 'english_parts_of_speech', 120);
-    addXp(reward.xp, reward.progressUpdates);
-  };
-
-  if (activeSection === 'game_parts_of_speech') {
-    return (
-      <LessonActivityStage
-        accent='sky'
-        headerTestId='english-parts-of-speech-game-header'
-        icon='🎮'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        shellTestId='english-parts-of-speech-game-shell'
-        title='Gra: Parts of Speech'
-        description='Przeciągnij słowa do właściwych części mowy.'
-      >
-        <EnglishPartsOfSpeechGame
-          finishLabel='Wróć do tematów'
-          onFinish={() => setActiveSection(null)}
-        />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection === 'game_pronouns_warmup') {
-    return (
-      <LessonActivityStage
-        accent='sky'
-        headerTestId='english-pronouns-warmup-game-header'
-        icon='⚡'
-        onBack={() => setActiveSection(null)}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        shellTestId='english-pronouns-warmup-game-shell'
-        title='Gra: Pronoun Warm-up'
-        description='Szybka rozgrzewka z zaimkami w matematycznych zdaniach.'
-      >
-        <EnglishPronounsWarmupGame
-          finishLabel='Wróć do tematów'
-          onFinish={() => setActiveSection(null)}
-        />
-      </LessonActivityStage>
-    );
-  }
-
-  if (activeSection) {
-    return (
-      <LessonSlideSection
-        slides={(SLIDES as any)[activeSection]}
-        sectionHeader={resolveLessonSectionHeader(HUB_SECTIONS as any, activeSection as any) as any}
-        onBack={() => setActiveSection(null)}
-        onComplete={activeSection === 'summary' ? handleComplete : undefined}
-        onProgressChange={(viewedCount) => markSectionViewedCount(activeSection, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(activeSection, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-sky-500'
-        dotDoneClass='bg-sky-300'
-        gradientClass='kangur-gradient-accent-sky'
-      />
-    );
-  }
-
-  const handleSelect = createLessonHubSelectHandler<SectionId>({
-    markSectionOpened,
-    onSelectSection: (sectionId) => setActiveSection(sectionId),
-    skipMarkFor: ['game_parts_of_speech', 'game_pronouns_warmup'] as const,
-  });
-
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='english_parts_of_speech'
       lessonEmoji='📝'
       lessonTitle='English: Pronouns'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-sky-300'
-      sections={buildLessonHubSectionsWithProgress(HUB_SECTIONS as any, sectionProgress) as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-sky-500'
+      dotDoneClass='bg-sky-300'
+      completionSectionId='summary'
+      autoRecordComplete
+      scorePercent={120}
+      skipMarkFor={['game_parts_of_speech', 'game_pronouns_warmup']}
+      games={[
+        {
+          sectionId: 'game_pronouns_warmup',
+          stage: {
+            accent: 'sky',
+            title: 'Gra: Pronoun Warm-up',
+            icon: '⚡',
+            description: 'Szybka rozgrzewka z zaimkami w matematycznych zdaniach.',
+            headerTestId: 'english-pronouns-warmup-game-header',
+            shellTestId: 'english-pronouns-warmup-game-shell',
+          },
+          render: ({ onFinish }) => (
+            <EnglishPronounsWarmupGame
+              finishLabel='Wróć do tematów'
+              onFinish={onFinish}
+            />
+          ),
+        },
+        {
+          sectionId: 'game_parts_of_speech',
+          stage: {
+            accent: 'sky',
+            title: 'Gra: Parts of Speech',
+            icon: '🎮',
+            description: 'Przeciągnij słowa do właściwych części mowy.',
+            headerTestId: 'english-parts-of-speech-game-header',
+            shellTestId: 'english-parts-of-speech-game-shell',
+          },
+          render: ({ onFinish }) => (
+            <EnglishPartsOfSpeechGame
+              finishLabel='Wróć do tematów'
+              onFinish={onFinish}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

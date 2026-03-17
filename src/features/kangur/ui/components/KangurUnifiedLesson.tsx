@@ -9,15 +9,31 @@ import LessonSlideSection, {
 } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   buildLessonHubSectionsWithProgress,
+  buildLessonSectionLabels,
   createLessonHubSelectHandler,
   resolveLessonSectionHeader,
 } from '@/features/kangur/ui/components/lesson-utils';
+import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   useKangurLessonSubsectionProgress,
   useLessonTimeTracking,
 } from '@/features/kangur/ui/learner-activity/hooks';
 
+const DEFAULT_DESCRIPTION = '';
+
 type LessonActivityAccent = ComponentProps<typeof LessonActivityStage>['accent'];
+
+type LessonProgressAdapter<SectionId extends string> = {
+  sectionProgress: Partial<Record<SectionId, unknown>>;
+  markSectionOpened: (sectionId: SectionId) => void;
+  markSectionViewedCount: (sectionId: SectionId, viewedCount: number) => void;
+  recordPanelTime: (
+    sectionId: SectionId,
+    panelIndex: number,
+    seconds: number,
+    panelTitle?: string | null
+  ) => void;
+};
 
 export type KangurUnifiedLessonSection<SectionId extends string> = {
   id: SectionId;
@@ -50,25 +66,52 @@ export type KangurUnifiedLessonGameConfig<SectionId extends string> = {
   }) => ReactNode;
 };
 
-type KangurUnifiedLessonProps<SectionId extends string> = {
+type KangurUnifiedLessonBaseProps<SectionId extends string> = {
   lessonId: string;
   lessonEmoji: string;
   lessonTitle: string;
-  sections: KangurUnifiedLessonSection<SectionId>[];
-  slides: Record<SectionId, LessonSlide[]>;
+  sections: ReadonlyArray<KangurUnifiedLessonSection<SectionId>>;
+  slides: Partial<Record<SectionId, LessonSlide[]>>;
   gradientClass: string;
   progressDotClassName: string;
   dotActiveClass: string;
   dotDoneClass: string;
   completionSectionId?: SectionId;
   autoRecordComplete?: boolean;
-  scorePercent?: number;
   skipMarkFor?: readonly SectionId[];
   games?: Array<KangurUnifiedLessonGameConfig<SectionId>>;
   onComplete?: () => void;
+  recordComplete: () => Promise<void>;
+  progressAdapter: LessonProgressAdapter<SectionId>;
 };
 
-export default function KangurUnifiedLesson<SectionId extends string>({
+type KangurUnifiedLessonSubsectionProps<SectionId extends string> = Omit<
+  KangurUnifiedLessonBaseProps<SectionId>,
+  'recordComplete' | 'progressAdapter'
+> & {
+  progressMode?: 'subsection';
+  scorePercent?: number;
+};
+
+type KangurUnifiedLessonPanelProps<SectionId extends string> = Omit<
+  KangurUnifiedLessonBaseProps<SectionId>,
+  'recordComplete' | 'progressAdapter'
+> & {
+  progressMode: 'panel';
+  lessonKey?: string;
+  scorePercent?: number;
+  sectionLabels?: Partial<Record<SectionId, string>>;
+};
+
+const normalizeSections = <SectionId extends string>(
+  sections: ReadonlyArray<KangurUnifiedLessonSection<SectionId>>
+): Array<KangurUnifiedLessonSection<SectionId> & { description: string }> =>
+  sections.map((section) => ({
+    ...section,
+    description: section.description ?? DEFAULT_DESCRIPTION,
+  }));
+
+function KangurUnifiedLessonBase<SectionId extends string>({
   lessonId,
   lessonEmoji,
   lessonTitle,
@@ -80,27 +123,20 @@ export default function KangurUnifiedLesson<SectionId extends string>({
   dotDoneClass,
   completionSectionId,
   autoRecordComplete = false,
-  scorePercent,
   skipMarkFor,
   games,
   onComplete,
-}: KangurUnifiedLessonProps<SectionId>): JSX.Element {
+  recordComplete,
+  progressAdapter,
+}: KangurUnifiedLessonBaseProps<SectionId>): JSX.Element {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
-
-  const { sectionProgress, markSectionOpened, markSectionViewedCount } =
-    useKangurLessonSubsectionProgress<SectionId>({
-      lessonId,
-      sections,
-    });
-
-  const { recordPanelTime, recordComplete } = useLessonTimeTracking({
-    lessonId,
-    scorePercent,
-  });
+  const resolvedSections = useMemo(() => normalizeSections(sections), [sections]);
+  const { sectionProgress, markSectionOpened, markSectionViewedCount, recordPanelTime } =
+    progressAdapter;
 
   const sectionList = useMemo(
-    () => buildLessonHubSectionsWithProgress(sections, sectionProgress),
-    [sections, sectionProgress]
+    () => buildLessonHubSectionsWithProgress(resolvedSections, sectionProgress),
+    [resolvedSections, sectionProgress]
   );
 
   const gameMap = useMemo(() => {
@@ -110,7 +146,7 @@ export default function KangurUnifiedLesson<SectionId extends string>({
 
   if (activeSection) {
     const currentSection = activeSection;
-    const sectionHeader = resolveLessonSectionHeader(sections, currentSection);
+    const sectionHeader = resolveLessonSectionHeader(resolvedSections, currentSection);
     const gameConfig = gameMap.get(currentSection);
 
     if (gameConfig) {
@@ -147,11 +183,11 @@ export default function KangurUnifiedLesson<SectionId extends string>({
     const shouldComplete = completionSectionId === currentSection;
     const handleComplete = shouldComplete
       ? () => {
-        if (autoRecordComplete) {
-          void recordComplete();
+          if (autoRecordComplete) {
+            void recordComplete();
+          }
+          onComplete?.();
         }
-        onComplete?.();
-      }
       : undefined;
 
     return (
@@ -187,4 +223,87 @@ export default function KangurUnifiedLesson<SectionId extends string>({
       onSelect={handleSelect}
     />
   );
+}
+
+function KangurUnifiedLessonSubsection<SectionId extends string>({
+  lessonId,
+  sections,
+  scorePercent,
+  ...rest
+}: KangurUnifiedLessonSubsectionProps<SectionId>): JSX.Element {
+  const { sectionProgress, markSectionOpened, markSectionViewedCount } =
+    useKangurLessonSubsectionProgress<SectionId>({
+      lessonId,
+      sections,
+    });
+
+  const { recordPanelTime, recordComplete } = useLessonTimeTracking({
+    lessonId,
+    scorePercent,
+  });
+
+  return (
+    <KangurUnifiedLessonBase
+      {...rest}
+      lessonId={lessonId}
+      sections={sections}
+      recordComplete={recordComplete}
+      progressAdapter={{
+        sectionProgress,
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime,
+      }}
+    />
+  );
+}
+
+function KangurUnifiedLessonPanel<SectionId extends string>({
+  lessonId,
+  lessonKey,
+  sectionLabels,
+  sections,
+  slides,
+  scorePercent,
+  ...rest
+}: KangurUnifiedLessonPanelProps<SectionId>): JSX.Element {
+  const resolvedLessonKey = lessonKey ?? lessonId;
+  const resolvedSectionLabels = sectionLabels ?? buildLessonSectionLabels(sections);
+
+  const { sectionProgress, markSectionOpened, markSectionViewedCount, recordPanelTime } =
+    useKangurLessonPanelProgress<SectionId>({
+      lessonKey: resolvedLessonKey,
+      slideSections: slides,
+      sectionLabels: resolvedSectionLabels,
+    });
+
+  const { recordComplete } = useLessonTimeTracking({
+    lessonId: resolvedLessonKey,
+    scorePercent,
+  });
+
+  return (
+    <KangurUnifiedLessonBase
+      {...rest}
+      lessonId={lessonId}
+      sections={sections}
+      slides={slides}
+      recordComplete={recordComplete}
+      progressAdapter={{
+        sectionProgress,
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime,
+      }}
+    />
+  );
+}
+
+export default function KangurUnifiedLesson<SectionId extends string>(
+  props: KangurUnifiedLessonSubsectionProps<SectionId> | KangurUnifiedLessonPanelProps<SectionId>
+): JSX.Element {
+  if (props.progressMode === 'panel') {
+    return <KangurUnifiedLessonPanel {...props} />;
+  }
+  return <KangurUnifiedLessonSubsection {...props} />;
 }

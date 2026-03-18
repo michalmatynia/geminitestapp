@@ -3,15 +3,18 @@
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import userEvent from '@testing-library/user-event';
 import { signIn } from 'next-auth/react';
 import { SessionProvider } from 'next-auth/react';
+import type { AnchorHTMLAttributes, PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider } from '@/features/auth/context/AuthContext';
 import SignInPage, {
   resolveSignInCallbackNavigation,
 } from '@/features/auth/pages/public/SignInPage';
+import enMessages from '@/i18n/messages/en.json';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
@@ -34,6 +37,18 @@ vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
   SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: PropsWithChildren<{ href: string } & AnchorHTMLAttributes<HTMLAnchorElement>>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -70,13 +85,15 @@ describe('SignInPage', () => {
 
   const renderPage = () =>
     render(
-      <SessionProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <SignInPage />
-          </AuthProvider>
-        </QueryClientProvider>
-      </SessionProvider>
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <SessionProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <SignInPage />
+            </AuthProvider>
+          </QueryClientProvider>
+        </SessionProvider>
+      </NextIntlClientProvider>
     );
 
   it('renders correctly', async () => {

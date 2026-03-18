@@ -29,6 +29,17 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 const OLLAMA_MODELS_TIMEOUT_MS = 4_500;
+const OLLAMA_DISCOVERY_LOG_THROTTLE_MS = 5 * 60 * 1000;
+let lastOllamaDiscoveryLogAt = 0;
+
+const shouldLogOllamaDiscoveryFailure = (): boolean => {
+  const now = Date.now();
+  if (now - lastOllamaDiscoveryLogAt < OLLAMA_DISCOVERY_LOG_THROTTLE_MS) {
+    return false;
+  }
+  lastOllamaDiscoveryLogAt = now;
+  return true;
+};
 
 type ListBrainModelsOptions = {
   family?: BrainModelFamily;
@@ -136,7 +147,9 @@ const resetProviderCatalog = async (): Promise<{
   return { catalog: fallback, status: 'reset' };
 };
 
-const fetchModelsFromUrl = async (url: string): Promise<string[] | null> => {
+const fetchModelsFromUrl = async (
+  url: string
+): Promise<{ models: string[] | null; error?: unknown }> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OLLAMA_MODELS_TIMEOUT_MS);
   try {
@@ -144,12 +157,11 @@ const fetchModelsFromUrl = async (url: string): Promise<string[] | null> => {
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
     });
-    if (!response.ok) return null;
+    if (!response.ok) return { models: null };
     const payload = (await response.json()) as unknown;
-    return parseDiscoveredModelIds(payload);
+    return { models: parseDiscoveredModelIds(payload) };
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    return null;
+    return { models: null, error };
   } finally {
     clearTimeout(timeoutId);
   }
@@ -157,9 +169,27 @@ const fetchModelsFromUrl = async (url: string): Promise<string[] | null> => {
 
 const fetchLiveOllamaModels = async (): Promise<string[] | null> => {
   const discoveryUrls = buildOllamaDiscoveryUrls(OLLAMA_BASE_URL);
+  let lastFailure: { url: string; error: unknown } | null = null;
   for (const url of discoveryUrls) {
-    const discovered = await fetchModelsFromUrl(url);
-    if (discovered !== null) return discovered;
+    const result = await fetchModelsFromUrl(url);
+    if (result.models !== null) return result.models;
+    if (result.error) {
+      lastFailure = { url, error: result.error };
+    }
+  }
+  if (lastFailure && shouldLogOllamaDiscoveryFailure()) {
+    const cause =
+      lastFailure.error instanceof Error
+        ? lastFailure.error
+        : new Error(String(lastFailure.error ?? 'Unknown error'));
+    const error = new Error(`Ollama server unreachable at ${OLLAMA_BASE_URL}.`, {
+      cause,
+    });
+    void ErrorSystem.captureException(error, {
+      service: 'ai-brain-model-catalog',
+      baseUrl: OLLAMA_BASE_URL,
+      url: lastFailure.url,
+    });
   }
   return null;
 };

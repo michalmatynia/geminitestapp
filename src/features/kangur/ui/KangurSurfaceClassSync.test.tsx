@@ -61,8 +61,8 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.documentElement).toHaveAttribute('data-kangur-appearance-mode', 'default');
     expect(document.body).toHaveAttribute('data-kangur-appearance-mode', 'default');
     expect(appContent).toHaveAttribute('data-kangur-appearance-mode', 'default');
-    expect(document.documentElement).toHaveStyle({ scrollbarGutter: 'stable' });
-    expect(document.body).toHaveStyle({ scrollbarGutter: 'stable' });
+    expect(document.documentElement.style.getPropertyValue('scrollbar-gutter')).toBe('');
+    expect(document.body.style.getPropertyValue('scrollbar-gutter')).toBe('');
     expect(appContent).toHaveStyle({ scrollbarGutter: 'stable' });
 
     unmount();

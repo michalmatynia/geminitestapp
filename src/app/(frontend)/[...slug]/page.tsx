@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
@@ -27,15 +28,19 @@ const isKangurFrontPageSelected = async (): Promise<boolean> => {
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const routeTranslations = await getTranslations('Routes');
   if (await isKangurFrontPageSelected()) {
     return {
-      title: slug[0]?.trim().toLowerCase() === 'login' ? 'StudiQ Login' : 'StudiQ',
+      title:
+        slug[0]?.trim().toLowerCase() === 'login'
+          ? routeTranslations('loginTitle')
+          : routeTranslations('siteTitle'),
     };
   }
   const page = await resolveSlugToPage(slug);
 
   if (!page) {
-    return { title: 'Page Not Found' };
+    return { title: routeTranslations('pageNotFoundTitle') };
   }
 
   return buildSlugMetadata(page);

@@ -58,9 +58,11 @@ const getSlugFromPathname = (
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
   embedded = false,
+  forceBodyScrollLock = false,
 }: {
   basePath?: string;
   embedded?: boolean;
+  forceBodyScrollLock?: boolean;
 }): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
@@ -127,7 +129,7 @@ export function KangurFeatureRouteShell({
         embedded={isEmbedded}
       >
         <KangurMainRoleProvider suppressMainRole>
-          <KangurFeaturePageShell />
+          <KangurFeaturePageShell forceBodyScrollLock={forceBodyScrollLock} />
         </KangurMainRoleProvider>
       </KangurRoutingProvider>
     </div>

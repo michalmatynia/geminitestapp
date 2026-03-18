@@ -36,15 +36,23 @@ describe('settings lite handler', () => {
   });
 
   it('returns lite settings without requiring admin access', async () => {
-    const toArrayMock = vi.fn().mockResolvedValue([
+    const toArrayKangurMock = vi.fn().mockResolvedValue([
       {
         _id: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
         key: KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
         value: JSON.stringify({ agentPersonaId: 'persona-1' }),
       },
     ]);
-    const findMock = vi.fn().mockReturnValue({ toArray: toArrayMock });
-    const collectionMock = vi.fn().mockReturnValue({ find: findMock });
+    const toArraySettingsMock = vi.fn().mockResolvedValue([]);
+    const createIndexMock = vi.fn().mockResolvedValue(undefined);
+    const findKangurMock = vi.fn().mockReturnValue({ toArray: toArrayKangurMock });
+    const findSettingsMock = vi.fn().mockReturnValue({ toArray: toArraySettingsMock });
+    const collectionMock = vi.fn((name: string) => {
+      if (name === 'kangur_settings') {
+        return { find: findKangurMock, createIndex: createIndexMock };
+      }
+      return { find: findSettingsMock };
+    });
     getMongoDbMock.mockResolvedValue({ collection: collectionMock });
 
     const response = await GET_handler(
@@ -54,7 +62,8 @@ describe('settings lite handler', () => {
 
     expect(response.status).toBe(200);
     expect(collectionMock).toHaveBeenCalledWith('settings');
-    expect(findMock).toHaveBeenCalledWith(
+    expect(collectionMock).toHaveBeenCalledWith('kangur_settings');
+    expect(findKangurMock).toHaveBeenCalledWith(
       expect.objectContaining({
         $or: expect.arrayContaining([
           expect.objectContaining({

@@ -14,7 +14,6 @@ import { ThemeProvider } from '@/shared/providers/theme-provider';
 import { UrlGuardProvider } from '@/shared/providers/UrlGuardProvider';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { RouteAccessibilityAnnouncer } from '@/shared/ui/RouteAccessibilityAnnouncer';
-import { SiteAccessibilityPanel } from '@/shared/ui/SiteAccessibilityPanel';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
 import { ToastProvider } from '@/shared/ui/toast';
 
@@ -27,7 +26,6 @@ export function RootProvidersClient({
     <>
       <SkipToContentLink />
       <RouteAccessibilityAnnouncer />
-      <SiteAccessibilityPanel />
       <ToastProvider>
         <QueryProvider>
           <SettingsStoreProvider mode='lite'>

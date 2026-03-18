@@ -87,6 +87,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
         <KangurButton
           onClick={onBack}
           size='sm'
+          type='button'
           variant='surface'
           className='w-full justify-center sm:w-auto sm:justify-start'
         >

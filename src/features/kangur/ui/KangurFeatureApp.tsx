@@ -4,12 +4,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 
+import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
 
-const KangurCmsRuntimeScreen = dynamic(() => import('@/features/kangur/cms-builder/KangurCmsRuntimeScreen').then(m => ({ default: m.KangurCmsRuntimeScreen })));
 const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
@@ -39,6 +39,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { cn } from '@/features/kangur/shared/utils';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
 
@@ -48,6 +49,7 @@ const NAVIGATION_SKELETON_DELAY_MS = 140;
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
     useKangurAuth();
+  const { isLoading: isLoadingSettings } = useSettingsStore();
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -70,19 +72,24 @@ const AuthenticatedApp = (): JSX.Element | null => {
     !isAuthenticated &&
     !authErrorType &&
     resolvedPageKey === 'ParentDashboard';
-  const canRenderRouteWhileLoading = resolvedPageKey === 'Lessons';
   const prefersReducedMotion = useReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
+  const isThemeLoading = isLoadingSettings;
+  const canRenderRouteWhileLoading = resolvedPageKey === 'Game' || resolvedPageKey === 'Lessons';
+  const shouldShowBootLoader = (isBootLoading && !canRenderRouteWhileLoading) || isThemeLoading;
+  const isBootOrThemeLoading = isBootLoading || isThemeLoading;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent =
-    (isBootLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
-  const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(isBootLoading);
+    (isBootOrThemeLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
+  const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
-  const bootSkeletonShownAtRef = useRef<number | null>(isBootLoading ? Date.now() : null);
+  const bootSkeletonShownAtRef = useRef<number | null>(
+    shouldShowBootLoader ? Date.now() : null
+  );
   const navigationSkeletonShownRef = useRef(false);
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
@@ -109,7 +116,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   }, [homeHref, routeNavigator, shouldRedirectToHome]);
 
   useEffect(() => {
-    if (isBootLoading) {
+    if (shouldShowBootLoader) {
       if (bootSkeletonShownAtRef.current === null) {
         bootSkeletonShownAtRef.current = Date.now();
       }
@@ -132,7 +139,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [isBootLoading]);
+  }, [shouldShowBootLoader]);
 
   useEffect(() => {
     if (isBootLoading) {

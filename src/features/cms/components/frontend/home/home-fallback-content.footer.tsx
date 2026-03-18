@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import {
@@ -19,35 +22,40 @@ export function HomeFallbackFooter({
 }: {
   socialLinks: SocialLink[];
 }): React.JSX.Element {
+  const translations = useTranslations('FallbackHome.Footer');
+
   return (
     <footer className='flex w-full shrink-0 flex-col gap-6 border-t border-[var(--cms-appearance-page-border)] px-4 py-8 md:px-6'>
       <div className={`${UI_STACK_RELAXED_CLASSNAME} md:flex-row md:items-center md:justify-between`}>
         <div className='space-y-2'>
-          <p className='font-heading text-lg'>Storefront</p>
+          <p className='font-heading text-lg'>{translations('brand')}</p>
           <p className='cms-appearance-muted-text text-xs'>
-            Curated commerce powered by your CMS appearance settings.
+            {translations('description')}
           </p>
         </div>
         <div className={`${UI_STACK_SPACED_CLASSNAME} md:flex-row md:items-center`}>
-          <nav className='flex flex-wrap gap-4 text-xs font-medium uppercase tracking-[0.2em]'>
-            <Link href='#signature' className='hover:underline' prefetch={false}>
-              Signature
-            </Link>
-            <Link href='#highlights' className='hover:underline' prefetch={false}>
-              Highlights
-            </Link>
-            <Link href='#collections' className='hover:underline' prefetch={false}>
-              Collections
-            </Link>
-            <Link href='#products' className='hover:underline' prefetch={false}>
-              Products
-            </Link>
+          <nav
+            className='flex flex-wrap gap-4 text-xs font-medium uppercase tracking-[0.2em]'
+            aria-label={translations('footerNavAria')}
+          >
+            <a href='#signature' className='hover:underline'>
+              {translations('signature')}
+            </a>
+            <a href='#highlights' className='hover:underline'>
+              {translations('highlights')}
+            </a>
+            <a href='#collections' className='hover:underline'>
+              {translations('collections')}
+            </a>
+            <a href='#products' className='hover:underline'>
+              {translations('products')}
+            </a>
             <Link href='/admin' className='hover:underline' prefetch={false}>
-              Admin
+              {translations('admin')}
             </Link>
           </nav>
           {socialLinks.length ? (
-            <nav className={UI_CENTER_ROW_CLASSNAME} aria-label='Social media'>
+            <nav className={UI_CENTER_ROW_CLASSNAME} aria-label={translations('socialAria')}>
               {socialLinks.map((link) => {
                 const Icon = link.Icon;
                 return (
@@ -75,7 +83,7 @@ export function HomeFallbackFooter({
         </div>
       </div>
       <p className='cms-appearance-muted-text text-xs'>
-        &copy; 2024 Acme Inc. All rights reserved.
+        {translations('copyright', { year: new Date().getFullYear() })}
       </p>
     </footer>
   );

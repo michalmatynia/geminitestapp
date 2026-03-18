@@ -6,7 +6,7 @@ import { PageBuilderLayout } from '@/features/cms/components/page-builder/PageBu
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock dependencies
-vi.mock('@/features/admin/context/AdminLayoutContext', () => ({
+vi.mock('@/shared/providers/AdminLayoutProvider', () => ({
   useAdminLayoutActions: () => ({
     setIsProgrammaticallyCollapsed: vi.fn(),
   }),

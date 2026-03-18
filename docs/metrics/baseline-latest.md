@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-18T11:31:55.006Z
+Generated at: 2026-03-18T16:38:13.702Z
 
 ## Snapshot
 
-- Source files: 6759
-- Source lines: 1082437
+- Source files: 6770
+- Source lines: 1084580
 - use client files: 1
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -33,9 +33,9 @@ Generated at: 2026-03-18T11:31:55.006Z
 | Route | LOC |
 | --- | ---: |
 | `src/app/api/v2/products/[[...path]]/route.ts` | 282 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 271 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 230 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 214 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
 | `src/app/api/databases/[[...path]]/route.ts` | 204 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 169 |

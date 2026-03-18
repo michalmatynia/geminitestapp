@@ -138,4 +138,3 @@ export * from './segmented-control';
 export * from './chip';
 export * from './searchable-select';
 export * from './image-slot-manager';
-export * from './SiteAccessibilityPanel';

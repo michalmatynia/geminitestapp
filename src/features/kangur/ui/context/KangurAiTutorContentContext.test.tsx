@@ -6,8 +6,9 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiGetMock } = vi.hoisted(() => ({
+const { apiGetMock, authStateMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
+  authStateMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', async (importOriginal) => {
@@ -20,6 +21,10 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
     },
   };
 });
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuthState: () => authStateMock(),
+}));
 
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
@@ -51,6 +56,7 @@ function Harness(): React.JSX.Element {
 describe('KangurAiTutorContentContext', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    authStateMock.mockReturnValue({ isAuthenticated: false });
   });
 
   it('falls back to the default AI Tutor content when no provider is mounted', () => {
@@ -88,6 +94,8 @@ describe('KangurAiTutorContentContext', () => {
         stepLabelTemplate: 'Etap {current} z {total}',
       },
     });
+
+    authStateMock.mockReturnValue({ isAuthenticated: true });
 
     render(
       <KangurAiTutorContentProvider>

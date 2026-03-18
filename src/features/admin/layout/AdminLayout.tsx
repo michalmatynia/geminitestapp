@@ -189,7 +189,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     (pathname.startsWith('/admin/kangur/') &&
       !pathname.startsWith('/admin/kangur/lessons-manager'));
   const mainPaddingClassName = isEmbeddedKangurRoute ? 'pt-6' : 'p-4 pt-16';
-  const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto ${mainPaddingClassName}`;
+  const mainClassName = `min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto scrollbar-gutter-stable ${mainPaddingClassName}`;
 
   const mobileMenuToggleLabel = isMenuHidden ? 'Open admin menu' : 'Close admin menu';
   const mobileMenuToggle = isOverlayMenu ? (

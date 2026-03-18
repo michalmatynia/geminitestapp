@@ -29,6 +29,7 @@ type CmsVariantProps = {
   theme: ThemeSettings;
   colorSchemes: Record<string, ColorSchemeColors>;
   showMenu: boolean;
+  loadingLabel: string;
   hasCmsContent: boolean;
   defaultSlug: string;
   rendererComponents: PageComponent[];
@@ -40,6 +41,7 @@ type FallbackVariantProps = {
   theme: ThemeSettings;
   colorSchemes: Record<string, ColorSchemeColors>;
   showMenu: boolean;
+  loadingLabel: string;
   products: ProductWithImages[];
   showFallbackHeader: boolean;
   appearanceTone: {
@@ -56,8 +58,13 @@ export function HomeContentClient(props: HomeContentClientProps): React.JSX.Elem
   return (
     <React.Suspense
       fallback={
-        <div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
-          Loading storefront...
+        <div
+          className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'
+          role='status'
+          aria-live='polite'
+          aria-atomic='true'
+        >
+          {props.loadingLabel}
         </div>
       }
     >

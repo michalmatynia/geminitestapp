@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import {
+  isKangurSettingKey,
+  listKangurSettingsByKeys,
+} from '@/features/kangur/services/kangur-settings-repository';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
@@ -51,6 +55,7 @@ const attachServerTiming = (
 
 const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];
+  if (keys.length === 0) return [];
   const mongo = await getMongoDb();
   const docs = await mongo
     .collection<MongoStringSettingRecord>(SETTINGS_COLLECTION)
@@ -70,7 +75,25 @@ const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord
 };
 
 const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
-  return readMongoSettings(LITE_SETTINGS_KEYS);
+  const kangurKeys: string[] = [];
+  const otherKeys: string[] = [];
+  LITE_SETTINGS_KEYS.forEach((key) => {
+    if (isKangurSettingKey(key)) {
+      kangurKeys.push(key);
+      return;
+    }
+    otherKeys.push(key);
+  });
+  const [otherSettings, kangurSettings] = await Promise.all([
+    readMongoSettings(otherKeys),
+    listKangurSettingsByKeys(kangurKeys),
+  ]);
+  if (kangurSettings.length === 0) return otherSettings;
+  if (otherSettings.length === 0) return kangurSettings;
+  const merged = new Map<string, string>();
+  otherSettings.forEach((item) => merged.set(item.key, item.value));
+  kangurSettings.forEach((item) => merged.set(item.key, item.value));
+  return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };
 
 export const clearLiteSettingsServerCache = (): void => {

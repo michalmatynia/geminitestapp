@@ -37,6 +37,7 @@ export * from './products';
 export * from './prompt-engine';
 export * from './prompt-exploder';
 export * from './settings';
+export * from './site-i18n';
 export * from './system';
 export * from './ui';
 export * from './validator';

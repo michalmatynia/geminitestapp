@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 
 import {
   DEFAULT_MENU_SETTINGS,
-  getCmsMenuSettingsKey,
+  getCmsMenuSettingsFallbackKeys,
   normalizeMenuSettings,
   type MenuSettings,
 } from '@/shared/contracts/cms-menu';
@@ -37,11 +37,23 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
-export const getCmsMenuSettings = async (domainId?: string | null): Promise<MenuSettings> => {
+export const getCmsMenuSettings = async (
+  domainId?: string | null,
+  locale?: string | null
+): Promise<MenuSettings> => {
   const zoningEnabled = await isDomainZoningEnabled();
-  const scopedKey = getCmsMenuSettingsKey(zoningEnabled ? (domainId ?? null) : null);
-  const stored = await readSettingValue(scopedKey);
-  if (!stored) return DEFAULT_MENU_SETTINGS;
-  const parsed = parseJsonSetting<unknown>(stored, null);
-  return normalizeMenuSettings(parsed);
+  const scopedDomainId = zoningEnabled ? (domainId ?? null) : null;
+  const fallbackKeys = getCmsMenuSettingsFallbackKeys(scopedDomainId, locale);
+
+  for (const key of fallbackKeys) {
+    const stored = await readSettingValue(key);
+    if (!stored) {
+      continue;
+    }
+
+    const parsed = parseJsonSetting<unknown>(stored, null);
+    return normalizeMenuSettings(parsed);
+  }
+
+  return DEFAULT_MENU_SETTINGS;
 };

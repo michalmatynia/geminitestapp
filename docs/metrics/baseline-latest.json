@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-18T11:31:55.006Z",
+  "generatedAt": "2026-03-18T16:38:13.702Z",
   "source": {
-    "totalFiles": 6759,
-    "totalLines": 1082437,
+    "totalFiles": 6770,
+    "totalLines": 1084580,
     "useClientFiles": 1,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -29,16 +29,16 @@
         "lines": 282
       },
       {
+        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
+        "lines": 271
+      },
+      {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
         "lines": 236
       },
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
         "lines": 230
-      },
-      {
-        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
-        "lines": 214
       },
       {
         "path": "src/app/api/ai-paths/[[...path]]/route.ts",
@@ -136,8 +136,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1274,
-        "lines": 268903
+        "files": 1281,
+        "lines": 270707
       },
       {
         "feature": "ai",
@@ -152,7 +152,7 @@
       {
         "feature": "cms",
         "files": 334,
-        "lines": 53146
+        "lines": 53197
       },
       {
         "feature": "products",
@@ -215,14 +215,14 @@
         "lines": 4074
       },
       {
+        "feature": "observability",
+        "files": 23,
+        "lines": 3599
+      },
+      {
         "feature": "case-resolver-capture",
         "files": 12,
         "lines": 3211
-      },
-      {
-        "feature": "observability",
-        "files": 20,
-        "lines": 3101
       },
       {
         "feature": "product-sync",
@@ -547,6 +547,10 @@
         "lines": 942
       },
       {
+        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
+        "lines": 940
+      },
+      {
         "path": "src/features/kangur/ui/components/GeometryPerimeterDrawingGame.tsx",
         "lines": 937
       },
@@ -576,10 +580,6 @@
       },
       {
         "path": "src/features/ai/ai-paths/components/canvas-sidebar.tsx",
-        "lines": 926
-      },
-      {
-        "path": "src/features/cms/components/page-builder/PreviewBlock.tsx",
         "lines": 926
       }
     ],

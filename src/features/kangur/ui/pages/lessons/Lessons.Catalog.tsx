@@ -174,11 +174,16 @@ export function LessonsCatalog() {
         const groupHasSubsections = Boolean(entry.group.subsections?.length);
         let groupLessonIndex = 0;
         return (
-          <KangurGlassPanel key={entry.group.id} className='w-full' padding='lg' surface='playField'>
+          <KangurGlassPanel
+            key={entry.group.id}
+            className='w-full kangur-panel-hover-zoom'
+            padding='lg'
+            surface='playField'
+          >
             <button
               type='button'
               onClick={() => setExpandedLessonGroupId(isExpanded ? null : entry.group.id)}
-              className='flex w-full items-center justify-between gap-3 text-left'
+              className='flex w-full cursor-pointer items-center justify-between gap-3 text-left'
             >
               <div className='min-w-0'>
                 <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>

@@ -17,7 +17,10 @@ import type {
   CmsDomainDto,
   CreateCmsDomainDto,
   UpdateCmsDomainDto,
+  CmsPageLookupOptions,
+  CmsSlugLookupOptions,
 } from '@/shared/contracts/cms';
+import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
@@ -30,6 +33,10 @@ const domainsCollection = 'cms_domains';
 interface PageDocument {
   id: string;
   name: string;
+  locale?: string | null;
+  translationGroupId?: string | null;
+  sourceLocale?: string | null;
+  translationStatus?: 'draft' | 'machine' | 'reviewed' | 'published';
   status: string;
   publishedAt?: Date | null;
   seoTitle?: string | null;
@@ -48,6 +55,8 @@ interface SlugDocument {
   id: string;
   slug: string;
   isDefault: boolean;
+  locale?: string | null;
+  translationGroupId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -106,6 +115,10 @@ function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
   return {
     id: doc.id,
     name: doc.name,
+    locale: normalizeLocale(doc.locale),
+    translationGroupId: normalizeTranslationGroupId(doc.translationGroupId),
+    sourceLocale: normalizeLocaleOrNull(doc.sourceLocale),
+    translationStatus: doc.translationStatus ?? 'draft',
     status: doc.status as 'draft' | 'published' | 'scheduled',
     publishedAt: doc.publishedAt?.toISOString(),
     seoTitle: doc.seoTitle ?? undefined,
@@ -127,6 +140,8 @@ function mapSlugDocumentToSlug(doc: SlugDocument): Slug {
     id: doc.id,
     slug: doc.slug,
     isDefault: doc.isDefault,
+    locale: normalizeLocale(doc.locale),
+    translationGroupId: normalizeTranslationGroupId(doc.translationGroupId),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
     pageId: null, // This would need a lookup if we strictly need it
@@ -149,6 +164,74 @@ function mapDomainDocumentToDomain(doc: DomainDocument): CmsDomainDto {
 // ---------------------------------------------------------------------------
 
 const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> => ({ id }) as Filter<T>;
+
+const DEFAULT_CMS_LOCALE = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
+
+const normalizeLocale = (value?: string | null): string => {
+  const normalized = value?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : DEFAULT_CMS_LOCALE;
+};
+
+const normalizeLocaleOrNull = (value?: string | null): string | null => {
+  const normalized = value?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : null;
+};
+
+const normalizeTranslationGroupId = (value?: string | null): string | null => {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? normalized : null;
+};
+
+const resolveLocaleCandidates = (
+  options?: CmsPageLookupOptions | CmsSlugLookupOptions
+): string[] => {
+  const requested = normalizeLocaleOrNull(options?.locale);
+  if (!requested) {
+    return [];
+  }
+
+  if (options?.fallbackToDefaultLocale === false) {
+    return [requested];
+  }
+
+  return Array.from(new Set([requested, DEFAULT_CMS_LOCALE]));
+};
+
+const pickLocalizedSlugDocument = (
+  docs: SlugDocument[],
+  options?: CmsSlugLookupOptions
+): SlugDocument | null => {
+  if (docs.length === 0) return null;
+
+  const candidates = resolveLocaleCandidates(options);
+  if (candidates.length === 0) {
+    return docs[0] ?? null;
+  }
+
+  for (const locale of candidates) {
+    const match = docs.find((doc) => normalizeLocale(doc.locale) === locale);
+    if (match) {
+      return match;
+    }
+  }
+
+  return docs.find((doc) => normalizeLocaleOrNull(doc.locale) === null) ?? null;
+};
+
+const filterLocalizedSlugDocuments = (
+  docs: SlugDocument[],
+  options?: CmsSlugLookupOptions
+): SlugDocument[] => {
+  const candidates = resolveLocaleCandidates(options);
+  if (candidates.length === 0) {
+    return docs;
+  }
+
+  return docs.filter((doc) => {
+    const locale = normalizeLocale(doc.locale);
+    return candidates.includes(locale) || normalizeLocaleOrNull(doc.locale) === null;
+  });
+};
 
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
@@ -217,9 +300,14 @@ export const mongoCmsRepository: CmsRepository = {
     return mapPageDocumentToPage(doc, slugs);
   },
 
-  async getPageBySlug(slugValue: string): Promise<Page | null> {
+  async getPageBySlug(slugValue: string, options?: CmsPageLookupOptions): Promise<Page | null> {
     const db = await getMongoDb();
-    const slugDoc = await db.collection<SlugDocument>(slugsCollection).findOne({ slug: slugValue });
+    const slugDocs = await db
+      .collection<SlugDocument>(slugsCollection)
+      .find({ slug: slugValue })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .toArray();
+    const slugDoc = pickLocalizedSlugDocument(slugDocs, options);
     if (!slugDoc) return null;
     const pageSlug = await db
       .collection<PageSlugDocument>('cms_page_slugs')
@@ -228,12 +316,24 @@ export const mongoCmsRepository: CmsRepository = {
     return this.getPageById(pageSlug.pageId);
   },
 
-  async createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page> {
+  async createPage(data: {
+    name: string;
+    themeId?: string | null | undefined;
+    locale?: string | null;
+    translationGroupId?: string | null;
+    sourceLocale?: string | null;
+    translationStatus?: 'draft' | 'machine' | 'reviewed' | 'published';
+  }): Promise<Page> {
     const db = await getMongoDb();
     const id = randomUUID();
+    const locale = normalizeLocale(data.locale);
     const doc: PageDocument = {
       id,
       name: data.name,
+      locale,
+      translationGroupId: normalizeTranslationGroupId(data.translationGroupId) ?? id,
+      sourceLocale: normalizeLocaleOrNull(data.sourceLocale),
+      translationStatus: data.translationStatus ?? 'draft',
       themeId: data.themeId ?? null,
       status: 'draft',
       showMenu: true,
@@ -264,6 +364,14 @@ export const mongoCmsRepository: CmsRepository = {
       themeId: data.themeId,
       showMenu: data.showMenu,
       components: data.components,
+      locale: data.locale ? normalizeLocale(data.locale) : undefined,
+      translationGroupId:
+        data.translationGroupId !== undefined
+          ? normalizeTranslationGroupId(data.translationGroupId)
+          : undefined,
+      sourceLocale:
+        data.sourceLocale !== undefined ? normalizeLocaleOrNull(data.sourceLocale) : undefined,
+      translationStatus: data.translationStatus,
       updatedAt: new Date(),
     }) as Partial<PageDocument>;
 
@@ -324,17 +432,19 @@ export const mongoCmsRepository: CmsRepository = {
   },
 
   // Slugs
-  async getSlugs(): Promise<Slug[]> {
+  async getSlugs(options?: CmsSlugLookupOptions): Promise<Slug[]> {
     const db = await getMongoDb();
     const docs = await db
       .collection<SlugDocument>(slugsCollection)
       .find()
       .sort({ createdAt: -1 })
       .toArray();
-    return docs.map((doc: SlugDocument): Slug => mapSlugDocumentToSlug(doc));
+    return filterLocalizedSlugDocuments(docs, options).map((doc: SlugDocument): Slug =>
+      mapSlugDocumentToSlug(doc)
+    );
   },
 
-  async getSlugsByIds(ids: string[]): Promise<Slug[]> {
+  async getSlugsByIds(ids: string[], options?: CmsSlugLookupOptions): Promise<Slug[]> {
     if (ids.length === 0) return [];
     const db = await getMongoDb();
     const docs = await db
@@ -344,10 +454,12 @@ export const mongoCmsRepository: CmsRepository = {
       })
       .sort({ createdAt: -1 })
       .toArray();
-    return docs.map((doc: SlugDocument): Slug => mapSlugDocumentToSlug(doc));
+    return filterLocalizedSlugDocuments(docs, options).map((doc: SlugDocument): Slug =>
+      mapSlugDocumentToSlug(doc)
+    );
   },
 
-  async getSlugById(id: string): Promise<Slug | null> {
+  async getSlugById(id: string, _options?: CmsSlugLookupOptions): Promise<Slug | null> {
     const db = await getMongoDb();
     const doc = await db
       .collection<SlugDocument>(slugsCollection)
@@ -356,9 +468,14 @@ export const mongoCmsRepository: CmsRepository = {
     return mapSlugDocumentToSlug(doc);
   },
 
-  async getSlugByValue(slugValue: string): Promise<Slug | null> {
+  async getSlugByValue(slugValue: string, options?: CmsSlugLookupOptions): Promise<Slug | null> {
     const db = await getMongoDb();
-    const doc = await db.collection<SlugDocument>(slugsCollection).findOne({ slug: slugValue });
+    const docs = await db
+      .collection<SlugDocument>(slugsCollection)
+      .find({ slug: slugValue })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .toArray();
+    const doc = pickLocalizedSlugDocument(docs, options);
     if (!doc) return null;
     return mapSlugDocumentToSlug(doc);
   },
@@ -367,6 +484,8 @@ export const mongoCmsRepository: CmsRepository = {
     slug: string;
     pageId?: string | null;
     isDefault?: boolean;
+    locale?: string | null;
+    translationGroupId?: string | null;
   }): Promise<Slug> {
     const db = await getMongoDb();
     const id = randomUUID();
@@ -374,6 +493,8 @@ export const mongoCmsRepository: CmsRepository = {
       id,
       slug: data.slug,
       isDefault: data.isDefault || false,
+      locale: normalizeLocale(data.locale),
+      translationGroupId: normalizeTranslationGroupId(data.translationGroupId) ?? id,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -388,12 +509,23 @@ export const mongoCmsRepository: CmsRepository = {
 
   async updateSlug(
     id: string,
-    data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>
+    data: Partial<{
+      slug: string;
+      pageId: string | null;
+      isDefault: boolean;
+      locale: string | null;
+      translationGroupId: string | null;
+    }>
   ): Promise<Slug | null> {
     const db = await getMongoDb();
     const update = removeUndefined({
       slug: data.slug,
       isDefault: data.isDefault,
+      locale: data.locale !== undefined ? normalizeLocale(data.locale) : undefined,
+      translationGroupId:
+        data.translationGroupId !== undefined
+          ? normalizeTranslationGroupId(data.translationGroupId)
+          : undefined,
       updatedAt: new Date(),
     }) as Partial<SlugDocument>;
 

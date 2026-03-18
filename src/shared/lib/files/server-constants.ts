@@ -23,8 +23,7 @@ if (
   uploadsRoot !== PUBLIC_UPLOADS_ROOT
 ) {
   logger.warn(
-    `[uploads] uploadsRoot points to "${uploadsRoot}", but /uploads is served from "${PUBLIC_UPLOADS_ROOT}". ` +
-      'Set UPLOADS_ROOT="public/uploads" to see local uploads in dev.'
+    `[uploads] uploadsRoot points to "${uploadsRoot}", but /uploads is served from "${PUBLIC_UPLOADS_ROOT}". Set UPLOADS_ROOT="public/uploads" to see local uploads in dev.`
   );
 }
 export const productsRoot = path.join(uploadsRoot, 'products');

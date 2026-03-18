@@ -15,6 +15,16 @@ import {
   resolveLookupDocumentId,
 } from '../mongo-product-repository.helpers';
 
+const orderImageFilesByRequestedIds = (
+  imageFiles: ImageFile[],
+  requestedIds: string[]
+): ImageFile[] => {
+  const filesById = new Map<string, ImageFile>(imageFiles.map((file) => [file.id, file]));
+  return requestedIds
+    .map((id) => filesById.get(id) ?? null)
+    .filter((file): file is ImageFile => file !== null);
+};
+
 export const mongoProductAssociationsImpl = {
   async getProductImages(
     productId: string,
@@ -88,9 +98,10 @@ export const mongoProductAssociationsImpl = {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     if (normalizedIds.length === 0) return;
 
-    const imageFiles = (await mongoImageFileRepository.findImageFilesByIds(
+    const imageFiles = orderImageFilesByRequestedIds(
+      (await mongoImageFileRepository.findImageFilesByIds(normalizedIds)) as ImageFile[],
       normalizedIds
-    )) as ImageFile[];
+    );
     const now = new Date().toISOString();
 
     const newImages = imageFiles.map((file) => ({
@@ -116,9 +127,10 @@ export const mongoProductAssociationsImpl = {
   ) {
     const collection = await getCollection();
     const normalizedIds = normalizeImageFileIds(imageFileIds);
-    const imageFiles = (await mongoImageFileRepository.findImageFilesByIds(
+    const imageFiles = orderImageFilesByRequestedIds(
+      (await mongoImageFileRepository.findImageFilesByIds(normalizedIds)) as ImageFile[],
       normalizedIds
-    )) as ImageFile[];
+    );
     const now = new Date().toISOString();
 
     const newImages = imageFiles.map((file) => ({

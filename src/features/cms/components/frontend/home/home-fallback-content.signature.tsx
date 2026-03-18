@@ -1,34 +1,63 @@
+'use client';
+
 import React from 'react';
+import { Layers, Palette, TrendingUp } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import ProductCard from '@/features/products/components/ProductCard';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { UI_GRID_RELAXED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
-
-import { impactStats } from './home-fallback-content.data';
 
 export function HomeFallbackSignature({
   featuredProducts,
 }: {
   featuredProducts: ProductWithImages[];
 }): React.JSX.Element {
+  const translations = useTranslations('FallbackHome.Signature');
+  const impactStats = [
+    {
+      label: translations('launchKitLabel'),
+      value: translations('launchKitValue'),
+      description: translations('launchKitDescription'),
+      Icon: Layers,
+    },
+    {
+      label: translations('appearanceModesLabel'),
+      value: translations('appearanceModesValue'),
+      description: translations('appearanceModesDescription'),
+      Icon: Palette,
+    },
+    {
+      label: translations('conversionFocusLabel'),
+      value: translations('conversionFocusValue'),
+      description: translations('conversionFocusDescription'),
+      Icon: TrendingUp,
+    },
+  ];
+
   return (
-    <section id='signature' className='w-full py-12'>
+    <section id='signature' className='w-full py-12' aria-labelledby='signature-title'>
       <div className='container px-4 md:px-6'>
         <div className='grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center'>
           <div className='space-y-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3'>
             <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
-              Signature edit
+              {translations('eyebrow')}
             </p>
-            <h2 className='font-heading text-3xl font-semibold tracking-tight sm:text-[2.3rem]'>
-              Bring a sense of direction to every collection.
+            <h2
+              id='signature-title'
+              className='font-heading text-3xl font-semibold tracking-tight sm:text-[2.3rem]'
+            >
+              {translations('title')}
             </h2>
             <p className='text-sm leading-relaxed text-[var(--cms-appearance-muted-text)] sm:text-base'>
-              Use this editorial band to spotlight new releases, seasonal edits, or staff
-              picks. It keeps the focus tight while the catalog grows.
+              {translations('description')}
             </p>
-            <div className='grid gap-3 sm:grid-cols-3'>
+            <ul
+              className='grid gap-3 sm:grid-cols-3 list-none p-0 m-0'
+              aria-label={translations('impactAria')}
+            >
               {impactStats.map(({ label, value, description, Icon }) => (
-                <div
+                <li
                   key={label}
                   className='cms-appearance-subtle-surface rounded-2xl border px-4 py-3'
                 >
@@ -44,23 +73,27 @@ export function HomeFallbackSignature({
                   <p className='text-xs text-[var(--cms-appearance-muted-text)]'>
                     {description}
                   </p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-          <div className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:delay-150`}>
+          <ul
+            className={`${UI_GRID_RELAXED_CLASSNAME} sm:grid-cols-2 list-none p-0 m-0 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:delay-150`}
+            aria-label={translations('featuredProductsAria')}
+          >
             {featuredProducts.length ? (
               featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  className='border-[var(--cms-appearance-page-border)]/60 shadow-sm'
-                />
+                <li key={product.id} className='h-full'>
+                  <ProductCard
+                    product={product}
+                    className='border-[var(--cms-appearance-page-border)]/60 shadow-sm'
+                  />
+                </li>
               ))
             ) : (
               <>
-                {['Curated set', 'Limited release'].map((label) => (
-                  <div
+                {[translations('curatedSet'), translations('limitedRelease')].map((label) => (
+                  <li
                     key={label}
                     className={`cms-appearance-subtle-surface ${UI_STACK_RELAXED_CLASSNAME} rounded-3xl border p-5`}
                   >
@@ -71,11 +104,11 @@ export function HomeFallbackSignature({
                       <div className='h-3 w-3/4 rounded-full bg-[color-mix(in srgb,var(--cms-appearance-page-border) 40%, transparent)]' />
                       <div className='h-3 w-1/2 rounded-full bg-[color-mix(in srgb,var(--cms-appearance-page-border) 30%, transparent)]' />
                     </div>
-                  </div>
+                  </li>
                 ))}
               </>
             )}
-          </div>
+          </ul>
         </div>
       </div>
     </section>

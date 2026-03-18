@@ -201,34 +201,35 @@ describe('Game page entry shells', () => {
 
   it.each(ENTRY_SCREEN_CASES)(
     'keeps the restored intro card visible on the $screen screen',
-    ({ artTestId, heading, screen: runtimeScreen, topSectionTestId, widgetTestId }) => {
+    async ({ artTestId, heading, screen: runtimeScreen, topSectionTestId, widgetTestId }) => {
       useKangurGameRuntimeMock.mockReturnValue(buildRuntime(runtimeScreen));
 
       render(<Game />);
 
-      expect(screen.getByTestId(topSectionTestId)).toHaveClass(
+      const topSection = await screen.findByTestId(topSectionTestId);
+      expect(topSection).toHaveClass(
         'glass-panel',
         'border-white/78',
         'bg-white/68',
         'text-center'
       );
-      expect(screen.getByRole('heading', { name: heading })).toHaveClass(
+      expect(await screen.findByRole('heading', { name: heading })).toHaveClass(
         'text-2xl',
         'sm:text-3xl'
       );
-      expect(screen.getByTestId(artTestId)).toBeInTheDocument();
-      expect(screen.getByTestId(widgetTestId)).toBeInTheDocument();
+      expect(await screen.findByTestId(artTestId)).toBeInTheDocument();
+      expect(await screen.findByTestId(widgetTestId)).toBeInTheDocument();
     }
   );
 
-  it('reuses the Grajmy shell when the training screen is requested', () => {
+  it('reuses the Grajmy shell when the training screen is requested', async () => {
     useKangurGameRuntimeMock.mockReturnValue(buildRuntime('training'));
 
     render(<Game />);
 
-    expect(screen.getByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-game-training-top-section')).toBeInTheDocument();
+    expect(await screen.findByTestId('mock-operation-selector')).toBeInTheDocument();
+    expect(await screen.findByTestId('mock-training-setup')).toBeInTheDocument();
   });
 });

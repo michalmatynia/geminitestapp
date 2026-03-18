@@ -34,7 +34,7 @@ import {
   KANGUR_TEST_SUITES_SETTING_KEY,
 } from '@/features/kangur/shared/contracts/kangur-tests';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
-import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { readKangurSettingValue } from '@/features/kangur/server';
 
 import {
   KANGUR_AI_TUTOR_DAILY_GOAL_GAMES,
@@ -174,8 +174,8 @@ export const loadKangurRegistryBaseData = async (learnerId: string): Promise<Kan
     getKangurAssignmentRepository(),
     getKangurLessonRepository(),
     getKangurLessonDocumentRepository(),
-    readStoredSettingValue(KANGUR_TEST_SUITES_SETTING_KEY),
-    readStoredSettingValue(KANGUR_TEST_QUESTIONS_SETTING_KEY),
+    readKangurSettingValue(KANGUR_TEST_SUITES_SETTING_KEY),
+    readKangurSettingValue(KANGUR_TEST_QUESTIONS_SETTING_KEY),
   ]);
   const [progress, scores, assignments, lessons, lessonDocuments] = await Promise.all([
     progressRepository.getProgress(learnerId),

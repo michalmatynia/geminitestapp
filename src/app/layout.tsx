@@ -1,5 +1,8 @@
+import { getTranslations } from 'next-intl/server';
+
 import { RootClientShell } from './_providers/RootClientShell';
 import { cn } from '@/shared/utils';
+import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 
 import type { Metadata, Viewport } from 'next';
 
@@ -21,16 +24,18 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>): Promise<React.JSX.Element> {
+  const commonTranslations = await getTranslations('Common');
+
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html lang={DEFAULT_SITE_I18N_CONFIG.defaultLocale} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         <a href='#app-content' className='app-skip-link'>
-          Skip to main content
+          {commonTranslations('skipToMainContent')}
         </a>
         <RootClientShell>{children}</RootClientShell>
       </body>

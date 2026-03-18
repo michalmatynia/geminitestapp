@@ -22,6 +22,7 @@ const {
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   KangurAuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurAuth: useKangurAuthMock,
+  useKangurAuthState: useKangurAuthMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -119,6 +120,11 @@ describe('KangurFeatureApp shell behavior', () => {
   });
 
   it('renders a full-screen Kangur loading shell while auth state is loading', () => {
+    useKangurRoutingMock.mockReturnValue({
+      pageKey: 'ParentDashboard',
+      requestedPath: '/kangur/parent',
+    });
+    resolveKangurPageKeyMock.mockReturnValue('ParentDashboard');
     useKangurAuthMock.mockReturnValue(
       buildAuthState({
         isLoadingAuth: true,

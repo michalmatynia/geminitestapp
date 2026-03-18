@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurSocialPostById } from '@/features/kangur/server/social-posts-repository';
-import { publishKangurSocialPost } from '@/features/kangur/server/social-posts-publish';
+import {
+  publishKangurSocialPost,
+  type KangurSocialPublishMode,
+} from '@/features/kangur/server/social-posts-publish';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
@@ -23,9 +26,19 @@ export async function postKangurSocialPostPublishHandler(
     throw notFoundError('Social post not found.');
   }
 
+  let mode: KangurSocialPublishMode = 'published';
+  try {
+    const payload = (await req.json()) as { mode?: string } | null;
+    if (payload?.mode === 'draft') {
+      mode = 'draft';
+    }
+  } catch (_error) {
+    mode = 'published';
+  }
+
   const startedAt = Date.now();
   try {
-    const published = await publishKangurSocialPost(post);
+    const published = await publishKangurSocialPost(post, { mode });
     void logKangurServerEvent({
       source: 'kangur.social-posts.publish',
       message: 'Kangur social post published to LinkedIn',
@@ -37,6 +50,7 @@ export async function postKangurSocialPostPublishHandler(
         postId: published.id,
         status: published.status,
         linkedinPostId: published.linkedinPostId ?? null,
+        publishMode: mode,
         durationMs: Date.now() - startedAt,
       },
     });

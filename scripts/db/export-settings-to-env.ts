@@ -78,7 +78,7 @@ const updateEnvFile = (entries: Map<string, string>): string[] => {
   const nextLines = lines.map((line) => {
     const match = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)$/);
     if (!match) return line;
-    const key = match[1];
+    const key = match[1] as string;
     if (!key) return line;
     if (!entries.has(key)) return line;
     const entryValue = entries.get(key);
@@ -89,7 +89,7 @@ const updateEnvFile = (entries: Map<string, string>): string[] => {
 
   const missingKeys = Array.from(entries.keys()).filter((key) => !updatedKeys.has(key));
   if (missingKeys.length > 0) {
-    const lastLine = nextLines.at(-1);
+    const lastLine = nextLines[nextLines.length - 1];
     if (lastLine !== undefined && lastLine.trim() !== '') {
       nextLines.push('');
     }

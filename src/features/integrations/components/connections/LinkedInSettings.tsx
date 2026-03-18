@@ -29,7 +29,7 @@ export function LinkedInSettings(): React.JSX.Element {
   return (
     <FormSection
       title='LinkedIn OAuth'
-      description='Provide your LinkedIn client ID and client secret in the connection fields, then authorize access.'
+      description='Provide your LinkedIn client ID and client secret in the connection fields, or set LINKEDIN_APP_KEY_SECRET and LINKEDIN_APP_CLIENT_SECRET in .env, then authorize access.'
       className='p-6'
     >
       <div className='space-y-6'>

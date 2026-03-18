@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-17T19:44:27.517Z",
+  "generatedAt": "2026-03-18T04:08:22.402Z",
   "source": {
-    "totalFiles": 6565,
-    "totalLines": 1054636,
+    "totalFiles": 6611,
+    "totalLines": 1061807,
     "useClientFiles": 1,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -111,10 +111,10 @@
     "appFeatureDeepImports": 22,
     "featureToSharedTotalImports": 28,
     "featureToAppApiTotalImports": 0,
-    "sharedToFeaturesTotalImports": 2
+    "sharedToFeaturesTotalImports": 1
   },
   "architecture": {
-    "crossFeatureEdgePairs": 7,
+    "crossFeatureEdgePairs": 8,
     "topCrossFeatureEdges": [
       {
         "edge": "kangur -> cms",
@@ -141,6 +141,10 @@
         "references": 1
       },
       {
+        "edge": "ai -> files",
+        "references": 1
+      },
+      {
         "edge": "cms -> admin",
         "references": 1
       }
@@ -148,13 +152,13 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1113,
-        "lines": 242032
+        "files": 1154,
+        "lines": 248186
       },
       {
         "feature": "ai",
-        "files": 1027,
-        "lines": 208341
+        "files": 1029,
+        "lines": 208449
       },
       {
         "feature": "case-resolver",
@@ -168,18 +172,18 @@
       },
       {
         "feature": "products",
-        "files": 225,
-        "lines": 44396
+        "files": 226,
+        "lines": 44882
       },
       {
         "feature": "integrations",
         "files": 205,
-        "lines": 28857
+        "lines": 28859
       },
       {
         "feature": "prompt-exploder",
         "files": 114,
-        "lines": 26285
+        "lines": 26284
       },
       {
         "feature": "notesapp",
@@ -479,6 +483,10 @@
         "lines": 1459
       },
       {
+        "path": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx",
+        "lines": 1377
+      },
+      {
         "path": "src/shared/contracts/kangur-ai-tutor-content.ts",
         "lines": 1189
       },
@@ -488,19 +496,23 @@
       },
       {
         "path": "src/features/kangur/ui/components/ClockLesson.tsx",
-        "lines": 1169
+        "lines": 1164
       },
       {
         "path": "src/features/kangur/services/local-kangur-platform-duels.ts",
         "lines": 1144
       },
       {
+        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
+        "lines": 1137
+      },
+      {
         "path": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
         "lines": 1133
       },
       {
-        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
-        "lines": 1124
+        "path": "src/shared/contracts/kangur.ts",
+        "lines": 1115
       },
       {
         "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
@@ -509,10 +521,6 @@
       {
         "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
         "lines": 1112
-      },
-      {
-        "path": "src/shared/contracts/kangur.ts",
-        "lines": 1100
       },
       {
         "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
@@ -547,10 +555,6 @@
         "lines": 1041
       },
       {
-        "path": "src/features/kangur/ui/pages/Game.tsx",
-        "lines": 1035
-      },
-      {
         "path": "src/features/prompt-engine/context/PromptEngineContext.tsx",
         "lines": 1035
       },
@@ -576,7 +580,11 @@
       },
       {
         "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-        "lines": 976
+        "lines": 983
+      },
+      {
+        "path": "src/features/kangur/ui/pages/Game.tsx",
+        "lines": 983
       },
       {
         "path": "src/shared/contracts/cms.ts",
@@ -589,10 +597,6 @@
       {
         "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
         "lines": 958
-      },
-      {
-        "path": "src/features/kangur/ui/KangurLoginPage.tsx",
-        "lines": 956
       }
     ],
     "topPagesByLines": [
@@ -679,8 +683,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 36,
-    "depthGte4Chains": 0,
-    "forwardingComponents": 36
+    "candidateChains": 42,
+    "depthGte4Chains": 1,
+    "forwardingComponents": 43
   }
 }

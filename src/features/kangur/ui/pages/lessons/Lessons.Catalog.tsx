@@ -18,6 +18,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurLesson,
+  KangurLessonComponentId,
 } from '@/features/kangur/shared/contracts/kangur';
 import {
   LESSONS_CARD_TRANSITION,
@@ -27,6 +28,31 @@ import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
+import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
+
+type LessonSubsectionDefinition = {
+  id: string;
+  label: string;
+  typeLabel?: string;
+  componentIds: readonly KangurLessonComponentId[];
+};
+
+type LessonGroupDefinition = {
+  id: string;
+  label: string;
+  typeLabel?: string;
+  componentIds?: readonly KangurLessonComponentId[];
+  subsections?: readonly LessonSubsectionDefinition[];
+};
+
+type LessonSubsection = LessonSubsectionDefinition & {
+  lessons: KangurLesson[];
+};
+
+type LessonGroup = Omit<LessonGroupDefinition, 'componentIds' | 'subsections'> & {
+  lessons: KangurLesson[];
+  subsections?: LessonSubsection[];
+};
 
 export function LessonsCatalog() {
   const {
@@ -48,32 +74,59 @@ export function LessonsCatalog() {
 
   const ageGroupLabel = getKangurAgeGroupLabel(ageGroup);
 
-  const lessonGroupDefinitions = subject === 'alphabet' ? ALPHABET_LESSON_GROUPS : [];
+  const lessonGroupDefinitions: readonly LessonGroupDefinition[] =
+    subject === 'alphabet'
+      ? ALPHABET_LESSON_GROUPS
+      : subject === 'web_development'
+        ? WEB_DEVELOPMENT_LESSON_GROUPS
+        : [];
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
     setExpandedLessonGroupId(null);
   }, [subject]);
 
-  const lessonGroups = lessonGroupDefinitions.length > 0
-    ? lessonGroupDefinitions
-        .map((group) => {
-          const lessonByComponent = new Map(orderedLessons.map((l) => [l.componentId, l]));
-          return {
-            ...group,
-            lessons: group.componentIds
+  const lessonGroups: LessonGroup[] =
+    lessonGroupDefinitions.length > 0
+      ? lessonGroupDefinitions
+          .map((group) => {
+            const lessonByComponent = new Map(orderedLessons.map((lesson) => [lesson.componentId, lesson]));
+            const groupLessons = (group.componentIds ?? [])
               .map((id) => lessonByComponent.get(id))
-              .filter((l): l is KangurLesson => Boolean(l)),
-          };
-        })
-        .filter((group) => group.lessons.length > 0)
-    : [];
+              .filter((lesson): lesson is KangurLesson => Boolean(lesson));
+            const subsections = group.subsections
+              ?.map((subsection) => ({
+                ...subsection,
+                lessons: subsection.componentIds
+                  .map((componentId) => lessonByComponent.get(componentId))
+                  .filter((lesson): lesson is KangurLesson => Boolean(lesson)),
+              }))
+              .filter((subsection) => subsection.lessons.length > 0);
 
-  const displayLessonGroups = lessonGroups.filter(
-    (group) =>
-      group.lessons.length > 1 &&
+            return {
+              id: group.id,
+              label: group.label,
+              typeLabel: group.typeLabel,
+              lessons: groupLessons,
+              subsections: subsections && subsections.length > 0 ? subsections : undefined,
+            };
+          })
+          .filter((group) =>
+            group.subsections ? group.subsections.length > 0 : group.lessons.length > 0
+          )
+      : [];
+
+  const allowSingleLessonGroups = subject === 'web_development';
+  const displayLessonGroups = lessonGroups.filter((group) => {
+    if (group.subsections) {
+      return group.subsections.some((subsection) => subsection.lessons.length > 0);
+    }
+    return (
+      (allowSingleLessonGroups || group.lessons.length > 1) &&
+      group.lessons.length > 0 &&
       !(subject === 'alphabet' && group.id === 'letter_tracing')
-  );
+    );
+  });
 
   type LessonEntry =
     | { kind: 'group'; group: (typeof displayLessonGroups)[number] }
@@ -87,7 +140,10 @@ export function LessonsCatalog() {
   const lessonGroupIdByComponent = new Map<string, LessonGroupId>();
 
   displayLessonGroups.forEach((group) => {
-    group.lessons.forEach((lesson) => {
+    const groupedLessons = group.subsections
+      ? group.subsections.flatMap((subsection) => subsection.lessons)
+      : group.lessons;
+    groupedLessons.forEach((lesson) => {
       lessonGroupIdByComponent.set(lesson.componentId, group.id);
     });
   });
@@ -114,10 +170,33 @@ export function LessonsCatalog() {
 
   const renderLessonEntries = () => {
     let lessonIndex = 0;
+    const renderLessonCard = (lesson: KangurLesson, index: number) => (
+      <motion.div
+        key={lesson.id}
+        data-testid={`lesson-library-motion-${lesson.id}`}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}
+      >
+        <KangurLessonLibraryCard
+          lesson={lesson}
+          dataDocId='lessons_library_entry'
+          iconTestId={`lesson-library-icon-${lesson.id}`}
+          onSelect={() => handleSelectLesson(lesson.id)}
+          masteryPresentation={getLessonMasteryPresentation(lesson, progress)}
+          lessonAssignment={lessonAssignmentsByComponent.get(lesson.componentId) ?? null}
+          completedLessonAssignment={completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null}
+          hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
+          ariaCurrent={activeLessonId === lesson.id ? 'page' : undefined}
+        />
+      </motion.div>
+    );
 
     return lessonEntries.map((entry) => {
       if (entry.kind === 'group') {
         const isExpanded = expandedLessonGroupId === entry.group.id;
+        const groupHasSubsections = Boolean(entry.group.subsections?.length);
+        let groupLessonIndex = 0;
         return (
           <KangurGlassPanel key={entry.group.id} className='w-full' padding='lg' surface='playField'>
             <button
@@ -138,27 +217,33 @@ export function LessonsCatalog() {
             </button>
             {isExpanded && (
               <div className={`mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
-                {entry.group.lessons.map((lesson, index) => (
-                  <motion.div
-                    key={lesson.id}
-                    data-testid={`lesson-library-motion-${lesson.id}`}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}
-                  >
-                    <KangurLessonLibraryCard
-                      lesson={lesson}
-                      dataDocId='lessons_library_entry'
-                      iconTestId={`lesson-library-icon-${lesson.id}`}
-                      onSelect={() => handleSelectLesson(lesson.id)}
-                      masteryPresentation={getLessonMasteryPresentation(lesson, progress)}
-                      lessonAssignment={lessonAssignmentsByComponent.get(lesson.componentId) ?? null}
-                      completedLessonAssignment={completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null}
-                      hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
-                      ariaCurrent={activeLessonId === lesson.id ? 'page' : undefined}
-                    />
-                  </motion.div>
-                ))}
+                {groupHasSubsections ? (
+                  entry.group.subsections?.map((subsection) => (
+                    <div key={subsection.id} className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+                      <div className='min-w-0'>
+                        <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
+                          {subsection.typeLabel ?? 'Subsection'}
+                        </div>
+                        <div className='mt-1 text-base font-semibold text-slate-900'>
+                          {subsection.label}
+                        </div>
+                      </div>
+                      <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
+                        {subsection.lessons.map((lesson) => {
+                          const index = groupLessonIndex;
+                          groupLessonIndex += 1;
+                          return renderLessonCard(lesson, index);
+                        })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  entry.group.lessons.map((lesson) => {
+                    const index = groupLessonIndex;
+                    groupLessonIndex += 1;
+                    return renderLessonCard(lesson, index);
+                  })
+                )}
               </div>
             )}
           </KangurGlassPanel>
@@ -168,27 +253,7 @@ export function LessonsCatalog() {
       const index = lessonIndex;
       lessonIndex += 1;
 
-      return (
-        <motion.div
-          key={entry.lesson.id}
-          data-testid={`lesson-library-motion-${entry.lesson.id}`}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...LESSONS_CARD_TRANSITION, delay: index * LESSONS_CARD_STAGGER_DELAY }}
-        >
-          <KangurLessonLibraryCard
-            lesson={entry.lesson}
-            dataDocId='lessons_library_entry'
-            iconTestId={`lesson-library-icon-${entry.lesson.id}`}
-            onSelect={() => handleSelectLesson(entry.lesson.id)}
-            masteryPresentation={getLessonMasteryPresentation(entry.lesson, progress)}
-            lessonAssignment={lessonAssignmentsByComponent.get(entry.lesson.componentId) ?? null}
-            completedLessonAssignment={completedLessonAssignmentsByComponent.get(entry.lesson.componentId) ?? null}
-            hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[entry.lesson.id])}
-            ariaCurrent={activeLessonId === entry.lesson.id ? 'page' : undefined}
-          />
-        </motion.div>
-      );
+      return renderLessonCard(entry.lesson, index);
     });
   };
 

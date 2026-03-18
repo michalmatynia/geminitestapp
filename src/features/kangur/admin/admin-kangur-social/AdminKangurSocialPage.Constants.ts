@@ -1,14 +1,30 @@
+import { ApiError } from '@/shared/lib/api-client';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
-export const emptyEditorState = {
+export type EditorState = {
+  titlePl: string;
+  titleEn: string;
+  bodyPl: string;
+  bodyEn: string;
+};
+
+export const emptyEditorState: EditorState = {
   titlePl: '',
   titleEn: '',
   bodyPl: '',
   bodyEn: '',
 };
 
-export const emptyAddonForm = {
+export type AddonFormState = {
+  title: string;
+  sourceUrl: string;
+  selector: string;
+  description: string;
+  waitForMs: string;
+};
+
+export const emptyAddonForm: AddonFormState = {
   title: '',
   sourceUrl: '',
   selector: '',
@@ -103,3 +119,41 @@ export const PIPELINE_STEP_LABELS: Record<PipelineStep, string> = {
   done: 'Pipeline complete',
   error: 'Pipeline failed',
 };
+
+export function isTransientError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return [408, 429, 502, 503, 504].includes(error.status);
+  }
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    return msg.includes('failed to fetch') || msg.includes('timeout') || msg.includes('network');
+  }
+  return false;
+}
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options?: {
+    maxAttempts?: number;
+    delayMs?: number;
+    retryable?: (error: unknown) => boolean;
+  }
+): Promise<T> {
+  const maxAttempts = options?.maxAttempts ?? 2;
+  const delayMs = options?.delayMs ?? 2000;
+  const retryable = options?.retryable ?? isTransientError;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxAttempts && retryable(error)) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}

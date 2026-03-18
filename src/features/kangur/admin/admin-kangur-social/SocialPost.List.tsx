@@ -2,7 +2,18 @@
 
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { Badge, Button, Card, ListPanel } from '@/features/kangur/shared/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  ListPanel,
+} from '@/features/kangur/shared/ui';
 import { cn } from '@/shared/utils';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import { formatDatetimeLocal, statusLabel } from './AdminKangurSocialPage.Constants';
@@ -11,11 +22,19 @@ export function SocialPostList({
   posts,
   activePostId,
   onSelectPost,
+  onPublishPost,
+  onUnpublishPost,
+  publishPendingId,
+  unpublishPendingId,
   onDeletePost,
 }: {
   posts: KangurSocialPost[];
   activePostId: string | null;
   onSelectPost: (id: string) => void;
+  onPublishPost?: (post: KangurSocialPost, mode?: 'published' | 'draft') => void;
+  onUnpublishPost?: (post: KangurSocialPost) => void;
+  publishPendingId?: string | null;
+  unpublishPendingId?: string | null;
   onDeletePost?: (post: KangurSocialPost) => void;
 }): React.JSX.Element {
   return (
@@ -57,12 +76,19 @@ export function SocialPostList({
                 <div className='font-semibold text-foreground'>
                   {post.titlePl || post.titleEn || 'Untitled update'}
                 </div>
-                <div className='text-xs text-muted-foreground'>
-                  {post.status === 'scheduled'
-                    ? `Scheduled: ${formatDatetimeLocal(post.scheduledAt) || '—'}`
-                    : post.publishedAt
-                      ? `Published: ${formatDatetimeLocal(post.publishedAt)}`
-                      : 'Draft'}
+                <div className='space-y-0.5 text-xs text-muted-foreground'>
+                  <div>
+                    {post.status === 'scheduled'
+                      ? `Scheduled: ${formatDatetimeLocal(post.scheduledAt) || '—'}`
+                      : post.publishedAt
+                        ? `Published: ${formatDatetimeLocal(post.publishedAt)}`
+                        : 'Draft'}
+                  </div>
+                  <div>
+                    {`Created: ${formatDatetimeLocal(post.createdAt) || '—'} · Published: ${
+                      formatDatetimeLocal(post.publishedAt) || '—'
+                    }`}
+                  </div>
                 </div>
               </div>
               {post.status !== 'draft' ? (
@@ -71,6 +97,106 @@ export function SocialPostList({
                 </Badge>
               ) : null}
             </button>
+            {onPublishPost ? (
+              (() => {
+                const isPublished = post.status === 'published';
+                const canPublish =
+                  post.status === 'draft' || post.status === 'failed';
+                const publishPending = publishPendingId === post.id;
+                const unpublishPending = unpublishPendingId === post.id;
+                const publishLabel = isPublished
+                  ? 'LinkedIn publication details'
+                  : 'Publish options';
+                const button = (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    disabled={publishPending || unpublishPending || (!isPublished && !canPublish)}
+                    aria-label={publishLabel}
+                    title={publishLabel}
+                    className={cn(
+                      'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
+                      isPublished
+                        ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600'
+                        : 'text-muted-foreground hover:text-foreground',
+                      publishPending && 'cursor-not-allowed opacity-60'
+                    )}
+                  >
+                    <span
+                      aria-hidden='true'
+                      className='text-[9px] font-black uppercase leading-none tracking-tight'
+                    >
+                      {publishPending ? '...' : 'in'}
+                    </span>
+                  </Button>
+                );
+
+                if (!isPublished) {
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+                      <DropdownMenuContent align='end' className='w-56'>
+                        <DropdownMenuLabel>Publish options</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onSelect={() => onPublishPost(post, 'published')}
+                          disabled={publishPending || unpublishPending || !canPublish}
+                        >
+                          Publish to LinkedIn
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => onPublishPost(post, 'draft')}
+                          disabled={publishPending || unpublishPending || !canPublish}
+                        >
+                          Publish as draft
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }
+
+                if (!onUnpublishPost) {
+                  return button;
+                }
+
+                const publishedAt = formatDatetimeLocal(post.publishedAt) || '—';
+                const createdAt = formatDatetimeLocal(post.createdAt) || '—';
+                const postId = post.linkedinPostId ?? '—';
+                const postUrl = post.linkedinUrl ?? null;
+
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+                    <DropdownMenuContent align='end' className='w-72'>
+                      <DropdownMenuLabel>LinkedIn publication</DropdownMenuLabel>
+                      <div className='space-y-1 px-3 py-2 text-xs text-muted-foreground'>
+                        <div>Published: {publishedAt}</div>
+                        <div>Created: {createdAt}</div>
+                        <div className='break-all'>Post ID: {postId}</div>
+                      </div>
+                      {postUrl ? (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => window.open(postUrl, '_blank', 'noopener')}
+                          >
+                            Open on LinkedIn
+                          </DropdownMenuItem>
+                        </>
+                      ) : null}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => onUnpublishPost(post)}
+                        className='text-destructive focus:text-destructive'
+                        disabled={unpublishPending || !post.linkedinPostId}
+                      >
+                        Unpublish (delete)
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })()
+            ) : null}
             {post.status === 'draft' && onDeletePost ? (
               <Button
                 type='button'

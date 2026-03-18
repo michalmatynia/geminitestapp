@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import {
+  isLinkedInIntegrationSlug,
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -142,6 +143,7 @@ export function useIntegrationsActionsImpl(args: {
     const isTraderaIntegration = isTraderaIntegrationSlug(args.activeIntegration.slug);
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
+    const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
     const resolvedConnectionId = requestedConnectionId ?? args.editingConnectionId;
     const isCreateMode =
@@ -153,7 +155,7 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection name is required.', { variant: 'error' });
       return null;
     }
-    if (!isBaselinkerIntegration && !normalizedUsername) {
+    if (!isBaselinkerIntegration && !isLinkedInIntegration && !normalizedUsername) {
       toast('Username is required for this integration.', { variant: 'error' });
       return null;
     }
@@ -161,7 +163,7 @@ export function useIntegrationsActionsImpl(args: {
       toast('Connection id is required for update.', { variant: 'error' });
       return null;
     }
-    if (isCreateMode && !formData.password.trim()) {
+    if (isCreateMode && !isLinkedInIntegration && !formData.password.trim()) {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }

@@ -56,6 +56,8 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     setBatchCaptureBaseUrl,
     batchCapturePresetIds,
     batchCaptureResult,
+    deleteError,
+    clearDeleteError,
     linkedinIntegration,
     linkedinConnections,
     brainModelOptions,
@@ -65,12 +67,15 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     patchMutation,
     deleteMutation,
     publishMutation,
+    unpublishMutation,
     previewDocUpdatesMutation,
     applyDocUpdatesMutation,
     createAddonMutation,
     batchCaptureMutation,
     handleCreateDraft,
     handleDeletePost,
+    handleQuickPublishPost,
+    handleUnpublishPost,
     handleSave,
     handleGenerate,
     handlePreviewDocUpdates,
@@ -91,12 +96,15 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     resolveDocReferences,
     pipelineStep,
     handleRunFullPipeline,
+    publishingPostId,
+    unpublishingPostId,
     contextSummary,
     contextLoading,
     handleLoadContext,
   } = useAdminKangurSocialPage();
 
   const [postToDelete, setPostToDelete] = React.useState<KangurSocialPost | null>(null);
+  const [postToUnpublish, setPostToUnpublish] = React.useState<KangurSocialPost | null>(null);
 
   const brainModelSelectOptions = React.useMemo(() => {
     const defaultDescription = brainModelOptions.effectiveModelId
@@ -209,6 +217,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
       }
       breadcrumbs={breadcrumbs}
       headerLayout='stacked'
+      headerFooterSpacing='flush'
       className='mx-0 max-w-none px-0 py-0'
       panelVariant='flat'
       panelClassName='rounded-none'
@@ -250,7 +259,18 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           posts={posts}
           activePostId={activePostId}
           onSelectPost={setActivePostId}
-          onDeletePost={setPostToDelete}
+          onPublishPost={(post, mode): void => {
+            void handleQuickPublishPost(post.id, mode);
+          }}
+          onUnpublishPost={(post): void => {
+            setPostToUnpublish(post);
+          }}
+          publishPendingId={publishingPostId}
+          unpublishPendingId={unpublishingPostId}
+          onDeletePost={(post): void => {
+            clearDeleteError();
+            setPostToDelete(post);
+          }}
         />
 
         <div className='space-y-6'>
@@ -403,16 +423,45 @@ export function AdminKangurSocialPage(): React.JSX.Element {
 
           <ConfirmModal
             isOpen={Boolean(postToDelete)}
-            onClose={(): void => setPostToDelete(null)}
-            onConfirm={(): void => {
+            onClose={(): void => {
+              setPostToDelete(null);
+              clearDeleteError();
+            }}
+            onConfirm={async (): Promise<void> => {
               if (!postToDelete) return;
-              void handleDeletePost(postToDelete.id);
+              await handleDeletePost(postToDelete.id);
             }}
             title='Delete draft'
-            message={`Delete draft "${postToDelete?.titlePl || postToDelete?.titleEn || 'Untitled update'}"? This action cannot be undone.`}
+            message={
+              <div className='space-y-2'>
+                <div>
+                  {`Delete draft "${postToDelete?.titlePl || postToDelete?.titleEn || 'Untitled update'}"? This action cannot be undone.`}
+                </div>
+                {deleteError ? (
+                  <div className='rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
+                    {deleteError}
+                  </div>
+                ) : null}
+              </div>
+            }
             confirmText='Delete'
             isDangerous={true}
             loading={deleteMutation.isPending}
+          />
+
+          <ConfirmModal
+            isOpen={Boolean(postToUnpublish)}
+            onClose={(): void => setPostToUnpublish(null)}
+            onConfirm={async (): Promise<void> => {
+              if (!postToUnpublish) return;
+              await handleUnpublishPost(postToUnpublish.id);
+              setPostToUnpublish(null);
+            }}
+            title='Unpublish from LinkedIn'
+            message={`This will delete the LinkedIn post and remove it from Kangur Social. Continue?`}
+            confirmText='Unpublish'
+            isDangerous={true}
+            loading={unpublishMutation.isPending}
           />
         </div>
       </div>

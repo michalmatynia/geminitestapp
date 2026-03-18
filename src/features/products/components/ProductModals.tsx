@@ -22,7 +22,7 @@ const ProductForm = dynamic(() => import('./ProductForm'), {
   loading: () => <EditProductSkeletonContent />,
 });
 
-const FileManager = dynamic(() => import('@/shared/ui/files'), {
+const FileManager = dynamic(() => import('@/features/files'), {
   ssr: false,
 });
 

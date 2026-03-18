@@ -21,6 +21,8 @@ export type LinkedInPublishResult = {
   url: string;
 };
 
+type LinkedInPublishMode = 'published' | 'draft';
+
 const API_BASE_URL = process.env['LINKEDIN_API_BASE_URL'] ?? 'https://api.linkedin.com/v2';
 const ASSET_RECIPE = 'urn:li:digitalmediaRecipe:feedshare-image';
 const UPLOAD_RELATIONSHIP = 'urn:li:userGeneratedContent';
@@ -60,6 +62,25 @@ const fetchLinkedInProfile = async (accessToken: string): Promise<LinkedInProfil
   );
   if (!response.ok) return null;
   return (await response.json()) as LinkedInProfileResponse;
+};
+
+const extractLinkedInPostUrn = (value: string | null | undefined): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('urn:li:')) return trimmed;
+  if (trimmed.startsWith('http')) {
+    try {
+      const url = new URL(trimmed);
+      const match = url.pathname.match(/\/feed\/update\/([^/]+)/i);
+      if (match?.[1]) {
+        return decodeURIComponent(match[1]);
+      }
+    } catch (_error) {
+      return trimmed;
+    }
+  }
+  return trimmed;
 };
 
 const resolveLinkedInConnection = async (preferredConnectionId?: string | null) => {
@@ -257,19 +278,23 @@ const resolveImageAsset = async (
 };
 
 export async function publishLinkedInPersonalPost(
-  post: KangurSocialPost
+  post: KangurSocialPost,
+  options?: { mode?: LinkedInPublishMode }
 ): Promise<LinkedInPublishResult> {
   const startedAt = Date.now();
   const imageAssets = post.imageAssets ?? [];
   const text =
     post.combinedBody?.trim() ||
     buildKangurSocialPostCombinedBody(post.bodyPl, post.bodyEn).trim();
+  const publishMode: LinkedInPublishMode = options?.mode ?? 'published';
+  const lifecycleState = publishMode === 'draft' ? 'DRAFT' : 'PUBLISHED';
   const baseContext = {
     service: 'kangur.social-posts.linkedin',
     postId: post.id,
     linkedinConnectionId: post.linkedinConnectionId ?? null,
     bodyLength: text.length,
     imageCount: imageAssets.length,
+    publishMode,
   };
   let stage = 'resolve_connection';
   let uploadedCount = 0;
@@ -334,7 +359,7 @@ export async function publishLinkedInPersonalPost(
     const shareMediaCategory = mediaAssets.length > 0 ? 'IMAGE' : 'NONE';
     const ugcPayload: Record<string, unknown> = {
       author: personUrn,
-      lifecycleState: 'PUBLISHED',
+      lifecycleState,
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
           shareCommentary: {
@@ -418,6 +443,83 @@ export async function publishLinkedInPersonalPost(
       action: 'publish',
       stage,
       uploadedCount,
+      durationMs: Date.now() - startedAt,
+    });
+    throw error;
+  }
+}
+
+export async function deleteLinkedInPersonalPost(post: KangurSocialPost): Promise<void> {
+  const startedAt = Date.now();
+  const postUrn = extractLinkedInPostUrn(post.linkedinPostId ?? null);
+  if (!postUrn) {
+    throw configurationError('LinkedIn post id is missing.');
+  }
+
+  const baseContext = {
+    service: 'kangur.social-posts.linkedin',
+    postId: post.id,
+    linkedinConnectionId: post.linkedinConnectionId ?? null,
+    linkedinPostUrn: postUrn,
+  };
+
+  try {
+    const { connection } = await resolveLinkedInConnection(post.linkedinConnectionId);
+    if (!connection) {
+      throw configurationError(
+        'LinkedIn connection is missing. Connect LinkedIn in Admin > Integrations.'
+      );
+    }
+
+    const expiresAt = toTimestamp(connection.linkedinExpiresAt);
+    if (expiresAt && expiresAt <= Date.now()) {
+      throw configurationError(
+        'LinkedIn access token has expired. Reauthorize LinkedIn in Admin > Integrations.'
+      );
+    }
+
+    const encryptedToken = connection.linkedinAccessToken;
+    if (!encryptedToken) {
+      throw configurationError(
+        'LinkedIn access token is missing. Connect LinkedIn in Admin > Integrations.'
+      );
+    }
+
+    const accessToken = decryptSecret(encryptedToken);
+    if (!accessToken) {
+      throw configurationError(
+        'LinkedIn access token is invalid. Reauthorize LinkedIn in Admin > Integrations.'
+      );
+    }
+
+    const encodedUrn = encodeURIComponent(postUrn);
+    const response = await fetch(`${API_BASE_URL}/ugcPosts/${encodedUrn}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'X-Restli-Protocol-Version': RESTLI_PROTOCOL_VERSION,
+      },
+    });
+
+    if (!response.ok && response.status !== 404) {
+      const detail = await response.text().catch((error) => {
+        void ErrorSystem.captureException(error);
+        return '';
+      });
+      throw operationFailedError(
+        `LinkedIn post delete failed${detail ? `: ${detail}` : '.'}`
+      );
+    }
+
+    void ErrorSystem.logInfo('Kangur LinkedIn post deleted', {
+      ...baseContext,
+      durationMs: Date.now() - startedAt,
+    });
+
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      ...baseContext,
+      action: 'delete',
       durationMs: Date.now() - startedAt,
     });
     throw error;

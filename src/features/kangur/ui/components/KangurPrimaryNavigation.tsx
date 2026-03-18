@@ -582,7 +582,10 @@ export function KangurPrimaryNavigation({
           className='flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none'
           data-testid='kangur-home-logo'
         >
-          <KangurHomeLogo idPrefix='kangur-primary-nav-logo' />
+          <KangurHomeLogo
+            idPrefix='kangur-primary-nav-logo'
+            className='-translate-y-[1px]'
+          />
         </span>
           <span className='sr-only'>Strona główna</span>
       </>

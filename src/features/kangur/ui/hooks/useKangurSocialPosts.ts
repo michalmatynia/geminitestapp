@@ -7,7 +7,7 @@ import {
   type KangurSocialDocUpdatesResponse,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
-import { api } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -107,10 +107,27 @@ export const usePatchKangurSocialPost = (): MutationResult<
 export const useDeleteKangurSocialPost = (): MutationResult<KangurSocialPost, string> =>
   createUpdateMutationV2<KangurSocialPost, string>({
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'delete'],
-    mutationFn: async (postId: string): Promise<KangurSocialPost> =>
-      await api.delete<KangurSocialPost>('/api/kangur/social-posts', {
-        params: { id: postId },
-      }),
+    mutationFn: async (postId: string): Promise<KangurSocialPost> => {
+      try {
+        return await api.delete<KangurSocialPost>('/api/kangur/social-posts', {
+          params: { id: postId },
+        });
+      } catch (error) {
+        if (error instanceof ApiError && [400, 404, 405, 501].includes(error.status)) {
+          try {
+            return await api.delete<KangurSocialPost>(`/api/kangur/social-posts/${postId}`);
+          } catch (fallbackError) {
+            if (fallbackError instanceof ApiError && [404, 405, 501].includes(fallbackError.status)) {
+              return await api.post<KangurSocialPost>('/api/kangur/social-posts/delete', {
+                id: postId,
+              });
+            }
+            throw fallbackError;
+          }
+        }
+        throw error;
+      }
+    },
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.useDeleteKangurSocialPost',
@@ -153,7 +170,7 @@ export const useGenerateKangurSocialPost = (): MutationResult<
   createUpdateMutationV2<KangurSocialPostGenerationResult, KangurSocialPostGenerationPayload>({
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'generate'],
     mutationFn: async (payload): Promise<KangurSocialPostGenerationResult> =>
-      await api.post('/api/kangur/social-posts/generate', payload),
+      await api.post('/api/kangur/social-posts/generate', payload, { timeout: 180_000 }),
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.useGenerateKangurSocialPost',
@@ -165,11 +182,23 @@ export const useGenerateKangurSocialPost = (): MutationResult<
     },
   });
 
-export const usePublishKangurSocialPost = (): MutationResult<KangurSocialPost, string> =>
-  createUpdateMutationV2<KangurSocialPost, string>({
+export type KangurSocialPublishMode = 'published' | 'draft';
+
+export type KangurSocialPostPublishInput = {
+  id: string;
+  mode?: KangurSocialPublishMode;
+};
+
+export const usePublishKangurSocialPost = (): MutationResult<
+  KangurSocialPost,
+  KangurSocialPostPublishInput
+> =>
+  createUpdateMutationV2<KangurSocialPost, KangurSocialPostPublishInput>({
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'publish'],
-    mutationFn: async (postId: string): Promise<KangurSocialPost> =>
-      await api.post<KangurSocialPost>(`/api/kangur/social-posts/${postId}/publish`),
+    mutationFn: async ({ id, mode }: KangurSocialPostPublishInput): Promise<KangurSocialPost> =>
+      await api.post<KangurSocialPost>(`/api/kangur/social-posts/${id}/publish`, {
+        ...(mode ? { mode } : {}),
+      }),
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.usePublishKangurSocialPost',
@@ -178,6 +207,22 @@ export const usePublishKangurSocialPost = (): MutationResult<KangurSocialPost, s
       domain: 'kangur',
       tags: ['kangur', 'social-posts', 'publish'],
       description: 'Publishes Kangur social posts to LinkedIn.',
+    },
+  });
+
+export const useUnpublishKangurSocialPost = (): MutationResult<KangurSocialPost, string> =>
+  createUpdateMutationV2<KangurSocialPost, string>({
+    mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'unpublish'],
+    mutationFn: async (postId: string): Promise<KangurSocialPost> =>
+      await api.post<KangurSocialPost>(`/api/kangur/social-posts/${postId}/unpublish`),
+    invalidate: invalidateSocialPosts,
+    meta: {
+      source: 'kangur.hooks.useUnpublishKangurSocialPost',
+      operation: 'delete',
+      resource: 'kangur.social-posts.unpublish',
+      domain: 'kangur',
+      tags: ['kangur', 'social-posts', 'unpublish'],
+      description: 'Unpublishes Kangur social posts from LinkedIn.',
     },
   });
 
@@ -191,7 +236,8 @@ const makeDocUpdatesMutation = (mode: 'preview' | 'apply') =>
     mutationFn: async (postId: string): Promise<KangurSocialDocUpdatesResponse> =>
       await api.post<KangurSocialDocUpdatesResponse>(
         `/api/kangur/social-posts/${postId}/doc-updates`,
-        { mode }
+        { mode },
+        { timeout: 120_000 }
       ),
     invalidate: invalidateSocialPosts,
     meta: {

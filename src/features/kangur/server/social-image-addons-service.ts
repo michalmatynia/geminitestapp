@@ -33,30 +33,41 @@ export default async function run({ page, input, artifacts, helpers, log }) {
     ? Number(input.waitForSelectorMs)
     : 15000;
 
-  // Wait for the Kangur page transition skeleton to disappear.
-  // The skeleton (data-testid="kangur-page-transition-skeleton") is a full-page
-  // overlay shown while React hydrates and data loads. It is unmounted from the
-  // DOM once the page reports ready via useKangurRoutePageReady().
-  try {
-    const skeleton = page.locator('[data-testid="kangur-page-transition-skeleton"]');
-    const skeletonCount = await skeleton.count();
-    if (skeletonCount > 0) {
-      log('Skeleton overlay detected — waiting for it to disappear');
-      await skeleton.waitFor({ state: 'hidden', timeout: timeoutMs });
-      log('Skeleton removed — page content is ready');
+  log(\`Load event fired — current URL: \${page.url()}\`);
+
+  // Poll DOM until the page is fully ready. Uses page.$() and locator.count()
+  // instead of waitForFunction (which can fail in vm sandbox contexts).
+  {
+    const pollDeadline = Date.now() + timeoutMs;
+    let pageReady = false;
+    log('Polling for page readiness (shell + no skeleton + transition idle)');
+    while (Date.now() < pollDeadline) {
+      const hasShell = await page.$('[data-testid="kangur-route-shell"]');
+      if (!hasShell) { await helpers.sleep(400); continue; }
+      const skeletonCount = await page.locator('[data-testid="kangur-page-transition-skeleton"]').count();
+      if (skeletonCount > 0) { await helpers.sleep(400); continue; }
+      const phaseEl = await page.$('[data-route-transition-phase]');
+      if (phaseEl) {
+        const phase = await phaseEl.getAttribute('data-route-transition-phase');
+        if (phase && phase !== 'idle') { await helpers.sleep(400); continue; }
+        const busy = await phaseEl.getAttribute('aria-busy');
+        if (busy === 'true') { await helpers.sleep(400); continue; }
+      }
+      pageReady = true;
+      break;
     }
-  } catch {
-    log('Skeleton wait timed out — proceeding with capture anyway');
+    log(pageReady
+      ? 'Page ready — skeleton gone, transition idle'
+      : 'Page readiness timeout — capturing current state');
   }
 
   if (selector) {
     await page.waitForSelector(selector, { state: 'visible', timeout: timeoutMs });
   }
 
-  if (waitForMs > 0) {
-    log(\`Waiting \${waitForMs}ms for content to settle\`);
-    await helpers.sleep(waitForMs);
-  }
+  const settleMs = Math.max(waitForMs, 3000);
+  log(\`Waiting \${settleMs}ms for content to settle\`);
+  await helpers.sleep(settleMs);
 
   const buffer = selector
     ? await page.locator(selector).screenshot({ type: 'png' })
@@ -80,6 +91,7 @@ type CreateSocialImageAddonInput = {
   waitForMs?: number | null;
   waitForSelectorMs?: number | null;
   createdBy?: string | null;
+  forwardCookies?: string | null;
 };
 
 const toSourceHost = (sourceUrl: string): string | null => {
@@ -98,6 +110,33 @@ const resolveArtifactByName = (
 
 const buildAddonPublicPath = (filename: string): string =>
   `/uploads/kangur/social-addons/${filename}`;
+
+const parseCookiesForPlaywright = (
+  cookieHeader: string,
+  sourceUrl: string
+): Array<{ name: string; value: string; domain: string; path: string }> => {
+  let domain: string;
+  try {
+    domain = new URL(sourceUrl).hostname;
+  } catch {
+    domain = 'localhost';
+  }
+  return cookieHeader
+    .split(';')
+    .map((pair) => pair.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const eqIdx = pair.indexOf('=');
+      if (eqIdx < 0) return null;
+      return {
+        name: pair.slice(0, eqIdx).trim(),
+        value: pair.slice(eqIdx + 1).trim(),
+        domain,
+        path: '/',
+      };
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
+};
 
 const writeLocalCopy = async (publicPath: string, buffer: Buffer): Promise<void> => {
   const diskPath = getDiskPathFromPublicPath(publicPath);
@@ -155,6 +194,17 @@ export async function createKangurSocialImageAddonFromPlaywright(
     }
 
     stage = 'enqueue';
+    const contextOptions: Record<string, unknown> = {};
+    if (input.forwardCookies) {
+      const cookies = parseCookiesForPlaywright(input.forwardCookies, sourceUrl);
+      if (cookies.length > 0) {
+        contextOptions['storageState'] = {
+          cookies,
+          origins: [],
+        };
+      }
+    }
+
     const run = await enqueuePlaywrightNodeRun({
       request: {
         script: SOCIAL_ADDON_PLAYWRIGHT_SCRIPT,
@@ -166,6 +216,7 @@ export async function createKangurSocialImageAddonFromPlaywright(
         startUrl: sourceUrl,
         timeoutMs: 90_000,
         browserEngine: 'chromium',
+        contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
       },
       waitForResult: true,
       ownerUserId: input.createdBy ?? null,

@@ -18,6 +18,7 @@ type KangurAdminContentShellProps = {
   breadcrumbs: BreadcrumbItem[];
   headerActions?: ReactNode;
   headerLayout?: 'inline' | 'stacked';
+  headerFooterSpacing?: 'default' | 'flush';
   showBreadcrumbs?: boolean;
   refresh?: KangurAdminRefresh | undefined;
   children: ReactNode;
@@ -34,6 +35,7 @@ const KangurAdminContentShellContext = createContext<{
   breadcrumbs: BreadcrumbItem[];
   headerActions?: ReactNode;
   headerLayout?: 'inline' | 'stacked';
+  headerFooterSpacing?: 'default' | 'flush';
   showBreadcrumbs?: boolean;
   refresh?: KangurAdminRefresh | undefined;
 } | null>(null);
@@ -53,6 +55,7 @@ function KangurAdminContentShellHeader(): React.JSX.Element {
     breadcrumbs,
     headerActions,
     headerLayout,
+    headerFooterSpacing,
     showBreadcrumbs,
     refresh,
   } =
@@ -62,6 +65,27 @@ function KangurAdminContentShellHeader(): React.JSX.Element {
     <div className='flex flex-wrap items-center justify-end gap-2 sm:gap-3'>{headerActions}</div>
   ) : null;
   const shouldShowBreadcrumbs = showBreadcrumbs !== false;
+  const hasFooterContent = Boolean((isStacked && resolvedHeaderActions) || shouldShowBreadcrumbs);
+  const renderFooterContent = (className: string): React.JSX.Element => (
+    <div className={className}>
+      {isStacked && resolvedHeaderActions ? (
+        <div className='flex flex-wrap items-center gap-2 sm:gap-3'>{resolvedHeaderActions}</div>
+      ) : null}
+      {shouldShowBreadcrumbs ? (
+        <div className='flex flex-wrap items-center gap-3'>
+          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <span className='hidden h-4 w-px bg-white/12 md:block' />
+          <span className='text-xs text-slate-300/80'>
+            Focused editing shell for lessons, tests, and content operations.
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+  const footerContentDefault = renderFooterContent('mt-1 space-y-1');
+  const footerContentFlush = hasFooterContent
+    ? renderFooterContent('mt-4 pt-4 space-y-1')
+    : null;
 
   return (
     <div className='relative overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.97),rgba(13,38,68,0.88))] px-5 py-5 shadow-[0_30px_100px_-56px_rgba(14,165,233,0.42)]'>
@@ -75,23 +99,9 @@ function KangurAdminContentShellHeader(): React.JSX.Element {
           className={cn('gap-6', isStacked ? 'lg:flex-col lg:items-stretch' : null)}
           actionsClassName={isStacked ? 'w-full justify-start' : undefined}
         >
-          <div className='mt-1 space-y-1'>
-            {isStacked && resolvedHeaderActions ? (
-              <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
-                {resolvedHeaderActions}
-              </div>
-            ) : null}
-            {shouldShowBreadcrumbs ? (
-              <div className='flex flex-wrap items-center gap-3'>
-                <Breadcrumbs items={breadcrumbs} className='mt-0' />
-                <span className='hidden h-4 w-px bg-white/12 md:block' />
-                <span className='text-xs text-slate-300/80'>
-                  Focused editing shell for lessons, tests, and content operations.
-                </span>
-              </div>
-            ) : null}
-          </div>
+          {headerFooterSpacing === 'flush' ? null : footerContentDefault}
         </SectionHeader>
+        {headerFooterSpacing === 'flush' ? footerContentFlush : null}
       </div>
     </div>
   );
@@ -103,6 +113,7 @@ export function KangurAdminContentShell({
   breadcrumbs,
   headerActions,
   headerLayout = 'inline',
+  headerFooterSpacing = 'default',
   showBreadcrumbs = true,
   refresh,
   children,
@@ -118,6 +129,7 @@ export function KangurAdminContentShell({
     breadcrumbs,
     headerActions,
     headerLayout,
+    headerFooterSpacing,
     showBreadcrumbs,
     refresh,
   };

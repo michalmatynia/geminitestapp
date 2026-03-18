@@ -67,7 +67,7 @@ vi.mock('../components/job-queue-panel', () => ({
   ),
 }));
 
-vi.mock('@/shared/ui/files', () => ({
+vi.mock('@/features/files', () => ({
   FileUploadEventsPanel: () => <div data-testid='file-upload-events'>file uploads</div>,
 }));
 

@@ -26,6 +26,7 @@ import {
   deleteSocialPostsQuerySchema,
   querySchema as socialPostsQuerySchema,
 } from '../../social-posts/handler';
+import { postKangurSocialPostsDeleteHandler } from '../../social-posts/delete/handler';
 import {
   getKangurSocialImageAddonsHandler,
   postKangurSocialImageAddonsHandler,
@@ -38,6 +39,7 @@ import {
   patchKangurSocialPostHandler,
 } from '../../social-posts/[id]/handler';
 import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publish/handler';
+import { postKangurSocialPostUnpublishHandler } from '../../social-posts/[id]/unpublish/handler';
 import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
 import { getKangurSocialPostContextHandler } from '../../social-posts/context/handler';
@@ -137,6 +139,15 @@ export const socialPostsDeleteHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const socialPostsDeletePostHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPostsDeleteHandler,
+  {
+    source: 'kangur.social-posts.delete.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
 export const socialImageAddonsGetHandler: SimpleRouteHandler = apiHandler(
   getKangurSocialImageAddonsHandler,
   {
@@ -193,6 +204,14 @@ export const socialPostPublishHandler: ParamRouteHandler = apiHandlerWithParams<
   postKangurSocialPostPublishHandler,
   {
     source: 'kangur.social-posts.[id].publish.POST',
+    service: 'kangur.api',
+  }
+);
+
+export const socialPostUnpublishHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+  postKangurSocialPostUnpublishHandler,
+  {
+    source: 'kangur.social-posts.[id].unpublish.POST',
     service: 'kangur.api',
   }
 );
@@ -320,6 +339,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
       }
       return handleGetPost(request, socialPostsGetHandler, socialPostsPostHandler);
     }
+    if (segments[1] === 'delete' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPostsDeletePostHandler(request);
+    }
     if (segments[1] === 'context' && segments.length === 2) {
       if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
       return socialPostContextGetHandler(request);
@@ -343,6 +366,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (segments[2] === 'publish' && segments.length === 3) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostPublishHandler(request, { params: { id } });
+    }
+    if (segments[2] === 'unpublish' && segments.length === 3) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPostUnpublishHandler(request, { params: { id } });
     }
     if (segments[2] === 'doc-updates' && segments.length === 3) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);

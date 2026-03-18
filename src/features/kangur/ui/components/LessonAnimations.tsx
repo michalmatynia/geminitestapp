@@ -4,3 +4,4 @@
 export * from './animations/AddingAnimations';
 export * from './animations/EnglishAnimations';
 export * from './animations/MathAnimations';
+export * from './animations/WebDevelopmentAnimations';

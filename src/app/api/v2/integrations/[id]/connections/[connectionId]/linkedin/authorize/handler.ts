@@ -12,6 +12,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const AUTH_URL =
   process.env['LINKEDIN_AUTH_URL'] ?? 'https://www.linkedin.com/oauth/v2/authorization';
 const DEFAULT_SCOPE = process.env['LINKEDIN_OAUTH_SCOPE'] ?? 'r_liteprofile w_member_social';
+const ENV_CLIENT_ID = process.env['LINKEDIN_APP_KEY_SECRET']?.trim() ?? null;
+const ENV_CLIENT_SECRET = process.env['LINKEDIN_APP_CLIENT_SECRET']?.trim() ?? null;
 
 export async function GET_handler(
   req: NextRequest,
@@ -46,16 +48,24 @@ export async function GET_handler(
       });
     }
 
-    if (!connection.username?.trim()) {
-      throw badRequestError('LinkedIn client ID is required.', {
-        connectionId: connId,
-      });
+    const connectionClientId = connection.username?.trim() ?? null;
+    const connectionSecret = connection.password?.trim() ?? null;
+    const hasConnectionCredentials = Boolean(connectionClientId && connectionSecret);
+    const clientId = hasConnectionCredentials ? connectionClientId : ENV_CLIENT_ID;
+    const clientSecret = hasConnectionCredentials ? connectionSecret : ENV_CLIENT_SECRET;
+
+    if (!clientId) {
+      throw badRequestError(
+        'LinkedIn client ID is required. Provide it in the connection or LINKEDIN_APP_KEY_SECRET.',
+        { connectionId: connId }
+      );
     }
 
-    if (!connection.password?.trim()) {
-      throw badRequestError('LinkedIn client secret is required.', {
-        connectionId: connId,
-      });
+    if (!clientSecret) {
+      throw badRequestError(
+        'LinkedIn client secret is required. Provide it in the connection or LINKEDIN_APP_CLIENT_SECRET.',
+        { connectionId: connId }
+      );
     }
 
     const state = randomUUID();
@@ -64,7 +74,7 @@ export async function GET_handler(
 
     const url = new URL(AUTH_URL);
     url.searchParams.set('response_type', 'code');
-    url.searchParams.set('client_id', connection.username);
+    url.searchParams.set('client_id', clientId);
     url.searchParams.set('redirect_uri', redirectUri);
     url.searchParams.set('state', state);
     url.searchParams.set('scope', DEFAULT_SCOPE);

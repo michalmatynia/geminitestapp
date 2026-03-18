@@ -38,7 +38,6 @@ import {
   KangurGameRuntimeBoundary,
   useKangurGameRuntime,
 } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import {
   KangurButton,
@@ -147,8 +146,6 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 function GameContent(): React.JSX.Element {
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast } = runtime;
-  const { ageGroup } = useKangurAgeGroupFocus();
-  const isAdultFocus = ageGroup === 'grown_ups';
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     runtime.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
@@ -639,55 +636,6 @@ function GameContent(): React.JSX.Element {
       {children}
     </motion.div>
   );
-
-  if (isAdultFocus) {
-    return (
-      <KangurStandardPageLayout
-        tone='play'
-        id='kangur-game-page'
-        skipLinkTargetId={GAME_MAIN_ID}
-        docsRootId='kangur-game-page'
-        docsTooltipsEnabled={docsTooltipsEnabled}
-        beforeNavigation={(
-          <XpToast
-            xpGained={xpToast.xpGained}
-            newBadges={xpToast.newBadges}
-            breakdown={xpToast.breakdown}
-            dailyQuest={xpToast.dailyQuest}
-            nextBadge={xpToast.nextBadge}
-            recommendation={xpToast.recommendation}
-            visible={xpToast.visible}
-          />
-        )}
-        navigation={<KangurGameNavigationWidget />}
-        afterNavigation={(
-          <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            Widok: {currentScreenLabel}
-          </div>
-        )}
-        containerProps={{
-          as: 'section',
-          'data-kangur-route-main': true,
-          id: GAME_MAIN_ID,
-          'aria-labelledby': GAME_TITLE_ID,
-          className: `flex flex-col items-center pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
-        }}
-      >
-        <h1 id={GAME_TITLE_ID} className='sr-only'>
-          {GAME_BRAND_NAME}
-        </h1>
-        <div className={`flex w-full max-w-lg flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-          <KangurEmptyState
-            accent='amber'
-            className='w-full'
-            description='Sekcja Grajmy jest teraz dostępna dla 10-latków.'
-            padding='xl'
-            title='Gry dla dorosłych w przygotowaniu'
-          />
-        </div>
-      </KangurStandardPageLayout>
-    );
-  }
 
   return (
     <>

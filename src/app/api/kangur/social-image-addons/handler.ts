@@ -79,6 +79,7 @@ export async function postKangurSocialImageAddonsHandler(
   const hasSelector = Boolean(parsed.selector?.trim());
 
   try {
+    const requestCookies = req.headers.get('cookie') ?? '';
     const addon = await createKangurSocialImageAddonFromPlaywright({
       title: parsed.title,
       description: parsed.description,
@@ -87,6 +88,7 @@ export async function postKangurSocialImageAddonsHandler(
       waitForMs: parsed.waitForMs,
       waitForSelectorMs: parsed.waitForSelectorMs,
       createdBy: actor.actorId,
+      forwardCookies: requestCookies || null,
     });
 
     void logKangurServerEvent({

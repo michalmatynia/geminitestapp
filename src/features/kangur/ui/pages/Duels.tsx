@@ -44,9 +44,11 @@ function DuelsContent(): React.JSX.Element {
     ready: true,
   });
 
+  const hasActiveLearner = Boolean(user?.activeLearner?.id);
+
   const lobby = useDuelsLobby({
-    canBrowseLobby: true,
-    canPlay: isAuthenticated,
+    canBrowseLobby: hasActiveLearner,
+    canPlay: hasActiveLearner,
     isGuest,
     isOnline: true,
     isPageActive: true,

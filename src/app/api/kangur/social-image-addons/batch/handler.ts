@@ -28,10 +28,12 @@ export async function postKangurSocialImageAddonsBatchHandler(
   const baseUrl = parsed.baseUrl?.trim() || requestOrigin;
 
   try {
+    const requestCookies = req.headers.get('cookie') ?? '';
     const result = await createKangurSocialImageAddonsBatch({
       baseUrl,
       presetIds: parsed.presetIds ?? null,
       createdBy: actor.actorId,
+      forwardCookies: requestCookies || null,
     });
 
     void logKangurServerEvent({

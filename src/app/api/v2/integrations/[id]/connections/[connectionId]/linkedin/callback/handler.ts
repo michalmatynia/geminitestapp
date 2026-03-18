@@ -13,6 +13,8 @@ const TOKEN_URL =
   process.env['LINKEDIN_TOKEN_URL'] ?? 'https://www.linkedin.com/oauth/v2/accessToken';
 const API_BASE_URL = process.env['LINKEDIN_API_BASE_URL'] ?? 'https://api.linkedin.com/v2';
 const DEFAULT_SCOPE = process.env['LINKEDIN_OAUTH_SCOPE'] ?? 'r_liteprofile w_member_social';
+const ENV_CLIENT_ID = process.env['LINKEDIN_APP_KEY_SECRET']?.trim() ?? null;
+const ENV_CLIENT_SECRET = process.env['LINKEDIN_APP_CLIENT_SECRET']?.trim() ?? null;
 
 type LinkedInTokenResponse = {
   access_token?: string;
@@ -168,7 +170,15 @@ export async function GET_handler(
 
     const connection = await repo.getConnectionByIdAndIntegration(connId, id);
 
-    if (!connection?.username || !connection.password) {
+    const connectionClientId = connection?.username?.trim() ?? null;
+    const connectionSecretEncrypted = connection?.password?.trim() ?? null;
+    const hasConnectionCredentials = Boolean(connectionClientId && connectionSecretEncrypted);
+    const clientId = hasConnectionCredentials ? connectionClientId : ENV_CLIENT_ID;
+    const clientSecret = hasConnectionCredentials
+      ? decryptSecret(connectionSecretEncrypted ?? '')
+      : ENV_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
       void logSystemEvent({
         level: 'warn',
         message: 'LinkedIn OAuth callback missing credentials',
@@ -177,8 +187,8 @@ export async function GET_handler(
         context: {
           integrationId,
           connectionId,
-          hasClientId: Boolean(connection?.username),
-          hasClientSecret: Boolean(connection?.password),
+          hasClientId: Boolean(connectionClientId || ENV_CLIENT_ID),
+          hasClientSecret: Boolean(connectionSecretEncrypted || ENV_CLIENT_SECRET),
           durationMs: Date.now() - startedAt,
         },
       });
@@ -187,8 +197,6 @@ export async function GET_handler(
       );
     }
 
-    const clientId = connection.username;
-    const clientSecret = decryptSecret(connection.password);
     const redirectUri = `${requestUrl.origin}/api/v2/integrations/${id}/connections/${connId}/linkedin/callback`;
 
     stage = 'exchange';

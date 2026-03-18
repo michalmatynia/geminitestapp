@@ -1,15 +1,17 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 
-import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
 import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
-import { KangurAiTutorWidget } from '@/features/kangur/ui/components/KangurAiTutorWidget';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
-import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
+
+const KangurCmsRuntimeScreen = dynamic(() => import('@/features/kangur/cms-builder/KangurCmsRuntimeScreen').then(m => ({ default: m.KangurCmsRuntimeScreen })));
+const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
+const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
@@ -229,6 +231,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
             aria-busy={isNavigationTransitionActive}
             aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
             className={cn(
+              'w-full min-w-0',
               embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
               isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
             )}

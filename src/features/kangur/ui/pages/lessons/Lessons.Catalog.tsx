@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { getKangurAgeGroupLabel } from '@/features/kangur/lessons/lesson-catalog';
 import {
   hasKangurLessonDocumentContent,
@@ -18,8 +18,9 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import type {
   KangurLesson,
-  KangurLessonComponentId,
 } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
+import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import {
   LESSONS_CARD_TRANSITION,
   LESSONS_CARD_STAGGER_DELAY,
@@ -27,30 +28,18 @@ import {
 import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
-import { AGENTIC_CODING_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/agentic-coding/catalog';
-import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
 
-type LessonSubsectionDefinition = {
+type LessonSubsection = {
   id: string;
   label: string;
   typeLabel?: string;
-  componentIds: readonly KangurLessonComponentId[];
-};
-
-type LessonGroupDefinition = {
-  id: string;
-  label: string;
-  typeLabel?: string;
-  componentIds?: readonly KangurLessonComponentId[];
-  subsections?: readonly LessonSubsectionDefinition[];
-};
-
-type LessonSubsection = LessonSubsectionDefinition & {
   lessons: KangurLesson[];
 };
 
-type LessonGroup = Omit<LessonGroupDefinition, 'componentIds' | 'subsections'> & {
+type LessonGroup = {
+  id: string;
+  label: string;
+  typeLabel?: string;
   lessons: KangurLesson[];
   subsections?: LessonSubsection[];
 };
@@ -75,62 +64,45 @@ export function LessonsCatalog() {
 
   const ageGroupLabel = getKangurAgeGroupLabel(ageGroup);
 
-  const lessonGroupDefinitions: readonly LessonGroupDefinition[] =
-    subject === 'alphabet'
-      ? ALPHABET_LESSON_GROUPS
-      : subject === 'web_development'
-        ? WEB_DEVELOPMENT_LESSON_GROUPS
-        : subject === 'agentic_coding'
-          ? AGENTIC_CODING_LESSON_GROUPS
-          : [];
+  const { data: sections = [] } = useKangurLessonSections({ subject, ageGroup, enabledOnly: true });
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
     setExpandedLessonGroupId(null);
   }, [subject]);
 
-  const lessonGroups: LessonGroup[] =
-    lessonGroupDefinitions.length > 0
-      ? lessonGroupDefinitions
-          .map((group) => {
-            const lessonByComponent = new Map(orderedLessons.map((lesson) => [lesson.componentId, lesson]));
-            const groupLessons = (group.componentIds ?? [])
-              .map((id) => lessonByComponent.get(id))
-              .filter((lesson): lesson is KangurLesson => Boolean(lesson));
-            const subsections = group.subsections
-              ?.map((subsection) => ({
-                ...subsection,
-                lessons: subsection.componentIds
-                  .map((componentId) => lessonByComponent.get(componentId))
-                  .filter((lesson): lesson is KangurLesson => Boolean(lesson)),
-              }))
-              .filter((subsection) => subsection.lessons.length > 0);
+  const displayLessonGroups: LessonGroup[] = useMemo(() => {
+    if (sections.length === 0) return [];
+    const lessonByComponent = new Map(orderedLessons.map((lesson) => [lesson.componentId, lesson]));
+    return sections
+      .map((section: KangurLessonSection): LessonGroup => {
+        const groupLessons = section.componentIds
+          .map((id) => lessonByComponent.get(id))
+          .filter((lesson): lesson is KangurLesson => Boolean(lesson));
+        const subsections = section.subsections
+          .filter((sub) => sub.enabled)
+          .map((sub) => ({
+            id: sub.id,
+            label: sub.label,
+            typeLabel: sub.typeLabel,
+            lessons: sub.componentIds
+              .map((componentId) => lessonByComponent.get(componentId))
+              .filter((lesson): lesson is KangurLesson => Boolean(lesson)),
+          }))
+          .filter((sub) => sub.lessons.length > 0);
 
-            return {
-              id: group.id,
-              label: group.label,
-              typeLabel: group.typeLabel,
-              lessons: groupLessons,
-              subsections: subsections && subsections.length > 0 ? subsections : undefined,
-            };
-          })
-          .filter((group) =>
-            group.subsections ? group.subsections.length > 0 : group.lessons.length > 0
-          )
-      : [];
-
-  const allowSingleLessonGroups =
-    subject === 'web_development' || subject === 'agentic_coding';
-  const displayLessonGroups = lessonGroups.filter((group) => {
-    if (group.subsections) {
-      return group.subsections.some((subsection) => subsection.lessons.length > 0);
-    }
-    return (
-      (allowSingleLessonGroups || group.lessons.length > 1) &&
-      group.lessons.length > 0 &&
-      !(subject === 'alphabet' && group.id === 'letter_tracing')
-    );
-  });
+        return {
+          id: section.id,
+          label: section.label,
+          typeLabel: section.typeLabel,
+          lessons: groupLessons,
+          subsections: subsections.length > 0 ? subsections : undefined,
+        };
+      })
+      .filter((group) =>
+        group.subsections ? group.subsections.length > 0 : group.lessons.length > 0
+      );
+  }, [sections, orderedLessons]);
 
   type LessonEntry =
     | { kind: 'group'; group: (typeof displayLessonGroups)[number] }

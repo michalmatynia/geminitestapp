@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -14,29 +14,27 @@ import {
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
+import { AGENTIC_CODING_GAMES } from './AgenticCodingMiniGames.config';
+import type { TrimGameConfig } from './AgenticCodingMiniGames.types';
+
 type PromptToken = {
   id: string;
   label: string;
   required: boolean;
 };
 
-const PROMPT_TOKENS: PromptToken[] = [
-  { id: 'goal', label: 'Goal: add retry backoff.', required: true },
-  { id: 'context', label: 'Context: api/notifications.ts + retry.ts.', required: true },
-  { id: 'constraints', label: 'Constraints: no new deps.', required: true },
-  { id: 'done', label: 'Done: tests + lint pass.', required: true },
-  { id: 'fluff-1', label: 'Please kindly help me.', required: false },
-  { id: 'fluff-2', label: 'As an AI, do your best.', required: false },
-  { id: 'fluff-3', label: 'Make it perfect and elegant.', required: false },
-  { id: 'fluff-4', label: 'Feel free to refactor widely.', required: false },
-  { id: 'fluff-5', label: 'Use any libraries you like.', required: false },
-  { id: 'fluff-6', label: 'Add extra improvements if possible.', required: false },
-];
+const PROMPT_TRIM_CONFIG = AGENTIC_CODING_GAMES.prompting as TrimGameConfig;
+
+const PROMPT_TOKENS: PromptToken[] = PROMPT_TRIM_CONFIG.tokens.map((token) => ({
+  id: token.id,
+  label: token.text,
+  required: token.keep,
+}));
 
 const TRIM_STEPS = [
-  'Klikaj karty, aby usunac nadmiar.',
-  'Zostaw tylko Goal, Context, Constraints i Done when.',
-  'Sprawdz wynik i popraw bledy.',
+  'Click tokens to remove the fluff.',
+  'Keep Goal, Context, Constraints, and Done when.',
+  'Check the result and correct mistakes.',
 ] as const;
 
 const buildInitialState = (): Record<string, boolean> => {
@@ -47,7 +45,13 @@ const buildInitialState = (): Record<string, boolean> => {
   return state;
 };
 
-export default function AgenticPromptTrimGame(): React.JSX.Element {
+type AgenticPromptTrimGameProps = {
+  onFinish?: () => void;
+};
+
+export default function AgenticPromptTrimGame({
+  onFinish,
+}: AgenticPromptTrimGameProps): React.JSX.Element {
   const [activeTokens, setActiveTokens] = useState<Record<string, boolean>>(buildInitialState);
   const [checked, setChecked] = useState(false);
 
@@ -70,6 +74,12 @@ export default function AgenticPromptTrimGame(): React.JSX.Element {
     ? Math.round((removedCount / removableTokens.length) * 100)
     : 0;
 
+  useEffect(() => {
+    if (isComplete) {
+      onFinish?.();
+    }
+  }, [isComplete, onFinish]);
+
   const toggleToken = (id: string): void => {
     setActiveTokens((prev) => ({ ...prev, [id]: !prev[id] }));
     setChecked(false);
@@ -83,26 +93,28 @@ export default function AgenticPromptTrimGame(): React.JSX.Element {
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonVisual
-        accent='rose'
-        caption='Trim meter: im wiecej usuniesz, tym blizej perfekcji.'
+        accent={PROMPT_TRIM_CONFIG.accent}
+        caption={PROMPT_TRIM_CONFIG.svgLabel}
         maxWidthClassName='max-w-full'
       >
         <PromptTrimSvg progress={progress} />
       </KangurLessonVisual>
 
-      <KangurLessonCallout accent='rose' padding='sm' className='text-left'>
+      <KangurLessonCallout accent={PROMPT_TRIM_CONFIG.accent} padding='sm' className='text-left'>
         <div className='flex flex-wrap items-center gap-2'>
-          <KangurLessonChip accent='rose'>Prompt Trim</KangurLessonChip>
+          <KangurLessonChip accent={PROMPT_TRIM_CONFIG.accent}>
+            {PROMPT_TRIM_CONFIG.title}
+          </KangurLessonChip>
           <span className='text-xs font-semibold text-slate-500'>
             Removed {removedCount}/{removableTokens.length}
           </span>
         </div>
         <KangurLessonCaption className='mt-2 text-left'>
-          Skroc prompt, zachowujac niezmienione znaczenie.
+          {PROMPT_TRIM_CONFIG.prompt}
         </KangurLessonCaption>
       </KangurLessonCallout>
 
-      <KangurLessonCallout accent='rose' padding='sm' className='text-left'>
+      <KangurLessonCallout accent={PROMPT_TRIM_CONFIG.accent} padding='sm' className='text-left'>
         <ul className='space-y-2 text-sm text-rose-950'>
           {TRIM_STEPS.map((step) => (
             <li key={step}>{step}</li>
@@ -143,24 +155,24 @@ export default function AgenticPromptTrimGame(): React.JSX.Element {
       </div>
 
       <div className={`grid w-full ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-[1fr_auto]`}>
-        <KangurLessonInset accent='rose'>
+        <KangurLessonInset accent={PROMPT_TRIM_CONFIG.accent}>
           <KangurLessonCaption className='text-left text-slate-700'>
-            Keep: Goal + Context + Constraints + Done when. Remove reszta.
+            Keep: Goal, Context, Constraints, and Done when. Remove the extras.
           </KangurLessonCaption>
           {checked && !isComplete ? (
             <KangurLessonCaption className='mt-2 text-left text-rose-700'>
-              Jeszcze nie. Sprawdz, czy zostawiles wymagane elementy.
+              Not yet. Double-check required tokens.
             </KangurLessonCaption>
           ) : null}
           {isComplete ? (
             <KangurLessonCaption className='mt-2 text-left text-emerald-700'>
-              Swietnie! Prompt jest precyzyjny i krotki.
+              {PROMPT_TRIM_CONFIG.success}
             </KangurLessonCaption>
           ) : null}
         </KangurLessonInset>
         <div className='flex flex-col gap-2'>
           <KangurButton variant={isComplete ? 'success' : 'surface'} onClick={() => setChecked(true)}>
-            {isComplete ? 'Gotowe' : 'Sprawdz'}
+            {isComplete ? 'Done' : 'Check'}
           </KangurButton>
           <KangurButton variant='ghost' onClick={resetGame}>
             Reset
@@ -175,7 +187,7 @@ function PromptTrimSvg({ progress }: { progress: number }): React.JSX.Element {
   const progressWidth = Math.round((260 * progress) / 100);
   return (
     <svg
-      aria-label='Animacja: nozyczki przycinaja prompt.'
+      aria-label='Animation: scissors trim the prompt.'
       className='h-auto w-full'
       role='img'
       viewBox='0 0 360 120'

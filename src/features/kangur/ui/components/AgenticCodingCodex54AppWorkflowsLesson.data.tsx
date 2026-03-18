@@ -67,7 +67,7 @@ Goal: Run "npm run lint" and summarize warnings
 Constraints: Read-only, no code changes
 Done when: Summary + attached logs`;
 
-const APP_SERVER_EXAMPLE = `codex app-server`;
+const APP_SERVER_EXAMPLE = 'codex app-server';
 
 const WorktreeSplitVisual = (): JSX.Element => (
   <svg

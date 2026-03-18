@@ -147,7 +147,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   prompt_trim_game: [
     {
-      title: 'Mini game: Prompt Contract',
+      title: 'Mini game: Prompt Trim',
       content: <AgenticCodingMiniGame gameId='prompting' />,
       panelClassName: 'w-full',
     },

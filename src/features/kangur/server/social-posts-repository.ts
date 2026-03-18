@@ -41,7 +41,7 @@ const LOCAL_STORE_PATH = resolveLocalStorePath();
 const readLocalStore = async (): Promise<KangurSocialPostStore> => {
   try {
     const raw = await fs.readFile(LOCAL_STORE_PATH, 'utf8');
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as unknown;
     return parseKangurSocialPostStore(parsed);
   } catch (error) {
     if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {

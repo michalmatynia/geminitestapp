@@ -2,8 +2,8 @@
 
 import { JSX, useState } from 'react';
 
-import { useSystemActivity } from '@/features/observability/hooks/useLogQueries';
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
+import { useSystemActivity } from '@/shared/hooks/useSystemActivity';
 import { PageLayout } from '@/shared/ui';
 
 import { QuickAccessPanel, RecentActivityPanel, SystemHealthPanel } from './dashboard-panels';

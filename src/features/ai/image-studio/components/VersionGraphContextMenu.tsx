@@ -40,13 +40,23 @@ export function VersionGraphContextMenu(): React.JSX.Element {
 
   return (
     <>
-      <div className='fixed inset-0 z-50' onClick={onClose} role='presentation' />
+      <button
+        type='button'
+        className='fixed inset-0 z-50 cursor-pointer border-0 bg-transparent p-0'
+        onClick={onClose}
+        aria-label='Close context menu'
+        tabIndex={-1}
+      />
       <Card
         className='fixed z-50 min-w-[140px] py-1 shadow-lg'
         style={{ left: menu.x, top: menu.y }}
+        role='menu'
+        aria-label='Version graph actions'
+        aria-orientation='vertical'
       >
         <button
           type='button'
+          role='menuitem'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-amber-300 hover:bg-accent'
           title={versionGraphTooltipsEnabled ? tooltipContent.detachSubtree : undefined}
           onClick={() => {
@@ -54,11 +64,12 @@ export function VersionGraphContextMenu(): React.JSX.Element {
             onClose();
           }}
         >
-          <GitBranchPlus className='size-3' />
+          <GitBranchPlus className='size-3' aria-hidden='true' />
           Detach Subtree
         </button>
         <button
           type='button'
+          role='menuitem'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
           title={versionGraphTooltipsEnabled ? tooltipContent.isolateNewCard : undefined}
           onClick={() => {
@@ -66,12 +77,13 @@ export function VersionGraphContextMenu(): React.JSX.Element {
             onClose();
           }}
         >
-          <Focus className='size-3' />
+          <Focus className='size-3' aria-hidden='true' />
           Isolate to New Card
         </button>
         {node.childIds.length > 0 ? (
           <button
             type='button'
+            role='menuitem'
             className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
             title={versionGraphTooltipsEnabled ? tooltipContent.toggleCollapse : undefined}
             onClick={() => {
@@ -81,11 +93,11 @@ export function VersionGraphContextMenu(): React.JSX.Element {
           >
             {collapsedNodeIds.has(menu.nodeId) ? (
               <>
-                <ChevronDown className='size-3' /> Expand
+                <ChevronDown className='size-3' aria-hidden='true' /> Expand
               </>
             ) : (
               <>
-                <ChevronUp className='size-3' /> Collapse
+                <ChevronUp className='size-3' aria-hidden='true' /> Collapse
               </>
             )}
           </button>
@@ -94,6 +106,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         <div className='my-1 border-t border-border/40' />
         <button
           type='button'
+          role='menuitem'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-teal-400 hover:bg-accent'
           title={versionGraphTooltipsEnabled ? tooltipContent.addToComposite : undefined}
           onClick={() => {
@@ -101,11 +114,12 @@ export function VersionGraphContextMenu(): React.JSX.Element {
             onClose();
           }}
         >
-          <Layers className='size-3' />
+          <Layers className='size-3' aria-hidden='true' />
           Add to Composite
         </button>
         <button
           type='button'
+          role='menuitem'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-cyan-400 hover:bg-accent'
           title={versionGraphTooltipsEnabled ? tooltipContent.compareWith : undefined}
           onClick={() => {
@@ -113,12 +127,13 @@ export function VersionGraphContextMenu(): React.JSX.Element {
             onClose();
           }}
         >
-          <Columns2 className='size-3' />
+          <Columns2 className='size-3' aria-hidden='true' />
           Compare With...
         </button>
         <div className='my-1 border-t border-border/40' />
         <button
           type='button'
+          role='menuitem'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
           title={versionGraphTooltipsEnabled ? tooltipContent.copyId : undefined}
           onClick={() => {
@@ -126,7 +141,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
             onClose();
           }}
         >
-          <Copy className='size-3' />
+          <Copy className='size-3' aria-hidden='true' />
           Copy ID
         </button>
       </Card>

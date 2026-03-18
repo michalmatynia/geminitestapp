@@ -47,9 +47,11 @@ const RULE_EXAMPLE = `prefix_rule(
   justification = "Viewing PRs is allowed with approval",
 )`;
 
-const EXEC_POLICY_CHECK = `codex execpolicy check --pretty \
-  --rules ~/.codex/rules/default.rules \
-  -- gh pr view 7888 --json title,body,comments`;
+const EXEC_POLICY_CHECK = [
+  'codex execpolicy check --pretty \\',
+  '  --rules ~/.codex/rules/default.rules \\',
+  '  -- gh pr view 7888 --json title,body,comments',
+].join('\n');
 
 const RulesDecisionVisual = (): JSX.Element => (
   <svg

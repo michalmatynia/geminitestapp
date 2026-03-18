@@ -28,7 +28,10 @@ type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
+type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
+type PatternToken = string | { param: string };
+type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -46,14 +49,14 @@ const methodNotAllowed = async (
   return response;
 };
 
-const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
+const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = async <P extends Params>(
-  module: RouteModule<P>,
+const dispatch = async (
+  module: RouteModule,
   method: HttpMethod,
   request: NextRequest,
-  params: P | undefined,
+  params: Params | undefined,
   source: string
 ): Promise<Response> => {
   const handler = module[method];
@@ -63,7 +66,7 @@ const dispatch = async <P extends Params>(
       ? methodNotAllowed(request, allowed, source)
       : notFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {
@@ -76,67 +79,61 @@ const getPathSegments = (request: NextRequest): string[] => {
   return remainder ? remainder.split('/').filter(Boolean) : [];
 };
 
+const param = (name: string): PatternToken => ({ param: name });
+
+const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
+  if (pattern.length !== segments.length) {
+    return null;
+  }
+  const params: Params = {};
+  for (let index = 0; index < pattern.length; index += 1) {
+    const token = pattern[index];
+    if (!token) {
+      return null;
+    }
+    const segment = segments[index];
+    if (!segment) {
+      return null;
+    }
+    if (typeof token === 'string') {
+      if (token !== segment) {
+        return null;
+      }
+      continue;
+    }
+    params[token.param] = segment;
+  }
+  return params;
+};
+
+const ROUTES: RouteDefinition[] = [
+  { pattern: [], module: chatbotIndex },
+  { pattern: ['agent'], module: agentIndex },
+  { pattern: ['agent', param('runId'), 'assets', param('file')], module: agentRunAssets },
+  { pattern: ['agent', param('runId'), param('action')], module: agentRunAction },
+  { pattern: ['agent', param('runId')], module: agentRun },
+  { pattern: ['context'], module: context },
+  { pattern: ['jobs'], module: jobsIndex },
+  { pattern: ['jobs', param('jobId')], module: jobById },
+  { pattern: ['memory'], module: memory },
+  { pattern: ['sessions'], module: sessionsIndex },
+  { pattern: ['sessions', param('sessionId'), 'messages'], module: sessionMessages },
+  { pattern: ['sessions', param('sessionId')], module: sessionById },
+  { pattern: ['settings'], module: settings },
+];
+
 const routeChatbot = (
   method: HttpMethod,
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
   const source = `chatbot.[[...path]].${method}`;
-  if (segments.length === 0) {
-    return dispatch(chatbotIndex, method, request, undefined, source);
-  }
-
-  const [first, second, third, fourth] = segments;
-
-  if (first === 'agent') {
-    if (segments.length === 1) {
-      return dispatch(agentIndex, method, request, undefined, source);
+  for (const route of ROUTES) {
+    const params = matchPattern(route.pattern, segments);
+    if (!params) {
+      continue;
     }
-    if (second && third === 'assets' && fourth && segments.length === 4) {
-      return dispatch(agentRunAssets, method, request, { runId: second, file: fourth }, source);
-    }
-    if (second && third && segments.length === 3) {
-      return dispatch(agentRunAction, method, request, { runId: second, action: third }, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(agentRun, method, request, { runId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'context' && segments.length === 1) {
-    return dispatch(context, method, request, undefined, source);
-  }
-
-  if (first === 'jobs') {
-    if (segments.length === 1) {
-      return dispatch(jobsIndex, method, request, undefined, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(jobById, method, request, { jobId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'memory' && segments.length === 1) {
-    return dispatch(memory, method, request, undefined, source);
-  }
-
-  if (first === 'sessions') {
-    if (segments.length === 1) {
-      return dispatch(sessionsIndex, method, request, undefined, source);
-    }
-    if (second && third === 'messages' && segments.length === 3) {
-      return dispatch(sessionMessages, method, request, { sessionId: second }, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(sessionById, method, request, { sessionId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'settings' && segments.length === 1) {
-    return dispatch(settings, method, request, undefined, source);
+    return dispatch(route.module, method, request, params, source);
   }
 
   return notFound(request, source);

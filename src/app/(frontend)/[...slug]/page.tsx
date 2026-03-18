@@ -1,15 +1,11 @@
 import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
-import {
-  CmsPageShell,
-  CmsRuntimePageRenderer as CmsPageRenderer,
-  ThemeProvider,
-} from '@/features/cms/public';
 import { KangurPublicApp } from '@/features/kangur/public';
 import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 
+import { renderCmsPage } from '../cms-render';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home-helpers';
 import { buildSlugMetadata, loadSlugRenderData, resolveSlugToPage } from './slug-page-data';
 
@@ -21,15 +17,20 @@ interface SlugPageProps {
   params: Promise<{ slug: string[] }>;
 }
 
+const isKangurFrontPageSelected = async (): Promise<boolean> => {
+  if (!shouldApplyFrontPageAppSelection()) {
+    return false;
+  }
+  const frontPageSetting = await getFrontPageSetting();
+  return getFrontPagePublicOwner(frontPageSetting) === 'kangur';
+};
+
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
-  if (shouldApplyFrontPageAppSelection()) {
-    const frontPageSetting = await getFrontPageSetting();
-    if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      return {
-        title: slug[0]?.trim().toLowerCase() === 'login' ? 'StudiQ Login' : 'StudiQ',
-      };
-    }
+  if (await isKangurFrontPageSelected()) {
+    return {
+      title: slug[0]?.trim().toLowerCase() === 'login' ? 'StudiQ Login' : 'StudiQ',
+    };
   }
   const page = await resolveSlugToPage(slug);
 
@@ -42,12 +43,9 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
 
 export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JSX.Element> {
   const { slug } = await params;
-  if (shouldApplyFrontPageAppSelection()) {
-    const frontPageSetting = await getFrontPageSetting();
-    if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const initialMode = await getKangurStorefrontDefaultMode();
-      return <KangurPublicApp slug={slug} basePath='/' initialMode={initialMode} />;
-    }
+  if (await isKangurFrontPageSelected()) {
+    const initialMode = await getKangurStorefrontDefaultMode();
+    return <KangurPublicApp slug={slug} basePath='/' initialMode={initialMode} />;
   }
   const page = await resolveSlugToPage(slug);
 
@@ -56,32 +54,5 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   }
 
   const renderData = await loadSlugRenderData(page);
-  const content = (
-    <CmsPageShell
-      menu={renderData.menuSettings}
-      theme={renderData.themeSettings}
-      colorSchemes={renderData.colorSchemes}
-      showMenu={renderData.showMenu}
-    >
-      <CmsPageRenderer
-        components={renderData.rendererComponents}
-        colorSchemes={renderData.colorSchemes}
-        layout={renderData.layout}
-        hoverEffect={renderData.hoverEffect}
-        hoverScale={renderData.hoverScale}
-        mediaVars={renderData.mediaVars}
-        mediaStyles={renderData.mediaStyles}
-      />
-    </CmsPageShell>
-  );
-
-  return (
-    <div className='min-h-screen'>
-      {renderData.theme ? (
-        <ThemeProvider theme={renderData.theme}>{content}</ThemeProvider>
-      ) : (
-        content
-      )}
-    </div>
-  );
+  return renderCmsPage(renderData);
 }

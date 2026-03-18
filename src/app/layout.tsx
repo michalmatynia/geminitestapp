@@ -29,6 +29,9 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
+        <a href='#app-content' className='app-skip-link'>
+          Skip to main content
+        </a>
         <RootClientShell>{children}</RootClientShell>
       </body>
     </html>

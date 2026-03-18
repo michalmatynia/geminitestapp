@@ -15,6 +15,7 @@ import {
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { useKangurAuthState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { api } from '@/shared/lib/api-client';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 
@@ -35,6 +36,7 @@ export function KangurAiTutorContentProvider({
   children,
   locale = 'pl',
 }: Props): JSX.Element {
+  const { isAuthenticated } = useKangurAuthState();
   const [content, setContent] = useState<KangurAiTutorContent>({
     ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
     locale,
@@ -42,6 +44,10 @@ export function KangurAiTutorContentProvider({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     let cancelled = false;
 
     const load = async (): Promise<void> => {
@@ -89,7 +95,7 @@ export function KangurAiTutorContentProvider({
     return () => {
       cancelled = true;
     };
-  }, [locale]);
+  }, [isAuthenticated, locale]);
 
   const value = useMemo(
     () => ({

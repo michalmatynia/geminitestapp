@@ -37,7 +37,10 @@ type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
+type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
+type PatternToken = string | { param: string };
+type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -55,14 +58,14 @@ const methodNotAllowed = async (
   return response;
 };
 
-const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
+const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = async <P extends Params>(
-  module: RouteModule<P>,
+const dispatch = async (
+  module: RouteModule,
   method: HttpMethod,
   request: NextRequest,
-  params: P | undefined,
+  params: Params | undefined,
   source: string
 ): Promise<Response> => {
   const handler = module[method];
@@ -72,7 +75,7 @@ const dispatch = async <P extends Params>(
       ? methodNotAllowed(request, allowed, source)
       : notFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {
@@ -85,6 +88,57 @@ const getPathSegments = (request: NextRequest): string[] => {
   return remainder ? remainder.split('/').filter(Boolean) : [];
 };
 
+const param = (name: string): PatternToken => ({ param: name });
+
+const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
+  if (pattern.length !== segments.length) {
+    return null;
+  }
+  const params: Params = {};
+  for (let index = 0; index < pattern.length; index += 1) {
+    const token = pattern[index];
+    if (!token) {
+      return null;
+    }
+    const segment = segments[index];
+    if (!segment) {
+      return null;
+    }
+    if (typeof token === 'string') {
+      if (token !== segment) {
+        return null;
+      }
+      continue;
+    }
+    params[token.param] = segment;
+  }
+  return params;
+};
+
+const ROUTES: RouteDefinition[] = [
+  { pattern: ['backup'], module: backup },
+  { pattern: ['backups'], module: backups },
+  { pattern: ['browse'], module: browse },
+  { pattern: ['copy-collection'], module: copyCollection },
+  { pattern: ['crud'], module: crud },
+  { pattern: ['delete'], module: deleteDatabase },
+  { pattern: ['execute'], module: execute },
+  { pattern: ['json-backup'], module: jsonBackup },
+  { pattern: ['json-restore'], module: jsonRestore },
+  { pattern: ['preview'], module: preview },
+  { pattern: ['redis'], module: redis },
+  { pattern: ['restore'], module: restore },
+  { pattern: ['schema'], module: schema },
+  { pattern: ['upload'], module: upload },
+  { pattern: ['engine', 'provider-preview'], module: engineProviderPreview },
+  { pattern: ['engine', 'status'], module: engineStatus },
+  { pattern: ['engine', 'backup-scheduler', 'tick'], module: engineBackupSchedulerTick },
+  { pattern: ['engine', 'backup-scheduler', 'run-now'], module: engineBackupSchedulerRunNow },
+  { pattern: ['engine', 'backup-scheduler', 'status'], module: engineBackupSchedulerStatus },
+  { pattern: ['engine', 'operations', 'jobs'], module: engineOperationsJobs },
+  { pattern: ['engine', 'operations', 'jobs', param('jobId'), 'cancel'], module: engineOperationsJobCancel },
+];
+
 const routeDatabases = (
   method: HttpMethod,
   request: NextRequest,
@@ -94,91 +148,12 @@ const routeDatabases = (
   if (segments.length === 0) {
     return notFound(request, source);
   }
-
-  const [first, second, third, fourth, fifth] = segments;
-
-  if (first === 'backup' && segments.length === 1) {
-    return dispatch(backup, method, request, undefined, source);
-  }
-
-  if (first === 'backups' && segments.length === 1) {
-    return dispatch(backups, method, request, undefined, source);
-  }
-
-  if (first === 'browse' && segments.length === 1) {
-    return dispatch(browse, method, request, undefined, source);
-  }
-
-  if (first === 'copy-collection' && segments.length === 1) {
-    return dispatch(copyCollection, method, request, undefined, source);
-  }
-
-  if (first === 'crud' && segments.length === 1) {
-    return dispatch(crud, method, request, undefined, source);
-  }
-
-  if (first === 'delete' && segments.length === 1) {
-    return dispatch(deleteDatabase, method, request, undefined, source);
-  }
-
-  if (first === 'execute' && segments.length === 1) {
-    return dispatch(execute, method, request, undefined, source);
-  }
-
-  if (first === 'json-backup' && segments.length === 1) {
-    return dispatch(jsonBackup, method, request, undefined, source);
-  }
-
-  if (first === 'json-restore' && segments.length === 1) {
-    return dispatch(jsonRestore, method, request, undefined, source);
-  }
-
-  if (first === 'preview' && segments.length === 1) {
-    return dispatch(preview, method, request, undefined, source);
-  }
-
-  if (first === 'redis' && segments.length === 1) {
-    return dispatch(redis, method, request, undefined, source);
-  }
-
-  if (first === 'restore' && segments.length === 1) {
-    return dispatch(restore, method, request, undefined, source);
-  }
-
-  if (first === 'schema' && segments.length === 1) {
-    return dispatch(schema, method, request, undefined, source);
-  }
-
-  if (first === 'upload' && segments.length === 1) {
-    return dispatch(upload, method, request, undefined, source);
-  }
-
-  if (first === 'engine') {
-    if (second === 'provider-preview' && segments.length === 2) {
-      return dispatch(engineProviderPreview, method, request, undefined, source);
+  for (const route of ROUTES) {
+    const params = matchPattern(route.pattern, segments);
+    if (!params) {
+      continue;
     }
-    if (second === 'status' && segments.length === 2) {
-      return dispatch(engineStatus, method, request, undefined, source);
-    }
-    if (second === 'backup-scheduler') {
-      if (third === 'tick' && segments.length === 3) {
-        return dispatch(engineBackupSchedulerTick, method, request, undefined, source);
-      }
-      if (third === 'run-now' && segments.length === 3) {
-        return dispatch(engineBackupSchedulerRunNow, method, request, undefined, source);
-      }
-      if (third === 'status' && segments.length === 3) {
-        return dispatch(engineBackupSchedulerStatus, method, request, undefined, source);
-      }
-    }
-    if (second === 'operations' && third === 'jobs') {
-      if (segments.length === 3) {
-        return dispatch(engineOperationsJobs, method, request, undefined, source);
-      }
-      if (fourth && fifth === 'cancel' && segments.length === 5) {
-        return dispatch(engineOperationsJobCancel, method, request, { jobId: fourth }, source);
-      }
-    }
+    return dispatch(route.module, method, request, params, source);
   }
 
   return notFound(request, source);

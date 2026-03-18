@@ -24,7 +24,7 @@ export default function AgenticCodingCodex54ApprovalsLesson(): JSX.Element {
         {
           sectionId: 'approval_gate_game',
           stage: {
-            accent: 'slate',
+            accent: 'sky',
             icon: '🛡️',
             title: 'Approval Gate',
             description: 'Classify actions that require approval.',

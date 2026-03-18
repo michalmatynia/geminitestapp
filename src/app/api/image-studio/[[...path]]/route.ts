@@ -50,7 +50,10 @@ type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
+type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
+type PatternToken = string | { param: string };
+type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -68,14 +71,14 @@ const methodNotAllowed = async (
   return response;
 };
 
-const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
+const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = async <P extends Params>(
-  module: RouteModule<P>,
+const dispatch = async (
+  module: RouteModule,
   method: HttpMethod,
   request: NextRequest,
-  params: P | undefined,
+  params: Params | undefined,
   source: string
 ): Promise<Response> => {
   const handler = module[method];
@@ -85,7 +88,7 @@ const dispatch = async <P extends Params>(
       ? methodNotAllowed(request, allowed, source)
       : notFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {
@@ -98,6 +101,88 @@ const getPathSegments = (request: NextRequest): string[] => {
   return remainder ? remainder.split('/').filter(Boolean) : [];
 };
 
+const param = (name: string): PatternToken => ({ param: name });
+
+const ROUTE_TABLE: RouteDefinition[] = [
+  { pattern: ['cards', 'backfill'], module: cardsBackfill },
+  { pattern: ['composite'], module: composite },
+  { pattern: ['mask', 'ai'], module: maskAi },
+  { pattern: ['models'], module: models },
+  { pattern: ['prompt-extract'], module: promptExtract },
+  { pattern: ['ui-extractor'], module: uiExtractor },
+  { pattern: ['run'], module: run },
+  { pattern: ['runs'], module: runsIndex },
+  { pattern: ['runs', param('runId')], module: runById },
+  { pattern: ['runs', param('runId'), 'stream'], module: runStream },
+  { pattern: ['sequences'], module: sequencesIndex },
+  { pattern: ['sequences', 'run'], module: sequencesRun },
+  { pattern: ['sequences', param('runId'), 'stream'], module: sequenceStream },
+  { pattern: ['sequences', param('runId'), 'cancel'], module: sequenceCancel },
+  { pattern: ['sequences', param('runId')], module: sequenceById },
+  { pattern: ['slots', 'base64'], module: slotsBase64 },
+  { pattern: ['slots', param('slotId')], module: slotById },
+  { pattern: ['slots', param('slotId'), 'analysis'], module: slotAnalysis },
+  { pattern: ['slots', param('slotId'), 'autoscale'], module: slotAutoscale },
+  { pattern: ['slots', param('slotId'), 'center'], module: slotCenter },
+  { pattern: ['slots', param('slotId'), 'crop'], module: slotCrop },
+  { pattern: ['slots', param('slotId'), 'masks'], module: slotMasks },
+  { pattern: ['slots', param('slotId'), 'screenshot'], module: slotScreenshot },
+  { pattern: ['slots', param('slotId'), 'upscale'], module: slotUpscale },
+  { pattern: ['projects'], module: projectsIndex },
+  { pattern: ['projects', param('projectId')], module: projectById },
+  { pattern: ['projects', param('projectId'), 'slots'], module: projectSlots },
+  { pattern: ['projects', param('projectId'), 'slots', 'ensure-from-upload'], module: projectSlotsEnsureFromUpload },
+  { pattern: ['projects', param('projectId'), 'assets'], module: projectAssets },
+  { pattern: ['projects', param('projectId'), 'assets', 'import'], module: projectAssetsImport },
+  { pattern: ['projects', param('projectId'), 'assets', 'delete'], module: projectAssetsDelete },
+  { pattern: ['projects', param('projectId'), 'assets', 'move'], module: projectAssetsMove },
+  { pattern: ['projects', param('projectId'), 'folders'], module: projectFolders },
+  { pattern: ['projects', param('projectId'), 'variants', 'delete'], module: projectVariantsDelete },
+  { pattern: ['validation-patterns', 'learn'], module: validationPatternsLearn },
+];
+
+const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
+  if (pattern.length !== segments.length) {
+    return null;
+  }
+  const params: Params = {};
+  for (let index = 0; index < pattern.length; index += 1) {
+    const token = pattern[index];
+    if (!token) {
+      return null;
+    }
+    const segment = segments[index];
+    if (!segment) {
+      return null;
+    }
+    if (typeof token === 'string') {
+      if (token !== segment) {
+        return null;
+      }
+      continue;
+    }
+    params[token.param] = segment;
+  }
+  return params;
+};
+
+const matchRouteEntry = (
+  segments: string[]
+): { module: RouteModule; params?: Params } | null => {
+  for (const entry of ROUTE_TABLE) {
+    const params = matchPattern(entry.pattern, segments);
+    if (!params) {
+      continue;
+    }
+
+    return {
+      module: entry.module,
+      params: Object.keys(params).length > 0 ? params : undefined,
+    };
+  }
+  return null;
+};
+
 const routeImageStudio = (
   method: HttpMethod,
   request: NextRequest,
@@ -108,150 +193,12 @@ const routeImageStudio = (
     return notFound(request, source);
   }
 
-  const [first, second, third, fourth] = segments;
-
-  if (first === 'cards' && second === 'backfill' && segments.length === 2) {
-    return dispatch(cardsBackfill, method, request, undefined, source);
-  }
-
-  if (first === 'composite' && segments.length === 1) {
-    return dispatch(composite, method, request, undefined, source);
-  }
-
-  if (first === 'mask' && second === 'ai' && segments.length === 2) {
-    return dispatch(maskAi, method, request, undefined, source);
-  }
-
-  if (first === 'models' && segments.length === 1) {
-    return dispatch(models, method, request, undefined, source);
-  }
-
-  if (first === 'prompt-extract' && segments.length === 1) {
-    return dispatch(promptExtract, method, request, undefined, source);
-  }
-
-  if (first === 'ui-extractor' && segments.length === 1) {
-    return dispatch(uiExtractor, method, request, undefined, source);
-  }
-
-  if (first === 'run' && segments.length === 1) {
-    return dispatch(run, method, request, undefined, source);
-  }
-
-  if (first === 'runs') {
-    if (segments.length === 1) {
-      return dispatch(runsIndex, method, request, undefined, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(runById, method, request, { runId: second }, source);
-    }
-    if (second && third === 'stream' && segments.length === 3) {
-      return dispatch(runStream, method, request, { runId: second }, source);
-    }
+  const match = matchRouteEntry(segments);
+  if (!match) {
     return notFound(request, source);
   }
 
-  if (first === 'sequences') {
-    if (segments.length === 1) {
-      return dispatch(sequencesIndex, method, request, undefined, source);
-    }
-    if (second === 'run' && segments.length === 2) {
-      return dispatch(sequencesRun, method, request, undefined, source);
-    }
-    if (second && third === 'stream' && segments.length === 3) {
-      return dispatch(sequenceStream, method, request, { runId: second }, source);
-    }
-    if (second && third === 'cancel' && segments.length === 3) {
-      return dispatch(sequenceCancel, method, request, { runId: second }, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(sequenceById, method, request, { runId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'slots') {
-    if (second === 'base64' && segments.length === 2) {
-      return dispatch(slotsBase64, method, request, undefined, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(slotById, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'analysis' && segments.length === 3) {
-      return dispatch(slotAnalysis, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'autoscale' && segments.length === 3) {
-      return dispatch(slotAutoscale, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'center' && segments.length === 3) {
-      return dispatch(slotCenter, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'crop' && segments.length === 3) {
-      return dispatch(slotCrop, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'masks' && segments.length === 3) {
-      return dispatch(slotMasks, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'screenshot' && segments.length === 3) {
-      return dispatch(slotScreenshot, method, request, { slotId: second }, source);
-    }
-    if (second && third === 'upscale' && segments.length === 3) {
-      return dispatch(slotUpscale, method, request, { slotId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'projects') {
-    if (segments.length === 1) {
-      return dispatch(projectsIndex, method, request, undefined, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(projectById, method, request, { projectId: second }, source);
-    }
-    if (second && third === 'slots') {
-      if (segments.length === 3) {
-        return dispatch(projectSlots, method, request, { projectId: second }, source);
-      }
-      if (fourth === 'ensure-from-upload' && segments.length === 4) {
-        return dispatch(
-          projectSlotsEnsureFromUpload,
-          method,
-          request,
-          { projectId: second },
-          source
-        );
-      }
-      return notFound(request, source);
-    }
-    if (second && third === 'assets') {
-      if (segments.length === 3) {
-        return dispatch(projectAssets, method, request, { projectId: second }, source);
-      }
-      if (fourth === 'import' && segments.length === 4) {
-        return dispatch(projectAssetsImport, method, request, { projectId: second }, source);
-      }
-      if (fourth === 'delete' && segments.length === 4) {
-        return dispatch(projectAssetsDelete, method, request, { projectId: second }, source);
-      }
-      if (fourth === 'move' && segments.length === 4) {
-        return dispatch(projectAssetsMove, method, request, { projectId: second }, source);
-      }
-      return notFound(request, source);
-    }
-    if (second && third === 'folders' && segments.length === 3) {
-      return dispatch(projectFolders, method, request, { projectId: second }, source);
-    }
-    if (second && third === 'variants' && fourth === 'delete' && segments.length === 4) {
-      return dispatch(projectVariantsDelete, method, request, { projectId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'validation-patterns' && second === 'learn' && segments.length === 2) {
-    return dispatch(validationPatternsLearn, method, request, undefined, source);
-  }
-
-  return notFound(request, source);
+  return dispatch(match.module, method, request, match.params, source);
 };
 
 const ROUTER_OPTIONS = {

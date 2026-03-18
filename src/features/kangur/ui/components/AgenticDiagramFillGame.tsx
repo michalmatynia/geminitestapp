@@ -153,6 +153,13 @@ const evaluateDiagramDrawing = (target: DiagramTarget, points: Point2d[]): Feedb
     const padding = 12;
     const minDistance = target.minDistance ?? 60;
 
+    if (!start || !end) {
+      return {
+        kind: 'error',
+        text: 'Zacznij rysowanie od wyraźnego punktu startu.',
+      };
+    }
+
     if (!isPointInRect(start, target.startZone, padding)) {
       return {
         kind: 'error',
@@ -569,6 +576,13 @@ export function AgenticDiagramFillGame({
   accent,
 }: AgenticDiagramFillGameProps): React.JSX.Element {
   const config = DIAGRAM_GAMES[gameId];
+  if (!config) {
+    return (
+      <KangurLessonStack align='start' className='w-full'>
+        <KangurLessonLead align='left'>Brak konfiguracji gry diagramu.</KangurLessonLead>
+      </KangurLessonStack>
+    );
+  }
   const resolvedAccent = accent ?? config.accent;
   const isCoarsePointer = useKangurCoarsePointer();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -593,9 +607,10 @@ export function AgenticDiagramFillGame({
       ctx.lineWidth = strokeWidth;
 
       currentStrokes.forEach((stroke) => {
-        if (stroke.length === 0) return;
+        const firstPoint = stroke[0];
+        if (!firstPoint) return;
         ctx.beginPath();
-        ctx.moveTo(stroke[0].x, stroke[0].y);
+        ctx.moveTo(firstPoint.x, firstPoint.y);
         stroke.slice(1).forEach((point) => {
           ctx.lineTo(point.x, point.y);
         });

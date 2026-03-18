@@ -1,15 +1,15 @@
 {
   "summary": {
-    "generatedAt": "2026-03-18T09:01:45.524Z",
-    "scannedSourceFiles": 5395,
-    "scannedJsxFiles": 1980,
-    "componentCount": 3314,
-    "componentsWithForwarding": 47,
-    "componentsWithAnyForwarding": 57,
-    "resolvedTransitionCount": 282,
-    "depth2CandidateChainCount": 282,
-    "candidateChainCount": 45,
-    "highPriorityChainCount": 1,
+    "generatedAt": "2026-03-18T09:22:13.839Z",
+    "scannedSourceFiles": 5394,
+    "scannedJsxFiles": 1979,
+    "componentCount": 3312,
+    "componentsWithForwarding": 45,
+    "componentsWithAnyForwarding": 55,
+    "resolvedTransitionCount": 276,
+    "depth2CandidateChainCount": 276,
+    "candidateChainCount": 42,
+    "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 11,
     "highPropCountComponentCount": 38,
     "passThroughHotspotCount": 14,
@@ -19,102 +19,20 @@
         "count": 50
       },
       {
-        "scope": "app",
-        "count": 3
-      },
-      {
         "scope": "feature:cms",
         "count": 2
       },
       {
         "scope": "shared-ui",
         "count": 2
+      },
+      {
+        "scope": "app",
+        "count": 1
       }
     ]
   },
   "backlog": [
-    {
-      "score": 152,
-      "depth": 4,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-        "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode",
-        "kangurInitialMode",
-        "initialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        },
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "toComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "initialMode",
-          "relativePath": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
-          "line": 31
-        }
-      ]
-    },
-    {
-      "score": 123,
-      "depth": 3,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
-      ],
-      "propPath": [
-        "accent",
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 628
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 177
-        }
-      ]
-    },
     {
       "score": 113,
       "depth": 3,
@@ -156,6 +74,42 @@
       "depth": 3,
       "rootFanout": 4,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "accent",
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+          "line": 628
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "score": 113,
+      "depth": 3,
+      "rootFanout": 4,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticDrawGame",
       "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
       "componentPath": [
@@ -175,7 +129,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 810
+          "line": 808
         },
         {
           "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
@@ -292,78 +246,6 @@
           "targetProp": "value",
           "relativePath": "src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx",
           "line": 478
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient"
-      ],
-      "propPath": [
-        "publicOwner",
-        "publicOwner",
-        "publicOwner"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        },
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode",
-        "kangurInitialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        },
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
         }
       ]
     },
@@ -1796,136 +1678,6 @@
       ]
     },
     {
-      "score": 84,
-      "depth": 2,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual"
-      ],
-      "propPath": [
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 628
-        }
-      ]
-    },
-    {
-      "score": 84,
-      "depth": 2,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
-      ],
-      "propPath": [
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 635
-        }
-      ]
-    },
-    {
-      "score": 84,
-      "depth": 2,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonChip",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonChip"
-      ],
-      "propPath": [
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonChip",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 637
-        }
-      ]
-    },
-    {
-      "score": 84,
-      "depth": 2,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#DraggableToken",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#DraggableToken"
-      ],
-      "propPath": [
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#DraggableToken",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 656
-        }
-      ]
-    },
-    {
-      "score": 84,
-      "depth": 2,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonInset",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonInset"
-      ],
-      "propPath": [
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonInset",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 697
-        }
-      ]
-    },
-    {
       "score": 78,
       "depth": 2,
       "rootFanout": 3,
@@ -2112,6 +1864,110 @@
       "depth": 2,
       "rootFanout": 4,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+      "componentPath": [
+        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual"
+      ],
+      "propPath": [
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+          "line": 628
+        }
+      ]
+    },
+    {
+      "score": 74,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+          "line": 635
+        }
+      ]
+    },
+    {
+      "score": 74,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonChip",
+      "componentPath": [
+        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonChip"
+      ],
+      "propPath": [
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonChip",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+          "line": 637
+        }
+      ]
+    },
+    {
+      "score": 74,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonInset",
+      "componentPath": [
+        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonInset"
+      ],
+      "propPath": [
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonInset",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+          "line": 695
+        }
+      ]
+    },
+    {
+      "score": 74,
+      "depth": 2,
+      "rootFanout": 4,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticDrawGame",
       "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
       "componentPath": [
@@ -2129,7 +1985,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 810
+          "line": 808
         }
       ]
     },
@@ -2155,7 +2011,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 826
+          "line": 824
         }
       ]
     },
@@ -2181,7 +2037,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 828
+          "line": 826
         }
       ]
     },
@@ -2207,7 +2063,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 835
+          "line": 833
         }
       ]
     },
@@ -2285,7 +2141,7 @@
           "sourceProp": "config",
           "targetProp": "caption",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 810
+          "line": 808
         }
       ]
     },
@@ -2311,7 +2167,7 @@
           "sourceProp": "config",
           "targetProp": "checkpoints",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 815
+          "line": 813
         }
       ]
     },
@@ -2337,7 +2193,7 @@
           "sourceProp": "config",
           "targetProp": "guide",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 815
+          "line": 813
         }
       ]
     },
@@ -3404,32 +3260,6 @@
           "targetProp": "transitionSourceId",
           "relativePath": "src/features/kangur/ui/components/KangurNavAction.tsx",
           "line": 66
-        }
-      ]
-    },
-    {
-      "score": 58,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx#CmsStorefrontAppearanceProvider",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx#CmsStorefrontAppearanceProvider"
-      ],
-      "propPath": [
-        "storefrontAppearanceMode",
-        "initialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx#CmsStorefrontAppearanceProvider",
-          "sourceProp": "storefrontAppearanceMode",
-          "targetProp": "initialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 22
         }
       ]
     },
@@ -5570,58 +5400,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "sinkComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient"
-      ],
-      "propPath": [
-        "publicOwner",
-        "publicOwner"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "sinkComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
-        }
-      ]
-    },
-    {
-      "score": 50,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
       "rootComponentId": "src/app/(frontend)/kangur/error.tsx#Error",
       "sinkComponentId": "src/features/kangur/ui/KangurErrorFallback.tsx#KangurErrorFallback",
       "componentPath": [
@@ -5692,58 +5470,6 @@
           "targetProp": "className",
           "relativePath": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
           "line": 74
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell"
-      ],
-      "propPath": [
-        "publicOwner",
-        "publicOwner"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
         }
       ]
     },
@@ -9108,15 +8834,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "name": "FrontendLayoutClient",
-      "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-      "feature": "app",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx#SocialPostList",
       "name": "SocialPostList",
       "relativePath": "src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx",
@@ -9153,15 +8870,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "name": "AgenticSortGame",
-      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx#KangurTrainingSetupPanel",
       "name": "KangurTrainingSetupPanel",
       "relativePath": "src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx",
@@ -9173,6 +8881,15 @@
     {
       "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSequenceGame",
       "name": "AgenticSequenceGame",
+      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "name": "AgenticSortGame",
       "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
@@ -9214,15 +8931,6 @@
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": true
-    },
-    {
-      "componentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "name": "FrontendPublicOwnerShell",
-      "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-      "feature": "app",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
     },
     {
       "componentId": "src/app/(frontend)/kangur/error.tsx#Error",
@@ -9533,15 +9241,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "name": "FrontendLayoutClient",
-      "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-      "feature": "app",
-      "forwardedPropCount": 3,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx#SocialPostList",
       "name": "SocialPostList",
       "relativePath": "src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx",
@@ -9578,15 +9277,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "name": "AgenticSortGame",
-      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 6,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx#KangurTrainingSetupPanel",
       "name": "KangurTrainingSetupPanel",
       "relativePath": "src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx",
@@ -9598,6 +9288,15 @@
     {
       "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSequenceGame",
       "name": "AgenticSequenceGame",
+      "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 5,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "name": "AgenticSortGame",
       "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 2,
@@ -9639,15 +9338,6 @@
       "forwardedPropCount": 2,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": true
-    },
-    {
-      "componentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-      "name": "FrontendPublicOwnerShell",
-      "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-      "feature": "app",
-      "forwardedPropCount": 2,
-      "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
     },
     {
       "componentId": "src/app/(frontend)/kangur/error.tsx#Error",
@@ -9940,88 +9630,6 @@
   ],
   "chains": [
     {
-      "score": 152,
-      "depth": 4,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-        "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode",
-        "kangurInitialMode",
-        "initialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        },
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "toComponentId": "src/features/kangur/ui/KangurStorefrontAppearanceProvider.tsx#KangurStorefrontAppearanceProvider",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "initialMode",
-          "relativePath": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
-          "line": 31
-        }
-      ]
-    },
-    {
-      "score": 123,
-      "depth": 3,
-      "rootFanout": 5,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
-      "componentPath": [
-        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
-      ],
-      "propPath": [
-        "accent",
-        "accent",
-        "accent"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 628
-        },
-        {
-          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
-          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
-          "sourceProp": "accent",
-          "targetProp": "accent",
-          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
-          "line": 177
-        }
-      ]
-    },
-    {
       "score": 113,
       "depth": 3,
       "rootFanout": 4,
@@ -10062,6 +9670,42 @@
       "depth": 3,
       "rootFanout": 4,
       "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+      "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+      "componentPath": [
+        "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+        "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout"
+      ],
+      "propPath": [
+        "accent",
+        "accent",
+        "accent"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticSortGame",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+          "line": 628
+        },
+        {
+          "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
+          "toComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
+          "sourceProp": "accent",
+          "targetProp": "accent",
+          "relativePath": "src/features/kangur/ui/design/lesson-primitives.tsx",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "score": 113,
+      "depth": 3,
+      "rootFanout": 4,
+      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx#AgenticDrawGame",
       "sinkComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonCallout",
       "componentPath": [
@@ -10081,7 +9725,7 @@
           "sourceProp": "accent",
           "targetProp": "accent",
           "relativePath": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-          "line": 810
+          "line": 808
         },
         {
           "fromComponentId": "src/features/kangur/ui/design/lesson-primitives.tsx#KangurLessonVisual",
@@ -10198,78 +9842,6 @@
           "targetProp": "value",
           "relativePath": "src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx",
           "line": 478
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient"
-      ],
-      "propPath": [
-        "publicOwner",
-        "publicOwner",
-        "publicOwner"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        },
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "publicOwner",
-          "targetProp": "publicOwner",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
-        }
-      ]
-    },
-    {
-      "score": 89,
-      "depth": 3,
-      "rootFanout": 1,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-      "sinkComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-      "componentPath": [
-        "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-        "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-        "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient"
-      ],
-      "propPath": [
-        "kangurInitialMode",
-        "kangurInitialMode",
-        "kangurInitialMode"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendLayoutClient.tsx#FrontendLayoutClient",
-          "toComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendLayoutClient.tsx",
-          "line": 24
-        },
-        {
-          "fromComponentId": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx#FrontendPublicOwnerShell",
-          "toComponentId": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx#FrontendPublicOwnerShellClient",
-          "sourceProp": "kangurInitialMode",
-          "targetProp": "kangurInitialMode",
-          "relativePath": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
-          "line": 14
         }
       ]
     },

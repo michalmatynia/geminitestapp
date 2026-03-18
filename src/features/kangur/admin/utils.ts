@@ -90,7 +90,8 @@ export const readPersistedTreeMode = (): LessonTreeMode => {
     },
     () => {
       const storedValue = window.localStorage.getItem(TREE_MODE_STORAGE_KEY);
-      return storedValue === 'catalog' ? 'catalog' : 'ordered';
+      if (storedValue === 'catalog' || storedValue === 'sections') return storedValue;
+      return 'ordered';
     },
     { fallback: 'ordered' }
   );

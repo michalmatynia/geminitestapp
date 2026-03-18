@@ -10,6 +10,10 @@ import {
   KANGUR_LESSON_LIBRARY,
 } from '@/features/kangur/lessons/lesson-catalog';
 import type { KangurLessonTemplate } from '@/features/kangur/lessons/lesson-types';
+import {
+  buildSectionLookup,
+  createDefaultKangurSections,
+} from '@/features/kangur/lessons/lesson-section-defaults';
 import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   KANGUR_LESSONS_SETTING_KEY,
@@ -378,14 +382,17 @@ export const createKangurLessonDraft = (
   };
 };
 
-export const createDefaultKangurLessons = (): KangurLesson[] =>
-  KANGUR_LESSON_COMPONENT_ORDER.map((componentId, index) => {
+export const createDefaultKangurLessons = (): KangurLesson[] => {
+  const sectionLookup = buildSectionLookup(createDefaultKangurSections());
+
+  return KANGUR_LESSON_COMPONENT_ORDER.map((componentId, index) => {
     const template = getKangurLessonTemplate(componentId);
     const ageGroup = resolveKangurLessonTemplateAgeGroup(template);
+    const sectionRef = sectionLookup.get(componentId);
     return {
       id: `kangur-lesson-${componentId}`,
       componentId,
-      contentMode: 'component',
+      contentMode: 'component' as const,
       subject: resolveKangurLessonTemplateSubject(template),
       ageGroup,
       title: template.title,
@@ -395,8 +402,11 @@ export const createDefaultKangurLessons = (): KangurLesson[] =>
       activeBg: template.activeBg,
       sortOrder: (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
       enabled: true,
+      ...(sectionRef?.sectionId ? { sectionId: sectionRef.sectionId } : {}),
+      ...(sectionRef?.subsectionId ? { subsectionId: sectionRef.subsectionId } : {}),
     };
   });
+};
 
 export const createDefaultKangurNarratorSettings = (): KangurNarratorSettings => ({
   engine: 'server',

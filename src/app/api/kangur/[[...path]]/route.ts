@@ -10,10 +10,10 @@ import { handleLearnerRouting } from './routing/routing.learner';
 import { handleAiTutorRouting } from './routing/routing.ai-tutor';
 import { handleMiscRouting } from './routing/routing.misc';
 
-export async function GET(
+const routeKangurRequest = async (
   request: NextRequest,
   context: { params: Promise<{ path?: string[] | string }> }
-): Promise<Response> {
+): Promise<Response> => {
   const params = await context.params;
   const segments = resolveKangurApiPathSegments(request, { params });
 
@@ -25,55 +25,32 @@ export async function GET(
     (await handleMiscRouting(request, segments)) ??
     (await notFound(request, request.method))
   );
+};
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ path?: string[] | string }> }
+): Promise<Response> {
+  return routeKangurRequest(request, context);
 }
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ path?: string[] | string }> }
 ): Promise<Response> {
-  const params = await context.params;
-  const segments = resolveKangurApiPathSegments(request, { params });
-
-  return (
-    (await handleAuthRouting(request, segments)) ??
-    (await handleDuelRouting(request, segments)) ??
-    (await handleLearnerRouting(request, segments)) ??
-    (await handleAiTutorRouting(request, segments)) ??
-    (await handleMiscRouting(request, segments)) ??
-    (await notFound(request, request.method))
-  );
+  return routeKangurRequest(request, context);
 }
 
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ path?: string[] | string }> }
 ): Promise<Response> {
-  const params = await context.params;
-  const segments = resolveKangurApiPathSegments(request, { params });
-
-  return (
-    (await handleAuthRouting(request, segments)) ??
-    (await handleDuelRouting(request, segments)) ??
-    (await handleLearnerRouting(request, segments)) ??
-    (await handleAiTutorRouting(request, segments)) ??
-    (await handleMiscRouting(request, segments)) ??
-    (await notFound(request, request.method))
-  );
+  return routeKangurRequest(request, context);
 }
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ path?: string[] | string }> }
 ): Promise<Response> {
-  const params = await context.params;
-  const segments = resolveKangurApiPathSegments(request, { params });
-
-  return (
-    (await handleAuthRouting(request, segments)) ??
-    (await handleDuelRouting(request, segments)) ??
-    (await handleLearnerRouting(request, segments)) ??
-    (await handleAiTutorRouting(request, segments)) ??
-    (await handleMiscRouting(request, segments)) ??
-    (await notFound(request, request.method))
-  );
+  return routeKangurRequest(request, context);
 }

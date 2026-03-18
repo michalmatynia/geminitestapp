@@ -5,7 +5,7 @@ import {
   type KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 
-export type LessonTreeMode = 'ordered' | 'catalog';
+export type LessonTreeMode = 'ordered' | 'catalog' | 'sections';
 export type TreeMode = LessonTreeMode;
 
 export type LessonFormData = {

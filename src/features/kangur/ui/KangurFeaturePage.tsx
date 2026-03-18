@@ -28,6 +28,7 @@ import {
 } from '@/features/kangur/utils/custom-css';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 import { cn } from '@/features/kangur/shared/utils';
+import { KangurAccessibilityPanel } from '@/features/kangur/ui/components/KangurAccessibilityPanel';
 
 import type { CSSProperties, JSX, KeyboardEvent } from 'react';
 
@@ -115,7 +116,7 @@ export function KangurFeaturePageShell(): JSX.Element {
   return (
     <div
       className={cn(
-        'relative w-full kangur-premium-bg text-slate-800',
+        'relative flex w-full min-w-0 flex-col overflow-x-hidden kangur-premium-bg text-slate-800',
         embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
         shellClassOverride
       )}
@@ -135,8 +136,11 @@ export function KangurFeaturePageShell(): JSX.Element {
       >
         Przejdź do głównej treści
       </a>
-      <KangurFeatureApp />
-      <footer className='w-full border-t border-white/10 px-4 py-6 text-center text-xs [color:var(--kangur-page-muted-text)] sm:px-6'>
+      {!embedded && <KangurAccessibilityPanel />}
+      <div className='w-full min-w-0 flex-1'>
+        <KangurFeatureApp />
+      </div>
+      <footer className='w-full border-t border-white/10 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [color:var(--kangur-page-muted-text)] sm:px-6'>
         <span>Creator credentials: Michał Matynia · created 2026 · </span>
         <a
           className='font-semibold [color:var(--kangur-page-text)] hover:underline'

@@ -12,9 +12,10 @@ import { mongoDiagnosticsResponseSchema } from '@/shared/contracts/observability
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
-import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
+import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 
 export type { LogFilters, SystemLogsResponse, SystemActivityResponse, SystemLogMetricsResponse };
+export { useSystemActivity } from '@/shared/hooks/useSystemActivity';
 
 export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsResponse> {
   const queryKey = logsKeys.list(filters);
@@ -51,29 +52,6 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
       queryKey,
       tags: ['observability', 'logs'],
       description: 'Loads system logs.'},
-  });
-}
-
-export function useSystemActivity(
-  params: { page?: number; pageSize?: number; search?: string } = {}
-): SingleQuery<SystemActivityResponse> {
-  const { page = 1, pageSize = 10, search } = params;
-  const queryKey = activityKeys.list({ page, pageSize, search });
-  return createSingleQueryV2({
-    id: 'system-activity',
-    queryKey,
-    queryFn: () =>
-      api.get<SystemActivityResponse>('/api/system/activity', {
-        params: { page, pageSize, search },
-      }),
-    meta: {
-      source: 'observability.hooks.useSystemActivity',
-      operation: 'detail',
-      resource: 'system.activity',
-      domain: 'observability',
-      queryKey,
-      tags: ['observability', 'activity'],
-      description: 'Loads system activity.'},
   });
 }
 

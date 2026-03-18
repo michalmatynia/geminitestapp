@@ -1,16 +1,13 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
-import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
-import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import {
   KangurButton,
@@ -18,9 +15,7 @@ import {
   KangurCardTitle,
   KangurEmptyState,
   KangurGlassPanel,
-  KangurInfoCard,
   KangurMetricCard,
-  KangurPanelRow,
   KangurStatusChip,
   KangurSummaryPanel,
   KangurTextField,
@@ -41,169 +36,26 @@ import {
   filterKangurAssignmentCatalog,
 } from '@/features/kangur/ui/services/delegated-assignments';
 import { buildKangurAssignmentDedupeKey } from '@/features/kangur/services/kangur-assignments';
-import { cn } from '@/features/kangur/shared/utils';
 
-
-type KangurAssignmentManagerView =
-  | 'full'
-  | 'catalog'
-  | 'catalogWithLists'
-  | 'tracking'
-  | 'metrics';
-
-type KangurAssignmentManagerProps = {
-  basePath: string;
-  view?: KangurAssignmentManagerView;
-};
-
-type KangurAssignmentManagerItemCardProps = {
-  accent?: ComponentProps<typeof KangurInfoCard>['accent'];
-  children: ReactNode;
-  testId: string;
-};
-
-type TimeLimitModalContext =
-  | {
-      mode: 'update';
-      assignmentId: string;
-    }
-  | {
-      mode: 'create';
-      catalogItemId: string;
-    };
-
-function KangurAssignmentManagerItemCard({
-  accent,
-  children,
-  testId,
-}: KangurAssignmentManagerItemCardProps): React.JSX.Element {
-  const cardAccent = accent;
-  const cardTestId = testId;
-
-  return (
-    <KangurInfoCard accent={cardAccent} data-testid={cardTestId} padding='lg'>
-      {children}
-    </KangurInfoCard>
-  );
-}
-
-function KangurAssignmentManagerCardHeader({
-  children,
-}: {
-  children: ReactNode;
-}): React.JSX.Element {
-  return (
-    <KangurPanelRow className='items-start sm:justify-between'>
-      {children}
-    </KangurPanelRow>
-  );
-}
-
-function KangurAssignmentManagerCardFooter({
-  children,
-}: {
-  children: ReactNode;
-}): React.JSX.Element {
-  return (
-    <KangurPanelRow className='mt-3 sm:items-center sm:justify-between'>
-      {children}
-    </KangurPanelRow>
-  );
-}
-
-const FILTER_OPTIONS = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'time', label: 'Czas' },
-  { value: 'arithmetic', label: 'Arytmetyka' },
-  { value: 'geometry', label: 'Geometria' },
-  { value: 'logic', label: 'Logika' },
-  { value: 'practice', label: 'Trening' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
-
-const TIME_LIMIT_MINUTES_MIN = 1;
-const TIME_LIMIT_MINUTES_MAX = 240;
-
-type FilterOption = (typeof FILTER_OPTIONS)[number]['value'];
-
-type KangurAssignmentTrackerSummary = {
-  activeCount: number;
-  notStartedCount: number;
-  inProgressCount: number;
-  completedCount: number;
-  completionRate: number;
-};
-
-const buildTrackerSummary = (
-  assignments: KangurAssignmentSnapshot[]
-): KangurAssignmentTrackerSummary => {
-  const visibleAssignments = assignments.filter((assignment) => !assignment.archived);
-  const activeAssignments = visibleAssignments.filter(
-    (assignment) => assignment.progress.status !== 'completed'
-  );
-  const notStartedCount = activeAssignments.filter(
-    (assignment) => assignment.progress.status === 'not_started'
-  ).length;
-  const inProgressCount = activeAssignments.filter(
-    (assignment) => assignment.progress.status === 'in_progress'
-  ).length;
-  const completedCount = visibleAssignments.filter(
-    (assignment) => assignment.progress.status === 'completed'
-  ).length;
-
-  return {
-    activeCount: activeAssignments.length,
-    notStartedCount,
-    inProgressCount,
-    completedCount,
-    completionRate:
-      visibleAssignments.length === 0
-        ? 0
-        : Math.round((completedCount / visibleAssignments.length) * 100),
-  };
-};
-
-const formatTimeLimitValue = (value: number | null | undefined): string | null => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  const rounded = Math.round(value);
-  if (!Number.isFinite(rounded) || rounded <= 0) {
-    return null;
-  }
-
-  const hours = Math.floor(rounded / 60);
-  const minutes = rounded % 60;
-  if (hours > 0 && minutes > 0) {
-    return `${hours} godz. ${minutes} min`;
-  }
-  if (hours > 0) {
-    return `${hours} godz.`;
-  }
-  return `${rounded} min`;
-};
-
-const parseTimeLimitInput = (
-  value: string
-): { value: number | null; error: string | null } => {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return { value: null, error: null };
-  }
-
-  const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
-    return { value: null, error: 'Podaj pełne minuty.' };
-  }
-  if (parsed < TIME_LIMIT_MINUTES_MIN || parsed > TIME_LIMIT_MINUTES_MAX) {
-    return {
-      value: null,
-      error: `Zakres: ${TIME_LIMIT_MINUTES_MIN}-${TIME_LIMIT_MINUTES_MAX} min.`,
-    };
-  }
-
-  return { value: parsed, error: null };
-};
+import {
+  KangurAssignmentManagerCardFooter,
+  KangurAssignmentManagerCardHeader,
+  KangurAssignmentManagerItemCard,
+} from './KangurAssignmentManager.cards';
+import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
+import {
+  FILTER_OPTIONS,
+  TIME_LIMIT_MINUTES_MAX,
+  TIME_LIMIT_MINUTES_MIN,
+  buildTrackerSummary,
+  formatTimeLimitValue,
+  parseTimeLimitInput,
+  type FilterOption,
+} from './KangurAssignmentManager.helpers';
+import type {
+  KangurAssignmentManagerProps,
+  TimeLimitModalContext,
+} from './KangurAssignmentManager.types';
 
 export function KangurAssignmentManager({
   basePath,
@@ -626,105 +478,20 @@ export function KangurAssignmentManager({
 
   return (
     <div className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <KangurDialog
-        open={isTimeLimitModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseTimeLimitModal();
-          }
-        }}
-        overlayVariant='standard'
-        contentSize='sm'
-        contentProps={{
-          'data-testid': 'assignment-time-limit-modal',
-          onEscapeKeyDown: handleCloseTimeLimitModal,
-          onInteractOutside: handleCloseTimeLimitModal,
-          onPointerDownOutside: handleCloseTimeLimitModal,
-        }}
-      >
-        <KangurDialogHeader
-          title='Czas na wykonanie'
-          description='Ustaw limit czasu dla zadania. Pozostaw puste, aby przypisać bez limitu.'
-          closeAriaLabel='Zamknij ustawienia czasu'
-        />
-
-        <KangurGlassPanel
-          className={cn('flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}
-          padding='lg'
-          surface='mistSoft'
-          variant='soft'
-        >
-          <div>
-            <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
-              Czas na wykonanie
-            </KangurStatusChip>
-            <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
-              Ustaw limit czasu dla wybranego zadania. Pozostaw puste, aby przypisać bez limitu.
-            </KangurCardDescription>
-          </div>
-
-          {timeLimitTarget ? (
-            <div className='rounded-[18px] border border-slate-200/70 bg-white/80 px-4 py-3'>
-              <div className='break-words text-sm font-semibold text-slate-900'>
-                {timeLimitTarget.title}
-              </div>
-              {timeLimitTarget.description ? (
-                <div className='mt-1 break-words text-xs text-slate-600'>
-                  {timeLimitTarget.description}
-                </div>
-              ) : null}
-              {timeLimitPreview ? (
-                <div className='mt-2 text-xs text-slate-500'>
-                  Aktualnie: {timeLimitPreview}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className='space-y-2'>
-            <KangurTextField
-              accent='indigo'
-              aria-label='Czas na wykonanie w minutach'
-              title='Czas na wykonanie (minuty)'
-              inputMode='numeric'
-              min={TIME_LIMIT_MINUTES_MIN}
-              max={TIME_LIMIT_MINUTES_MAX}
-              placeholder={'np. 30'}
-              type='number'
-              value={timeLimitDraft}
-              onChange={(event) => setTimeLimitDraft(event.target.value)}
-            />
-            <div className='text-xs text-slate-500'>
-              Wpisz liczbę minut ({TIME_LIMIT_MINUTES_MIN}-{TIME_LIMIT_MINUTES_MAX}).
-            </div>
-            {timeLimitParsed.error ? (
-              <div className='text-xs text-rose-600'>{timeLimitParsed.error}</div>
-            ) : null}
-          </div>
-
-          <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-end`}>
-            <KangurButton
-              className='w-full sm:w-auto'
-              size='sm'
-              type='button'
-              variant='ghost'
-              onClick={handleCloseTimeLimitModal}
-            >
-              Anuluj
-            </KangurButton>
-            <KangurButton
-              className='w-full sm:w-auto'
-              size='sm'
-              type='button'
-              variant='surface'
-              disabled={isTimeLimitSaveDisabled}
-              onClick={() => void handleSaveTimeLimit()}
-            >
-              {timeLimitSaveLabel}
-            </KangurButton>
-          </div>
-        </KangurGlassPanel>
-      </KangurDialog>
+      <KangurAssignmentManagerTimeLimitModal
+        isOpen={isTimeLimitModalOpen}
+        onClose={handleCloseTimeLimitModal}
+        onSave={() => void handleSaveTimeLimit()}
+        timeLimitDraft={timeLimitDraft}
+        onTimeLimitDraftChange={setTimeLimitDraft}
+        timeLimitTarget={timeLimitTarget}
+        timeLimitPreview={timeLimitPreview}
+        timeLimitParsedError={timeLimitParsed.error}
+        isSaveDisabled={isTimeLimitSaveDisabled}
+        saveLabel={timeLimitSaveLabel}
+        minMinutes={TIME_LIMIT_MINUTES_MIN}
+        maxMinutes={TIME_LIMIT_MINUTES_MAX}
+      />
       {shouldShowCatalog ? (
         <KangurGlassPanel
           data-testid='assignment-manager-create-shell'

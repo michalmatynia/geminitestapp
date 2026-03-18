@@ -56,7 +56,10 @@ type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
+type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
+type PatternToken = string | { param: string };
+type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -74,14 +77,14 @@ const methodNotAllowed = async (
   return response;
 };
 
-const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
+const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = async <P extends Params>(
-  module: RouteModule<P>,
+const dispatch = async (
+  module: RouteModule,
   method: HttpMethod,
   request: NextRequest,
-  params: P | undefined,
+  params: Params | undefined,
   source: string
 ): Promise<Response> => {
   const handler = module[method];
@@ -91,7 +94,7 @@ const dispatch = async <P extends Params>(
       ? methodNotAllowed(request, allowed, source)
       : notFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {
@@ -104,201 +107,89 @@ const getPathSegments = (request: NextRequest): string[] => {
   return remainder ? remainder.split('/').filter(Boolean) : [];
 };
 
+const param = (name: string): PatternToken => ({ param: name });
+
+const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
+  if (pattern.length !== segments.length) {
+    return null;
+  }
+  const params: Params = {};
+  for (let index = 0; index < pattern.length; index += 1) {
+    const token = pattern[index];
+    if (!token) {
+      return null;
+    }
+    const segment = segments[index];
+    if (!segment) {
+      return null;
+    }
+    if (typeof token === 'string') {
+      if (token !== segment) {
+        return null;
+      }
+      continue;
+    }
+    params[token.param] = segment;
+  }
+  return params;
+};
+
+const ROUTES: RouteDefinition[] = [
+  { pattern: [], module: integrationsIndex },
+  { pattern: ['with-connections'], module: integrationsWithConnections },
+  { pattern: ['connections', param('id')], module: connectionsById },
+  { pattern: ['connections', param('id'), 'session'], module: connectionSession },
+  { pattern: ['exports', 'base', param('setting')], module: exportsBaseSetting },
+  { pattern: ['images', 'sync-base', 'all'], module: imagesSyncBaseAll },
+  { pattern: ['imports', 'base'], module: importsBase },
+  { pattern: ['imports', 'base', 'parameters'], module: importsBaseParameters },
+  { pattern: ['imports', 'base', 'runs'], module: importsBaseRuns },
+  { pattern: ['imports', 'base', 'runs', param('runId')], module: importsBaseRun },
+  { pattern: ['imports', 'base', 'runs', param('runId'), 'cancel'], module: importsBaseRunCancel },
+  { pattern: ['imports', 'base', 'runs', param('runId'), 'report'], module: importsBaseRunReport },
+  { pattern: ['imports', 'base', 'runs', param('runId'), 'resume'], module: importsBaseRunResume },
+  { pattern: ['imports', 'base', 'sample-product'], module: importsBaseSample },
+  { pattern: ['imports', 'base', param('setting')], module: importsBaseSetting },
+  { pattern: ['jobs'], module: integrationsJobs },
+  { pattern: ['product-listings'], module: productListings },
+  { pattern: ['products', param('id'), 'base', 'link-existing'], module: integrationProductLinkExisting },
+  { pattern: ['products', param('id'), 'base', 'sku-check'], module: integrationProductSkuCheck },
+  { pattern: ['products', param('id'), 'export-to-base'], module: integrationProductExportToBase },
+  { pattern: ['products', param('id'), 'listings'], module: integrationProductsListings },
+  { pattern: ['products', param('id'), 'listings', param('listingId')], module: integrationProductListing },
+  { pattern: ['products', param('id'), 'listings', param('listingId'), 'delete-from-base'], module: integrationProductListingDelete },
+  { pattern: ['products', param('id'), 'listings', param('listingId'), 'purge'], module: integrationProductListingPurge },
+  { pattern: ['products', param('id'), 'listings', param('listingId'), 'relist'], module: integrationProductListingRelist },
+  { pattern: ['products', param('id'), 'listings', param('listingId'), 'sync-base-images'], module: integrationProductListingSyncImages },
+  { pattern: ['queues', 'tradera'], module: queuesTradera },
+  { pattern: [param('id'), 'connections'], module: integrationsConnections },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'test'], module: connectionTest },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'authorize'], module: allegroAuthorize },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'callback'], module: allegroCallback },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'disconnect'], module: allegroDisconnect },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'request'], module: allegroRequest },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'test'], module: allegroTest },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'authorize'], module: linkedinAuthorize },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'callback'], module: linkedinCallback },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'disconnect'], module: linkedinDisconnect },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'base', 'inventories'], module: baseInventories },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'base', 'products'], module: baseProducts },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'base', 'request'], module: baseRequest },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'base', 'test'], module: baseTest },
+];
+
 const routeIntegrations = (
   method: HttpMethod,
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
   const source = `v2.integrations.[[...path]].${method}`;
-  if (segments.length === 0) {
-    return dispatch(integrationsIndex, method, request, undefined, source);
-  }
-
-  const [first, second, third, fourth, fifth] = segments;
-
-  if (first === 'with-connections' && segments.length === 1) {
-    return dispatch(integrationsWithConnections, method, request, undefined, source);
-  }
-
-  if (first === 'connections') {
-    if (second && segments.length === 2) {
-      return dispatch(connectionsById, method, request, { id: second }, source);
+  for (const route of ROUTES) {
+    const params = matchPattern(route.pattern, segments);
+    if (!params) {
+      continue;
     }
-    if (second && third === 'session' && segments.length === 3) {
-      return dispatch(connectionSession, method, request, { id: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'exports' && second === 'base' && third && segments.length === 3) {
-    return dispatch(exportsBaseSetting, method, request, { setting: third }, source);
-  }
-
-  if (first === 'images' && second === 'sync-base' && third === 'all' && segments.length === 3) {
-    return dispatch(imagesSyncBaseAll, method, request, undefined, source);
-  }
-
-  if (first === 'imports' && second === 'base') {
-    if (!third && segments.length === 2) {
-      return dispatch(importsBase, method, request, undefined, source);
-    }
-    if (third === 'parameters' && segments.length === 3) {
-      return dispatch(importsBaseParameters, method, request, undefined, source);
-    }
-    if (third === 'runs') {
-      if (!fourth && segments.length === 3) {
-        return dispatch(importsBaseRuns, method, request, undefined, source);
-      }
-      if (fourth && segments.length === 4) {
-        return dispatch(importsBaseRun, method, request, { runId: fourth }, source);
-      }
-      if (fourth && fifth === 'cancel' && segments.length === 5) {
-        return dispatch(importsBaseRunCancel, method, request, { runId: fourth }, source);
-      }
-      if (fourth && fifth === 'report' && segments.length === 5) {
-        return dispatch(importsBaseRunReport, method, request, { runId: fourth }, source);
-      }
-      if (fourth && fifth === 'resume' && segments.length === 5) {
-        return dispatch(importsBaseRunResume, method, request, { runId: fourth }, source);
-      }
-      return notFound(request, source);
-    }
-    if (third === 'sample-product' && segments.length === 3) {
-      return dispatch(importsBaseSample, method, request, undefined, source);
-    }
-    if (third && segments.length === 3) {
-      return dispatch(importsBaseSetting, method, request, { setting: third }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'jobs' && segments.length === 1) {
-    return dispatch(integrationsJobs, method, request, undefined, source);
-  }
-
-  if (first === 'product-listings' && segments.length === 1) {
-    return dispatch(productListings, method, request, undefined, source);
-  }
-
-  if (first === 'products') {
-    if (second && !third && segments.length === 2) {
-      return notFound(request, source);
-    }
-    if (second && third === 'base' && fourth === 'link-existing' && segments.length === 4) {
-      return dispatch(integrationProductLinkExisting, method, request, { id: second }, source);
-    }
-    if (second && third === 'base' && fourth === 'sku-check' && segments.length === 4) {
-      return dispatch(integrationProductSkuCheck, method, request, { id: second }, source);
-    }
-    if (second && third === 'export-to-base' && segments.length === 3) {
-      return dispatch(integrationProductExportToBase, method, request, { id: second }, source);
-    }
-    if (second && third === 'listings' && !fourth && segments.length === 3) {
-      return dispatch(integrationProductsListings, method, request, { id: second }, source);
-    }
-    if (second && third === 'listings' && fourth && segments.length >= 4) {
-      const listingId = fourth;
-      if (segments.length === 4) {
-        return dispatch(integrationProductListing, method, request, { id: second, listingId }, source);
-      }
-      const action = segments[4];
-      if (action === 'delete-from-base' && segments.length === 5) {
-        return dispatch(
-          integrationProductListingDelete,
-          method,
-          request,
-          { id: second, listingId },
-          source
-        );
-      }
-      if (action === 'purge' && segments.length === 5) {
-        return dispatch(
-          integrationProductListingPurge,
-          method,
-          request,
-          { id: second, listingId },
-          source
-        );
-      }
-      if (action === 'relist' && segments.length === 5) {
-        return dispatch(
-          integrationProductListingRelist,
-          method,
-          request,
-          { id: second, listingId },
-          source
-        );
-      }
-      if (action === 'sync-base-images' && segments.length === 5) {
-        return dispatch(
-          integrationProductListingSyncImages,
-          method,
-          request,
-          { id: second, listingId },
-          source
-        );
-      }
-      return notFound(request, source);
-    }
-  }
-
-  if (first === 'queues' && second === 'tradera' && segments.length === 2) {
-    return dispatch(queuesTradera, method, request, undefined, source);
-  }
-
-  if (first && second === 'connections') {
-    const integrationId = first;
-    if (!third && segments.length === 2) {
-      return dispatch(integrationsConnections, method, request, { id: integrationId }, source);
-    }
-    if (third) {
-      const connectionId = third;
-      if (fourth === 'test' && segments.length === 4) {
-        return dispatch(connectionTest, method, request, { id: integrationId, connectionId }, source);
-      }
-      if (fourth === 'allegro') {
-        if (fifth === 'authorize' && segments.length === 5) {
-          return dispatch(allegroAuthorize, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'callback' && segments.length === 5) {
-          return dispatch(allegroCallback, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'disconnect' && segments.length === 5) {
-          return dispatch(allegroDisconnect, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'request' && segments.length === 5) {
-          return dispatch(allegroRequest, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'test' && segments.length === 5) {
-          return dispatch(allegroTest, method, request, { id: integrationId, connectionId }, source);
-        }
-      }
-      if (fourth === 'linkedin') {
-        if (fifth === 'authorize' && segments.length === 5) {
-          return dispatch(linkedinAuthorize, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'callback' && segments.length === 5) {
-          return dispatch(linkedinCallback, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'disconnect' && segments.length === 5) {
-          return dispatch(linkedinDisconnect, method, request, { id: integrationId, connectionId }, source);
-        }
-      }
-      if (fourth === 'base') {
-        if (fifth === 'inventories' && segments.length === 5) {
-          return dispatch(baseInventories, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'products' && segments.length === 5) {
-          return dispatch(baseProducts, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'request' && segments.length === 5) {
-          return dispatch(baseRequest, method, request, { id: integrationId, connectionId }, source);
-        }
-        if (fifth === 'test' && segments.length === 5) {
-          return dispatch(baseTest, method, request, { id: integrationId, connectionId }, source);
-        }
-      }
-    }
+    return dispatch(route.module, method, request, params, source);
   }
 
   return notFound(request, source);

@@ -191,14 +191,12 @@ export const DataTable = memo(function DataTable<TData>({
 
   const { rows } = table.getRowModel();
   const visibleColumnCount = table.getVisibleLeafColumns().length;
-  const resolvedAriaLabel =
-    ariaLabel ??
-    (typeof meta?.['ariaLabel'] === 'string' ? (meta['ariaLabel'] as string) : undefined);
-  const resolvedAriaDescription =
-    ariaDescription ??
-    (typeof meta?.['ariaDescription'] === 'string'
-      ? (meta['ariaDescription'] as string)
-      : undefined);
+const resolvedAriaLabel =
+  ariaLabel ??
+  (typeof meta?.['ariaLabel'] === 'string' ? meta['ariaLabel'] : undefined);
+const resolvedAriaDescription =
+  ariaDescription ??
+  (typeof meta?.['ariaDescription'] === 'string' ? meta['ariaDescription'] : undefined);
 
   const rowVirtualizer = useVirtualizer({
     count: rows.length,

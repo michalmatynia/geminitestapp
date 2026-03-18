@@ -46,7 +46,7 @@ Don't:
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   dos_donts: [
     {
-      title: "Do's",
+      title: 'Do\'s',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
@@ -70,7 +70,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: "Don'ts",
+      title: 'Don\'ts',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
@@ -139,7 +139,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: "Mini game: Do / Don't",
+      title: 'Mini game: Do / Don\'t',
       content: <AgenticCodingMiniGame gameId='dos_donts' />,
       panelClassName: 'w-full',
     },
@@ -150,7 +150,7 @@ export const HUB_SECTIONS = [
   {
     id: 'dos_donts',
     emoji: '✅',
-    title: "Do's & Don'ts",
+    title: 'Do\'s & Don\'ts',
     description: 'Najważniejsze zasady współpracy z agentem.',
     slideCount: SLIDES.dos_donts.length,
   },

@@ -103,6 +103,7 @@ const nextConfig = {
       'papaparse',
       'gsap',
       'zod',
+      'framer-motion',
     ],
   },
   serverExternalPackages: [

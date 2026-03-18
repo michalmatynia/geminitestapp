@@ -48,6 +48,7 @@ export default function LessonHub({
       className='flex w-full max-w-full flex-col items-center sm:max-w-md'
       role='region'
       aria-label={hubLabel}
+      data-kangur-lesson-hub='true'
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}

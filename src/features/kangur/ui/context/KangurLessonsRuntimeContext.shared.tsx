@@ -18,6 +18,7 @@ import {
   type LessonProps,
 } from '@/features/kangur/lessons/lesson-ui-registry';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
+import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 export { LESSON_COMPONENTS };
 
@@ -45,7 +46,8 @@ export const resolveFocusedLessonId = (
 };
 
 export const resolveFocusedLessonComponentId = (
-  focusToken: string
+  focusToken: string,
+  templateMap?: Map<string, KangurLessonTemplate>,
 ): KangurLessonComponentId | null => {
   const normalizedToken = focusToken.trim().toLowerCase();
   if (!normalizedToken) {
@@ -57,15 +59,28 @@ export const resolveFocusedLessonComponentId = (
     return mappedComponent;
   }
 
+  if (templateMap) {
+    return templateMap.has(normalizedToken)
+      ? (normalizedToken as KangurLessonComponentId)
+      : null;
+  }
+
   return normalizedToken in KANGUR_LESSON_LIBRARY
     ? (normalizedToken as KangurLessonComponentId)
     : null;
 };
 
-export const resolveFocusedLessonSubject = (focusToken: string): KangurLessonSubject | null => {
-  const componentId = resolveFocusedLessonComponentId(focusToken);
+export const resolveFocusedLessonSubject = (
+  focusToken: string,
+  templateMap?: Map<string, KangurLessonTemplate>,
+): KangurLessonSubject | null => {
+  const componentId = resolveFocusedLessonComponentId(focusToken, templateMap);
   if (!componentId) {
     return null;
+  }
+
+  if (templateMap) {
+    return templateMap.get(componentId)?.subject ?? null;
   }
 
   return KANGUR_LESSON_LIBRARY[componentId]?.subject ?? null;

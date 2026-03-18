@@ -64,7 +64,15 @@ function LessonActivityStageTopBar(): React.JSX.Element {
 
   return (
     <nav className='flex w-full flex-wrap items-center justify-between kangur-panel-gap' aria-label='Nawigacja lekcji'>
-      <KangurButton onClick={onBack} size='sm' type='button' variant='surface'>
+      <KangurButton
+        onClick={onBack}
+        size='sm'
+        type='button'
+        variant='surface'
+        className='hidden sm:inline-flex'
+        data-kangur-lesson-back='true'
+        data-kangur-lesson-back-label={backButtonLabel}
+      >
         <ArrowLeft className='w-4 h-4' aria-hidden='true' /> {backButtonLabel}
       </KangurButton>
       {navigationPills || secretLessonPill?.isUnlocked ? (

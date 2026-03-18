@@ -351,9 +351,11 @@ export default function LessonSlideSection({
       size='sm'
       variant='surface'
       className={cn(
-        'w-full justify-center sm:w-auto sm:justify-start sm:justify-self-start',
+        'hidden w-full justify-center sm:inline-flex sm:w-auto sm:justify-start sm:justify-self-start',
         className
       )}
+      data-kangur-lesson-back='true'
+      data-kangur-lesson-back-label='Wróć do tematów'
     >
       <ChevronLeft className='w-4 h-4' aria-hidden='true' />
       Wróć do tematów
@@ -526,10 +528,9 @@ export default function LessonSlideSection({
         </motion.div>
       </AnimatePresence>
 
-      {isMobile ? (
+      {isMobile && shouldRenderArrowNavigation ? (
         <div className='flex w-full flex-col items-center gap-2'>
-          {renderBackButton()}
-          {shouldRenderArrowNavigation ? renderArrowNavigation() : null}
+          {renderArrowNavigation()}
         </div>
       ) : null}
     </div>

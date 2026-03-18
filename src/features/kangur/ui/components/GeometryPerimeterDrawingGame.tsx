@@ -819,7 +819,7 @@ export default function GeometryPerimeterDrawingGame({
         </KangurInfoCard>
         <p
           id='geometry-perimeter-input-help'
-          className='text-xs text-center [color:var(--kangur-page-muted-text)]'
+          className='hidden text-xs text-center [color:var(--kangur-page-muted-text)] sm:block'
         >
           Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy
           kreskę, strzałki przesuwają kursor, Escape czyści planszę.

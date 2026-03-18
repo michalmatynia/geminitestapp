@@ -25,6 +25,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
 import { resolveFocusedLessonSubject } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
+import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 import {
   ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES,
   LESSONS_ROUTE_ACKNOWLEDGE_MS,
@@ -47,6 +48,11 @@ export function useLessonsLogic() {
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const isMobile = useKangurMobileBreakpoint();
+  const { data: lessonTemplates = [] } = useKangurLessonTemplates();
+  const lessonTemplateMap = useMemo(
+    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
+    [lessonTemplates],
+  );
 
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
@@ -173,7 +179,7 @@ export function useLessonsLogic() {
     const currentUrl = new URL(window.location.href);
     const focusToken = readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase();
     if (!focusToken) return;
-    const focusSubject = resolveFocusedLessonSubject(focusToken);
+    const focusSubject = resolveFocusedLessonSubject(focusToken, lessonTemplateMap);
     if (focusSubject && focusSubject !== subject) {
       setSubject(focusSubject);
       return;
@@ -184,7 +190,7 @@ export function useLessonsLogic() {
     setActiveLessonId(focusedLessonId);
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
-  }, [activeLessonId, basePath, lessons, setSubject, subject]);
+  }, [activeLessonId, basePath, lessons, lessonTemplateMap, setSubject, subject]);
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
@@ -224,6 +230,13 @@ export function useLessonsLogic() {
 
   useLayoutEffect(() => {
     if (!activeLesson) return;
+    if (isMobile) {
+      const scrollContainer = activeLessonScrollRef.current;
+      if (scrollContainer) {
+        scrollContainer.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }
+      return;
+    }
     let frameId: number | null = null;
     let remainingFrames = ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES;
     const resolveTopOffset = (): number => {
@@ -238,14 +251,6 @@ export function useLessonsLogic() {
     const scrollToTarget = (): boolean => {
       const target = activeLessonNavigationRef.current ?? activeLessonHeaderRef.current;
       if (!target) return false;
-      const scrollContainer = isMobile ? activeLessonScrollRef.current : null;
-      if (scrollContainer) {
-        const containerTop = scrollContainer.getBoundingClientRect().top;
-        const delta = target.getBoundingClientRect().top - containerTop;
-        const nextTop = Math.max(0, scrollContainer.scrollTop + delta);
-        scrollContainer.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
-        return Math.abs(delta) <= 8;
-      }
       const delta = target.getBoundingClientRect().top - resolveTopOffset();
       const nextTop = Math.max(0, window.scrollY + delta);
       window.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });

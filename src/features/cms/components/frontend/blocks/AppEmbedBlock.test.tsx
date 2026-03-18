@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-cms-adapter';
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/public';
 
 const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   kangurAdapterTestDouble: {
@@ -86,7 +86,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-vi.mock('@/shared/lib/kangur-cms-adapter', async () => {
+vi.mock('@/features/kangur/public', async () => {
   return {
     buildKangurEmbeddedBasePath: kangurAdapterTestDouble.buildKangurEmbeddedBasePath,
     getKangurPageSlug: kangurAdapterTestDouble.getKangurPageSlug,

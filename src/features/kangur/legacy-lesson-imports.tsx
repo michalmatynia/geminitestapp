@@ -64,7 +64,7 @@ import {
 } from './ui/components/LogicalReasoningLesson';
 import {
   HUB_SECTIONS as LOGICAL_THINKING_HUB_SECTIONS,
-  SLIDES as LOGICAL_THINKING_SLIDES,
+  SECTION_SLIDES as LOGICAL_THINKING_SLIDES,
 } from './ui/components/LogicalThinkingLesson';
 import {
   HUB_SECTIONS as MULTIPLICATION_HUB_SECTIONS,
@@ -420,6 +420,118 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     slides: [],
   },
   webdev_react_state_management: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_fit: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_surfaces: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_operating_model: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_prompting: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_responses: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_agents_md: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_approvals: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_safety: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_config_layers: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_rules: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_web_citations: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_tooling: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_response_contract: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_delegation: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_models: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_cli_ide: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_app_workflows: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_skills: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_mcp_integrations: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_automations: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_state_scale: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_review: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_long_horizon: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_dos_donts: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_non_engineers: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_prompt_patterns: {
+    kind: 'flat',
+    slides: [],
+  },
+  agentic_coding_codex_5_4_rollout: {
     kind: 'flat',
     slides: [],
   },

@@ -19,7 +19,7 @@ import {
   readKangurUrlParam,
   KANGUR_EMBED_QUERY_PARAM,
   KangurFeaturePage,
-} from '@/shared/lib/kangur-cms-adapter';
+} from '@/features/kangur/public';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';

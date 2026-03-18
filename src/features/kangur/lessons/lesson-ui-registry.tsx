@@ -232,6 +232,90 @@ const WebDevelopmentReactSetupLesson = loadLessonComponent(
 const WebDevelopmentReactStateManagementLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/WebDevelopmentReactStateManagementLesson')
 );
+const AgenticCodingCodex54Lesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54Lesson')
+);
+const AgenticCodingCodex54FitLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54FitLesson')
+);
+const AgenticCodingCodex54SurfacesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson')
+);
+const AgenticCodingCodex54OperatingModelLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54OperatingModelLesson')
+);
+const AgenticCodingCodex54PromptingLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson')
+);
+const AgenticCodingCodex54ResponsesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ResponsesLesson')
+);
+const AgenticCodingCodex54AgentsMdLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54AgentsMdLesson')
+);
+const AgenticCodingCodex54ApprovalsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ApprovalsLesson')
+);
+const AgenticCodingCodex54SafetyLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54SafetyLesson')
+);
+const AgenticCodingCodex54ConfigLayersLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ConfigLayersLesson')
+);
+const AgenticCodingCodex54RulesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54RulesLesson')
+);
+const AgenticCodingCodex54WebCitationsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54WebCitationsLesson')
+);
+const AgenticCodingCodex54ToolingLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ToolingLesson')
+);
+const AgenticCodingCodex54ResponseContractLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ResponseContractLesson')
+);
+const AgenticCodingCodex54DelegationLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54DelegationLesson')
+);
+const AgenticCodingCodex54ModelsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ModelsLesson')
+);
+const AgenticCodingCodex54CliIdeLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54CliIdeLesson')
+);
+const AgenticCodingCodex54AppWorkflowsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54AppWorkflowsLesson')
+);
+const AgenticCodingCodex54SkillsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54SkillsLesson')
+);
+const AgenticCodingCodex54McpIntegrationsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54McpIntegrationsLesson')
+);
+const AgenticCodingCodex54AutomationsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54AutomationsLesson')
+);
+const AgenticCodingCodex54StateScaleLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54StateScaleLesson')
+);
+const AgenticCodingCodex54ReviewLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54ReviewLesson')
+);
+const AgenticCodingCodex54LongHorizonLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54LongHorizonLesson')
+);
+const AgenticCodingCodex54DosDontsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54DosDontsLesson')
+);
+const AgenticCodingCodex54NonEngineersLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54NonEngineersLesson')
+);
+const AgenticCodingCodex54PromptPatternsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54PromptPatternsLesson')
+);
+const AgenticCodingCodex54RolloutLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54RolloutLesson')
+);
 
 export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
   alphabet_basics: AlphabetBasicsLesson,
@@ -283,6 +367,34 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   webdev_react_router: WebDevelopmentReactRouterLesson,
   webdev_react_setup: WebDevelopmentReactSetupLesson,
   webdev_react_state_management: WebDevelopmentReactStateManagementLesson,
+  agentic_coding_codex_5_4: AgenticCodingCodex54Lesson,
+  agentic_coding_codex_5_4_fit: AgenticCodingCodex54FitLesson,
+  agentic_coding_codex_5_4_surfaces: AgenticCodingCodex54SurfacesLesson,
+  agentic_coding_codex_5_4_operating_model: AgenticCodingCodex54OperatingModelLesson,
+  agentic_coding_codex_5_4_prompting: AgenticCodingCodex54PromptingLesson,
+  agentic_coding_codex_5_4_responses: AgenticCodingCodex54ResponsesLesson,
+  agentic_coding_codex_5_4_agents_md: AgenticCodingCodex54AgentsMdLesson,
+  agentic_coding_codex_5_4_approvals: AgenticCodingCodex54ApprovalsLesson,
+  agentic_coding_codex_5_4_safety: AgenticCodingCodex54SafetyLesson,
+  agentic_coding_codex_5_4_config_layers: AgenticCodingCodex54ConfigLayersLesson,
+  agentic_coding_codex_5_4_rules: AgenticCodingCodex54RulesLesson,
+  agentic_coding_codex_5_4_web_citations: AgenticCodingCodex54WebCitationsLesson,
+  agentic_coding_codex_5_4_tooling: AgenticCodingCodex54ToolingLesson,
+  agentic_coding_codex_5_4_response_contract: AgenticCodingCodex54ResponseContractLesson,
+  agentic_coding_codex_5_4_delegation: AgenticCodingCodex54DelegationLesson,
+  agentic_coding_codex_5_4_models: AgenticCodingCodex54ModelsLesson,
+  agentic_coding_codex_5_4_cli_ide: AgenticCodingCodex54CliIdeLesson,
+  agentic_coding_codex_5_4_app_workflows: AgenticCodingCodex54AppWorkflowsLesson,
+  agentic_coding_codex_5_4_skills: AgenticCodingCodex54SkillsLesson,
+  agentic_coding_codex_5_4_mcp_integrations: AgenticCodingCodex54McpIntegrationsLesson,
+  agentic_coding_codex_5_4_automations: AgenticCodingCodex54AutomationsLesson,
+  agentic_coding_codex_5_4_state_scale: AgenticCodingCodex54StateScaleLesson,
+  agentic_coding_codex_5_4_review: AgenticCodingCodex54ReviewLesson,
+  agentic_coding_codex_5_4_long_horizon: AgenticCodingCodex54LongHorizonLesson,
+  agentic_coding_codex_5_4_dos_donts: AgenticCodingCodex54DosDontsLesson,
+  agentic_coding_codex_5_4_non_engineers: AgenticCodingCodex54NonEngineersLesson,
+  agentic_coding_codex_5_4_prompt_patterns: AgenticCodingCodex54PromptPatternsLesson,
+  agentic_coding_codex_5_4_rollout: AgenticCodingCodex54RolloutLesson,
 };
 
 export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
@@ -536,4 +648,10 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   webdev_react_dom_hooks: 'webdev_react_dom_hooks',
   webdev: 'webdev_react_components',
   web_development: 'webdev_react_components',
+  agentic_coding: 'agentic_coding_codex_5_4',
+  agentic: 'agentic_coding_codex_5_4',
+  codex: 'agentic_coding_codex_5_4',
+  codex_5_4: 'agentic_coding_codex_5_4',
+  'codex-5-4': 'agentic_coding_codex_5_4',
+  agentic_coding_codex_5_4: 'agentic_coding_codex_5_4',
 };

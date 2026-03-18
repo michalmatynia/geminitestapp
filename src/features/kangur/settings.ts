@@ -129,6 +129,21 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   webdev_react_router: 'webdev_react_router',
   webdev_react_setup: 'webdev_react_setup',
   webdev_react_state_management: 'webdev_react_state_management',
+  agentic_coding_codex_5_4: 'agentic_coding_codex_5_4',
+  agentic_coding_codex_5_4_fit: 'agentic_coding_codex_5_4_fit',
+  agentic_coding_codex_5_4_surfaces: 'agentic_coding_codex_5_4_surfaces',
+  agentic_coding_codex_5_4_operating_model: 'agentic_coding_codex_5_4_operating_model',
+  agentic_coding_codex_5_4_responses: 'agentic_coding_codex_5_4_responses',
+  agentic_coding_codex_5_4_agents_md: 'agentic_coding_codex_5_4_agents_md',
+  agentic_coding_codex_5_4_safety: 'agentic_coding_codex_5_4_safety',
+  agentic_coding_codex_5_4_models: 'agentic_coding_codex_5_4_models',
+  agentic_coding_codex_5_4_skills: 'agentic_coding_codex_5_4_skills',
+  agentic_coding_codex_5_4_state_scale: 'agentic_coding_codex_5_4_state_scale',
+  agentic_coding_codex_5_4_long_horizon: 'agentic_coding_codex_5_4_long_horizon',
+  agentic_coding_codex_5_4_dos_donts: 'agentic_coding_codex_5_4_dos_donts',
+  agentic_coding_codex_5_4_non_engineers: 'agentic_coding_codex_5_4_non_engineers',
+  agentic_coding_codex_5_4_prompt_patterns: 'agentic_coding_codex_5_4_prompt_patterns',
+  agentic_coding_codex_5_4_rollout: 'agentic_coding_codex_5_4_rollout',
 };
 
 export const KANGUR_LESSON_COMPONENT_OPTIONS: Array<

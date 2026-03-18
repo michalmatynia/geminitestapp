@@ -24,6 +24,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import type { LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { KangurUnifiedLessonSection } from '@/features/kangur/ui/components/KangurUnifiedLesson';
 
 type SectionId =
   | 'wprowadzenie'
@@ -434,7 +435,9 @@ export const SLIDES: LessonSlide[] = [
   ...LAB_GAME_SLIDES,
 ];
 
-export const HUB_SECTIONS = [
+export const HUB_SECTIONS: ReadonlyArray<
+  KangurUnifiedLessonSection<SectionId> & { description: string }
+> = [
   {
     id: 'wprowadzenie',
     emoji: '🧠',

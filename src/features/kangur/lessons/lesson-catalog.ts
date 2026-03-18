@@ -12,6 +12,10 @@ import {
   ALPHABET_LESSON_COMPONENT_ORDER,
   ALPHABET_LESSON_TEMPLATES,
 } from './subjects/alphabet/catalog';
+import {
+  AGENTIC_CODING_LESSON_COMPONENT_ORDER,
+  AGENTIC_CODING_LESSON_TEMPLATES,
+} from './subjects/agentic-coding/catalog';
 import { ENGLISH_LESSON_COMPONENT_ORDER, ENGLISH_LESSON_TEMPLATES } from './subjects/english/catalog';
 import {
   GEOMETRY_LESSON_COMPONENT_ORDER,
@@ -60,6 +64,13 @@ export const KANGUR_SUBJECTS: readonly KangurSubjectDefinition[] = [
     sortOrder: 5,
     ageGroups: ['grown_ups'],
   },
+  {
+    id: 'agentic_coding',
+    label: 'Agentic Coding',
+    shortLabel: 'Agentic',
+    sortOrder: 6,
+    ageGroups: ['grown_ups'],
+  },
 ] as const;
 
 export const KANGUR_AGE_GROUPS: readonly KangurAgeGroupDefinition[] = [
@@ -96,7 +107,7 @@ export const KANGUR_DEFAULT_SUBJECT_BY_AGE_GROUP: Record<
 > = {
   six_year_old: 'alphabet',
   ten_year_old: 'maths',
-  grown_ups: 'web_development',
+  grown_ups: 'agentic_coding',
 };
 
 const subjectLabelMap = new Map<KangurLessonSubject, string>(
@@ -156,6 +167,7 @@ export const KANGUR_LESSON_COMPONENT_ORDER = [
   ...MATHS_LESSON_COMPONENT_ORDER,
   ...ENGLISH_LESSON_COMPONENT_ORDER,
   ...WEB_DEVELOPMENT_LESSON_COMPONENT_ORDER,
+  ...AGENTIC_CODING_LESSON_COMPONENT_ORDER,
 ] as const satisfies readonly KangurLessonComponentId[];
 
 export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLessonTemplate> = {
@@ -164,6 +176,7 @@ export const KANGUR_LESSON_LIBRARY: Record<KangurLessonComponentId, KangurLesson
   ...MATHS_LESSON_TEMPLATES,
   ...ENGLISH_LESSON_TEMPLATES,
   ...WEB_DEVELOPMENT_LESSON_TEMPLATES,
+  ...AGENTIC_CODING_LESSON_TEMPLATES,
 };
 
 const buildSubjectAgeGroupMap = (): Map<KangurLessonSubject, readonly KangurLessonAgeGroup[]> => {

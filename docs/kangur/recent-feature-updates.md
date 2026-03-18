@@ -72,6 +72,22 @@ Key paths:
 - Web Dev lesson shell: `src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.tsx`
 - Web Dev catalog metadata: `src/features/kangur/lessons/subjects/web-development/catalog.ts`
 
+## Agentic Coding default for Dorośli (2026-03-18)
+
+Adult learner sessions now default to the Agentic Coding subject (Codex 5.4),
+while keeping Web Development available as an alternative track.
+
+Highlights:
+
+- Dorośli default subject set to Agentic Coding for faster access to the Codex 5.4 path.
+- Web Development remains selectable for adult learners.
+
+Key paths:
+
+- Subject defaults: `src/features/kangur/lessons/lesson-catalog.ts`
+- Agentic Coding catalog: `src/features/kangur/lessons/subjects/agentic-coding/catalog.ts`
+- Codex 5.4 lessons: `src/features/kangur/ui/components/AgenticCodingCodex54*Lesson*.tsx`
+
 ## Social image add-ons and visual analysis (2026-03-17)
 
 Operators can capture screenshots as reusable add-ons to enrich social posts and

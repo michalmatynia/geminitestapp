@@ -23,9 +23,20 @@ type KangurSocialPostDoc = Omit<KangurSocialPost, 'createdAt' | 'updatedAt'> & {
 
 let indexesEnsured: Promise<void> | null = null;
 
-const LOCAL_STORE_PATH =
-  process.env['KANGUR_SOCIAL_POSTS_STORE_PATH'] ??
-  path.join(os.tmpdir(), 'kangur_social_posts.json');
+const LOCAL_STORE_FILENAME = 'kangur_social_posts.json';
+
+const resolveLocalStorePath = (): string => {
+  const customPath = process.env['KANGUR_SOCIAL_POSTS_STORE_PATH']?.trim();
+  const baseDir = customPath
+    ? path.extname(customPath)
+      ? path.dirname(customPath)
+      : customPath
+    : os.tmpdir();
+
+  return path.join(baseDir, LOCAL_STORE_FILENAME);
+};
+
+const LOCAL_STORE_PATH = resolveLocalStorePath();
 
 const readLocalStore = async (): Promise<KangurSocialPostStore> => {
   try {

@@ -84,6 +84,34 @@ export const kangurLessonComponentIdSchema = z.enum([
   'webdev_react_router',
   'webdev_react_setup',
   'webdev_react_state_management',
+  'agentic_coding_codex_5_4',
+  'agentic_coding_codex_5_4_fit',
+  'agentic_coding_codex_5_4_surfaces',
+  'agentic_coding_codex_5_4_operating_model',
+  'agentic_coding_codex_5_4_prompting',
+  'agentic_coding_codex_5_4_responses',
+  'agentic_coding_codex_5_4_agents_md',
+  'agentic_coding_codex_5_4_approvals',
+  'agentic_coding_codex_5_4_safety',
+  'agentic_coding_codex_5_4_config_layers',
+  'agentic_coding_codex_5_4_rules',
+  'agentic_coding_codex_5_4_web_citations',
+  'agentic_coding_codex_5_4_tooling',
+  'agentic_coding_codex_5_4_response_contract',
+  'agentic_coding_codex_5_4_delegation',
+  'agentic_coding_codex_5_4_models',
+  'agentic_coding_codex_5_4_cli_ide',
+  'agentic_coding_codex_5_4_app_workflows',
+  'agentic_coding_codex_5_4_skills',
+  'agentic_coding_codex_5_4_mcp_integrations',
+  'agentic_coding_codex_5_4_automations',
+  'agentic_coding_codex_5_4_state_scale',
+  'agentic_coding_codex_5_4_review',
+  'agentic_coding_codex_5_4_long_horizon',
+  'agentic_coding_codex_5_4_dos_donts',
+  'agentic_coding_codex_5_4_non_engineers',
+  'agentic_coding_codex_5_4_prompt_patterns',
+  'agentic_coding_codex_5_4_rollout',
 ]);
 export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
 
@@ -96,6 +124,7 @@ export const kangurLessonSubjectSchema = z.enum([
   'maths',
   'english',
   'web_development',
+  'agentic_coding',
 ]);
 export type KangurLessonSubject = z.infer<typeof kangurLessonSubjectSchema>;
 

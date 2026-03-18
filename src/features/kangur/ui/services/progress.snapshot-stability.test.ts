@@ -29,6 +29,7 @@ describe('loadProgress', () => {
           maths: {},
           english: {},
           web_development: {},
+          agentic_coding: {},
         },
       })
     );

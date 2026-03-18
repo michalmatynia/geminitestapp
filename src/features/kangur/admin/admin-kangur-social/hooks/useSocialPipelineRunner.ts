@@ -70,7 +70,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   useEffect(() => {
     deps.setDocUpdatesResult(null);
     deps.setBatchCaptureResult(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deps.activePostId]);
 
   const handleRunFullPipeline = useCallback(async (): Promise<void> => {

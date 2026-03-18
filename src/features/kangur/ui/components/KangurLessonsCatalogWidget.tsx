@@ -17,6 +17,7 @@ import {
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
+import { AGENTIC_CODING_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/agentic-coding/catalog';
 import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
 import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
@@ -49,6 +50,7 @@ type LessonGroup = Omit<LessonGroupDefinition, 'componentIds' | 'subsections'> &
 const LESSON_GROUP_DEFINITIONS_BY_SUBJECT: Record<string, readonly LessonGroupDefinition[]> = {
   alphabet: ALPHABET_LESSON_GROUPS,
   web_development: WEB_DEVELOPMENT_LESSON_GROUPS,
+  agentic_coding: AGENTIC_CODING_LESSON_GROUPS,
 };
 
 export function KangurLessonsCatalogWidget(): JSX.Element {
@@ -152,7 +154,8 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
             lessonGroup.subsections ? lessonGroup.subsections.length > 0 : lessonGroup.lessons.length > 0
           );
 
-        const allowSingleLessonGroups = group.value === 'web_development';
+        const allowSingleLessonGroups =
+          group.value === 'web_development' || group.value === 'agentic_coding';
         const displayLessonGroups = lessonGroups.filter((lessonGroup) => {
           if (lessonGroup.subsections) {
             return lessonGroup.subsections.some((subsection) => subsection.lessons.length > 0);

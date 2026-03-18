@@ -122,8 +122,12 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     deps.setLinkedinConnectionId(
       activePost.linkedinConnectionId ?? deps.persistedSocialSettings.linkedinConnectionId ?? null
     );
-    deps.setBrainModelId(activePost.brainModelId ?? deps.persistedSocialSettings.brainModelId ?? null);
-    deps.setVisionModelId(activePost.visionModelId ?? deps.persistedSocialSettings.visionModelId ?? null);
+    deps.setBrainModelId(
+      deps.persistedSocialSettings.brainModelId ?? activePost.brainModelId ?? null
+    );
+    deps.setVisionModelId(
+      deps.persistedSocialSettings.visionModelId ?? activePost.visionModelId ?? null
+    );
     setImageAddonIds(activePost.imageAddonIds ?? []);
     setImageAssets(
       (activePost.imageAssets ?? []).map((asset, index) => ({

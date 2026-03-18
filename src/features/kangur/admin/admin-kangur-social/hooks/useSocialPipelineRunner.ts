@@ -168,8 +168,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         .filter((asset): asset is ImageFileSelection => Boolean(asset));
       const currentAddonIds = depsRef.current.imageAddonIds;
       const currentAssets = depsRef.current.imageAssets;
-      const mergedAddonIds = Array.from(new Set([...currentAddonIds, ...capturedAddonIds]));
-      const mergedAssets = mergeImageAssets(currentAssets, capturedAssets);
+      // Cap to schema limits: imageAddonIds.max(30), imageAssets.max(12)
+      const mergedAddonIds = Array.from(new Set([...currentAddonIds, ...capturedAddonIds])).slice(0, 30);
+      const mergedAssets = mergeImageAssets(currentAssets, capturedAssets).slice(0, 12);
       console.log('[PIPELINE] Merged: %d addonIds, %d assets', mergedAddonIds.length, mergedAssets.length);
 
       // Step 2: Save post with captured addon IDs (with retry)
@@ -182,22 +183,35 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         editorState.bodyPl,
         editorState.bodyEn
       );
+      const docReferences = depsRef.current.resolveDocReferences().slice(0, 80);
+      const savePayload = {
+        post: {
+          id: activePostId,
+          ...editorState,
+          combinedBody,
+          status: 'draft' as const,
+          imageAssets: mergedAssets,
+          imageAddonIds: mergedAddonIds,
+          docReferences,
+          linkedinConnectionId: depsRef.current.linkedinConnectionId ?? null,
+          brainModelId: depsRef.current.brainModelId ?? null,
+          visionModelId: depsRef.current.visionModelId ?? null,
+          publishError: null,
+        },
+      };
+      console.log('[PIPELINE] Step 2 payload:', {
+        id: savePayload.post.id,
+        titlePl: savePayload.post.titlePl?.slice(0, 30),
+        bodyPlLen: savePayload.post.bodyPl?.length,
+        bodyEnLen: savePayload.post.bodyEn?.length,
+        combinedBodyLen: savePayload.post.combinedBody?.length,
+        imageAssetsCount: savePayload.post.imageAssets.length,
+        imageAddonIdsCount: savePayload.post.imageAddonIds.length,
+        docReferencesCount: savePayload.post.docReferences.length,
+        status: savePayload.post.status,
+      });
       const savedPost = await withRetry(
-        () => api.post<KangurSocialPost>('/api/kangur/social-posts', {
-          post: {
-            id: activePostId,
-            ...editorState,
-            combinedBody,
-            status: 'draft' as const,
-            imageAssets: mergedAssets,
-            imageAddonIds: mergedAddonIds,
-            docReferences: depsRef.current.resolveDocReferences(),
-            linkedinConnectionId: depsRef.current.linkedinConnectionId ?? null,
-            brainModelId: depsRef.current.brainModelId ?? null,
-            visionModelId: depsRef.current.visionModelId ?? null,
-            publishError: null,
-          },
-        }, { timeout: 30_000 }),
+        () => api.post<KangurSocialPost>('/api/kangur/social-posts', savePayload, { timeout: 30_000 }),
         { maxAttempts: 2 }
       );
       console.log('[PIPELINE] Step 2 result: savedPost.id=%s', savedPost?.id);
@@ -279,6 +293,10 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       }
     } catch (error) {
       console.error('[PIPELINE] Pipeline error at step "%s":', currentStep, error);
+      // Log full error payload for Zod validation details
+      if (error && typeof error === 'object' && 'payload' in error) {
+        console.error('[PIPELINE] Error payload (validation details):', (error as { payload: unknown }).payload);
+      }
       if (pipelineTimedOut) return;
       setPipelineStep('error');
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

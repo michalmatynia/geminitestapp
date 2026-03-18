@@ -49,7 +49,13 @@ export function CmsStorefrontAppearanceProvider({
   storageKey = 'cms_appearance_mode',
   persistMode = true,
 }: CmsStorefrontAppearanceProviderProps): React.JSX.Element {
-  const [mode, setMode] = useState<CmsStorefrontAppearanceMode>(initialMode);
+  const [mode, setMode] = useState<CmsStorefrontAppearanceMode>(() => {
+    if (!persistMode) {
+      return initialMode;
+    }
+
+    return readPersistedMode(storageKey) ?? initialMode;
+  });
   const [hydrated, setHydrated] = useState(false);
   const persistedModeRef = useRef<CmsStorefrontAppearanceMode | null>(null);
   const lastInitialModeRef = useRef<CmsStorefrontAppearanceMode>(initialMode);

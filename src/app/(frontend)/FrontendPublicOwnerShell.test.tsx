@@ -18,11 +18,13 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
   KangurFeatureRouteShell: ({
     basePath,
     embedded,
+    forceBodyScrollLock,
   }: {
     basePath?: string;
     embedded?: boolean;
+    forceBodyScrollLock?: boolean;
   }) => {
-    kangurFeatureRouteShellMock({ basePath, embedded });
+    kangurFeatureRouteShellMock({ basePath, embedded, forceBodyScrollLock });
     return <div data-testid='kangur-feature-route-shell'>Kangur route shell</div>;
   },
 }));
@@ -49,6 +51,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
       basePath: '/',
       embedded: false,
+      forceBodyScrollLock: false,
     });
   });
 
@@ -63,6 +66,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
       basePath: '/',
       embedded: true,
+      forceBodyScrollLock: true,
     });
   });
 

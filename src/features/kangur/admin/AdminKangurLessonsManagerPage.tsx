@@ -386,18 +386,26 @@ export function AdminKangurLessonsManagerPage({
 
   const applyTemplateForComponent = useCallback((componentId: KangurLessonComponentId): void => {
     const template = lessonTemplateMap.get(componentId);
-    if (!template) return;
-    setFormData((current) => ({
-      ...current,
-      componentId,
-      subject: template.subject ?? 'maths',
-      ageGroup: template.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP,
-      title: template.title,
-      description: template.description,
-      emoji: template.emoji,
-      color: template.color,
-      activeBg: template.activeBg,
-    }));
+    setFormData((current) => {
+      if (!template) {
+        return {
+          ...current,
+          componentId,
+        };
+      }
+
+      return {
+        ...current,
+        componentId,
+        subject: template.subject ?? 'maths',
+        ageGroup: template.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP,
+        title: template.title,
+        description: template.description,
+        emoji: template.emoji,
+        color: template.color,
+        activeBg: template.activeBg,
+      };
+    });
   }, [lessonTemplateMap]);
 
   const handleSaveLesson = async (): Promise<void> => {

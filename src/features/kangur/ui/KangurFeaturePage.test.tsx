@@ -96,10 +96,47 @@ describe('KangurFeaturePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
+    delete document.body.dataset.kangurShell;
+    document.body.style.overflow = '';
   });
 
   afterEach(() => {
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
+    delete document.body.dataset.kangurShell;
+    document.body.style.overflow = '';
+  });
+
+  it('does not lock body scroll when rendering an embedded page mount', () => {
+    render(
+      <KangurFeaturePage
+        slug={['lessons']}
+        basePath={buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')}
+        embedded
+      />
+    );
+
+    expect(document.body.dataset.kangurShell).toBeUndefined();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('locks body scroll when forceBodyScrollLock is enabled for embedded mounts', () => {
+    const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a');
+    const { unmount } = render(
+      <KangurFeaturePage
+        slug={['lessons']}
+        basePath={embeddedBasePath}
+        embedded
+        forceBodyScrollLock
+      />
+    );
+
+    expect(document.body.dataset.kangurShell).toBe('true');
+    expect(document.body.style.overflow).toBe('hidden');
+
+    unmount();
+
+    expect(document.body.dataset.kangurShell).toBeUndefined();
+    expect(document.body.style.overflow).toBe('');
   });
 
   it('renders the persistent shell for embedded Kangur mounts', () => {

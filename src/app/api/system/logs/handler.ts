@@ -9,7 +9,7 @@ import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-ac
 import {
   hydrateLogRuntimeContext,
   hydrateSystemLogRecordRuntimeContext,
-} from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
+} from '@/features/observability/server';
 import {
   clearSystemLogs,
   createSystemLog,

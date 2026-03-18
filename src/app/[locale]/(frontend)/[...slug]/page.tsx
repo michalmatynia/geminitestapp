@@ -1,0 +1,93 @@
+import { getTranslations } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { JSX } from 'react';
+
+import { KangurPublicApp } from '@/features/kangur/public';
+import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import {
+  buildLocalizedPathname,
+  normalizeSiteLocale,
+} from '@/shared/lib/i18n/site-locale';
+import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
+
+import { renderCmsPage } from '../../../(frontend)/cms-render';
+import {
+  getFrontPageSetting,
+  shouldApplyFrontPageAppSelection,
+} from '../../../(frontend)/home-helpers';
+import {
+  buildSlugMetadata,
+  loadSlugRenderData,
+  resolveSlugToPage,
+} from '../../../(frontend)/[...slug]/slug-page-data';
+
+import type { Metadata } from 'next';
+
+export const revalidate = 3600;
+
+type LocalizedSlugPageProps = {
+  params: Promise<{ locale: string; slug: string[] }>;
+};
+
+const isKangurFrontPageSelected = async (): Promise<boolean> => {
+  if (!shouldApplyFrontPageAppSelection()) {
+    return false;
+  }
+  const frontPageSetting = await getFrontPageSetting();
+  return getFrontPagePublicOwner(frontPageSetting) === 'kangur';
+};
+
+export async function generateMetadata({
+  params,
+}: LocalizedSlugPageProps): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const resolvedLocale = normalizeSiteLocale(locale);
+  const routeTranslations = await getTranslations({
+    locale: resolvedLocale,
+    namespace: 'Routes',
+  });
+
+  if (await isKangurFrontPageSelected()) {
+    return {
+      title:
+        slug[0]?.trim().toLowerCase() === 'login'
+          ? routeTranslations('loginTitle')
+          : routeTranslations('siteTitle'),
+    };
+  }
+
+  const page = await resolveSlugToPage(slug, { locale: resolvedLocale });
+
+  if (!page) {
+    return { title: routeTranslations('pageNotFoundTitle') };
+  }
+
+  return buildSlugMetadata(page);
+}
+
+export default async function LocalizedCmsSlugPage({
+  params,
+}: LocalizedSlugPageProps): Promise<JSX.Element> {
+  const { locale, slug } = await params;
+  const resolvedLocale = normalizeSiteLocale(locale);
+
+  if (await isKangurFrontPageSelected()) {
+    const initialMode = await getKangurStorefrontDefaultMode();
+    return (
+      <KangurPublicApp
+        slug={slug}
+        basePath={buildLocalizedPathname('/', resolvedLocale)}
+        initialMode={initialMode}
+      />
+    );
+  }
+
+  const page = await resolveSlugToPage(slug, { locale: resolvedLocale });
+
+  if (!page) {
+    notFound();
+  }
+
+  const renderData = await loadSlugRenderData(page, { locale: resolvedLocale });
+  return renderCmsPage(renderData);
+}

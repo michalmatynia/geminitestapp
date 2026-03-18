@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
+import {
+  isKangurSettingKey,
+  listKangurSettings,
+  readKangurSettingValue,
+  upsertKangurSettingValue,
+} from '@/features/kangur/services/kangur-settings-repository';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import {
   type MongoPersistedStringSettingRecord,
@@ -129,6 +135,9 @@ const ensureSettingsIndexes = async (): Promise<void> => {
 const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
+  if (isKangurSettingKey(key)) {
+    return await readKangurSettingValue(key);
+  }
   const readMongo = async (): Promise<string | null> => {
     if (!process.env['MONGODB_URI']) return null;
     await ensureSettingsIndexes();
@@ -243,27 +252,48 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     .collection<SettingDocument>(SETTINGS_COLLECTION)
     .find(query, { projection: { _id: 1, key: 1, value: 1 } })
     .toArray();
-  return docs
+  const baseSettings = docs
     .map((doc: WithId<SettingDocument>) => ({
       key: doc.key ?? String(doc._id),
       value: decodeSettingValue(doc.key ?? String(doc._id), doc.value),
     }))
     .filter((doc: SettingRecord) => typeof doc.key === 'string' && typeof doc.value === 'string');
+  if (scope === 'heavy') {
+    return baseSettings;
+  }
+
+  const kangurSettings = await listKangurSettings();
+  if (kangurSettings.length === 0) {
+    return baseSettings;
+  }
+
+  const merged = new Map<string, string>();
+  baseSettings.forEach((setting) => {
+    merged.set(setting.key, setting.value);
+  });
+  kangurSettings.forEach((setting) => {
+    merged.set(setting.key, setting.value);
+  });
+  return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };
 
 const upsertMongoSetting = async (key: string, value: string): Promise<SettingRecord | null> => {
+  if (isKangurSettingKey(key)) {
+    return await upsertKangurSettingValue(key, value);
+  }
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const now = new Date();
+  const encodedValue = encodeSettingValue(key, value);
   await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
     { key },
     {
-      $set: { value, updatedAt: now },
+      $set: { value: encodedValue, updatedAt: now },
       $setOnInsert: { createdAt: now },
     },
     { upsert: true }
   );
-  return { key, value };
+  return { key, value: encodedValue };
 };
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
@@ -711,8 +741,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       }
     }
   }
-  const valueForStorage = encodeSettingValue(key, value);
-  const setting = provider === 'mongodb' ? await upsertMongoSetting(key, valueForStorage) : null;
+  const setting = provider === 'mongodb' ? await upsertMongoSetting(key, value) : null;
   if (!setting) {
     throw internalError('No settings store configured.');
   }

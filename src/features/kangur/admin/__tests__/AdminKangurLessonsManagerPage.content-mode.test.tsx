@@ -103,6 +103,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: () => ({ data: [] }),
+}));
+
 vi.mock('@/features/kangur/admin/KangurLessonDocumentEditor', () => ({
   KangurLessonDocumentEditor: () => {
     const { lesson, document, onChange } = useLessonContentEditorContext();

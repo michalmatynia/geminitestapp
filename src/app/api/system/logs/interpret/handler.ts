@@ -15,7 +15,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
-import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
+import { hydrateSystemLogRecordRuntimeContext } from '@/features/observability/server';
 import { getSystemLogById } from '@/shared/lib/observability/system-logger';
 
 const readContextRegistryEnvelope = (

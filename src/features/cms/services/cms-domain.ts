@@ -2,8 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type { CmsDomain, Slug } from '@/shared/contracts/cms';
-import type { CmsRepository } from '@/shared/contracts/cms';
+import type { CmsDomain, CmsRepository, CmsSlugLookupOptions, Slug } from '@/shared/contracts/cms';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -376,10 +375,14 @@ export async function isSlugLinkedToAnyDomain(slugId: string): Promise<boolean> 
   return count > 0;
 }
 
-export async function getSlugsForDomain(domainId: string, repo: CmsRepository): Promise<Slug[]> {
+export async function getSlugsForDomain(
+  domainId: string,
+  repo: CmsRepository,
+  options?: CmsSlugLookupOptions
+): Promise<Slug[]> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) {
-    return repo.getSlugs();
+    return repo.getSlugs(options);
   }
   const links = await getDomainSlugLinks(domainId);
   if (!links.length) return [];
@@ -387,7 +390,7 @@ export async function getSlugsForDomain(domainId: string, repo: CmsRepository): 
   const slugIds = links.map((link: CmsDomainSlugLink) => link.slugId);
   const map = new Map(links.map((link: CmsDomainSlugLink) => [link.slugId, link]));
 
-  const slugs = await repo.getSlugsByIds(slugIds);
+  const slugs = await repo.getSlugsByIds(slugIds, options);
   return slugs.map((slug: Slug) => ({
     ...slug,
     isDefault: map.get(slug.id)?.isDefault ?? false,
@@ -397,13 +400,14 @@ export async function getSlugsForDomain(domainId: string, repo: CmsRepository): 
 export async function getSlugForDomainById(
   domainId: string,
   slugId: string,
-  repo: CmsRepository
+  repo: CmsRepository,
+  options?: CmsSlugLookupOptions
 ): Promise<Slug | null> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) {
-    return repo.getSlugById(slugId);
+    return repo.getSlugById(slugId, options);
   }
-  const slug = await repo.getSlugById(slugId);
+  const slug = await repo.getSlugById(slugId, options);
   if (!slug) return null;
   const links = await getDomainSlugLinks(domainId);
   const link = links.find((item: CmsDomainSlugLink) => item.slugId === slugId);
@@ -417,13 +421,14 @@ export async function getSlugForDomainById(
 export async function getSlugForDomainByValue(
   domainId: string,
   slugValue: string,
-  repo: CmsRepository
+  repo: CmsRepository,
+  options?: CmsSlugLookupOptions
 ): Promise<Slug | null> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) {
-    return repo.getSlugByValue(slugValue);
+    return repo.getSlugByValue(slugValue, options);
   }
-  const slug = await repo.getSlugByValue(slugValue);
+  const slug = await repo.getSlugByValue(slugValue, options);
   if (!slug) return null;
   const isAllowed = await isSlugAssignedToDomain(domainId, slug.id);
   if (!isAllowed) return null;

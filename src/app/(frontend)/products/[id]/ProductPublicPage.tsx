@@ -1,4 +1,5 @@
 import { ArrowUpRight, ChevronLeft, LayoutGrid, ShieldCheck, Sparkles } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import Link from 'next/link';
 import { headers } from 'next/headers';
@@ -10,7 +11,9 @@ import {
   getCmsThemeSettings,
   resolveCmsDomainFromHeaders,
 } from '@/features/cms/server';
+import { Link as LocaleLink } from '@/i18n/navigation';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
 import { productService } from '@/shared/lib/products/services/productService';
 import { MissingImagePlaceholder } from '@/shared/ui';
 
@@ -18,10 +21,18 @@ import type { JSX } from 'react';
 
 export async function ProductPublicPage({
   params,
+  locale,
 }: {
   params: { id: string };
+  locale?: string;
 }): Promise<JSX.Element> {
   const { id } = params;
+  const resolvedLocale = normalizeSiteLocale(locale);
+  const productTranslations = await getTranslations({
+    locale: resolvedLocale,
+    namespace: 'Product',
+  });
+  const localeSuffix = resolvedLocale.split('-')[0] ?? resolvedLocale;
   const product = await productService.getProductById(id);
 
   if (!product) {
@@ -31,12 +42,18 @@ export async function ProductPublicPage({
   const resolveText = (value: unknown): string | null =>
     typeof value === 'string' && value.trim().length > 0 ? value : null;
 
+  const resolveLocaleField = (record: Record<string, unknown>, baseKey: string): string | null => {
+    const key = `${baseKey}_${localeSuffix}`;
+    return resolveText(record[key]);
+  };
+
   const title =
+    resolveLocalizedText(product.name, resolvedLocale) ??
+    resolveLocaleField(product as Record<string, unknown>, 'name') ??
     resolveText(product.name_en) ??
     resolveText(product.name_pl) ??
     resolveText(product.name_de) ??
-    resolveText(product.name) ??
-    'Product';
+    productTranslations('fallbackTitle');
 
   const imageUrls = [
     ...(product.images ?? [])
@@ -49,19 +66,27 @@ export async function ProductPublicPage({
 
   const priceLabel =
     typeof product.price === 'number'
-      ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(product.price)
+      ? new Intl.NumberFormat(
+        resolvedLocale === 'pl' ? 'pl-PL' : resolvedLocale === 'de' ? 'de-DE' : 'en-US',
+        {
+          style: 'currency',
+          currency: 'USD',
+        }
+      ).format(product.price)
       : '—';
 
   const description =
+    resolveLocalizedText(product.description, resolvedLocale) ??
+    resolveLocaleField(product as Record<string, unknown>, 'description') ??
     resolveText(product.description_en) ??
     resolveText(product.description_pl) ??
     resolveText(product.description_de) ??
     '';
 
   const categoryLabel =
+    (product.category
+      ? resolveLocaleField(product.category as Record<string, unknown>, 'name')
+      : null) ??
     product.category?.name_en ??
     product.category?.name_pl ??
     product.category?.name_de ??
@@ -69,13 +94,13 @@ export async function ProductPublicPage({
     null;
   const stockLabel =
     typeof product.stock === 'number'
-      ? `${product.stock > 0 ? product.stock : 0} available`
+      ? productTranslations('available', { count: product.stock > 0 ? product.stock : 0 })
       : null;
   const details = [
-    { label: 'SKU', value: product.sku },
-    { label: 'Category', value: categoryLabel },
-    { label: 'Availability', value: stockLabel },
-    { label: 'Supplier', value: product.supplierName },
+    { label: productTranslations('sku'), value: product.sku },
+    { label: productTranslations('category'), value: categoryLabel },
+    { label: productTranslations('availability'), value: stockLabel },
+    { label: productTranslations('supplier'), value: product.supplierName },
   ].filter((item) => Boolean(item.value));
   const tags = (product.tags ?? [])
     .map((tag) => tag.tag?.name ?? '')
@@ -85,7 +110,7 @@ export async function ProductPublicPage({
   const domain = await resolveCmsDomainFromHeaders(hdrs);
   const [themeSettings, menuSettings] = await Promise.all([
     getCmsThemeSettings(),
-    getCmsMenuSettings(domain.id),
+    getCmsMenuSettings(domain.id, resolvedLocale),
   ]);
   const colorSchemes = buildColorSchemeMap(themeSettings);
 
@@ -104,10 +129,14 @@ export async function ProductPublicPage({
         </div>
         <div className='page-container px-4 py-12 md:px-6 lg:py-16'>
           <div className='flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--cms-appearance-muted-text)]'>
-            <Link href='/' prefetch={false} className='inline-flex items-center gap-1 hover:underline'>
+            <LocaleLink
+              href='/'
+              prefetch={false}
+              className='inline-flex items-center gap-1 hover:underline'
+            >
               <ChevronLeft className='size-3' aria-hidden='true' />
-              Storefront
-            </Link>
+              {productTranslations('storefront')}
+            </LocaleLink>
             <span>/</span>
             <span className='text-[var(--cms-appearance-page-text)]'>{title}</span>
           </div>
@@ -119,7 +148,7 @@ export async function ProductPublicPage({
                   {mainImage ? (
                     <Image
                       src={mainImage}
-                      alt={`${title} image`}
+                      alt={productTranslations('imageAlt', { title })}
                       fill
                       className='object-cover'
                       sizes='(min-width: 1024px) 55vw, 100vw'
@@ -139,7 +168,7 @@ export async function ProductPublicPage({
                     >
                       <Image
                         src={image}
-                        alt={`${title} thumbnail`}
+                        alt={productTranslations('thumbnailAlt', { title })}
                         fill
                         className='object-cover'
                         sizes='120px'
@@ -164,7 +193,7 @@ export async function ProductPublicPage({
                 ) : (
                   <span className='inline-flex items-center gap-2 rounded-full border border-[var(--cms-appearance-page-border)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]'>
                     <Sparkles className='size-3' aria-hidden='true' />
-                    Featured
+                    {productTranslations('featured')}
                   </span>
                 )}
               </div>
@@ -189,8 +218,7 @@ export async function ProductPublicPage({
                 </p>
               ) : (
                 <p className='text-base text-[var(--cms-appearance-muted-text)] sm:text-lg'>
-                  No description available yet. Add details in the admin panel to make this product
-                  stand out.
+                  {productTranslations('noDescription')}
                 </p>
               )}
 
@@ -213,19 +241,19 @@ export async function ProductPublicPage({
               ) : null}
 
               <div className='flex flex-wrap gap-3'>
-                <Link
+                <LocaleLink
                   href='/'
                   className='cms-appearance-button-outline inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-semibold'
                   prefetch={false}
                 >
-                  Back to storefront
-                </Link>
+                  {productTranslations('backToStorefront')}
+                </LocaleLink>
                 <Link
                   href='/admin'
                   className='cms-appearance-button-primary inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3 text-sm font-semibold'
                   prefetch={false}
                 >
-                  Edit in admin
+                  {productTranslations('editInAdmin')}
                   <ArrowUpRight className='size-4' aria-hidden='true' />
                 </Link>
               </div>
@@ -233,18 +261,18 @@ export async function ProductPublicPage({
               <div className='grid gap-4 sm:grid-cols-3'>
                 {[
                   {
-                    title: 'Theme-aligned',
-                    description: 'Built to match your CMS appearance settings.',
+                    title: productTranslations('themeAlignedTitle'),
+                    description: productTranslations('themeAlignedDescription'),
                     Icon: Sparkles,
                   },
                   {
-                    title: 'Catalog-ready',
-                    description: 'Showcase tags, categories, and inventory status.',
+                    title: productTranslations('catalogReadyTitle'),
+                    description: productTranslations('catalogReadyDescription'),
                     Icon: LayoutGrid,
                   },
                   {
-                    title: 'Confident display',
-                    description: 'Highlight pricing, specs, and availability at a glance.',
+                    title: productTranslations('confidentDisplayTitle'),
+                    description: productTranslations('confidentDisplayDescription'),
                     Icon: ShieldCheck,
                   },
                 ].map(({ title: itemTitle, description: itemDescription, Icon }) => (

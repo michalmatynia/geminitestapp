@@ -23,6 +23,7 @@ export default function FrontendPublicOwnerShellClient({
 }: FrontendPublicOwnerShellProps): JSX.Element {
   const pathname = usePathname();
   const normalizedPathname = pathname?.trim() || '/';
+  const isHomeRoute = normalizedPathname === '/';
   const isKangurAliasRoute =
     normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/');
 
@@ -31,7 +32,11 @@ export default function FrontendPublicOwnerShellClient({
       <KangurStorefrontAppearanceProvider initialMode={kangurInitialMode}>
         <KangurSurfaceClassSync>
           <KangurMainRoleProvider suppressMainRole>
-            <KangurFeatureRouteShell basePath='/' embedded={normalizedPathname === '/'} />
+            <KangurFeatureRouteShell
+              basePath='/'
+              embedded={isHomeRoute}
+              forceBodyScrollLock={isHomeRoute}
+            />
           </KangurMainRoleProvider>
         </KangurSurfaceClassSync>
       </KangurStorefrontAppearanceProvider>

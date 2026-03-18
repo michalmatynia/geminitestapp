@@ -32,6 +32,10 @@ export type SlugRenderData = {
   hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
 };
 
+type SlugResolutionOptions = {
+  locale?: string;
+};
+
 const normalizeRendererComponent = (
   pageId: string,
   component: Page['components'][number],
@@ -68,15 +72,20 @@ const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   }
 };
 
-export async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
+export async function resolveSlugToPage(
+  slugSegments: string[],
+  options?: SlugResolutionOptions
+): Promise<Page | null> {
   try {
     const slugValue = slugSegments.join('/');
     const cmsRepository = await getCmsRepository();
     const hdrs = await headers();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
-    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository);
+    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository, {
+      locale: options?.locale,
+    });
     if (!domainSlug) return null;
-    const page = await cmsRepository.getPageBySlug(slugValue);
+    const page = await cmsRepository.getPageBySlug(slugValue, { locale: options?.locale });
     if (!page) return null;
     if (page.status === 'published') return page;
     const session = await auth();
@@ -114,7 +123,10 @@ export const buildSlugMetadata = (page: Page): Metadata => {
   return metadata;
 };
 
-export const loadSlugRenderData = async (page: Page): Promise<SlugRenderData> => {
+export const loadSlugRenderData = async (
+  page: Page,
+  options?: SlugResolutionOptions
+): Promise<SlugRenderData> => {
   let theme: CmsTheme | null = null;
   if (page.themeId) {
     const cmsRepository = await getCmsRepository();
@@ -124,7 +136,10 @@ export const loadSlugRenderData = async (page: Page): Promise<SlugRenderData> =>
   const hdrs = await headers();
   const domain = await resolveCmsDomainFromHeaders(hdrs);
   const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings(domain.id);
+  const menuSettings = await getCmsMenuSettings(
+    domain.id,
+    options?.locale ?? page.locale ?? undefined
+  );
   const colorSchemes = buildColorSchemeMap(themeSettings);
   const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
   const mediaVars = getMediaStyleVars(themeSettings);

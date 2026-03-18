@@ -1,12 +1,33 @@
+'use client';
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
+import { LayoutGrid, ShieldCheck, Sparkles } from 'lucide-react';
 
 import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
-import { highlightItems } from './home-fallback-content.data';
-
 export function HomeFallbackHighlights(): React.JSX.Element {
+  const translations = useTranslations('FallbackHome.Highlights');
+  const highlightItems = [
+    {
+      title: translations('itemOneTitle'),
+      description: translations('itemOneDescription'),
+      Icon: Sparkles,
+    },
+    {
+      title: translations('itemTwoTitle'),
+      description: translations('itemTwoDescription'),
+      Icon: ShieldCheck,
+    },
+    {
+      title: translations('itemThreeTitle'),
+      description: translations('itemThreeDescription'),
+      Icon: LayoutGrid,
+    },
+  ];
+
   return (
-    <section id='highlights' className='relative w-full py-12'>
+    <section id='highlights' className='relative w-full py-12' aria-labelledby='highlights-title'>
       <div
         className='pointer-events-none absolute inset-0 -z-10 opacity-50'
         style={{
@@ -18,19 +39,21 @@ export function HomeFallbackHighlights(): React.JSX.Element {
       <div className='container px-4 md:px-6'>
         <div className='flex flex-col gap-3 text-center motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2'>
           <p className='text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
-            Highlights
+            {translations('eyebrow')}
           </p>
-          <h2 className='font-heading text-3xl font-semibold tracking-tight sm:text-[2.3rem]'>
-            Everything you need to make the homepage feel complete.
+          <h2
+            id='highlights-title'
+            className='font-heading text-3xl font-semibold tracking-tight sm:text-[2.3rem]'
+          >
+            {translations('title')}
           </h2>
           <p className='mx-auto max-w-2xl text-sm leading-relaxed text-[var(--cms-appearance-muted-text)] sm:text-base'>
-            The fallback layout balances storytelling with shopping, so you can launch while
-            your CMS pages are still coming together.
+            {translations('description')}
           </p>
         </div>
-        <div className={`${UI_GRID_ROOMY_CLASSNAME} mt-10 md:grid-cols-3`}>
+        <ul className={`${UI_GRID_ROOMY_CLASSNAME} mt-10 md:grid-cols-3 list-none p-0 m-0`}>
           {highlightItems.map(({ title, description, Icon }) => (
-            <div
+            <li
               key={title}
               className='cms-appearance-surface rounded-3xl border p-6 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4'
             >
@@ -43,9 +66,9 @@ export function HomeFallbackHighlights(): React.JSX.Element {
               <p className='mt-2 text-sm leading-relaxed text-[var(--cms-appearance-muted-text)]'>
                 {description}
               </p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

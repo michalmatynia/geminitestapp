@@ -1,12 +1,13 @@
 'use client';
 
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
+import { Link } from '@/i18n/navigation';
 import {
   Button,
   Input,
@@ -29,6 +30,7 @@ export default function RegisterPage(): React.JSX.Element {
 }
 
 function RegisterForm(): React.JSX.Element {
+  const translations = useTranslations('AuthRegister');
   const { userPageSettings } = useAuth();
   const allowSignup = Boolean(userPageSettings.allowSignup);
 
@@ -64,7 +66,7 @@ function RegisterForm(): React.JSX.Element {
         const details = payload?.details?.issues?.join(' ') ?? '';
         const message = payload?.error
           ? `${payload.error}${details ? ` ${details}` : ''}`
-          : 'Failed to create account.';
+          : translations('createAccountFailed');
         logClientError(new Error(message), {
           context: { source: 'RegisterPage', action: 'registerUser', email },
         });
@@ -82,13 +84,13 @@ function RegisterForm(): React.JSX.Element {
         logClientError(signInErr);
         logClientError(signInErr, { context: { source: 'RegisterPage', action: 'signIn', email } });
         const message =
-          signInErr instanceof Error ? signInErr.message : 'Sign-in failed. Please try again.';
+          signInErr instanceof Error ? signInErr.message : translations('signInFailed');
         setError(message);
       }
     } catch (err) {
       logClientError(err);
       logClientError(err, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
-      const message = err instanceof Error ? err.message : 'Failed to create account.';
+      const message = err instanceof Error ? err.message : translations('createAccountFailed');
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -100,9 +102,11 @@ function RegisterForm(): React.JSX.Element {
       <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]' />
       <Card className='w-full max-w-md border-border/60 bg-card/40 backdrop-blur-xl shadow-2xl relative z-10'>
         <CardHeader className='space-y-1 pb-6'>
-          <CardTitle className='text-2xl font-bold tracking-tight'>Create account</CardTitle>
+          <CardTitle className='text-2xl font-bold tracking-tight'>
+            {translations('title')}
+          </CardTitle>
           <CardDescription className='text-gray-400'>
-            Enter your details to register for the platform.
+            {translations('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -118,18 +122,18 @@ function RegisterForm(): React.JSX.Element {
             )}
             {!allowSignup && (
               <Alert variant='warning' className='text-xs'>
-                Self-service registration is disabled. Please contact an administrator.
+                {translations('signupDisabled')}
               </Alert>
             )}
 
             <FormField
               id='name'
-              label='Full Name'
-              description='Display name for your profile (optional).'
+              label={translations('nameLabel')}
+              description={translations('nameDescription')}
             >
               <Input
                 id='name'
-                placeholder='John Doe'
+                placeholder={translations('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={!allowSignup}
@@ -138,11 +142,11 @@ function RegisterForm(): React.JSX.Element {
               />
             </FormField>
 
-            <FormField id='email' label='Email Address' required>
+            <FormField id='email' label={translations('emailLabel')} required>
               <Input
                 id='email'
                 type='email'
-                placeholder='name@example.com'
+                placeholder={translations('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -152,10 +156,10 @@ function RegisterForm(): React.JSX.Element {
               />
             </FormField>
 
-            <FormField id='password' label='Password' required>
+            <FormField id='password' label={translations('passwordLabel')} required>
               <PasswordInput
                 id='password'
-                placeholder='••••••••'
+                placeholder={translations('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -165,7 +169,11 @@ function RegisterForm(): React.JSX.Element {
                 className='h-10 bg-gray-900/50'
               />
               <div className='mt-2 flex justify-between items-center px-1'>
-                <Hint>Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.</Hint>
+                <Hint>
+                  {translations('passwordHint', {
+                    count: DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength,
+                  })}
+                </Hint>
               </div>
             </FormField>
 
@@ -175,7 +183,7 @@ function RegisterForm(): React.JSX.Element {
               disabled={isSubmitting || !allowSignup}
               loading={isSubmitting}
             >
-              Create Account
+              {translations('submit')}
             </Button>
           </form>
         </CardContent>
@@ -183,9 +191,9 @@ function RegisterForm(): React.JSX.Element {
           className={`${UI_STACK_RELAXED_CLASSNAME} border-t border-white/5 pt-6`}
         >
           <p className='text-sm text-gray-400'>
-            Already have an account?{' '}
+            {translations('alreadyHaveAccount')}{' '}
             <Link href='/auth/signin' className='text-primary font-medium hover:underline'>
-              Sign in
+              {translations('signIn')}
             </Link>
           </p>
         </CardFooter>

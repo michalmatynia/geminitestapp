@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
@@ -36,9 +36,16 @@ type KangurFeaturePageProps = {
   slug?: string[];
   basePath?: string;
   embedded?: boolean;
+  forceBodyScrollLock?: boolean;
 };
 
-export function KangurFeaturePageShell(): JSX.Element {
+type KangurFeaturePageShellProps = {
+  forceBodyScrollLock?: boolean;
+};
+
+export function KangurFeaturePageShell({
+  forceBodyScrollLock = false,
+}: KangurFeaturePageShellProps): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
   const appearanceMode = appearance?.mode ?? 'default';
@@ -114,17 +121,22 @@ export function KangurFeaturePageShell(): JSX.Element {
     };
   }, [pageKey, requestedPath]);
 
-  useEffect(() => {
-    if (embedded || typeof document === 'undefined') {
+  const shouldLockBodyScroll = forceBodyScrollLock || !embedded;
+
+  useLayoutEffect(() => {
+    if (!shouldLockBodyScroll || typeof document === 'undefined') {
       return;
     }
 
-    document.body.dataset.kangurShell = 'true';
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.dataset['kangurShell'] = 'true';
 
     return () => {
-      delete document.body.dataset.kangurShell;
+      document.body.style.overflow = previousOverflow;
+      delete document.body.dataset['kangurShell'];
     };
-  }, [embedded]);
+  }, [shouldLockBodyScroll]);
 
   return (
     <div
@@ -178,6 +190,7 @@ export function KangurFeaturePage({
   slug = [],
   basePath = KANGUR_BASE_PATH,
   embedded = false,
+  forceBodyScrollLock = false,
 }: KangurFeaturePageProps): JSX.Element {
   const { normalizedBasePath, pageKey, requestedPath } = resolveKangurFeaturePageRoute(
     slug,
@@ -193,7 +206,7 @@ export function KangurFeaturePage({
       basePath={normalizedBasePath}
       embedded={isEmbedded}
     >
-      <KangurFeaturePageShell />
+      <KangurFeaturePageShell forceBodyScrollLock={forceBodyScrollLock} />
     </KangurRoutingProvider>
   );
 }

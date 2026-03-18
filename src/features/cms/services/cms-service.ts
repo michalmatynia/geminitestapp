@@ -11,8 +11,11 @@ import type {
   CmsDomainDto,
   CreateCmsDomainDto,
   UpdateCmsDomainDto,
+  CmsPageLookupOptions,
+  CmsSlugLookupOptions,
 } from '@/shared/contracts/cms';
 import type { CmsRepository, PageUpdateData } from '@/shared/contracts/cms';
+import type { CmsTranslationStatus } from '@/shared/contracts/site-i18n';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -45,10 +48,15 @@ export const cmsService: CmsRepository = {
   // Pages
   getPages: (): Promise<Page[]> => repoCall('getPages'),
   getPageById: (id: string): Promise<Page | null> => repoCall('getPageById', id),
-  getPageBySlug: (slug: string): Promise<Page | null> => repoCall('getPageBySlug', slug),
+  getPageBySlug: (slug: string, options?: CmsPageLookupOptions): Promise<Page | null> =>
+    repoCall('getPageBySlug', slug, options),
   createPage: async (data: {
     name: string;
     themeId?: string | null | undefined;
+    locale?: string | null;
+    translationGroupId?: string | null;
+    sourceLocale?: string | null;
+    translationStatus?: CmsTranslationStatus;
   }): Promise<Page> => {
     const page = await repoCall('createPage', data);
     void logActivity({
@@ -92,18 +100,29 @@ export const cmsService: CmsRepository = {
     repoCall('replacePageComponents', pageId, components),
 
   // Slugs
-  getSlugs: (): Promise<Slug[]> => repoCall('getSlugs'),
-  getSlugsByIds: (ids: string[]): Promise<Slug[]> => repoCall('getSlugsByIds', ids),
-  getSlugById: (id: string): Promise<Slug | null> => repoCall('getSlugById', id),
-  getSlugByValue: (slug: string): Promise<Slug | null> => repoCall('getSlugByValue', slug),
+  getSlugs: (options?: CmsSlugLookupOptions): Promise<Slug[]> => repoCall('getSlugs', options),
+  getSlugsByIds: (ids: string[], options?: CmsSlugLookupOptions): Promise<Slug[]> =>
+    repoCall('getSlugsByIds', ids, options),
+  getSlugById: (id: string, options?: CmsSlugLookupOptions): Promise<Slug | null> =>
+    repoCall('getSlugById', id, options),
+  getSlugByValue: (slug: string, options?: CmsSlugLookupOptions): Promise<Slug | null> =>
+    repoCall('getSlugByValue', slug, options),
   createSlug: (data: {
     slug: string;
     pageId?: string | null;
     isDefault?: boolean;
+    locale?: string | null;
+    translationGroupId?: string | null;
   }): Promise<Slug> => repoCall('createSlug', data),
   updateSlug: (
     id: string,
-    data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>
+    data: Partial<{
+      slug: string;
+      pageId: string | null;
+      isDefault: boolean;
+      locale: string | null;
+      translationGroupId: string | null;
+    }>
   ): Promise<Slug | null> => repoCall('updateSlug', id, data),
   deleteSlug: (id: string): Promise<Slug | null> => repoCall('deleteSlug', id),
 

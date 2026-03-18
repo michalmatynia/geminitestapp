@@ -36,8 +36,60 @@ type RouteHandler<P extends Params = Params> = (
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
 type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+type RoutePatternToken =
+  | string
+  | { param: string }
+  | { literal: string; optional?: boolean };
+type RoutePattern = RoutePatternToken[];
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+
+const ROUTES: Array<{ pattern: RoutePattern }> = [
+  { pattern: ['agent', { param: 'runId' }, 'assets', { param: 'file' }] },
+];
+
+const matchPattern = (pattern: RoutePattern, segments: string[]): Params | null => {
+  const params: Params = {};
+  let index = 0;
+
+  for (const token of pattern) {
+    const segment = segments[index];
+
+    if (typeof token === 'string') {
+      if (segment !== token) {
+        return null;
+      }
+      index += 1;
+      continue;
+    }
+
+    if ('param' in token) {
+      if (!segment) {
+        return null;
+      }
+      params[token.param] = segment;
+      index += 1;
+      continue;
+    }
+
+    if ('literal' in token) {
+      if (segment === token.literal) {
+        index += 1;
+        continue;
+      }
+      if (token.optional) {
+        continue;
+      }
+      return null;
+    }
+  }
+
+  if (index < segments.length) {
+    return null;
+  }
+
+  return params;
+};
 
 const notFound = async (request: NextRequest, source: string): Promise<Response> =>
   createErrorResponse(notFoundError('Not Found'), { request, source });
@@ -190,6 +242,11 @@ const ROUTER_OPTIONS = {
   resolveSessionUser: false,
   rateLimitKey: false,
 } as const;
+
+export const __testables = {
+  ROUTES,
+  matchPattern,
+};
 
 export const GET = apiHandlerWithParams<RouteParams>(
   (request: NextRequest, _ctx, _params) => routeAgentCreator('GET', request, getPathSegments(request)),

@@ -50,11 +50,14 @@ const applyKangurSurfaceStyle = (
   target: HTMLElement,
   mode: CmsStorefrontAppearanceMode,
   background: string,
-  vars: Record<string, string>
+  vars: Record<string, string>,
+  options: { applyScrollbarGutter?: boolean } = {}
 ): void => {
-  if (!(KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY in target.dataset)) {
-    target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY] =
-      target.style.getPropertyValue(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER);
+  if (options.applyScrollbarGutter) {
+    if (!(KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY in target.dataset)) {
+      target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY] =
+        target.style.getPropertyValue(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER);
+    }
   }
   if (!(KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY in target.dataset)) {
     target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY] =
@@ -71,7 +74,9 @@ const applyKangurSurfaceStyle = (
       target.getAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE) ?? '';
   }
 
-  target.style.setProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER, 'stable');
+  if (options.applyScrollbarGutter) {
+    target.style.setProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER, 'stable');
+  }
   target.style.setProperty(KANGUR_ACTIVE_SURFACE_BACKGROUND, background);
   target.setAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE, mode);
   Object.entries(vars).forEach(([key, value]) => {
@@ -80,12 +85,15 @@ const applyKangurSurfaceStyle = (
 };
 
 const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
-  const previousValue =
-    target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY];
-  if (typeof previousValue === 'string' && previousValue.length > 0) {
-    target.style.setProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER, previousValue);
-  } else {
-    target.style.removeProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER);
+  if (KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY in target.dataset) {
+    const previousValue =
+      target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY];
+    if (typeof previousValue === 'string' && previousValue.length > 0) {
+      target.style.setProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER, previousValue);
+    } else {
+      target.style.removeProperty(KANGUR_ACTIVE_SURFACE_SCROLLBAR_GUTTER);
+    }
+    delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY];
   }
   const previousBackground = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY];
   if (typeof previousBackground === 'string' && previousBackground.length > 0) {
@@ -120,7 +128,6 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
   } else {
     target.removeAttribute(KANGUR_ACTIVE_SURFACE_MODE_ATTRIBUTE);
   }
-  delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY];
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY];
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY];
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY];
@@ -185,13 +192,15 @@ export function KangurSurfaceClassSync({
 
   useEffect(() => {
     const targets = getKangurSurfaceTargets();
+    const hasAppTarget = targets.some((target) => target.slot === 'app');
     targets.forEach(({ element, slot }) => {
       element.classList.add(KANGUR_ACTIVE_SURFACE_CLASSNAME);
       applyKangurSurfaceStyle(
         element,
         appearanceMode,
         kangurAppearance.background,
-        kangurAppearance.vars
+        kangurAppearance.vars,
+        { applyScrollbarGutter: slot === 'app' || (!hasAppTarget && slot === 'body') }
       );
       applyKangurSurfaceClassOverrides(element, classOverrides.globals[slot]);
     });

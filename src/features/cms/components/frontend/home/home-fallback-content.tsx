@@ -1,10 +1,12 @@
+'use client';
+
 import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import type { CmsAppearanceTone } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
-import { collections, setupSteps } from './home-fallback-content.data';
 import { HomeFallbackCollections } from './home-fallback-content.collections';
 import { HomeFallbackFooter, type SocialLink } from './home-fallback-content.footer';
 import { HomeFallbackHeader } from './home-fallback-content.header';
@@ -123,6 +125,7 @@ export function HomeFallbackContent({
   themeSettings: SocialThemeSettings;
   appearanceTone?: CmsAppearanceTone;
 }): React.JSX.Element {
+  const dividerTranslations = useTranslations('FallbackHome.Dividers');
   const socialLinks = React.useMemo(() => buildSocialLinks(themeSettings), [themeSettings]);
   const featuredProducts = products.slice(0, 3);
 
@@ -131,22 +134,18 @@ export function HomeFallbackContent({
       {showFallbackHeader ? <HomeFallbackHeader appearanceTone={appearanceTone} /> : null}
 
       <div className='flex-1'>
-        <HomeFallbackHero
-          appearanceTone={appearanceTone}
-          setupSteps={setupSteps}
-          collectionCount={collections.length}
-        />
+        <HomeFallbackHero appearanceTone={appearanceTone} collectionCount={5} />
 
-        <SectionDivider label='Editorial' />
+        <SectionDivider label={dividerTranslations('editorial')} />
         <HomeFallbackSignature featuredProducts={featuredProducts} />
 
-        <SectionDivider label='Highlights' />
+        <SectionDivider label={dividerTranslations('highlights')} />
         <HomeFallbackHighlights />
 
-        <SectionDivider label='Collections' />
+        <SectionDivider label={dividerTranslations('collections')} />
         <HomeFallbackCollections />
 
-        <SectionDivider label='Catalog' />
+        <SectionDivider label={dividerTranslations('catalog')} />
         <HomeFallbackProducts products={products} />
 
         <HomeFallbackNextSteps />

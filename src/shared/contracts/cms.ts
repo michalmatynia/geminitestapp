@@ -4,6 +4,12 @@ import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
 import type { LabeledOptionDto } from './base';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { chatMessageSchema } from './chatbot';
+import {
+  cmsTranslationMetadataSchema,
+  cmsTranslationStatusSchema,
+  siteLocaleCodeSchema,
+  type CmsTranslationStatus,
+} from './site-i18n';
 
 export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
 export type CmsPageStatusDto = z.infer<typeof cmsPageStatusSchema>;
@@ -167,6 +173,8 @@ export const cmsSlugSchema = dtoBaseSchema.extend({
   slug: z.string(),
   pageId: z.string().nullable(),
   isDefault: z.boolean(),
+  locale: siteLocaleCodeSchema.default('pl'),
+  translationGroupId: z.string().trim().min(1).max(160).nullable().default(null),
 });
 
 export type CmsSlugDto = z.infer<typeof cmsSlugSchema>;
@@ -183,6 +191,8 @@ export type UpdateCmsSlugDto = Partial<CreateCmsSlugDto>;
 
 export const cmsSlugCreateSchema = z.object({
   slug: cmsRequiredStringSchema,
+  locale: siteLocaleCodeSchema.optional(),
+  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
 });
 
 export type CmsSlugCreateRequestDto = z.infer<typeof cmsSlugCreateSchema>;
@@ -190,6 +200,8 @@ export type CmsSlugCreateRequestDto = z.infer<typeof cmsSlugCreateSchema>;
 export const cmsSlugUpdateSchema = z.object({
   slug: cmsRequiredStringSchema,
   isDefault: z.boolean().optional(),
+  locale: siteLocaleCodeSchema.optional(),
+  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
 });
 
 export type CmsSlugUpdateRequestDto = z.infer<typeof cmsSlugUpdateSchema>;
@@ -685,6 +697,7 @@ export const cmsPageSchema = dtoBaseSchema
     components: z.array(cmsPageComponentInputSchema),
     slugs: z.array(cmsSlugSchema),
   })
+  .merge(cmsTranslationMetadataSchema)
   .merge(cmsPageSeoSchema);
 
 export type CmsPageDto = z.infer<typeof cmsPageSchema>;
@@ -703,6 +716,10 @@ export const cmsPageCreateSchema = z.object({
   name: cmsRequiredStringSchema,
   slugIds: cmsIdArraySchema.optional(),
   themeId: z.string().nullable().optional(),
+  locale: siteLocaleCodeSchema.optional(),
+  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
+  sourceLocale: siteLocaleCodeSchema.nullable().optional(),
+  translationStatus: cmsTranslationStatusSchema.optional(),
 });
 
 export type CmsPageCreateRequestDto = z.infer<typeof cmsPageCreateSchema>;
@@ -720,6 +737,10 @@ export const cmsPageUpdateSchema = z.object({
   themeId: z.string().nullable().optional(),
   slugIds: cmsIdArraySchema.optional(),
   components: z.array(cmsPageComponentRequestSchema),
+  locale: siteLocaleCodeSchema.optional(),
+  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
+  sourceLocale: siteLocaleCodeSchema.nullable().optional(),
+  translationStatus: cmsTranslationStatusSchema.optional(),
 });
 
 export type CmsPageUpdateRequestDto = z.infer<typeof cmsPageUpdateSchema>;
@@ -930,12 +951,29 @@ export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'upda
   components?: PageComponentInput[];
 };
 
+export type CmsPageLookupOptions = {
+  locale?: string | null;
+  fallbackToDefaultLocale?: boolean;
+};
+
+export type CmsSlugLookupOptions = {
+  locale?: string | null;
+  fallbackToDefaultLocale?: boolean;
+};
+
 export type CmsRepository = {
   // Pages
   getPages(): Promise<Page[]>;
   getPageById(id: string): Promise<Page | null>;
-  getPageBySlug(slug: string): Promise<Page | null>;
-  createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page>;
+  getPageBySlug(slug: string, options?: CmsPageLookupOptions): Promise<Page | null>;
+  createPage(data: {
+    name: string;
+    themeId?: string | null | undefined;
+    locale?: string | null;
+    translationGroupId?: string | null;
+    sourceLocale?: string | null;
+    translationStatus?: CmsTranslationStatus;
+  }): Promise<Page>;
   updatePage(id: string, data: PageUpdateData): Promise<Page | null>;
   deletePage(id: string): Promise<Page | null>;
   addSlugToPage(pageId: string, slugId: string): Promise<void>;
@@ -944,14 +982,26 @@ export type CmsRepository = {
   replacePageComponents(pageId: string, components: PageComponentInput[]): Promise<void>;
 
   // Slugs
-  getSlugs(): Promise<Slug[]>;
-  getSlugsByIds(ids: string[]): Promise<Slug[]>;
-  getSlugById(id: string): Promise<Slug | null>;
-  getSlugByValue(slug: string): Promise<Slug | null>;
-  createSlug(data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug>;
+  getSlugs(options?: CmsSlugLookupOptions): Promise<Slug[]>;
+  getSlugsByIds(ids: string[], options?: CmsSlugLookupOptions): Promise<Slug[]>;
+  getSlugById(id: string, options?: CmsSlugLookupOptions): Promise<Slug | null>;
+  getSlugByValue(slug: string, options?: CmsSlugLookupOptions): Promise<Slug | null>;
+  createSlug(data: {
+    slug: string;
+    pageId?: string | null;
+    isDefault?: boolean;
+    locale?: string | null;
+    translationGroupId?: string | null;
+  }): Promise<Slug>;
   updateSlug(
     id: string,
-    data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>
+    data: Partial<{
+      slug: string;
+      pageId: string | null;
+      isDefault: boolean;
+      locale: string | null;
+      translationGroupId: string | null;
+    }>
   ): Promise<Slug | null>;
   deleteSlug(id: string): Promise<Slug | null>;
 

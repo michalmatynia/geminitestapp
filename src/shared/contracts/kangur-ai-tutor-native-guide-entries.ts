@@ -4,7 +4,7 @@ import { KANGUR_NATIVE_GUIDE_ENTRIES_GAME } from './kangur-ai-tutor-native-guide
 import { KANGUR_NATIVE_GUIDE_ENTRIES_LESSON } from './kangur-ai-tutor-native-guide-entries.lesson';
 import { KANGUR_NATIVE_GUIDE_ENTRIES_PARENT_DASHBOARD } from './kangur-ai-tutor-native-guide-entries.parent-dashboard';
 import { KANGUR_NATIVE_GUIDE_ENTRIES_PROFILE } from './kangur-ai-tutor-native-guide-entries.profile';
-import { KANGUR_NATIVE_GUIDE_ENTRIES_TEST } from './kangur-ai-tutor-native-guide-entries.test';
+import { KANGUR_NATIVE_GUIDE_ENTRIES_TEST } from './kangur-ai-tutor-native-guide-entries.fixtures';
 
 export const KANGUR_NATIVE_GUIDE_ENTRIES: KangurAiTutorNativeGuideEntry[] = [
   ...KANGUR_NATIVE_GUIDE_ENTRIES_LESSON,

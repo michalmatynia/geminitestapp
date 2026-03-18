@@ -1,34 +1,60 @@
+import createIntlMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { auth } from '@/features/auth/edge';
+import { siteRouting } from '@/i18n/routing';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
-const baseProxy = (request: NextRequest): NextResponse => {
-  const response = NextResponse.next();
+const intlMiddleware = createIntlMiddleware(siteRouting);
+
+const finalizeResponse = (request: NextRequest, response: NextResponse): NextResponse => {
   const existing = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
   ensureCsrfCookie(response, existing);
   return response;
 };
 
+const baseProxy = (request: NextRequest): NextResponse => {
+  const response = NextResponse.next();
+  return finalizeResponse(request, response);
+};
+
 const handler =
-  typeof auth === 'function'
-    ? auth((request: NextRequest): Response => baseProxy(request))
-    : null;
+  typeof auth === 'function' ? auth((request: NextRequest): Response => baseProxy(request)) : null;
 
 type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
 
-const shouldBypassAuth = (request: NextRequest): boolean =>
-  request.nextUrl.pathname.startsWith('/api/');
+const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
+
+const isAdminRequest = (pathname: string): boolean =>
+  pathname === '/admin' || pathname.startsWith('/admin/');
+
+const isSafePageMethod = (request: NextRequest): boolean =>
+  request.method === 'GET' || request.method === 'HEAD';
+
+const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null => {
+  if (!isSafePageMethod(request)) {
+    return null;
+  }
+
+  return finalizeResponse(request, intlMiddleware(request));
+};
 
 export function proxy(
   request: NextRequest,
   context?: HandlerContext
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
-  if (shouldBypassAuth(request)) {
+  const pathname = request.nextUrl.pathname;
+
+  if (isApiRequest(pathname)) {
     return baseProxy(request);
   }
+
+  if (!isAdminRequest(pathname)) {
+    return resolvePublicLocaleResponse(request) ?? baseProxy(request);
+  }
+
   if (!handler || typeof handler !== 'function') {
     return baseProxy(request);
   }
@@ -42,5 +68,5 @@ export function proxy(
 export default proxy;
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/:path*'],
+  matcher: ['/((?!_next|_vercel|.*\\..*).*)'],
 };

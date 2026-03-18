@@ -75,6 +75,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: () => ({ data: [] }),
+}));
+
 vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/shared/ui')>();
   return {

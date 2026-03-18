@@ -11,6 +11,7 @@ const {
   routingStateMock,
   routeTransitionStateMock,
   routeNavigatorMock,
+  settingsStoreStateMock,
 } = vi.hoisted(() => ({
   authStateMock: vi.fn(),
   routingStateMock: vi.fn(),
@@ -21,6 +22,7 @@ const {
     push: vi.fn(),
     replace: vi.fn(),
   },
+  settingsStoreStateMock: vi.fn(),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -98,6 +100,14 @@ vi.mock('@/features/kangur/ui/context/KangurScoreSyncProvider', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   KangurAuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useKangurAuth: () => authStateMock(),
+  useKangurAuthState: () => authStateMock(),
+  useKangurAuthActions: () => ({
+    logout: vi.fn(),
+    navigateToLogin: vi.fn(),
+    checkAppState: vi.fn(),
+    selectLearner: vi.fn(),
+  }),
+  useOptionalKangurAuth: () => authStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -138,6 +148,10 @@ vi.mock('@/features/kangur/cms-builder/KangurCmsRuntimeScreen', () => ({
   KangurCmsRuntimeScreen: ({ fallback }: { fallback: ReactNode }) => <>{fallback}</>,
 }));
 
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => settingsStoreStateMock(),
+}));
+
 let KangurFeatureApp: typeof import('@/features/kangur/ui/KangurFeatureApp').KangurFeatureApp;
 
 describe('KangurFeatureApp', () => {
@@ -145,6 +159,16 @@ describe('KangurFeatureApp', () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     vi.resetModules();
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
 
     authStateMock.mockReturnValue({
       isLoadingAuth: false,
@@ -340,7 +364,7 @@ describe('KangurFeatureApp', () => {
     );
   });
 
-  it('keeps the global app loader for boot loading states', () => {
+  it('keeps core routes visible during boot loading states', () => {
     authStateMock.mockReturnValue({
       isLoadingAuth: true,
       isLoadingPublicSettings: false,
@@ -357,7 +381,8 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-app-loader')).toBeNull();
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 
@@ -386,5 +411,23 @@ describe('KangurFeatureApp', () => {
       pageKey: 'Game',
       sourceId: 'kangur-auth:redirect-parent-dashboard',
     });
+  });
+
+  it('keeps the app loader while Kangur theme settings are loading', () => {
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: true,
+      isFetching: false,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
   });
 });

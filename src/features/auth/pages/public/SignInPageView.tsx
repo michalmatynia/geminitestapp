@@ -1,11 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState, Suspense } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { Link } from '@/i18n/navigation';
 import {
   Button,
   Input,
@@ -47,6 +48,7 @@ export const resolveSignInCallbackNavigation = (
 };
 
 function SignInPageLoader(): React.JSX.Element {
+  const translations = useTranslations('AuthSignIn');
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
@@ -55,7 +57,9 @@ function SignInPageLoader(): React.JSX.Element {
   const { userPageSettings } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(urlError ? 'Invalid credentials.' : null);
+  const [error, setError] = useState<string | null>(
+    urlError ? translations('invalidCredentials') : null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const allowSignup = Boolean(userPageSettings.allowSignup);
@@ -74,7 +78,7 @@ function SignInPageLoader(): React.JSX.Element {
       });
 
       if (result?.error) {
-        setError('Invalid email or password.');
+        setError(translations('invalidEmailOrPassword'));
       } else if (result?.ok) {
         const navigationTarget = resolveSignInCallbackNavigation(
           callbackUrl,
@@ -89,7 +93,7 @@ function SignInPageLoader(): React.JSX.Element {
     } catch (err) {
       logClientError(err);
       logClientError(err, { context: { source: 'SignInPage', action: 'handleSubmit', email } });
-      setError('An unexpected error occurred. Please try again.');
+      setError(translations('unexpectedError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -100,9 +104,11 @@ function SignInPageLoader(): React.JSX.Element {
       <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]' />
       <Card className='w-full max-w-md border-border/60 bg-card/40 backdrop-blur-xl shadow-2xl relative z-10'>
         <CardHeader className='space-y-1 pb-6'>
-          <CardTitle className='text-2xl font-bold tracking-tight'>Sign in</CardTitle>
+          <CardTitle className='text-2xl font-bold tracking-tight'>
+            {translations('title')}
+          </CardTitle>
           <CardDescription className='text-gray-400'>
-            Welcome back. Please enter your credentials.
+            {translations('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,11 +123,11 @@ function SignInPageLoader(): React.JSX.Element {
               </Alert>
             )}
 
-            <FormField id='email' label='Email Address'>
+            <FormField id='email' label={translations('emailLabel')}>
               <Input
                 id='email'
                 type='email'
-                placeholder='name@example.com'
+                placeholder={translations('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -131,10 +137,10 @@ function SignInPageLoader(): React.JSX.Element {
               />
             </FormField>
 
-            <FormField id='password' label='Password'>
+            <FormField id='password' label={translations('passwordLabel')}>
               <PasswordInput
                 id='password'
-                placeholder='••••••••'
+                placeholder={translations('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -149,7 +155,7 @@ function SignInPageLoader(): React.JSX.Element {
               disabled={isSubmitting}
               loading={isSubmitting}
             >
-              Sign In
+              {translations('submit')}
             </Button>
           </form>
         </CardContent>
@@ -158,14 +164,14 @@ function SignInPageLoader(): React.JSX.Element {
         >
           {allowSignup && (
             <p className='text-sm text-gray-400'>
-              Don&apos;t have an account?{' '}
+              {translations('noAccount')}{' '}
               <Link href='/auth/register' className='text-primary font-medium hover:underline'>
-                Create one
+                {translations('createOne')}
               </Link>
             </p>
           )}
           <Link href='/' className='text-xs text-gray-500 hover:text-gray-300 transition-colors'>
-            &larr; Back to storefront
+            &larr; {translations('backToStorefront')}
           </Link>
         </CardFooter>
       </Card>
@@ -174,11 +180,13 @@ function SignInPageLoader(): React.JSX.Element {
 }
 
 export default function SignInPageView(): React.JSX.Element {
+  const translations = useTranslations('AuthSignIn');
+
   return (
     <Suspense
       fallback={
         <div role='status' aria-live='polite' className='sr-only'>
-          Loading sign in form...
+          {translations('loading')}
         </div>
       }
     >

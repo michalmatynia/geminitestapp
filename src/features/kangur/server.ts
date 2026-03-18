@@ -9,6 +9,7 @@ export * from '@/features/kangur/services/kangur-learner-repository';
 export * from '@/features/kangur/services/kangur-lesson-repository';
 export * from '@/features/kangur/services/kangur-lesson-document-repository';
 export * from '@/features/kangur/services/kangur-actor';
+export * from '@/features/kangur/services/kangur-settings-repository';
 export * from '@/features/kangur/server/context-registry';
 export * from '@/features/kangur/server/kangur-learner-sessions';
 export * from '@/features/kangur/server/kangur-learner-interactions';

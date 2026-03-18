@@ -427,6 +427,11 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--app-font-body);
+    scrollbar-gutter: stable;
+  }
+  body[data-kangur-shell='true'] {
+    overflow: hidden;
+    scrollbar-gutter: auto;
   }
   @media (prefers-reduced-motion: reduce) {
     html:focus-within {
@@ -1413,6 +1418,27 @@
         radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%)
       );
     }
+
+    body:has(#app-content [data-kangur-appearance]) {
+      overflow: hidden;
+      scrollbar-gutter: auto;
+    }
+
+    #app-content:has([data-kangur-appearance]) {
+      height: 100dvh;
+      min-height: 100dvh;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      scrollbar-gutter: stable;
+    }
+  }
+
+  body[data-kangur-shell='true'] #app-content {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
   }
 
   .kangur-surface-active {
@@ -3478,6 +3504,51 @@
     margin-top: calc(var(--kangur-lesson-panel-gap, 1rem) * -0.5);
   }
 
+  .kangur-panel-hover-zoom {
+    --kangur-panel-hover-tint: 10%;
+    --kangur-panel-hover-tint-color: #ffffff;
+    --kangur-panel-hover-border: rgba(255, 255, 255, 0.9);
+    --kangur-panel-hover-shadow: 0 18px 45px -32px rgba(79, 70, 229, 0.45);
+    position: relative;
+    cursor: pointer;
+    transform: translateZ(0);
+    transition:
+      transform 700ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 700ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 700ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+
+  .kangur-panel-hover-zoom::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: color-mix(
+      in srgb,
+      var(--kangur-panel-hover-tint-color) var(--kangur-panel-hover-tint),
+      transparent
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .kangur-panel-hover-zoom > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .kangur-panel-hover-zoom:hover {
+    transform: translateY(-1px) scale(1.01);
+    border-color: var(--kangur-panel-hover-border);
+    box-shadow: var(--kangur-panel-hover-shadow);
+  }
+
+  .kangur-panel-hover-zoom:hover::before {
+    opacity: 1;
+  }
+
   .kangur-drawing-canvas {
     touch-action: none;
     -webkit-user-select: none;
@@ -3525,6 +3596,18 @@
     .kangur-panel-shell.kangur-panel-gap,
     .kangur-panel-shell .kangur-panel-gap {
       gap: 0.9rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kangur-panel-hover-zoom {
+      transition: none;
+    }
+    .kangur-panel-hover-zoom::before {
+      transition: none;
+    }
+    .kangur-panel-hover-zoom:hover {
+      transform: none;
     }
   }
 
@@ -3577,6 +3660,9 @@
   }
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
+  }
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
   }
   @keyframes ai-paths-wire-flow {
     0% {

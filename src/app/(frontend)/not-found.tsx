@@ -1,9 +1,12 @@
-import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { JSX } from 'react';
 
+import { Link } from '@/i18n/navigation';
 import { Button } from '@/shared/ui/button';
 
-export default function FrontendNotFound(): JSX.Element {
+export default async function FrontendNotFound(): Promise<JSX.Element> {
+  const translations = await getTranslations('NotFound');
+
   return (
     <div
       className='flex min-h-[60vh] w-full flex-col items-center justify-center gap-4 rounded-lg border p-8 text-center'
@@ -19,7 +22,7 @@ export default function FrontendNotFound(): JSX.Element {
         className='text-2xl font-semibold'
         style={{ color: 'var(--cms-appearance-page-text, var(--kangur-page-text, #334155))' }}
       >
-        Page not found
+        {translations('title')}
       </h1>
       <p
         className='max-w-md text-sm'
@@ -27,7 +30,7 @@ export default function FrontendNotFound(): JSX.Element {
           color: 'var(--cms-appearance-muted-text, var(--kangur-page-muted-text, #64748b))',
         }}
       >
-        We couldn&apos;t find what you&apos;re looking for.
+        {translations('frontendDescription')}
       </p>
       <Button
         asChild
@@ -38,7 +41,7 @@ export default function FrontendNotFound(): JSX.Element {
           color: 'var(--cms-appearance-button-primary-text, #ffffff)',
         }}
       >
-        <Link href='/'>Back to Home</Link>
+        <Link href='/'>{translations('backToHome')}</Link>
       </Button>
     </div>
   );

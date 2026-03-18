@@ -252,8 +252,9 @@ const getFeaturedHomeAction = (label: string): HTMLElement => {
   return action as HTMLElement;
 };
 
-const getEntryScreenBackButton = (sectionTestId: string): HTMLButtonElement => {
-  return within(screen.getByTestId(sectionTestId)).getByRole('button', {
+const getEntryScreenBackButton = async (sectionTestId: string): Promise<HTMLButtonElement> => {
+  const section = await screen.findByTestId(sectionTestId);
+  return within(section).getByRole('button', {
     name: 'Wróć do poprzedniej strony',
   });
 };
@@ -447,15 +448,15 @@ describe('Kangur accessibility smoke', () => {
 
     await user.click(getFeaturedHomeAction('Grajmy!'));
     expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
-    expect(getEntryScreenBackButton('kangur-game-operation-top-section')).toBeInTheDocument();
+    expect(await getEntryScreenBackButton('kangur-game-operation-top-section')).toBeInTheDocument();
 
-    await user.click(getEntryScreenBackButton('kangur-game-operation-top-section'));
+    await user.click(await getEntryScreenBackButton('kangur-game-operation-top-section'));
     expect(await screen.findByRole('heading', { name: 'Wybierz aktywność' })).toBeInTheDocument();
 
     await user.click(getFeaturedHomeAction('Kangur Matematyczny'));
     expect(
       await screen.findByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })
     ).toBeInTheDocument();
-    expect(getEntryScreenBackButton('kangur-game-kangur-setup-top-section')).toBeInTheDocument();
+    expect(await getEntryScreenBackButton('kangur-game-kangur-setup-top-section')).toBeInTheDocument();
   });
 });

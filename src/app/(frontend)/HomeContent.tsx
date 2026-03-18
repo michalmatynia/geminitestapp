@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { auth } from '@/features/auth/auth';
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
@@ -5,6 +7,7 @@ import { getCmsThemeSettings } from '@/features/cms/server';
 import { productService } from '@/features/products/server';
 import type { Page, PageComponent, Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import { canPreviewDrafts } from './home-helpers';
 import { normalizeHomeProducts } from './home-product-normalize';
@@ -14,17 +17,24 @@ type HomeContentProps = {
   domainId: string;
   slugs: Slug[];
   withTiming: <T>(label: string, fn: () => Promise<T>) => Promise<T>;
+  locale?: string;
 };
 
 export async function HomeContent({
   domainId,
   slugs,
   withTiming,
+  locale,
 }: HomeContentProps): Promise<React.JSX.Element> {
+  const resolvedLocale = normalizeSiteLocale(locale);
+  const commonTranslations = await getTranslations({
+    locale: resolvedLocale,
+    namespace: 'Common',
+  });
   const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
     withTiming('cmsTheme', () => getCmsThemeSettings()),
-    withTiming('cmsMenu', () => getCmsMenuSettings(domainId)),
+    withTiming('cmsMenu', () => getCmsMenuSettings(domainId, resolvedLocale)),
   ]);
 
   const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
@@ -32,7 +42,7 @@ export async function HomeContent({
 
   if (defaultSlug) {
     const cmsPage: Page | null = await withTiming('cmsPageBySlug', () =>
-      cmsRepository.getPageBySlug(defaultSlug.slug)
+      cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
     );
     let allowDrafts = false;
     if (cmsPage && cmsPage.status !== 'published') {
@@ -57,6 +67,7 @@ export async function HomeContent({
         theme={themeSettings}
         colorSchemes={colorSchemes}
         showMenu={showMenu}
+        loadingLabel={commonTranslations('loadingStorefront')}
         hasCmsContent={hasCmsContent}
         defaultSlug={defaultSlug.slug}
         rendererComponents={rendererComponents as PageComponent[]}
@@ -80,6 +91,7 @@ export async function HomeContent({
       theme={themeSettings}
       colorSchemes={colorSchemes}
       showMenu={Boolean(menuSettings.showMenu)}
+      loadingLabel={commonTranslations('loadingStorefront')}
       showFallbackHeader={showFallbackHeader}
       products={products}
       appearanceTone={{

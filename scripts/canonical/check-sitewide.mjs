@@ -1067,6 +1067,8 @@ const checkHardcodedSecrets = (sourceFileMap) => {
   ];
   const SECRETS_ALLOWLIST = new Set([
     'src/shared/lib/security/csrf-client.ts',
+    'src/shared/lib/search/search-settings.ts',
+    'src/shared/lib/auth/auth-secret-settings.ts',
   ]);
 
   for (const [relativeFile, content] of sourceFileMap.entries()) {

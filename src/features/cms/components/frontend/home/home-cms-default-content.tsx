@@ -1,6 +1,10 @@
+'use client';
+
 import { Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
+import { Link as LocaleLink } from '@/i18n/navigation';
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
 import {
   getMediaInlineStyles,
@@ -14,6 +18,7 @@ export function HomeCmsDefaultContent(props: {
   defaultSlug: string;
   rendererComponents: React.ComponentProps<typeof CmsPageRenderer>['components'];
 }): React.JSX.Element {
+  const translations = useTranslations('CmsHome');
   const { themeSettings, colorSchemes, hasCmsContent, defaultSlug, rendererComponents } = props;
 
   return hasCmsContent ? (
@@ -34,14 +39,13 @@ export function HomeCmsDefaultContent(props: {
             <Sparkles className='size-6' aria-hidden='true' />
           </span>
           <p className='mt-4 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--cms-appearance-muted-text)]'>
-            CMS Ready
+            {translations('readyEyebrow')}
           </p>
           <h1 className='mt-3 font-heading text-3xl font-semibold tracking-tight sm:text-4xl'>
-            Welcome to {defaultSlug}
+            {translations('emptyTitle', { slug: defaultSlug })}
           </h1>
           <p className='mx-auto mt-3 max-w-xl text-sm text-[var(--cms-appearance-muted-text)] sm:text-base'>
-            Your CMS homepage is set but it does not have any content blocks yet. Start building in
-            the admin panel to replace this placeholder with your custom layout.
+            {translations('emptyDescription')}
           </p>
           <div className='mt-6 flex flex-wrap justify-center gap-3'>
             <Link
@@ -49,15 +53,15 @@ export function HomeCmsDefaultContent(props: {
               className='cms-appearance-button-primary inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-semibold'
               prefetch={false}
             >
-              Open CMS editor
+              {translations('openEditor')}
             </Link>
-            <Link
+            <LocaleLink
               href='/'
               className='cms-appearance-button-outline inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-semibold'
               prefetch={false}
             >
-              Preview storefront
-            </Link>
+              {translations('previewStorefront')}
+            </LocaleLink>
           </div>
         </div>
       </div>

@@ -87,6 +87,8 @@ export type MenuSettings = MenuSettingsDto;
 
 export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings.v1';
 export const CMS_MENU_SETTINGS_ZONE_PREFIX = 'cms_menu_settings.v1.zone.';
+export const CMS_MENU_SETTINGS_LOCALE_KEY = 'cms_menu_settings.v2.locale.';
+export const CMS_MENU_SETTINGS_LOCALE_ZONE_PREFIX = 'cms_menu_settings.v2.zone.';
 
 export const DEFAULT_MENU_SETTINGS: MenuSettings = {
   showMenu: true,
@@ -146,9 +148,37 @@ export const DEFAULT_MENU_SETTINGS: MenuSettings = {
   menuHoverAnimation: 'none',
 };
 
-export function getCmsMenuSettingsKey(domainId?: string | null): string {
+export function getCmsMenuSettingsKey(domainId?: string | null, locale?: string | null): string {
+  const normalizedLocale = typeof locale === 'string' ? locale.trim().toLowerCase() : '';
+  if (normalizedLocale) {
+    if (!domainId) {
+      return `${CMS_MENU_SETTINGS_LOCALE_KEY}${normalizedLocale}`;
+    }
+    return `${CMS_MENU_SETTINGS_LOCALE_ZONE_PREFIX}${domainId}.locale.${normalizedLocale}`;
+  }
   if (!domainId) return CMS_MENU_SETTINGS_KEY;
   return `${CMS_MENU_SETTINGS_ZONE_PREFIX}${domainId}`;
+}
+
+export function getCmsMenuSettingsFallbackKeys(
+  domainId?: string | null,
+  locale?: string | null
+): string[] {
+  const keys: string[] = [];
+
+  if (locale) {
+    keys.push(getCmsMenuSettingsKey(domainId, locale));
+    if (domainId) {
+      keys.push(getCmsMenuSettingsKey(null, locale));
+    }
+  }
+
+  keys.push(getCmsMenuSettingsKey(domainId, null));
+  if (domainId) {
+    keys.push(getCmsMenuSettingsKey(null, null));
+  }
+
+  return Array.from(new Set(keys));
 }
 
 export function normalizeMenuSettings(input: unknown): MenuSettings {

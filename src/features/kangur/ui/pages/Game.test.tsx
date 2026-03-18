@@ -381,12 +381,12 @@ describe('Game page', () => {
     cancelAnimationFrameSpy.mockRestore();
   });
 
-  it('uses the canonical Lekcje transition preset for Gra screens', () => {
+  it('uses the canonical Lekcje transition preset for Gra screens', async () => {
     useKangurGameRuntimeMock.mockReturnValue(buildRuntime('calendar_quiz'));
 
     render(<Game />);
 
-    const transitionShell = screen.getByTestId('kangur-calendar-training-widget').parentElement;
+    const transitionShell = (await screen.findByTestId('kangur-calendar-training-widget')).parentElement;
 
     expect(transitionShell).not.toBeNull();
     expect(transitionShell).toHaveAttribute(

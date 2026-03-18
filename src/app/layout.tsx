@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import { RootClientShell } from './_providers/RootClientShell';
 import { cn } from '@/shared/utils';
 
@@ -33,6 +34,7 @@ export default function RootLayout({
           Skip to main content
         </a>
         <RootClientShell>{children}</RootClientShell>
+        <Analytics />
       </body>
     </html>
   );

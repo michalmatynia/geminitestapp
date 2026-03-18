@@ -468,7 +468,7 @@ const executePlaywrightNodeRun = async (
       }
       logs.push(`[runtime] Navigating to start URL: ${request.startUrl}`);
       await page.goto(request.startUrl, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'load',
         timeout: effectiveSettings.navigationTimeout,
       });
     }

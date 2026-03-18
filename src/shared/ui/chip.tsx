@@ -64,7 +64,12 @@ export function Chip(props: ChipProps): React.JSX.Element {
           active ? activeClassName : className
         )}
       >
-        {Icon && <Icon className={cn('size-3', !active && 'opacity-70 group-hover:opacity-100')} />}
+        {Icon && (
+          <Icon
+            className={cn('size-3', !active && 'opacity-70 group-hover:opacity-100')}
+            aria-hidden='true'
+          />
+        )}
         {label}
       </Badge>
     </button>

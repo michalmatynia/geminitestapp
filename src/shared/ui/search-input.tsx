@@ -41,8 +41,14 @@ const { Context: SearchInputRuntimeContext, useStrictContext: useSearchInputRunt
 
 const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInputContent(_, ref) {
   const runtime = useSearchInputRuntime();
-  const { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, id, placeholder, ...rest } =
-    runtime.inputProps;
+  const {
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    id,
+    placeholder,
+    type,
+    ...rest
+  } = runtime.inputProps;
   const resolvedAriaLabel =
     ariaLabel ?? (ariaLabelledBy || id ? undefined : placeholder ?? 'Search');
   const resolvedContainerLabel =
@@ -65,6 +71,7 @@ const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInp
         size={runtime.size}
         className={cn('pl-9 pr-9', runtime.className)}
         id={id}
+        type={type ?? 'search'}
         placeholder={placeholder}
         aria-label={resolvedAriaLabel}
         aria-labelledby={ariaLabelledBy}

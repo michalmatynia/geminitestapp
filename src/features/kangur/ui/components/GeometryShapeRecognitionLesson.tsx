@@ -30,6 +30,13 @@ type ShapeDefinition = {
   color: string;
 };
 
+type ShapeRound = {
+  id: ShapeId;
+  shape: ShapeId;
+  correct: string;
+  options: readonly string[];
+};
+
 const SHAPES: ShapeDefinition[] = [
   {
     id: 'circle',
@@ -97,14 +104,14 @@ const HUB_SECTIONS = [
   },
 ] as const;
 
-const SHAPE_ROUNDS = [
+const SHAPE_ROUNDS: ShapeRound[] = [
   { id: 'circle', shape: 'circle', correct: 'Koło', options: ['Koło', 'Kwadrat', 'Trójkąt'] },
   { id: 'triangle', shape: 'triangle', correct: 'Trójkąt', options: ['Trójkąt', 'Prostokąt', 'Koło'] },
   { id: 'square', shape: 'square', correct: 'Kwadrat', options: ['Kwadrat', 'Romb', 'Prostokąt'] },
   { id: 'rectangle', shape: 'rectangle', correct: 'Prostokąt', options: ['Prostokąt', 'Kwadrat', 'Owal'] },
   { id: 'oval', shape: 'oval', correct: 'Owal', options: ['Owal', 'Koło', 'Romb'] },
   { id: 'diamond', shape: 'diamond', correct: 'Romb', options: ['Romb', 'Kwadrat', 'Trójkąt'] },
-] as const;
+];
 
 const ShapeIcon = ({
   shape,
@@ -200,7 +207,7 @@ const ShapeRecognitionGame = (): React.JSX.Element => {
 
   const isFinished = roundIndex >= SHAPE_ROUNDS.length;
   const safeIndex = Math.min(roundIndex, SHAPE_ROUNDS.length - 1);
-  const round = SHAPE_ROUNDS[safeIndex];
+  const round = SHAPE_ROUNDS[safeIndex]!;
   const shape = SHAPES.find((item) => item.id === round.shape) ?? SHAPES[0]!;
   const isCorrect = selected === round.correct;
 
@@ -356,7 +363,7 @@ export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
               finishLabel='Wróć do tematów'
               lessonKey='geometry_shape_recognition'
               onFinish={onFinish}
-              shapeIds={['circle', 'triangle', 'square', 'rectangle']}
+              shapeIds={['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle']}
               showDifficultySelector={false}
             />
           ),

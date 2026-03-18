@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/server/auth', () => ({
   auth: vi.fn(),
@@ -17,8 +17,10 @@ vi.mock('./kangur-learner-session', () => ({
 
 import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
 import { kangurAuthUserSchema } from '@/features/kangur/shared/contracts/kangur';
+import { auth, findAuthUserById } from '@/server/auth';
 
-import { toKangurAuthUser, type KangurParentActor } from './kangur-actor';
+import { listKangurLearnersByOwner } from './kangur-learner-repository';
+import { resolveKangurActor, toKangurAuthUser, type KangurParentActor } from './kangur-actor';
 
 const learner = {
   id: 'learner-1',
@@ -59,5 +61,53 @@ describe('toKangurAuthUser', () => {
 
     expect(authUser.email).toBe('parent@example.com');
     expect(kangurAuthUserSchema.parse(authUser).email).toBe('parent@example.com');
+  });
+});
+
+describe('resolveKangurActor', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('maps super_admin to admin role', async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: {
+        id: 'owner-1',
+        email: 'parent@example.com',
+        name: 'Parent Example',
+        role: 'super_admin',
+      },
+    } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(findAuthUserById).mockResolvedValue({
+      email: 'parent@example.com',
+      emailVerified: true,
+    });
+    vi.mocked(listKangurLearnersByOwner).mockResolvedValue([learner]);
+
+    const actor = await resolveKangurActor();
+
+    expect(actor.actorType).toBe('parent');
+    expect(actor.role).toBe('admin');
+  });
+
+  it('maps superuser to admin role', async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: {
+        id: 'owner-1',
+        email: 'parent@example.com',
+        name: 'Parent Example',
+        role: 'superuser',
+      },
+    } as Awaited<ReturnType<typeof auth>>);
+    vi.mocked(findAuthUserById).mockResolvedValue({
+      email: 'parent@example.com',
+      emailVerified: true,
+    });
+    vi.mocked(listKangurLearnersByOwner).mockResolvedValue([learner]);
+
+    const actor = await resolveKangurActor();
+
+    expect(actor.actorType).toBe('parent');
+    expect(actor.role).toBe('admin');
   });
 });

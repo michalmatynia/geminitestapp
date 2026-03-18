@@ -59,7 +59,7 @@ const PROFILE_TABS: Array<
 const PROFILE_MAIN_ID = 'kangur-learner-profile-main';
 
 function LearnerProfileContent(): React.JSX.Element {
-  const { user, isLoadingScores, scoresError } = useKangurLearnerProfileRuntime();
+  const { user, isLoadingScores } = useKangurLearnerProfileRuntime();
   const auth = useKangurAuth();
   const isAuthenticated = auth.isAuthenticated ?? Boolean(auth.user);
   const { push: navigateTo } = useKangurRouteNavigator();

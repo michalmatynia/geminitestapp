@@ -62,7 +62,7 @@ describe('AddingLesson', () => {
 
     expect(screen.getByTestId('lesson-hub-progress-podstawy')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-0')).toHaveClass(
-      'bg-orange-200'
+      'bg-amber-200'
     );
     expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-1')).toHaveClass(
       'kangur-step-pill-pending'
@@ -73,7 +73,7 @@ describe('AddingLesson', () => {
     fireEvent.click(screen.getByRole('button', { name: /wróć do tematów/i }));
 
     expect(screen.getByTestId('lesson-hub-progress-dot-podstawy-1')).toHaveClass(
-      'bg-orange-200'
+      'bg-amber-200'
     );
   });
 

@@ -32,7 +32,7 @@ test('case resolver exposes tree controls accessibly and passes the accessibilit
   await expect(page.getByText('Case 1').first()).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('button', { name: 'ALL CASES' })).toBeVisible();
   await expect(page.getByRole('switch', { name: 'Show nested folders and files' })).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Search files & folders…' })).toBeVisible();
+  await expect(page.getByRole('searchbox', { name: 'Search files & folders…' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add folder' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add case file' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Create new image file' })).toBeVisible();

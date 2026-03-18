@@ -67,14 +67,6 @@ function KangurAdminContentShellHeader(): React.JSX.Element {
     <div className='relative overflow-hidden rounded-[28px] border border-border/60 bg-[linear-gradient(135deg,rgba(10,18,32,0.97),rgba(13,38,68,0.88))] px-5 py-5 shadow-[0_30px_100px_-56px_rgba(14,165,233,0.42)]'>
       <div className='pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.18),transparent_58%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_54%)]' />
       <div className='relative'>
-        <div className='mb-4 flex flex-wrap items-center gap-2'>
-          <span className='inline-flex rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-100/85'>
-            Kangur Admin Workspace
-          </span>
-          <span className='inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-slate-300/90'>
-            Structured authoring shell
-          </span>
-        </div>
         <SectionHeader
           title={title}
           description={description}

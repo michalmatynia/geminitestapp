@@ -62,7 +62,10 @@ import {
   HUB_SECTIONS as LOGICAL_REASONING_HUB_SECTIONS,
   SLIDES as LOGICAL_REASONING_SLIDES,
 } from './ui/components/LogicalReasoningLesson';
-import { SLIDES as LOGICAL_THINKING_SLIDES } from './ui/components/LogicalThinkingLesson';
+import {
+  HUB_SECTIONS as LOGICAL_THINKING_HUB_SECTIONS,
+  SLIDES as LOGICAL_THINKING_SLIDES,
+} from './ui/components/LogicalThinkingLesson';
 import {
   HUB_SECTIONS as MULTIPLICATION_HUB_SECTIONS,
   SLIDES as MULTIPLICATION_SLIDES,
@@ -268,10 +271,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     GEOMETRY_PERIMETER_HUB_SECTIONS,
     GEOMETRY_PERIMETER_SLIDES
   ),
-  logical_thinking: {
-    kind: 'flat',
-    slides: LOGICAL_THINKING_SLIDES,
-  },
+  logical_thinking: createSectionedDefinition(
+    LOGICAL_THINKING_HUB_SECTIONS,
+    LOGICAL_THINKING_SLIDES
+  ),
   logical_patterns: createSectionedDefinition(
     LOGICAL_PATTERNS_HUB_SECTIONS,
     LOGICAL_PATTERNS_SLIDES

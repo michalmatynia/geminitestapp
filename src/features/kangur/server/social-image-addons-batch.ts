@@ -39,10 +39,10 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     const id = typeof capture.id === 'string' ? capture.id : \`capture-\${index + 1}\`;
     const url = typeof capture.url === 'string' ? capture.url : '';
     const selector = typeof capture.selector === 'string' ? capture.selector.trim() : '';
-    const waitForMs = Number.isFinite(capture.waitForMs) ? Number(capture.waitForMs) : 0;
+    const waitForMs = Number.isFinite(capture.waitForMs) ? Number(capture.waitForMs) : 2000;
     const waitForSelectorMs = Number.isFinite(capture.waitForSelectorMs)
       ? Number(capture.waitForSelectorMs)
-      : 10000;
+      : 15000;
 
     if (!url) {
       results.push({ id, status: 'skipped', reason: 'missing_url' });
@@ -50,11 +50,33 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     }
 
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded' });
-      if (selector) {
-        await page.waitForSelector(selector, { timeout: waitForSelectorMs });
+      log(\`[\${id}] Navigating to \${url}\`);
+      await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+
+      // Wait for the Kangur page transition skeleton to disappear.
+      // This overlay (data-testid="kangur-page-transition-skeleton") covers the
+      // entire page while React hydrates and data loads. It is unmounted from
+      // the DOM once the page calls useKangurRoutePageReady({ ready: true }).
+      try {
+        const skeleton = page.locator('[data-testid="kangur-page-transition-skeleton"]');
+        const skeletonCount = await skeleton.count();
+        if (skeletonCount > 0) {
+          log(\`[\${id}] Skeleton overlay detected — waiting for it to disappear\`);
+          await skeleton.waitFor({ state: 'hidden', timeout: waitForSelectorMs });
+          log(\`[\${id}] Skeleton removed — page content is ready\`);
+        }
+      } catch {
+        log(\`[\${id}] Skeleton wait timed out — proceeding with capture anyway\`);
       }
+
+      if (selector) {
+        log(\`[\${id}] Waiting for target selector: \${selector}\`);
+        await page.waitForSelector(selector, { state: 'visible', timeout: waitForSelectorMs });
+      }
+
+      // Settling time for animations and late API responses
       if (waitForMs > 0) {
+        log(\`[\${id}] Waiting \${waitForMs}ms for content to settle\`);
         await helpers.sleep(waitForMs);
       }
 
@@ -68,6 +90,7 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         kind: 'screenshot',
       });
 
+      log(\`[\${id}] Captured successfully\`);
       results.push({ id, status: 'ok' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'capture_failed';

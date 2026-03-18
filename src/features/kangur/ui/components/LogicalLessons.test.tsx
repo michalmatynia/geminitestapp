@@ -56,7 +56,7 @@ describe('Logical lessons shared surfaces', () => {
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
-    await screen.findByText('Wzorce kolorów i kształtów');
+    await screen.findAllByText('Wzorce kolorów i kształtów');
 
     expect(screen.getByText(/^Wzorzec AB$/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
@@ -73,7 +73,7 @@ describe('Logical lessons shared surfaces', () => {
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
-    await screen.findByRole('heading', { name: /Jeśli… to…/i });
+    await screen.findByRole('heading', { name: /Jeśli… to…/i, level: 2 });
 
     expect(getParagraphByTextContent('NIE znaczy')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
@@ -90,7 +90,7 @@ describe('Logical lessons shared surfaces', () => {
     );
 
     fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
-    await screen.findByRole('heading', { name: /Grupowanie według cech/i });
+    await screen.findByRole('heading', { name: /Grupowanie według cech/i, level: 2 });
 
     expect(screen.getByText(/Cecha: mają skrzydła/i)).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'

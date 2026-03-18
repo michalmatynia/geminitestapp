@@ -8,16 +8,16 @@ canonical: true
 ---
 # Accessibility Component Policy Report
 
-Generated at: 2026-03-17T11:11:31.134Z
+Generated at: 2026-03-17T22:06:04.621Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 65
+- Files scanned: 66
 - Dialogs checked: 4
 - Alert dialogs checked: 1
 - Tablists checked: 29
-- Tooltips checked: 74
+- Tooltips checked: 75
 - Errors: 0
 - Warnings: 0
 

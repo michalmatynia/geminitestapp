@@ -631,7 +631,7 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <BookCheck aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Przedmiot: {subjectChoiceLabel}</span>
+        <span className='truncate'>{subjectChoiceLabel}</span>
       </>
     ),
     docId: 'top_nav_subject_choice',
@@ -645,7 +645,7 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <Users aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Wiek: {ageGroupChoiceLabel}</span>
+        <span className='truncate'>{ageGroupChoiceLabel}</span>
       </>
     ),
     docId: 'top_nav_age_group_choice',

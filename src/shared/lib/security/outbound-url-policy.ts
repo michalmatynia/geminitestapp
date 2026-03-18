@@ -35,17 +35,20 @@ const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.20
 /**
  * Returns the set of `host` strings (hostname[:port]) that belong to this app's own
  * configured asset origin.  Only AI_PATHS_ASSET_BASE_URL is consulted so that broader
- * app-URL env vars (NEXT_PUBLIC_APP_URL, NEXTAUTH_URL) don't accidentally open localhost
- * in environments where those vars are set to http://localhost:xxxx.
+ * AI_PATHS_ASSET_BASE_URL takes priority; NEXT_PUBLIC_APP_URL is used as fallback so that
+ * features like Kangur Social batch capture can screenshot the app's own pages without
+ * requiring a separate env var in every environment.
  *
- * Set AI_PATHS_ASSET_BASE_URL to your app's public base URL (e.g. http://localhost:3000
- * in dev or https://myapp.example.com in production) to allow AI-Paths model nodes to
- * fetch self-hosted product images.
+ * Set AI_PATHS_ASSET_BASE_URL to override the self-origin (e.g. a public tunnel URL).
+ * Only the exact host:port is allowed — other localhost ports remain blocked.
  *
  * Evaluated on every call (no module-level cache) so that tests can override env vars.
  */
 const resolveAppSelfOriginHosts = (): Set<string> => {
-  const envCandidates: (string | null | undefined)[] = [process.env['AI_PATHS_ASSET_BASE_URL']];
+  const envCandidates: (string | null | undefined)[] = [
+    process.env['AI_PATHS_ASSET_BASE_URL'],
+    process.env['NEXT_PUBLIC_APP_URL'],
+  ];
   const hosts = new Set<string>();
   for (const candidate of envCandidates) {
     if (typeof candidate !== 'string' || !candidate.trim()) continue;

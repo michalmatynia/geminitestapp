@@ -6,12 +6,15 @@ import React from 'react';
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import {
   Badge,
+  Breadcrumbs,
   Button,
   Card,
   SelectSimple,
 } from '@/features/kangur/shared/ui';
+import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import type { KangurSocialDocUpdatePlan, KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 
 import {
   BRAIN_MODEL_DEFAULT_VALUE,
@@ -44,6 +47,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     linkedinConnectionId,
     brainModelId,
     visionModelId,
+    isSettingsDirty,
+    isSavingSettings,
+    handleSaveSettings,
     docUpdatesResult,
     recentAddons,
     batchCaptureBaseUrl,
@@ -57,12 +63,14 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     addonsQuery,
     saveMutation,
     patchMutation,
+    deleteMutation,
     publishMutation,
     previewDocUpdatesMutation,
     applyDocUpdatesMutation,
     createAddonMutation,
     batchCaptureMutation,
     handleCreateDraft,
+    handleDeletePost,
     handleSave,
     handleGenerate,
     handlePreviewDocUpdates,
@@ -83,7 +91,12 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     resolveDocReferences,
     pipelineStep,
     handleRunFullPipeline,
+    contextSummary,
+    contextLoading,
+    handleLoadContext,
   } = useAdminKangurSocialPage();
+
+  const [postToDelete, setPostToDelete] = React.useState<KangurSocialPost | null>(null);
 
   const brainModelSelectOptions = React.useMemo(() => {
     const defaultDescription = brainModelOptions.effectiveModelId
@@ -138,6 +151,11 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     [linkedinConnections, linkedinConnectionId]
   );
 
+  const brainModelBadgeLabel =
+    brainModelId ?? brainModelOptions.effectiveModelId ?? 'Not configured';
+  const visionModelBadgeLabel =
+    visionModelId ?? visionModelOptions.effectiveModelId ?? 'Not configured';
+
   const linkedInExpiry = selectedLinkedInConnection?.linkedinExpiresAt
     ? new Date(selectedLinkedInConnection.linkedinExpiresAt)
     : null;
@@ -164,25 +182,39 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     docUpdatesResult?.post?.docUpdatesAppliedAt ?? activePost?.docUpdatesAppliedAt ?? null;
   const docUpdatesAppliedBy =
     docUpdatesResult?.post?.docUpdatesAppliedBy ?? activePost?.docUpdatesAppliedBy ?? null;
-  const docUpdatesPlan = docUpdatesResult?.plan ?? null;
+  const docUpdatesPlan: KangurSocialDocUpdatePlan | null = docUpdatesResult?.plan ?? null;
   const docUpdatesAppliedCount = docUpdatesPlan
-    ? docUpdatesPlan.items.filter((item: any) => item.applied).length
+    ? docUpdatesPlan.items.filter((item) => item.applied).length
     : 0;
   const docUpdatesSkippedCount = docUpdatesPlan
     ? docUpdatesPlan.items.length - docUpdatesAppliedCount
     : 0;
+  const breadcrumbs = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Kangur', href: '/admin/kangur' },
+    { label: 'Social' },
+  ];
 
   return (
     <KangurAdminContentShell
       title='Kangur Social'
-      description='Prepare LinkedIn updates for Kangur and StudiQ improvements.'
-      breadcrumbs={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Kangur', href: '/admin/kangur' },
-        { label: 'Social' },
-      ]}
+      description={
+        <div className='flex flex-wrap items-center gap-3'>
+          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <span className='hidden h-4 w-px bg-white/12 md:block' />
+          <span className='text-xs text-slate-300/80'>
+            Prepare LinkedIn updates for Kangur and StudiQ improvements.
+          </span>
+        </div>
+      }
+      breadcrumbs={breadcrumbs}
+      headerLayout='stacked'
+      className='mx-0 max-w-none px-0 py-0'
+      panelVariant='flat'
+      panelClassName='rounded-none'
+      showBreadcrumbs={false}
       headerActions={
-        <div className='flex flex-wrap items-center gap-2'>
+        <>
           <Button
             variant='outline'
             size='sm'
@@ -192,10 +224,20 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           >
             New draft
           </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              void handleSaveSettings();
+            }}
+            disabled={!isSettingsDirty || isSavingSettings}
+          >
+            {isSavingSettings ? 'Saving settings...' : 'Save Social settings'}
+          </Button>
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/brain?tab=routing'>AI Brain routing</Link>
           </Button>
-        </div>
+        </>
       }
     >
       <div
@@ -208,6 +250,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           posts={posts}
           activePostId={activePostId}
           onSelectPost={setActivePostId}
+          onDeletePost={setPostToDelete}
         />
 
         <div className='space-y-6'>
@@ -229,7 +272,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                   Capability: Kangur Social Post Generation
                 </div>
               </div>
-              <Badge variant='outline'>{brainModelOptions.effectiveModelId || 'Not configured'}</Badge>
+              <Badge variant='outline'>{brainModelBadgeLabel}</Badge>
             </div>
             <div className='mt-3 space-y-2'>
               <SelectSimple
@@ -257,7 +300,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                   Capability: Kangur Social Visual Analysis
                 </div>
               </div>
-              <Badge variant='outline'>{visionModelOptions.effectiveModelId || 'Not configured'}</Badge>
+              <Badge variant='outline'>{visionModelBadgeLabel}</Badge>
             </div>
             <div className='mt-3 space-y-2'>
               <SelectSimple
@@ -352,8 +395,25 @@ export function AdminKangurSocialPage(): React.JSX.Element {
               patchMutationPending={patchMutation.isPending}
               publishMutationPending={publishMutation.isPending}
               docsUsed={docsUsed}
+              contextSummary={contextSummary}
+              contextLoading={contextLoading}
+              handleLoadContext={handleLoadContext}
             />
           </Card>
+
+          <ConfirmModal
+            isOpen={Boolean(postToDelete)}
+            onClose={(): void => setPostToDelete(null)}
+            onConfirm={(): void => {
+              if (!postToDelete) return;
+              void handleDeletePost(postToDelete.id);
+            }}
+            title='Delete draft'
+            message={`Delete draft "${postToDelete?.titlePl || postToDelete?.titleEn || 'Untitled update'}"? This action cannot be undone.`}
+            confirmText='Delete'
+            isDangerous={true}
+            loading={deleteMutation.isPending}
+          />
         </div>
       </div>
     </KangurAdminContentShell>

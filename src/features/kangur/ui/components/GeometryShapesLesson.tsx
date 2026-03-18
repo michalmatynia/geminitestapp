@@ -1,5 +1,6 @@
 'use client';
 
+import GeometryDrawingGame from './GeometryDrawingGame';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './GeometryShapesLesson.data';
@@ -20,6 +21,19 @@ export default function GeometryShapesLesson(): JSX.Element {
       dotDoneClass='bg-amber-200'
       completionSectionId='summary'
       autoRecordComplete
+      skipMarkFor={['game']}
+      games={[
+        {
+          sectionId: 'game',
+          stage: {
+            accent: 'amber',
+            title: 'Rysuj figury',
+            icon: '✏️',
+            shellTestId: 'geometry-shapes-game-shell',
+          },
+          render: ({ onFinish }) => <GeometryDrawingGame onFinish={onFinish} />,
+        },
+      ]}
     />
   );
 }

@@ -27,6 +27,7 @@ import { api } from '@/shared/lib/api-client';
 import {
   Alert,
   Badge,
+  Breadcrumbs,
   Button,
   CompactEmptyState,
   LoadingState,
@@ -124,6 +125,11 @@ export function AdminKangurObservabilityPage(): JSX.Element {
   const knowledgeGraphPreviewReplayCandidates = buildKnowledgeGraphPreviewReplayCandidates(
     summary?.analytics.recent ?? []
   );
+  const breadcrumbs = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Kangur', href: '/admin/kangur' },
+    { label: 'Observability' },
+  ];
   const updateKnowledgeGraphPreviewDraft = useCallback(
     (field: keyof KnowledgeGraphPreviewDraft, value: string): void => {
       setKnowledgeGraphPreviewDraft((current) => {
@@ -335,12 +341,21 @@ export function AdminKangurObservabilityPage(): JSX.Element {
   return (
     <KangurAdminContentShell
       title='Kangur Observability'
-      description='Monitor Kangur-specific alerts, route health, client telemetry, and recent server activity.'
-      breadcrumbs={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Kangur', href: '/admin/kangur' },
-        { label: 'Observability' },
-      ]}
+      description={
+        <div className='flex flex-wrap items-center gap-3'>
+          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <span className='hidden h-4 w-px bg-white/12 md:block' />
+          <span className='text-xs text-slate-300/80'>
+            Monitor Kangur-specific alerts, route health, client telemetry, and recent server activity.
+          </span>
+        </div>
+      }
+      breadcrumbs={breadcrumbs}
+      headerLayout='stacked'
+      className='mx-0 max-w-none px-0 py-0'
+      panelVariant='flat'
+      panelClassName='rounded-none'
+      showBreadcrumbs={false}
       refresh={{
         onRefresh: (): void => {
           void summaryQuery.refetch();
@@ -349,7 +364,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
         isRefreshing: summaryQuery.isFetching || knowledgeGraphStatusQuery.isFetching,
       }}
       headerActions={
-        <div className='flex flex-wrap items-center gap-3'>
+        <>
           <div
             className='flex items-center gap-2 text-xs text-gray-400'
             data-doc-id='admin_observability_range'
@@ -369,7 +384,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
               Logs
             </Link>
           </Button>
-        </div>
+        </>
       }
     >
       <div id='kangur-admin-observability-page' className='space-y-8'>

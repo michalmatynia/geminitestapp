@@ -1,26 +1,25 @@
 'use client';
 
-import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
+import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
-export default function WebDevelopmentReactComponentsLesson(): React.JSX.Element {
+import { HUB_SECTIONS, SLIDES } from './WebDevelopmentReactComponentsLesson.data';
+
+export { HUB_SECTIONS, SLIDES };
+
+export default function WebDevelopmentReactComponentsLesson(): JSX.Element {
   return (
-    <div className='flex w-full justify-center'>
-      <KangurGlassPanel
-        className='flex w-full max-w-3xl flex-col items-center gap-4 text-center'
-        padding='xl'
-        surface='playField'
-      >
-        <div className='text-5xl' aria-hidden='true'>
-          ⚛️
-        </div>
-        <div className='space-y-2'>
-          <h2 className='text-2xl font-semibold text-slate-800'>React Components</h2>
-          <p className='text-sm text-slate-600'>
-            Materiały do tej ścieżki są w przygotowaniu. Wkrótce pojawią się ćwiczenia i
-            przykłady komponentów.
-          </p>
-        </div>
-      </KangurGlassPanel>
-    </div>
+    <KangurUnifiedLesson
+      lessonId='webdev-react-components'
+      lessonEmoji='⚛️'
+      lessonTitle='React 19.2'
+      sections={HUB_SECTIONS}
+      slides={SLIDES}
+      gradientClass='kangur-gradient-accent-sky'
+      progressDotClassName='bg-sky-300'
+      dotActiveClass='bg-sky-400'
+      dotDoneClass='bg-sky-200'
+      completionSectionId='summary'
+      autoRecordComplete
+    />
   );
 }

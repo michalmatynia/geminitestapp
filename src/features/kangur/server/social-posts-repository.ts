@@ -1,11 +1,16 @@
 import 'server-only';
 
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import type { Filter } from 'mongodb';
 
 import {
   KANGUR_SOCIAL_POSTS_COLLECTION,
   normalizeKangurSocialPost,
+  parseKangurSocialPostStore,
   type KangurSocialPost,
+  type KangurSocialPostStore,
   type UpdateKangurSocialPostInput,
 } from '@/shared/contracts/kangur-social-posts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -17,7 +22,31 @@ type KangurSocialPostDoc = Omit<KangurSocialPost, 'createdAt' | 'updatedAt'> & {
 };
 
 let indexesEnsured: Promise<void> | null = null;
-let inMemoryPosts: KangurSocialPost[] = [];
+
+const LOCAL_STORE_PATH =
+  process.env['KANGUR_SOCIAL_POSTS_STORE_PATH'] ??
+  path.join(os.tmpdir(), 'kangur_social_posts.json');
+
+const readLocalStore = async (): Promise<KangurSocialPostStore> => {
+  try {
+    const raw = await fs.readFile(LOCAL_STORE_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parseKangurSocialPostStore(parsed);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+      void ErrorSystem.captureException(error, {
+        service: 'kangur.social-posts.repository',
+        action: 'readLocalStore',
+      });
+    }
+    return parseKangurSocialPostStore({});
+  }
+};
+
+const writeLocalStore = async (store: KangurSocialPostStore): Promise<void> => {
+  const payload = JSON.stringify(store, null, 2);
+  await fs.writeFile(LOCAL_STORE_PATH, payload, 'utf8');
+};
 
 const ensureIndexes = async (): Promise<void> => {
   if (!process.env['MONGODB_URI']) {
@@ -68,9 +97,37 @@ const toDocUpdate = (post: KangurSocialPost): Omit<KangurSocialPostDoc, 'created
 
 const matchPublished = (): Filter<KangurSocialPostDoc> => ({ status: 'published' });
 
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildLooseIdRegex = (id: string): RegExp =>
+  new RegExp(`^\\s*${escapeRegex(id)}\\s*$`);
+
+const findPostDocById = async (
+  collection: ReturnType<typeof readCollection> extends Promise<infer T> ? T : never,
+  normalizedId: string
+): Promise<KangurSocialPostDoc | null> => {
+  const direct = await collection.findOne({ id: normalizedId });
+  if (direct) return direct;
+  const regex = buildLooseIdRegex(normalizedId);
+  return collection.findOne({ id: { $regex: regex } });
+};
+
+const deletePostDocById = async (
+  collection: ReturnType<typeof readCollection> extends Promise<infer T> ? T : never,
+  normalizedId: string
+): Promise<KangurSocialPostDoc | null> => {
+  const direct = await collection.findOneAndDelete({ id: normalizedId });
+  const directDoc = direct?.value ?? null;
+  if (directDoc) return directDoc;
+  const regex = buildLooseIdRegex(normalizedId);
+  const fallback = await collection.findOneAndDelete({ id: { $regex: regex } });
+  return fallback?.value ?? null;
+};
+
 export async function listKangurSocialPosts(): Promise<KangurSocialPost[]> {
   if (!process.env['MONGODB_URI']) {
-    return [...inMemoryPosts].sort((left, right) => {
+    const store = await readLocalStore();
+    return [...store.posts].sort((left, right) => {
       const leftTs = left.updatedAt ? Date.parse(left.updatedAt) : 0;
       const rightTs = right.updatedAt ? Date.parse(right.updatedAt) : 0;
       return rightTs - leftTs;
@@ -85,7 +142,8 @@ export async function listKangurSocialPosts(): Promise<KangurSocialPost[]> {
 
 export async function listPublishedKangurSocialPosts(limit = 8): Promise<KangurSocialPost[]> {
   if (!process.env['MONGODB_URI']) {
-    return [...inMemoryPosts]
+    const store = await readLocalStore();
+    return [...store.posts]
       .filter((post) => post.status === 'published')
       .sort((left, right) => {
         const leftTs = left.publishedAt ? Date.parse(left.publishedAt) : 0;
@@ -110,7 +168,8 @@ export async function listDueScheduledKangurSocialPosts(
 ): Promise<KangurSocialPost[]> {
   if (!process.env['MONGODB_URI']) {
     const nowIso = now.toISOString();
-    return [...inMemoryPosts].filter(
+    const store = await readLocalStore();
+    return [...store.posts].filter(
       (post) =>
         post.status === 'scheduled' &&
         post.scheduledAt !== null &&
@@ -135,12 +194,13 @@ export async function getKangurSocialPostById(id: string): Promise<KangurSocialP
   if (!normalizedId) return null;
 
   if (!process.env['MONGODB_URI']) {
-    return inMemoryPosts.find((post) => post.id === normalizedId) ?? null;
+    const store = await readLocalStore();
+    return store.posts.find((post) => post.id === normalizedId) ?? null;
   }
 
   await ensureIndexes();
   const collection = await readCollection();
-  const doc = await collection.findOne({ id: normalizedId });
+  const doc = await findPostDocById(collection, normalizedId);
   return doc ? toSocialPost(doc) : null;
 }
 
@@ -154,12 +214,14 @@ export async function upsertKangurSocialPost(post: KangurSocialPost): Promise<Ka
       createdAt: normalized.createdAt ?? now.toISOString(),
       updatedAt: now.toISOString(),
     };
-    const existingIndex = inMemoryPosts.findIndex((entry) => entry.id === normalized.id);
+    const store = await readLocalStore();
+    const existingIndex = store.posts.findIndex((entry) => entry.id === normalized.id);
     if (existingIndex >= 0) {
-      inMemoryPosts[existingIndex] = next;
+      store.posts[existingIndex] = next;
     } else {
-      inMemoryPosts = [next, ...inMemoryPosts];
+      store.posts = [next, ...store.posts];
     }
+    await writeLocalStore(store);
     return next;
   }
 
@@ -203,4 +265,23 @@ export async function updateKangurSocialPost(
     id: existing.id,
   });
   return upsertKangurSocialPost(merged);
+}
+
+export async function deleteKangurSocialPost(id: string): Promise<KangurSocialPost | null> {
+  const normalizedId = id.trim();
+  if (!normalizedId) return null;
+
+  if (!process.env['MONGODB_URI']) {
+    const store = await readLocalStore();
+    const existingIndex = store.posts.findIndex((entry) => entry.id === normalizedId);
+    if (existingIndex < 0) return null;
+    const [removed] = store.posts.splice(existingIndex, 1);
+    await writeLocalStore(store);
+    return removed ?? null;
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const doc = await deletePostDocById(collection, normalizedId);
+  return doc ? toSocialPost(doc) : null;
 }

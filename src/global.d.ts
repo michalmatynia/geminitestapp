@@ -1,5 +1,19 @@
 // src/global.d.ts
+import type { JSX as ReactJSX } from 'react';
 import 'react';
+
+declare global {
+  namespace JSX {
+    type Element = ReactJSX.Element;
+    interface ElementClass extends ReactJSX.ElementClass {}
+    interface ElementAttributesProperty extends ReactJSX.ElementAttributesProperty {}
+    interface ElementChildrenAttribute extends ReactJSX.ElementChildrenAttribute {}
+    type LibraryManagedAttributes<C, P> = ReactJSX.LibraryManagedAttributes<C, P>;
+    interface IntrinsicAttributes extends ReactJSX.IntrinsicAttributes {}
+    interface IntrinsicClassAttributes<T> extends ReactJSX.IntrinsicClassAttributes<T> {}
+    interface IntrinsicElements extends ReactJSX.IntrinsicElements {}
+  }
+}
 
 declare module 'react' {
   interface CSSProperties {

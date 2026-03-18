@@ -9,7 +9,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { Alert, Button, StandardDataTablePanel } from '@/shared/ui';
+import { Alert, Button, DataTable, EmptyState, StandardDataTablePanel } from '@/shared/ui';
 
 import type { Row } from '@tanstack/react-table';
 
@@ -36,6 +36,15 @@ const ProductSelectionActions = dynamic(
     import('@/features/products/components/list/ProductFilters').then(
       (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
         mod.ProductSelectionActions
+    ),
+  { ssr: false }
+);
+
+const ProductListMobileCards = dynamic(
+  () =>
+    import('@/features/products/components/list/ProductListMobileCards').then(
+      (mod: typeof import('@/features/products/components/list/ProductListMobileCards')) =>
+        mod.ProductListMobileCards
     ),
   { ssr: false }
 );
@@ -103,6 +112,7 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
   );
   const actionsContent = useMemo(() => <ProductSelectionActions />, []);
   const alertsContent = useMemo(() => <ProductListAlerts />, []);
+  const isEmpty = !tableProps.isLoading && tableProps.data.length === 0;
 
   return (
     <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
@@ -123,7 +133,38 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
         maxHeight={tableProps.maxHeight}
         stickyHeader={tableProps.stickyHeader}
         enableVirtualization={true}
-      />
+      >
+        <div className='space-y-4'>
+          <div className='lg:hidden'>
+            {isEmpty ? (
+              <EmptyState
+                title='No results'
+                description="Try adjusting your filters to find what you're looking for."
+                className='border-none p-0'
+              />
+            ) : (
+              <ProductListMobileCards />
+            )}
+          </div>
+          <div className='hidden lg:block'>
+            <DataTable
+              columns={tableProps.columns}
+              data={tableProps.data}
+              isLoading={tableProps.isLoading}
+              getRowId={tableProps.getRowId}
+              getRowClassName={
+                tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
+              }
+              rowSelection={tableProps.rowSelection}
+              onRowSelectionChange={tableProps.onRowSelectionChange}
+              skeletonRows={tableProps.skeletonRows}
+              maxHeight={tableProps.maxHeight}
+              stickyHeader={tableProps.stickyHeader}
+              enableVirtualization={true}
+            />
+          </div>
+        </div>
+      </StandardDataTablePanel>
     </Profiler>
   );
 });

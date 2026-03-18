@@ -20,7 +20,10 @@ import {
 import {
   imageStudioOperationLifecycleSchema,
 } from './base';
-import { imageStudioDetectionDetailsSchema } from '../image-studio-transform-contracts';
+import {
+  imageStudioDetectionDetailsSchema,
+  type ImageStudioDetectionDetails,
+} from '../image-studio-transform-contracts';
 
 export type LandingSlotLike = {
   index: number;
@@ -296,6 +299,6 @@ export type ImageStudioCenterMetadata = {
   layout?: ImageStudioCenterLayoutMetadata | null;
   detectionUsed?: ImageStudioObjectDetectionUsed | null;
   confidenceBefore?: number | null;
-  detectionDetails?: any | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
   scale?: number | null;
 };

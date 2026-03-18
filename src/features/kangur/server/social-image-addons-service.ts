@@ -28,15 +28,33 @@ import { upsertKangurSocialImageAddon } from './social-image-addons-repository';
 const SOCIAL_ADDON_PLAYWRIGHT_SCRIPT = `
 export default async function run({ page, input, artifacts, helpers, log }) {
   const selector = typeof input.selector === 'string' ? input.selector.trim() : '';
-  const waitForMs = Number.isFinite(input.waitForMs) ? Number(input.waitForMs) : 0;
+  const waitForMs = Number.isFinite(input.waitForMs) ? Number(input.waitForMs) : 2000;
   const timeoutMs = Number.isFinite(input.waitForSelectorMs)
     ? Number(input.waitForSelectorMs)
-    : 10000;
+    : 15000;
+
+  // Wait for the Kangur page transition skeleton to disappear.
+  // The skeleton (data-testid="kangur-page-transition-skeleton") is a full-page
+  // overlay shown while React hydrates and data loads. It is unmounted from the
+  // DOM once the page reports ready via useKangurRoutePageReady().
+  try {
+    const skeleton = page.locator('[data-testid="kangur-page-transition-skeleton"]');
+    const skeletonCount = await skeleton.count();
+    if (skeletonCount > 0) {
+      log('Skeleton overlay detected — waiting for it to disappear');
+      await skeleton.waitFor({ state: 'hidden', timeout: timeoutMs });
+      log('Skeleton removed — page content is ready');
+    }
+  } catch {
+    log('Skeleton wait timed out — proceeding with capture anyway');
+  }
 
   if (selector) {
-    await page.waitForSelector(selector, { timeout: timeoutMs });
+    await page.waitForSelector(selector, { state: 'visible', timeout: timeoutMs });
   }
+
   if (waitForMs > 0) {
+    log(\`Waiting \${waitForMs}ms for content to settle\`);
     await helpers.sleep(waitForMs);
   }
 

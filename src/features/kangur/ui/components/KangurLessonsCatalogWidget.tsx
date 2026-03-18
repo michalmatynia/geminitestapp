@@ -1,3 +1,5 @@
+'use client';
+
 import { ChevronDown } from 'lucide-react';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
@@ -16,6 +18,7 @@ import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/Kangu
 import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
 import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
+import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
 import { useState, type JSX } from 'react';
 
@@ -23,7 +26,7 @@ type LessonGroupDefinition = {
   id: string;
   label: string;
   typeLabel?: string;
-  componentIds: readonly string[];
+  componentIds: readonly KangurLessonComponentId[];
 };
 
 const LESSON_GROUP_DEFINITIONS_BY_SUBJECT: Record<string, readonly LessonGroupDefinition[]> = {

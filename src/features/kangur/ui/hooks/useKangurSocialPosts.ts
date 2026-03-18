@@ -104,6 +104,24 @@ export const usePatchKangurSocialPost = (): MutationResult<
     },
   });
 
+export const useDeleteKangurSocialPost = (): MutationResult<KangurSocialPost, string> =>
+  createUpdateMutationV2<KangurSocialPost, string>({
+    mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'delete'],
+    mutationFn: async (postId: string): Promise<KangurSocialPost> =>
+      await api.delete<KangurSocialPost>('/api/kangur/social-posts', {
+        params: { id: postId },
+      }),
+    invalidate: invalidateSocialPosts,
+    meta: {
+      source: 'kangur.hooks.useDeleteKangurSocialPost',
+      operation: 'delete',
+      resource: 'kangur.social-posts',
+      domain: 'kangur',
+      tags: ['kangur', 'social-posts', 'delete'],
+      description: 'Deletes Kangur social posts.',
+    },
+  });
+
 export type KangurSocialPostGenerationPayload = {
   postId?: string;
   docReferences?: string[];

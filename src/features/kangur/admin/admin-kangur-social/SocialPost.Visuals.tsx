@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CalendarClock, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
+import { BookOpen, CalendarClock, Sparkles, ImagePlus, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -29,6 +29,8 @@ type AddonFormState = {
   description: string;
   waitForMs: string;
 };
+
+type LoadContextHandler = () => Promise<{ summary: string | null; docCount: number | null; error?: boolean }>;
 
 export function SocialPostVisuals({
   activePost,
@@ -60,6 +62,8 @@ export function SocialPostVisuals({
   generationNotes,
   setGenerationNotes,
   handleGenerate,
+  handleLoadContext,
+  contextLoading,
   docsUsed,
   hasVisualDocUpdates,
   handlePreviewDocUpdates,
@@ -104,6 +108,8 @@ export function SocialPostVisuals({
   generationNotes: string;
   setGenerationNotes: React.Dispatch<React.SetStateAction<string>>;
   handleGenerate: () => Promise<void>;
+  handleLoadContext?: LoadContextHandler;
+  contextLoading?: boolean;
   docsUsed: string[];
   hasVisualDocUpdates: boolean;
   handlePreviewDocUpdates: () => Promise<void>;
@@ -489,17 +495,30 @@ export function SocialPostVisuals({
           value={generationNotes}
           onChange={(event) => setGenerationNotes(event.target.value)}
         />
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => void handleGenerate()}
-          disabled={!activePost}
-          className='inline-flex items-center gap-2'
-        >
-          <Sparkles className='h-4 w-4' />
-          Generate PL/EN draft
-        </Button>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => void handleLoadContext?.()}
+            disabled={!activePost || contextLoading || !handleLoadContext}
+            className='inline-flex items-center gap-2'
+          >
+            <BookOpen className='h-4 w-4' />
+            {contextLoading ? 'Loading context...' : 'Load context'}
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => void handleGenerate()}
+            disabled={!activePost}
+            className='inline-flex items-center gap-2'
+          >
+            <Sparkles className='h-4 w-4' />
+            Generate PL/EN draft
+          </Button>
+        </div>
         <div className='space-y-2 rounded-xl border border-border/60 bg-background/40 p-3'>
           <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
             Docs used

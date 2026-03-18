@@ -38,7 +38,7 @@ const normalizeValue = (value: string | undefined): string | null => {
   if (!trimmed) return null;
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
   ) {
     return trimmed.slice(1, -1);
   }
@@ -79,18 +79,24 @@ const updateEnvFile = (entries: Map<string, string>): string[] => {
     const match = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)$/);
     if (!match) return line;
     const key = match[1];
+    if (!key) return line;
     if (!entries.has(key)) return line;
+    const entryValue = entries.get(key);
+    if (entryValue === undefined) return line;
     updatedKeys.add(key);
-    return `${key}=${formatEnvValue(entries.get(key) as string)}`;
+    return `${key}=${formatEnvValue(entryValue)}`;
   });
 
   const missingKeys = Array.from(entries.keys()).filter((key) => !updatedKeys.has(key));
   if (missingKeys.length > 0) {
-    if (nextLines.length > 0 && nextLines[nextLines.length - 1].trim() !== '') {
+    const lastLine = nextLines.at(-1);
+    if (lastLine !== undefined && lastLine.trim() !== '') {
       nextLines.push('');
     }
     missingKeys.forEach((key) => {
-      nextLines.push(`${key}=${formatEnvValue(entries.get(key) as string)}`);
+      const entryValue = entries.get(key);
+      if (entryValue === undefined) return;
+      nextLines.push(`${key}=${formatEnvValue(entryValue)}`);
     });
   }
 

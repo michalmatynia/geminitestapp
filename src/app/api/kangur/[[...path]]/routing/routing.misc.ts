@@ -20,8 +20,10 @@ import {
   postKangurLessonDocumentsHandler,
 } from '../../lesson-documents/handler';
 import {
+  deleteKangurSocialPostsHandler,
   getKangurSocialPostsHandler,
   postKangurSocialPostsHandler,
+  deleteSocialPostsQuerySchema,
   querySchema as socialPostsQuerySchema,
 } from '../../social-posts/handler';
 import {
@@ -32,11 +34,13 @@ import {
 import { postKangurSocialImageAddonsBatchHandler } from '../../social-image-addons/batch/handler';
 import {
   getKangurSocialPostHandler,
+  deleteKangurSocialPostHandler,
   patchKangurSocialPostHandler,
 } from '../../social-posts/[id]/handler';
 import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publish/handler';
 import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
+import { getKangurSocialPostContextHandler } from '../../social-posts/context/handler';
 import { postKangurSocialPostsPublishScheduledHandler } from '../../social-posts/publish-scheduled/handler';
 import { postNumberBalanceCreateHandler } from '../../number-balance/create/handler';
 import { postNumberBalanceJoinHandler } from '../../number-balance/join/handler';
@@ -124,6 +128,15 @@ export const socialPostsPostHandler: SimpleRouteHandler = apiHandler(postKangurS
   parseJsonBody: true,
 });
 
+export const socialPostsDeleteHandler: SimpleRouteHandler = apiHandler(
+  deleteKangurSocialPostsHandler,
+  {
+    source: 'kangur.social-posts.DELETE',
+    service: 'kangur.api',
+    querySchema: deleteSocialPostsQuerySchema,
+  }
+);
+
 export const socialImageAddonsGetHandler: SimpleRouteHandler = apiHandler(
   getKangurSocialImageAddonsHandler,
   {
@@ -168,6 +181,14 @@ export const socialPostPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ 
   }
 );
 
+export const socialPostDeleteHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+  deleteKangurSocialPostHandler,
+  {
+    source: 'kangur.social-posts.[id].DELETE',
+    service: 'kangur.api',
+  }
+);
+
 export const socialPostPublishHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
   postKangurSocialPostPublishHandler,
   {
@@ -198,6 +219,14 @@ export const socialPostsPublishScheduledHandler: SimpleRouteHandler = apiHandler
   postKangurSocialPostsPublishScheduledHandler,
   {
     source: 'kangur.social-posts.publish-scheduled.POST',
+    service: 'kangur.api',
+  }
+);
+
+export const socialPostContextGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurSocialPostContextHandler,
+  {
+    source: 'kangur.social-posts.context.GET',
     service: 'kangur.api',
   }
 );
@@ -286,7 +315,14 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   }
   if (segments[0] === 'social-posts') {
     if (segments.length === 1) {
+      if (request.method === 'DELETE') {
+        return socialPostsDeleteHandler(request);
+      }
       return handleGetPost(request, socialPostsGetHandler, socialPostsPostHandler);
+    }
+    if (segments[1] === 'context' && segments.length === 2) {
+      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+      return socialPostContextGetHandler(request);
     }
     if (segments[1] === 'generate' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
@@ -301,7 +337,8 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (segments.length === 2) {
       if (request.method === 'GET') return socialPostGetHandler(request, { params: { id } });
       if (request.method === 'PATCH') return socialPostPatchHandler(request, { params: { id } });
-      return methodNotAllowed(request, ['GET', 'PATCH'], request.method);
+      if (request.method === 'DELETE') return socialPostDeleteHandler(request, { params: { id } });
+      return methodNotAllowed(request, ['GET', 'PATCH', 'DELETE'], request.method);
     }
     if (segments[2] === 'publish' && segments.length === 3) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);

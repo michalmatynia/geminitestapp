@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurAiTutorContentSettingsPanel } from '@/features/kangur/admin/components/KangurAiTutorContentSettingsPanel';
-import { Badge, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
+import { Badge, Breadcrumbs, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 const AI_TUTOR_CONTENT_ID = 'kangur-ai-tutor-content';
@@ -12,6 +12,13 @@ const AI_TUTOR_CONTENT_TITLE_ID = 'kangur-ai-tutor-content-title';
 const AI_TUTOR_CONTENT_DESCRIPTION_ID = 'kangur-ai-tutor-content-description';
 
 export function AdminKangurAiTutorContentPage(): React.JSX.Element {
+  const breadcrumbs = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Kangur', href: '/admin/kangur' },
+    { label: 'Settings', href: '/admin/kangur/settings' },
+    { label: 'AI Tutor Content' },
+  ];
+
   return (
     <>
       <SkipToContentLink targetId={AI_TUTOR_CONTENT_ID}>
@@ -19,13 +26,22 @@ export function AdminKangurAiTutorContentPage(): React.JSX.Element {
       </SkipToContentLink>
       <KangurAdminContentShell
         title='Kangur AI Tutor Content'
-        description='Edit the Mongo-backed tutor copy pack used by onboarding, helper prompts, labels, narrator controls, and tutor explanations.'
-        breadcrumbs={[
-          { label: 'Admin', href: '/admin' },
-          { label: 'Kangur', href: '/admin/kangur' },
-          { label: 'Settings', href: '/admin/kangur/settings' },
-          { label: 'AI Tutor Content' },
-        ]}
+        description={
+          <div className='flex flex-wrap items-center gap-3'>
+            <Breadcrumbs items={breadcrumbs} className='mt-0' />
+            <span className='hidden h-4 w-px bg-white/12 md:block' />
+            <span className='text-xs text-slate-300/80'>
+              Edit the Mongo-backed tutor copy pack used by onboarding, helper prompts, labels,
+              narrator controls, and tutor explanations.
+            </span>
+          </div>
+        }
+        breadcrumbs={breadcrumbs}
+        headerLayout='stacked'
+        className='mx-0 max-w-none px-0 py-0'
+        panelVariant='flat'
+        panelClassName='rounded-none'
+        showBreadcrumbs={false}
         headerActions={
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/kangur/settings'>Back to settings</Link>

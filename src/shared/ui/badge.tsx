@@ -71,7 +71,11 @@ function Badge({
 
   const content = (
     <>
-      {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}
+      {icon && (
+        <span className='mr-1.5 shrink-0' aria-hidden='true'>
+          {icon}
+        </span>
+      )}
       {children}
       {onRemove && (
         <button
@@ -83,7 +87,7 @@ function Badge({
           className='ml-1.5 -mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors'
           aria-label={removeLabel || 'Remove'}
           title={removeLabel || 'Remove'}>
-          <X className='size-3' />
+          <X className='size-3' aria-hidden='true' />
         </button>
       )}
     </>
@@ -114,7 +118,11 @@ function Badge({
           onKeyDown={handleButtonKeyDown}
           aria-label={accessibleLabel || undefined}
         >
-          {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}
+          {icon && (
+            <span className='mr-1.5 shrink-0' aria-hidden='true'>
+              {icon}
+            </span>
+          )}
           {children}
         </button>
         <button
@@ -126,7 +134,7 @@ function Badge({
           className='mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-colors'
           aria-label={removeLabel || 'Remove'}
           title={removeLabel || 'Remove'}>
-          <X className='size-3' />
+          <X className='size-3' aria-hidden='true' />
         </button>
       </div>
     );

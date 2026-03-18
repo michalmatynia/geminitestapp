@@ -15,18 +15,18 @@ describe('importLegacyKangurLessonDocument', () => {
     expect(result?.importedPageCount).toBeGreaterThan(0);
     expect(result?.warnings).toEqual([]);
     expect(result?.document.pages?.[0]?.title).toBe('Overview');
-    expect(result?.document.pages?.some((page) => page.title === 'Co to znaczy dodawać?')).toBe(
+    expect(result?.document.pages?.some((page) => page.title === 'Dodawanie to laczenie')).toBe(
       true
     );
     expect(result?.document.pages?.some((page) => page.title === 'Gra z piłkami')).toBe(true);
     expect(result?.document.pages?.some((page) => page.title === 'Synteza dodawania')).toBe(true);
     expect(
-      result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawać?')?.sectionTitle
+      result?.document.pages?.find((page) => page.title === 'Dodawanie to laczenie')?.sectionTitle
     ).toBe('Podstawy dodawania');
     expect(
-      result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawać?')
+      result?.document.pages?.find((page) => page.title === 'Dodawanie to laczenie')
         ?.sectionDescription
-    ).toBe('Co to dodawanie? Jednocyfrowe + animacja');
+    ).toBe('Sumy do 10 i 20');
     expect(
       result?.document.pages?.find((page) => page.title === 'Gra z piłkami')?.blocks[0]
     ).toMatchObject({
@@ -51,7 +51,7 @@ describe('importLegacyKangurLessonDocument', () => {
     expect(result).not.toBeNull();
     expect(result?.warnings).toEqual([]);
     expect(result?.document.pages?.[0]?.title).toBe('Overview');
-    expect(result?.document.pages?.[1]?.title).toContain('myślenie logiczne');
+    expect(result?.document.pages?.[1]?.title).toBe('Wprowadzenie');
     expect(result?.document.pages?.[1]?.blocks[0]).toMatchObject({
       type: 'text',
     });

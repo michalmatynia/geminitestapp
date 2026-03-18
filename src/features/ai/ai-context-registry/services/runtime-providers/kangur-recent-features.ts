@@ -39,7 +39,7 @@ const truncateText = (value: string, maxLength: number): string => {
 };
 
 const parseFrontMatterValue = (raw: string, key: string): string | null => {
-  const regex = new RegExp(`^${key}:[\t ]*['\"]?(.+?)['\"]?$`, 'im');
+  const regex = new RegExp(`^${key}:[\\t ]*["']?(.+?)["']?$`, 'im');
   const match = raw.match(regex);
   return match ? match[1]?.trim() ?? null : null;
 };
@@ -168,7 +168,7 @@ export const kangurRecentFeaturesContextProvider: RuntimeContextProvider = {
     if (matching.length === 0) return [];
 
     const doc = await buildRecentFeaturesRuntimeDocument();
-    const docs = Array(matching.length).fill(doc);
+    const docs = Array.from({ length: matching.length }, () => doc);
     if (options?.maxDocuments && docs.length > options.maxDocuments) {
       return docs.slice(0, options.maxDocuments);
     }

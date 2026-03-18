@@ -8,7 +8,6 @@ import {
   Card,
   EmptyState,
   FormSection,
-  Hint,
   Input,
   Label,
   SelectSimple,
@@ -129,10 +128,10 @@ export function ExplosionMetricsPanel(): React.JSX.Element {
           <div>Typed coverage: {(explosionMetrics.typedCoverage * 100).toFixed(1)}%</div>
           <div className='rounded border border-border/50 bg-card/20 p-2'>
             {Object.entries(explosionMetrics.typeCounts)
-              .sort((left, right) => (right[1] as any) - (left[1] as any))
+              .sort((left, right) => right[1] - left[1])
               .map(([type, count]) => (
                 <div key={type}>
-                  {type}: {count as any}
+                  {type}: {count}
                 </div>
               ))}
           </div>
@@ -226,9 +225,9 @@ export function PromptProjectsPanel(): React.JSX.Element {
                 description: item.prompt,
                 subtitle: `segments ${item.document?.segments.length ?? 0} · updated ${promptExploderFormatTimestamp(item.updatedAt)}`,
                 original: item,
-              })) as any}
+              }))}
               selectedId={selectedLibraryItemId ?? undefined}
-              onSelect={(item: any) => handleLoadLibraryItem(item.id)}
+              onSelect={(item) => handleLoadLibraryItem(item.id)}
               emptyMessage='No projects saved yet.'
               padding='sm'
             />
@@ -337,7 +336,7 @@ export function BindingsPanel(): React.JSX.Element {
                   size='sm'
                   value={bindingDraft.type}
                   onValueChange={(value: string) => {
-                    setBindingDraft((previous: any) => ({
+                    setBindingDraft((previous) => ({
                       ...previous,
                       type: value as PromptExploderBindingType,
                     }));

@@ -6,7 +6,12 @@ import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_PAGE_TONE_CLASSNAMES, type KangurPageTone } from '../tokens';
 import { KANGUR_MAIN_CONTENT_ID } from './KangurPageContainer';
 
-export type KangurPageShellProps = React.HTMLAttributes<HTMLDivElement> & {
+type KangurPageShellDataAttributes = {
+  [key: `data-${string}`]: string | undefined;
+};
+
+export type KangurPageShellProps = React.HTMLAttributes<HTMLDivElement> &
+  KangurPageShellDataAttributes & {
   tone?: KangurPageTone;
   skipLinkTargetId?: string;
   skipLinkLabel?: string;

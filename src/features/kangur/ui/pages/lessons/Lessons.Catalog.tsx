@@ -27,7 +27,6 @@ import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
-import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
 
 export function LessonsCatalog() {
   const {
@@ -49,12 +48,7 @@ export function LessonsCatalog() {
 
   const ageGroupLabel = getKangurAgeGroupLabel(ageGroup);
 
-  const lessonGroupDefinitions =
-    subject === 'web_development'
-      ? WEB_DEVELOPMENT_LESSON_GROUPS
-      : subject === 'alphabet'
-      ? ALPHABET_LESSON_GROUPS
-      : [];
+  const lessonGroupDefinitions = subject === 'alphabet' ? ALPHABET_LESSON_GROUPS : [];
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,18 +69,22 @@ export function LessonsCatalog() {
         .filter((group) => group.lessons.length > 0)
     : [];
 
-  const allowSingleLessonGroups = subject === 'web_development';
-  const displayLessonGroups = allowSingleLessonGroups
-    ? lessonGroups
-    : lessonGroups.filter((group) => group.lessons.length > 1);
+  const displayLessonGroups = lessonGroups.filter(
+    (group) =>
+      group.lessons.length > 1 &&
+      !(subject === 'alphabet' && group.id === 'letter_tracing')
+  );
 
   type LessonEntry =
     | { kind: 'group'; group: (typeof displayLessonGroups)[number] }
     | { kind: 'lesson'; lesson: KangurLesson };
 
   const lessonEntries: LessonEntry[] = [];
-  const lessonGroupById = new Map(displayLessonGroups.map((group) => [group.id, group]));
-  const lessonGroupIdByComponent = new Map<string, string>();
+  type LessonGroupId = (typeof displayLessonGroups)[number]['id'];
+  const lessonGroupById = new Map<LessonGroupId, (typeof displayLessonGroups)[number]>(
+    displayLessonGroups.map((group) => [group.id, group])
+  );
+  const lessonGroupIdByComponent = new Map<string, LessonGroupId>();
 
   displayLessonGroups.forEach((group) => {
     group.lessons.forEach((lesson) => {

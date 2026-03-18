@@ -51,6 +51,8 @@ interface DataTableProps<TData> {
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
   enableVirtualization?: boolean;
+  ariaLabel?: string | undefined;
+  ariaDescription?: string | undefined;
 }
 
 export function DataTableSortableHeader<TData, TValue>({
@@ -115,6 +117,8 @@ export const DataTable = memo(function DataTable<TData>({
   maxHeight,
   stickyHeader = false,
   enableVirtualization = false,
+  ariaLabel,
+  ariaDescription,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
@@ -186,6 +190,15 @@ export const DataTable = memo(function DataTable<TData>({
   });
 
   const { rows } = table.getRowModel();
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const resolvedAriaLabel =
+    ariaLabel ??
+    (typeof meta?.['ariaLabel'] === 'string' ? (meta['ariaLabel'] as string) : undefined);
+  const resolvedAriaDescription =
+    ariaDescription ??
+    (typeof meta?.['ariaDescription'] === 'string'
+      ? (meta['ariaDescription'] as string)
+      : undefined);
 
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -213,7 +226,14 @@ export const DataTable = memo(function DataTable<TData>({
       {...(isLoading ? { 'aria-busy': true } : {})}
     >
       <div ref={parentRef} className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
-        <Table className='border-collapse' wrapperClassName={cn(maxHeight && 'overflow-visible')}>
+        <Table
+          className='border-collapse'
+          wrapperClassName={cn(maxHeight && 'overflow-visible')}
+          aria-label={resolvedAriaLabel}
+          aria-describedby={resolvedAriaDescription}
+          aria-rowcount={rows.length || undefined}
+          aria-colcount={visibleColumnCount || undefined}
+        >
           <TableHeader className={cn(stickyHeader && 'z-10 bg-background')}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='border-border'>
@@ -258,7 +278,7 @@ export const DataTable = memo(function DataTable<TData>({
                       aria-live='polite'
                       aria-atomic='true'
                     >
-                      <Loader2 className='h-6 w-6 animate-spin text-blue-500' />
+                      <Loader2 className='h-6 w-6 animate-spin text-blue-500' aria-hidden='true' />
                       <span className='text-xs'>Loading data...</span>
                     </div>
                   </TableCell>

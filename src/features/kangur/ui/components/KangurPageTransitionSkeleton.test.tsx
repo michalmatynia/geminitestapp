@@ -3,7 +3,11 @@
  */
 
 import { render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import enMessages from '@/i18n/messages/en.json';
 
 const { useOptionalKangurRoutingMock } = vi.hoisted(() => ({
   useOptionalKangurRoutingMock: vi.fn(),
@@ -14,6 +18,13 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 }));
 
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
+
+const renderWithIntl = (element: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='en' messages={enMessages}>
+      {element}
+    </NextIntlClientProvider>
+  );
 
 describe('KangurPageTransitionSkeleton', () => {
   beforeEach(() => {
@@ -26,7 +37,7 @@ describe('KangurPageTransitionSkeleton', () => {
       embedded: false,
     });
 
-    render(<KangurPageTransitionSkeleton pageKey='Lessons' />);
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' />);
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('fixed', 'inset-0');
     expect(screen.getByTestId('kangur-page-transition-skeleton')).not.toHaveClass('absolute');
@@ -42,7 +53,7 @@ describe('KangurPageTransitionSkeleton', () => {
       embedded: true,
     });
 
-    render(<KangurPageTransitionSkeleton pageKey='Lessons' />);
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' />);
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass(
       'absolute',
@@ -57,7 +68,7 @@ describe('KangurPageTransitionSkeleton', () => {
       embedded: false,
     });
 
-    render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-focus' />);
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-focus' />);
 
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
@@ -77,7 +88,7 @@ describe('KangurPageTransitionSkeleton', () => {
       embedded: false,
     });
 
-    render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
 
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
@@ -90,7 +101,7 @@ describe('KangurPageTransitionSkeleton', () => {
       embedded: false,
     });
 
-    render(<KangurPageTransitionSkeleton pageKey='Game' />);
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Game' />);
 
     expect(
       screen.getByTestId('kangur-page-transition-skeleton-game-home-progress-grid')

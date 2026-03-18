@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
@@ -14,6 +15,7 @@ type KangurAliasLoginPageProps = {
 export default async function Page({
   searchParams,
 }: KangurAliasLoginPageProps): Promise<JSX.Element> {
+  const translations = await getTranslations('KangurPublic');
   const shouldRedirectToCanonical =
     shouldApplyFrontPageAppSelection() && process.env.NODE_ENV === 'production';
 
@@ -27,7 +29,7 @@ export default async function Page({
   }
 
   return (
-    <Suspense fallback={<div className='sr-only'>Ladowanie Kangura...</div>}>
+    <Suspense fallback={<div className='sr-only'>{translations('routeLoading')}</div>}>
       <KangurFeatureRouteShell />
     </Suspense>
   );

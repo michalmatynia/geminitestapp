@@ -1,8 +1,9 @@
 'use client';
 
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useEffect, type JSX } from 'react';
 
+import { Link as LocaleLink } from '@/i18n/navigation';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 
@@ -22,10 +23,10 @@ const getKangurErrorDigest = (error: unknown): string | undefined => {
   return typeof digest === 'string' && digest.trim().length > 0 ? digest : undefined;
 };
 
-const getKangurErrorMessage = (error: unknown): string =>
+const getKangurErrorMessage = (error: unknown, fallbackMessage: string): string =>
   error instanceof Error && error.message.trim().length > 0
     ? error.message
-    : 'Something went wrong while loading the Kangur application.';
+    : fallbackMessage;
 
 export function KangurErrorFallback({
   error,
@@ -33,8 +34,9 @@ export function KangurErrorFallback({
   reset,
   source = 'kangur-error-boundary',
 }: KangurErrorFallbackProps): JSX.Element {
+  const translations = useTranslations('KangurPublic');
   const digest = getKangurErrorDigest(error);
-  const errorMessage = getKangurErrorMessage(error);
+  const errorMessage = getKangurErrorMessage(error, translations('errorDescription'));
 
   useEffect(() => {
     logKangurClientError(error, {
@@ -71,7 +73,7 @@ export function KangurErrorFallback({
           K
         </div>
         <h1 className='text-2xl font-extrabold [color:var(--kangur-page-text)]'>
-          Kangur encountered an error
+          {translations('errorTitle')}
         </h1>
         <p className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>{errorMessage}</p>
         <div className='mt-6 flex items-center justify-center kangur-panel-gap'>
@@ -80,14 +82,14 @@ export function KangurErrorFallback({
             onClick={reset}
             className='rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
           >
-            Try Again
+            {translations('tryAgain')}
           </button>
-          <Link
+          <LocaleLink
             href={homeHref}
             className='soft-card rounded-xl border px-4 py-2 font-semibold [color:var(--kangur-page-text)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white'
           >
-            Back to Kangur
-          </Link>
+            {translations('backToHome')}
+          </LocaleLink>
         </div>
       </div>
     </KangurStandardPageLayout>

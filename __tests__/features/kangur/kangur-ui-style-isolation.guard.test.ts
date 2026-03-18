@@ -70,7 +70,7 @@ const KANGUR_VISUAL_CONTRACTS = [
     requiredTokens: [
       'data-testid=\'kangur-error-shell\'',
       'kangur-premium-bg',
-      'Back to Kangur',
+      "translations('backToHome')",
     ],
   },
   {
@@ -83,7 +83,7 @@ const KANGUR_VISUAL_CONTRACTS = [
   },
   {
     file: 'src/app/(frontend)/kangur/login/page.tsx',
-    requiredTokens: ['KangurFeatureRouteShell', 'Ladowanie Kangura...'],
+    requiredTokens: ['KangurFeatureRouteShell', "translations('routeLoading')"],
   },
 ] as const;
 

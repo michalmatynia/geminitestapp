@@ -1,1 +1,3 @@
-export { dynamic, default } from '../../../auth/signin/page';
+export { default } from '../../../auth/signin/page';
+
+export const dynamic = 'force-dynamic';

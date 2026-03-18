@@ -1,10 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { Link as LocaleLink } from '@/i18n/navigation';
 import { getGsapFromVars } from '@/features/gsap';
 import {
   CmsStorefrontAppearanceButtons,
@@ -13,8 +14,14 @@ import {
 } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
+import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
-const isExternalUrl = (url: string): boolean => /^https?:\/\//i.test(url);
+const isExternalUrl = (url: string): boolean => /^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(url);
+const isHashLink = (url: string): boolean => url.trim().startsWith('#');
+const isLocaleRoutedUrl = (url: string): boolean => {
+  const trimmed = url.trim();
+  return trimmed.length === 0 || (trimmed.startsWith('/') && !trimmed.startsWith('//'));
+};
 
 type CmsMenuProps = {
   menu: MenuSettings;
@@ -35,6 +42,7 @@ export function CmsMenu({
 }: CmsMenuProps): React.ReactNode {
   const appearance = useOptionalCmsStorefrontAppearance();
   const pathname = usePathname();
+  const translations = useTranslations('CmsMenu');
   const [hydrated, setHydrated] = useState(false);
   const itemsRef = useRef<HTMLUListElement | null>(null);
   const itemsId = React.useId();
@@ -165,6 +173,7 @@ export function CmsMenu({
   );
 
   const allowAnimations = animationsEnabled && !prefersReducedMotion;
+  const normalizedPathname = normalizePathname(stripSiteLocalePrefix(pathname));
 
   useEffect(() => {
     if (!allowAnimations) return;
@@ -327,7 +336,7 @@ export function CmsMenu({
 
   return (
     <nav
-      aria-label='Site navigation'
+      aria-label={translations('siteNavigation')}
       style={navStyle}
       data-cms-menu='true'
       data-menu-placement={menu.menuPlacement}
@@ -347,7 +356,9 @@ export function CmsMenu({
             onClick={(): void => setCollapsed((prev: boolean) => !prev)}
             aria-controls={itemsId}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            aria-label={
+              collapsed ? translations('expandNavigation') : translations('collapseNavigation')
+            }
             className='mb-2 inline-flex items-center gap-2 rounded px-2 py-1 text-[11px] transition-colors'
             style={{
               border: `1px solid ${displayColors.border}`,
@@ -355,7 +366,7 @@ export function CmsMenu({
               color: displayColors.text,
             }}
           >
-            {collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            {collapsed ? translations('expandNavigation') : translations('collapseNavigation')}
           </button>
         )}
         <ul
@@ -368,8 +379,11 @@ export function CmsMenu({
         >
           {menu.items.map((item: { id: string; url: string; label: string; imageUrl?: string }) => {
             const isExternal = isExternalUrl(item.url);
+            const isHash = isHashLink(item.url);
+            const isLocaleRouted = isLocaleRoutedUrl(item.url);
             const isActive = hydrated
-              ? !isExternal && normalizePathname(pathname) === normalizePathname(item.url)
+              ? isLocaleRouted &&
+                normalizePathname(stripSiteLocalePrefix(item.url)) === normalizedPathname
               : false;
             const color = isActive ? displayColors.accent : displayColors.text;
             const activeStyles: React.CSSProperties = {};
@@ -407,7 +421,9 @@ export function CmsMenu({
                   />
                 )}
                 <span>{item.label}</span>
-                {isExternal ? <span className='sr-only'> (opens in a new tab)</span> : null}
+                {isExternal ? (
+                  <span className='sr-only'> ({translations('opensInNewTab')})</span>
+                ) : null}
               </>
             );
             const className = 'inline-flex items-center gap-2';
@@ -432,8 +448,18 @@ export function CmsMenu({
                   >
                     {content}
                   </a>
+                ) : isHash || !isLocaleRouted ? (
+                  <a
+                    href={item.url || '/'}
+                    className={className}
+                    style={style}
+                    data-menu-item
+                    aria-label={item.label}
+                  >
+                    {content}
+                  </a>
                 ) : (
-                  <Link
+                  <LocaleLink
                     href={item.url || '/'}
                     className={className}
                     style={style}
@@ -442,7 +468,7 @@ export function CmsMenu({
                     aria-label={item.label}
                   >
                     {content}
-                  </Link>
+                  </LocaleLink>
                 )}
               </li>
             );
@@ -451,7 +477,7 @@ export function CmsMenu({
         <CmsStorefrontAppearanceButtons
           tone={displayColors}
           className={isSide ? 'mt-3' : 'ml-auto'}
-          label='Site appearance'
+          label={translations('siteAppearance')}
         />
       </div>
     </nav>

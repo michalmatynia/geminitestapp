@@ -1,3 +1,4 @@
+import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 import { RootClientShell } from './_providers/RootClientShell';
@@ -34,10 +35,12 @@ export default async function RootLayout({
   return (
     <html lang={DEFAULT_SITE_I18N_CONFIG.defaultLocale} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
-        <a href='#app-content' className='app-skip-link'>
-          {commonTranslations('skipToMainContent')}
-        </a>
-        <RootClientShell>{children}</RootClientShell>
+        <NextIntlClientProvider>
+          <a href='#app-content' className='app-skip-link'>
+            {commonTranslations('skipToMainContent')}
+          </a>
+          <RootClientShell>{children}</RootClientShell>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

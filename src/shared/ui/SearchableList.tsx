@@ -40,8 +40,21 @@ export function SearchableList<T>(props: SearchableListProps<T>): React.JSX.Elem
     return items.filter((item) => getLabel(item).toLowerCase().includes(term));
   }, [items, search, getLabel]);
 
+  const liveSummary = useMemo(() => {
+    const baseLabel = search
+      ? `${filteredItems.length} result${filteredItems.length === 1 ? '' : 's'} for "${search}".`
+      : `${filteredItems.length} item${filteredItems.length === 1 ? '' : 's'} available.`;
+    const selectionLabel = showCount
+      ? `${selectedIds.length} ${countLabel} selected.`
+      : '';
+    return `${baseLabel} ${selectionLabel}`.trim();
+  }, [filteredItems.length, search, selectedIds.length, showCount, countLabel]);
+
   return (
     <div className={cn('space-y-4', className)}>
+      <div className='sr-only' role='status' aria-live='polite' aria-atomic='true'>
+        {liveSummary}
+      </div>
       <SearchInput
         value={search}
         onChange={(e) => setSearch(e.target.value)}

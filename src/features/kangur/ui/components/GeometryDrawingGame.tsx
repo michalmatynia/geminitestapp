@@ -84,12 +84,26 @@ const SHAPE_ROUND_LIBRARY: Record<GeometryShapeId, ShapeRound> = {
     hint: 'Narysuj jedną płynną, zamkniętą linię.',
     accent: 'kangur-gradient-accent-teal',
   },
+  oval: {
+    id: 'oval',
+    label: 'Owal',
+    emoji: '🥚',
+    hint: 'Narysuj kształt bez rogów, ale trochę wydłużony.',
+    accent: 'kangur-gradient-accent-sky',
+  },
   triangle: {
     id: 'triangle',
     label: 'Trójkąt',
     emoji: '🔺',
     hint: 'Postaraj się zrobić 3 wyraźne rogi.',
     accent: 'kangur-gradient-accent-amber',
+  },
+  diamond: {
+    id: 'diamond',
+    label: 'Romb',
+    emoji: '💠',
+    hint: '4 rogi, boki wyglądają na ukośne.',
+    accent: 'kangur-gradient-accent-amber-reverse',
   },
   square: {
     id: 'square',
@@ -130,7 +144,9 @@ const STARTER_ROUNDS: ShapeRound[] = [
 
 const PRO_ROUNDS: ShapeRound[] = [
   SHAPE_ROUND_LIBRARY.circle,
+  SHAPE_ROUND_LIBRARY.oval,
   SHAPE_ROUND_LIBRARY.triangle,
+  SHAPE_ROUND_LIBRARY.diamond,
   SHAPE_ROUND_LIBRARY.square,
   SHAPE_ROUND_LIBRARY.rectangle,
   SHAPE_ROUND_LIBRARY.pentagon,

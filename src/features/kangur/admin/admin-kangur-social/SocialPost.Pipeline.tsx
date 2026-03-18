@@ -10,7 +10,7 @@ export function SocialPostPipeline({
   handleRunFullPipeline,
 }: {
   activePostId: string | null;
-  pipelineStep: 'idle' | 'capturing' | 'saving' | 'generating' | 'previewing' | 'done' | 'error';
+  pipelineStep: 'idle' | 'loading_context' | 'capturing' | 'saving' | 'generating' | 'previewing' | 'done' | 'error';
   handleRunFullPipeline: () => Promise<void>;
 }) {
   const isPipelineActive = pipelineStep !== 'idle' && pipelineStep !== 'done' && pipelineStep !== 'error';
@@ -25,7 +25,7 @@ export function SocialPostPipeline({
         <Button
           type='button'
           size='sm'
-          onClick={handleRunFullPipeline}
+          onClick={() => void handleRunFullPipeline()}
           disabled={!activePostId || isPipelineActive}
           className='gap-2 shadow-lg shadow-primary/20'
         >
@@ -35,14 +35,15 @@ export function SocialPostPipeline({
       }
     >
       <div className='mt-2 space-y-3'>
-        <div className='grid gap-4 sm:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-5'>
           {[
+            { id: 'loading_context', label: 'Load context' },
             { id: 'capturing', label: 'Capture screenshots' },
             { id: 'saving', label: 'Link images' },
             { id: 'generating', label: 'Generate draft' },
             { id: 'previewing', label: 'Prepare doc diff' },
           ].map((step, index) => {
-            const steps = ['capturing', 'saving', 'generating', 'previewing', 'done'];
+            const steps = ['loading_context', 'capturing', 'saving', 'generating', 'previewing', 'done'];
             const currentIdx = steps.indexOf(pipelineStep);
             const stepIdx = steps.indexOf(step.id);
             const isCompleted = currentIdx > stepIdx || pipelineStep === 'done';

@@ -65,13 +65,14 @@ TableRow.displayName = 'TableRow';
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, scope, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
       'h-10 px-3 text-left align-middle font-medium text-muted-foreground sm:h-12 sm:px-4 [&:has([role=checkbox])]:pr-0',
       className
     )}
+    scope={scope ?? 'col'}
     {...props}
   />
 ));

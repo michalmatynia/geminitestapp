@@ -10,6 +10,10 @@ import {
   type KangurTooltipDocEntry,
 } from '@/shared/lib/documentation/catalogs/kangur';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  kangurRecentFeaturesContextProvider,
+  createKangurRecentFeaturesRef,
+} from '@/features/ai/ai-context-registry/services/runtime-providers/kangur-recent-features';
 
 export type KangurDocEntry = KangurDocumentationGuide | KangurTooltipDocEntry;
 
@@ -165,21 +169,43 @@ const readDocExcerpt = async (entry: KangurDocEntry): Promise<string | null> => 
   }
 };
 
+const loadRecentFeaturesContext = async (): Promise<string | null> => {
+  try {
+    const ref = createKangurRecentFeaturesRef();
+    const docs = await kangurRecentFeaturesContextProvider.resolveRefs([ref]);
+    if (docs.length === 0) return null;
+    const doc = docs[0]!;
+    const textSections = (doc.sections ?? [])
+      .filter((s) => s.kind === 'text' && s.text)
+      .map((s) => s.text!.trim())
+      .filter(Boolean);
+    if (textSections.length === 0) return null;
+    return `### Recent Feature Updates (Context Registry)\n${textSections.join('\n\n')}`;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return null;
+  }
+};
+
 export const buildKangurDocContext = async (
   entries: KangurDocEntry[]
 ): Promise<{ summary: string; context: string }> => {
+  const [excerptEntries, recentFeaturesContext] = await Promise.all([
+    Promise.all(
+      entries.slice(0, MAX_EXCERPT_DOCS).map(async (entry) => {
+        const excerpt = await readDocExcerpt(entry);
+        if (!excerpt) return null;
+        return {
+          title: entry.title,
+          docPath: entry.docPath,
+          excerpt,
+        };
+      })
+    ),
+    loadRecentFeaturesContext(),
+  ]);
+
   const summary = buildSummary(entries);
-  const excerptEntries = await Promise.all(
-    entries.slice(0, MAX_EXCERPT_DOCS).map(async (entry) => {
-      const excerpt = await readDocExcerpt(entry);
-      if (!excerpt) return null;
-      return {
-        title: entry.title,
-        docPath: entry.docPath,
-        excerpt,
-      };
-    })
-  );
   const excerpts = excerptEntries
     .filter(Boolean)
     .map((entry) =>
@@ -187,7 +213,7 @@ export const buildKangurDocContext = async (
     )
     .join('\n\n');
 
-  const combined = [summary, excerpts].filter(Boolean).join('\n\n');
+  const combined = [summary, recentFeaturesContext, excerpts].filter(Boolean).join('\n\n');
   const trimmedContext = truncateText(combined, MAX_CONTEXT_CHARS);
 
   return {

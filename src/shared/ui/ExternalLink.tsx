@@ -34,6 +34,7 @@ export function ExternalLink({
         'size-3.5 opacity-70 group-hover:opacity-100 transition-opacity',
         iconClassName
       )}
+      aria-hidden='true'
     />
   ) : null;
 

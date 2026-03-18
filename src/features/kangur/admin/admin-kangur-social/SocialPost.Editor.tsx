@@ -8,13 +8,52 @@ import {
   SelectSimple,
   Textarea,
 } from '@/features/kangur/shared/ui';
-import type { KangurSocialPost, KangurSocialDocUpdatesResponse } from '@/shared/contracts/kangur-social-posts';
+import type {
+  KangurSocialDocUpdatePlan,
+  KangurSocialDocUpdatesResponse,
+  KangurSocialPost,
+} from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { KangurSocialImageAddonsBatchResult } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
 import { SocialPostVisuals } from './SocialPost.Visuals';
+
+type SocialPostEditorState = {
+  titlePl: string;
+  titleEn: string;
+  bodyPl: string;
+  bodyEn: string;
+};
+
+type SocialPostAddonForm = {
+  title: string;
+  sourceUrl: string;
+  selector: string;
+  description: string;
+  waitForMs: string;
+};
+
+type LinkedInOption = {
+  value: string;
+  label: string;
+};
+
+type LinkedInIntegrationRef = {
+  id: string;
+};
+
+type LinkedInConnectionRef = {
+  id: string;
+  hasLinkedInAccessToken?: boolean;
+};
+
+type LoadContextHandler = () => Promise<{ summary: string | null; docCount: number | null; error?: boolean }>;
 
 export function SocialPostEditor({
   activePost,
+  contextSummary,
+  contextLoading,
+  handleLoadContext,
   editorState,
   setEditorState,
   scheduledAt,
@@ -74,8 +113,11 @@ export function SocialPostEditor({
   docsUsed,
 }: {
   activePost: KangurSocialPost | null;
-  editorState: any;
-  setEditorState: React.Dispatch<React.SetStateAction<any>>;
+  contextSummary?: string | null;
+  contextLoading?: boolean;
+  handleLoadContext?: LoadContextHandler;
+  editorState: SocialPostEditorState;
+  setEditorState: React.Dispatch<React.SetStateAction<SocialPostEditorState>>;
   scheduledAt: string;
   setScheduledAt: React.Dispatch<React.SetStateAction<string>>;
   docReferenceInput: string;
@@ -88,8 +130,8 @@ export function SocialPostEditor({
   setShowMediaLibrary: React.Dispatch<React.SetStateAction<boolean>>;
   showMediaLibrary: boolean;
   handleAddImages: (filepaths: string[]) => void;
-  addonForm: any;
-  setAddonForm: React.Dispatch<React.SetStateAction<any>>;
+  addonForm: SocialPostAddonForm;
+  setAddonForm: React.Dispatch<React.SetStateAction<SocialPostAddonForm>>;
   handleCreateAddon: () => Promise<void>;
   createAddonPending: boolean;
   batchCaptureBaseUrl: string;
@@ -100,7 +142,7 @@ export function SocialPostEditor({
   clearCapturePresets: () => void;
   handleBatchCapture: () => Promise<void>;
   batchCapturePending: boolean;
-  batchCaptureResult: any;
+  batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   recentAddons: KangurSocialImageAddon[];
   recentAddonsLoading: boolean;
   selectedAddonSet: Set<string>;
@@ -116,12 +158,12 @@ export function SocialPostEditor({
   docUpdatesAppliedBy: string | null;
   docUpdatesAppliedCount: number;
   docUpdatesSkippedCount: number;
-  docUpdatesPlan: any;
+  docUpdatesPlan: KangurSocialDocUpdatePlan | null;
   linkedinConnectionId: string | null;
   handleLinkedInConnectionChange: (value: string) => void;
-  linkedInOptions: any[];
-  linkedinIntegration: any;
-  selectedLinkedInConnection: any;
+  linkedInOptions: LinkedInOption[];
+  linkedinIntegration: LinkedInIntegrationRef | null;
+  selectedLinkedInConnection: LinkedInConnectionRef | null;
   linkedInExpiryStatus: 'expired' | 'warning' | 'ok' | null;
   linkedInExpiryLabel: string | null;
   linkedInDaysRemaining: number | null;
@@ -132,6 +174,7 @@ export function SocialPostEditor({
   publishMutationPending: boolean;
   docsUsed: string[];
 }) {
+  const resolvedContextSummary = contextSummary ?? activePost?.contextSummary ?? null;
   return (
     <div className='space-y-4'>
       <div className='text-sm font-semibold text-foreground'>Post editor</div>
@@ -141,7 +184,7 @@ export function SocialPostEditor({
           placeholder='Polish title'
           value={editorState.titlePl}
           onChange={(event) =>
-            setEditorState((prev: any) => ({ ...prev, titlePl: event.target.value }))
+            setEditorState((prev) => ({ ...prev, titlePl: event.target.value }))
           }
         />
         <Textarea
@@ -149,7 +192,7 @@ export function SocialPostEditor({
           rows={5}
           value={editorState.bodyPl}
           onChange={(event) =>
-            setEditorState((prev: any) => ({ ...prev, bodyPl: event.target.value }))
+            setEditorState((prev) => ({ ...prev, bodyPl: event.target.value }))
           }
         />
       </FormSection>
@@ -159,7 +202,7 @@ export function SocialPostEditor({
           placeholder='English title'
           value={editorState.titleEn}
           onChange={(event) =>
-            setEditorState((prev: any) => ({ ...prev, titleEn: event.target.value }))
+            setEditorState((prev) => ({ ...prev, titleEn: event.target.value }))
           }
         />
         <Textarea
@@ -167,10 +210,23 @@ export function SocialPostEditor({
           rows={5}
           value={editorState.bodyEn}
           onChange={(event) =>
-            setEditorState((prev: any) => ({ ...prev, bodyEn: event.target.value }))
+            setEditorState((prev) => ({ ...prev, bodyEn: event.target.value }))
           }
         />
       </FormSection>
+
+      {resolvedContextSummary ? (
+        <FormSection title='Loaded context' className='space-y-2'>
+          <div className='max-h-48 overflow-y-auto rounded border border-border bg-muted/30 p-3'>
+            <pre className='whitespace-pre-wrap text-xs text-muted-foreground'>
+              {resolvedContextSummary}
+            </pre>
+          </div>
+          <div className='text-xs text-muted-foreground'>
+            Context loaded from documentation references. This will be used for generation.
+          </div>
+        </FormSection>
+      ) : null}
 
       <SocialPostVisuals
         activePost={activePost}
@@ -202,6 +258,8 @@ export function SocialPostEditor({
         generationNotes={generationNotes}
         setGenerationNotes={setGenerationNotes}
         handleGenerate={handleGenerate}
+        handleLoadContext={handleLoadContext}
+        contextLoading={contextLoading}
         docsUsed={docsUsed}
         hasVisualDocUpdates={hasVisualDocUpdates}
         handlePreviewDocUpdates={handlePreviewDocUpdates}

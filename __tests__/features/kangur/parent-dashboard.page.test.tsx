@@ -252,7 +252,9 @@ describe('ParentDashboard page', () => {
       'rounded-full',
       'border'
     );
-    expect(screen.getByRole('button', { name: /Edytuj Profil/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Ustawienia profilu ucznia/i })
+    ).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(progressTab).toHaveAttribute('aria-selected', 'false');
     expect(scoresTab).toHaveAttribute('aria-selected', 'true');

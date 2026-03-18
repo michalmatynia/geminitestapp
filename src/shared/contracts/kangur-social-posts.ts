@@ -65,6 +65,7 @@ export const kangurSocialPostSchema = z.object({
   imageAssets: z.array(imageFileSelectionSchema).max(12).default([]),
   imageAddonIds: z.array(trimmedString.max(160)).max(30).default([]),
   docReferences: z.array(trimmedString.max(240)).max(80).default([]),
+  contextSummary: trimmedString.max(8000).nullable().default(null),
   generatedSummary: trimmedString.max(8000).nullable().default(null),
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),

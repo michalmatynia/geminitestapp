@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/features/kangur/shared/ui';
 import {
   useApplyKangurSocialDocUpdates,
+  useDeleteKangurSocialPost,
   useGenerateKangurSocialPost,
   useKangurSocialPosts,
   usePatchKangurSocialPost,
@@ -18,10 +20,13 @@ import {
   type KangurSocialImageAddonsBatchResult,
 } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { ApiError } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   useIntegrationConnections,
   useIntegrations,
 } from '@/features/integrations/hooks/useIntegrationQueries';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   logKangurClientError,
   trackKangurClientEvent,
@@ -45,12 +50,22 @@ import {
   parseDatetimeLocal,
 } from './AdminKangurSocialPage.Constants';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
+import {
+  KANGUR_SOCIAL_SETTINGS_KEY,
+  parseKangurSocialSettings,
+} from '@/features/kangur/settings-social';
+import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
+import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 export function useAdminKangurSocialPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
   const postsQuery = useKangurSocialPosts({ scope: 'admin' });
   const saveMutation = useSaveKangurSocialPost();
   const patchMutation = usePatchKangurSocialPost();
+  const deleteMutation = useDeleteKangurSocialPost();
   const publishMutation = usePublishKangurSocialPost();
   const generateMutation = useGenerateKangurSocialPost();
   const previewDocUpdatesMutation = usePreviewKangurSocialDocUpdates();
@@ -61,6 +76,11 @@ export function useAdminKangurSocialPage() {
   const brainModelOptions = useBrainModelOptions({ capability: 'kangur_social.post_generation' });
   const visionModelOptions = useBrainModelOptions({ capability: 'kangur_social.visual_analysis' });
   const integrationsQuery = useIntegrations();
+  const rawSocialSettings = settingsStore.get(KANGUR_SOCIAL_SETTINGS_KEY);
+  const persistedSocialSettings = useMemo(
+    () => parseKangurSocialSettings(rawSocialSettings),
+    [rawSocialSettings]
+  );
   
   const linkedinIntegration = useMemo(
     () => integrationsQuery.data?.find((integration) => integration.slug === 'linkedin') ?? null,
@@ -86,20 +106,109 @@ export function useAdminKangurSocialPage() {
   const [imageAddonIds, setImageAddonIds] = useState<string[]>([]);
   const [addonForm, setAddonForm] = useState(emptyAddonForm);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
-  const [linkedinConnectionId, setLinkedinConnectionId] = useState<string | null>(null);
-  const [brainModelId, setBrainModelId] = useState<string | null>(null);
-  const [visionModelId, setVisionModelId] = useState<string | null>(null);
+  const [linkedinConnectionId, setLinkedinConnectionId] = useState<string | null>(
+    persistedSocialSettings.linkedinConnectionId
+  );
+  const [brainModelId, setBrainModelId] = useState<string | null>(
+    persistedSocialSettings.brainModelId
+  );
+  const [visionModelId, setVisionModelId] = useState<string | null>(
+    persistedSocialSettings.visionModelId
+  );
   const [docUpdatesResult, setDocUpdatesResult] =
     useState<KangurSocialDocUpdatesResponse | null>(null);
-  const [batchCaptureBaseUrl, setBatchCaptureBaseUrl] = useState<string>('');
+  const [contextSummary, setContextSummary] = useState<string | null>(null);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [batchCaptureBaseUrl, setBatchCaptureBaseUrl] = useState<string>(
+    persistedSocialSettings.batchCaptureBaseUrl ?? ''
+  );
   const [batchCapturePresetIds, setBatchCapturePresetIds] = useState<string[]>(
-    () => KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id)
+    () => persistedSocialSettings.batchCapturePresetIds
   );
   const [batchCaptureResult, setBatchCaptureResult] =
     useState<KangurSocialImageAddonsBatchResult | null>(null);
   const [pipelineStep, setPipelineStep] = useState<
-    'idle' | 'capturing' | 'saving' | 'generating' | 'previewing' | 'done' | 'error'
+    'idle' | 'loading_context' | 'capturing' | 'saving' | 'generating' | 'previewing' | 'done' | 'error'
   >('idle');
+  const hasManualBatchBaseUrlRef = useRef(false);
+
+  const normalizeBatchCaptureBaseUrl = useCallback((value: string): string | null => {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }, []);
+
+  const normalizePresetIds = useCallback((value: string[]): string[] => {
+    const allowed = new Set(KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id));
+    if (value.length === 0) {
+      return [];
+    }
+    const unique = new Set(value.filter((entry) => allowed.has(entry)));
+    if (unique.size === 0) {
+      return KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id);
+    }
+    return KANGUR_SOCIAL_CAPTURE_PRESETS
+      .map((preset) => preset.id)
+      .filter((id) => unique.has(id));
+  }, []);
+
+  const normalizedBatchCaptureBaseUrl = useMemo(
+    () => normalizeBatchCaptureBaseUrl(batchCaptureBaseUrl),
+    [batchCaptureBaseUrl, normalizeBatchCaptureBaseUrl]
+  );
+  const normalizedBatchCapturePresetIds = useMemo(
+    () => normalizePresetIds(batchCapturePresetIds),
+    [batchCapturePresetIds, normalizePresetIds]
+  );
+
+  const arePresetSetsEqual = useCallback((left: string[], right: string[]): boolean => {
+    if (left.length !== right.length) return false;
+    const leftSet = new Set(left);
+    return right.every((value) => leftSet.has(value));
+  }, []);
+
+  const isSettingsDirty =
+    persistedSocialSettings.brainModelId !== brainModelId ||
+    persistedSocialSettings.visionModelId !== visionModelId ||
+    persistedSocialSettings.linkedinConnectionId !== linkedinConnectionId ||
+    persistedSocialSettings.batchCaptureBaseUrl !== normalizedBatchCaptureBaseUrl ||
+    !arePresetSetsEqual(
+      persistedSocialSettings.batchCapturePresetIds,
+      normalizedBatchCapturePresetIds
+    );
+
+  const handleSaveSettings = useCallback(async (): Promise<void> => {
+    if (updateSetting.isPending) return;
+    const payload = {
+      brainModelId: brainModelId ?? null,
+      visionModelId: visionModelId ?? null,
+      linkedinConnectionId: linkedinConnectionId ?? null,
+      batchCaptureBaseUrl: normalizedBatchCaptureBaseUrl,
+      batchCapturePresetIds: normalizedBatchCapturePresetIds,
+    };
+    try {
+      await updateSetting.mutateAsync({
+        key: KANGUR_SOCIAL_SETTINGS_KEY,
+        value: serializeSetting(payload),
+      });
+      toast('Kangur Social settings saved.', { variant: 'success' });
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+      logKangurClientError(error, {
+        source: 'AdminKangurSocialPage',
+        action: 'saveSettings',
+        nextSettings: payload,
+      });
+      toast('Failed to save Kangur Social settings.', { variant: 'error' });
+    }
+  }, [
+    brainModelId,
+    linkedinConnectionId,
+    normalizedBatchCaptureBaseUrl,
+    normalizedBatchCapturePresetIds,
+    toast,
+    updateSetting,
+    visionModelId,
+  ]);
 
   const resolveDocReferences = useCallback((): string[] =>
     docReferenceInput
@@ -123,6 +232,89 @@ export function useAdminKangurSocialPage() {
     batchCaptureBaseUrl: batchCaptureBaseUrl.trim() || null,
     ...overrides,
   }), [activePost?.id, activePost?.status, activePost?.visualDocUpdates?.length, batchCaptureBaseUrl, batchCapturePresetIds.length, brainModelId, docReferenceInput, generationNotes, imageAddonIds.length, imageAssets.length, linkedinConnectionId, resolveDocReferences, scheduledAt, visionModelId]);
+
+  const handleLoadContext = useCallback(
+    async (options?: { notify?: boolean; persist?: boolean }): Promise<{
+      summary: string | null;
+      docCount: number | null;
+      error?: boolean;
+    }> => {
+      const notify = options?.notify !== false;
+      const persist = options?.persist !== false;
+      if (!activePost) {
+        if (notify) {
+          toast('Create or select a post first', { variant: 'warning' });
+        }
+        return { summary: null, docCount: null, error: true };
+      }
+      if (contextLoading) {
+        return { summary: contextSummary ?? null, docCount: null };
+      }
+      setContextLoading(true);
+      try {
+        const docRefs = resolveDocReferences();
+        const contextUrl = `/api/kangur/social-posts/context${
+          docRefs.length > 0 ? `?refs=${encodeURIComponent(docRefs.join(','))}` : ''
+        }`;
+        const contextResponse = await fetch(contextUrl);
+        if (!contextResponse.ok) {
+          if (notify) {
+            toast('Failed to load documentation context', { variant: 'error' });
+          }
+          return { summary: null, docCount: null, error: true };
+        }
+        const contextData = (await contextResponse.json()) as {
+          context?: string;
+          summary?: string;
+          docCount?: number;
+        };
+        const summary = contextData.context ?? contextData.summary ?? null;
+        if (!summary) {
+          if (notify) {
+            toast('No documentation context found', { variant: 'warning' });
+          }
+          return { summary: null, docCount: contextData.docCount ?? null };
+        }
+        setContextSummary(summary);
+        if (persist) {
+          await patchMutation.mutateAsync({
+            id: activePost.id,
+            updates: { contextSummary: summary },
+          });
+        }
+        if (notify) {
+          toast(
+            `Loaded context from ${contextData.docCount ?? 0} document${
+              contextData.docCount === 1 ? '' : 's'
+            }`,
+            { variant: 'success' }
+          );
+        }
+        return { summary, docCount: contextData.docCount ?? null };
+      } catch (error) {
+        logKangurClientError(error, {
+          source: 'AdminKangurSocialPage',
+          action: 'loadContext',
+          ...buildSocialContext({ error: true }),
+        });
+        if (notify) {
+          toast('Failed to load documentation context', { variant: 'error' });
+        }
+        return { summary: null, docCount: null, error: true };
+      } finally {
+        setContextLoading(false);
+      }
+    },
+    [
+      activePost,
+      buildSocialContext,
+      contextLoading,
+      contextSummary,
+      patchMutation,
+      resolveDocReferences,
+      toast,
+    ]
+  );
 
   useEffect(() => {
     if (!activePostId && posts.length > 0) {
@@ -157,9 +349,10 @@ export function useAdminKangurSocialPage() {
       setDocReferenceInput('');
       setImageAssets([]);
       setImageAddonIds([]);
-      setLinkedinConnectionId(null);
-      setBrainModelId(null);
-      setVisionModelId(null);
+      setLinkedinConnectionId(persistedSocialSettings.linkedinConnectionId);
+      setBrainModelId(persistedSocialSettings.brainModelId);
+      setVisionModelId(persistedSocialSettings.visionModelId);
+      setContextSummary(null);
       return;
     }
     setEditorState({
@@ -170,9 +363,11 @@ export function useAdminKangurSocialPage() {
     });
     setScheduledAt(formatDatetimeLocal(activePost.scheduledAt));
     setDocReferenceInput(activePost.docReferences?.join(', ') ?? '');
-    setLinkedinConnectionId(activePost.linkedinConnectionId ?? null);
-    setBrainModelId(activePost.brainModelId ?? null);
-    setVisionModelId(activePost.visionModelId ?? null);
+    setLinkedinConnectionId(
+      activePost.linkedinConnectionId ?? persistedSocialSettings.linkedinConnectionId ?? null
+    );
+    setBrainModelId(activePost.brainModelId ?? persistedSocialSettings.brainModelId ?? null);
+    setVisionModelId(activePost.visionModelId ?? persistedSocialSettings.visionModelId ?? null);
     setImageAddonIds(activePost.imageAddonIds ?? []);
     setImageAssets(
       (activePost.imageAssets ?? []).map((asset, index) => ({
@@ -180,7 +375,8 @@ export function useAdminKangurSocialPage() {
         id: asset.id || asset.filepath || asset.url || `image-${index}`,
       }))
     );
-  }, [activePost]);
+    setContextSummary(activePost.contextSummary ?? null);
+  }, [activePost, persistedSocialSettings]);
 
   useEffect(() => {
     setDocUpdatesResult(null);
@@ -188,10 +384,20 @@ export function useAdminKangurSocialPage() {
   }, [activePostId]);
 
   useEffect(() => {
+    setBatchCapturePresetIds(persistedSocialSettings.batchCapturePresetIds);
+  }, [persistedSocialSettings.batchCapturePresetIds]);
+
+  useEffect(() => {
+    if (hasManualBatchBaseUrlRef.current) return;
+    const persistedBaseUrl = persistedSocialSettings.batchCaptureBaseUrl;
+    if (persistedBaseUrl) {
+      setBatchCaptureBaseUrl(persistedBaseUrl);
+      return;
+    }
     if (batchCaptureBaseUrl) return;
     if (typeof window === 'undefined') return;
     setBatchCaptureBaseUrl(window.location.origin);
-  }, [batchCaptureBaseUrl]);
+  }, [batchCaptureBaseUrl, persistedSocialSettings.batchCaptureBaseUrl]);
 
   useEffect(() => {
     if (!activePost) return;
@@ -225,6 +431,80 @@ export function useAdminKangurSocialPage() {
         'kangur_social_post_create_failed',
         buildSocialContext({ error: true })
       );
+    }
+  };
+
+  const handleDeletePost = async (postId: string): Promise<void> => {
+    if (!postId) return;
+    const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
+    const wasActive = activePostId === postId;
+    const previousPosts = queryClient.getQueryData<KangurSocialPost[]>(queryKey) ?? [];
+    const nextPosts = previousPosts.filter((post) => post.id !== postId);
+    queryClient.setQueryData(queryKey, nextPosts);
+    setActivePostId((current) => (current === postId ? nextPosts[0]?.id ?? null : current));
+    trackKangurClientEvent(
+      'kangur_social_post_delete_attempt',
+      buildSocialContext({ postId })
+    );
+    try {
+      await deleteMutation.mutateAsync(postId);
+      toast('Draft deleted.', { variant: 'success' });
+      trackKangurClientEvent(
+        'kangur_social_post_delete_success',
+        buildSocialContext({ postId })
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        let refreshedPosts: KangurSocialPost[] | null = null;
+        try {
+          const refetchResult = await postsQuery.refetch();
+          refreshedPosts = refetchResult.data ?? null;
+        } catch {
+          refreshedPosts = null;
+        }
+        const effectivePosts = refreshedPosts ?? previousPosts;
+        const stillExists = effectivePosts.some((post) => post.id === postId);
+        if (!refreshedPosts) {
+          queryClient.setQueryData(queryKey, previousPosts);
+        }
+        if (stillExists) {
+          setActivePostId((current) => {
+            if (wasActive && effectivePosts.some((post) => post.id === postId)) {
+              return postId;
+            }
+            if (current && effectivePosts.some((post) => post.id === current)) {
+              return current;
+            }
+            return effectivePosts[0]?.id ?? null;
+          });
+          toast('Failed to delete draft.', { variant: 'error' });
+        }
+        trackKangurClientEvent(
+          'kangur_social_post_delete_not_found',
+          buildSocialContext({ postId })
+        );
+        return;
+      }
+      queryClient.setQueryData(queryKey, previousPosts);
+      setActivePostId((current) => {
+        if (current && previousPosts.some((post) => post.id === current)) {
+          return current;
+        }
+        return previousPosts[0]?.id ?? null;
+      });
+      void ErrorSystem.captureException(error);
+      logKangurClientError(error, {
+        source: 'AdminKangurSocialPage',
+        action: 'deletePost',
+        ...buildSocialContext({ postId }),
+      });
+      const message = error instanceof Error ? error.message : 'Failed to delete draft.';
+      toast(message, { variant: 'error' });
+      trackKangurClientEvent(
+        'kangur_social_post_delete_failed',
+        buildSocialContext({ postId, error: true })
+      );
+      throw error;
     }
   };
 
@@ -418,6 +698,14 @@ export function useAdminKangurSocialPage() {
     });
   };
 
+  const handleBatchCaptureBaseUrlChange = useCallback(
+    (value: string | ((prev: string) => string)) => {
+    hasManualBatchBaseUrlRef.current = true;
+    setBatchCaptureBaseUrl((prev) =>
+      typeof value === 'function' ? value(prev) : value
+    );
+  }, []);
+
   const handleToggleCapturePreset = (presetId: string): void => {
     setBatchCapturePresetIds((prev) =>
       prev.includes(presetId) ? prev.filter((id) => id !== presetId) : [...prev, presetId]
@@ -525,8 +813,11 @@ export function useAdminKangurSocialPage() {
       handleSelectAddons(result.addons);
       const successCount = result.addons.length;
       const failureCount = result.failures.length;
+      const failureSummary = successCount === 0 && failureCount > 0
+        ? `. ${result.failures.slice(0, 3).map((f) => `${f.id}: ${f.reason}`).join('; ')}`
+        : '';
       toast(
-        `${successCount > 0 ? 'Batch capture completed' : 'Batch capture finished with no assets'} (${successCount} add-on${successCount === 1 ? '' : 's'}, ${failureCount} failure${failureCount === 1 ? '' : 's'})`,
+        `${successCount > 0 ? 'Batch capture completed' : 'Batch capture finished with no assets'} (${successCount} add-on${successCount === 1 ? '' : 's'}, ${failureCount} failure${failureCount === 1 ? '' : 's'})${failureSummary}`,
         { variant: successCount > 0 ? 'success' : 'warning' }
       );
       trackKangurClientEvent(
@@ -603,6 +894,24 @@ export function useAdminKangurSocialPage() {
     }
     trackKangurClientEvent('kangur_social_pipeline_attempt', buildSocialContext());
     try {
+      // Step 0: Load documentation context from Context Registry
+      setPipelineStep('loading_context');
+      toast('Pipeline: loading documentation context...', { variant: 'default' });
+      try {
+        const contextResult = await handleLoadContext({ notify: false, persist: true });
+        if (contextResult.summary) {
+          toast(
+            `Pipeline: loaded context from ${contextResult.docCount ?? 0} document(s)`,
+            { variant: 'default' }
+          );
+        } else {
+          toast('Pipeline: context loading skipped (no context found)', { variant: 'default' });
+        }
+      } catch {
+        // Context loading is best-effort — don't fail the pipeline
+        toast('Pipeline: context loading skipped (endpoint unavailable)', { variant: 'default' });
+      }
+
       // Step 1: Batch capture
       setPipelineStep('capturing');
       toast('Pipeline: capturing screenshots...', { variant: 'default' });
@@ -621,7 +930,13 @@ export function useAdminKangurSocialPage() {
       setBatchCaptureResult(captureResult);
       handleSelectAddons(captureResult.addons);
       if (captureResult.addons.length === 0) {
-        toast('Pipeline stopped: no screenshots captured', { variant: 'warning' });
+        const failureReasons = captureResult.failures
+          .map((f) => `${f.id}: ${f.reason}`)
+          .slice(0, 3);
+        const hint = failureReasons.length > 0
+          ? `Failures: ${failureReasons.join('; ')}`
+          : 'Check that the base URL is reachable by Playwright (localhost may be blocked by outbound policy)';
+        toast(`Pipeline stopped: no screenshots captured. ${hint}`, { variant: 'warning' });
         setPipelineStep('error');
         return;
       }
@@ -685,7 +1000,8 @@ export function useAdminKangurSocialPage() {
         action: 'runFullPipeline',
         ...buildSocialContext({ error: true }),
       });
-      toast('Pipeline failed — check logs for details', { variant: 'error' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast(`Pipeline failed at step "${pipelineStep}": ${errorMessage}`, { variant: 'error' });
       trackKangurClientEvent(
         'kangur_social_pipeline_failed',
         buildSocialContext({ error: true })
@@ -721,10 +1037,13 @@ export function useAdminKangurSocialPage() {
     setBrainModelId,
     visionModelId,
     setVisionModelId,
+    isSettingsDirty,
+    isSavingSettings: updateSetting.isPending,
+    handleSaveSettings,
     docUpdatesResult,
     setDocUpdatesResult,
     batchCaptureBaseUrl,
-    setBatchCaptureBaseUrl,
+    setBatchCaptureBaseUrl: handleBatchCaptureBaseUrlChange,
     batchCapturePresetIds,
     setBatchCapturePresetIds,
     batchCaptureResult,
@@ -738,12 +1057,14 @@ export function useAdminKangurSocialPage() {
     saveMutation,
     patchMutation,
     publishMutation,
+    deleteMutation,
     generateMutation,
     previewDocUpdatesMutation,
     applyDocUpdatesMutation,
     createAddonMutation,
     batchCaptureMutation,
     handleCreateDraft,
+    handleDeletePost,
     handleSave,
     handleGenerate,
     handlePreviewDocUpdates,
@@ -764,5 +1085,8 @@ export function useAdminKangurSocialPage() {
     resolveDocReferences,
     pipelineStep,
     handleRunFullPipeline,
+    contextSummary,
+    contextLoading,
+    handleLoadContext,
   };
 }

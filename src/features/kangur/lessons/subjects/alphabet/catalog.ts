@@ -83,9 +83,9 @@ export const ALPHABET_LESSON_TEMPLATES: Record<AlphabetLessonComponentId, Kangur
 
 export const ALPHABET_LESSON_GROUPS = [
   {
-    id: 'letter_tracing',
-    label: 'Letter Tracing',
-    typeLabel: 'Track',
+    id: 'rysuj_litery',
+    label: 'Rysuj Litery',
+    typeLabel: 'Gra',
     componentIds: ['alphabet_basics', 'alphabet_copy'],
   },
   {

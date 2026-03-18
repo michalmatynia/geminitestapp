@@ -50,11 +50,32 @@ const buildCircle = (
     };
   });
 
+const buildEllipse = (
+  center: Point2d,
+  radiusX: number,
+  radiusY: number,
+  pointsCount = 140
+): Point2d[] =>
+  Array.from({ length: pointsCount }, (_, index): Point2d => {
+    const angle = (Math.PI * 2 * index) / Math.max(1, pointsCount - 1);
+    return {
+      x: center.x + radiusX * Math.cos(angle),
+      y: center.y + radiusY * Math.sin(angle),
+    };
+  });
+
 const EXPECT_ACCEPTED: Record<GeometryShapeId, Point2d[]> = {
+  oval: buildEllipse({ x: 145, y: 120 }, 110, 60),
   triangle: buildPolygon([
     { x: 140, y: 28 },
     { x: 34, y: 190 },
     { x: 246, y: 190 },
+  ]),
+  diamond: buildPolygon([
+    { x: 145, y: 20 },
+    { x: 260, y: 120 },
+    { x: 145, y: 220 },
+    { x: 30, y: 120 },
   ]),
   square: buildPolygon([
     { x: 44, y: 44 },
@@ -88,7 +109,9 @@ const EXPECT_ACCEPTED: Record<GeometryShapeId, Point2d[]> = {
 
 describe('geometry drawing evaluator', () => {
   it.each([
+    ['oval' as const],
     ['triangle' as const],
+    ['diamond' as const],
     ['square' as const],
     ['rectangle' as const],
     ['pentagon' as const],

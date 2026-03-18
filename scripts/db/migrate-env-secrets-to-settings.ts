@@ -27,7 +27,7 @@ const normalizeValue = (value: string | undefined): string | null => {
   if (!trimmed) return null;
   const unquoted =
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
       ? trimmed.slice(1, -1)
       : trimmed;
   return unquoted.trim() || null;
@@ -114,7 +114,13 @@ const main = async (): Promise<void> => {
   const client = new MongoClient(mongoUri);
   await client.connect();
   const db = client.db(dbName);
-  const collection = db.collection('settings');
+  const collection = db.collection<{
+    _id: string;
+    key?: string;
+    value?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }>('settings');
 
   const now = new Date();
   for (const secret of secrets) {

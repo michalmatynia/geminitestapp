@@ -68,7 +68,7 @@ describe('GeometryDrawingGame', () => {
 
     fireEvent.click(proButton);
 
-    expect(screen.getByTestId('geometry-drawing-progress-label')).toHaveTextContent('1/6');
+    expect(screen.getByTestId('geometry-drawing-progress-label')).toHaveTextContent('1/8');
     expect(starterButton).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(proButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(starterButton).toHaveAttribute('aria-pressed', 'false');

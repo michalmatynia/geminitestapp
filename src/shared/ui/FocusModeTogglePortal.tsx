@@ -44,6 +44,7 @@ export function FocusModeTogglePortal({
       onClick={onToggleFocusMode}
       title={label}
       aria-label={label}
+      aria-pressed={isFocusMode}
       className={cn(
         'fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2',
         className

@@ -6,13 +6,15 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
+  deleteKangurSocialPost,
+  getKangurSocialPostById,
   listKangurSocialPosts,
   listPublishedKangurSocialPosts,
   upsertKangurSocialPost,
 } from '@/features/kangur/server/social-posts-repository';
 import { kangurSocialPostSchema } from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError } from '@/shared/errors/app-error';
+import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 import {
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
@@ -21,6 +23,10 @@ import {
 export const querySchema = z.object({
   scope: optionalTrimmedQueryString(z.enum(['public', 'admin'])),
   limit: optionalIntegerQuerySchema(z.number().int().min(1).max(50)),
+});
+
+export const deleteSocialPostsQuerySchema = z.object({
+  id: optionalTrimmedQueryString(z.string().min(1)),
 });
 
 const bodySchema = z.object({
@@ -94,4 +100,43 @@ export async function postKangurSocialPostsHandler(
   });
 
   return NextResponse.json(saved, { headers: { 'Cache-Control': 'no-store' } });
+}
+
+export async function deleteKangurSocialPostsHandler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
+  const query = deleteSocialPostsQuerySchema.parse(ctx.query ?? {});
+  const id = query.id?.trim();
+  if (!id) {
+    throw badRequestError('Missing social post id.');
+  }
+  const actor = await resolveKangurActor(req);
+  if (actor.role !== 'admin') {
+    throw forbiddenError('Only admins can delete social posts.');
+  }
+
+  const post = await getKangurSocialPostById(id);
+  if (!post) {
+    throw notFoundError('Social post not found.');
+  }
+  const deleted = await deleteKangurSocialPost(id);
+  if (!deleted) {
+    throw notFoundError('Social post not found.');
+  }
+
+  void logKangurServerEvent({
+    source: 'kangur.social-posts.delete',
+    message: 'Kangur social post deleted',
+    request: req,
+    requestContext: ctx,
+    actor,
+    statusCode: 200,
+    context: {
+      postId: deleted.id,
+      status: deleted.status,
+    },
+  });
+
+  return NextResponse.json(deleted, { headers: { 'Cache-Control': 'no-store' } });
 }

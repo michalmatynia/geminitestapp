@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
+  deleteKangurSocialPost,
   getKangurSocialPostById,
   updateKangurSocialPost,
 } from '@/features/kangur/server/social-posts-repository';
@@ -76,4 +77,38 @@ export async function patchKangurSocialPostHandler(
   });
 
   return NextResponse.json(updated, { headers: { 'Cache-Control': 'no-store' } });
+}
+
+export async function deleteKangurSocialPostHandler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<Response> {
+  const id = String(ctx.params?.['id'] ?? '');
+  const actor = await resolveKangurActor(req);
+  if (actor.role !== 'admin') {
+    throw forbiddenError('Only admins can delete social posts.');
+  }
+  const post = await getKangurSocialPostById(id);
+  if (!post) {
+    throw notFoundError('Social post not found.');
+  }
+  const deleted = await deleteKangurSocialPost(id);
+  if (!deleted) {
+    throw notFoundError('Social post not found.');
+  }
+
+  void logKangurServerEvent({
+    source: 'kangur.social-posts.delete',
+    message: 'Kangur social post deleted',
+    request: req,
+    requestContext: ctx,
+    actor,
+    statusCode: 200,
+    context: {
+      postId: deleted.id,
+      status: deleted.status,
+    },
+  });
+
+  return NextResponse.json(deleted, { headers: { 'Cache-Control': 'no-store' } });
 }

@@ -8,14 +8,14 @@ canonical: true
 ---
 # Accessibility Smoke Report
 
-Generated at: 2026-03-17T11:16:28.045Z
+Generated at: 2026-03-17T22:14:10.967Z
 
 ## Summary
 
 - Suites: 14
-- Passed: 14
-- Failed: 0
-- React act warnings: 2
+- Passed: 12
+- Failed: 2
+- React act warnings: 1
 - Warning budget: 10
 - Warning budget status: ok
 - Warning budget enforcement: telemetry-only
@@ -24,33 +24,33 @@ Generated at: 2026-03-17T11:16:28.045Z
 
 | Suite | Runner | Status | Duration | Exit | Tests |
 | --- | --- | --- | ---: | ---: | --- |
-| App Shell Accessibility | vitest | PASS | 2.2s | 0 | `src/app/__tests__/shell-accessibility.test.tsx` |
-| Auth Sign-In Accessibility | vitest | PASS | 3.5s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
-| Products Edit Form Accessibility | vitest | PASS | 5.1s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
-| Image Studio UI Accessibility | vitest | PASS | 3.6s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
-| AI Paths Canvas Accessibility | vitest | PASS | 3.7s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
-| Case Resolver Header Accessibility | vitest | PASS | 3.5s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
-| Case Resolver Accessibility | playwright | PASS | 59.8s | 0 | `e2e/features/accessibility/case-resolver-accessibility.spec.ts` |
-| Kangur Profile Accessibility | vitest | PASS | 11.4s | 0 | `__tests__/features/kangur/kangur-accessibility-smoke.test.tsx` |
-| Public Auth Route Accessibility | playwright | PASS | 8.6s | 0 | `e2e/features/accessibility/public-auth-accessibility.spec.ts` |
-| Admin Dashboard Accessibility | playwright | PASS | 11.7s | 0 | `e2e/features/accessibility/admin-dashboard-accessibility.spec.ts` |
-| Products List Accessibility | playwright | PASS | 25.3s | 0 | `e2e/features/accessibility/products-list-accessibility.spec.ts` |
-| CMS Pages Accessibility | playwright | PASS | 19.3s | 0 | `e2e/features/accessibility/cms-pages-accessibility.spec.ts` |
-| Notes Workspace Accessibility | playwright | PASS | 12.7s | 0 | `e2e/features/accessibility/notes-workspace-accessibility.spec.ts` |
-| CMS Builder Accessibility | playwright | PASS | 1.5m | 0 | `e2e/features/accessibility/cms-builder-accessibility.spec.ts` |
+| App Shell Accessibility | vitest | PASS | 2.3s | 0 | `src/app/__tests__/shell-accessibility.test.tsx` |
+| Auth Sign-In Accessibility | vitest | PASS | 3.6s | 0 | `__tests__/features/auth/pages/signin-page.test.tsx` |
+| Products Edit Form Accessibility | vitest | PASS | 5.3s | 0 | `__tests__/features/products/pages/product-edit-page.test.tsx` |
+| Image Studio UI Accessibility | vitest | PASS | 4.1s | 0 | `src/features/ai/image-studio/components/__tests__/ImageStudioAnalysisTab.apply-intent.test.tsx` |
+| AI Paths Canvas Accessibility | vitest | PASS | 3.9s | 0 | `src/features/ai/ai-paths/components/__tests__/AiPathsRuntimeAnalysis.test.tsx` |
+| Case Resolver Header Accessibility | vitest | PASS | 3.3s | 0 | `src/features/case-resolver/__tests__/case-resolver-tree-header.test.tsx` |
+| Case Resolver Accessibility | playwright | PASS | 48.7s | 0 | `e2e/features/accessibility/case-resolver-accessibility.spec.ts` |
+| Kangur Profile Accessibility | vitest | PASS | 15.3s | 0 | `__tests__/features/kangur/kangur-accessibility-smoke.test.tsx` |
+| Public Auth Route Accessibility | playwright | PASS | 18.9s | 0 | `e2e/features/accessibility/public-auth-accessibility.spec.ts` |
+| Admin Dashboard Accessibility | playwright | PASS | 10.8s | 0 | `e2e/features/accessibility/admin-dashboard-accessibility.spec.ts` |
+| Products List Accessibility | playwright | PASS | 26.2s | 0 | `e2e/features/accessibility/products-list-accessibility.spec.ts` |
+| CMS Pages Accessibility | playwright | FAIL | 42.3s | 1 | `e2e/features/accessibility/cms-pages-accessibility.spec.ts` |
+| Notes Workspace Accessibility | playwright | PASS | 41.9s | 0 | `e2e/features/accessibility/notes-workspace-accessibility.spec.ts` |
+| CMS Builder Accessibility | playwright | FAIL | 3.4m | 1 | `e2e/features/accessibility/cms-builder-accessibility.spec.ts` |
 
 ## Warning Details
 
 | Suite | React act warnings |
 | --- | ---: |
-| App Shell Accessibility | 2 |
+| App Shell Accessibility | 0 |
 | Auth Sign-In Accessibility | 0 |
 | Products Edit Form Accessibility | 0 |
 | Image Studio UI Accessibility | 0 |
 | AI Paths Canvas Accessibility | 0 |
 | Case Resolver Header Accessibility | 0 |
 | Case Resolver Accessibility | 0 |
-| Kangur Profile Accessibility | 0 |
+| Kangur Profile Accessibility | 1 |
 | Public Auth Route Accessibility | 0 |
 | Admin Dashboard Accessibility | 0 |
 | Products List Accessibility | 0 |

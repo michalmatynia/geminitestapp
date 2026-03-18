@@ -75,7 +75,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
   const snapshotOptions = React.useMemo<Array<LabeledOptionDto<string>>>(
     () =>
       availableSnapshots.length > 0
-        ? availableSnapshots.map((snapshot: any) => ({
+        ? availableSnapshots.map((snapshot) => ({
           value: snapshot.id,
           label: `${snapshot.name} (${snapshot.ruleCount})`,
         }))
@@ -601,7 +601,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
            />
         ) : (
           <div className='max-h-[220px] space-y-2 overflow-auto'>
-            {effectiveLearnedTemplates.slice(0, 20).map((template: any) => (
+            {effectiveLearnedTemplates.slice(0, 20).map((template) => (
               <Card
                 key={template.id}
                 variant='subtle-compact'

@@ -73,6 +73,8 @@
     },
     "types": [
       "vitest/globals",
+      "react",
+      "react-dom",
       "react-error-boundary",
       "@tanstack/react-query-devtools",
       "@testing-library/jest-dom"
@@ -114,7 +116,9 @@
     ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53-route-crawl/dev/types/**/*.ts",
     ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53/types/**/*.ts",
-    ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53/dev/types/**/*.ts"
+    ".next-dev-playwright-broker-web-dev-webpack-019cf7c7-96e6-7c60-8268-9ad505dd0c53/dev/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-webpack-019cfcb7-96ac-71d3-8129-5c5d4f189c9a/types/**/*.ts",
+    ".next-dev-playwright-broker-web-dev-webpack-019cfcb7-96ac-71d3-8129-5c5d4f189c9a/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

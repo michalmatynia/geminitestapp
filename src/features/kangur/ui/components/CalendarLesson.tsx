@@ -1,18 +1,8 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
-import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
-import LessonHub from '@/features/kangur/ui/components/LessonHub';
-import LessonSlideSection, {
-  type LessonSlide as LessonSlideSectionSlide,
-} from '@/features/kangur/ui/components/LessonSlideSection';
-import {
-  buildLessonHubSectionsWithProgress,
-  buildLessonSectionLabels,
-  createLessonHubSelectHandler,
-  resolveLessonSectionHeader,
-} from '@/features/kangur/ui/components/lesson-utils';
+import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   CalendarDateFormatAnimation,
   CalendarDateHighlightAnimation,
@@ -28,12 +18,12 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
-import { useKangurLessonPanelProgress } from '@/features/kangur/ui/hooks/useKangurLessonPanelProgress';
 import {
   addXp,
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 import CalendarInteractiveGame, {
   type CalendarInteractiveSectionId,
@@ -47,14 +37,6 @@ type LessonSlide = LessonSlideSectionSlide & {
   tts: string;
 };
 
-type LegacyCalendarHubSection = {
-  id: LessonSectionId | 'game';
-  emoji: string;
-  title: string;
-  description: string;
-  isGame?: boolean;
-};
-
 type CalendarLiveHubSection = {
   id: CalendarHubId;
   emoji: string;
@@ -62,11 +44,6 @@ type CalendarLiveHubSection = {
   description: string;
   isGame?: boolean;
 };
-
-type CalendarLessonView =
-  | { kind: 'hub' }
-  | { kind: 'lesson'; sectionId: LessonSectionId }
-  | { kind: 'training'; sectionId: CalendarInteractiveSectionId };
 
 const MONTHS = [
   { name: 'Styczen', days: 31, num: 1 },
@@ -419,26 +396,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
 };
 
-export const HUB_SECTIONS: LegacyCalendarHubSection[] = [
-  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiące i dni' },
-  { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
-  {
-    id: 'miesiace',
-    emoji: '🌸',
-    title: 'Miesiące i pory roku',
-    description: '12 miesięcy i ich pory roku',
-  },
-  { id: 'data', emoji: '📝', title: 'Jak czytać datę?', description: 'Dzień / miesiąc / rok' },
-  {
-    id: 'game',
-    emoji: '🎮',
-    title: 'Ćwiczenia z Kalendarzem',
-    description: 'Cwicz w interaktywnej grze',
-    isGame: true,
-  },
-];
-
-const LIVE_HUB_SECTIONS: CalendarLiveHubSection[] = [
+export const HUB_SECTIONS: CalendarLiveHubSection[] = [
   { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiące i dni' },
   { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
   {
@@ -471,115 +429,84 @@ const LIVE_HUB_SECTIONS: CalendarLiveHubSection[] = [
   },
 ];
 
-const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = LIVE_HUB_SECTIONS.filter(
+const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = HUB_SECTIONS.filter(
   (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
 );
 
-const LESSON_SECTIONS: Array<
-  CalendarLiveHubSection & { id: LessonSectionId; isGame?: false }
-> = LIVE_HUB_SECTIONS.filter(
-  (section): section is CalendarLiveHubSection & { id: LessonSectionId; isGame?: false } =>
-    !section.isGame
-);
+const CALENDAR_GAME_SECTION_MAP: Record<TrainingCardId, CalendarInteractiveSectionId> = {
+  game_days: 'dni',
+  game_months: 'miesiace',
+  game_dates: 'data',
+};
 
-const SECTION_LABELS: Partial<Record<LessonSectionId, string>> =
-  buildLessonSectionLabels(LESSON_SECTIONS as any);
+const CalendarGameBody = ({
+  section,
+  onFinish,
+  onAward,
+}: {
+  section: CalendarInteractiveSectionId;
+  onFinish: () => void;
+  onAward: () => void;
+}): React.JSX.Element => {
+  useEffect(() => {
+    onAward();
+  }, [onAward]);
+
+  return <CalendarInteractiveGame key={section} onFinish={onFinish} section={section} />;
+};
 
 export default function CalendarLesson(): React.JSX.Element {
-  const [view, setView] = useState<CalendarLessonView>({ kind: 'hub' });
-  const { markSectionOpened, markSectionViewedCount, recordPanelTime, sectionProgress } =
-    useKangurLessonPanelProgress({
-      lessonKey: 'calendar',
-      slideSections: SECTION_SLIDES,
-      sectionLabels: SECTION_LABELS,
-    });
   const lessonCompletionAwardedRef = useRef(false);
-
-  const lessonHubSections = buildLessonHubSectionsWithProgress(LIVE_HUB_SECTIONS as any, sectionProgress);
-
-  const handleStartTraining = useCallback((sectionId: CalendarInteractiveSectionId) => {
-    if (!lessonCompletionAwardedRef.current) {
-      const progress = loadProgress();
-      const reward = createLessonCompletionReward(progress, 'calendar', 60);
-      addXp(reward.xp, reward.progressUpdates);
-      lessonCompletionAwardedRef.current = true;
+  const awardLessonCompletionOnce = useCallback(() => {
+    if (lessonCompletionAwardedRef.current) {
+      return;
     }
-    setView({ kind: 'training', sectionId });
+
+    const progress = loadProgress();
+    const reward = createLessonCompletionReward(progress, 'calendar', 60);
+    addXp(reward.xp, reward.progressUpdates);
+    lessonCompletionAwardedRef.current = true;
   }, []);
 
-  if (view.kind === 'training') {
-    const currentTrainingSection =
-      TRAINING_SECTIONS.find((section) => section.id === view.sectionId) ?? TRAINING_SECTIONS[0];
-    if (!currentTrainingSection) {
-      return <></>;
-    }
+  const games = TRAINING_SECTIONS.map((section) => {
+    const trainingId = section.id as TrainingCardId;
+    const interactiveSection = CALENDAR_GAME_SECTION_MAP[trainingId];
 
-    return (
-      <LessonActivityStage
-        accent='emerald'
-        description={currentTrainingSection.description}
-        headerTestId='calendar-lesson-game-header'
-        icon='📅'
-        maxWidthClassName='max-w-lg'
-        onBack={() => setView({ kind: 'hub' })}
-        sectionHeader={
-          (resolveLessonSectionHeader(LIVE_HUB_SECTIONS as any, view.sectionId) as any) ?? {
-            description: currentTrainingSection.description,
-            emoji: currentTrainingSection.emoji,
-            isGame: true,
-            title: currentTrainingSection.title,
-          }
-        }
-        shellTestId='calendar-lesson-game-shell'
-        title={currentTrainingSection.title}
-      >
-        <CalendarInteractiveGame
-          key={view.sectionId}
-          onFinish={() => setView({ kind: 'hub' })}
-          section={view.sectionId}
+    return {
+      sectionId: trainingId,
+      stage: {
+        accent: 'emerald' as const,
+        description: section.description,
+        headerTestId: 'calendar-lesson-game-header',
+        icon: '📅',
+        maxWidthClassName: 'max-w-lg',
+        shellTestId: 'calendar-lesson-game-shell',
+        title: section.title,
+      },
+      render: ({ onBack }: { onBack: () => void }) => (
+        <CalendarGameBody
+          section={interactiveSection}
+          onFinish={onBack}
+          onAward={awardLessonCompletionOnce}
         />
-      </LessonActivityStage>
-    );
-  }
-
-  if (view.kind === 'lesson') {
-    return (
-      <LessonSlideSection
-        slides={SECTION_SLIDES[view.sectionId]}
-        sectionHeader={resolveLessonSectionHeader(LIVE_HUB_SECTIONS as any, view.sectionId) as any}
-        onBack={() => setView({ kind: 'hub' })}
-        onProgressChange={(viewedCount) => markSectionViewedCount(view.sectionId, viewedCount)}
-        onPanelTimeUpdate={(panelIndex, panelTitle, seconds) =>
-          recordPanelTime(view.sectionId, panelIndex, seconds, panelTitle)
-        }
-        dotActiveClass='bg-emerald-500'
-        dotDoneClass='bg-emerald-200'
-        gradientClass='kangur-gradient-accent-emerald'
-      />
-    );
-  }
-
-  const hubHandlers: Partial<Record<CalendarHubId, () => void>> = {
-    game_days: () => handleStartTraining('dni'),
-    game_months: () => handleStartTraining('miesiace'),
-    game_dates: () => handleStartTraining('data'),
-  };
-  const handleSelect = createLessonHubSelectHandler<CalendarHubId>({
-    markSectionOpened: (sectionId) => markSectionOpened(sectionId as LessonSectionId),
-    onSelectSection: (sectionId) =>
-      setView({ kind: 'lesson', sectionId: sectionId as LessonSectionId }),
-    skipMarkFor: ['game_days', 'game_months', 'game_dates'] as const,
-    handlers: hubHandlers,
+      ),
+    };
   });
 
   return (
-    <LessonHub
+    <KangurUnifiedLesson
+      progressMode='panel'
+      lessonId='calendar'
       lessonEmoji='📅'
       lessonTitle='Nauka kalendarza'
+      sections={HUB_SECTIONS}
+      slides={SECTION_SLIDES}
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-200'
-      sections={lessonHubSections as any}
-      onSelect={handleSelect as any}
+      dotActiveClass='bg-emerald-500'
+      dotDoneClass='bg-emerald-200'
+      skipMarkFor={['game_days', 'game_months', 'game_dates']}
+      games={games}
     />
   );
 }

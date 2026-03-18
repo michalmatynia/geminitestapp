@@ -5,6 +5,7 @@ import { type ReactElement, Suspense } from 'react';
 
 import {
   Badge,
+  Breadcrumbs,
   Button,
   Card,
   FormSection,
@@ -67,16 +68,31 @@ export function AdminKangurSettingsPage(): ReactElement {
     parentVerificationNotificationsPausedUntil,
     persistedParentVerificationEmailSettings,
   } = useKangurSettings();
+  const breadcrumbs = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Kangur', href: '/admin/kangur' },
+    { label: 'Settings' },
+  ];
 
   return (
     <KangurAdminContentShell
       title='Kangur Settings'
-      description='Manage storefront theme, class overrides, AI Tutor, narration, and parent verification behavior across Kangur.'
-      breadcrumbs={[
-        { label: 'Admin', href: '/admin' },
-        { label: 'Kangur', href: '/admin/kangur' },
-        { label: 'Settings' },
-      ]}
+      description={
+        <div className='flex flex-wrap items-center gap-3'>
+          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <span className='hidden h-4 w-px bg-white/12 md:block' />
+          <span className='text-xs text-slate-300/80'>
+            Manage storefront theme, class overrides, AI Tutor, narration, and parent verification
+            behavior across Kangur.
+          </span>
+        </div>
+      }
+      breadcrumbs={breadcrumbs}
+      headerLayout='stacked'
+      className='mx-0 max-w-none px-0 py-0'
+      panelVariant='flat'
+      panelClassName='rounded-none'
+      showBreadcrumbs={false}
       headerActions={
         <>
           <Button asChild variant='outline' size='sm'>

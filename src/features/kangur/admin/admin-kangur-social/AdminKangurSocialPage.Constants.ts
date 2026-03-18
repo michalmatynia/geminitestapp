@@ -85,6 +85,7 @@ export const BRAIN_MODEL_DEFAULT_VALUE = '__brain_default__';
 
 export type PipelineStep =
   | 'idle'
+  | 'loading_context'
   | 'capturing'
   | 'saving'
   | 'generating'
@@ -94,6 +95,7 @@ export type PipelineStep =
 
 export const PIPELINE_STEP_LABELS: Record<PipelineStep, string> = {
   idle: 'Run full pipeline',
+  loading_context: 'Loading context...',
   capturing: 'Capturing screenshots...',
   saving: 'Saving post...',
   generating: 'Generating draft...',

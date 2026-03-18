@@ -22,6 +22,7 @@ import {
 } from '@/shared/lib/ai-context-registry/page-context';
 import {
   Badge,
+  Breadcrumbs,
   Button,
   FolderTreePanel,
   FormModal,
@@ -1092,6 +1093,11 @@ export function AdminKangurLessonsManagerPage({
   ) : (
     mainWorkspace
   );
+  const breadcrumbs = [
+    { label: 'Admin', href: '/admin' },
+    { label: 'Kangur', href: '/admin/kangur' },
+    { label: 'Lessons' },
+  ];
 
   return (
     <ContextRegistryPageProvider
@@ -1103,15 +1109,22 @@ export function AdminKangurLessonsManagerPage({
       {standalone ? (
         <KangurAdminContentShell
           title='Kangur Lessons'
-          description='Manage lesson library, order, and interactive content.'
-          breadcrumbs={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Kangur', href: '/admin/kangur' },
-            { label: 'Lessons' },
-          ]}
-          className='h-full'
-          panelClassName='flex h-full min-h-0 flex-col'
+          description={
+            <div className='flex flex-wrap items-center gap-3'>
+              <Breadcrumbs items={breadcrumbs} className='mt-0' />
+              <span className='hidden h-4 w-px bg-white/12 md:block' />
+              <span className='text-xs text-slate-300/80'>
+                Manage lesson library, order, and interactive content.
+              </span>
+            </div>
+          }
+          breadcrumbs={breadcrumbs}
+          headerLayout='stacked'
+          className='mx-0 h-full max-w-none px-0 py-0'
+          panelVariant='flat'
+          panelClassName='rounded-none flex h-full min-h-0 flex-col'
           contentClassName='flex min-h-0 flex-1 flex-col'
+          showBreadcrumbs={false}
         >
           {content}
         </KangurAdminContentShell>

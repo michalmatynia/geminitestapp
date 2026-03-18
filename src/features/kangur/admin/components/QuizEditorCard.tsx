@@ -8,7 +8,7 @@ import { Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui'
 import { cn } from '@/features/kangur/shared/utils';
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+  import('@/features/document-editor').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 );

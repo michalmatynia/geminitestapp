@@ -92,7 +92,10 @@ describe('auth verify-credentials handler', () => {
     const response = await POST_handler(
       new NextRequest('http://localhost/api/auth/verify-credentials', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'accept-language': 'en-US,en;q=0.9',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify(requestContext.body),
       }),
       requestContext
@@ -126,7 +129,10 @@ describe('auth verify-credentials handler', () => {
     const response = await POST_handler(
       new NextRequest('http://localhost/api/auth/verify-credentials', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'accept-language': 'en-US,en;q=0.9',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify(requestContext.body),
       }),
       requestContext
@@ -170,7 +176,10 @@ describe('auth verify-credentials handler', () => {
     const response = await POST_handler(
       new NextRequest('http://localhost/api/auth/verify-credentials', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'accept-language': 'en-US,en;q=0.9',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify(requestContext.body),
       }),
       requestContext

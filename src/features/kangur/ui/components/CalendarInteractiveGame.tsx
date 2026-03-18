@@ -1,10 +1,11 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import {
@@ -775,7 +776,7 @@ export default function CalendarInteractiveGame({
       )}
 
       {task.type === 'drag_season' && (
-        <DragDropContext onDragEnd={handleSeasonDragEnd}>
+        <KangurDragDropContext onDragEnd={handleSeasonDragEnd}>
           <div className='flex flex-col items-center kangur-panel-gap w-full'>
             <Droppable droppableId='calendar-season-pool' direction='horizontal'>
               {(provided) => (
@@ -889,7 +890,7 @@ export default function CalendarInteractiveGame({
               })}
             </div>
           </div>
-        </DragDropContext>
+        </KangurDragDropContext>
       )}
     </KangurPracticeGameStage>
   );

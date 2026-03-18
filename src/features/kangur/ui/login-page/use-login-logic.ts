@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
@@ -13,8 +14,6 @@ import {
 import { clearSessionUserCache } from '@/features/kangur/services/local-kangur-platform-auth';
 import {
   LOGIN_SUCCESS_NOTICE_DELAY_MS,
-  LOGIN_SUCCESS_NOTICE_PARENT,
-  LOGIN_SUCCESS_NOTICE_STUDENT,
 } from './login-constants';
 import { useKangurLoginPageProps } from './login-context';
 
@@ -69,6 +68,7 @@ const resolveCurrentPath = (): string | null => {
 };
 
 export function useLoginLogic() {
+  const translations = useTranslations('KangurLogin');
   const router = useRouter();
   const { defaultCallbackUrl, callbackUrl, onClose } = useKangurLoginPageProps();
   const auth = useOptionalKangurAuth();
@@ -79,7 +79,9 @@ export function useLoginLogic() {
   const handleLoginSuccess = useCallback(
     async ({ kind, learnerId, callbackUrl: callbackOverride }: KangurLoginSuccessOptions) => {
       setSuccessMessage(
-        kind === 'student' ? LOGIN_SUCCESS_NOTICE_STUDENT : LOGIN_SUCCESS_NOTICE_PARENT
+        kind === 'student'
+          ? translations('successStudent')
+          : translations('successParent')
       );
 
       // Force session refresh
@@ -125,7 +127,7 @@ export function useLoginLogic() {
         router.refresh();
       }, LOGIN_SUCCESS_NOTICE_DELAY_MS);
     },
-    [callbackUrl, defaultCallbackUrl, onClose, router, auth]
+    [auth, callbackUrl, defaultCallbackUrl, onClose, router, translations]
   );
 
   return {

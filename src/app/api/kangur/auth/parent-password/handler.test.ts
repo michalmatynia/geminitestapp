@@ -62,12 +62,13 @@ describe('kangur parent password handler', () => {
     expect(setKangurParentPasswordMock).toHaveBeenCalledWith({
       userId: 'parent-1',
       password: 'Magic123!',
+      locale: 'pl',
     });
     await expect(response.json()).resolves.toEqual({
       ok: true,
       email: 'parent@example.com',
       hasPassword: true,
-      message: 'Hasło rodzica zostało ustawione. Od teraz możesz logowac się emailem i hasłem.',
+      message: 'Hasło rodzica zostało ustawione. Od teraz możesz logować się e-mailem i hasłem.',
     });
   });
 });

@@ -1,37 +1,19 @@
 {
-  "generatedAt": "2026-03-18T16:09:03.837Z",
-  "status": "warn",
+  "generatedAt": "2026-03-18T19:19:39.610Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
+    "status": "passed",
     "routeFileCount": 283,
     "handlerFileCount": 380
   },
   "scope": {
     "root": "src/app/api"
   },
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "unchecked-req-json",
-      "message": "req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation.",
-      "file": "src/app/api/kangur/social-posts/[id]/publish/handler.ts",
-      "line": 31,
-      "column": null,
-      "snippet": null,
-      "context": null
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "unchecked-req-json",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 119
+  "issues": [],
+  "rules": [],
+  "durationMs": 55
 }

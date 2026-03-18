@@ -3,7 +3,11 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import plMessages from '@/i18n/messages/pl.json';
 
 const {
   signOutMock,
@@ -62,6 +66,13 @@ vi.mock('@/features/kangur/services/local-kangur-platform-auth', () => ({
 
 import { KangurLoginPage } from './KangurLoginPage';
 
+const renderWithIntl = (element: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      {element}
+    </NextIntlClientProvider>
+  );
+
 describe('KangurLoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,7 +84,7 @@ describe('KangurLoginPage', () => {
   });
 
   it('updates the identifier input value after a change', () => {
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     const input = screen.getByTestId('kangur-login-identifier-input') as HTMLInputElement;
 
@@ -110,7 +121,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     const identifierInput = await screen.findByTestId('kangur-login-identifier-input');
     const passwordInput = await screen.findByLabelText('Hasło');
@@ -171,7 +182,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     const identifierInput = await screen.findByTestId('kangur-login-identifier-input');
     const passwordInput = await screen.findByLabelText('Hasło');

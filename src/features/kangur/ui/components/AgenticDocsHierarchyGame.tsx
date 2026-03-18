@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import { KangurButton, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
@@ -108,7 +109,7 @@ export default function AgenticDocsHierarchyGame({
         </KangurStatusChip>
       </div>
       <KangurLessonCaption className='mt-2 text-left'>{helperText}</KangurLessonCaption>
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <KangurDragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId={`docs-hierarchy-${droppableId}`}>
           {(droppableProvided, snapshot) => (
             <div
@@ -179,7 +180,7 @@ export default function AgenticDocsHierarchyGame({
             </div>
           )}
         </Droppable>
-      </DragDropContext>
+      </KangurDragDropContext>
       <div className={cn(KANGUR_CENTER_ROW_CLASSNAME, 'mt-3 flex-wrap justify-start gap-2')}>
         <KangurButton size='sm' variant='primary' onClick={handleCheck} disabled={isComplete}>
           Sprawdź

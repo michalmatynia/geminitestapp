@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
@@ -336,7 +337,7 @@ export default function LogicalReasoningIfThenGame({
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <KangurDragDropContext onDragEnd={onDragEnd}>
       <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <KangurInfoCard accent='indigo' tone='muted' padding='sm' className='w-full'>
           <div className='flex flex-wrap items-start justify-between kangur-panel-gap'>
@@ -577,6 +578,6 @@ export default function LogicalReasoningIfThenGame({
           </KangurInfoCard>
         ) : null}
       </div>
-    </DragDropContext>
+    </KangurDragDropContext>
   );
 }

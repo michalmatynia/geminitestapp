@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-17T09:54:56.435Z",
+  "generatedAt": "2026-03-18T19:19:36.926Z",
   "status": "passed",
   "summary": {
-    "total": 7,
+    "total": 15,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 7,
+    "infoCount": 15,
     "status": "passed",
-    "fileCount": 5182
+    "fileCount": 5525
   },
   "scope": {
     "root": "src",
@@ -16,17 +16,35 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 2,
-    "eslintDisableCount": 1,
-    "nonNullAssertionCount": 4,
+    "anyCount": 1,
+    "eslintDisableCount": 7,
+    "nonNullAssertionCount": 7,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@typescript-eslint/no-explicit-any": 1,
+    "@typescript-eslint/no-explicit-any": 7,
+    "--": 6,
+    "route": 6,
+    "modules": 6,
+    "define": 6,
+    "their": 6,
+    "own": 6,
+    "param": 6,
+    "shapes.": 6,
     "@typescript-eslint/no-unsafe-assignment": 1
   },
   "issues": [
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
+      "file": "src/app/api/ai-paths/[[...path]]/route.ts",
+      "line": 48,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "non-null-assertion",
@@ -39,10 +57,50 @@
     },
     {
       "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/app/api/kangur/duels/lobby/handler.ts",
-      "line": 49,
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
+      "file": "src/app/api/chatbot/[[...path]]/route.ts",
+      "line": 31,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
+      "file": "src/app/api/databases/[[...path]]/route.ts",
+      "line": 40,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
+      "file": "src/app/api/image-studio/[[...path]]/route.ts",
+      "line": 53,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
+      "file": "src/app/api/v2/integrations/[[...path]]/route.ts",
+      "line": 59,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
+      "file": "src/app/api/v2/products/[[...path]]/route.ts",
+      "line": 73,
       "column": null,
       "snippet": null,
       "context": null
@@ -62,7 +120,37 @@
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/features/kangur/duels/server.db.ts",
-      "line": 541,
+      "line": 543,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/kangur/server/social-posts-docs.ts",
+      "line": 180,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/kangur/server/social-posts-docs.ts",
+      "line": 212,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/kangur/ui/login-page/use-turnstile.ts",
+      "line": 107,
       "column": null,
       "snippet": null,
       "context": null
@@ -103,20 +191,20 @@
       "ruleId": "eslint-disable",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 7
     },
     {
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 2
+      "infoCount": 1
     },
     {
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 4
+      "infoCount": 7
     }
   ],
-  "durationMs": 1018
+  "durationMs": 1712
 }

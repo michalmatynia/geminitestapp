@@ -6,6 +6,8 @@ import { createIssue, sortIssues, summarizeIssues, summarizeRules } from './chec
 
 const METRIC_KEYS = ['lines', 'statements', 'functions', 'branches'];
 const DEFAULT_COVERAGE_SUMMARY_PATH = 'coverage/coverage-summary.json';
+const HIGH_RISK_COVERAGE_REPORTS_DIRECTORY = 'coverage/high-risk';
+const HIGH_RISK_COVERAGE_SUMMARY_GLOB_LABEL = 'coverage/high-risk/*/coverage-summary.json (merged)';
 
 const toRepoRelativeCoverageKey = (root, filePath) => {
   if (typeof filePath !== 'string' || filePath.length === 0) {
@@ -17,19 +19,6 @@ const toRepoRelativeCoverageKey = (root, filePath) => {
   }
 
   return filePath.replace(/\\/g, '/').replace(/^\.\//, '');
-};
-
-const readCoverageSummary = (root, relativeCoveragePath) => {
-  const absolutePath = path.join(root, relativeCoveragePath);
-  if (!fs.existsSync(absolutePath)) {
-    return null;
-  }
-
-  return {
-    absolutePath,
-    relativePath: relativeCoveragePath,
-    payload: JSON.parse(fs.readFileSync(absolutePath, 'utf8')),
-  };
 };
 
 const summarizeMetric = (entries, metricKey) => {
@@ -52,6 +41,80 @@ const summarizeMetric = (entries, metricKey) => {
         ? 100
         : Number(((aggregate.covered / aggregate.total) * 100).toFixed(1)),
   };
+};
+
+const readJson = (absolutePath) => JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
+
+const mergeCoveragePayloads = (payloads) => {
+  const mergedEntries = {};
+
+  for (const payload of payloads) {
+    for (const [filePath, metrics] of Object.entries(payload ?? {})) {
+      if (filePath === 'total') {
+        continue;
+      }
+      if (!(filePath in mergedEntries)) {
+        mergedEntries[filePath] = metrics;
+      }
+    }
+  }
+
+  const metricEntries = Object.values(mergedEntries);
+  return {
+    total: Object.fromEntries(
+      METRIC_KEYS.map((metricKey) => [metricKey, summarizeMetric(metricEntries, metricKey)])
+    ),
+    ...mergedEntries,
+  };
+};
+
+const readFallbackCoverageSummary = (root) => {
+  const highRiskCoverageRoot = path.join(root, HIGH_RISK_COVERAGE_REPORTS_DIRECTORY);
+  if (!fs.existsSync(highRiskCoverageRoot)) {
+    return null;
+  }
+
+  const mergedSummaryPath = path.join(highRiskCoverageRoot, 'coverage-summary.json');
+  if (fs.existsSync(mergedSummaryPath)) {
+    return {
+      absolutePath: mergedSummaryPath,
+      relativePath: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/coverage-summary.json`,
+      payload: readJson(mergedSummaryPath),
+    };
+  }
+
+  const summaryFiles = fs.readdirSync(highRiskCoverageRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(highRiskCoverageRoot, entry.name, 'coverage-summary.json'))
+    .filter((candidate) => fs.existsSync(candidate))
+    .sort((left, right) => left.localeCompare(right));
+
+  if (summaryFiles.length === 0) {
+    return null;
+  }
+
+  return {
+    absolutePath: null,
+    relativePath: HIGH_RISK_COVERAGE_SUMMARY_GLOB_LABEL,
+    payload: mergeCoveragePayloads(summaryFiles.map(readJson)),
+  };
+};
+
+const readCoverageSummary = (root, relativeCoveragePath) => {
+  const absolutePath = path.join(root, relativeCoveragePath);
+  if (fs.existsSync(absolutePath)) {
+    return {
+      absolutePath,
+      relativePath: relativeCoveragePath,
+      payload: readJson(absolutePath),
+    };
+  }
+
+  if (relativeCoveragePath !== DEFAULT_COVERAGE_SUMMARY_PATH) {
+    return null;
+  }
+
+  return readFallbackCoverageSummary(root);
 };
 
 const summarizeTarget = ({ target, entries }) => {

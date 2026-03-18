@@ -92,6 +92,7 @@ describe('kangur parent account create handler', () => {
       email: 'parent@example.com',
       password: 'Strong123!',
       callbackUrl: '/tests?focus=division',
+      locale: 'pl',
       request: expect.any(NextRequest),
     });
     await expect(response.json()).resolves.toEqual({
@@ -207,5 +208,34 @@ describe('kangur parent account create handler', () => {
     ).rejects.toThrow('Nie udało się zweryfikować Captcha. Spróbuj ponownie.');
 
     expect(createKangurParentAccountMock).not.toHaveBeenCalled();
+  });
+
+  it('localizes captcha validation messages from accept-language', async () => {
+    const requestContext = createRequestContext();
+    requestContext.body = {
+      email: 'parent@example.com',
+      password: 'Strong123!',
+      callbackUrl: '/tests?focus=division',
+    };
+
+    verifyKangurParentCaptchaMock.mockResolvedValue({
+      ok: false,
+      required: true,
+      reason: 'missing-token',
+    });
+
+    await expect(
+      postKangurParentAccountCreateHandler(
+        new NextRequest('http://localhost/api/kangur/auth/parent-account/create', {
+          method: 'POST',
+          headers: {
+            'accept-language': 'en-US,en;q=0.9',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(requestContext.body),
+        }),
+        requestContext
+      )
+    ).rejects.toThrow('Confirm that you are not a bot.');
   });
 });

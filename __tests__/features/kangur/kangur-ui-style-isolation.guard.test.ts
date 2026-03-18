@@ -79,7 +79,11 @@ const KANGUR_VISUAL_CONTRACTS = [
   },
   {
     file: 'src/features/kangur/ui/KangurLoginPage.tsx',
-    requiredTokens: ['data-testid=\'kangur-login-shell\'', 'Zaloguj się', 'Mam konto'],
+    requiredTokens: [
+      'data-testid=\'kangur-login-shell\'',
+      "translations('defaultLoginTitle')",
+      "translations('haveAccount')",
+    ],
   },
   {
     file: 'src/app/(frontend)/kangur/login/page.tsx',

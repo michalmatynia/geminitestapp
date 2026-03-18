@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { buildKangurDocContext, resolveKangurDocReferences } from '@/features/kangur/server/social-posts-docs';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+
+export const querySchema = z.object({
+  refs: optionalTrimmedQueryString(z.string().min(1)),
+});
 
 export async function getKangurSocialPostContextHandler(
   req: NextRequest,
@@ -15,8 +21,8 @@ export async function getKangurSocialPostContextHandler(
     throw forbiddenError('Only admins can load social post context.');
   }
 
-  const url = new URL(req.url);
-  const refsParam = url.searchParams.get('refs')?.trim() ?? '';
+  const query = querySchema.parse(ctx.query ?? {});
+  const refsParam = query.refs?.trim() ?? '';
   const refs = refsParam
     .split(',')
     .map((r) => r.trim())

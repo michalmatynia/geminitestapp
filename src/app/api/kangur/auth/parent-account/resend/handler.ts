@@ -9,27 +9,27 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import type { KangurParentAccountResend } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE =
-  'Wysyłka e-maili potwierdzających jest obecnie wyłączona. Skontaktuj się z administratorem.';
+import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export async function postKangurParentAccountResendHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  const { locale, t } = await getSiteTranslator({ request: req });
   await auth().catch((error) => {
     void ErrorSystem.captureException(error);
     return null;
   });
   const body = ctx.body as KangurParentAccountResend | undefined;
   if (!body) {
-    throw badRequestError('Invalid payload.');
+    throw badRequestError(t('KangurAuthApi.invalidPayload'));
   }
 
   const result = await resendKangurParentVerificationEmail({
     email: body.email,
     callbackUrl: body.callbackUrl,
     request: req,
+    locale,
   });
   const notificationSuppressed = result.notificationSuppressed === true;
 
@@ -41,8 +41,8 @@ export async function postKangurParentAccountResendHandler(
     hasPassword: result.hasPassword,
     retryAfterMs: result.retryAfterMs,
     message: notificationSuppressed
-      ? PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE
-      : 'Wysłaliśmy nowy email potwierdzający. Konto rodzica uaktywni się po weryfikacji adresu.',
+      ? t('KangurAuthApi.notificationsDisabled')
+      : t('KangurAuthApi.parentVerificationResent'),
     debug: buildKangurParentAccountCreateDebugPayload(result),
   });
 }

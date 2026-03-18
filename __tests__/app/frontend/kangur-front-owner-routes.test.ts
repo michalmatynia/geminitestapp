@@ -30,6 +30,13 @@ vi.mock('next/navigation', () => ({
   redirect: redirectMock,
 }));
 
+vi.mock('next-intl/server', () => ({
+  getTranslations: vi.fn(async () => vi.fn((key) => {
+    if (key === 'loginTitle') return 'StudiQ Login';
+    return key;
+  })),
+}));
+
 vi.mock('@/app/(frontend)/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
@@ -174,7 +181,7 @@ describe('kangur public-owner frontend routes', () => {
     expect(result.props.fallback).toMatchObject({
       props: {
         className: 'sr-only',
-        children: 'Ladowanie Kangura...',
+        children: 'routeLoading',
       },
     });
     expect(redirectMock).not.toHaveBeenCalled();

@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
+import { internalError } from '@/shared/errors/app-error';
 
 export type KangurLoginPageProps = {
   callbackUrl?: string;
@@ -16,7 +17,7 @@ export const KangurLoginPagePropsContext = createContext<KangurLoginPageProps | 
 export const useKangurLoginPageProps = (): KangurLoginPageProps => {
   const value = useContext(KangurLoginPagePropsContext);
   if (!value) {
-    throw new Error('KangurLoginPage props are unavailable.');
+    throw internalError('KangurLoginPage props are unavailable.');
   }
   return value;
 };

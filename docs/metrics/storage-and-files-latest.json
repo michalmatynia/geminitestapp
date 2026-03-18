@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-17T09:55:12.161Z",
+  "generatedAt": "2026-03-18T19:19:52.878Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "fileCount": 5162,
+    "fileCount": 5500,
     "codeUploadRootCount": 10,
     "runtimeUploadRootCount": 9,
     "dynamicReadRiskCount": 0
@@ -377,12 +377,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/dashboard-panels.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(admin)/admin/databases/backups/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -426,12 +420,6 @@
     },
     {
       "file": "src/app/(admin)/admin/drafts/page.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(admin)/admin/error.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -707,6 +695,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/(admin)/admin/kangur/social/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/(admin)/admin/kangur/tests-manager/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -714,12 +708,6 @@
     },
     {
       "file": "src/app/(admin)/admin/not-found.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(admin)/admin/notes/error.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -809,12 +797,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/prompt-engine/validation/ClientPage.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(admin)/admin/prompt-engine/validation/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -869,12 +851,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/settings/logging/logging-settings-form.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(admin)/admin/settings/logging/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -911,18 +887,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/settings/recovery/transient-recovery-settings-form.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(admin)/admin/settings/recovery/transient-recovery-settings-utils.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(admin)/admin/settings/storage/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -953,12 +917,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(admin)/admin/validator/ClientPage.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(admin)/admin/validator/lists/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -972,12 +930,6 @@
     },
     {
       "file": "src/app/(admin)/layout.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(frontend)/FrontendPublicOwnerShell.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -1001,19 +953,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(frontend)/error.tsx",
+      "file": "src/app/(frontend)/_components/FrontendPublicOwnerShell.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(frontend)/home-cms-default-content.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/(frontend)/home-fallback-content.tsx",
+      "file": "src/app/(frontend)/cms-render.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -1097,12 +1043,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/(frontend)/preview/foldertree-shell-runtime/FolderTreeShellRuntimePreviewClient.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -1116,6 +1056,108 @@
     },
     {
       "file": "src/app/(frontend)/products/[id]/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/[...slug]/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/kangur/(app)/layout.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/kangur/error.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/kangur/layout.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/kangur/login/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/layout.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/not-found.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/preview/[id]/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/preview/foldertree-shell-runtime/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/(frontend)/products/[id]/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/auth/layout.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/auth/register/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/auth/signin/page.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/[locale]/layout.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/_providers/RootClientShell.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -3947,6 +3989,42 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/kangur/[[...path]]/routing/routing.ai-tutor.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/[[...path]]/routing/routing.auth.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/[[...path]]/routing/routing.duels.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/[[...path]]/routing/routing.learner.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/[[...path]]/routing/routing.misc.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/[[...path]]/routing/routing.utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/kangur/ai-tutor/chat/build-system-prompt.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -4301,6 +4379,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/app/api/kangur/lesson-sections/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/lesson-templates/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/app/api/kangur/lessons/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -4350,6 +4440,72 @@
     },
     {
       "file": "src/app/api/kangur/scores/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-image-addons/batch/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-image-addons/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/[id]/doc-updates/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/[id]/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/[id]/publish/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/[id]/unpublish/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/context/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/delete/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/generate/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/kangur/social-posts/publish-scheduled/handler.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -5118,6 +5274,60 @@
     },
     {
       "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/base/test/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/authorize/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/authorize/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/authorize/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/callback/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/callback/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/callback/route.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/disconnect/handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/disconnect/route-handler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/app/api/v2/integrations/[id]/connections/[connectionId]/linkedin/disconnect/route.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -6509,18 +6719,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/app/error.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/app/global-error.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/app/layout.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -6528,6 +6726,18 @@
     },
     {
       "file": "src/app/not-found.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/admin/components/AdminPromptEngineValidationPatternsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/admin/components/AdminValidatorSettings.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -6629,7 +6839,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/admin/pages/AdminDashboardPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/admin/pages/AdminFrontManagePage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/admin/pages/AdminGlobalValidatorPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/admin/pages/AdminLoggingSettingsPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -6665,6 +6893,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/admin/pages/AdminTransientRecoverySettingsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/admin/pages/AdminTypographySettingsPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -6684,6 +6918,12 @@
     },
     {
       "file": "src/features/admin/pages/admin-menu-layout-types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/admin/pages/dashboard-panels.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -7457,6 +7697,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/ai/ai-context-registry/services/runtime-providers/kangur-recent-features.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 2,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/ai/ai-context-registry/services/runtime-providers/kangur.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -7596,6 +7842,12 @@
     },
     {
       "file": "src/features/ai/ai-paths/components/TriggerButtonListManager.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.fixtures.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -8778,6 +9030,12 @@
     },
     {
       "file": "src/features/ai/ai-paths/context/AdminAiPathsValidationContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/ai/ai-paths/context/AiPathsContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -11573,31 +11831,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/ai/insights/components/AnalyticsInsightsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/ai/insights/components/InsightCard.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/ai/insights/components/InsightsResultPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/ai/insights/components/LogInsightsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/ai/insights/components/RuntimeAnalyticsInsightsPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -13481,6 +13715,36 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.chat-resolvers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.color-resolvers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.default-vars.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.runtime-vars.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.theme-resolvers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/cms/components/frontend/blocks/AppEmbedBlock.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -13566,6 +13830,78 @@
     },
     {
       "file": "src/features/cms/components/frontend/blocks/image-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/HomeContentClient.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-cms-default-content.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.collections.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.footer.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.header.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.hero.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.highlights.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.next-steps.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.products.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.section-divider.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.signature.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/frontend/home/home-fallback-content.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -14136,6 +14472,36 @@
     },
     {
       "file": "src/features/cms/components/page-builder/preview/sections/PreviewSlideshowSection.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-content.constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-content.controls.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-content.layout.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-content.sections.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/cms/components/page-builder/registry/block-definitions-content.text.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15005,18 +15371,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/data-import-export/components/imports/ExportTab.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/ImportTab.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/data-import-export/components/imports/constants.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -15024,54 +15378,6 @@
     },
     {
       "file": "src/features/data-import-export/components/imports/sections/ExportBaseConfigSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ExportCategoryStatusSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ExportImageRetryPresetsSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ExportQuickActionsSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ExportWarehouseConfigSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ImportBaseConnectionSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ImportLastResultSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ImportListPreviewSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/data-import-export/components/imports/sections/ImportRunStatusSection.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15174,6 +15480,60 @@
     },
     {
       "file": "src/features/data-import-export/pages/imports/imports-page-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Export.CategoryStatus.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Export.ImageRetryPresets.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Export.QuickActions.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Export.WarehouseConfig.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Import.BaseConnection.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Import.LastResult.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Import.List.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/Import.RunStatus.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/data-import-export/pages/imports-page/ImportsPage.Constants.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15462,18 +15822,6 @@
     },
     {
       "file": "src/features/drafter/components/DraftCreatorFormFields.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/drafter/components/DraftCreatorModal.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/drafter/components/DraftList.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -15965,6 +16313,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/foldertree/pages/FolderTreeShellRuntimePreviewClient.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/foldertree/pages/folder-tree-settings/InstanceSettingsPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -16068,6 +16422,12 @@
     },
     {
       "file": "src/features/foldertree/v2/hooks/useFolderTreeKeyboardNav.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/foldertree/v2/hooks/useFolderTreeProfile.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -16344,6 +16704,12 @@
     },
     {
       "file": "src/features/integrations/components/connections/IntegrationModal.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/integrations/components/connections/LinkedInSettings.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17597,6 +17963,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/internationalization/services/site-i18n-config.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/jobs/pages/ChatbotJobsPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17657,6 +18029,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/AdminKangurObservabilityPage.fixtures.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/AdminKangurObservabilityPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17670,6 +18048,12 @@
     },
     {
       "file": "src/features/kangur/admin/AdminKangurSettingsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/AdminKangurSocialPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17711,6 +18095,84 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/admin-kangur-social/AdminKangurSocialPage.Constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/AdminKangurSocialPage.hooks.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/SocialPost.Pipeline.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialContext.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialEditorSync.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialGeneration.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialImageAddons.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialPipelineRunner.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialPostCrud.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialSettings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/appearance/AppearanceModeSelector.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17718,6 +18180,12 @@
     },
     {
       "file": "src/features/kangur/admin/appearance/AppearancePage.constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/appearance/AppearancePage.context.impl.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17748,6 +18216,18 @@
     },
     {
       "file": "src/features/kangur/admin/components/ActivityEditorCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/AdminKangurLessonSectionsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/AdminKangurLessonsManagerTreePanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17837,6 +18317,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/components/KangurAiTutorSettingsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/components/KangurClassOverridesSettingsPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17873,6 +18359,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/admin/components/KangurPageContentEntryEditor.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -17898,6 +18390,12 @@
     },
     {
       "file": "src/features/kangur/admin/components/KangurPageContentSettingsPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/KangurParentVerificationSettingsPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -17970,6 +18468,12 @@
     },
     {
       "file": "src/features/kangur/admin/components/QuizEditorCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/components/SettingsChoiceCard.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18138,6 +18642,12 @@
     },
     {
       "file": "src/features/kangur/admin/hooks/useKangurQuestionsMutations.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/admin/hooks/useKangurSettings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18365,6 +18875,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/cms-builder/defaults/game-defaults.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/cms-builder/defaults/game-defaults.primary.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/cms-builder/defaults/game-defaults.result.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/cms-builder/defaults/game-defaults.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18485,6 +19013,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/learner-activity/hooks.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/legacy-lesson-imports.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18533,6 +19067,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/lessons/lesson-section-defaults.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/lessons/lesson-template-defaults.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/lessons/lesson-types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18545,13 +19091,37 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/lessons/subjects/agentic-coding/catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/lessons/subjects/alphabet/catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/lessons/subjects/english/catalog.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/lessons/subjects/geometry/catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/lessons/subjects/maths/catalog.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/lessons/subjects/web-development/catalog.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18659,6 +19229,48 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.contracts.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.recommendations-focus.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.recommendations-logic.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.recommendations.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.registry.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/ai-tutor-adaptive/adaptive.utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/server/ai-tutor-adaptive.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18702,6 +19314,12 @@
     },
     {
       "file": "src/features/kangur/server/ai-tutor-usage.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/context-registry/kangur-ai-context-provider.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -18857,6 +19475,78 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/server/social-image-addons-batch.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-image-addons-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-image-addons-service.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": true
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-doc-updater.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-doc-updates.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-docs.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-generation.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-publish.linkedin.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": true
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-publish.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/server/social-posts-vision.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 1,
+      "strongRootGuard": true
+    },
+    {
+      "file": "src/features/kangur/server/storefront-appearance.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -18983,6 +19673,42 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/services/kangur-lesson-section-repository/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/services/kangur-lesson-section-repository/mongo-kangur-lesson-section-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/services/kangur-lesson-section-repository/types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/services/kangur-lesson-template-repository/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/services/kangur-lesson-template-repository/mongo-kangur-lesson-template-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/services/kangur-lesson-template-repository/types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/services/kangur-platform.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19031,6 +19757,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/services/kangur-settings-repository.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/services/kangur-subject-focus-repository/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19067,7 +19799,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/services/local-kangur-platform-duels.read.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/services/local-kangur-platform-duels.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/services/local-kangur-platform-duels.write.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19122,6 +19866,12 @@
     },
     {
       "file": "src/features/kangur/settings-ai-tutor.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/settings-social.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19259,6 +20009,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/shared/social-capture-presets.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/shared/ui/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19302,6 +20058,12 @@
     },
     {
       "file": "src/features/kangur/shared/utils/observability/client-error-logger.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/shared/utils/observability/error-system-client.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19391,6 +20153,24 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/themes/others.daily-crystal.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/themes/others.logo-glow.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/themes/others.nightly-crystal.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/themes/others.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19439,6 +20219,12 @@
       "strongRootGuard": true
     },
     {
+      "file": "src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/KangurErrorFallback.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19470,6 +20256,12 @@
     },
     {
       "file": "src/features/kangur/ui/KangurPublicApp.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/KangurPublicAppEntry.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19517,6 +20309,504 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/AgenticApprovalGateGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AgentsMdLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AgentsMdLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AiDocumentationLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AiDocumentationLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AppWorkflowsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AppWorkflowsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ApprovalsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ApprovalsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AutomationsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54AutomationsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54CliIdeLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54CliIdeLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ConfigLayersLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ConfigLayersLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54DelegationLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54DelegationLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54DosDontsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54DosDontsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54FitLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54FitLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54Lesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54Lesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54LongHorizonLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54LongHorizonLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54McpIntegrationsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54McpIntegrationsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ModelsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ModelsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54NonEngineersLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54NonEngineersLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54OperatingModelLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54OperatingModelLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54PromptPatternsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54PromptPatternsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54PromptingLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ResponseContractLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ResponseContractLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ResponsesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ResponsesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ReviewLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ReviewLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54RolloutLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54RolloutLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54RulesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54RulesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54SafetyLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54SafetyLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54SkillsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54SkillsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54StateScaleLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54StateScaleLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54SurfacesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ToolingLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54ToolingLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54WebCitationsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingCodex54WebCitationsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.config.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.draw.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.sequence.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.sort.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.trim.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticCodingMiniGames.types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticDiagramFillGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticLessonCodeBlock.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticLessonQuickCheck.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticPromptTrimGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticReasoningRouterGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AgenticSurfaceMatchGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetBasicsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetCopyLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetMatchingLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetMatchingLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetSequenceLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetSequenceLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetSyllablesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetSyllablesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetWordsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/AlphabetWordsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/AssignmentPanel.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19547,7 +20837,43 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/ClockLesson.data.combined.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ClockLesson.data.hours.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ClockLesson.data.minutes.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ClockLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/ClockLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ClockLesson.types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/ClockLesson.visuals.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -19697,6 +21023,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/ExamNavigation.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/GeometryBasicsLesson.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -19733,13 +21065,37 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/GeometryShapeRecognitionLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/GeometryShapesLesson.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/GeometrySymmetryGame.canvas.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/GeometrySymmetryGame.data.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/GeometrySymmetryGame.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20075,7 +21431,31 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurAssignmentManager.cards.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAssignmentManager.helpers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAssignmentManager.types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurAssignmentManagerTimeLimitModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20129,6 +21509,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurChoiceDialog.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurConfirmModal.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20136,6 +21522,36 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurDailyQuestHighlightCardContent.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurDialog.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurDialogCloseButton.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurDialogHeader.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurDialogMeta.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurDialogShell.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20279,6 +21695,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurGameQuizStage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurGameResultWidget.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20286,6 +21708,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurGameSetupMomentumCard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurGameSetupStage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20483,6 +21911,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurNavAction.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurPageIntroCard.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20663,6 +22097,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/KangurTransitionLink.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20670,6 +22110,18 @@
     },
     {
       "file": "src/features/kangur/ui/components/KangurTreningWordmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurUnifiedLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/KangurWordmarkBase.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20700,6 +22152,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/LessonMasteryInsights.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/LessonPlaceholder.data.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20903,6 +22361,312 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactApisLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactApisLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactCompilerConfigLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactCompilerConfigLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactCompilerDirectivesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactCompilerDirectivesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactCompilerLibrariesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactCompilerLibrariesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.activity.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.components.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.composition.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.fragment.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.profiler.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.shared.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.strict-mode.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.summary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.suspense.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomApisLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomApisLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomClientApisLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomClientApisLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomComponentsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomComponentsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomHooksLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomHooksLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomServerApisLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomServerApisLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomStaticApisLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactDomStaticApisLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactHooksLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactHooksLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactLintsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactLintsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactPerformanceTracksLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactPerformanceTracksLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactRouterLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactRouterLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactRulesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactRulesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactServerComponentsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactServerComponentsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactServerDirectivesLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactServerDirectivesLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactServerFunctionsLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactServerFunctionsLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactSetupLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactSetupLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactStateManagementLesson.data.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/WebDevelopmentReactStateManagementLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/XpToast.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -20915,7 +22679,61 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/adding-ball-game/AddingBallGame.GroupSum.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/adding-ball-game/AddingBallGame.PickAnswer.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/adding-ball-game/AddingBallGame.Shared.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/adding-ball-game/types.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/adding-ball-game/utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/animations/AddingAnimations.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/animations/AgenticCodingAnimations.Primary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/animations/AgenticCodingAnimations.Secondary.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/animations/AgenticCodingAnimations.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -20928,6 +22746,12 @@
     },
     {
       "file": "src/features/kangur/ui/components/animations/MathAnimations.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/components/animations/WebDevelopmentAnimations.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21077,6 +22901,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/components/lesson-utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/components/lessons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21113,6 +22943,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/context/ExamNavigationContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurAgeGroupFocusContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/context/KangurAiTutorContentContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21125,7 +22967,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.hook.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.session.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurAiTutorRuntime.types.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21203,6 +23063,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/context/KangurParentDashboardRuntimeContext.impl.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/context/KangurParentDashboardRuntimeContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21228,6 +23094,12 @@
     },
     {
       "file": "src/features/kangur/ui/context/KangurScoreSyncProvider.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/context/KangurSubjectAgeGroupSync.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21449,7 +23321,19 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/design/primitives/KangurPanelRow.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/design/primitives/KangurPanelStack.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/design/primitives/KangurPanelTypes.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21551,6 +23435,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/hooks/useKangurCanvasTouchLock.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useKangurCoarsePointer.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/hooks/useKangurLeaderboardState.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21570,6 +23466,18 @@
     },
     {
       "file": "src/features/kangur/ui/hooks/useKangurLessonPanelProgress.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useKangurLessonSections.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useKangurLessonTemplates.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21629,6 +23537,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/hooks/useKangurSocialImageAddons.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/hooks/useKangurSocialPosts.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/hooks/useKangurTextHighlight.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21648,6 +23568,54 @@
     },
     {
       "file": "src/features/kangur/ui/hooks/useLessonHubProgress.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/learner-activity/hooks.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/lessons/lesson-components.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/login-page/login-constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/login-page/login-context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/login-page/login-forms.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/login-page/signup-forms.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/login-page/use-login-logic.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/login-page/use-turnstile.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21690,6 +23658,12 @@
     },
     {
       "file": "src/features/kangur/ui/pages/ParentDashboard.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/SocialUpdates.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21749,6 +23723,48 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/ui/pages/lessons/Lessons.ActiveLesson.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/lessons/Lessons.constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/lessons/Lessons.hooks.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/lessons/Lessons.utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/lessons/LessonsContext.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/pages/lessons/lessons-scroll-lock.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/ui/routing/route-transition-skeletons.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -21756,6 +23772,12 @@
     },
     {
       "file": "src/features/kangur/ui/services/adding-synthesis.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/ui/services/age-group-focus.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -21923,7 +23945,25 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/features/kangur/utils/custom-css.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/features/kangur/utils/settings-json.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/utils/theme-debug.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/kangur/workers/kangurSocialSchedulerQueue.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22421,49 +24461,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/observability/components/AiLogInterpreter.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/observability/components/ClientErrorReporter.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/observability/components/ContextDocumentCard.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/components/ContextRegistryNodesCard.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/components/EventStreamPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/components/LogDiagnostics.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/components/LogMetrics.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/observability/components/LogTriagePresets.tsx",
+      "file": "src/features/observability/components/RootProvidersClient.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22500,6 +24504,66 @@
     },
     {
       "file": "src/features/observability/pages/SystemLogsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogs.Context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogs.Diagnostics.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogs.Metrics.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogs.Presets.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogs.Table.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogs.constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/pages/system-logs/SystemLogsContent.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/server/runtime-context/hydrate-system-log-runtime-context.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/server/runtime-context/sanitize-system-log-for-ai.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/observability/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -22908,6 +24972,12 @@
     },
     {
       "file": "src/features/products/components/list/ProductListHeader.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/products/components/list/ProductListMobileCards.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23777,25 +25847,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-engine/components/LearnedRuleItem.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/LearnedRuleList.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-engine/components/PromptEngineFilters.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-engine/components/PromptEngineToolbar.tsx",
+      "file": "src/features/prompt-engine/components/RuleItem.constants.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23807,13 +25865,43 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-engine/components/RuleItemSimilarPatternsSection.tsx",
+      "file": "src/features/prompt-engine/components/RuleItemAutofixSettings.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-engine/components/RuleList.tsx",
+      "file": "src/features/prompt-engine/components/RuleItemBasicSettings.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/components/RuleItemExecutionSettings.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/components/RuleItemExploderSettings.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/components/RuleItemHeader.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/components/RuleItemRawEditor.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/components/RuleItemSimilarPatternsSection.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23826,42 +25914,6 @@
     },
     {
       "file": "src/features/prompt-engine/components/context/RuleListDragContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/rule-item/RuleItemAutofixSettings.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/rule-item/RuleItemBasicSettings.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/rule-item/RuleItemExecutionSettings.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/rule-item/RuleItemExploderSettings.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/rule-item/RuleItemHeader.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/components/rule-item/RuleItemRawEditor.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23891,54 +25943,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-engine/context/prompt-engine/PromptEngineActionsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/PromptEngineConfigContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/PromptEngineDataContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/PromptEngineFiltersContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/usePromptEngineActionsImpl.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/usePromptEngineConfigImpl.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/usePromptEngineDataImpl.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-engine/context/prompt-engine/usePromptEngineFilteringImpl.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-engine/context/prompt-engine-context-utils.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -23946,6 +25950,18 @@
     },
     {
       "file": "src/features/prompt-engine/index.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/pages/AdminPromptEngineValidationClientPage.client.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-engine/pages/AdminPromptEngineValidationClientPage.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -23981,49 +25997,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-exploder/components/BenchmarkReportPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/BindingsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/ExplosionMetricsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/ParserTuningSection.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/PatternRuntimePanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/PromptExploderDocsTab.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24047,85 +26021,13 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-exploder/components/PromptExploderParserTuningContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/PromptExploderParserTuningPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/PromptProjectsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/ReassembledPromptPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/SegmentEditorInsightsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-exploder/components/SegmentEditorListItemLogicalEditor.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-exploder/components/SegmentEditorPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/SegmentEditorSubsectionsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/SourcePromptPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/WarningsPanel.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/segment-editor/ListItemsEditor.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/segment-editor/ParameterBlockEditor.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-exploder/components/segment-editor/SegmentDetailEditor.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/segment-editor/SegmentListSidebar.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24138,18 +26040,6 @@
     },
     {
       "file": "src/features/prompt-exploder/components/tree/PromptExploderSubsectionsTreeEditor.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/tree/PromptExploderTreeNode.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/components/tree/PromptExploderTreeNodeRuntimeContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24179,12 +26069,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-exploder/context/LibraryContext.types.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-exploder/context/PromptExploderProvider.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -24197,79 +26081,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-exploder/context/SegmentEditorContext.types.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-exploder/context/SettingsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/document/DocumentActionsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/document/DocumentCoreContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/document/DocumentMetricsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/document/DocumentParamsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/document/DocumentPromptContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/document/DocumentSelectionContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/index.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useBenchmark.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useBenchmarkSuggestionActions.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useBindings.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useDocument.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24293,79 +26105,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/features/prompt-exploder/context/hooks/useLibrary.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useLibraryPersistence.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useSegmentEditor.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useSegmentEditorPatterns.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useSegmentPatternApproval.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useSegmentationRecordCapture.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/hooks/useSettings.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/features/prompt-exploder/context/index.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/settings/SettingsActionsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/settings/SettingsCoreContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/settings/SettingsDraftsContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/settings/SettingsRuntimeContext.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/features/prompt-exploder/context/settings/SettingsSnapshotsContext.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -24480,6 +26220,60 @@
     },
     {
       "file": "src/features/prompt-exploder/pages/AdminPromptExploderSettingsPage.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.Benchmark.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.Constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.Docs.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.Header.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.ParserTuning.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.PatternRuntime.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.Utils.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/PromptExploder.WorkspacePanels.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/features/prompt-exploder/pages/admin-prompt-exploder/index.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -25319,6 +27113,66 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/image-studio/analysis.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/autoscaler.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/base.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/execution.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/misc.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/project.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/run.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/sequence.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/slot.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/image-studio/whitespace.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/image-studio-transform-contracts.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25439,6 +27293,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/kangur-ai-tutor-content.defaults.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-content.moods.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/kangur-ai-tutor-content.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25452,6 +27318,42 @@
     },
     {
       "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.auth.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.fixtures.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.game.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.lesson.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.parent-dashboard.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.profile.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.shared.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -25481,6 +27383,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/kangur-cms.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/kangur-duels-chat.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25499,6 +27407,30 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/kangur-learner-password.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-lesson-constants.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-lesson-sections.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-lesson-templates.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/kangur-multiplayer-number-balance.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25512,6 +27444,24 @@
     },
     {
       "file": "src/shared/contracts/kangur-page-content.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-settings-keys.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-social-image-addons.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/kangur-social-posts.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -25745,6 +27695,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/contracts/site-i18n.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/contracts/state-store.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -25758,6 +27714,84 @@
     },
     {
       "file": "src/shared/contracts/tree.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/api.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/base.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/canvas.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/controls.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/image-manager.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/logs.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/menus.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/modals.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/panels.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/pickers.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/playwright.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/queries.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/contracts/ui/settings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -25991,12 +28025,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/hooks/use-folder-tree-profile.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/shared/hooks/use-i18n-queries.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -26010,12 +28038,6 @@
     },
     {
       "file": "src/shared/hooks/use-settings.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/hooks/useAdminChatbotSessionAccess.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -26106,6 +28128,12 @@
     },
     {
       "file": "src/shared/hooks/useQuerySync.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/hooks/useSystemActivity.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -26412,6 +28440,18 @@
     },
     {
       "file": "src/shared/lib/ai-context-registry/page-context.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-context-registry/runtime-providers/kangur.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/ai-context-registry/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -28103,49 +30143,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/analytics/components/AnalyticsAiInsights.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/analytics/components/AnalyticsDashboardHeader.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/analytics/components/AnalyticsEventDetails.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/analytics/components/AnalyticsMetricsGrid.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/analytics/components/AnalyticsStatCard.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/analytics/components/AnalyticsTopStats.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/shared/lib/analytics/components/PageAnalyticsTracker.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/analytics/components/RecentEventsTable.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -28242,6 +30240,12 @@
     },
     {
       "file": "src/shared/lib/app-embeds.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/auth/auth-secret-settings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -28607,6 +30611,18 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/i18n/server-translator.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/i18n/site-locale.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/icons/components/IconSelector.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -28644,6 +30660,12 @@
     },
     {
       "file": "src/shared/lib/image-slots/lib/slot-engine.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/integrations/server.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -28751,7 +30773,7 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/kangur-ai-context-provider.ts",
+      "file": "src/shared/lib/kangur/app-embed.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -29015,12 +31037,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/lib/product-integrations-server.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/shared/lib/product-query-keys.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -29028,12 +31044,6 @@
     },
     {
       "file": "src/shared/lib/product-sync-adapter.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
-      "file": "src/shared/lib/product-validator-admin.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -29453,6 +31463,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/lib/search/search-settings.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/lib/security/csrf-client.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -29472,6 +31488,12 @@
     },
     {
       "file": "src/shared/lib/security/outbound-url-policy.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/lib/settings/secret-settings.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -29687,12 +31709,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/ui/DocsTooltipEnhancer.tsx",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/shared/ui/DocumentationList.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -29736,6 +31752,12 @@
     },
     {
       "file": "src/shared/ui/Hint.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/ui/HtmlLangSync.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -30095,12 +32117,6 @@
       "strongRootGuard": false
     },
     {
-      "file": "src/shared/ui/files.ts",
-      "dynamicPublicResolvers": 0,
-      "readOps": 0,
-      "strongRootGuard": false
-    },
-    {
       "file": "src/shared/ui/filters-container.tsx",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -30186,6 +32202,12 @@
     },
     {
       "file": "src/shared/ui/label.tsx",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
+      "file": "src/shared/ui/layout.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
       "strongRootGuard": false
@@ -30845,6 +32867,12 @@
       "strongRootGuard": false
     },
     {
+      "file": "src/shared/utils/observability/error-system-client.ts",
+      "dynamicPublicResolvers": 0,
+      "readOps": 0,
+      "strongRootGuard": false
+    },
+    {
       "file": "src/shared/utils/observability/error-system.ts",
       "dynamicPublicResolvers": 0,
       "readOps": 0,
@@ -31015,5 +33043,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 2476
+  "durationMs": 2180
 }

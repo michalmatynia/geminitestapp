@@ -178,7 +178,7 @@ export function SocialPostList({
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onSelect={() => window.open(postUrl, '_blank', 'noopener')}
+                            onSelect={() => window.open(postUrl, '_blank', 'noopener,noreferrer')}
                           >
                             Open on LinkedIn
                           </DropdownMenuItem>

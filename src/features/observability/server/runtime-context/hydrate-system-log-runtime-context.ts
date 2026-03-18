@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
+import { contextRegistryEngine } from '@/shared/lib/ai-context-registry/server';
 import type {
   ContextRegistryConsumerEnvelope,
   ContextRegistryRef,

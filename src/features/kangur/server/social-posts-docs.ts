@@ -13,7 +13,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import {
   kangurRecentFeaturesContextProvider,
   createKangurRecentFeaturesRef,
-} from '@/features/ai/ai-context-registry/services/runtime-providers/kangur-recent-features';
+} from '@/features/ai/server';
 
 export type KangurDocEntry = KangurDocumentationGuide | KangurTooltipDocEntry;
 

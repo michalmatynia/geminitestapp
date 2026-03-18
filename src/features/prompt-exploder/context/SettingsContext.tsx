@@ -12,6 +12,7 @@ import type {
   PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 import type { ValidatorPatternList } from '@/shared/contracts/validator';
+import { internalError } from '@/shared/errors/app-error';
 import {
   useSettingsMap,
   useUpdateSetting,
@@ -134,13 +135,13 @@ const SettingsSnapshotsContext = createContext<SettingsSnapshotsState | null>(nu
 
 export const useSettingsState = (): PromptExploderSettingsState => {
   const ctx = React.useContext(SettingsStateContext);
-  if (!ctx) throw new Error('useSettingsState must be used within SettingsProvider');
+  if (!ctx) throw internalError('useSettingsState must be used within SettingsProvider');
   return ctx;
 };
 
 export const useSettingsActions = (): PromptExploderSettingsActions => {
   const ctx = React.useContext(SettingsActionsContext);
-  if (!ctx) throw new Error('useSettingsActions must be used within SettingsProvider');
+  if (!ctx) throw internalError('useSettingsActions must be used within SettingsProvider');
   return ctx;
 };
 

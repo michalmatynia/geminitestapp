@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { createPortal } from 'react-dom';
 import { useMemo, useRef, useState } from 'react';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -660,7 +661,7 @@ export default function EnglishPartsOfSpeechGame({
         dataTestId='english-parts-of-speech-progress-bar'
         totalRounds={TOTAL_ROUNDS}
       />
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <KangurDragDropContext onDragEnd={handleDragEnd}>
         <KangurGlassPanel
           className={cn('w-full', KANGUR_PANEL_GAP_CLASSNAME)}
           padding='lg'
@@ -857,7 +858,7 @@ export default function EnglishPartsOfSpeechGame({
             )}
           </div>
         </KangurGlassPanel>
-      </DragDropContext>
+      </KangurDragDropContext>
     </KangurPracticeGameStage>
   );
 }

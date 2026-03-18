@@ -52,7 +52,10 @@ import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publ
 import { postKangurSocialPostUnpublishHandler } from '../../social-posts/[id]/unpublish/handler';
 import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
-import { getKangurSocialPostContextHandler } from '../../social-posts/context/handler';
+import {
+  getKangurSocialPostContextHandler,
+  querySchema as socialPostContextQuerySchema,
+} from '../../social-posts/context/handler';
 import { postKangurSocialPostsPublishScheduledHandler } from '../../social-posts/publish-scheduled/handler';
 import { postNumberBalanceCreateHandler } from '../../number-balance/create/handler';
 import { postNumberBalanceJoinHandler } from '../../number-balance/join/handler';
@@ -251,6 +254,7 @@ export const socialPostPublishHandler: ParamRouteHandler = apiHandlerWithParams<
   {
     source: 'kangur.social-posts.[id].publish.POST',
     service: 'kangur.api',
+    parseJsonBody: true,
   }
 );
 
@@ -293,6 +297,7 @@ export const socialPostContextGetHandler: SimpleRouteHandler = apiHandler(
   {
     source: 'kangur.social-posts.context.GET',
     service: 'kangur.api',
+    querySchema: socialPostContextQuerySchema,
   }
 );
 

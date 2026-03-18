@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -411,7 +412,7 @@ export default function LogicalAnalogiesRelationGame({
   }
 
   return (
-    <DragDropContext
+    <KangurDragDropContext
       onDragEnd={onDragEnd}
       onDragStart={() => {
         setSelectedTokenId(null);
@@ -789,6 +790,6 @@ export default function LogicalAnalogiesRelationGame({
           </div>
         </div>
       </KangurPracticeGameStage>
-    </DragDropContext>
+    </KangurDragDropContext>
   );
 }

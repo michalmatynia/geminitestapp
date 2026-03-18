@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 import { useLessonsLogic } from './Lessons.hooks';
 
 type LessonsContextValue = ReturnType<typeof useLessonsLogic>;
@@ -19,7 +20,7 @@ export function LessonsProvider({ children }: { children: ReactNode }) {
 export function useLessons() {
   const context = useContext(LessonsContext);
   if (!context) {
-    throw new Error('useLessons must be used within a LessonsProvider');
+    throw internalError('useLessons must be used within a LessonsProvider');
   }
   return context;
 }

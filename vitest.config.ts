@@ -19,7 +19,7 @@ export default defineConfig({
     },
     server: {
       deps: {
-        inline: ['next-auth'],
+        inline: ['next-auth', 'next-intl'],
       },
     },
     projects: [
@@ -62,6 +62,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'next/server': path.resolve(__dirname, './node_modules/next/server.js'),
+      'next/navigation': path.resolve(__dirname, './node_modules/next/navigation.js'),
       '@docs': path.resolve(__dirname, './docs'),
       '@/__tests__': path.resolve(__dirname, './__tests__'),
       '@': path.resolve(__dirname, './src'),

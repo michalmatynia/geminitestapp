@@ -10,11 +10,8 @@ import {
   enqueuePlaywrightNodeRun,
   readPlaywrightNodeArtifact,
   type PlaywrightNodeRunArtifact,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
-import {
-  getDiskPathFromPublicPath,
-  uploadToConfiguredStorage,
-} from '@/features/files/server';
+} from '@/features/ai/server';
+import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
   type KangurSocialImageAddon,
@@ -136,10 +133,16 @@ const resolveArtifactByName = (
 const buildAddonPublicPath = (filename: string): string =>
   `/uploads/kangur/social-addons/${filename}`;
 
-const writeLocalCopy = async (publicPath: string, buffer: Buffer): Promise<void> => {
-  const diskPath = getDiskPathFromPublicPath(publicPath);
-  await fs.mkdir(path.dirname(diskPath), { recursive: true });
+// Write batch capture screenshots to a temp directory OUTSIDE public/ so that
+// Turbopack's file watcher doesn't trigger HMR page reloads during the pipeline.
+// The vision handler reads from disk via the absolute path stored in imageAsset.filepath.
+const BATCH_CAPTURE_TEMP_ROOT = '/var/tmp/libapp-uploads/kangur/social-addons';
+
+const writeTempCopy = async (filename: string, buffer: Buffer): Promise<string> => {
+  await fs.mkdir(BATCH_CAPTURE_TEMP_ROOT, { recursive: true });
+  const diskPath = path.join(BATCH_CAPTURE_TEMP_ROOT, filename);
   await fs.writeFile(diskPath, buffer);
+  return diskPath;
 };
 
 const toImageSelection = (params: {
@@ -303,6 +306,10 @@ export async function createKangurSocialImageAddonsBatch(
     const filename = `${randomUUID()}.png`;
     const publicPath = buildAddonPublicPath(filename);
 
+    // Write to temp dir (outside public/) to avoid Turbopack HMR during pipeline
+    console.log('[BATCH] [%s] Writing temp copy...', preset.id);
+    const tempDiskPath = await writeTempCopy(filename, buffer);
+
     console.log('[BATCH] [%s] Uploading to storage...', preset.id);
     const stored = await uploadToConfiguredStorage({
       buffer,
@@ -312,15 +319,22 @@ export async function createKangurSocialImageAddonsBatch(
       category: 'kangur_social',
       projectId: null,
       folder: 'social-addons',
-      writeLocalCopy: () => writeLocalCopy(publicPath, buffer),
+      writeLocalCopy: async () => {
+        // Already written to temp dir — skip public/ write to prevent Turbopack HMR
+      },
     });
     console.log('[BATCH] [%s] Upload done, source=%s', preset.id, stored.source);
+
+    // For local storage, use temp disk path so the vision handler can read
+    // without files being in public/uploads/ (which triggers Turbopack rebuilds).
+    // For cloud storage, use the remote URL returned by the storage service.
+    const effectiveFilepath = stored.source === 'local' ? tempDiskPath : stored.filepath;
 
     const imageAssetId = randomUUID();
     const imageAsset = toImageSelection({
       id: imageAssetId,
       filename,
-      filepath: stored.filepath,
+      filepath: effectiveFilepath,
       width,
       height,
     });

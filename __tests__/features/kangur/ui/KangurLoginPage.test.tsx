@@ -5,9 +5,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { NextIntlClientProvider } from 'next-intl';
 import { signOut } from 'next-auth/react';
+import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS } from '@/features/kangur/settings';
+import plMessages from '@/i18n/messages/pl.json';
 import { expectNoAxeViolations } from '@/testing/accessibility/axe';
 
 const {
@@ -71,6 +74,13 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 }));
 
 import { KangurLoginPage } from '@/features/kangur/ui/KangurLoginPage';
+
+const renderWithIntl = (element: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      {element}
+    </NextIntlClientProvider>
+  );
 
 describe('KangurLoginPage', () => {
   const originalLocation = window.location;
@@ -235,7 +245,7 @@ describe('KangurLoginPage', () => {
   });
 
   it('renders a single unified login form with explicit parent account actions', () => {
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(screen.getByText('Zaloguj się')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-login-shell')).toBeInTheDocument();
@@ -272,7 +282,7 @@ describe('KangurLoginPage', () => {
   });
 
   it('has no obvious accessibility violations in the login shell', async () => {
-    const { container } = render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    const { container } = renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await screen.findByText('Zaloguj się');
     await expectNoAxeViolations(container);
@@ -305,7 +315,7 @@ describe('KangurLoginPage', () => {
       status: 'success',
     }));
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(useKangurAiTutorSessionSyncMock).toHaveBeenCalledWith({
       learnerId: null,
@@ -326,7 +336,7 @@ describe('KangurLoginPage', () => {
   it('switches the parent form into explicit create-account mode with a minimal create-account layout', async () => {
     const user = userEvent.setup();
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.click(screen.getByRole('button', { name: 'Utwórz konto' }));
 
@@ -347,7 +357,7 @@ describe('KangurLoginPage', () => {
       )
     );
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(screen.getByTestId('kangur-login-identifier-input')).toHaveAttribute(
       'placeholder',
@@ -364,7 +374,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
@@ -469,7 +479,7 @@ describe('KangurLoginPage', () => {
       })
     );
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' onClose={onClose} />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' onClose={onClose} />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
@@ -488,7 +498,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
@@ -557,7 +567,7 @@ describe('KangurLoginPage', () => {
         '@/features/kangur/ui/KangurLoginPage'
       );
 
-      render(<CaptchaLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+      renderWithIntl(<CaptchaLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
@@ -630,7 +640,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
@@ -647,7 +657,7 @@ describe('KangurLoginPage', () => {
     try {
       vi.setSystemTime(new Date('2026-03-09T11:30:00.000Z'));
 
-      render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+      renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
@@ -727,7 +737,7 @@ describe('KangurLoginPage', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+      renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
@@ -814,7 +824,7 @@ describe('KangurLoginPage', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+      renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
@@ -855,7 +865,7 @@ describe('KangurLoginPage', () => {
       vi.setSystemTime(new Date('2026-03-09T11:30:00.000Z'));
       const fetchMock = vi.mocked(fetch);
 
-      render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+      renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
@@ -948,7 +958,7 @@ describe('KangurLoginPage', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+      renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
       fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
         target: { value: 'parent@example.com' },
@@ -1007,7 +1017,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
@@ -1029,7 +1039,7 @@ describe('KangurLoginPage', () => {
   it('clears the compact create-account confirmation when switching back to sign-in mode', async () => {
     const user = userEvent.setup();
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' parentAuthMode='create-account' />);
 
     fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'parent@example.com' },
@@ -1095,7 +1105,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
@@ -1161,7 +1171,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'parent@example.com');
     await user.type(screen.getByLabelText('Hasło'), 'secret123');
@@ -1193,7 +1203,7 @@ describe('KangurLoginPage', () => {
       )
     );
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await waitFor(() => {
       expect(checkAppStateMock).toHaveBeenCalledTimes(1);
@@ -1214,7 +1224,7 @@ describe('KangurLoginPage', () => {
       )
     );
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(
       await screen.findByText(
@@ -1245,7 +1255,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'janek123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');
@@ -1276,7 +1286,7 @@ describe('KangurLoginPage', () => {
     const user = userEvent.setup();
     const fetchMock = vi.mocked(fetch);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'janek#123');
     await user.type(screen.getByLabelText('Hasło'), 'tajnehaslo');

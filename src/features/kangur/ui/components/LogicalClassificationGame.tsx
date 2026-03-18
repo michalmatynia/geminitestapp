@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { createPortal } from 'react-dom';
 import { useMemo, useRef, useState } from 'react';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -783,13 +784,13 @@ export default function LogicalClassificationGame({
   }
 
   return (
-    <DragDropContext
+    <KangurDragDropContext
       onDragEnd={onDragEnd}
       onDragStart={() => {
         setSelectedTokenId(null);
       }}
     >
       {stageContent}
-    </DragDropContext>
+    </KangurDragDropContext>
   );
 }

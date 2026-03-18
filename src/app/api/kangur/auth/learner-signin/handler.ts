@@ -10,6 +10,7 @@ import { authError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { parseKangurLearnerSignInPayload } from '@/shared/validations/kangur';
+import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 import { readKangurAuthJsonBody } from '../shared';
 
@@ -17,6 +18,7 @@ export async function postKangurLearnerSignInHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  const { t } = await getSiteTranslator({ request: req });
   const payload = parseKangurLearnerSignInPayload(
     await readKangurAuthJsonBody(req, 'learner sign-in', ctx.body)
   );
@@ -33,7 +35,7 @@ export async function postKangurLearnerSignInHandler(
         reason: 'invalid_credentials',
       },
     });
-    throw authError('Invalid learner login name or password.');
+    throw authError(t('KangurAuthApi.invalidLearnerCredentials'));
   }
 
   const owner = await findAuthUserById(learner.ownerUserId);

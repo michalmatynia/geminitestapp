@@ -1,9 +1,10 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -660,7 +661,7 @@ export default function DivisionGroupsGame({
                 </KangurInfoCard>
               </div>
             </div>
-            <DragDropContext onDragEnd={handleDragEnd}>
+            <KangurDragDropContext onDragEnd={handleDragEnd}>
               <AnimatePresence mode='wait'>
                 <motion.div
                   key={roundIndex}
@@ -902,7 +903,7 @@ export default function DivisionGroupsGame({
                   </KangurPanelRow>
                 </motion.div>
               </AnimatePresence>
-            </DragDropContext>
+            </KangurDragDropContext>
           </div>
         </div>
       </KangurGlassPanel>

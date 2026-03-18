@@ -147,6 +147,13 @@ const nextConfig = {
     config.optimization.moduleIds = 'deterministic';
     config.optimization.minimize = process.env.NODE_ENV === 'production';
 
+    // Prevent webpack dev server from triggering HMR rebuilds when files are
+    // written to public/uploads/ (e.g. batch screenshot captures).
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: [...(config.watchOptions?.ignored ?? []), '**/public/uploads/**'],
+    };
+
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');

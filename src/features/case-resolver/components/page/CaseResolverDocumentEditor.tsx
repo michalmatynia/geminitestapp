@@ -63,7 +63,7 @@ import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/uti
 export type { EditorDetailsTab };
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor/components/DocumentWysiwygEditor').then((mod) => ({
+  import('@/features/document-editor').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 );

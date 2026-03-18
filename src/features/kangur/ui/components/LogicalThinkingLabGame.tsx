@@ -1,6 +1,6 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useState } from 'react';
 
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
@@ -10,6 +10,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -414,7 +415,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
           <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
             Uzupełnij wzorzec: znajdź dwie następne figury.
           </p>
-          <DragDropContext onDragEnd={handlePatternDragEnd}>
+          <KangurDragDropContext onDragEnd={handlePatternDragEnd}>
             <div className='flex flex-wrap items-center justify-center gap-2 text-2xl'>
               {PATTERN_SEQUENCE.map((token, index) => (
                 <span key={`${token}-${index}`} className='rounded-xl bg-white/80 px-3 py-2 shadow-sm'>
@@ -594,7 +595,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 Do puli
               </KangurButton>
             </div>
-          </DragDropContext>
+          </KangurDragDropContext>
         </div>
       ) : null}
 
@@ -603,7 +604,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
           <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
             Posegreguj obrazki według cechy: <b>ma skrzydła</b>.
           </p>
-          <DragDropContext onDragEnd={handleClassifyDragEnd}>
+          <KangurDragDropContext onDragEnd={handleClassifyDragEnd}>
             <div className='grid kangur-panel-gap sm:grid-cols-2'>
               {(['classify-yes', 'classify-no'] as ClassifyZoneId[]).map((zoneId) => (
                 <Droppable key={zoneId} droppableId={zoneId} direction='horizontal'>
@@ -768,7 +769,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 Do puli
               </KangurButton>
             </div>
-          </DragDropContext>
+          </KangurDragDropContext>
         </div>
       ) : null}
 

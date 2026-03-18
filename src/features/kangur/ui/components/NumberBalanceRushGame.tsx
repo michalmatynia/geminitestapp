@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
@@ -797,7 +798,7 @@ export default function NumberBalanceRushGame(
       : Math.max(0, Math.ceil(timeLeftMs / 1000));
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <KangurDragDropContext onDragEnd={handleDragEnd}>
       <KangurPracticeGameStage className='w-full max-w-2xl'>
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
@@ -1045,6 +1046,6 @@ export default function NumberBalanceRushGame(
           </div>
         ) : null}
       </KangurPracticeGameStage>
-    </DragDropContext>
+    </KangurDragDropContext>
   );
 }

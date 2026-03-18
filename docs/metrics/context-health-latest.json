@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-17T10:00:06.361Z",
+  "generatedAt": "2026-03-18T20:02:35.108Z",
   "status": "passed",
   "summary": {
-    "total": 5,
+    "total": 6,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 5,
+    "infoCount": 6,
     "status": "passed",
-    "contextFileCount": 250
+    "contextFileCount": 240
   },
   "scope": {
     "sourceDirs": [
@@ -18,6 +18,16 @@
     "oversizedLocThreshold": 500
   },
   "issues": [
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/ai/ai-paths/context/AiPathsContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "info",
       "ruleId": "context-missing-split",
@@ -74,8 +84,8 @@
       "ruleId": "context-missing-split",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 5
+      "infoCount": 6
     }
   ],
-  "durationMs": 391
+  "durationMs": 542
 }

@@ -603,6 +603,12 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
   })),
   useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+  useSelectedLayoutSegment: vi.fn(() => null),
+  useSelectedLayoutSegments: vi.fn(() => []),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
+  permanentRedirect: vi.fn(),
 }));
 
 // Mock next/server (for NextRequest/NextResponse in API routes)

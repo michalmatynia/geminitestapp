@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-18'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,14 +8,14 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-03-17T09:54:57.216Z
+Generated at: 2026-03-18T19:19:37.710Z
 
 ## Summary
 
 - Status: PASSED
-- Files scanned: 895
-- Total handlers: 856
-- Validated handlers: 856
+- Files scanned: 923
+- Total handlers: 878
+- Validated handlers: 878
 - **Coverage: 100%**
 - Errors: 0
 - Warnings: 0

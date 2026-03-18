@@ -10,7 +10,11 @@ vi.mock('@/features/auth/', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/app/(frontend)/_components/FrontendPublicOwnerShell', () => ({
+vi.mock('next-intl', () => ({
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerShellClient', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

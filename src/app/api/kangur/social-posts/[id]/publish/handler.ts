@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
@@ -10,6 +11,10 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
+
+const bodySchema = z.object({
+  mode: z.enum(['draft', 'published']).optional(),
+});
 
 export async function postKangurSocialPostPublishHandler(
   req: NextRequest,
@@ -26,15 +31,8 @@ export async function postKangurSocialPostPublishHandler(
     throw notFoundError('Social post not found.');
   }
 
-  let mode: KangurSocialPublishMode = 'published';
-  try {
-    const payload = (await req.json()) as { mode?: string } | null;
-    if (payload?.mode === 'draft') {
-      mode = 'draft';
-    }
-  } catch (_error) {
-    mode = 'published';
-  }
+  const parsed = bodySchema.parse(ctx.body ?? {});
+  const mode: KangurSocialPublishMode = parsed.mode === 'draft' ? 'draft' : 'published';
 
   const startedAt = Date.now();
   try {

@@ -527,6 +527,7 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   agentic_coding_codex_5_4_web_citations: 'article',
   agentic_coding_codex_5_4_tooling: 'article',
   agentic_coding_codex_5_4_response_contract: 'article',
+  agentic_coding_codex_5_4_ai_documentation: 'article',
   agentic_coding_codex_5_4_delegation: 'article',
   agentic_coding_codex_5_4_models: 'article',
   agentic_coding_codex_5_4_cli_ide: 'article',

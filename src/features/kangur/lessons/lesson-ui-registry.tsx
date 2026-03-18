@@ -274,6 +274,9 @@ const AgenticCodingCodex54ToolingLesson = loadLessonComponent(
 const AgenticCodingCodex54ResponseContractLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AgenticCodingCodex54ResponseContractLesson')
 );
+const AgenticCodingCodex54AiDocumentationLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/AgenticCodingCodex54AiDocumentationLesson')
+);
 const AgenticCodingCodex54DelegationLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AgenticCodingCodex54DelegationLesson')
 );
@@ -381,6 +384,7 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   agentic_coding_codex_5_4_web_citations: AgenticCodingCodex54WebCitationsLesson,
   agentic_coding_codex_5_4_tooling: AgenticCodingCodex54ToolingLesson,
   agentic_coding_codex_5_4_response_contract: AgenticCodingCodex54ResponseContractLesson,
+  agentic_coding_codex_5_4_ai_documentation: AgenticCodingCodex54AiDocumentationLesson,
   agentic_coding_codex_5_4_delegation: AgenticCodingCodex54DelegationLesson,
   agentic_coding_codex_5_4_models: AgenticCodingCodex54ModelsLesson,
   agentic_coding_codex_5_4_cli_ide: AgenticCodingCodex54CliIdeLesson,

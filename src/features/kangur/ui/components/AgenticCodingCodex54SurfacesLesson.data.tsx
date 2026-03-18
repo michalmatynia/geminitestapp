@@ -9,13 +9,14 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME, KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
-  AgenticCliQueueTipAnimation,
-  AgenticCodexCliCommandMapAnimation,
   AgenticSurfacePickerAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
+import AgenticDiagramFillGame from '@/features/kangur/ui/components/AgenticDiagramFillGame';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
-type SectionId = 'surfaces' | 'cli';
+type SectionId = 'surfaces' | 'surface_match_game';
 
 const SURFACES = [
   {
@@ -74,90 +75,17 @@ const WORKTREE_COMPARE = [
   },
 ] as const;
 
-const CLI_COMMAND_GROUPS = [
-  {
-    title: 'Non-interactive',
-    commands: ['codex exec', 'codex cloud', 'codex apply'],
-  },
-  {
-    title: 'Sesje',
-    commands: ['codex resume', 'codex fork'],
-  },
-  {
-    title: 'Integracje',
-    commands: ['codex mcp', 'codex mcp-server', 'codex app-server'],
-  },
-  {
-    title: 'Narzędzia',
-    commands: [
-      'codex completion',
-      'codex sandbox',
-      'codex execpolicy',
-      'codex features',
-      'codex app',
-      'codex login/logout',
-      'codex debug app-server',
-    ],
-  },
-] as const;
-
-const EXEC_MODE_FLAGS = [
-  '--skip-git-repo-check',
-  '--output-schema',
-  '--json',
-  '--output-last-message',
-  '--ephemeral',
-] as const;
-
-const CLOUD_MODE_FLAGS = ['cloud exec --env <ENV_ID>', 'cloud exec --attempts 3', 'cloud list --json'] as const;
-
-const CLI_GLOBAL_FLAGS = [
-  { title: '-a / --ask-for-approval', description: 'Ustaw policy: untrusted | on-request | never.' },
-  { title: '-s / --sandbox', description: 'Tryb: read-only | workspace-write | danger-full-access.' },
-  { title: '--full-auto', description: 'Skrót: on-request + workspace-write.' },
-  { title: '--yolo', description: 'Omija approvals i sandbox (tylko w izolacji).' },
-  { title: '--add-dir', description: 'Dodaje dodatkowe writable roots.' },
-  { title: '-C / --cd', description: 'Start w wybranym katalogu projektu.' },
-  { title: '-m / --model', description: 'Wymuś konkretny model dla sesji.' },
-  { title: '--search', description: 'Włącza live web search w sesji.' },
-  { title: '-i / --image', description: 'Dołącza obrazy do pierwszego promptu.' },
-  { title: '--no-alt-screen', description: 'Zachowuje scrollback w terminalu.' },
-] as const;
-
-const CLI_TIPS = [
-  'Tab kolejkuje follow-up podczas pracy, Enter wstrzykuje instrukcję do bieżącej tury.',
-  '`@` uruchamia file search, a `!` wykonuje lokalną komendę z outputem w rozmowie.',
-  '`--cd` i `--add-dir` pomagają ustawić scope workspace przed startem.',
-  'Aktywuj autouzupełnianie: `codex completion zsh|bash|fish`.',
-] as const;
-
 const SURFACE_DECISION_EXAMPLE = `Surface choice:
 - Need open-file context? -> IDE Extension
 - Need long-running or parallel? -> App / Cloud
 - Need tight local loop? -> CLI
 - Need custom tools? -> API harness`;
 
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='emerald'
-    className='border-emerald-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
-);
+const SURFACE_MATCH_STEPS = [
+  'Kliknij scenariusz, aby go zaznaczyć.',
+  'Wybierz powierzchnię z największym kontekstem.',
+  'Sprawdź wynik i popraw routing.',
+] as const;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   surfaces: [
@@ -226,7 +154,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ))}
             </ul>
           </KangurLessonCallout>
-          <LessonCodeBlock title='Surface decision' code={SURFACE_DECISION_EXAMPLE} />
+          <AgenticLessonCodeBlock
+            accent='emerald'
+            title='Surface decision'
+            code={SURFACE_DECISION_EXAMPLE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -272,131 +204,29 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Mini game: Surface Match',
+      content: <AgenticCodingMiniGame gameId='surfaces' />,
+      panelClassName: 'w-full',
+    },
+    {
+      title: 'Mini game: Surface Arrow',
+      content: <AgenticDiagramFillGame gameId='surfaces_flow_arrow' />,
+      panelClassName: 'w-full',
+    },
   ],
-  cli: [
+  surface_match_game: [
     {
-      title: 'Codex CLI = centrum sterowania',
+      title: 'Surface Match Game',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            CLI to najszybsza droga do agentic coding w repo. Masz pełną kontrolę nad
-            kontekstem, sesjami i integracjami.
+            Dopasuj scenariusze do właściwej powierzchni pracy Codex.
           </KangurLessonLead>
-          <KangurLessonVisual
-            accent='emerald'
-            caption='Komendy CLI pokrywają run, review, integracje i narzędzia pomocnicze.'
-            maxWidthClassName='max-w-full'
-          >
-            <AgenticCodexCliCommandMapAnimation />
-          </KangurLessonVisual>
-          <KangurLessonCallout accent='emerald' padding='sm' className='text-left'>
-            <KangurLessonCaption className='text-emerald-950'>
-              CLI łączy tryb interaktywny z batch workflow (exec/review/apply) i zarządzaniem sesjami.
-            </KangurLessonCaption>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Mapa komend',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Podziel komendy na cztery bloki: non-interactive, sesje, integracje i narzędzia.
-          </KangurLessonLead>
-          <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-2`}>
-            {CLI_COMMAND_GROUPS.map((group) => (
-              <KangurLessonCallout key={group.title} accent='emerald' padding='sm' className='text-left'>
-                <p className='text-sm font-semibold text-emerald-950'>{group.title}</p>
-                <ul className='mt-2 space-y-1 text-xs text-emerald-950'>
-                  {group.commands.map((command) => (
-                    <li key={command}>
-                      <code>{command}</code>
-                    </li>
-                  ))}
-                </ul>
-              </KangurLessonCallout>
-            ))}
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Exec, Cloud, Apply: tryby batch',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Batch workflow przyspiesza powtarzalne zadania. Użyj exec do pracy lokalnej,
-            cloud do uruchomień w tle, a apply do przeniesienia diffu.
-          </KangurLessonLead>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
-            <KangurLessonInset accent='emerald'>
-              <div className='text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500'>
-                codex exec
-              </div>
-              <ul className='mt-2 space-y-1 text-xs text-emerald-950'>
-                {EXEC_MODE_FLAGS.map((flag) => (
-                  <li key={flag}>
-                    <code>{flag}</code>
-                  </li>
-                ))}
-              </ul>
-            </KangurLessonInset>
-            <KangurLessonInset accent='emerald'>
-              <div className='text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500'>
-                codex cloud
-              </div>
-              <ul className='mt-2 space-y-1 text-xs text-emerald-950'>
-                {CLOUD_MODE_FLAGS.map((flag) => (
-                  <li key={flag}>
-                    <code>{flag}</code>
-                  </li>
-                ))}
-              </ul>
-            </KangurLessonInset>
-            <KangurLessonInset accent='emerald'>
-              <div className='text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500'>
-                codex apply
-              </div>
-              <KangurLessonCaption className='mt-2 text-emerald-950'>
-                Użyj <code>codex apply &lt;TASK_ID&gt;</code>, aby nałożyć diff z zadania cloud.
-              </KangurLessonCaption>
-            </KangurLessonInset>
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Global flags i tipy interaktywne',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Globalne flagi odpowiadają za kontekst, model i ergonomię. Tipy interaktywne
-            minimalizują tarcie w dłuższych sesjach.
-          </KangurLessonLead>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {CLI_GLOBAL_FLAGS.map((flag) => (
-              <KangurLessonInset key={flag.title} accent='emerald'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-emerald-500'>
-                  {flag.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-emerald-950'>
-                  {flag.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
-          <KangurLessonVisual
-            accent='emerald'
-            caption='Kolejkuj wiadomości bez przerywania bieżącego zadania.'
-            maxWidthClassName='max-w-full'
-          >
-            <AgenticCliQueueTipAnimation />
-          </KangurLessonVisual>
           <KangurLessonCallout accent='emerald' padding='sm' className='text-left'>
             <ul className='space-y-2 text-sm text-emerald-950'>
-              {CLI_TIPS.map((tip) => (
-                <li key={tip}>{tip}</li>
+              {SURFACE_MATCH_STEPS.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
           </KangurLessonCallout>
@@ -415,10 +245,10 @@ export const HUB_SECTIONS = [
     slideCount: SLIDES.surfaces.length,
   },
   {
-    id: 'cli',
-    emoji: '⌨️',
-    title: 'Codex CLI',
-    description: 'Komendy, flagi i tipy, które przyspieszają pracę.',
-    slideCount: SLIDES.cli.length,
+    id: 'surface_match_game',
+    emoji: '🧭',
+    title: 'Surface Match',
+    description: 'Dopasuj scenariusze do właściwej powierzchni pracy.',
+    isGame: true,
   },
 ] as const;

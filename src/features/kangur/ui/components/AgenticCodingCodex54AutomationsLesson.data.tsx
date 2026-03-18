@@ -9,27 +9,26 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticAutomationScheduleAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
 type SectionId = 'automations';
 
 const AUTOMATION_INBOX = [
-  'Automations i ich runy znajdziesz w panelu automations w Codex app.',
-  'Sekcja Triage działa jak inbox na wyniki z zadań w tle.',
-  'Możesz filtrować wszystkie runy lub tylko nieprzeczytane.',
+  'Automations planują powtarzalne zadania w tle w Codex app.',
+  'Wyniki trafiają do inboxa, a brak zmian kończy się auto-archiwizacją.',
+  'App musi być uruchomiona, a projekt dostępny na dysku.',
 ] as const;
 
 const AUTOMATION_ENVIRONMENTS = [
   {
-    title: 'Worktree',
-    description: 'Izoluje zmiany od lokalnej pracy i chroni bieżący checkout.',
+    title: 'Worktree (Git)',
+    description: 'Automations w repo Git działają w dedykowanych worktree.',
   },
   {
     title: 'Local project',
-    description: 'Pracuje na głównym checkout (może modyfikować pliki w toku).',
-  },
-  {
-    title: 'No-git projects',
-    description: 'W projektach bez VCS automations działają w katalogu projektu.',
+    description: 'Dla projektów bez VCS automations pracują w katalogu projektu.',
   },
 ] as const;
 
@@ -43,6 +42,7 @@ const AUTOMATION_SANDBOX = [
 const AUTOMATION_SKILLS = [
   'Skills definiują metodę, automations definiują harmonogram.',
   'Automations mogą wywołać skill używając `$skill-name` w prompt.',
+  'Łączenie skills + automations poprawia spójność i reuse.',
 ] as const;
 
 const AUTOMATION_SCHEDULE_TIPS = [
@@ -65,28 +65,6 @@ Schedule: Fri 17:00
 Goal: Summarize last 20 commits + flag risky areas
 Constraints: read-only, no network
 Done when: Summary + follow-up questions in Triage`;
-
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='indigo'
-    className='border-indigo-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
-);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   automations: [
@@ -115,7 +93,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             W repo Git wybierasz local project albo osobny worktree.
           </KangurLessonLead>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
             {AUTOMATION_ENVIRONMENTS.map((item) => (
               <KangurLessonInset key={item.title} accent='indigo'>
                 <div className='text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500'>
@@ -187,7 +165,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ))}
             </ul>
           </KangurLessonCallout>
-          <LessonCodeBlock title='Automation template' code={AUTOMATION_SCHEDULE_EXAMPLE} />
+          <AgenticLessonCodeBlock
+            accent='indigo'
+            title='Automation template'
+            code={AUTOMATION_SCHEDULE_EXAMPLE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -207,6 +189,30 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Co warto zrobić przed ustawieniem automation?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='indigo'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Przetestować prompt manualnie.', correct: true },
+              { id: 'b', label: 'Od razu ustawić daily schedule.' },
+              { id: 'c', label: 'Wyłączyć sandbox.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: Automation Cadence',
+      content: <AgenticCodingMiniGame gameId='automations' />,
+      panelClassName: 'w-full',
     },
   ],
 };

@@ -12,7 +12,9 @@ import {
   AgenticEvidencePackAnimation,
   AgenticOperatingLoopAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
 type SectionId = 'review';
 
@@ -209,6 +211,30 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Co jest wymagane do akceptacji zmian?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='amber'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Testy + review diffu + opis ryzyk.', correct: true },
+              { id: 'b', label: 'Sama deklaracja, że działa.' },
+              { id: 'c', label: 'Wyłącznie screenshot UI.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: Evidence Pack',
+      content: <AgenticCodingMiniGame gameId='review' />,
+      panelClassName: 'w-full',
     },
   ],
 };

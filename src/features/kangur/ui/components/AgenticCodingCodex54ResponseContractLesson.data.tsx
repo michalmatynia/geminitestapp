@@ -9,7 +9,9 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticDocsStackAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'response_contract';
 
@@ -34,8 +36,17 @@ const FILE_RULES = [
 const LINK_RULES = [
   'URL tylko w code lub gdy użytkownik prosi o link.',
   'Code blocki zawsze z info string (np. ts, bash).',
-  'Cytaty krótkie: max 25 słów z jednego źródła.',
+  'Zasady cytowania i web search są opisane w lekcji Web & Citations.',
 ] as const;
+
+const RESPONSE_EXAMPLE = `Summary:
+- Updated: src/features/kangur/ui/components/AgenticLessonCodeBlock.tsx
+- Tests: not run (not requested)
+- Risks: none observed
+
+Next steps:
+1. Run "npm run test:ui" if needed.
+2. Review UI spacing in the lesson gallery.`;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   response_contract: [
@@ -99,6 +110,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
+      title: 'Przykład odpowiedzi',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Konsekwentny format skraca review i ułatwia decyzje.
+          </KangurLessonLead>
+          <AgenticLessonCodeBlock
+            accent='amber'
+            title='Response format'
+            code={RESPONSE_EXAMPLE}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
       title: 'Linki i cytaty',
       content: (
         <KangurLessonStack align='start' className='w-full'>
@@ -133,6 +159,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Response Contract',
+      content: <AgenticCodingMiniGame gameId='response_contract' />,
+      panelClassName: 'w-full',
     },
   ],
 };

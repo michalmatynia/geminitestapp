@@ -5,9 +5,13 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
-type SectionId = 'rules';
+type SectionId = 'rules-execpolicy';
 
 const RULES_PURPOSE = [
   'Rules kontroluja, ktore komendy Codex moze uruchamiac poza sandbox.',
@@ -47,30 +51,42 @@ const EXEC_POLICY_CHECK = `codex execpolicy check --pretty \
   --rules ~/.codex/rules/default.rules \
   -- gh pr view 7888 --json title,body,comments`;
 
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='violet'
-    className='border-violet-900/70 bg-slate-950 text-slate-100'
+const RulesDecisionVisual = (): JSX.Element => (
+  <svg
+    aria-label='Diagram: decyzje rules (allow, prompt, forbidden).'
+    className='h-auto w-full'
+    role='img'
+    viewBox='0 0 360 140'
   >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
+    <style>{`
+      .panel {
+        fill: #f8fafc;
+        stroke: #e2e8f0;
+        stroke-width: 2;
+      }
+      .label {
+        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+        fill: #0f172a;
+      }
+      .arrow {
+        stroke: #94a3b8;
+        stroke-width: 2;
+        fill: none;
+      }
+    `}</style>
+    <rect className='panel' height='36' rx='10' width='90' x='20' y='52' />
+    <rect className='panel' height='36' rx='10' width='90' x='135' y='52' />
+    <rect className='panel' height='36' rx='10' width='90' x='250' y='52' />
+    <text className='label' x='38' y='74'>Allow</text>
+    <text className='label' x='155' y='74'>Prompt</text>
+    <text className='label' x='262' y='74'>Block</text>
+    <path className='arrow' d='M110 70 H135' />
+    <path className='arrow' d='M225 70 H250' />
+  </svg>
 );
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
-  rules: [
+  'rules-execpolicy': [
     {
       title: 'Rules = kontrola komend',
       content: (
@@ -79,6 +95,13 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Rules pozwalaja precyzyjnie sterowac, ktore komendy moga wyjsc poza
             sandbox.
           </KangurLessonLead>
+          <KangurLessonVisual
+            accent='violet'
+            caption='Decyzja rule: allow, prompt albo forbidden.'
+            maxWidthClassName='max-w-full'
+          >
+            <RulesDecisionVisual />
+          </KangurLessonVisual>
           <KangurLessonCallout accent='violet' padding='sm' className='text-left'>
             <ul className='space-y-2 text-sm text-violet-950'>
               {RULES_PURPOSE.map((item) => (
@@ -108,7 +131,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonInset>
             ))}
           </div>
-          <LessonCodeBlock title='Przyklad reguly' code={RULE_EXAMPLE} />
+          <AgenticLessonCodeBlock accent='violet' title='Przyklad reguly' code={RULE_EXAMPLE} />
         </KangurLessonStack>
       ),
     },
@@ -161,9 +184,37 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Przed wdrozeniem sprawdz, jak reguly dzialaja na realne komendy.
           </KangurLessonLead>
-          <LessonCodeBlock title='codex execpolicy check' code={EXEC_POLICY_CHECK} />
+          <AgenticLessonCodeBlock
+            accent='violet'
+            title='codex execpolicy check'
+            code={EXEC_POLICY_CHECK}
+          />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Co oznacza decyzja `prompt` w rules?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='violet'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Komenda wymaga zgody użytkownika.', correct: true },
+              { id: 'b', label: 'Komenda jest zawsze blokowana.' },
+              { id: 'c', label: 'Komenda jest automatycznie dozwolona.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: Rules Triage',
+      content: <AgenticCodingMiniGame gameId='rules' />,
+      panelClassName: 'w-full',
     },
   ],
 };
@@ -174,6 +225,6 @@ export const HUB_SECTIONS = [
     emoji: '🧷',
     title: 'Rules & Execpolicy',
     description: 'Allowlist komend i testowanie zasad.',
-    slideCount: SLIDES.rules.length,
+    slideCount: SLIDES['rules-execpolicy'].length,
   },
 ] as const;

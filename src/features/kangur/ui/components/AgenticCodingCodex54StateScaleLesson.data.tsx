@@ -13,38 +13,47 @@ import {
   AgenticCacheCompactionAnimation,
   AgenticStateChainAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
-type SectionId = 'stateScale';
+type SectionId = 'state-scale';
 
 const STATE_RULES = [
-  { title: 'store', description: 'Zapisz odpowiedź, aby móc do niej wrócić.' },
-  { title: 'previous_response_id', description: 'Kontynuuj rozmowę bez przepisywania historii.' },
-  { title: 'input list', description: 'Dodawaj kolejne wiadomości do listy input.' },
-  { title: 'output_text', description: 'Wyciągaj gotowy tekst z output.' },
+  { title: 'Responses API', description: 'Stan rozmowy jest wbudowany, bez ręcznego kopiowania.' },
+  { title: 'conversation', description: 'Przekazuj identyfikator rozmowy do kolejnych odpowiedzi.' },
+  { title: 'previous_response_id', description: 'Łańcuchuj kolejne kroki bez pełnej historii.' },
+  { title: 'Chat Completions', description: 'Wymaga manualnego sklejania kontekstu.' },
 ] as const;
 
 const BACKGROUND_RULES = [
-  'Użyj background mode dla długich zadań (build, migracje, duże analizy).',
-  'Monitoruj status lub odbierz wynik przez webhook.',
-  'Dobry fit: generowanie raportów i długie testy.',
+  'Ustaw `background: true`, gdy zadanie trwa długo lub wymaga wielu kroków.',
+  'Status śledzisz przez GET /responses (queued → in_progress → terminal).',
+  'Background responses możesz anulować, gdy przestają być potrzebne.',
 ] as const;
 
-const WEBHOOK_NOTES = [
-  'Obsługuj eventy typu response.completed i response.failed.',
-  'Weryfikuj podpis webhooka i zapisuj idempotency key.',
-  'Traktuj webhook jak źródło statusu background tasku.',
+const POLLING_NOTES = [
+  'Polling sprawdzaj co kilka sekund, aż status będzie terminalny.',
+  'W odpowiedzi końcowej odbierasz output_text lub output items.',
+  'Cancel jest idempotentny - ponowne wywołanie nie zmienia wyniku.',
 ] as const;
 
 const CACHE_RULES = [
-  { title: 'Compaction', description: 'Podsumuj kontekst i zostaw najważniejsze decyzje.' },
-  { title: 'Prefix match', description: 'Static prefix na początku zwiększa cache hit rate.' },
-  { title: 'prompt_cache_key', description: 'Stabilizuje routing i poprawia trafienia cache.' },
-  { title: 'React', description: 'Powtarzalne instrukcje UI trzymają się w cache.' },
+  { title: 'Compaction', description: 'Włącz `context_management` z `compact_threshold`.' },
+  { title: 'Opaque item', description: 'Compaction item przenosi kluczowy stan dalej.' },
+  { title: 'Prefix match', description: 'Stały prefix na początku zwiększa cache hit rate.' },
+  { title: 'prompt_cache_key', description: 'Ułatwia routing i poprawia trafienia cache.' },
 ] as const;
 
+const POLLING_EXAMPLE = `// Polling loop (pseudo)
+while (status !== "completed") {
+  await sleep(3000);
+  status = await responses.get(id);
+}
+// Use output_text or output items`;
+
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
-  stateScale: [
+  'state-scale': [
     {
       title: 'Conversation state',
       content: (
@@ -84,7 +93,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonLead>
           <KangurLessonVisual
             accent='indigo'
-            caption='Odbieraj wynik przez webhook lub polling.'
+            caption='Odbieraj wynik przez polling.'
             maxWidthClassName='max-w-full'
           >
             <AgenticBackgroundWebhookAnimation />
@@ -100,19 +109,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Webhooks',
+      title: 'Polling & cancel',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Webhooki pozwalają automatycznie reagować na zakończenie pracy agenta.
+            Polling to prosty sposób na monitorowanie długich zadań i ich statusu.
           </KangurLessonLead>
           <KangurLessonCallout accent='indigo' padding='sm' className='text-left'>
             <ul className='space-y-2 text-sm text-indigo-950'>
-              {WEBHOOK_NOTES.map((item) => (
+              {POLLING_NOTES.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </KangurLessonCallout>
+          <AgenticLessonCodeBlock
+            accent='indigo'
+            title='Polling loop'
+            code={POLLING_EXAMPLE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -156,13 +170,18 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='indigo'
             question='Wybierz najlepszą odpowiedź.'
             choices={[
-              { id: 'a', label: 'Static prefix na początku promptu.', correct: true },
+              { id: 'a', label: 'Stały prefix na początku promptu.', correct: true },
               { id: 'b', label: 'Zawsze losuj kolejność sekcji.' },
               { id: 'c', label: 'Wyłącz compaction i cache jednocześnie.' },
             ]}
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: State & Scale',
+      content: <AgenticCodingMiniGame gameId='state_scale' />,
+      panelClassName: 'w-full',
     },
   ],
 };
@@ -173,6 +192,6 @@ export const HUB_SECTIONS = [
     emoji: '🗺️',
     title: 'State & Scale',
     description: 'Conversation state, background mode i webhooks.',
-    slideCount: SLIDES.stateScale.length,
+    slideCount: SLIDES['state-scale'].length,
   },
 ] as const;

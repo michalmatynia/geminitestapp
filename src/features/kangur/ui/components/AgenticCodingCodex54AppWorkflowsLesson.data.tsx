@@ -8,7 +8,9 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
 type SectionId = 'app_workflows';
 
@@ -21,18 +23,29 @@ const LOCAL_VS_WORKTREE = [
     title: 'Worktree',
     description: 'Izolowana kopia repo, idealna do równoległych wątków.',
   },
+  {
+    title: 'Cloud',
+    description: 'Tryb zdalny w Codex app, gdy nie potrzebujesz lokalnego checkoutu.',
+  },
 ] as const;
 
 const GIT_TOOLS = [
-  'Review diffu i inline komentarze bez wychodzenia z app.',
-  'Stage lub revert chunków jednym kliknięciem.',
-  'Commitowanie bez przełączania się do terminala.',
+  'Diff pane pokazuje zmiany i pozwala dodawać inline komentarze.',
+  'Możesz stage/revertować pojedyncze chunki lub całe pliki.',
+  'Commit, push i tworzenie PR-ów działają bez opuszczania app.',
+  'Zaawansowane operacje Git robisz w wbudowanym terminalu.',
+] as const;
+
+const TERMINAL_TIPS = [
+  'Każdy wątek ma terminal przypięty do projektu lub worktree.',
+  'Terminal służy do uruchamiania skryptów i walidacji zmian.',
+  'Codex może czytać output terminala i reagować na błędy.',
 ] as const;
 
 const AUTOMATION_FLOW = [
   'Automations działają w tle - app musi być uruchomiona.',
   'Możesz łączyć automations ze skills.',
-  'W repo Git wybierasz local vs worktree.',
+  'Automations w repo Git działają w dedykowanych worktree.',
   'Model i reasoning mogą zostać domyślne lub wybrane ręcznie.',
 ] as const;
 
@@ -42,11 +55,19 @@ const SYNC_FEATURES = [
   'Łatwe przełączanie się między wątkami i projektami.',
 ] as const;
 
+const APP_SERVER_FEATURES = [
+  '`codex app-server` uruchamia lokalny App Server do custom UI/harness.',
+  'API obejmuje m.in. `thread/*`, `turn/start`, `turn/steer`, `review/start`, `command/exec`.',
+  'Event stream (`thread/*`, `turn/*`, `item/*`) pozwala renderować postęp na żywo.',
+] as const;
+
 const AUTOMATION_PROMPT_EXAMPLE = `Automation: Nightly quality scan
 Schedule: 02:00 Mon-Fri
 Goal: Run "npm run lint" and summarize warnings
 Constraints: Read-only, no code changes
 Done when: Summary + attached logs`;
+
+const APP_SERVER_EXAMPLE = `codex app-server`;
 
 const WorktreeSplitVisual = (): JSX.Element => (
   <svg
@@ -93,8 +114,8 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Codex app pozwala uruchamiać wątki w lokalnym projekcie lub w worktree.
-            Worktree to najprostsza ochrona przed konfliktami.
+            Codex app pozwala uruchamiać wątki w trybie Local, Worktree lub Cloud.
+            Worktree to najprostsza ochrona przed konfliktami zmian.
           </KangurLessonLead>
           <KangurLessonVisual
             accent='teal'
@@ -103,7 +124,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           >
             <WorktreeSplitVisual />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
             {LOCAL_VS_WORKTREE.map((item) => (
               <KangurLessonInset key={item.title} accent='teal'>
                 <div className='text-xs font-semibold uppercase tracking-[0.2em] text-teal-500'>
@@ -128,6 +149,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
             <ul className='space-y-2 text-sm text-teal-950'>
               {GIT_TOOLS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Wbudowany terminal',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Terminal w wątku pozwala uruchamiać skrypty i szybko walidować zmiany bez
+            przełączania kontekstu.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
+            <ul className='space-y-2 text-sm text-teal-950'>
+              {TERMINAL_TIPS.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -175,6 +214,53 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'App Server jako własny harness',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Gdy potrzebujesz własnej UI lub integracji, App Server daje pełny dostęp do
+            wątków, turnów i eventów.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
+            <ul className='space-y-2 text-sm text-teal-950'>
+              {APP_SERVER_FEATURES.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </KangurLessonCallout>
+          <AgenticLessonCodeBlock
+            accent='teal'
+            title='Start lokalnego App Servera'
+            code={APP_SERVER_EXAMPLE}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Kiedy najlepiej użyć worktree w Codex app?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='teal'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Gdy chcesz izolować równoległy wątek.', correct: true },
+              { id: 'b', label: 'Gdy potrzebujesz edytować README.' },
+              { id: 'c', label: 'Gdy masz tylko jeden prosty fix.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: Worktree Split',
+      content: <AgenticCodingMiniGame gameId='app_workflows' />,
+      panelClassName: 'w-full',
     },
   ],
 };

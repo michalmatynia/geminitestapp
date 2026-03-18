@@ -733,6 +733,19 @@
     border-radius: var(--kangur-lesson-inset-radius, 18px);
   }
 
+  .kangur-lesson-visual-frame {
+    --kangur-lesson-visual-padding: var(--kangur-card-padding-md, 16px);
+    --kangur-card-padding-sm: var(--kangur-lesson-visual-padding);
+    --kangur-card-padding-md: var(--kangur-lesson-visual-padding);
+    --tw-shadow: var(--kangur-lesson-visual-shadow, 0 24px 60px -44px rgba(15, 23, 42, 0.32));
+    box-shadow: var(--tw-shadow);
+  }
+
+  .kangur-lesson-visual-caption {
+    font-size: var(--kangur-lesson-visual-caption-size, 0.78rem);
+    line-height: 1.45;
+  }
+
   .kangur-gradient-icon-tile-md {
     border-radius: var(--kangur-gradient-icon-tile-radius-md, 16px);
   }

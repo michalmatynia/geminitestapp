@@ -1,16 +1,14 @@
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
-  KangurLessonCaption,
-  KangurLessonChip,
-  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticApprovalGateAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'safety';
 
@@ -27,41 +25,6 @@ const ESCALATION_TRIGGERS = [
   'Planowana operacja jest destrukcyjna lub trudna do cofnięcia.',
 ] as const;
 
-const PREFIX_RULES = [
-  'npm run test',
-  'npm run build',
-  'npx vitest run',
-  'docker compose up',
-  'git add',
-] as const;
-
-const APPROVAL_POLICIES = [
-  {
-    title: 'untrusted',
-    description: 'Tylko zaufane komendy bez pytania; reszta wymaga zgody.',
-  },
-  {
-    title: 'on-request',
-    description: 'Agent sam decyduje, kiedy poprosić o approval.',
-  },
-  {
-    title: 'never',
-    description: 'Brak pytań o approval; ryzyko musi być świadome.',
-  },
-] as const;
-
-const SANDBOX_POLICIES = [
-  { title: 'read-only', description: 'Brak zapisów, tylko odczyt.' },
-  { title: 'workspace-write', description: 'Zapis wyłącznie w workspace.' },
-  { title: 'danger-full-access', description: 'Pełny dostęp - tylko w izolowanym środowisku.' },
-] as const;
-
-const CLI_SAFETY_SHORTCUTS = [
-  '`--full-auto` = `-a on-request` + `--sandbox workspace-write`.',
-  'Unikaj `--dangerously-bypass-approvals-and-sandbox` bez zewnętrznego sandboxu.',
-  '`codex sandbox` uruchamia polecenia w izolacji systemowej.',
-] as const;
-
 const SAFETY_STACK = [
   'Sandbox ogranicza skutki uboczne (zapisy tylko w workspace).',
   'Approvals wymagają świadomej zgody na ryzykowne akcje.',
@@ -73,13 +36,6 @@ const RISK_SIGNALS = [
   'Każda eskalacja musi mieć opis zakresu i plan rollbacku.',
   'Ryzyko maleje, gdy masz testy lub twardy proof.',
 ] as const;
-
-const SAFE_CLI_EXAMPLE = `# Bezpieczny start
-codex --sandbox workspace-write --ask-for-approval on-request "Refactor auth middleware."
-
-# Eskalacja tylko gdy potrzebna
-Request approval to run: npm run test:integration
-Scope: workspace-write, no network`;
 
 const SAFETY_AUDIT_LOG = `Decision log
 - Action: run "npm run test:integration"
@@ -161,28 +117,6 @@ const RiskMatrixVisual = (): JSX.Element => (
     <text className='muted' x='14' y='26'>Likelihood</text>
     <text className='muted' x='258' y='150'>Impact</text>
   </svg>
-);
-
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='slate'
-    className='border-slate-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
 );
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
@@ -279,87 +213,17 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Prefix rules i minimalny dostęp',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Prefix rules pozwalają automatycznie akceptować bezpieczne komendy. Im
-            węższy prefix, tym lepsza kontrola.
-          </KangurLessonLead>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {PREFIX_RULES.map((rule) => (
-              <KangurLessonInset key={rule} accent='slate'>
-                <KangurLessonChip accent='slate'>{rule}</KangurLessonChip>
-                <KangurLessonCaption className='mt-3 text-left'>
-                  Zakres ograniczony do powtarzalnych, bezpiecznych akcji.
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'CLI: approval i sandboxing',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Tryby approval i sandbox są dostępne w CLI jako proste flagi. Dobierz je
-            do poziomu ryzyka zadania.
-          </KangurLessonLead>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {APPROVAL_POLICIES.map((policy) => (
-              <KangurLessonInset key={policy.title} accent='slate'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                  {policy.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-slate-900'>
-                  {policy.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {SANDBOX_POLICIES.map((policy) => (
-              <KangurLessonInset key={policy.title} accent='slate'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                  {policy.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-slate-900'>
-                  {policy.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
-          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-slate-900'>
-              {CLI_SAFETY_SHORTCUTS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Przykład bezpiecznego startu',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Zacznij od bezpiecznych ustawień, a eskalację rób tylko z jasnym powodem.
-          </KangurLessonLead>
-          <LessonCodeBlock title='Safe CLI flow' code={SAFE_CLI_EXAMPLE} />
-        </KangurLessonStack>
-      ),
-    },
-    {
       title: 'Ślad audytu w praktyce',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
             Log decyzji skraca review i pozwala szybko wrócić do kontekstu.
           </KangurLessonLead>
-          <LessonCodeBlock title='Decision log' code={SAFETY_AUDIT_LOG} />
+          <AgenticLessonCodeBlock
+            accent='slate'
+            title='Decision log'
+            code={SAFETY_AUDIT_LOG}
+          />
         </KangurLessonStack>
       ),
     },
@@ -381,6 +245,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Safety Gate',
+      content: <AgenticCodingMiniGame gameId='safety' />,
+      panelClassName: 'w-full',
     },
   ],
 };

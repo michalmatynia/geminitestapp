@@ -9,7 +9,9 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticDocsStackAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'agents_md';
 
@@ -96,28 +98,6 @@ const AgentsMdLayeringVisual = (): JSX.Element => (
   </svg>
 );
 
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='amber'
-    className='border-amber-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
-);
-
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   agents_md: [
     {
@@ -174,7 +154,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Krótki, konkretny template działa najlepiej. Ten przykład możesz skopiować.
           </KangurLessonLead>
-          <LessonCodeBlock title='AGENTS.md example' code={AGENTS_MD_TEMPLATE} />
+          <AgenticLessonCodeBlock
+            accent='amber'
+            title='AGENTS.md example'
+            code={AGENTS_MD_TEMPLATE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -254,6 +238,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: AGENTS.md Map',
+      content: <AgenticCodingMiniGame gameId='agents_md' />,
+      panelClassName: 'w-full',
     },
   ],
 };

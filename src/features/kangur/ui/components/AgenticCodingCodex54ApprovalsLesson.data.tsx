@@ -1,44 +1,44 @@
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   KangurLessonCallout,
-  KangurLessonCaption,
-  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   AgenticApprovalGateAnimation,
   AgenticApprovalScopeMapAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
+import AgenticDiagramFillGame from '@/features/kangur/ui/components/AgenticDiagramFillGame';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
-type SectionId = 'approvals';
+type SectionId = 'approvals' | 'approval_gate_game';
 
 const DEFAULTS = [
-  'Network access jest wyłączony domyślnie.',
-  'Sandbox ogranicza zapisy do workspace.',
+  'W bezpiecznych presetach sieć startuje wyłączona.',
+  'Sandbox ogranicza zapisy do workspace, gdy jest włączony.',
   'Approval policy decyduje, kiedy agent pyta o zgodę.',
+  'Read-only oznacza planowanie bez zmian w repo.',
 ] as const;
 
 const NETWORK_CONTROLS = [
-  'Włącz sieć w workspace-write tylko, gdy to konieczne.',
-  'Web search działa na cache index (domyślnie).',
-  'Ustaw web_search=live lub disabled w razie potrzeby.',
+  'Web search może działać w trybie cache lub live, zależnie od konfiguracji.',
+  'Włącz live search tylko wtedy, gdy potrzebujesz aktualnych danych.',
   'Traktuj wyniki z web search jako nieufne.',
-] as const;
-
-const PROTECTED_PATHS = [
-  '.git (read-only)',
-  '.agents (read-only)',
-  '.codex (read-only)',
+  'Network access włączaj tylko, gdy to konieczne.',
 ] as const;
 
 const APPROVAL_TIPS = [
-  'Opisuj cel i dokładną komendę.',
-  'Proś o minimalny zakres uprawnień.',
-  'Jeśli to jednorazowe, poproś o approval tylko dla tej komendy.',
+  'Zacznij od read-only, przejdź do workspace-write dopiero gdy to potrzebne.',
+  'Full access (`danger-full-access`) tylko w izolowanym środowisku.',
+  '`--full-auto` to bezpieczniejszy preset: workspace-write + on-request.',
+] as const;
+
+const APP_TOOL_APPROVALS = [
+  'App/MCP tool calls z side effects mogą wymagać approval nawet bez shell command.',
+  'Destrukcyjne narzędzia zawsze wymagają zgody, nawet jeśli deklarują read-only.',
 ] as const;
 
 const ESCALATION_PLAYBOOK = [
@@ -59,6 +59,12 @@ const ESCALATION_REQUEST_EXAMPLE = `Request approval:
 - Scope: workspace-write, no network
 - Reason: verify doc placement rules
 - Prefix rule: ["npm", "run", "docs:structure:check"]`;
+
+const APPROVAL_GATE_STEPS = [
+  'Kliknij akcję, aby ją zaznaczyć.',
+  'Zdecyduj: wymaga approval czy jest bezpieczna.',
+  'Sprawdź, czy zachowałeś minimalny scope.',
+] as const;
 
 const ApprovalTiersVisual = (): JSX.Element => (
   <svg
@@ -92,8 +98,8 @@ const ApprovalTiersVisual = (): JSX.Element => (
     <text className='badge' x='40' y='92'>Default</text>
     <text className='label' x='138' y='70'>Workspace</text>
     <text className='badge' x='150' y='92'>Write</text>
-    <text className='label' x='258' y='70'>Network</text>
-    <text className='badge' x='252' y='92'>Higher risk</text>
+    <text className='label' x='252' y='70'>Full access</text>
+    <text className='badge' x='246' y='92'>Higher risk</text>
   </svg>
 );
 
@@ -129,7 +135,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Podnoś dostęp stopniowo: od read-only, przez workspace-write, aż po sieć.
+            Podnoś dostęp stopniowo: od read-only, przez workspace-write, aż po pełny dostęp.
           </KangurLessonLead>
           <KangurLessonVisual
             accent='slate'
@@ -197,6 +203,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
+      title: 'App/MCP approvals',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Approvals dotyczą nie tylko shell commandów. Narzędzia zewnętrzne też mogą
+            wymagać zgody.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
+            <ul className='space-y-2 text-sm text-slate-950'>
+              {APP_TOOL_APPROVALS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
       title: 'Przykład requestu approval',
       content: (
         <KangurLessonStack align='start' className='w-full'>
@@ -212,19 +236,50 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Chronione ścieżki w workspace',
+      title: 'Quick check',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Nawet w workspace-write część katalogów pozostaje tylko do odczytu.
+            Co powinno znaleźć się w dobrym requestcie approval?
           </KangurLessonLead>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
-            {PROTECTED_PATHS.map((item) => (
-              <KangurLessonInset key={item} accent='slate'>
-                <KangurLessonCaption className='text-slate-950'>{item}</KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
+          <AgenticLessonQuickCheck
+            accent='slate'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Akcja, zakres i powód.', correct: true },
+              { id: 'b', label: 'Tylko nazwa komendy.' },
+              { id: 'c', label: 'Lista wszystkich plików w repo.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: Approval Ladder',
+      content: <AgenticCodingMiniGame gameId='approvals' />,
+      panelClassName: 'w-full',
+    },
+    {
+      title: 'Mini game: Approval Chart',
+      content: <AgenticDiagramFillGame gameId='approval_tiers_chart' />,
+      panelClassName: 'w-full',
+    },
+  ],
+  approval_gate_game: [
+    {
+      title: 'Approval Gate Game',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Przeprowadź akcje przez approval gate i oceń, czy wymagają zgody.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='slate' padding='sm' className='text-left'>
+            <ul className='space-y-2 text-sm text-slate-950'>
+              {APPROVAL_GATE_STEPS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -238,5 +293,12 @@ export const HUB_SECTIONS = [
     title: 'Approvals & Network',
     description: 'Sandbox, approvals i kontrola dostępu do sieci.',
     slideCount: SLIDES.approvals.length,
+  },
+  {
+    id: 'approval_gate_game',
+    emoji: '🛡️',
+    title: 'Approval Gate',
+    description: 'Zdecyduj, które akcje wymagają zgody.',
+    isGame: true,
   },
 ] as const;

@@ -12,9 +12,12 @@ import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens'
 import {
   AgenticCliQueueTipAnimation,
   AgenticCodexCliCommandMapAnimation,
+  AgenticCliIdeFlowAnimation,
   AgenticDocsStackAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
 type SectionId = 'cli_ide';
 
@@ -28,7 +31,7 @@ const CLI_SHORTCUTS = [
   'Wpisz `@`, aby uruchomić fuzzy file search; Tab lub Enter wstawia ścieżkę.',
   'Enter podczas pracy injektuje instrukcję, a Tab kolejkuje follow-up.',
   'Prefix `!` uruchamia lokalną komendę; output respektuje approvals i sandbox.',
-  'Dwukrotne `Esc` edytuje poprzednią wiadomość; kolejne `Esc` cofają w historii.',
+  'Dwukrotne `Esc` edytuje poprzednią wiadomość; kolejne `Esc` cofają w historii, Enter = fork.',
   '`codex --cd <path>` ustawia katalog roboczy bez `cd`.',
   '`--add-dir` dodaje dodatkowe writable roots.',
 ] as const;
@@ -59,6 +62,17 @@ const QUEUE_TIPS = [
 
 const QUEUE_EXAMPLE = `# W trakcie działania taska:
 "Po tej iteracji zaktualizuj README i uruchom testy."`;
+
+const IDE_TO_CLI_FLOW = [
+  { title: 'IDE', description: 'Wybierz plik, zaznacz fragment i dodaj brief.' },
+  { title: 'CLI', description: 'Uruchom plan, review i testy w jednym flow.' },
+  { title: 'Review', description: 'Sprawdź diff i w razie potrzeby dopisz deltę.' },
+] as const;
+
+const CLI_FLOW_CARD = `Flow card
+IDE: open src/app/editor.tsx and select the sidebar section
+CLI: /plan → /review → !npm run test:smoke
+Done when: diff reviewed + tests pass`;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   cli_ide: [
@@ -127,6 +141,41 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
+      title: 'Flow IDE → CLI',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Najszybszy sposób pracy: zacznij od kontekstu w IDE, a wykonanie i proof
+            domknij w CLI.
+          </KangurLessonLead>
+          <KangurLessonVisual
+            accent='sky'
+            caption='IDE daje kontekst, CLI domyka wykonanie.'
+            maxWidthClassName='max-w-full'
+          >
+            <AgenticCliIdeFlowAnimation />
+          </KangurLessonVisual>
+          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3`}>
+            {IDE_TO_CLI_FLOW.map((item) => (
+              <KangurLessonInset key={item.title} accent='sky'>
+                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-sky-500'>
+                  {item.title}
+                </div>
+                <KangurLessonCaption className='mt-2 text-sky-950'>
+                  {item.description}
+                </KangurLessonCaption>
+              </KangurLessonInset>
+            ))}
+          </div>
+          <AgenticLessonCodeBlock
+            accent='sky'
+            title='Flow card'
+            code={CLI_FLOW_CARD}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
       title: 'Kolejkowanie instrukcji',
       content: (
         <KangurLessonStack align='start' className='w-full'>
@@ -174,6 +223,30 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           </div>
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Co daje `/review` w Codex CLI?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='sky'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Szybki review working tree.', correct: true },
+              { id: 'b', label: 'Zmianę modelu na deep.' },
+              { id: 'c', label: 'Włączenie web search.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: IDE → CLI Flow',
+      content: <AgenticCodingMiniGame gameId='cli_ide' />,
+      panelClassName: 'w-full',
     },
   ],
 };

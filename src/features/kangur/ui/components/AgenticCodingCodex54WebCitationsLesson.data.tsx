@@ -9,7 +9,9 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticDocsStackAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'web_citations';
 
@@ -56,6 +58,9 @@ const SOURCE_RULES = [
     description: 'Podawaj daty, gdy informacja może się zmieniać.',
   },
 ] as const;
+
+const CITATION_EXAMPLE = `Fakt wsparty źródłem. citesource1
+Drugi fakt z innym źródłem. citesource2`;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   web_citations: [
@@ -115,6 +120,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ))}
             </ul>
           </KangurLessonCallout>
+          <AgenticLessonCodeBlock
+            accent='sky'
+            title='Przykład cytowania'
+            code={CITATION_EXAMPLE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -158,6 +168,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Citation Check',
+      content: <AgenticCodingMiniGame gameId='web_citations' />,
+      panelClassName: 'w-full',
     },
   ],
 };

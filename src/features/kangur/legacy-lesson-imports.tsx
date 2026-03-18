@@ -479,6 +479,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  agentic_coding_codex_5_4_ai_documentation: {
+    kind: 'flat',
+    slides: [],
+  },
   agentic_coding_codex_5_4_delegation: {
     kind: 'flat',
     slides: [],

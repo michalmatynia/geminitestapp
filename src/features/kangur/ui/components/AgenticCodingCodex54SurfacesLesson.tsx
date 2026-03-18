@@ -3,6 +3,7 @@
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54SurfacesLesson.data';
+import AgenticSurfaceMatchGame from './AgenticSurfaceMatchGame';
 
 export { HUB_SECTIONS, SLIDES };
 
@@ -18,7 +19,21 @@ export default function AgenticCodingCodex54SurfacesLesson(): JSX.Element {
       progressDotClassName='bg-emerald-300'
       dotActiveClass='bg-emerald-400'
       dotDoneClass='bg-emerald-200'
-      completionSectionId='cli'
+      skipMarkFor={['surface_match_game']}
+      games={[
+        {
+          sectionId: 'surface_match_game',
+          stage: {
+            accent: 'emerald',
+            icon: '🧭',
+            title: 'Surface Match',
+            description: 'Match each scenario to the best Codex surface.',
+            maxWidthClassName: 'max-w-4xl',
+          },
+          render: ({ onFinish }) => <AgenticSurfaceMatchGame onFinish={onFinish} />,
+        },
+      ]}
+      completionSectionId='surfaces'
       autoRecordComplete
     />
   );

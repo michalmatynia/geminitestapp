@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-18T04:08:22.402Z
+Generated at: 2026-03-18T09:01:32.819Z
 
 ## Snapshot
 
-- Source files: 6611
-- Source lines: 1061807
+- Source files: 6680
+- Source lines: 1080158
 - use client files: 1
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -25,7 +25,7 @@ Generated at: 2026-03-18T04:08:22.402Z
 - Cross-feature dependency pairs: 8
 - Shared -> features imports: 1
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 42
+- Prop-drilling chains (depth >= 3): 45
 - Prop-drilling chains (depth >= 4): 1
 
 ## Top API Hotspots (by LOC)
@@ -66,14 +66,15 @@ Generated at: 2026-03-18T04:08:22.402Z
 | File | LOC |
 | --- | ---: |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
+| `src/features/kangur/ui/components/animations/AgenticCodingAnimations.tsx` | 1436 |
 | `src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx` | 1377 |
 | `src/shared/contracts/kangur-ai-tutor-content.ts` | 1189 |
 | `src/features/kangur/cms-builder/defaults/game-defaults.ts` | 1188 |
 | `src/features/kangur/ui/components/ClockLesson.tsx` | 1164 |
+| `src/shared/contracts/kangur.ts` | 1150 |
 | `src/features/kangur/services/local-kangur-platform-duels.ts` | 1144 |
 | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 1137 |
 | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 1133 |
-| `src/shared/contracts/kangur.ts` | 1115 |
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 1113 |
 | `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1112 |
 | `src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts` | 1087 |
@@ -84,4 +85,3 @@ Generated at: 2026-03-18T04:08:22.402Z
 | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1051 |
 | `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
-| `src/features/prompt-engine/context/PromptEngineContext.tsx` | 1035 |

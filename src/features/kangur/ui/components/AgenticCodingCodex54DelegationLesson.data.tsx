@@ -9,7 +9,9 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticOperatingLoopAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'delegation';
 
@@ -33,6 +35,12 @@ const PLAN_RULES = [
   { title: 'Critical path', description: 'Blokujące kroki wykonuj lokalnie, nie deleguj.' },
   { title: 'Scope discipline', description: 'Nie duplikuj pracy między agentami.' },
 ] as const;
+
+const DELEGATION_BRIEF = `Sub-agent brief:
+Goal: Scan src/features/kangur for unused imports.
+Scope: Only touch *.data.tsx in kangur/ui/components.
+Output: List of files + suggested removals.
+Constraints: Do not edit files; no deletions.`;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   delegation: [
@@ -101,6 +109,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
+      title: 'Przykład briefu delegacji',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Deleguj z jasnym zakresem i outputem, żeby uniknąć konfliktów.
+          </KangurLessonLead>
+          <AgenticLessonCodeBlock
+            accent='violet'
+            title='Delegation brief'
+            code={DELEGATION_BRIEF}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
       title: 'Quick check',
       content: (
         <KangurLessonStack align='start' className='w-full'>
@@ -118,6 +141,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Delegation Loop',
+      content: <AgenticCodingMiniGame gameId='delegation' />,
+      panelClassName: 'w-full',
     },
   ],
 };

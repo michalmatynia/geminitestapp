@@ -11,7 +11,7 @@ export default function AgenticCodingCodex54ToolingLesson(): JSX.Element {
     <KangurUnifiedLesson
       lessonId='agentic-coding-codex-5-4-tooling'
       lessonEmoji='🛠️'
-      lessonTitle='Codex 5.4: Tooling Contract'
+      lessonTitle='Codex 5.4: Tooling & Search'
       sections={HUB_SECTIONS}
       slides={SLIDES}
       gradientClass='kangur-gradient-accent-slate'

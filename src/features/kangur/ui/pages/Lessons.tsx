@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
@@ -9,6 +10,7 @@ import { KangurStandardPageLayout } from '@/features/kangur/ui/components/Kangur
 import { useLessons, LessonsProvider } from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
 import { ActiveLessonView } from './lessons/Lessons.ActiveLesson';
+import { unlockKangurLessonScroll } from './lessons/lessons-scroll-lock';
 
 function LessonsContent() {
   const {
@@ -51,6 +53,12 @@ function LessonsContent() {
     onLogin: () => {},
     onLogout: () => logout(false),
   };
+
+  useEffect(() => {
+    if (!activeLesson) {
+      unlockKangurLessonScroll();
+    }
+  }, [activeLesson]);
 
   return (
     <>

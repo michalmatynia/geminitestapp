@@ -707,6 +707,7 @@ export function AdminKangurLessonSectionsPanel({
             <input
               type='checkbox'
               id='section-enabled'
+              aria-label='Enabled'
               checked={sectionForm.enabled}
               onChange={(e) => setSectionForm((f) => ({ ...f, enabled: e.target.checked }))}
             />
@@ -782,6 +783,7 @@ export function AdminKangurLessonSectionsPanel({
               <input
                 type='checkbox'
                 id='subsection-enabled'
+                aria-label='Enabled'
                 checked={subsectionForm.enabled}
                 onChange={(e) =>
                   setSubsectionForm((f) => ({ ...f, enabled: e.target.checked }))
@@ -794,6 +796,7 @@ export function AdminKangurLessonSectionsPanel({
             <Label>Component IDs (comma-separated)</Label>
             <textarea
               className='flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm'
+              aria-label='Component IDs (comma-separated)'
               value={subsectionForm.componentIds}
               onChange={(e) =>
                 setSubsectionForm((f) => ({ ...f, componentIds: e.target.value }))

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -22,6 +22,7 @@ import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { LESSON_NAV_ANCHOR_ID } from './Lessons.constants';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
+import { lockKangurLessonScroll, unlockKangurLessonScroll } from './lessons-scroll-lock';
 
 export function ActiveLessonView() {
   const {
@@ -48,6 +49,8 @@ export function ActiveLessonView() {
   const { entry: activeLessonSecretPanelContent } = useKangurPageContentEntry('lessons-active-secret-panel');
 
   const isMobile = useKangurMobileBreakpoint();
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
 
   if (!activeLesson) return null;
 
@@ -82,16 +85,10 @@ export function ActiveLessonView() {
   void activeLessonNavigationContent;
 
   useEffect(() => {
-    if (!isMobile || typeof document === 'undefined') return undefined;
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevBodyOverflow = body.style.overflow;
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
+    if (!isMobile) return undefined;
+    lockKangurLessonScroll();
     return () => {
-      html.style.overflow = prevHtmlOverflow;
-      body.style.overflow = prevBodyOverflow;
+      unlockKangurLessonScroll();
     };
   }, [isMobile, activeLesson.id]);
 
@@ -110,6 +107,57 @@ export function ActiveLessonView() {
     };
   }, [activeLesson.id, activeLessonScrollRef, isMobile]);
 
+  const updateScrollButtons = useCallback((): void => {
+    const container = activeLessonScrollRef.current;
+    if (!container) return;
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    const nextCanScrollUp = container.scrollTop > 0;
+    const nextCanScrollDown = container.scrollTop < maxScrollTop - 1;
+    setCanScrollUp((prev) => (prev === nextCanScrollUp ? prev : nextCanScrollUp));
+    setCanScrollDown((prev) => (prev === nextCanScrollDown ? prev : nextCanScrollDown));
+  }, [activeLessonScrollRef]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setCanScrollUp(false);
+      setCanScrollDown(false);
+      return;
+    }
+
+    const container = activeLessonScrollRef.current;
+    if (!container) return;
+
+    const handleUpdate = (): void => {
+      updateScrollButtons();
+    };
+
+    handleUpdate();
+    container.addEventListener('scroll', handleUpdate, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => handleUpdate());
+      resizeObserver.observe(container);
+    }
+
+    let mutationObserver: MutationObserver | null = null;
+    if (typeof MutationObserver !== 'undefined') {
+      mutationObserver = new MutationObserver(() => {
+        window.requestAnimationFrame(handleUpdate);
+      });
+      mutationObserver.observe(container, { childList: true, subtree: true });
+    }
+
+    const frameId = window.requestAnimationFrame(handleUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      container.removeEventListener('scroll', handleUpdate);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+    };
+  }, [activeLesson.id, activeLessonScrollRef, isMobile, updateScrollButtons]);
+
   const handleScrollBy = useCallback(
     (direction: 'up' | 'down'): void => {
       const container = activeLessonScrollRef.current;
@@ -117,11 +165,12 @@ export function ActiveLessonView() {
       const step = Math.max(240, Math.round(container.clientHeight * 0.7));
       const delta = direction === 'up' ? -step : step;
       container.scrollBy({ top: delta, left: 0, behavior: 'smooth' });
+      window.requestAnimationFrame(updateScrollButtons);
     },
-    [activeLessonScrollRef]
+    [activeLessonScrollRef, updateScrollButtons]
   );
 
-  const headerSection = (
+  const headerSection = !isMobile ? (
     <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
       <KangurActiveLessonHeader
         lesson={activeLesson}
@@ -141,7 +190,7 @@ export function ActiveLessonView() {
         assignmentSectionSummary={activeLessonAssignmentContent?.summary ?? undefined}
       />
     </div>
-  );
+  ) : null;
 
   const navigationSection = (
     <div ref={activeLessonNavigationRef} id={LESSON_NAV_ANCHOR_ID} className='w-full max-w-5xl'>
@@ -229,17 +278,19 @@ export function ActiveLessonView() {
       >
         {isMobile ? (
           <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(100dvh-var(--kangur-top-bar-height,88px))]'>
-            <KangurButton
-              fullWidth
-              size='sm'
-              variant='surface'
-              className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-              onClick={() => handleScrollBy('up')}
-              aria-label='Przewiń w górę'
-            >
-              <ChevronUp className='h-4 w-4' aria-hidden='true' />
-              Przewiń w górę
-            </KangurButton>
+            {canScrollUp ? (
+              <KangurButton
+                fullWidth
+                size='sm'
+                variant='surface'
+                className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                onClick={() => handleScrollBy('up')}
+                aria-label='Przewiń w górę'
+              >
+                <ChevronUp className='h-4 w-4' aria-hidden='true' />
+                Przewiń w górę
+              </KangurButton>
+            ) : null}
             <div
               ref={activeLessonScrollRef}
               className={`flex-1 min-h-0 w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-none`}
@@ -249,17 +300,19 @@ export function ActiveLessonView() {
               {navigationSection}
               {lessonContentSection}
             </div>
-            <KangurButton
-              fullWidth
-              size='sm'
-              variant='surface'
-              className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)] pb-[calc(10px+env(safe-area-inset-bottom))]'
-              onClick={() => handleScrollBy('down')}
-              aria-label='Przewiń w dół'
-            >
-              <ChevronDown className='h-4 w-4' aria-hidden='true' />
-              Przewiń w dół
-            </KangurButton>
+            {canScrollDown ? (
+              <KangurButton
+                fullWidth
+                size='sm'
+                variant='surface'
+                className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)] pb-[calc(10px+env(safe-area-inset-bottom))]'
+                onClick={() => handleScrollBy('down')}
+                aria-label='Przewiń w dół'
+              >
+                <ChevronDown className='h-4 w-4' aria-hidden='true' />
+                Przewiń w dół
+              </KangurButton>
+            ) : null}
           </div>
         ) : (
           <>

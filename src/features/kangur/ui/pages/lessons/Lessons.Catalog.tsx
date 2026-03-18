@@ -28,6 +28,7 @@ import { getLessonMasteryPresentation } from './Lessons.utils';
 import { useLessons } from './LessonsContext';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
+import { AGENTIC_CODING_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/agentic-coding/catalog';
 import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
 
 type LessonSubsectionDefinition = {
@@ -79,7 +80,9 @@ export function LessonsCatalog() {
       ? ALPHABET_LESSON_GROUPS
       : subject === 'web_development'
         ? WEB_DEVELOPMENT_LESSON_GROUPS
-        : [];
+        : subject === 'agentic_coding'
+          ? AGENTIC_CODING_LESSON_GROUPS
+          : [];
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -116,7 +119,8 @@ export function LessonsCatalog() {
           )
       : [];
 
-  const allowSingleLessonGroups = subject === 'web_development';
+  const allowSingleLessonGroups =
+    subject === 'web_development' || subject === 'agentic_coding';
   const displayLessonGroups = lessonGroups.filter((group) => {
     if (group.subsections) {
       return group.subsections.some((subsection) => subsection.lessons.length > 0);

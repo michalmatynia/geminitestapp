@@ -25,6 +25,7 @@ vi.mock('@/shared/ui', async () => {
   const mocks = await import('./studioInlineEditRuntimeMockComponents');
   return {
     Button: mocks.MockButton,
+    Card: mocks.MockCard,
     FileUploadTrigger: mocks.MockFileUploadTrigger,
   };
 });
@@ -50,7 +51,7 @@ vi.mock('@/shared/ui/templates/modals', async () => {
   };
 });
 
-vi.mock('@/shared/ui/files', async () => {
+vi.mock('@/features/files', async () => {
   const React = await import('react');
 
   const FileManagerRuntimeContext = React.createContext<{

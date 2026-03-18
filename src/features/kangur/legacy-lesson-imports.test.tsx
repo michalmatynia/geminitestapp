@@ -2,12 +2,18 @@
  * @vitest-environment jsdom
  */
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { importLegacyKangurLessonDocument } from '@/features/kangur/legacy-lesson-imports';
+const loadImporter = async () =>
+  (await import('@/features/kangur/legacy-lesson-imports')).importLegacyKangurLessonDocument;
 
 describe('importLegacyKangurLessonDocument', () => {
-  it('imports sectioned lessons into modular pages and preserves game sections as activity blocks', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('imports sectioned lessons into modular pages and preserves game sections as activity blocks', async () => {
+    const importLegacyKangurLessonDocument = await loadImporter();
     const result = importLegacyKangurLessonDocument('adding');
 
     expect(result).not.toBeNull();
@@ -15,18 +21,18 @@ describe('importLegacyKangurLessonDocument', () => {
     expect(result?.importedPageCount).toBeGreaterThan(0);
     expect(result?.warnings).toEqual([]);
     expect(result?.document.pages?.[0]?.title).toBe('Overview');
-    expect(result?.document.pages?.some((page) => page.title === 'Dodawanie to laczenie')).toBe(
+    expect(result?.document.pages?.some((page) => page.title === 'Co to znaczy dodawać?')).toBe(
       true
     );
     expect(result?.document.pages?.some((page) => page.title === 'Gra z piłkami')).toBe(true);
     expect(result?.document.pages?.some((page) => page.title === 'Synteza dodawania')).toBe(true);
     expect(
-      result?.document.pages?.find((page) => page.title === 'Dodawanie to laczenie')?.sectionTitle
+      result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawać?')?.sectionTitle
     ).toBe('Podstawy dodawania');
     expect(
-      result?.document.pages?.find((page) => page.title === 'Dodawanie to laczenie')
+      result?.document.pages?.find((page) => page.title === 'Co to znaczy dodawać?')
         ?.sectionDescription
-    ).toBe('Sumy do 10 i 20');
+    ).toBe('Co to dodawanie? Jednocyfrowe + animacja');
     expect(
       result?.document.pages?.find((page) => page.title === 'Gra z piłkami')?.blocks[0]
     ).toMatchObject({
@@ -45,19 +51,21 @@ describe('importLegacyKangurLessonDocument', () => {
     });
   });
 
-  it('imports flat-slide lessons with an overview page and no warnings', () => {
+  it('imports flat-slide lessons with an overview page and no warnings', async () => {
+    const importLegacyKangurLessonDocument = await loadImporter();
     const result = importLegacyKangurLessonDocument('logical_thinking');
 
     expect(result).not.toBeNull();
     expect(result?.warnings).toEqual([]);
     expect(result?.document.pages?.[0]?.title).toBe('Overview');
-    expect(result?.document.pages?.[1]?.title).toBe('Wprowadzenie');
+    expect(result?.document.pages?.[1]?.title).toBe('Co to jest myślenie logiczne? 🧠');
     expect(result?.document.pages?.[1]?.blocks[0]).toMatchObject({
       type: 'text',
     });
   });
 
-  it('preserves narration settings when importing the clock lesson', () => {
+  it('preserves narration settings when importing the clock lesson', async () => {
+    const importLegacyKangurLessonDocument = await loadImporter();
     const result = importLegacyKangurLessonDocument('clock', {
       narration: {
         voice: 'echo',

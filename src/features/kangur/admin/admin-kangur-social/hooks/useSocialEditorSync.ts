@@ -136,7 +136,6 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
       }))
     );
     setContextSummary(activePost.contextSummary ?? null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePost, deps.persistedSocialSettings]);
 
   // Auto-select LinkedIn connection fallback
@@ -150,7 +149,6 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     if (fallback) {
       deps.setLinkedinConnectionId(fallback.id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePost, deps.linkedinConnections, deps.linkedinConnectionId]);
 
   // Image & addon handlers

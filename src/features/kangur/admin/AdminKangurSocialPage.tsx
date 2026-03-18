@@ -459,7 +459,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
               setPostToUnpublish(null);
             }}
             title='Unpublish from LinkedIn'
-            message={`This will delete the LinkedIn post and remove it from Kangur Social. Continue?`}
+            message='This will delete the LinkedIn post and remove it from Kangur Social. Continue?'
             confirmText='Unpublish'
             isDangerous={true}
             loading={unpublishMutation.isPending}

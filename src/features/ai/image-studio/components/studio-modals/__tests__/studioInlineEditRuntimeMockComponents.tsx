@@ -20,6 +20,13 @@ export function MockButton({
   );
 }
 
+export function MockCard({
+  children,
+  ...rest
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
+  return <div {...rest}>{children}</div>;
+}
+
 export function MockEmptyState({
   description,
   title,

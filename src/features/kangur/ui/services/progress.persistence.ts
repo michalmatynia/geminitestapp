@@ -25,6 +25,7 @@ const createDefaultProgressStore = (): KangurSubjectProgressStore => ({
     maths: createDefaultKangurProgressState(),
     english: createDefaultKangurProgressState(),
     web_development: createDefaultKangurProgressState(),
+    agentic_coding: createDefaultKangurProgressState(),
   },
 });
 
@@ -88,6 +89,7 @@ const cloneProgressStore = (store: KangurSubjectProgressStore): KangurSubjectPro
     maths: cloneProgress(store.subjects.maths ?? DEFAULT_PROGRESS),
     english: cloneProgress(store.subjects.english ?? DEFAULT_PROGRESS),
     web_development: cloneProgress(store.subjects.web_development ?? DEFAULT_PROGRESS),
+    agentic_coding: cloneProgress(store.subjects.agentic_coding ?? DEFAULT_PROGRESS),
   },
 });
 
@@ -105,6 +107,7 @@ const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
           maths: normalizeKangurProgressState(subjectsRecord['maths']),
           english: normalizeKangurProgressState(subjectsRecord['english']),
           web_development: normalizeKangurProgressState(subjectsRecord['web_development']),
+          agentic_coding: normalizeKangurProgressState(subjectsRecord['agentic_coding']),
         },
       };
     }
@@ -118,6 +121,7 @@ const normalizeProgressStore = (value: unknown): KangurSubjectProgressStore => {
       maths: normalizeKangurProgressState(value),
       english: createDefaultKangurProgressState(),
       web_development: createDefaultKangurProgressState(),
+      agentic_coding: createDefaultKangurProgressState(),
     },
   };
 };

@@ -37,6 +37,7 @@ const SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
   english: 'sky',
   maths: 'violet',
   web_development: 'teal',
+  agentic_coding: 'indigo',
 };
 
 export function KangurAssignmentSpotlight({

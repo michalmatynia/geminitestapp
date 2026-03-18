@@ -75,6 +75,7 @@ const ASSIGNMENT_SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
   english: 'sky',
   maths: 'violet',
   web_development: 'teal',
+  agentic_coding: 'indigo',
 };
 
 const MIXED_TRAINING_PRESET_CATEGORIES: KangurOperation[] = [

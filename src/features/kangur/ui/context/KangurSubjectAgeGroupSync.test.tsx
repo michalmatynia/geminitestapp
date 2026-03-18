@@ -81,7 +81,7 @@ describe('KangurSubjectAgeGroupSync', () => {
     render(<KangurSubjectAgeGroupSync />);
 
     await waitFor(() => {
-      expect(setSubject).toHaveBeenCalledWith('web_development');
+      expect(setSubject).toHaveBeenCalledWith('agentic_coding');
     });
   });
 });

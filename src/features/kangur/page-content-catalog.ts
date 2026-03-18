@@ -326,6 +326,20 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     explanation: 'Poznaj podstawy zarządzania stanem w React. Lekcja dla dorosłych.',
     triggerPhrases: ['state', 'stan', 'useState', 'context', 'reducer'],
   },
+  agentic_coding_codex_5_4: {
+    explanation:
+      'Wprowadzenie do agentycznego kodowania z Codex 5.4: planowanie, iteracje i praca z asystentem AI. Lekcja dla dorosłych.',
+    triggerPhrases: [
+      'agentic coding',
+      'agentyczne kodowanie',
+      'codex',
+      'codex 5.4',
+      'codex 5_4',
+      'ai coding',
+      'asystent programisty',
+    ],
+    aliases: ['agentic coding', 'codex 5.4', 'codex'],
+  },
   multiplication: {
     explanation:
       'Utrwala tabliczkę mnożenia, mnożenie jako grupowanie i prosty algorytm. Dobra do automatyzacji iloczynów.',

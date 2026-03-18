@@ -118,6 +118,29 @@ const GEOMETRY_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel>
   geometry_shape_recognition: { label: 'Geometria', emoji: '🔷' },
 };
 
+const AGENTIC_CODING_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
+  all: { label: 'Wszystkie', emoji: '🏆' },
+  agentic_coding_codex_5_4: { label: 'Foundations', emoji: '🤖' },
+  agentic_coding_codex_5_4_fit: { label: 'Fit & Limits', emoji: '🧭' },
+  agentic_coding_codex_5_4_surfaces: { label: 'Surfaces', emoji: '🧩' },
+  agentic_coding_codex_5_4_operating_model: { label: 'Operating Model', emoji: '🔁' },
+  agentic_coding_codex_5_4_responses: { label: 'Responses & Tools', emoji: '📡' },
+  agentic_coding_codex_5_4_agents_md: { label: 'AGENTS.md', emoji: '🗂️' },
+  agentic_coding_codex_5_4_safety: { label: 'Config & Safety', emoji: '🛡️' },
+  agentic_coding_codex_5_4_web_citations: { label: 'Web & Citations', emoji: '🌐' },
+  agentic_coding_codex_5_4_tooling: { label: 'Tooling Contract', emoji: '🛠️' },
+  agentic_coding_codex_5_4_response_contract: { label: 'Response Contract', emoji: '📐' },
+  agentic_coding_codex_5_4_delegation: { label: 'Delegation', emoji: '🤝' },
+  agentic_coding_codex_5_4_models: { label: 'Models & Reasoning', emoji: '🧠' },
+  agentic_coding_codex_5_4_skills: { label: 'Skills & MCP', emoji: '🧰' },
+  agentic_coding_codex_5_4_state_scale: { label: 'State & Scale', emoji: '🗺️' },
+  agentic_coding_codex_5_4_long_horizon: { label: 'Long-Horizon', emoji: '🛰️' },
+  agentic_coding_codex_5_4_dos_donts: { label: 'Do\'s & Don\'ts', emoji: '✅' },
+  agentic_coding_codex_5_4_non_engineers: { label: 'Non-Engineers', emoji: '👥' },
+  agentic_coding_codex_5_4_prompt_patterns: { label: 'Prompt Patterns', emoji: '📝' },
+  agentic_coding_codex_5_4_rollout: { label: 'Team Rollout', emoji: '🚀' },
+};
+
 const OPERATION_LABELS_BY_SUBJECT: Record<
   KangurLessonSubject,
   Record<string, KangurLeaderboardOperationLabel>
@@ -150,6 +173,7 @@ const OPERATION_LABELS_BY_SUBJECT: Record<
     webdev_react_setup: { label: 'Setup', emoji: '📦' },
     webdev_react_state_management: { label: 'Managing State', emoji: '🗃️' },
   },
+  agentic_coding: AGENTIC_CODING_OPERATION_LABELS,
 };
 
 const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
@@ -157,6 +181,7 @@ const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   ...ENGLISH_OPERATION_LABELS,
   ...ALPHABET_OPERATION_LABELS,
   ...GEOMETRY_OPERATION_LABELS,
+  ...AGENTIC_CODING_OPERATION_LABELS,
 };
 
 const buildOperationOptions = (subject: KangurLessonSubject): KangurLeaderboardOperationOption[] =>

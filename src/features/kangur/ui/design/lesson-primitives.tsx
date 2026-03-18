@@ -171,13 +171,13 @@ export function KangurLessonVisual({
   children,
   ...props
 }: KangurLessonVisualProps): React.JSX.Element {
-  const resolvedCaptionClassName = captionClassName ?? 'mt-2';
+  const resolvedCaptionClassName = captionClassName ?? 'mt-2 kangur-lesson-visual-caption';
 
   return (
     <KangurLessonCallout
       accent={accent}
       padding={padding}
-      className={cn(center ? 'text-center' : 'text-left', className)}
+      className={cn('kangur-lesson-visual-frame', center ? 'text-center' : 'text-left', className)}
       {...props}
     >
       <div

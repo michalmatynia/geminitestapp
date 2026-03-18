@@ -16,6 +16,7 @@ export const AGENTIC_CODING_LESSON_COMPONENT_ORDER = [
   'agentic_coding_codex_5_4_web_citations',
   'agentic_coding_codex_5_4_tooling',
   'agentic_coding_codex_5_4_response_contract',
+  'agentic_coding_codex_5_4_ai_documentation',
   'agentic_coding_codex_5_4_delegation',
   'agentic_coding_codex_5_4_models',
   'agentic_coding_codex_5_4_cli_ide',
@@ -88,6 +89,10 @@ const AGENTIC_CODING_TOOLING_COMPONENT_IDS = [
 
 const AGENTIC_CODING_RESPONSE_CONTRACT_COMPONENT_IDS = [
   'agentic_coding_codex_5_4_response_contract',
+] as const satisfies readonly AgenticCodingLessonComponentId[];
+
+const AGENTIC_CODING_AI_DOCUMENTATION_COMPONENT_IDS = [
+  'agentic_coding_codex_5_4_ai_documentation',
 ] as const satisfies readonly AgenticCodingLessonComponentId[];
 
 const AGENTIC_CODING_DELEGATION_COMPONENT_IDS = [
@@ -286,9 +291,9 @@ export const AGENTIC_CODING_LESSON_TEMPLATES: Record<
     componentId: 'agentic_coding_codex_5_4_tooling',
     subject: 'agentic_coding',
     ageGroup: 'grown_ups',
-    label: 'Tooling Contract',
-    title: 'Tooling Contract',
-    description: 'exec_command, apply_patch, js_repl i repo guardrails.',
+    label: 'Tooling & Search',
+    title: 'Tooling & Search',
+    description: 'Web search, file search, computer use i tool search.',
     emoji: '🛠️',
     color: 'kangur-gradient-accent-slate',
     activeBg: 'bg-slate-500',
@@ -303,6 +308,17 @@ export const AGENTIC_CODING_LESSON_TEMPLATES: Record<
     emoji: '📐',
     color: 'kangur-gradient-accent-amber',
     activeBg: 'bg-amber-500',
+  },
+  agentic_coding_codex_5_4_ai_documentation: {
+    componentId: 'agentic_coding_codex_5_4_ai_documentation',
+    subject: 'agentic_coding',
+    ageGroup: 'grown_ups',
+    label: 'AI Documentation',
+    title: 'AI Documentation',
+    description: 'Hierarchia trosk, dowody i rollout w jednym formacie.',
+    emoji: '📚',
+    color: 'kangur-gradient-accent-emerald',
+    activeBg: 'bg-emerald-500',
   },
   agentic_coding_codex_5_4_delegation: {
     componentId: 'agentic_coding_codex_5_4_delegation',
@@ -387,7 +403,7 @@ export const AGENTIC_CODING_LESSON_TEMPLATES: Record<
     ageGroup: 'grown_ups',
     label: 'State & Scale',
     title: 'State & Scale',
-    description: 'Conversation state, background mode i webhooks.',
+    description: 'Conversation state, background mode, compaction i prompt caching.',
     emoji: '🗺️',
     color: 'kangur-gradient-accent-indigo',
     activeBg: 'bg-indigo-500',
@@ -540,7 +556,7 @@ export const AGENTIC_CODING_LESSON_GROUPS = [
       },
       {
         id: 'tooling-contract',
-        label: 'Tooling Contract',
+        label: 'Tooling & Search',
         typeLabel: 'Subsection',
         componentIds: AGENTIC_CODING_TOOLING_COMPONENT_IDS,
       },
@@ -549,6 +565,12 @@ export const AGENTIC_CODING_LESSON_GROUPS = [
         label: 'Response Contract',
         typeLabel: 'Subsection',
         componentIds: AGENTIC_CODING_RESPONSE_CONTRACT_COMPONENT_IDS,
+      },
+      {
+        id: 'ai-documentation',
+        label: 'AI Documentation',
+        typeLabel: 'Subsection',
+        componentIds: AGENTIC_CODING_AI_DOCUMENTATION_COMPONENT_IDS,
       },
       {
         id: 'delegation-parallelism',

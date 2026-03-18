@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-18T04:08:22.402Z",
+  "generatedAt": "2026-03-18T09:01:32.819Z",
   "source": {
-    "totalFiles": 6611,
-    "totalLines": 1061807,
+    "totalFiles": 6680,
+    "totalLines": 1080158,
     "useClientFiles": 1,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -152,13 +152,13 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1154,
-        "lines": 248186
+        "files": 1224,
+        "lines": 266658
       },
       {
         "feature": "ai",
         "files": 1029,
-        "lines": 208449
+        "lines": 208457
       },
       {
         "feature": "case-resolver",
@@ -483,6 +483,10 @@
         "lines": 1459
       },
       {
+        "path": "src/features/kangur/ui/components/animations/AgenticCodingAnimations.tsx",
+        "lines": 1436
+      },
+      {
         "path": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx",
         "lines": 1377
       },
@@ -499,6 +503,10 @@
         "lines": 1164
       },
       {
+        "path": "src/shared/contracts/kangur.ts",
+        "lines": 1150
+      },
+      {
         "path": "src/features/kangur/services/local-kangur-platform-duels.ts",
         "lines": 1144
       },
@@ -509,10 +517,6 @@
       {
         "path": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
         "lines": 1133
-      },
-      {
-        "path": "src/shared/contracts/kangur.ts",
-        "lines": 1115
       },
       {
         "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
@@ -563,6 +567,10 @@
         "lines": 1035
       },
       {
+        "path": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
+        "lines": 1029
+      },
+      {
         "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
         "lines": 1000
       },
@@ -589,14 +597,6 @@
       {
         "path": "src/shared/contracts/cms.ts",
         "lines": 974
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
-        "lines": 973
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
-        "lines": 958
       }
     ],
     "topPagesByLines": [
@@ -683,8 +683,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 42,
+    "candidateChains": 45,
     "depthGte4Chains": 1,
-    "forwardingComponents": 43
+    "forwardingComponents": 47
   }
 }

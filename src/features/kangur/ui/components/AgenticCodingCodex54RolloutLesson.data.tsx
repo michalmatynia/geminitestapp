@@ -9,7 +9,9 @@ import {
   AgenticRolloutMetricsAnimation,
   AgenticRolloutStagesAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'rollout';
 
@@ -31,29 +33,6 @@ const ROLLOUT_CHECKLIST = `Rollout checklist:
 - Metrics dashboard defined
 - Review/QA gate agreed
 - Feedback loop scheduled`;
-
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonCallout
-    accent='teal'
-    padding='sm'
-    className='border-teal-900/60 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonCallout>
-);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   rollout: [
@@ -123,7 +102,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Ustal checklistę przed skalowaniem - to stabilizuje jakość.
           </KangurLessonLead>
-          <LessonCodeBlock title='Checklist' code={ROLLOUT_CHECKLIST} />
+          <AgenticLessonCodeBlock
+            accent='teal'
+            title='Checklist'
+            code={ROLLOUT_CHECKLIST}
+          />
         </KangurLessonStack>
       ),
     },
@@ -145,6 +128,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Rollout Stages',
+      content: <AgenticCodingMiniGame gameId='rollout' />,
+      panelClassName: 'w-full',
     },
   ],
 };

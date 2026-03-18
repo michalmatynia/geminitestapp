@@ -9,6 +9,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticMilestoneTimelineAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
@@ -239,7 +240,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Krótki update po każdym milestone skraca feedback loop i chroni przed dryfem.
           </KangurLessonLead>
-          <LessonCodeBlock title='Milestone update' code={CHECKPOINT_UPDATE_TEMPLATE} />
+          <AgenticLessonCodeBlock
+            accent='sky'
+            title='Milestone update'
+            code={CHECKPOINT_UPDATE_TEMPLATE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -279,6 +284,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Milestone Flow',
+      content: <AgenticCodingMiniGame gameId='long_horizon' />,
+      panelClassName: 'w-full',
     },
   ],
 };

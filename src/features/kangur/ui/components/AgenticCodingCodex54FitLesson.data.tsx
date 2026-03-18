@@ -12,7 +12,9 @@ import {
   AgenticDoDontAnimation,
   AgenticFitQuadrantAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'fit';
 
@@ -45,28 +47,6 @@ const FIT_DECISION_TEMPLATE = `Fit triage:
 - Verification: tests / logs / none
 - Risk: low / medium / high
 - Decision: Codex / plan first / split task`;
-
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='sky'
-    className='border-sky-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
-);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   fit: [
@@ -111,7 +91,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           >
             <AgenticFitQuadrantAnimation />
           </KangurLessonVisual>
-          <LessonCodeBlock title='Fit triage' code={FIT_DECISION_TEMPLATE} />
+          <AgenticLessonCodeBlock accent='sky' title='Fit triage' code={FIT_DECISION_TEMPLATE} />
         </KangurLessonStack>
       ),
     },
@@ -169,6 +149,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Fit Scanner',
+      content: <AgenticCodingMiniGame gameId='fit' />,
+      panelClassName: 'w-full',
     },
   ],
 };

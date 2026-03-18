@@ -12,6 +12,8 @@ import {
   AgenticBriefContractAnimation,
   AgenticOperatingLoopAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
+import AgenticDiagramFillGame from '@/features/kangur/ui/components/AgenticDiagramFillGame';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
@@ -190,6 +192,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Brief Builder',
+      content: <AgenticCodingMiniGame gameId='foundations' />,
+      panelClassName: 'w-full',
+    },
+    {
+      title: 'Mini game: Loop Sketch',
+      content: <AgenticDiagramFillGame gameId='operating_loop_arrow' />,
+      panelClassName: 'w-full',
+    },
+    {
+      title: 'Mini game: Contract Box',
+      content: <AgenticDiagramFillGame gameId='brief_contract_box' />,
+      panelClassName: 'w-full',
     },
   ],
 };

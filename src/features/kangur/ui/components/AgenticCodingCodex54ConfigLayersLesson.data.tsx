@@ -5,10 +5,15 @@ import {
   KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
+  KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
+import AgenticDiagramFillGame from '@/features/kangur/ui/components/AgenticDiagramFillGame';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
-type SectionId = 'configLayers';
+type SectionId = 'config-layers';
 
 const CONFIG_LAYERS = [
   { title: 'User config', description: '`~/.codex/config.toml` dla ustawien osobistych.' },
@@ -46,30 +51,39 @@ web_search = "cached"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"`;
 
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='slate'
-    className='border-slate-900/70 bg-slate-950 text-slate-100'
+const ConfigLayersVisual = (): JSX.Element => (
+  <svg
+    aria-label='Diagram: warstwy konfiguracji (user, project).'
+    className='h-auto w-full'
+    role='img'
+    viewBox='0 0 360 140'
   >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
+    <style>{`
+      .layer {
+        fill: #f8fafc;
+        stroke: #e2e8f0;
+        stroke-width: 2;
+      }
+      .label {
+        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+        fill: #0f172a;
+      }
+      .arrow {
+        stroke: #94a3b8;
+        stroke-width: 2;
+        fill: none;
+      }
+    `}</style>
+    <rect className='layer' height='32' rx='10' width='220' x='70' y='22' />
+    <rect className='layer' height='32' rx='10' width='220' x='70' y='74' />
+    <text className='label' x='108' y='43'>User config</text>
+    <text className='label' x='98' y='95'>Project config</text>
+    <path className='arrow' d='M180 54 V74' />
+  </svg>
 );
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
-  configLayers: [
+  'config-layers': [
     {
       title: 'Warstwy konfiguracji',
       content: (
@@ -78,6 +92,13 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Codex laduje konfiguracje z poziomu user i projektu. Warstwy projektu
             dzialaja tylko dla zaufanych repo.
           </KangurLessonLead>
+          <KangurLessonVisual
+            accent='slate'
+            caption='User config jest bazą, project config działa tylko w trusted repo.'
+            maxWidthClassName='max-w-full'
+          >
+            <ConfigLayersVisual />
+          </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
             {CONFIG_LAYERS.map((item) => (
               <KangurLessonInset key={item.title} accent='slate'>
@@ -154,9 +175,38 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             Traktuj profile jako bezpieczne presety. Nastepnie odpaliaj Codex z
             docelowym profilem.
           </KangurLessonLead>
-          <LessonCodeBlock title='config.toml' code={CONFIG_EXAMPLE} />
+          <AgenticLessonCodeBlock accent='slate' title='config.toml' code={CONFIG_EXAMPLE} />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Kiedy wczytywane są projektowe warstwy config?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='slate'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Gdy repo jest oznaczone jako trusted.', correct: true },
+              { id: 'b', label: 'Zawsze, niezależnie od zaufania.' },
+              { id: 'c', label: 'Tylko w trybie read-only.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Mini game: Config Stack',
+      content: <AgenticCodingMiniGame gameId='config_layers' />,
+      panelClassName: 'w-full',
+    },
+    {
+      title: 'Mini game: Layer Sketch',
+      content: <AgenticDiagramFillGame gameId='config_layers_box' />,
+      panelClassName: 'w-full',
     },
   ],
 };
@@ -167,6 +217,6 @@ export const HUB_SECTIONS = [
     emoji: '⚙️',
     title: 'Config Layers',
     description: 'Warstwy konfiguracji i profile pracy.',
-    slideCount: SLIDES.configLayers.length,
+    slideCount: SLIDES['config-layers'].length,
   },
 ] as const;

@@ -2,27 +2,20 @@ import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSec
 import {
   KangurLessonCallout,
   KangurLessonCaption,
-  KangurLessonInset,
   KangurLessonLead,
   KangurLessonStack,
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import { KANGUR_GRID_TIGHT_CLASSNAME, KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
-  AgenticBriefContractAnimation,
   AgenticContextLensAnimation,
   AgenticDocsStackAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 
-type SectionId = 'prompting';
-
-const PROMPT_FRAME = [
-  { title: 'Goal', description: 'Co ma się zmienić lub powstać.' },
-  { title: 'Context', description: 'Pliki, logi, zależności, tło biznesowe.' },
-  { title: 'Constraints', description: 'Zakazy, limity, wymagane standardy.' },
-  { title: 'Done when', description: 'Testy, proof i akceptacja zachowania.' },
-] as const;
+type SectionId = 'prompting' | 'prompt_trim_game';
 
 const PLAN_OPTIONS = [
   { title: 'Plan mode', description: 'Gdy zadanie jest złożone lub niejasne.' },
@@ -52,36 +45,6 @@ const PROMPT_DELTA_EXAMPLE = `Follow-up (delta):
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   prompting: [
-    {
-      title: 'Prompt = kontrakt kontekstu',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Najlepsze prompty mają cztery bloki. Ten format stabilizuje wynik i skraca
-            iteracje.
-          </KangurLessonLead>
-          <KangurLessonVisual
-            accent='rose'
-            caption='Goal / Context / Constraints / Done when.'
-            maxWidthClassName='max-w-full'
-          >
-            <AgenticBriefContractAnimation />
-          </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-            {PROMPT_FRAME.map((item) => (
-              <KangurLessonInset key={item.title} accent='rose'>
-                <div className='text-xs font-semibold uppercase tracking-[0.2em] text-rose-500'>
-                  {item.title}
-                </div>
-                <KangurLessonCaption className='mt-2 text-rose-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
-        </KangurLessonStack>
-      ),
-    },
     {
       title: 'Plan, gdy zadanie jest trudne',
       content: (
@@ -162,6 +125,32 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Quick check',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Kiedy warto użyć delta prompt?
+          </KangurLessonLead>
+          <AgenticLessonQuickCheck
+            accent='rose'
+            question='Wybierz najlepszą odpowiedź.'
+            choices={[
+              { id: 'a', label: 'Gdy wynik jest blisko i chcesz doprecyzować.', correct: true },
+              { id: 'b', label: 'Gdy nie masz żadnego kontekstu.' },
+              { id: 'c', label: 'Gdy chcesz całkowicie zmienić temat.' },
+            ]}
+          />
+        </KangurLessonStack>
+      ),
+    },
+  ],
+  prompt_trim_game: [
+    {
+      title: 'Mini game: Prompt Contract',
+      content: <AgenticCodingMiniGame gameId='prompting' />,
+      panelClassName: 'w-full',
+    },
   ],
 };
 
@@ -172,5 +161,12 @@ export const HUB_SECTIONS = [
     title: 'Prompting & Context',
     description: 'Kontekst, planowanie i krótsze prompty w praktyce.',
     slideCount: SLIDES.prompting.length,
+  },
+  {
+    id: 'prompt_trim_game',
+    emoji: '✂️',
+    title: 'Prompt Trim Game',
+    description: 'Kliknij zbędne słowa i skróć prompt do perfekcyjnego formatu.',
+    isGame: true,
   },
 ] as const;

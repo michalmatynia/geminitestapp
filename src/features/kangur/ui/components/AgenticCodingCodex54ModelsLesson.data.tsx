@@ -12,9 +12,11 @@ import {
   AgenticModelSelectorAnimation,
   AgenticRoutingDialAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
-type SectionId = 'models';
+type SectionId = 'models' | 'reasoning_router_game';
 
 const MODEL_FACTORS = [
   { title: 'Speed', description: 'Szybkie iteracje, krótkie zadania, mały scope.' },
@@ -27,6 +29,12 @@ const REASONING_LEVELS = [
   { title: 'Medium', description: 'Większość zadań produktowych i refactorów.' },
   { title: 'High', description: 'Złożone debugowanie i nowe architektury.' },
   { title: 'XHigh', description: 'Najtrudniejsze, ryzykowne lub długie zadania.' },
+] as const;
+
+const REASONING_EFFORT_GUIDE = [
+  'Dostępne poziomy effort są zależne od modelu (np. none/minimal/low/medium/high/xhigh).',
+  'Niższy effort = mniejsza latencja i mniej tokenów.',
+  'Wyższy effort = pełniejsze rozumowanie kosztem czasu i ceny.',
 ] as const;
 
 const REASONING_TRIGGERS = [
@@ -82,6 +90,12 @@ Model: balanced
 Reasoning: high
 Budget: 2 iteracje, max 90 min
 Done when: testy + krótki plan rollout`;
+
+const REASONING_ROUTER_STEPS = [
+  'Kliknij zadanie, aby je zaznaczyć.',
+  'Przypisz poziom reasoning, który pasuje do ryzyka.',
+  'Sprawdź, czy routing jest spójny.',
+] as const;
 
 const ModelDecisionMatrixVisual = (): JSX.Element => (
   <svg
@@ -170,28 +184,6 @@ const ReasoningRampVisual = (): JSX.Element => (
   </svg>
 );
 
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='teal'
-    className='border-teal-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
-);
-
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   models: [
     {
@@ -241,6 +233,23 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               </KangurLessonInset>
             ))}
           </div>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Reasoning effort w praktyce',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Effort jest zależny od modelu - traktuj go jak regulator jakości i kosztu.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
+            <ul className='space-y-2 text-sm text-teal-950'>
+              {REASONING_EFFORT_GUIDE.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -324,7 +333,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ))}
             </ul>
           </KangurLessonCallout>
-          <LessonCodeBlock title='Routing playbook' code={ROUTING_PLAYBOOK_TEMPLATE} />
+          <AgenticLessonCodeBlock
+            accent='teal'
+            title='Routing playbook'
+            code={ROUTING_PLAYBOOK_TEMPLATE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -335,7 +348,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Zapisz decyzję o modelu w jednym miejscu - to przyspiesza współpracę.
           </KangurLessonLead>
-          <LessonCodeBlock title='Model decision template' code={MODEL_DECISION_TEMPLATE} />
+          <AgenticLessonCodeBlock
+            accent='teal'
+            title='Model decision template'
+            code={MODEL_DECISION_TEMPLATE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -346,7 +363,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Routing card trzyma decyzję o modelu i reasoning w jednym miejscu.
           </KangurLessonLead>
-          <LessonCodeBlock title='Routing card' code={ROUTING_CARD_EXAMPLE} />
+          <AgenticLessonCodeBlock
+            accent='teal'
+            title='Routing card'
+            code={ROUTING_CARD_EXAMPLE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -386,6 +407,30 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
         </KangurLessonStack>
       ),
     },
+    {
+      title: 'Mini game: Model Routing',
+      content: <AgenticCodingMiniGame gameId='models' />,
+      panelClassName: 'w-full',
+    },
+  ],
+  reasoning_router_game: [
+    {
+      title: 'Reasoning Router Game',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Przypisz poziomy reasoning do zadań o różnym ryzyku i złożoności.
+          </KangurLessonLead>
+          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
+            <ul className='space-y-2 text-sm text-teal-950'>
+              {REASONING_ROUTER_STEPS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
   ],
 };
 
@@ -396,5 +441,12 @@ export const HUB_SECTIONS = [
     title: 'Models & Reasoning',
     description: 'Trade-off między szybkością, kosztem i głębią.',
     slideCount: SLIDES.models.length,
+  },
+  {
+    id: 'reasoning_router_game',
+    emoji: '🎛️',
+    title: 'Reasoning Router',
+    description: 'Dobierz poziom reasoning do konkretnego zadania.',
+    isGame: true,
   },
 ] as const;

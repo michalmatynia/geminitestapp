@@ -12,21 +12,23 @@ import {
   AgenticResponsesStreamAnimation,
   AgenticToolLoopAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'responses';
 
 const RESPONSES_CORE = [
-  'Jeden endpoint obsługuje tekst, narzędzia i multimodalne akcje.',
-  'Wyniki przychodzą jako itemy w output, możliwe jest streamowanie.',
-  'API jest bazą pod agentów, automatyzacje i narzędzia.',
+  'Responses API łączy odpowiedzi tekstowe i wywołania narzędzi w jednym flow.',
+  'Wyniki przychodzą jako itemy w output, a stream ułatwia monitoring postępu.',
+  'Ten sam endpoint może obsługiwać funkcje, built-in tools i integracje MCP.',
 ] as const;
 
 const TOOL_RULES = [
-  { title: 'tools', description: 'Definiujesz listę funkcji lub narzędzi w JSON Schema.' },
-  { title: 'tool_choice', description: 'Auto, required albo wymuszenie konkretnej funkcji.' },
+  { title: 'tools', description: 'Lista funkcji i built-in tools dostępnych dla modelu.' },
+  { title: 'tool_choice', description: 'Auto, required albo wymuszenie konkretnego narzędzia.' },
   { title: 'parallel_tool_calls', description: 'Steruje, czy model może wołać wiele narzędzi naraz.' },
-  { title: 'built-in tools', description: 'Web search, code interpreter, MCP i więcej.' },
+  { title: 'tool_search', description: 'Ładuje odroczone narzędzia tylko wtedy, gdy są potrzebne.' },
 ] as const;
 
 const REACT_SCHEMA = `response_format: {
@@ -43,6 +45,14 @@ const REACT_SCHEMA = `response_format: {
       required: ["title", "cta"]
     }
   }
+}`;
+
+const RESPONSES_REQUEST = `// responses.create (pseudo)
+{
+  input: "Summarize recent errors in the log",
+  tools: [{ type: "shell" }, { type: "file_search" }],
+  tool_choice: "auto",
+  response_format: { type: "text" }
 }`;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
@@ -108,22 +118,31 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Gdy agent ma budować UI (np. React), wymuś JSON Schema i odbierz gotowe propsy.
           </KangurLessonLead>
-          <KangurLessonInset
+          <AgenticLessonCodeBlock
             accent='sky'
-            className='border-sky-900/70 bg-slate-950 text-slate-100'
-          >
-            <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-200'>
-              React props schema
-            </div>
-            <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-              <code>{REACT_SCHEMA}</code>
-            </pre>
-          </KangurLessonInset>
+            title='React props schema'
+            code={REACT_SCHEMA}
+          />
           <KangurLessonCallout accent='sky' padding='sm' className='text-left'>
             <KangurLessonCaption className='text-sky-950'>
               Schemat = mniej ręcznej walidacji i mniej bugów w UI.
             </KangurLessonCaption>
           </KangurLessonCallout>
+        </KangurLessonStack>
+      ),
+    },
+    {
+      title: 'Skeleton requestu',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Minimalny request ułatwia kontrolę narzędzi i formatu odpowiedzi.
+          </KangurLessonLead>
+          <AgenticLessonCodeBlock
+            accent='sky'
+            title='responses.create'
+            code={RESPONSES_REQUEST}
+          />
         </KangurLessonStack>
       ),
     },
@@ -145,6 +164,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Response Flow',
+      content: <AgenticCodingMiniGame gameId='responses' />,
+      panelClassName: 'w-full',
     },
   ],
 };

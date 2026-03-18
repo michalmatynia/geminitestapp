@@ -1384,3 +1384,52 @@ export function AgenticSkillManifestAnimation(): React.JSX.Element {
     </svg>
   );
 }
+
+export function AgenticCliIdeFlowAnimation(): React.JSX.Element {
+  return (
+    <svg
+      aria-label='Animacja: przepływ między IDE a CLI.'
+      className='h-auto w-full'
+      role='img'
+      viewBox='0 0 360 150'
+    >
+      <style>{`
+        .panel {
+          fill: #f8fafc;
+          stroke: #e2e8f0;
+          stroke-width: 2;
+        }
+        .label {
+          font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
+          fill: #0f172a;
+        }
+        .line {
+          stroke: #bae6fd;
+          stroke-width: 3;
+          stroke-linecap: round;
+        }
+        .dot {
+          fill: #38bdf8;
+          animation: dotFlow 5.8s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        @keyframes dotFlow {
+          0% { transform: translateX(0); opacity: 0; }
+          15% { opacity: 1; }
+          55% { transform: translateX(150px); opacity: 1; }
+          100% { transform: translateX(210px); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dot { animation: none; opacity: 1; transform: translateX(130px); }
+        }
+      `}</style>
+      <rect className='panel' height='70' rx='14' width='120' x='30' y='40' />
+      <rect className='panel' height='70' rx='14' width='120' x='210' y='40' />
+      <text className='label' x='68' y='70'>IDE</text>
+      <text className='label' x='248' y='70'>CLI</text>
+      <line className='line' x1='150' x2='210' y1='75' y2='75' />
+      <circle className='dot' cx='150' cy='75' r='5' />
+    </svg>
+  );
+}

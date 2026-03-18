@@ -340,6 +340,146 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     ],
     aliases: ['agentic coding', 'codex 5.4', 'codex'],
   },
+  agentic_coding_codex_5_4_fit: {
+    explanation:
+      'Wyjaśnia, kiedy Codex jest najlepszym wyborem, a kiedy trzeba uważać na ograniczenia. Lekcja dla dorosłych.',
+    triggerPhrases: ['fit', 'limits', 'use cases', 'granice codex', 'kiedy codex'],
+  },
+  agentic_coding_codex_5_4_surfaces: {
+    explanation:
+      'Porównuje środowiska Codex: CLI, IDE, Cloud i App, oraz kiedy wybrać każde z nich. Lekcja dla dorosłych.',
+    triggerPhrases: ['codex cli', 'codex ide', 'codex app', 'surfaces', 'środowiska codex'],
+  },
+  agentic_coding_codex_5_4_operating_model: {
+    explanation:
+      'Operating model: Goal/Context/Constraints/Done, planowanie i weryfikacja. Lekcja dla dorosłych.',
+    triggerPhrases: ['operating model', 'goal context', 'constraints', 'definition of done'],
+  },
+  agentic_coding_codex_5_4_prompting: {
+    explanation:
+      'Prompty i kontekst: krótsze briefy, @file i delta prompts. Lekcja dla dorosłych.',
+    triggerPhrases: ['prompting', 'kontekst', 'prompt', '@file', 'delta prompt'],
+  },
+  agentic_coding_codex_5_4_responses: {
+    explanation:
+      'Responses API i narzędzia: jak budować agenticzne workflow. Lekcja dla dorosłych.',
+    triggerPhrases: ['responses api', 'tools', 'function calling', 'codex responses'],
+  },
+  agentic_coding_codex_5_4_agents_md: {
+    explanation:
+      'AGENTS.md jako repo-brief: komendy, zasady i definicja Done. Lekcja dla dorosłych.',
+    triggerPhrases: ['agents.md', 'repo rules', 'instructions', 'agent guidance'],
+  },
+  agentic_coding_codex_5_4_approvals: {
+    explanation:
+      'Approvals i kontrola sieci: kiedy agent prosi o zgodę i jak ograniczać ryzyko. Lekcja dla dorosłych.',
+    triggerPhrases: ['approvals', 'approval', 'network access', 'approval policy'],
+  },
+  agentic_coding_codex_5_4_safety: {
+    explanation:
+      'Sandboxing i bezpieczeństwo pracy agenta: read-only, workspace-write, full access. Lekcja dla dorosłych.',
+    triggerPhrases: ['sandbox', 'permissions', 'safety', 'bezpieczeństwo'],
+  },
+  agentic_coding_codex_5_4_config_layers: {
+    explanation:
+      'Warstwy konfiguracji i profile Codex: user vs project, trust i presety pracy. Lekcja dla dorosłych.',
+    triggerPhrases: ['config.toml', 'profiles', 'config layers', 'trust level'],
+  },
+  agentic_coding_codex_5_4_rules: {
+    explanation:
+      'Rules i execpolicy: allowlist komend, prefix rules i testowanie zasad. Lekcja dla dorosłych.',
+    triggerPhrases: ['rules', 'execpolicy', 'allowlist', 'prefix_rule'],
+  },
+  agentic_coding_codex_5_4_web_citations: {
+    explanation:
+      'Web search i cytowania: kiedy szukać w sieci i jak podawać źródła. Lekcja dla dorosłych.',
+    triggerPhrases: ['web search', 'citations', 'źródła', 'linki'],
+  },
+  agentic_coding_codex_5_4_tooling: {
+    explanation:
+      'Tooling contract: exec_command, apply_patch, js_repl i zasady pracy z narzędziami. Lekcja dla dorosłych.',
+    triggerPhrases: ['tooling', 'exec_command', 'apply_patch', 'js_repl'],
+  },
+  agentic_coding_codex_5_4_response_contract: {
+    explanation:
+      'Response contract: format odpowiedzi, podsumowanie i ryzyka. Lekcja dla dorosłych.',
+    triggerPhrases: ['response contract', 'format odpowiedzi', 'summary', 'risk'],
+  },
+  agentic_coding_codex_5_4_ai_documentation: {
+    explanation:
+      'AI documentation: hierarchia trosk, dowody i rollout. Lekcja dla dorosłych.',
+    triggerPhrases: ['ai documentation', 'dokumentacja ai', 'documentation structure', 'hierarchia trosk'],
+  },
+  agentic_coding_codex_5_4_delegation: {
+    explanation:
+      'Delegowanie i równoległość: sub-agenci, podział scope i kontrola zadań. Lekcja dla dorosłych.',
+    triggerPhrases: ['delegation', 'subagents', 'parallel', 'delegowanie'],
+  },
+  agentic_coding_codex_5_4_models: {
+    explanation:
+      'Dobór modeli i poziomów reasoning do rodzaju zadania. Lekcja dla dorosłych.',
+    triggerPhrases: ['model', 'reasoning', 'gpt-5.4', 'gpt-5.4-mini'],
+  },
+  agentic_coding_codex_5_4_cli_ide: {
+    explanation:
+      'Workflow w CLI i IDE: skróty, komendy i szybkie iteracje. Lekcja dla dorosłych.',
+    triggerPhrases: ['cli', 'ide', 'codex cli', 'codex extension'],
+  },
+  agentic_coding_codex_5_4_app_workflows: {
+    explanation:
+      'Codex App: worktrees, automations i Git tools w aplikacji. Lekcja dla dorosłych.',
+    triggerPhrases: ['codex app', 'worktree', 'app workflows'],
+  },
+  agentic_coding_codex_5_4_skills: {
+    explanation:
+      'Skills i MCP: zamiana powtarzalnych workflow w reusable narzędzia. Lekcja dla dorosłych.',
+    triggerPhrases: ['skills', 'mcp', 'skills codex'],
+  },
+  agentic_coding_codex_5_4_mcp_integrations: {
+    explanation:
+      'Integracje MCP: podłączanie zewnętrznych narzędzi i kontekstu. Lekcja dla dorosłych.',
+    triggerPhrases: ['mcp integrations', 'linear', 'figma', 'github mcp'],
+  },
+  agentic_coding_codex_5_4_automations: {
+    explanation:
+      'Automations: praca w tle, harmonogram i triage. Lekcja dla dorosłych.',
+    triggerPhrases: ['automations', 'background tasks', 'harmonogram', 'triage'],
+  },
+  agentic_coding_codex_5_4_state_scale: {
+    explanation:
+      'State & scale: conversation state, background mode i cache. Lekcja dla dorosłych.',
+    triggerPhrases: ['state', 'scale', 'long-running', 'conversation state'],
+  },
+  agentic_coding_codex_5_4_review: {
+    explanation:
+      'Review & verification: testy, diff review i checklisty jakości. Lekcja dla dorosłych.',
+    triggerPhrases: ['review', 'verification', 'tests', 'diff'],
+  },
+  agentic_coding_codex_5_4_long_horizon: {
+    explanation:
+      'Długie zadania: spec, milestones i kontrola dryfu. Lekcja dla dorosłych.',
+    triggerPhrases: ['long horizon', 'milestones', 'spec', 'plan'],
+  },
+  agentic_coding_codex_5_4_dos_donts: {
+    explanation:
+      'Do’s & Don’ts: najważniejsze zasady współpracy z agentem. Lekcja dla dorosłych.',
+    triggerPhrases: ['dos', 'donts', 'best practices', 'zasady'],
+  },
+  agentic_coding_codex_5_4_non_engineers: {
+    explanation:
+      'Playbook dla non-engineers: jak delegować bez bycia full-time dev. Lekcja dla dorosłych.',
+    triggerPhrases: ['non-engineer', 'product manager', 'ops', 'delegowanie'],
+  },
+  agentic_coding_codex_5_4_prompt_patterns: {
+    explanation:
+      'Prompt patterns: szablony dla bugfix, refactor i review. Lekcja dla dorosłych.',
+    triggerPhrases: ['prompt patterns', 'bugfix prompt', 'refactor prompt', 'review prompt'],
+  },
+  agentic_coding_codex_5_4_rollout: {
+    explanation:
+      'Team rollout: stopniowe wdrożenie Codex w zespole. Lekcja dla dorosłych.',
+    triggerPhrases: ['rollout', 'team', 'wdrozenie', 'adopcja'],
+  },
   multiplication: {
     explanation:
       'Utrwala tabliczkę mnożenia, mnożenie jako grupowanie i prosty algorytm. Dobra do automatyzacji iloczynów.',

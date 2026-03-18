@@ -9,7 +9,9 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_GRID_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { AgenticSkillPipelineAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'non_engineers';
 
@@ -25,6 +27,11 @@ const REVIEW_RITUAL = [
   'Sprawdź dowód: testy, logi, zrzuty.',
   'Zatwierdź tylko jeśli rozumiesz wpływ na produkt.',
 ] as const;
+
+const NON_ENGINEER_BRIEF_EXAMPLE = `Goal: Skrócić onboarding użytkownika do 3 kroków.
+Context: screen "WelcomeFlow" w apps/web, obecnie 5 kroków i 2 drop-offs.
+Constraints: bez zmian w copy, zachowaj analytics events.
+Done when: 3 kroki, drop-off < 20%, QA checklist wypełniona.`;
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   non_engineers: [
@@ -70,6 +77,21 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
+      title: 'Przykład briefu',
+      content: (
+        <KangurLessonStack align='start' className='w-full'>
+          <KangurLessonLead align='left'>
+            Poniżej przykład briefu w języku biznesowym, ale z jasnym Done.
+          </KangurLessonLead>
+          <AgenticLessonCodeBlock
+            accent='amber'
+            title='Brief example'
+            code={NON_ENGINEER_BRIEF_EXAMPLE}
+          />
+        </KangurLessonStack>
+      ),
+    },
+    {
       title: 'Review ritual',
       content: (
         <KangurLessonStack align='start' className='w-full'>
@@ -104,6 +126,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Delegation Clarity',
+      content: <AgenticCodingMiniGame gameId='non_engineers' />,
+      panelClassName: 'w-full',
     },
   ],
 };

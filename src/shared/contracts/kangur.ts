@@ -98,6 +98,7 @@ export const kangurLessonComponentIdSchema = z.enum([
   'agentic_coding_codex_5_4_web_citations',
   'agentic_coding_codex_5_4_tooling',
   'agentic_coding_codex_5_4_response_contract',
+  'agentic_coding_codex_5_4_ai_documentation',
   'agentic_coding_codex_5_4_delegation',
   'agentic_coding_codex_5_4_models',
   'agentic_coding_codex_5_4_cli_ide',

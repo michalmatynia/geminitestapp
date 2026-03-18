@@ -6,7 +6,9 @@ import {
   KangurLessonVisual,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { AgenticDoDontAnimation } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'dos_donts';
 
@@ -40,29 +42,6 @@ Don't:
 - Mix multiple tasks
 - Skip proof loop
 - Grant full access by default`;
-
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonCallout
-    accent='violet'
-    padding='sm'
-    className='border-violet-900/60 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonCallout>
-);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   dos_donts: [
@@ -132,7 +111,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonLead align='left'>
             Krótka ściąga do codziennej pracy z agentem.
           </KangurLessonLead>
-          <LessonCodeBlock title='Do / Don’t' code={DO_DONT_CHEATSHEET} />
+          <AgenticLessonCodeBlock
+            accent='violet'
+            title='Do / Don’t'
+            code={DO_DONT_CHEATSHEET}
+          />
         </KangurLessonStack>
       ),
     },
@@ -154,6 +137,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: "Mini game: Do / Don't",
+      content: <AgenticCodingMiniGame gameId='dos_donts' />,
+      panelClassName: 'w-full',
     },
   ],
 };

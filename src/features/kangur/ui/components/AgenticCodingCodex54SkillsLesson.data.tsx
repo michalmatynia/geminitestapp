@@ -12,7 +12,9 @@ import {
   AgenticSkillManifestAnimation,
   AgenticSkillPipelineAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 
 type SectionId = 'skills';
 
@@ -36,29 +38,12 @@ const SKILL_QUALITY = [
   'Guardrails i approvals są spisane wprost.',
 ] as const;
 
-const AUTOMATIONS = [
-  'Automations uruchamiasz w Codex app - działają w tle.',
-  'Możesz łączyć automations ze skills, żeby reuseować workflow.',
-  'W repo Git wybierasz worktree albo lokalny projekt jako środowisko.',
-  'Worktree izoluje zmiany od bieżącej pracy, lokalny projekt modyfikuje na miejscu.',
-] as const;
-
-const AUTOMATION_EXAMPLES = [
-  'Codziennie: podsumowanie ostatnich commitów.',
-  'Co tydzień: szkic release notes.',
-  'Po każdym cyklu: szybki scan na likely bugs lub CI failures.',
-  'Rano: standup summary z repo aktywności.',
-] as const;
-
 const MCP_CLI_COMMANDS = [
-  { title: 'codex mcp list/get', description: 'Lista i podgląd serwerów MCP.' },
-  { title: 'codex mcp add/remove', description: 'Rejestracja i usuwanie integracji.' },
-  { title: 'codex mcp login/logout', description: 'Obsługa autoryzacji dla MCP.' },
+  { title: 'codex mcp list / get', description: 'Lista i podgląd konfiguracji serwerów.' },
+  { title: 'codex mcp add <name>', description: 'Rejestracja serwera (URL lub STDIO).' },
+  { title: 'codex mcp remove <name>', description: 'Usuwanie integracji MCP.' },
+  { title: 'codex mcp login / logout', description: 'Obsługa OAuth dla serwerów MCP.' },
   { title: 'codex mcp-server', description: 'Uruchom Codex jako MCP server (stdio).' },
-  {
-    title: 'codex app-server generate-ts/json-schema',
-    description: 'Generuje bindingi i schematy protokołu.',
-  },
 ] as const;
 
 const SKILL_MANIFEST_TEMPLATE = `name: audit-react-hooks
@@ -73,28 +58,6 @@ outputs:
 safety:
   approvals: workspace-write
   network: disabled`;
-
-const LessonCodeBlock = ({
-  title,
-  code,
-}: {
-  title?: string;
-  code: string;
-}): JSX.Element => (
-  <KangurLessonInset
-    accent='emerald'
-    className='border-emerald-900/70 bg-slate-950 text-slate-100'
-  >
-    {title ? (
-      <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200'>
-        {title}
-      </div>
-    ) : null}
-    <pre className='mt-2 whitespace-pre-wrap text-xs leading-relaxed'>
-      <code>{code}</code>
-    </pre>
-  </KangurLessonInset>
-);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   skills: [
@@ -143,35 +106,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               ))}
             </ul>
           </KangurLessonCallout>
-          <LessonCodeBlock title='Skill manifest' code={SKILL_MANIFEST_TEMPLATE} />
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Automations = harmonogram',
-      content: (
-        <KangurLessonStack align='start' className='w-full'>
-          <KangurLessonLead align='left'>
-            Skills definiują metodę, automations definiują schedule. To najkrótsza
-            droga do stałej jakości w tle.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='emerald' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-emerald-950'>
-              {AUTOMATIONS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
-          <KangurLessonCallout accent='emerald' padding='sm' className='text-left'>
-            <KangurLessonCaption className='mb-3 text-emerald-950'>
-              Przykłady cadence i zadań:
-            </KangurLessonCaption>
-            <ul className='space-y-2 text-sm text-emerald-950'>
-              {AUTOMATION_EXAMPLES.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
+          <AgenticLessonCodeBlock
+            accent='emerald'
+            title='Skill manifest'
+            code={SKILL_MANIFEST_TEMPLATE}
+          />
         </KangurLessonStack>
       ),
     },
@@ -256,6 +195,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           />
         </KangurLessonStack>
       ),
+    },
+    {
+      title: 'Mini game: Skill Contract',
+      content: <AgenticCodingMiniGame gameId='skills' />,
+      panelClassName: 'w-full',
     },
   ],
 };

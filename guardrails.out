@@ -1,0 +1,26 @@
+Guardrail comparison against baseline
+Baseline generated at: 2026-03-17T11:03:10.000Z
+INFO   api.delegatedServerRoutes                    current=     158 max=       0
+OK     api.routesWithoutApiHandler                  current=       1 max=      53
+OK     api.routesWithoutExplicitCachePolicy         current=       0 max=      53
+OK     api.totalRoutes                              current=      29 max=      83
+FAIL   architecture.crossFeatureEdgePairs           current=       7 max=       6
+OK     imports.appFeatureBarrelImports              current=       0 max=       0
+OK     imports.appFeatureDeepImports                current=      22 max=      37
+OK     imports.featuresToAppApiTotalImports         current=       0 max=       0
+OK     imports.featuresToSharedTotalImports         current=      28 max=    1448
+OK     imports.sharedToFeaturesTotalImports         current=       2 max=       7
+FAIL   propDrilling.componentsWithForwarding        current=       1 max=       0
+OK     propDrilling.depthGte4Chains                 current=       0 max=       0
+OK     runtime.setIntervalOccurrences               current=       0 max=       6
+OK     source.filesOver1000                         current=       0 max=       6
+OK     source.filesOver1500                         current=       0 max=       0
+OK     source.largestFileLines                      current=     273 max=     364
+OK     source.useClientFiles                        current=       1 max=     398
+OK     uiConsolidation.duplicateNameClusters        current=       0 max=       0
+OK     uiConsolidation.highPriorityOpportunities    current=       0 max=       0
+OK     uiConsolidation.propSignatureClusters        current=       0 max=       0
+OK     uiConsolidation.tokenSimilarityClusters      current=       0 max=       0
+OK     uiConsolidation.totalOpportunities           current=       0 max=       0
+OK     imports.featuresToAppApiTotalImports (hard limit) current=       0 max=       0
+OK     source.largestFileLines (hard limit)         current=     273 max=    2000

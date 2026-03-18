@@ -5,8 +5,17 @@ import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicO
 
 export type { FrontendPublicOwnerShellProps };
 
-export default function FrontendPublicOwnerShell(
-  props: FrontendPublicOwnerShellProps
-): JSX.Element {
-  return <FrontendPublicOwnerShellClient {...props} />;
+export default function FrontendPublicOwnerShell({
+  publicOwner,
+  kangurInitialMode,
+  children,
+}: FrontendPublicOwnerShellProps): JSX.Element {
+  return (
+    <FrontendPublicOwnerShellClient
+      publicOwner={publicOwner}
+      kangurInitialMode={kangurInitialMode}
+    >
+      {children}
+    </FrontendPublicOwnerShellClient>
+  );
 }

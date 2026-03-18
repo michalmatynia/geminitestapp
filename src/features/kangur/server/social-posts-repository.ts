@@ -112,18 +112,6 @@ const findPostDocById = async (
   return collection.findOne({ id: { $regex: regex } });
 };
 
-const deletePostDocById = async (
-  collection: ReturnType<typeof readCollection> extends Promise<infer T> ? T : never,
-  normalizedId: string
-): Promise<KangurSocialPostDoc | null> => {
-  const direct = await collection.findOneAndDelete({ id: normalizedId });
-  const directDoc = direct?.value ?? null;
-  if (directDoc) return directDoc;
-  const regex = buildLooseIdRegex(normalizedId);
-  const fallback = await collection.findOneAndDelete({ id: { $regex: regex } });
-  return fallback?.value ?? null;
-};
-
 export async function listKangurSocialPosts(): Promise<KangurSocialPost[]> {
   if (!process.env['MONGODB_URI']) {
     const store = await readLocalStore();
@@ -273,15 +261,19 @@ export async function deleteKangurSocialPost(id: string): Promise<KangurSocialPo
 
   if (!process.env['MONGODB_URI']) {
     const store = await readLocalStore();
-    const existingIndex = store.posts.findIndex((entry) => entry.id === normalizedId);
-    if (existingIndex < 0) return null;
-    const [removed] = store.posts.splice(existingIndex, 1);
+    const matchesId = (value: string): boolean => value.trim() === normalizedId;
+    const existing = store.posts.find((entry) => matchesId(entry.id)) ?? null;
+    if (!existing) return null;
+    store.posts = store.posts.filter((entry) => !matchesId(entry.id));
     await writeLocalStore(store);
-    return removed ?? null;
+    return existing;
   }
 
   await ensureIndexes();
   const collection = await readCollection();
-  const doc = await deletePostDocById(collection, normalizedId);
-  return doc ? toSocialPost(doc) : null;
+  const existing = await findPostDocById(collection, normalizedId);
+  if (!existing) return null;
+  const regex = buildLooseIdRegex(normalizedId);
+  await collection.deleteMany({ id: { $regex: regex } });
+  return toSocialPost(existing);
 }

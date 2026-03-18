@@ -91,7 +91,9 @@ describe('publishKangurSocialPost', () => {
 
     const result = await publishKangurSocialPost(basePost);
 
-    expect(mocks.publishLinkedInPersonalPostMock).toHaveBeenCalledWith(basePost);
+    expect(mocks.publishLinkedInPersonalPostMock).toHaveBeenCalledWith(basePost, {
+      mode: 'published',
+    });
     expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
       basePost.id,
       expect.objectContaining({

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import { AdminAiPathsBreadcrumbs, Badge, Button, ListPanel, Hint } from '@/shared/ui';
-import { FileUploadEventsPanel } from '@/shared/ui/files';
+import { FileUploadEventsPanel } from '@/features/files';
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';

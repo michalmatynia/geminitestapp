@@ -52,21 +52,33 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
     try {
       log(\`[\${id}] Navigating to \${url}\`);
       await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+      log(\`[\${id}] Load event fired — current URL: \${page.url()}\`);
 
-      // Wait for the Kangur page transition skeleton to disappear.
-      // This overlay (data-testid="kangur-page-transition-skeleton") covers the
-      // entire page while React hydrates and data loads. It is unmounted from
-      // the DOM once the page calls useKangurRoutePageReady({ ready: true }).
-      try {
-        const skeleton = page.locator('[data-testid="kangur-page-transition-skeleton"]');
-        const skeletonCount = await skeleton.count();
-        if (skeletonCount > 0) {
-          log(\`[\${id}] Skeleton overlay detected — waiting for it to disappear\`);
-          await skeleton.waitFor({ state: 'hidden', timeout: waitForSelectorMs });
-          log(\`[\${id}] Skeleton removed — page content is ready\`);
+      // Poll DOM until the page is fully ready. Uses only page.$() and
+      // locator.count() (no waitForFunction) because Playwright scripts
+      // run inside a vm sandbox where function serialization can fail.
+      {
+        const pollDeadline = Date.now() + waitForSelectorMs;
+        let pageReady = false;
+        log(\`[\${id}] Polling for page readiness (shell + no skeleton + transition idle)\`);
+        while (Date.now() < pollDeadline) {
+          const hasShell = await page.$('[data-testid="kangur-route-shell"]');
+          if (!hasShell) { await helpers.sleep(400); continue; }
+          const skeletonCount = await page.locator('[data-testid="kangur-page-transition-skeleton"]').count();
+          if (skeletonCount > 0) { await helpers.sleep(400); continue; }
+          const phaseEl = await page.$('[data-route-transition-phase]');
+          if (phaseEl) {
+            const phase = await phaseEl.getAttribute('data-route-transition-phase');
+            if (phase && phase !== 'idle') { await helpers.sleep(400); continue; }
+            const busy = await phaseEl.getAttribute('aria-busy');
+            if (busy === 'true') { await helpers.sleep(400); continue; }
+          }
+          pageReady = true;
+          break;
         }
-      } catch {
-        log(\`[\${id}] Skeleton wait timed out — proceeding with capture anyway\`);
+        log(pageReady
+          ? \`[\${id}] Page ready — skeleton gone, transition idle\`
+          : \`[\${id}] Page readiness timeout — capturing current state\`);
       }
 
       if (selector) {
@@ -74,11 +86,10 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
         await page.waitForSelector(selector, { state: 'visible', timeout: waitForSelectorMs });
       }
 
-      // Settling time for animations and late API responses
-      if (waitForMs > 0) {
-        log(\`[\${id}] Waiting \${waitForMs}ms for content to settle\`);
-        await helpers.sleep(waitForMs);
-      }
+      // Settling time for animations, lazy-loaded images, and late API responses
+      const settleMs = Math.max(waitForMs, 3000);
+      log(\`[\${id}] Waiting \${settleMs}ms for content to settle\`);
+      await helpers.sleep(settleMs);
 
       const buffer = selector
         ? await page.locator(selector).screenshot({ type: 'png' })
@@ -107,6 +118,7 @@ type BatchCaptureInput = {
   baseUrl: string;
   presetIds?: string[] | null;
   createdBy?: string | null;
+  forwardCookies?: string | null;
 };
 
 type BatchCaptureResult = {
@@ -151,6 +163,33 @@ const buildCaptureUrl = (baseUrl: string, pathValue: string): string => {
   return `${trimmedBase}${normalizedPath}`;
 };
 
+const parseCookiesForPlaywright = (
+  cookieHeader: string,
+  baseUrl: string
+): Array<{ name: string; value: string; domain: string; path: string }> => {
+  let domain: string;
+  try {
+    domain = new URL(baseUrl).hostname;
+  } catch {
+    domain = 'localhost';
+  }
+  return cookieHeader
+    .split(';')
+    .map((pair) => pair.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const eqIdx = pair.indexOf('=');
+      if (eqIdx < 0) return null;
+      return {
+        name: pair.slice(0, eqIdx).trim(),
+        value: pair.slice(eqIdx + 1).trim(),
+        domain,
+        path: '/',
+      };
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null && c.name.length > 0);
+};
+
 export async function createKangurSocialImageAddonsBatch(
   input: BatchCaptureInput
 ): Promise<BatchCaptureResult> {
@@ -178,6 +217,17 @@ export async function createKangurSocialImageAddonsBatch(
     waitForSelectorMs: preset.waitForSelectorMs ?? 10000,
   }));
 
+  const contextOptions: Record<string, unknown> = {};
+  if (input.forwardCookies) {
+    const cookies = parseCookiesForPlaywright(input.forwardCookies, baseUrl);
+    if (cookies.length > 0) {
+      contextOptions['storageState'] = {
+        cookies,
+        origins: [],
+      };
+    }
+  }
+
   const run = await enqueuePlaywrightNodeRun({
     request: {
       script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
@@ -186,6 +236,7 @@ export async function createKangurSocialImageAddonsBatch(
       },
       timeoutMs: 180_000,
       browserEngine: 'chromium',
+      contextOptions: Object.keys(contextOptions).length > 0 ? contextOptions : undefined,
     },
     waitForResult: true,
     ownerUserId: input.createdBy ?? null,

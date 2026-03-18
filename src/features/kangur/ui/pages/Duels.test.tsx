@@ -120,8 +120,40 @@ describe('Duels page', () => {
     );
   });
 
-  it('configures lobby hook for authenticated users', () => {
+  it('configures lobby hook for authenticated users with an active learner', () => {
     authState.isAuthenticated = true;
+    authState.user = {
+      id: 'user-1',
+      full_name: 'Parent',
+      email: 'parent@example.com',
+      role: 'user',
+      actorType: 'parent',
+      canManageLearners: true,
+      ownerUserId: 'user-1',
+      ownerEmailVerified: true,
+      activeLearner: {
+        id: 'learner-1',
+        ownerUserId: 'user-1',
+        displayName: 'Learner',
+        loginName: 'learner',
+        status: 'active',
+        legacyUserKey: null,
+        aiTutor: {
+          mood: 'calm',
+          level: 'primary',
+          voice: 'neutral',
+          emoji: 'smile',
+          voiceStyle: 'gentle',
+          tone: 'encouraging',
+          language: 'pl',
+          defaultSupportMode: 'encourage',
+          intensity: 0.5,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      learners: [],
+    } as any;
 
     render(<Duels />);
 
@@ -129,6 +161,30 @@ describe('Duels page', () => {
       expect.objectContaining({
         canPlay: true,
         isGuest: false,
+      })
+    );
+  });
+
+  it('disables lobby play when no active learner is selected', () => {
+    authState.isAuthenticated = true;
+    authState.user = {
+      id: 'user-2',
+      full_name: 'Parent',
+      email: 'parent@example.com',
+      role: 'user',
+      actorType: 'parent',
+      canManageLearners: true,
+      ownerUserId: 'user-2',
+      ownerEmailVerified: true,
+      activeLearner: null,
+      learners: [],
+    } as any;
+
+    render(<Duels />);
+
+    expect(useDuelsLobbyMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canPlay: false,
       })
     );
   });

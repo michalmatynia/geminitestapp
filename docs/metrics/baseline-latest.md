@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-18'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-17T19:44:27.517Z
+Generated at: 2026-03-18T04:08:22.402Z
 
 ## Snapshot
 
-- Source files: 6565
-- Source lines: 1054636
+- Source files: 6611
+- Source lines: 1061807
 - use client files: 1
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -22,11 +22,11 @@ Generated at: 2026-03-17T19:44:27.517Z
 - API delegated server routes: 158
 - API routes without apiHandler/delegation: 1
 - API explicit cache policy coverage: 283/29 (975.9%)
-- Cross-feature dependency pairs: 7
-- Shared -> features imports: 2
+- Cross-feature dependency pairs: 8
+- Shared -> features imports: 1
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 36
-- Prop-drilling chains (depth >= 4): 0
+- Prop-drilling chains (depth >= 3): 42
+- Prop-drilling chains (depth >= 4): 1
 
 ## Top API Hotspots (by LOC)
 
@@ -58,6 +58,7 @@ Generated at: 2026-03-17T19:44:27.517Z
 | `admin -> observability` | 1 |
 | `admin -> prompt-engine` | 1 |
 | `admin -> products` | 1 |
+| `ai -> files` | 1 |
 | `cms -> admin` | 1 |
 
 ## Top File Hotspots (by LOC)
@@ -65,15 +66,16 @@ Generated at: 2026-03-17T19:44:27.517Z
 | File | LOC |
 | --- | ---: |
 | `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts` | 1459 |
+| `src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx` | 1377 |
 | `src/shared/contracts/kangur-ai-tutor-content.ts` | 1189 |
 | `src/features/kangur/cms-builder/defaults/game-defaults.ts` | 1188 |
-| `src/features/kangur/ui/components/ClockLesson.tsx` | 1169 |
+| `src/features/kangur/ui/components/ClockLesson.tsx` | 1164 |
 | `src/features/kangur/services/local-kangur-platform-duels.ts` | 1144 |
+| `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 1137 |
 | `src/features/kangur/ui/components/KangurAssignmentManager.tsx` | 1133 |
-| `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 1124 |
+| `src/shared/contracts/kangur.ts` | 1115 |
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 1113 |
 | `src/features/cms/components/page-builder/registry/block-definitions-content.ts` | 1112 |
-| `src/shared/contracts/kangur.ts` | 1100 |
 | `src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts` | 1087 |
 | `src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx` | 1077 |
 | `src/features/prompt-engine/components/RuleItem.tsx` | 1075 |
@@ -82,5 +84,4 @@ Generated at: 2026-03-17T19:44:27.517Z
 | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1051 |
 | `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
-| `src/features/kangur/ui/pages/Game.tsx` | 1035 |
 | `src/features/prompt-engine/context/PromptEngineContext.tsx` | 1035 |

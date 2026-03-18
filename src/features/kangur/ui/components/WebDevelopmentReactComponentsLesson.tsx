@@ -11,7 +11,7 @@ export default function WebDevelopmentReactComponentsLesson(): JSX.Element {
     <KangurUnifiedLesson
       lessonId='webdev-react-components'
       lessonEmoji='⚛️'
-      lessonTitle='React 19.2'
+      lessonTitle='Component Basics'
       sections={HUB_SECTIONS}
       slides={SLIDES}
       gradientClass='kangur-gradient-accent-sky'

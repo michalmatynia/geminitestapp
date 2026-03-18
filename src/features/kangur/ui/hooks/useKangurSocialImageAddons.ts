@@ -74,7 +74,9 @@ export const useCreateKangurSocialImageAddon = (): MutationResult<
     mutationFn: async (
       payload: CreateKangurSocialImageAddonPayload
     ): Promise<KangurSocialImageAddon> =>
-      await api.post<KangurSocialImageAddon>('/api/kangur/social-image-addons', payload),
+      await api.post<KangurSocialImageAddon>('/api/kangur/social-image-addons', payload, {
+        timeout: 90_000,
+      }),
     invalidate: invalidateSocialImageAddons,
     meta: {
       source: 'kangur.hooks.useCreateKangurSocialImageAddon',
@@ -108,7 +110,8 @@ export const useBatchCaptureKangurSocialImageAddons = (): MutationResult<
     ): Promise<KangurSocialImageAddonsBatchResult> =>
       await api.post<KangurSocialImageAddonsBatchResult>(
         '/api/kangur/social-image-addons/batch',
-        payload
+        payload,
+        { timeout: 180_000 }
       ),
     invalidate: invalidateSocialImageAddons,
     meta: {

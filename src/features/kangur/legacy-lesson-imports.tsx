@@ -343,6 +343,86 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
     kind: 'flat',
     slides: [],
   },
+  webdev_react_dom_components: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_hooks: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_apis: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_dom_hooks: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_dom_apis: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_dom_client_apis: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_dom_server_apis: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_dom_static_apis: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_compiler_config: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_compiler_directives: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_compiler_libraries: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_performance_tracks: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_lints: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_rules: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_server_components: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_server_functions: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_server_directives: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_router: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_setup: {
+    kind: 'flat',
+    slides: [],
+  },
+  webdev_react_state_management: {
+    kind: 'flat',
+    slides: [],
+  },
 };
 
 const buildPagesFromDefinition = (

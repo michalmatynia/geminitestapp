@@ -246,6 +246,86 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
     explanation: 'Buduj interaktywne komponenty w React. Lekcja dla dorosłych.',
     triggerPhrases: ['react', 'komponenty', 'programowanie'],
   },
+  webdev_react_dom_components: {
+    explanation: 'Poznaj komponenty React DOM i podstawy pracy z DOM. Lekcja dla dorosłych.',
+    triggerPhrases: ['react dom', 'react-dom', 'dom', 'components', 'komponenty'],
+  },
+  webdev_react_hooks: {
+    explanation: 'Poznaj podstawy hooków w React 19.2. Lekcja dla dorosłych.',
+    triggerPhrases: ['hooks', 'hooki', 'useState', 'useEffect', 'react'],
+  },
+  webdev_react_apis: {
+    explanation: 'Poznaj podstawowe API Reacta. Lekcja dla dorosłych.',
+    triggerPhrases: ['api', 'apis', 'react', 'createContext', 'memo', 'lazy'],
+  },
+  webdev_react_dom_hooks: {
+    explanation: 'Poznaj hooki z React DOM i obsługę formularzy. Lekcja dla dorosłych.',
+    triggerPhrases: ['react dom', 'react-dom', 'dom', 'form', 'formularz', 'useFormStatus'],
+  },
+  webdev_react_dom_apis: {
+    explanation: 'Poznaj API React DOM: portale i narzędzia renderowania. Lekcja dla dorosłych.',
+    triggerPhrases: ['react dom', 'react-dom', 'portal', 'createPortal', 'flushSync'],
+  },
+  webdev_react_dom_client_apis: {
+    explanation: 'Poznaj client API React DOM: createRoot i hydrateRoot. Lekcja dla dorosłych.',
+    triggerPhrases: ['react dom', 'react-dom', 'createRoot', 'hydrateRoot', 'client api'],
+  },
+  webdev_react_dom_server_apis: {
+    explanation: 'Poznaj server API React DOM: renderowanie HTML i streaming. Lekcja dla dorosłych.',
+    triggerPhrases: ['react dom', 'react-dom', 'renderToString', 'streaming', 'server api'],
+  },
+  webdev_react_dom_static_apis: {
+    explanation: 'Poznaj static API React DOM: renderowanie bez streamingu. Lekcja dla dorosłych.',
+    triggerPhrases: ['react dom', 'react-dom', 'static', 'renderToStaticMarkup', 'renderToString'],
+  },
+  webdev_react_compiler_config: {
+    explanation: 'Poznaj konfigurację React Compiler i podstawy optymalizacji. Lekcja dla dorosłych.',
+    triggerPhrases: ['react compiler', 'compiler', 'konfiguracja', 'optymalizacja', 'memo'],
+  },
+  webdev_react_compiler_directives: {
+    explanation: 'Poznaj dyrektywy React Compiler i kontrolę optymalizacji. Lekcja dla dorosłych.',
+    triggerPhrases: ['react compiler', 'directives', 'dyrektywy', 'compiler'],
+  },
+  webdev_react_compiler_libraries: {
+    explanation: 'Poznaj biblioteki wspierające React Compiler. Lekcja dla dorosłych.',
+    triggerPhrases: ['react compiler', 'libraries', 'biblioteki', 'compiler'],
+  },
+  webdev_react_performance_tracks: {
+    explanation: 'Poznaj ścieżki wydajności w React i analizę renderów. Lekcja dla dorosłych.',
+    triggerPhrases: ['performance', 'wydajność', 'tracks', 'profiler', 'render'],
+  },
+  webdev_react_lints: {
+    explanation: 'Poznaj linting w React i zasady jakości kodu. Lekcja dla dorosłych.',
+    triggerPhrases: ['lint', 'linting', 'eslint', 'rules of hooks', 'quality'],
+  },
+  webdev_react_rules: {
+    explanation: 'Poznaj Rules Of React i dobre praktyki Reacta. Lekcja dla dorosłych.',
+    triggerPhrases: ['rules of react', 'zasady reacta', 'react rules', 'best practices'],
+  },
+  webdev_react_server_components: {
+    explanation: 'Poznaj Server Components i podział na Server/Client. Lekcja dla dorosłych.',
+    triggerPhrases: ['server components', 'react server components', 'use client', 'server'],
+  },
+  webdev_react_server_functions: {
+    explanation: 'Poznaj Server Functions i bezpieczne akcje po stronie serwera. Lekcja dla dorosłych.',
+    triggerPhrases: ['server functions', 'server actions', 'use server', 'actions'],
+  },
+  webdev_react_server_directives: {
+    explanation: 'Poznaj Server Directives i granice kodu. Lekcja dla dorosłych.',
+    triggerPhrases: ['server directives', 'use server', 'use client', 'directives'],
+  },
+  webdev_react_router: {
+    explanation: 'Poznaj podstawy routingu w React i React Router. Lekcja dla dorosłych.',
+    triggerPhrases: ['react router', 'routing', 'routes', 'route', 'nawigacja'],
+  },
+  webdev_react_setup: {
+    explanation: 'Poznaj podstawy konfiguracji i uruchomienia React. Lekcja dla dorosłych.',
+    triggerPhrases: ['setup', 'konfiguracja', 'start', 'dev server', 'react'],
+  },
+  webdev_react_state_management: {
+    explanation: 'Poznaj podstawy zarządzania stanem w React. Lekcja dla dorosłych.',
+    triggerPhrases: ['state', 'stan', 'useState', 'context', 'reducer'],
+  },
   multiplication: {
     explanation:
       'Utrwala tabliczkę mnożenia, mnożenie jako grupowanie i prosty algorytm. Dobra do automatyzacji iloczynów.',

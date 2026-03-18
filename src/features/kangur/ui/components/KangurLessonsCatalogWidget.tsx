@@ -18,15 +18,32 @@ import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/Kangu
 import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
 import { ALPHABET_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/alphabet/catalog';
 import { WEB_DEVELOPMENT_LESSON_GROUPS } from '@/features/kangur/lessons/subjects/web-development/catalog';
-import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
 import { useState, type JSX } from 'react';
+
+type LessonSubsectionDefinition = {
+  id: string;
+  label: string;
+  typeLabel?: string;
+  componentIds: readonly KangurLessonComponentId[];
+};
 
 type LessonGroupDefinition = {
   id: string;
   label: string;
   typeLabel?: string;
-  componentIds: readonly KangurLessonComponentId[];
+  componentIds?: readonly KangurLessonComponentId[];
+  subsections?: readonly LessonSubsectionDefinition[];
+};
+
+type LessonSubsection = LessonSubsectionDefinition & {
+  lessons: KangurLesson[];
+};
+
+type LessonGroup = Omit<LessonGroupDefinition, 'componentIds' | 'subsections'> & {
+  lessons: KangurLesson[];
+  subsections?: LessonSubsection[];
 };
 
 const LESSON_GROUP_DEFINITIONS_BY_SUBJECT: Record<string, readonly LessonGroupDefinition[]> = {
@@ -108,24 +125,42 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
         }
 
         const lessonGroupDefinitions = LESSON_GROUP_DEFINITIONS_BY_SUBJECT[group.value] ?? [];
-        const lessonGroups = lessonGroupDefinitions
+        const lessonGroups: LessonGroup[] = lessonGroupDefinitions
           .map((lessonGroup) => {
             const lessonByComponent = new Map(groupLessons.map((lesson) => [lesson.componentId, lesson]));
+            const lessons = (lessonGroup.componentIds ?? [])
+              .map((componentId) => lessonByComponent.get(componentId))
+              .filter((lesson): lesson is KangurLesson => Boolean(lesson));
+            const subsections = lessonGroup.subsections
+              ?.map((subsection) => ({
+                ...subsection,
+                lessons: subsection.componentIds
+                  .map((componentId) => lessonByComponent.get(componentId))
+                  .filter((lesson): lesson is KangurLesson => Boolean(lesson)),
+              }))
+              .filter((subsection) => subsection.lessons.length > 0);
+
             return {
-              ...lessonGroup,
-              lessons: lessonGroup.componentIds
-                .map((componentId) => lessonByComponent.get(componentId))
-                .filter(
-                  (lesson): lesson is (typeof groupLessons)[number] => Boolean(lesson)
-                ),
+              id: lessonGroup.id,
+              label: lessonGroup.label,
+              typeLabel: lessonGroup.typeLabel,
+              lessons,
+              subsections: subsections && subsections.length > 0 ? subsections : undefined,
             };
           })
-          .filter((lessonGroup) => lessonGroup.lessons.length > 0);
+          .filter((lessonGroup) =>
+            lessonGroup.subsections ? lessonGroup.subsections.length > 0 : lessonGroup.lessons.length > 0
+          );
 
         const allowSingleLessonGroups = group.value === 'web_development';
-        const displayLessonGroups = allowSingleLessonGroups
-          ? lessonGroups
-          : lessonGroups.filter((lessonGroup) => lessonGroup.lessons.length > 1);
+        const displayLessonGroups = lessonGroups.filter((lessonGroup) => {
+          if (lessonGroup.subsections) {
+            return lessonGroup.subsections.some((subsection) => subsection.lessons.length > 0);
+          }
+          return allowSingleLessonGroups
+            ? lessonGroup.lessons.length > 0
+            : lessonGroup.lessons.length > 1;
+        });
 
         type LessonEntry =
           | { kind: 'group'; group: (typeof displayLessonGroups)[number] }
@@ -139,7 +174,10 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
         const lessonGroupIdByComponent = new Map<string, string>();
 
         displayLessonGroups.forEach((lessonGroup) => {
-          lessonGroup.lessons.forEach((lesson) => {
+          const groupedLessons = lessonGroup.subsections
+            ? lessonGroup.subsections.flatMap((subsection) => subsection.lessons)
+            : lessonGroup.lessons;
+          groupedLessons.forEach((lesson) => {
             lessonGroupIdByComponent.set(lesson.componentId, lessonGroup.id);
           });
         });
@@ -171,6 +209,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                 if (entry.kind === 'group') {
                   const groupKey = `${group.value}:${entry.group.id}`;
                   const isExpanded = expandedLessonGroupId === groupKey;
+                  const groupHasSubsections = Boolean(entry.group.subsections?.length);
 
                   return (
                     <div key={groupKey} role='listitem' className='w-full'>
@@ -198,7 +237,29 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                             className={`mt-4 flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
                             role='list'
                           >
-                            {entry.group.lessons.map((lesson) => renderLessonCard(lesson))}
+                            {groupHasSubsections ? (
+                              entry.group.subsections?.map((subsection) => (
+                                <div
+                                  key={subsection.id}
+                                  className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}
+                                  role='listitem'
+                                >
+                                  <div className='min-w-0'>
+                                    <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
+                                      {subsection.typeLabel ?? 'Subsection'}
+                                    </div>
+                                    <div className='mt-1 text-base font-semibold text-slate-900'>
+                                      {subsection.label}
+                                    </div>
+                                  </div>
+                                  <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} role='list'>
+                                    {subsection.lessons.map((lesson) => renderLessonCard(lesson))}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              entry.group.lessons.map((lesson) => renderLessonCard(lesson))
+                            )}
                           </div>
                         )}
                       </KangurGlassPanel>

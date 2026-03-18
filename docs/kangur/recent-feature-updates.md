@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-18'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:kangur'
@@ -17,7 +17,7 @@ creation, release summaries, and AI agent prompts.
 
 ## Window
 
-This summary covers changes merged between 2026-03-04 and 2026-03-17 (inclusive).
+This summary covers changes merged between 2026-03-05 and 2026-03-18 (inclusive).
 Update this section whenever the reporting window changes.
 
 ## Refresh cadence
@@ -53,6 +53,24 @@ Key paths:
 - Social post API: `src/app/api/kangur/social-posts/*`
 - Generation + publishing: `src/features/kangur/server/social-posts-*.ts`
 - Scheduler: `src/features/kangur/workers/kangurSocialSchedulerQueue.ts`
+
+## StudiQ lesson navigation parity (2026-03-18)
+
+Adult learner lessons now mirror the structured navigation used in the 10-year-old
+Maths experience, with clickable subsection hubs and cleaner lesson lists.
+
+Highlights:
+
+- Dorośli lesson lists no longer rely on collapsible group containers.
+- Web Dev lesson renamed to React 19.2 and now includes a Components subsection hub.
+- Letter Tracing lessons render as flat, clickable items (no accordion grouping).
+
+Key paths:
+
+- Lessons catalog layout: `src/features/kangur/ui/pages/lessons/Lessons.Catalog.tsx`
+- Web Dev lesson data: `src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx`
+- Web Dev lesson shell: `src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.tsx`
+- Web Dev catalog metadata: `src/features/kangur/lessons/subjects/web-development/catalog.ts`
 
 ## Social image add-ons and visual analysis (2026-03-17)
 
@@ -193,4 +211,3 @@ Latest commits:
 - Commit: `c03399b46` (2026-03-17) DS
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_END -->
-

@@ -122,6 +122,66 @@ const EnglishArticlesLesson = loadLessonComponent(
 const WebDevelopmentReactComponentsLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/WebDevelopmentReactComponentsLesson')
 );
+const WebDevelopmentReactDomComponentsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactDomComponentsLesson')
+);
+const WebDevelopmentReactHooksLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactHooksLesson')
+);
+const WebDevelopmentReactApisLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactApisLesson')
+);
+const WebDevelopmentReactDomHooksLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactDomHooksLesson')
+);
+const WebDevelopmentReactDomApisLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactDomApisLesson')
+);
+const WebDevelopmentReactDomClientApisLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactDomClientApisLesson')
+);
+const WebDevelopmentReactDomServerApisLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactDomServerApisLesson')
+);
+const WebDevelopmentReactDomStaticApisLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactDomStaticApisLesson')
+);
+const WebDevelopmentReactCompilerConfigLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactCompilerConfigLesson')
+);
+const WebDevelopmentReactCompilerDirectivesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactCompilerDirectivesLesson')
+);
+const WebDevelopmentReactCompilerLibrariesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactCompilerLibrariesLesson')
+);
+const WebDevelopmentReactPerformanceTracksLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactPerformanceTracksLesson')
+);
+const WebDevelopmentReactLintsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactLintsLesson')
+);
+const WebDevelopmentReactRulesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactRulesLesson')
+);
+const WebDevelopmentReactServerComponentsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactServerComponentsLesson')
+);
+const WebDevelopmentReactServerFunctionsLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactServerFunctionsLesson')
+);
+const WebDevelopmentReactServerDirectivesLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactServerDirectivesLesson')
+);
+const WebDevelopmentReactRouterLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactRouterLesson')
+);
+const WebDevelopmentReactSetupLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactSetupLesson')
+);
+const WebDevelopmentReactStateManagementLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/WebDevelopmentReactStateManagementLesson')
+);
 
 export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<LessonProps>> = {
   alphabet_basics: AlphabetBasicsLesson,
@@ -153,6 +213,26 @@ export const LESSON_COMPONENTS: Record<KangurLessonComponentId, ComponentType<Le
   english_subject_verb_agreement: EnglishSubjectVerbAgreementLesson,
   english_articles: EnglishArticlesLesson,
   webdev_react_components: WebDevelopmentReactComponentsLesson,
+  webdev_react_dom_components: WebDevelopmentReactDomComponentsLesson,
+  webdev_react_hooks: WebDevelopmentReactHooksLesson,
+  webdev_react_apis: WebDevelopmentReactApisLesson,
+  webdev_react_dom_hooks: WebDevelopmentReactDomHooksLesson,
+  webdev_react_dom_apis: WebDevelopmentReactDomApisLesson,
+  webdev_react_dom_client_apis: WebDevelopmentReactDomClientApisLesson,
+  webdev_react_dom_server_apis: WebDevelopmentReactDomServerApisLesson,
+  webdev_react_dom_static_apis: WebDevelopmentReactDomStaticApisLesson,
+  webdev_react_compiler_config: WebDevelopmentReactCompilerConfigLesson,
+  webdev_react_compiler_directives: WebDevelopmentReactCompilerDirectivesLesson,
+  webdev_react_compiler_libraries: WebDevelopmentReactCompilerLibrariesLesson,
+  webdev_react_performance_tracks: WebDevelopmentReactPerformanceTracksLesson,
+  webdev_react_lints: WebDevelopmentReactLintsLesson,
+  webdev_react_rules: WebDevelopmentReactRulesLesson,
+  webdev_react_server_components: WebDevelopmentReactServerComponentsLesson,
+  webdev_react_server_functions: WebDevelopmentReactServerFunctionsLesson,
+  webdev_react_server_directives: WebDevelopmentReactServerDirectivesLesson,
+  webdev_react_router: WebDevelopmentReactRouterLesson,
+  webdev_react_setup: WebDevelopmentReactSetupLesson,
+  webdev_react_state_management: WebDevelopmentReactStateManagementLesson,
 };
 
 export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
@@ -295,6 +375,115 @@ export const FOCUS_TO_COMPONENT: Record<string, KangurLessonComponentId> = {
   react_components: 'webdev_react_components',
   'react-components': 'webdev_react_components',
   components: 'webdev_react_components',
+  react_dom_components: 'webdev_react_dom_components',
+  'react-dom-components': 'webdev_react_dom_components',
+  dom_components: 'webdev_react_dom_components',
+  'dom-components': 'webdev_react_dom_components',
+  components_react_dom: 'webdev_react_dom_components',
+  'components-react-dom': 'webdev_react_dom_components',
+  webdev_react_dom_components: 'webdev_react_dom_components',
+  hooks: 'webdev_react_hooks',
+  hooki: 'webdev_react_hooks',
+  hook: 'webdev_react_hooks',
+  react_hooks: 'webdev_react_hooks',
+  'react-hooks': 'webdev_react_hooks',
+  hooks_basics: 'webdev_react_hooks',
+  'hooks-basics': 'webdev_react_hooks',
+  webdev_react_hooks: 'webdev_react_hooks',
+  apis: 'webdev_react_apis',
+  api: 'webdev_react_apis',
+  react_apis: 'webdev_react_apis',
+  'react-apis': 'webdev_react_apis',
+  apis_basics: 'webdev_react_apis',
+  'apis-basics': 'webdev_react_apis',
+  webdev_react_apis: 'webdev_react_apis',
+  react_dom_apis: 'webdev_react_dom_apis',
+  'react-dom-apis': 'webdev_react_dom_apis',
+  dom_apis: 'webdev_react_dom_apis',
+  'dom-apis': 'webdev_react_dom_apis',
+  apis_react_dom: 'webdev_react_dom_apis',
+  'apis-react-dom': 'webdev_react_dom_apis',
+  webdev_react_dom_apis: 'webdev_react_dom_apis',
+  client_apis_react_dom: 'webdev_react_dom_client_apis',
+  'client-apis-react-dom': 'webdev_react_dom_client_apis',
+  react_dom_client_apis: 'webdev_react_dom_client_apis',
+  'react-dom-client-apis': 'webdev_react_dom_client_apis',
+  webdev_react_dom_client_apis: 'webdev_react_dom_client_apis',
+  server_apis_react_dom: 'webdev_react_dom_server_apis',
+  'server-apis-react-dom': 'webdev_react_dom_server_apis',
+  react_dom_server_apis: 'webdev_react_dom_server_apis',
+  'react-dom-server-apis': 'webdev_react_dom_server_apis',
+  webdev_react_dom_server_apis: 'webdev_react_dom_server_apis',
+  static_apis_react_dom: 'webdev_react_dom_static_apis',
+  'static-apis-react-dom': 'webdev_react_dom_static_apis',
+  react_dom_static_apis: 'webdev_react_dom_static_apis',
+  'react-dom-static-apis': 'webdev_react_dom_static_apis',
+  webdev_react_dom_static_apis: 'webdev_react_dom_static_apis',
+  react_compiler: 'webdev_react_compiler_config',
+  compiler_config: 'webdev_react_compiler_config',
+  compiler_configuration: 'webdev_react_compiler_config',
+  react_compiler_configuration: 'webdev_react_compiler_config',
+  'react-compiler-configuration': 'webdev_react_compiler_config',
+  webdev_react_compiler_config: 'webdev_react_compiler_config',
+  react_compiler_directives: 'webdev_react_compiler_directives',
+  'react-compiler-directives': 'webdev_react_compiler_directives',
+  compiler_directives: 'webdev_react_compiler_directives',
+  webdev_react_compiler_directives: 'webdev_react_compiler_directives',
+  react_compiler_libraries: 'webdev_react_compiler_libraries',
+  'react-compiler-libraries': 'webdev_react_compiler_libraries',
+  compiler_libraries: 'webdev_react_compiler_libraries',
+  webdev_react_compiler_libraries: 'webdev_react_compiler_libraries',
+  performance_tracks: 'webdev_react_performance_tracks',
+  'performance-tracks': 'webdev_react_performance_tracks',
+  react_performance_tracks: 'webdev_react_performance_tracks',
+  'react-performance-tracks': 'webdev_react_performance_tracks',
+  webdev_react_performance_tracks: 'webdev_react_performance_tracks',
+  lints: 'webdev_react_lints',
+  lint: 'webdev_react_lints',
+  linting: 'webdev_react_lints',
+  webdev_react_lints: 'webdev_react_lints',
+  rules_of_react: 'webdev_react_rules',
+  'rules-of-react': 'webdev_react_rules',
+  react_rules: 'webdev_react_rules',
+  'react-rules': 'webdev_react_rules',
+  webdev_react_rules: 'webdev_react_rules',
+  server_components: 'webdev_react_server_components',
+  'server-components': 'webdev_react_server_components',
+  react_server_components: 'webdev_react_server_components',
+  'react-server-components': 'webdev_react_server_components',
+  webdev_react_server_components: 'webdev_react_server_components',
+  server_functions: 'webdev_react_server_functions',
+  'server-functions': 'webdev_react_server_functions',
+  react_server_functions: 'webdev_react_server_functions',
+  'react-server-functions': 'webdev_react_server_functions',
+  webdev_react_server_functions: 'webdev_react_server_functions',
+  server_directives: 'webdev_react_server_directives',
+  'server-directives': 'webdev_react_server_directives',
+  react_server_directives: 'webdev_react_server_directives',
+  'react-server-directives': 'webdev_react_server_directives',
+  webdev_react_server_directives: 'webdev_react_server_directives',
+  react_router: 'webdev_react_router',
+  'react-router': 'webdev_react_router',
+  router: 'webdev_react_router',
+  webdev_react_router: 'webdev_react_router',
+  setup: 'webdev_react_setup',
+  react_setup: 'webdev_react_setup',
+  'react-setup': 'webdev_react_setup',
+  webdev_react_setup: 'webdev_react_setup',
+  managing_state: 'webdev_react_state_management',
+  'managing-state': 'webdev_react_state_management',
+  react_state: 'webdev_react_state_management',
+  'react-state': 'webdev_react_state_management',
+  webdev_react_state_management: 'webdev_react_state_management',
+  react_dom: 'webdev_react_dom_hooks',
+  'react-dom': 'webdev_react_dom_hooks',
+  dom_hooks: 'webdev_react_dom_hooks',
+  'dom-hooks': 'webdev_react_dom_hooks',
+  react_dom_hooks: 'webdev_react_dom_hooks',
+  'react-dom-hooks': 'webdev_react_dom_hooks',
+  hooks_react_dom: 'webdev_react_dom_hooks',
+  'hooks-react-dom': 'webdev_react_dom_hooks',
+  webdev_react_dom_hooks: 'webdev_react_dom_hooks',
   webdev: 'webdev_react_components',
   web_development: 'webdev_react_components',
 };

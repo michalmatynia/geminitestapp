@@ -70,7 +70,13 @@ type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
+type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
+type PatternToken =
+  | string
+  | { literal: string; optional?: boolean }
+  | { param: string; optional?: boolean };
+type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -91,14 +97,14 @@ const methodNotAllowed = async (
   return response;
 };
 
-const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
+const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = async <P extends Params>(
-  module: RouteModule<P>,
+const dispatch = async (
+  module: RouteModule,
   method: HttpMethod,
   request: NextRequest,
-  params?: P
+  params?: Params
 ): Promise<Response> => {
   const handler = module[method];
   if (!handler) {
@@ -107,7 +113,7 @@ const dispatch = async <P extends Params>(
       ? methodNotAllowed(request, allowed, method)
       : notFound(request, method);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {
@@ -120,236 +126,129 @@ const getPathSegments = (request: NextRequest): string[] => {
   return remainder ? remainder.split('/').filter(Boolean) : [];
 };
 
+const param = (name: string): PatternToken => ({ param: name });
+
+const normalizeToken = (
+  token: PatternToken
+): { isParam: boolean; key: string; optional: boolean } => {
+  if (typeof token === 'string') {
+    return { isParam: false, key: token, optional: false };
+  }
+  if ('literal' in token) {
+    return { isParam: false, key: token.literal, optional: Boolean(token.optional) };
+  }
+  return { isParam: true, key: token.param, optional: Boolean(token.optional) };
+};
+
+const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
+  const params: Params = {};
+  let segmentIndex = 0;
+  for (const token of pattern) {
+    const { isParam, key, optional } = normalizeToken(token);
+
+    if (segmentIndex >= segments.length) {
+      if (optional) {
+        continue;
+      }
+      return null;
+    }
+
+    const currentSegment = segments[segmentIndex];
+    if (!currentSegment) {
+      return null;
+    }
+
+    if (!isParam) {
+      if (key !== currentSegment) {
+        if (optional) {
+          continue;
+        }
+        return null;
+      }
+      segmentIndex += 1;
+      continue;
+    }
+
+    params[key] = currentSegment;
+    segmentIndex += 1;
+  }
+
+  if (segmentIndex !== segments.length) {
+    return null;
+  }
+
+  return params;
+};
+
+const ROUTES: RouteDefinition[] = [
+  { pattern: [], module: productsIndex },
+  { pattern: ['count'], module: productsCount },
+  { pattern: ['paged'], module: productsPaged },
+  { pattern: ['ids'], module: productsIds },
+  { pattern: ['simple-parameters'], module: productsSimpleParameters },
+  { pattern: ['parameters'], module: productsParameters },
+  { pattern: ['parameters', param('id')], module: productsParametersId },
+  { pattern: ['producers'], module: productsProducers },
+  { pattern: ['producers', param('id')], module: productsProducersId },
+  { pattern: ['tags'], module: productsTags },
+  { pattern: ['tags', 'all'], module: productsTagsAll },
+  { pattern: ['tags', param('id')], module: productsTagsId },
+  { pattern: ['validation'], module: productsValidation },
+  { pattern: ['validator-config'], module: productsValidatorConfig },
+  { pattern: ['validator-decisions'], module: productsValidatorDecisions },
+  { pattern: ['validator-settings'], module: productsValidatorSettings },
+  { pattern: ['validator-patterns'], module: productsValidatorPatterns },
+  { pattern: ['validator-patterns', 'import'], module: productsValidatorPatternsImport },
+  { pattern: ['validator-patterns', 'reorder'], module: productsValidatorPatternsReorder },
+  { pattern: ['validator-patterns', 'templates', param('type')], module: productsValidatorPatternsTemplates },
+  { pattern: ['validator-patterns', param('id')], module: productsValidatorPatternsId },
+  { pattern: ['validator-runtime', 'evaluate'], module: productsValidatorRuntimeEvaluate },
+  { pattern: ['categories'], module: productsCategories },
+  { pattern: ['categories', 'tree'], module: productsCategoriesTree },
+  { pattern: ['categories', 'batch'], module: productsCategoriesBatch },
+  { pattern: ['categories', 'migrate'], module: productsCategoriesMigrate },
+  { pattern: ['categories', 'reorder'], module: productsCategoriesReorder },
+  { pattern: ['categories', param('id')], module: productsCategoriesId },
+  { pattern: ['entities', 'catalogs', 'assign'], module: productsEntitiesCatalogsAssign },
+  { pattern: ['entities', param('type')], module: productsEntitiesType },
+  { pattern: ['entities', param('type'), param('id')], module: productsEntitiesTypeId },
+  { pattern: ['metadata', param('type')], module: productsMetadataType },
+  { pattern: ['metadata', param('type'), param('id')], module: productsMetadataTypeId },
+  { pattern: ['images', 'base64'], module: productsImagesBase64 },
+  { pattern: ['images', 'base64', 'all'], module: productsImagesBase64All },
+  { pattern: ['images', 'upload'], module: productsImagesUpload },
+  { pattern: ['import', 'csv'], module: productsImportCsv },
+  { pattern: ['ai-jobs'], module: productsAiJobs },
+  { pattern: ['ai-jobs', 'bulk'], module: productsAiJobsBulk },
+  { pattern: ['ai-jobs', 'enqueue'], module: productsAiJobsEnqueue },
+  { pattern: ['ai-jobs', param('jobId')], module: productsAiJobsJob },
+  { pattern: ['ai-paths', 'description-context'], module: productsAiPathsDescriptionContext },
+  { pattern: ['sync', 'profiles'], module: productsSyncProfiles },
+  { pattern: ['sync', 'profiles', param('id')], module: productsSyncProfilesId },
+  { pattern: ['sync', 'profiles', param('id'), 'run'], module: productsSyncProfilesRun },
+  { pattern: ['sync', 'runs'], module: productsSyncRuns },
+  { pattern: ['sync', 'runs', param('runId')], module: productsSyncRunsId },
+  { pattern: ['sync', 'relink'], module: productsSyncRelink },
+  { pattern: [param('id')], module: productIdRoute },
+  { pattern: [param('id'), 'duplicate'], module: productDuplicate },
+  { pattern: [param('id'), 'images', 'base64'], module: productImagesBase64 },
+  { pattern: [param('id'), 'images', 'link-to-file'], module: productImagesLinkToFile },
+  { pattern: [param('id'), 'images', param('imageFileId')], module: productImagesById },
+  { pattern: [param('id'), 'studio'], module: productStudio },
+  { pattern: [param('id'), 'studio', param('action')], module: productStudioAction },
+];
+
 const routeProducts = (
   method: HttpMethod,
   request: NextRequest,
   segments: string[]
 ): Promise<Response> => {
-  if (segments.length === 0) {
-    return dispatch(productsIndex, method, request);
-  }
-
-  const [first, second, third, fourth] = segments;
-
-  if (first === 'count' && segments.length === 1) {
-    return dispatch(productsCount, method, request);
-  }
-
-  if (first === 'paged' && segments.length === 1) {
-    return dispatch(productsPaged, method, request);
-  }
-
-  if (first === 'ids' && segments.length === 1) {
-    return dispatch(productsIds, method, request);
-  }
-
-  if (first === 'simple-parameters' && segments.length === 1) {
-    return dispatch(productsSimpleParameters, method, request);
-  }
-
-  if (first === 'parameters') {
-    if (!second && segments.length === 1) {
-      return dispatch(productsParameters, method, request);
+  for (const route of ROUTES) {
+    const params = matchPattern(route.pattern, segments);
+    if (!params) {
+      continue;
     }
-    if (second && segments.length === 2) {
-      return dispatch(productsParametersId, method, request, { id: second });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'producers') {
-    if (!second && segments.length === 1) {
-      return dispatch(productsProducers, method, request);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(productsProducersId, method, request, { id: second });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'tags') {
-    if (!second && segments.length === 1) {
-      return dispatch(productsTags, method, request);
-    }
-    if (second === 'all' && segments.length === 2) {
-      return dispatch(productsTagsAll, method, request);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(productsTagsId, method, request, { id: second });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'validation' && segments.length === 1) {
-    return dispatch(productsValidation, method, request);
-  }
-
-  if (first === 'validator-config' && segments.length === 1) {
-    return dispatch(productsValidatorConfig, method, request);
-  }
-
-  if (first === 'validator-decisions' && segments.length === 1) {
-    return dispatch(productsValidatorDecisions, method, request);
-  }
-
-  if (first === 'validator-settings' && segments.length === 1) {
-    return dispatch(productsValidatorSettings, method, request);
-  }
-
-  if (first === 'validator-patterns') {
-    if (!second && segments.length === 1) {
-      return dispatch(productsValidatorPatterns, method, request);
-    }
-    if (second === 'import' && segments.length === 2) {
-      return dispatch(productsValidatorPatternsImport, method, request);
-    }
-    if (second === 'reorder' && segments.length === 2) {
-      return dispatch(productsValidatorPatternsReorder, method, request);
-    }
-    if (second === 'templates' && third && segments.length === 3) {
-      return dispatch(productsValidatorPatternsTemplates, method, request, { type: third });
-    }
-    if (second && segments.length === 2) {
-      return dispatch(productsValidatorPatternsId, method, request, { id: second });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'validator-runtime' && second === 'evaluate' && segments.length === 2) {
-    return dispatch(productsValidatorRuntimeEvaluate, method, request);
-  }
-
-  if (first === 'categories') {
-    if (!second && segments.length === 1) {
-      return dispatch(productsCategories, method, request);
-    }
-    if (second === 'tree' && segments.length === 2) {
-      return dispatch(productsCategoriesTree, method, request);
-    }
-    if (second === 'batch' && segments.length === 2) {
-      return dispatch(productsCategoriesBatch, method, request);
-    }
-    if (second === 'migrate' && segments.length === 2) {
-      return dispatch(productsCategoriesMigrate, method, request);
-    }
-    if (second === 'reorder' && segments.length === 2) {
-      return dispatch(productsCategoriesReorder, method, request);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(productsCategoriesId, method, request, { id: second });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'entities') {
-    if (second === 'catalogs' && third === 'assign' && segments.length === 3) {
-      return dispatch(productsEntitiesCatalogsAssign, method, request);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(productsEntitiesType, method, request, { type: second });
-    }
-    if (second && third && segments.length === 3) {
-      return dispatch(productsEntitiesTypeId, method, request, { type: second, id: third });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'metadata') {
-    if (second && segments.length === 2) {
-      return dispatch(productsMetadataType, method, request, { type: second });
-    }
-    if (second && third && segments.length === 3) {
-      return dispatch(productsMetadataTypeId, method, request, { type: second, id: third });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'images') {
-    if (second === 'base64' && segments.length === 2) {
-      return dispatch(productsImagesBase64, method, request);
-    }
-    if (second === 'base64' && third === 'all' && segments.length === 3) {
-      return dispatch(productsImagesBase64All, method, request);
-    }
-    if (second === 'upload' && segments.length === 2) {
-      return dispatch(productsImagesUpload, method, request);
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'import' && second === 'csv' && segments.length === 2) {
-    return dispatch(productsImportCsv, method, request);
-  }
-
-  if (first === 'ai-jobs') {
-    if (!second && segments.length === 1) {
-      return dispatch(productsAiJobs, method, request);
-    }
-    if (second === 'bulk' && segments.length === 2) {
-      return dispatch(productsAiJobsBulk, method, request);
-    }
-    if (second === 'enqueue' && segments.length === 2) {
-      return dispatch(productsAiJobsEnqueue, method, request);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(productsAiJobsJob, method, request, { jobId: second });
-    }
-    return notFound(request, method);
-  }
-
-  if (first === 'ai-paths' && second === 'description-context' && segments.length === 2) {
-    return dispatch(productsAiPathsDescriptionContext, method, request);
-  }
-
-  if (first === 'sync') {
-    if (second === 'profiles' && segments.length === 2) {
-      return dispatch(productsSyncProfiles, method, request);
-    }
-    if (second === 'profiles' && third && segments.length === 3) {
-      return dispatch(productsSyncProfilesId, method, request, { id: third });
-    }
-    if (second === 'profiles' && third && fourth === 'run' && segments.length === 4) {
-      return dispatch(productsSyncProfilesRun, method, request, { id: third });
-    }
-    if (second === 'runs' && segments.length === 2) {
-      return dispatch(productsSyncRuns, method, request);
-    }
-    if (second === 'runs' && third && segments.length === 3) {
-      return dispatch(productsSyncRunsId, method, request, { runId: third });
-    }
-    if (second === 'relink' && segments.length === 2) {
-      return dispatch(productsSyncRelink, method, request);
-    }
-    return notFound(request, method);
-  }
-
-  if (first && segments.length === 1) {
-    return dispatch(productIdRoute, method, request, { id: first });
-  }
-
-  if (first && second) {
-    if (second === 'duplicate' && segments.length === 2) {
-      return dispatch(productDuplicate, method, request, { id: first });
-    }
-    if (second === 'images') {
-      if (third === 'base64' && segments.length === 3) {
-        return dispatch(productImagesBase64, method, request, { id: first });
-      }
-      if (third === 'link-to-file' && segments.length === 3) {
-        return dispatch(productImagesLinkToFile, method, request, { id: first });
-      }
-      if (third && segments.length === 3) {
-        return dispatch(productImagesById, method, request, { id: first, imageFileId: third });
-      }
-    }
-    if (second === 'studio') {
-      if (!third && segments.length === 2) {
-        return dispatch(productStudio, method, request, { id: first });
-      }
-      if (third && segments.length === 3) {
-        return dispatch(productStudioAction, method, request, { id: first, action: third });
-      }
-    }
+    return dispatch(route.module, method, request, params);
   }
 
   return notFound(request, method);

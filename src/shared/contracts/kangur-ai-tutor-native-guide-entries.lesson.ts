@@ -1,0 +1,587 @@
+import { createGuideEntry } from './kangur-ai-tutor-native-guide-entries.shared';
+
+export const KANGUR_NATIVE_GUIDE_ENTRIES_LESSON = [
+  createGuideEntry({
+    id: 'lesson-overview',
+    surface: 'lesson',
+    contentIdPrefixes: ['lesson-', 'lesson:list'],
+    title: 'Ekran lekcji',
+    shortDescription: 'To tutaj uczeń przechodzi przez temat krok po kroku.',
+    fullDescription:
+      'Ekran lekcji prowadzi ucznia przez jeden temat matematyczny lub logiczny. Zawiera wprowadzenie, główną treść, przykłady, aktywności i krótkie sprawdzenie rozumienia. To najlepsze miejsce, gdy trzeba najpierw zrozumieć temat, a dopiero potem przejść do treningu.',
+    hints: [
+      'Najpierw przeczytaj nagłówek i opis lekcji, aby wiedzieć, czego dotyczy materiał.',
+      'Potem przejdź przez dokument lub aktywność po kolei, bez przeskakiwania między blokami.',
+      'Gdy temat zacznie być jasny, dopiero wtedy przejdź do gry lub kolejnej próby.',
+    ],
+    relatedGames: ['Szybki trening działań', 'Powtórka po lekcji'],
+    relatedTests: ['Sprawdzenie po zakończonej lekcji'],
+    followUpActions: [
+      { id: 'lesson-open-library', label: 'Otwórz lekcje', page: 'Lessons' },
+      { id: 'lesson-open-training', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: [
+      'lekcja',
+      'ekran lekcji',
+      'co mogę tutaj zrobić',
+      'jak działa ta lekcja',
+      'na czym polega ta lekcja',
+    ],
+    sortOrder: 10,
+  }),
+  createGuideEntry({
+    id: 'lesson-header',
+    surface: 'lesson',
+    focusKind: 'lesson_header',
+    focusIdPrefixes: ['kangur-lesson-header'],
+    title: 'Nagłówek lekcji',
+    shortDescription: 'Nagłówek pokazuje temat, poziom i główny cel tej lekcji.',
+    fullDescription:
+      'Nagłówek lekcji zbiera najważniejsze informacje o aktualnym materiale: tytuł, opis i punkt startowy. Dzięki temu uczeń od razu widzi, czego będzie się uczył i jaki rodzaj ćwiczeń pojawi się dalej.',
+    hints: [
+      'Zacznij od przeczytania opisu pod tytułem.',
+      'Jeśli temat brzmi nowo, przechodź dalej wolniej i sprawdzaj przykłady.',
+    ],
+    followUpActions: [{ id: 'lesson-header-open', label: 'Wróć do lekcji', page: 'Lessons' }],
+    triggerPhrases: ['nagłówek', 'tytuł lekcji', 'opis lekcji', 'o czym jest ta lekcja'],
+    sortOrder: 20,
+  }),
+  createGuideEntry({
+    id: 'lesson-document',
+    surface: 'lesson',
+    focusKind: 'document',
+    focusIdPrefixes: ['kangur-lesson-document'],
+    title: 'Główna treść lekcji',
+    shortDescription: 'To główny materiał z objaśnieniami, obrazami i przykładami.',
+    fullDescription:
+      'Główna treść lekcji zawiera wyjaśnienia tematu, ilustracje, przykłady i kroki rozwiązywania. To sekcja do spokojnego czytania i zrozumienia zasad, zanim uczeń zacznie szybciej odpowiadać w grze albo teście.',
+    hints: [
+      'Czytaj po jednym bloku i zatrzymuj się po każdym przykładzie.',
+      'Jeśli jest rysunek lub ilustracja, połącz ją z tym, co jest napisane obok.',
+      'Po każdej części warto spróbować własnymi słowami powiedzieć, o co chodzi.',
+    ],
+    relatedGames: ['Trening po przeczytaniu lekcji'],
+    followUpActions: [{ id: 'lesson-document-open', label: 'Czytaj dalej', page: 'Lessons' }],
+    triggerPhrases: ['dokument', 'główna treść', 'sekcja z materiałem', 'wyjaśnij tę sekcję'],
+    sortOrder: 30,
+  }),
+  createGuideEntry({
+    id: 'lesson-assignment',
+    surface: 'lesson',
+    focusKind: 'assignment',
+    focusIdPrefixes: ['kangur-lesson-assignment'],
+    title: 'Zadanie powiązane z lekcją',
+    shortDescription: 'To szybki most między lekcją a praktyką.',
+    fullDescription:
+      'Sekcja zadania pokazuje, jaka praktyka jest powiązana z tą lekcją. Może prowadzić do dalszej części materiału albo do treningu w grze. Jej rola to zamienić teorię z lekcji na konkretny następny krok.',
+    hints: [
+      'Najpierw zakończ bieżący fragment lekcji, potem przejdź do zadania.',
+      'Jeśli zadanie prowadzi do gry, skup się na dokładności, a nie tylko na tempie.',
+    ],
+    followUpActions: [{ id: 'lesson-assignment-game', label: 'Uruchom trening', page: 'Game' }],
+    triggerPhrases: ['zadanie', 'co dalej po lekcji', 'następny krok po lekcji'],
+    sortOrder: 40,
+  }),
+  createGuideEntry({
+    id: 'lesson-list-intro',
+    surface: 'lesson',
+    focusKind: 'hero',
+    focusIdPrefixes: ['kangur-lessons-list-intro'],
+    contentIdPrefixes: ['lesson:list'],
+    title: 'Wprowadzenie do lekcji',
+    shortDescription: 'To karta startowa, która wyjaśnia, jak korzystać z biblioteki lekcji.',
+    fullDescription:
+      'Wprowadzenie do lekcji ustawia ucznia przed wyborem tematu. Pokazuje, że tutaj wybiera się obszar do nauki i przechodzi od razu do praktyki lub powtórki. To dobre miejsce, gdy trzeba zrozumieć, po co są lekcje i jak rozpocząć kolejny temat.',
+    hints: [
+      'Najpierw przeczytaj opis pod tytułem, żeby wiedzieć, czego dotyczy ten ekran.',
+      'Potem wybierz jeden temat z biblioteki zamiast przeskakiwać między wieloma lekcjami naraz.',
+    ],
+    followUpActions: [{ id: 'lesson-list-intro-open', label: 'Przeglądaj lekcje', page: 'Lessons' }],
+    triggerPhrases: ['lekcje', 'biblioteka lekcji', 'jak zacząć lekcje', 'ekran lekcji start'],
+    sortOrder: 45,
+  }),
+  createGuideEntry({
+    id: 'lesson-library',
+    surface: 'lesson',
+    focusKind: 'library',
+    focusIdPrefixes: ['kangur-lessons-library'],
+    contentIdPrefixes: ['lesson:list'],
+    title: 'Biblioteka lekcji',
+    shortDescription: 'To lista tematów, z której wybierasz następna lekcje do przerobienia.',
+    fullDescription:
+      'Biblioteka lekcji zbiera wszystkie aktywne tematy i pokazuje, które z nich są najważniejsze teraz. Na kartach widać poziom opanowania, priorytety od rodzica i dodatkowe oznaczenia, dzięki czemu łatwiej zdecydować, od czego zacząć.',
+    hints: [
+      'Zacznij od tematu z najwyższym priorytetem albo najsłabszym opanowaniem.',
+      'Nie wybieraj losowo. Najwięcej zyskasz, gdy karta lekcji pasuje do tego, co było ćwiczone ostatnio.',
+    ],
+    followUpActions: [{ id: 'lesson-library-open', label: 'Wybierz temat', page: 'Lessons' }],
+    triggerPhrases: ['lista lekcji', 'biblioteka', 'karty lekcji', 'która lekcje wybrać'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-clock',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-clock', 'lesson-clock'],
+    title: 'Lekcja: Nauka zegara',
+    shortDescription: 'Uczy odczytywania godzin i minut na zegarze analogowym.',
+    fullDescription:
+      'Lekcja Nauka zegara prowadzi przez wskazówki, pełne godziny, połówki i kwadranse. Uczeń ćwiczy łączenie położenia wskazówek z zapisem czasu i planem dnia.',
+    hints: [
+      'Najpierw rozpoznaj długą wskazówkę minutową, potem krótką godzinową.',
+      'Ćwicz różnicę między pełną godziną, połówką i kwadransem.',
+      'Po przykładzie wypowiedz czas na głos, aby go utrwalić.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-clock-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-clock-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['nauka zegara', 'zegar', 'godziny', 'minuty', 'kwadrans', 'czas'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-calendar',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-calendar', 'lesson-calendar'],
+    title: 'Lekcja: Nauka kalendarza',
+    shortDescription: 'Uczy dni tygodnia, miesięcy, dat i planowania czasu.',
+    fullDescription:
+      'Lekcja kalendarza pomaga rozumieć dni tygodnia, miesiące, daty oraz pory roku. Uczeń ćwiczy liczenie odstępów czasu i planowanie wydarzeń.',
+    hints: [
+      'Najpierw nazwij dzień tygodnia, a potem sprawdź numer daty.',
+      'Ćwicz liczenie "za ile dni" krok po kroku.',
+      'Zwróć uwagę, ile dni ma dany miesiąc.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-calendar-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-calendar-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['kalendarz', 'dni tygodnia', 'miesiące', 'daty', 'pory roku'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-adding',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-adding', 'lesson-adding'],
+    title: 'Lekcja: Dodawanie',
+    shortDescription: 'Dodawanie jednocyfrowe i dwucyfrowe, także z przejściem przez dziesiątkę.',
+    fullDescription:
+      'Lekcja dodawania ćwiczy sumowanie w pamięci i na papierze, w tym przejście przez dziesiątkę. Uczeń poznaje strategie łączenia liczb, rozbijania składników i sprawdzania wyniku.',
+    hints: [
+      'Rozbij większą liczbę tak, aby dopełnić do 10.',
+      'Najpierw dodaj dziesiątki, potem jedności.',
+      'Sprawdzaj wynik odejmowaniem.',
+    ],
+    relatedGames: ['Dodawanie', 'Szybki trening działań'],
+    followUpActions: [
+      { id: 'lesson-topic-adding-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-adding-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['dodawanie', 'suma', 'plus', 'dodaj', 'przejście przez dziesiątkę'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-subtracting',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-subtracting', 'lesson-subtracting'],
+    title: 'Lekcja: Odejmowanie',
+    shortDescription: 'Odejmowanie jednocyfrowe i dwucyfrowe, także z pożyczaniem.',
+    fullDescription:
+      'Lekcja odejmowania uczy liczyć różnicę oraz pracować z pożyczaniem w zapisie pisemnym. Uczeń kontroluje wynik przez dodawanie i porównywanie liczb.',
+    hints: [
+      'Najpierw odejmij dziesiątki, potem jedności.',
+      'Gdy brakuje jedności, pożycz jedną dziesiątkę.',
+      'Sprawdzaj wynik dodawaniem.',
+    ],
+    relatedGames: ['Odejmowanie', 'Szybki trening działań'],
+    followUpActions: [
+      { id: 'lesson-topic-subtracting-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-subtracting-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['odejmowanie', 'różnica', 'minus', 'odejmij', 'pożyczanie'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-multiplication',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-multiplication', 'lesson-multiplication'],
+    title: 'Lekcja: Mnożenie',
+    shortDescription: 'Tabliczka mnożenia i rozumienie mnożenia jako grupowania.',
+    fullDescription:
+      'Lekcja mnożenia utrwala tabliczkę mnożenia i pokazuje, że mnożenie to powtarzające się dodawanie. Uczeń buduje automatyzm i uczy się sprawdzać wynik przez dzielenie.',
+    hints: [
+      'Myśl o grupach: 3 × 4 to 4 + 4 + 4.',
+      'Zapamiętuj krótkie fakty, a potem łącz je w większe.',
+      'Sprawdzaj wynik dzieleniem.',
+    ],
+    relatedGames: ['Mnożenie', 'Szybki trening działań'],
+    followUpActions: [
+      { id: 'lesson-topic-multiplication-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-multiplication-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['mnożenie', 'iloczyn', 'tabliczka mnożenia', 'razy', 'mnożyć'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-division',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-division', 'lesson-division'],
+    title: 'Lekcja: Dzielenie',
+    shortDescription: 'Dzielenie na równe części, także z resztą.',
+    fullDescription:
+      'Lekcja dzielenia uczy rozkładania na równe grupy i rozpoznawania reszty. Pokazuje związek między dzieleniem a mnożeniem oraz sposoby sprawdzania wyniku.',
+    hints: [
+      'Najpierw podziel na równe grupy.',
+      'Jeśli zostaje reszta, nazwij ją i zapisz.',
+      'Sprawdzaj wynik mnożeniem.',
+    ],
+    relatedGames: ['Dzielenie', 'Szybki trening działań'],
+    followUpActions: [
+      { id: 'lesson-topic-division-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-division-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['dzielenie', 'iloraz', 'reszta', 'podziel', 'dzielić'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-geometry-basics',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-geometry_basics', 'lesson-geometry_basics'],
+    title: 'Lekcja: Podstawy geometrii',
+    shortDescription: 'Wprowadza pojęcia: punkt, odcinek, prosta, bok i kąt.',
+    fullDescription:
+      'Lekcja podstaw geometrii uczy rozpoznawać i nazywać elementy figur. To fundament potrzebny do dalszych tematów, takich jak figury, symetria i obwód.',
+    hints: [
+      'Nazwij elementy na rysunku, zanim zaczniesz liczyć.',
+      'Sprawdź różnicę między prostą a odcinkiem.',
+      'Zwracaj uwagę na wierzchołek kąta.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-geometry-basics-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-geometry-basics-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['podstawy geometrii', 'punkt', 'odcinek', 'prosta', 'kąt', 'bok'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-geometry-shapes',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-geometry_shapes', 'lesson-geometry_shapes'],
+    title: 'Lekcja: Figury geometryczne',
+    shortDescription: 'Rozpoznawanie i nazywanie figur oraz ich cech.',
+    fullDescription:
+      'Lekcja figur geometrycznych uczy cech trójkąta, kwadratu, prostokąta i koła. Uczeń ćwiczy liczenie boków i kątów oraz rozpoznawanie figur w różnych ułożeniach.',
+    hints: [
+      'Policz boki i kąty, zanim wybierzesz odpowiedź.',
+      'Sprawdź, czy wszystkie boki są równe.',
+      'Pamiętaj, że obrót figury nie zmienia jej nazwy.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-geometry-shapes-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-geometry-shapes-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['figury', 'kształty', 'trójkąt', 'kwadrat', 'prostokąt', 'koło'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-geometry-symmetry',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-geometry_symmetry', 'lesson-geometry_symmetry'],
+    title: 'Lekcja: Symetria',
+    shortDescription: 'Oś symetrii i odbicia lustrzane w figurach.',
+    fullDescription:
+      'Lekcja symetrii uczy znajdowania osi symetrii i rozpoznawania odbić lustrzanych. Uczeń ćwiczy, czy obie strony są równe i jak dorysować brakującą połowę.',
+    hints: [
+      'Wyobraź sobie lustro ustawione na osi symetrii.',
+      'Sprawdź, czy odległości po obu stronach osi są równe.',
+      'Rysuj oś przez środek figury, gdy to możliwe.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-geometry-symmetry-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-geometry-symmetry-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['symetria', 'oś symetrii', 'odbicie', 'lustro', 'symetryczny'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-geometry-perimeter',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-geometry_perimeter', 'lesson-geometry_perimeter'],
+    title: 'Lekcja: Obwód figur',
+    shortDescription: 'Liczenie obwodu jako sumy długości boków.',
+    fullDescription:
+      'Lekcja obwodu uczy dodawania długości wszystkich boków figury. Uczeń pilnuje jednostek i uczy się szybszych sposobów liczenia, gdy boki są równe.',
+    hints: [
+      'Dodawaj boki po kolei i zapisuj wynik z jednostką.',
+      'Jeśli boki są równe, możesz użyć mnożenia.',
+      'Sprawdź, czy wszystkie długości zostały uwzględnione.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-geometry-perimeter-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-geometry-perimeter-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['obwód', 'perymetr', 'długość boków', 'liczenie obwodu'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-logical-thinking',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-logical_thinking', 'lesson-logical_thinking'],
+    title: 'Lekcja: Myślenie logiczne',
+    shortDescription: 'Wprowadzenie do reguł, wzorców, klasyfikacji i analogii.',
+    fullDescription:
+      'Lekcja myślenia logicznego uczy patrzeć na zadania krok po kroku i szukać reguł. To baza do późniejszych zadań z wnioskowania i analogii.',
+    hints: [
+      'Najpierw poszukaj reguły, a dopiero potem zgaduj.',
+      'Sprawdź, czy elementy mają wspólne cechy.',
+      'Wyjaśnij własnymi słowami, dlaczego rozwiązanie pasuje.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-logical-thinking-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-logical-thinking-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['myślenie logiczne', 'logika', 'reguła', 'wzorce', 'analogie'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-logical-patterns',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-logical_patterns', 'lesson-logical_patterns'],
+    title: 'Lekcja: Wzorce i ciągi',
+    shortDescription: 'Rozpoznawanie reguł w sekwencjach i przewidywanie kolejnych elementów.',
+    fullDescription:
+      'Lekcja wzorców i ciągów uczy odnajdywać regułę w sekwencjach liczb, kształtów lub kolorów. Uczeń ćwiczy przewidywanie kolejnego elementu i sprawdzanie własnej reguły.',
+    hints: [
+      'Sprawdź różnice między kolejnymi elementami.',
+      'Szukaj powtarzających się układów.',
+      'Zapisz regułę jednym zdaniem.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-logical-patterns-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-logical-patterns-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['wzorce', 'ciągi', 'sekwencje', 'reguła', 'schemat'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-logical-classification',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-logical_classification', 'lesson-logical_classification'],
+    title: 'Lekcja: Klasyfikacja',
+    shortDescription: 'Grupowanie po cechach i znajdowanie elementu niepasującego.',
+    fullDescription:
+      'Lekcja klasyfikacji uczy porządkowania obiektów według cech i wskazywania intruza. Rozwija umiejętność porównywania i budowania kategorii.',
+    hints: [
+      'Wypisz cechy wspólne, zanim wybierzesz intruza.',
+      'Sprawdź, co się różni w każdej grupie.',
+      'Najpierw grupuj, potem wybieraj.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-logical-classification-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-logical-classification-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['klasyfikacja', 'sortowanie', 'grupowanie', 'intruzi', 'kategorie'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-logical-reasoning',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-logical_reasoning', 'lesson-logical_reasoning'],
+    title: 'Lekcja: Wnioskowanie',
+    shortDescription: 'Jeśli... to... i łączenie faktów w poprawny tok rozumowania.',
+    fullDescription:
+      'Lekcja wnioskowania ćwiczy logiczne kroki: od faktów do wniosku. Pomaga budować poprawny tok rozumowania i unikać zgadywania.',
+    hints: [
+      'Zapisz znane fakty, zanim wyciągniesz wniosek.',
+      'Sprawdź, co wynika z każdego zdania.',
+      'Nie pomijaj pośrednich kroków.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-logical-reasoning-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-logical-reasoning-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['wnioskowanie', 'jeśli to', 'wniosek', 'przyczyna i skutek'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-topic-logical-analogies',
+    surface: 'lesson',
+    contentIdPrefixes: ['kangur-lesson-logical_analogies', 'lesson-logical_analogies'],
+    title: 'Lekcja: Analogie',
+    shortDescription: 'Relacje typu A:B = C:? i szukanie podobnych zależności.',
+    fullDescription:
+      'Lekcja analogii uczy rozpoznawać relacje między pojęciami i przenosić je na nowy przykład. Pomaga porównywać funkcje, a nie tylko wygląd.',
+    hints: [
+      'Najpierw nazwij relację między pierwszą parą.',
+      'Sprawdź, czy druga para ma tę samą relację.',
+      'Unikaj mylenia podobieństwa z relacją.',
+    ],
+    followUpActions: [
+      { id: 'lesson-topic-logical-analogies-open', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-topic-logical-analogies-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['analogie', 'porównania', 'relacje', 'A do B', 'A:B=C:?'],
+    sortOrder: 46,
+  }),
+  createGuideEntry({
+    id: 'lesson-empty-state',
+    surface: 'lesson',
+    focusKind: 'empty_state',
+    focusIdPrefixes: ['kangur-lessons-list-empty-state', 'kangur-lesson-empty-document'],
+    contentIdPrefixes: ['lesson:list'],
+    title: 'Brak dostępnej zawartości lekcji',
+    shortDescription:
+      'Ten komunikat pokazuje, że w tym miejscu nie ma jeszcze aktywnej treści do przerobienia.',
+    fullDescription:
+      'Pusty stan lekcji nie oznacza błędu ucznia. Informuje tylko, że nie ma jeszcze aktywnych lekcji albo dokument dla tej lekcji nie został zapisany. Tutor może wtedy wskazać, czy trzeba wrócić do listy tematów, czy poczekać na uzupełnienie materiału.',
+    hints: [
+      'Sprawdź, czy są inne aktywne tematy na liście lekcji.',
+      'Jeśli to pusta treść dokumentu, najlepszy ruch to wrócić do innej lekcji lub treningu.',
+    ],
+    followUpActions: [
+      { id: 'lesson-empty-state-open-list', label: 'Wróć do listy', page: 'Lessons' },
+      { id: 'lesson-empty-state-open-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['brak aktywnych lekcji', 'pusta lekcja', 'nie ma treści', 'dlaczego nic tu nie ma'],
+    sortOrder: 47,
+  }),
+  createGuideEntry({
+    id: 'lesson-screen',
+    surface: 'lesson',
+    focusKind: 'screen',
+    focusIdPrefixes: ['kangur-lesson-screen-secret'],
+    contentIdPrefixes: ['lesson-'],
+    title: 'Specjalna plansza lekcji',
+    shortDescription:
+      'To dodatkowa plansza lekcji, która wyjaśnia szczególny stan albo ukryte zakończenie.',
+    fullDescription:
+      'Specjalna plansza lekcji pojawia się zamiast zwykłej treści, gdy uczeń trafia do szczególnego stanu, na przykład ukrytego finiszu. To miejsce bardziej podsumowuje drogę przez temat i pokazuje, co zostało odblokowane, niż prowadzi przez nowy materiał krok po kroku.',
+    hints: [
+      'Przeczytaj ten panel jak nagrodę albo specjalne zakończenie, a nie jak kolejny rozdział z teorią.',
+      'Po obejrzeniu planszy wróć do listy lekcji albo przejdź do treningu, by utrwalić cały cykl.',
+    ],
+    followUpActions: [
+      { id: 'lesson-screen-open-list', label: 'Wróć do lekcji', page: 'Lessons' },
+      { id: 'lesson-screen-open-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['specjalna plansza', 'ukryty finisz', 'co oznacza ten panel', 'sekret odblokowany'],
+    sortOrder: 48,
+  }),
+  createGuideEntry({
+    id: 'lesson-navigation',
+    surface: 'lesson',
+    focusKind: 'navigation',
+    focusIdPrefixes: ['kangur-lesson-navigation'],
+    contentIdPrefixes: ['lesson-'],
+    title: 'Nawigacja lekcji',
+    shortDescription:
+      'Ta sekcja pomaga przejść do poprzedniej albo następnej lekcji bez wracania do całej listy.',
+    fullDescription:
+      'Nawigacja lekcji porządkuje ruch po materiale. Uczeń może szybko wracać do poprzedniego tematu albo przechodzić dalej, kiedy aktualna lekcja jest już zrozumiała. To dobry moment, by zatrzymać się i sprawdzić, czy warto iść dalej, czy jeszcze zostać przy obecnym temacie.',
+    hints: [
+      'Przejdź dalej dopiero wtedy, gdy aktualna lekcja jest już w miarę jasna.',
+      'Jeśli temat dalej jest niepewny, zostań jeszcze chwilę na tej lekcji albo wróć do dokumentu.',
+    ],
+    followUpActions: [{ id: 'lesson-navigation-open', label: 'Przeglądaj lekcje', page: 'Lessons' }],
+    triggerPhrases: ['nawigacja lekcji', 'poprzednia lekcja', 'następna lekcja', 'jak przejść dalej'],
+    sortOrder: 49,
+  }),
+  createGuideEntry({
+    id: 'shared-progress',
+    focusKind: 'progress',
+    focusIdPrefixes: ['kangur-game-home-progress'],
+    contentIdPrefixes: ['game:home'],
+    title: 'Postęp',
+    shortDescription: 'Postęp pokazuje, jak regularnie i jak skutecznie uczeń pracuje.',
+    fullDescription:
+      'Sekcja postępu zbiera informacje o regularności, skuteczności, tempie i zdobytych punktach. Nie służy tylko do patrzenia na wynik. Pomaga zobaczyć, czy uczeń wraca do materiału, czy utrzymuje serię oraz gdzie potrzebuje jeszcze kilku spokojnych powtórek.',
+    hints: [
+      'Patrz nie tylko na liczbę punktów, ale tez na regularność.',
+      'Jeśli postęp zwalnia, najlepszy ruch to krótka powtórka, a nie losowa nowa aktywność.',
+      'Regularne krótkie sesje dają stabilniejszy postęp niż pojedyncze długie próby.',
+    ],
+    followUpActions: [
+      { id: 'progress-profile', label: 'Otwórz profil', page: 'LearnerProfile' },
+      { id: 'progress-lessons', label: 'Wróć do lekcji', page: 'Lessons' },
+    ],
+    triggerPhrases: ['postęp', 'jak idzie', 'wyniki postępu', 'co pokazuje postęp'],
+    sortOrder: 50,
+  }),
+  createGuideEntry({
+    id: 'shared-leaderboard',
+    focusKind: 'leaderboard',
+    focusIdPrefixes: ['kangur-game-home-leaderboard'],
+    contentIdPrefixes: ['game:home'],
+    title: 'Ranking',
+    shortDescription: 'Ranking pokazuje wyniki i pozycje na tle innych prób.',
+    fullDescription:
+      'Ranking służy do lekkiej motywacji i porównania wyników, ale nie jest najważniejszym celem nauki. Największa wartość daje wtedy, gdy pomaga zauważyć postęp, a nie tylko miejsce na liście. To dobry sygnał do obserwowania własnej poprawy, a nie do stresowania się wynikiem innych.',
+    hints: [
+      'Najpierw patrz na własny postęp, dopiero potem na pozycje.',
+      'Lepsza regularna seria spokojnych prób niż jedna szybka próba dla rankingu.',
+      'Porównuj się głównie do własnego wyniku z poprzednich dni.',
+    ],
+    followUpActions: [{ id: 'leaderboard-profile', label: 'Zobacz profil', page: 'LearnerProfile' }],
+    triggerPhrases: ['ranking', 'tablica wyników', 'pozycja', 'jak działa ranking'],
+    sortOrder: 60,
+  }),
+  createGuideEntry({
+    id: 'shared-home-actions',
+    focusKind: 'home_actions',
+    focusIdPrefixes: ['kangur-game-home-actions'],
+    contentIdPrefixes: ['game:home'],
+    title: 'Szybkie akcje',
+    shortDescription: 'To skróty do najważniejszych aktywności w Kangur.',
+    fullDescription:
+      'Szybkie akcje to skróty do startu: lekcje, Grajmy (z treningiem mieszanym i szybkimi quizami), Pojedynki oraz Kangur Matematyczny. Dzięki temu uczeń albo rodzic może od razu wejść w najważniejszy krok bez szukania po całym ekranie. Najlepiej wybrać akcję zgodną z celem: zrozumieć temat w lekcji, utrwalić go w grze albo sprawdzić się w lobby pojedynków.',
+    hints: [
+      'Użyj tej sekcji, gdy nie wiesz, od czego zacząć.',
+      'Gdy potrzebujesz wyjaśnienia, wybierz lekcję. Gdy potrzebujesz praktyki, wybierz grę.',
+      'Jeśli masz misję dnia lub zadanie priorytetowe, zacznij właśnie od niego.',
+    ],
+    followUpActions: [
+      { id: 'home-actions-lessons', label: 'Przejdź do lekcji', page: 'Lessons' },
+      { id: 'home-actions-game', label: 'Przejdź do gry', page: 'Game' },
+    ],
+    triggerPhrases: ['szybkie akcje', 'skróty', 'od czego zacząć', 'co mam uruchomić'],
+    sortOrder: 70,
+  }),
+  createGuideEntry({
+    id: 'shared-home-quest',
+    focusKind: 'home_quest',
+    focusIdPrefixes: ['kangur-game-home-quest'],
+    contentIdPrefixes: ['game:home'],
+    title: 'Misja dnia',
+    shortDescription: 'Misja dnia podpowiada jeden mały, konkretny cel na teraz.',
+    fullDescription:
+      'Misja dnia ogranicza wybór do jednego sensownego celu. Zamiast wielu opcji uczeń dostaje jeden jasny kierunek: dokończyć lekcję, zagrać szybki trening albo wrócić do konkretnego obszaru. Misja jest dobierana na podstawie postępu i zadań, więc często jest najlepszym startem sesji.',
+    hints: [
+      'Traktuj misję jako jeden mały cel, nie jako długą listę zadań.',
+      'Po wykonaniu misji warto sprawdzić postęp albo przejść do lekkiej powtórki.',
+      'Jeśli misja jest niejasna, otwórz ją i sprawdź szczegóły kroku.',
+    ],
+    followUpActions: [
+      { id: 'home-quest-lessons', label: 'Realizuj w lekcjach', page: 'Lessons' },
+      { id: 'home-quest-game', label: 'Realizuj w grze', page: 'Game' },
+    ],
+    triggerPhrases: ['misja', 'misja dnia', 'cel na dziś', 'co robi ta misja'],
+    sortOrder: 80,
+  }),
+  createGuideEntry({
+    id: 'shared-priority-assignments',
+    focusKind: 'priority_assignments',
+    focusIdPrefixes: ['kangur-game-home-assignments'],
+    contentIdPrefixes: ['game:home'],
+    title: 'Priorytetowe zadania',
+    shortDescription: 'To najważniejsze rzeczy do zrobienia w tej chwili.',
+    fullDescription:
+      'Priorytetowe zadania porządkują to, co uczeń powinien wykonać jako pierwsze. Ta sekcja zbiera zaległe, aktywne albo najbardziej potrzebne kroki, często ustawione przez rodzica lub opiekuna, żeby nie trzeba było samemu zgadywać, co teraz da najwięcej korzyści.',
+    hints: [
+      'Zacznij od pierwszego zadania, nie od najłatwiejszego na oko.',
+      'Jeśli zadanie prowadzi do lekcji, najpierw zrozum temat, potem przejdź do gry.',
+      'Gdy zadanie jest niejasne, wróć do opisu lekcji albo zapytaj rodzica o cel.',
+    ],
+    followUpActions: [{ id: 'priority-assignments-open', label: 'Przejdź do lekcji', page: 'Lessons' }],
+    triggerPhrases: ['zadania priorytetowe', 'priorytety', 'co mam zrobić najpierw'],
+    sortOrder: 90,
+  }),
+];

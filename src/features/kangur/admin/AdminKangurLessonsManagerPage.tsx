@@ -1,15 +1,13 @@
 'use client';
 
-import { Folders, ListOrdered, Plus, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
+  useMasterFolderTreeSearch,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree';
-import { FolderTreeSearchBar, useMasterFolderTreeSearch } from '@/features/foldertree';
 import { DEFAULT_KANGUR_AGE_GROUP, KANGUR_AGE_GROUPS } from '@/features/kangur/lessons/lesson-catalog';
 import type {
   KangurLesson,
@@ -20,15 +18,7 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import {
-  Badge,
-  Breadcrumbs,
-  Button,
-  FolderTreePanel,
-  FormModal,
-  Skeleton,
-  useToast,
-} from '@/features/kangur/shared/ui';
+import { Badge, Breadcrumbs, FormModal, useToast } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -73,7 +63,8 @@ import {
 } from '../settings';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
-import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { AdminKangurLessonsManagerTreePanel } from './components/AdminKangurLessonsManagerTreePanel';
+import { AdminKangurLessonSectionsPanel } from './components/AdminKangurLessonSectionsPanel';
 import { LessonContentEditorDialog } from './components/LessonContentEditorDialog';
 import { LessonMetadataForm } from './components/LessonMetadataForm';
 import { LessonSvgQuickAddModal } from './components/LessonSvgQuickAddModal';
@@ -153,6 +144,7 @@ export function AdminKangurLessonsManagerPage({
   const [authoringFilter, setAuthoringFilter] = useState<KangurLessonAuthoringFilter>('all');
   const [ageGroupFilter, setAgeGroupFilter] = useState<'all' | KangurLessonAgeGroup>('all');
   const isCatalogMode = treeMode === 'catalog';
+  const isSectionsMode = treeMode === 'sections';
   const activeTreeInstance = isCatalogMode ? CATALOG_TREE_INSTANCE : ORDERED_TREE_INSTANCE;
   const treeSearchQuery = isCatalogMode ? catalogTreeSearchQuery : orderedTreeSearchQuery;
   const isSaving = updateLessons.isPending || updateLessonDocuments.isPending;
@@ -701,13 +693,6 @@ export function AdminKangurLessonsManagerPage({
   const hiddenLessonCount = filterCountMap.get('hidden')?.count ?? 0;
   const needsAttention =
     lessonsNeedingLegacyImport > 0 || needsFixesCount > 0 || missingNarrationCount > 0;
-  const toolbarButtonClassName =
-    'h-8 rounded-xl border-border/60 bg-background/60 px-3 text-xs font-semibold text-foreground shadow-sm hover:bg-card/80';
-  const activeSegmentClassName = 'border-primary/30 bg-primary/15 text-foreground shadow-sm';
-  const inactiveSegmentClassName =
-    'border-border/60 bg-background/40 text-muted-foreground hover:bg-card/70 hover:text-foreground';
-  const filterSectionLabelClassName =
-    'text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground';
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
@@ -727,246 +712,50 @@ export function AdminKangurLessonsManagerPage({
 
   const mainWorkspace = (
     <div className={cn(KANGUR_STACK_ROOMY_CLASSNAME, 'h-full overflow-hidden')}>
-      {standalone ? (
-        <KangurAdminWorkspaceIntroCard
-          title='Lessons workspace'
-          description='Manage the Kangur lesson library, focus the tree by editorial state, and open lesson editing from the same surface used across the rest of Kangur admin.'
-          badge='Library surface'
+      {isSectionsMode ? (
+        <AdminKangurLessonSectionsPanel standalone={standalone} />
+      ) : (
+        <AdminKangurLessonsManagerTreePanel
+          standalone={standalone}
+          isCatalogMode={isCatalogMode}
+          isSaving={isSaving}
+          isLoading={isLoading}
+          lessonsCount={lessons.length}
+          lessonsNeedingLegacyImport={lessonsNeedingLegacyImport}
+          geometryPackAddedCount={geometryPackAddedCount}
+          logicPackAddedCount={logicPackAddedCount}
+          filterCounts={filterCounts}
+          authoringFilter={authoringFilter}
+          onAuthoringFilterChange={setAuthoringFilter}
+          authoringFilteredLessonCount={authoringFilteredLessons.length}
+          ageGroupFilter={ageGroupFilter}
+          onAgeGroupFilterChange={setAgeGroupFilter}
+          ageGroupCounts={ageGroupCounts}
+          filteredLessonCount={filteredLessons.length}
+          activeAgeGroupLabel={activeAgeGroupLabel}
+          treeSearchQuery={treeSearchQuery}
+          onTreeSearchChange={handleTreeSearchChange}
+          searchEnabled={capabilities.search.enabled}
+          searchState={searchState}
+          controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
+          rootDropUi={rootDropUi}
+          renderNode={renderNode}
+          onAddGeometryPack={(): void => {
+            void handleAddGeometryPack();
+          }}
+          onAddLogicalThinkingPack={(): void => {
+            void handleAddLogicalThinkingPack();
+          }}
+          onImportAllLessonsToEditor={(): void => {
+            void handleImportAllLessonsToEditor();
+          }}
+          onAddLesson={openCreateModal}
+          onSelectOrderedView={(): void => setTreeMode('ordered')}
+          onSelectCatalogView={(): void => setTreeMode('catalog')}
+          onSelectSectionsView={(): void => setTreeMode('sections')}
         />
-      ) : null}
-
-      <FolderTreePanel
-        className='min-h-0 flex-1 rounded-2xl border border-border/60 bg-card/35 shadow-sm'
-        bodyClassName='min-h-0 overflow-hidden'
-        header={
-          <div className='border-b border-border/60 p-4'>
-            <div className='space-y-4'>
-              <div className='flex flex-wrap items-start justify-between gap-3'>
-                <div>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <div className='text-sm font-semibold text-foreground'>Lesson library</div>
-                    <span className='rounded-full border border-border/60 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground'>
-                      {isCatalogMode ? 'Catalog view' : 'Ordered view'}
-                    </span>
-                  </div>
-                  <div className='mt-1 text-sm text-muted-foreground'>
-                    Lessons stay synced to the learner app, while this workspace keeps authoring,
-                    filtering, and ordering in one place.
-                  </div>
-                </div>
-                <div className='flex flex-wrap items-center gap-2'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className={cn(
-                      'h-8 rounded-lg px-3 text-xs font-semibold',
-                      !isCatalogMode ? activeSegmentClassName : inactiveSegmentClassName
-                    )}
-                    onClick={(): void => setTreeMode('ordered')}
-                    disabled={isSaving}
-                  >
-                    <ListOrdered className='mr-1 size-3.5' />
-                    Ordered
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className={cn(
-                      'h-8 rounded-lg px-3 text-xs font-semibold',
-                      isCatalogMode ? activeSegmentClassName : inactiveSegmentClassName
-                    )}
-                    onClick={(): void => setTreeMode('catalog')}
-                    disabled={isSaving}
-                  >
-                    <Folders className='mr-1 size-3.5' />
-                    Catalog
-                  </Button>
-                </div>
-              </div>
-
-              <div className='flex flex-wrap items-center gap-2'>
-                <Button
-                  onClick={() => {
-                    void handleAddGeometryPack();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className={toolbarButtonClassName}
-                  disabled={isSaving || geometryPackAddedCount === 0}
-                >
-                  <Sparkles className='mr-1 size-3.5' />
-                  Add geometry pack
-                </Button>
-                <Button
-                  onClick={() => {
-                    void handleAddLogicalThinkingPack();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className={toolbarButtonClassName}
-                  disabled={isSaving || logicPackAddedCount === 0}
-                >
-                  <Sparkles className='mr-1 size-3.5' />
-                  Add logic pack
-                </Button>
-                <Button
-                  onClick={() => {
-                    void handleImportAllLessonsToEditor();
-                  }}
-                  size='sm'
-                  variant='outline'
-                  className={toolbarButtonClassName}
-                  disabled={isSaving || lessons.length === 0}
-                >
-                  <Sparkles className='mr-1 size-3.5' />
-                  Import all to editor
-                  {lessonsNeedingLegacyImport > 0 ? ` (${lessonsNeedingLegacyImport})` : ''}
-                </Button>
-                <Button
-                  onClick={openCreateModal}
-                  size='sm'
-                  variant='outline'
-                  className={toolbarButtonClassName}
-                  disabled={isSaving}
-                >
-                  <Plus className='mr-1 size-3.5' />
-                  Add lesson
-                </Button>
-              </div>
-
-              <div className='space-y-2'>
-                <div className={filterSectionLabelClassName}>Editorial filters</div>
-                <div className='flex flex-wrap items-center gap-1.5'>
-                  {filterCounts.map((filter) => (
-                    <Button
-                      key={filter.id}
-                      type='button'
-                      size='sm'
-                      variant='outline'
-                      className={cn(
-                        'h-8 rounded-xl px-3 text-xs font-semibold',
-                        authoringFilter === filter.id
-                          ? activeSegmentClassName
-                          : inactiveSegmentClassName
-                      )}
-                      onClick={(): void => setAuthoringFilter(filter.id)}
-                      disabled={isSaving}
-                    >
-                      {filter.label}
-                      <span className='ml-1 text-[10px] text-current/75'>{filter.count}</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className='space-y-2'>
-                <div className={filterSectionLabelClassName}>Age groups</div>
-                <div className='flex flex-wrap items-center gap-1.5'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='outline'
-                    className={cn(
-                      'h-8 rounded-xl px-3 text-xs font-semibold',
-                      ageGroupFilter === 'all' ? activeSegmentClassName : inactiveSegmentClassName
-                    )}
-                    onClick={(): void => setAgeGroupFilter('all')}
-                    disabled={isSaving}
-                  >
-                    All ages
-                    <span className='ml-1 text-[10px] text-current/75'>
-                      {authoringFilteredLessons.length}
-                    </span>
-                  </Button>
-                  {KANGUR_AGE_GROUPS.map((group) => (
-                    <Button
-                      key={group.id}
-                      type='button'
-                      size='sm'
-                      variant='outline'
-                      className={cn(
-                        'h-8 rounded-xl px-3 text-xs font-semibold',
-                        ageGroupFilter === group.id
-                          ? activeSegmentClassName
-                          : inactiveSegmentClassName
-                      )}
-                      onClick={(): void => setAgeGroupFilter(group.id)}
-                      disabled={isSaving}
-                    >
-                      {group.label}
-                      <span className='ml-1 text-[10px] text-current/75'>
-                        {ageGroupCounts.get(group.id) ?? 0}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className='flex flex-wrap items-center gap-2'>
-                <span className='text-xs text-muted-foreground'>
-                  {isCatalogMode
-                    ? 'Catalog mode groups lessons by visibility, age group, and lesson type.'
-                    : 'Ordered mode supports drag-and-drop reordering.'}
-                  {authoringFilter !== 'all'
-                    ? ` Showing ${filteredLessons.length} matching lessons.`
-                    : ''}
-                  {ageGroupFilter !== 'all' && authoringFilter === 'all'
-                    ? ` Showing ${filteredLessons.length} lessons for ${activeAgeGroupLabel}.`
-                    : ''}
-                </span>
-              </div>
-
-              {capabilities.search.enabled ? (
-                <div className='space-y-2'>
-                  <div className={filterSectionLabelClassName}>Search</div>
-                  <FolderTreeSearchBar
-                    value={treeSearchQuery}
-                    onChange={handleTreeSearchChange}
-                    placeholder={
-                      isCatalogMode
-                        ? 'Search catalog groups and lessons...'
-                        : 'Search lessons, ids, or component types...'
-                    }
-                  />
-                  {searchState.isActive ? (
-                    <div className='text-[11px] text-muted-foreground/80'>
-                      {searchState.matchNodeIds.size} results
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        }
-      >
-        {isLoading ? (
-          <div className='space-y-2 p-3'>
-            <Skeleton className='h-10 w-full' />
-            <Skeleton className='h-10 w-full' />
-            <Skeleton className='h-10 w-full' />
-          </div>
-        ) : (
-          <div className='min-h-0 flex-1 overflow-auto p-2'>
-            <FolderTreeViewportV2
-              controller={controller}
-              scrollToNodeRef={scrollToNodeRef}
-              searchState={searchState}
-              rootDropUi={isCatalogMode ? { ...rootDropUi, enabled: false } : rootDropUi}
-              renderNode={renderNode}
-              enableDnd={
-                !isCatalogMode && authoringFilter === 'all' && ageGroupFilter === 'all' && !isSaving
-              }
-              emptyLabel={
-                authoringFilter === 'all'
-                  ? 'No lessons yet. Add the first lesson to start.'
-                  : 'No lessons match the current authoring filter.'
-              }
-            />
-          </div>
-        )}
-      </FolderTreePanel>
+      )}
 
       <LessonSvgQuickAddRuntimeProvider
         lesson={svgModalLesson}
@@ -1055,7 +844,7 @@ export function AdminKangurLessonsManagerPage({
         items={[
           {
             label: 'View mode',
-            value: <Badge variant='outline'>{isCatalogMode ? 'Catalog' : 'Ordered'}</Badge>,
+            value: <Badge variant='outline'>{isSectionsMode ? 'Sections' : isCatalogMode ? 'Catalog' : 'Ordered'}</Badge>,
           },
           {
             label: 'Filter',

@@ -79,13 +79,13 @@ export const KANGUR_AGE_GROUPS: readonly KangurAgeGroupDefinition[] = [
     label: '6 lat',
     shortLabel: '6 lat',
     sortOrder: 1,
-    default: true,
   },
   {
     id: 'ten_year_old',
     label: '10 lat',
     shortLabel: '10 lat',
     sortOrder: 2,
+    default: true,
   },
   {
     id: 'grown_ups',

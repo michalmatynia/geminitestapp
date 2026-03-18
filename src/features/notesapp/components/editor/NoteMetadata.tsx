@@ -358,6 +358,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
       <div className='flex gap-6 py-2'>
         <Label className='flex items-center gap-2 text-white cursor-pointer hover:text-blue-200 transition-colors'>
           <Checkbox
+            aria-label='Pinned'
             checked={isPinned}
             onCheckedChange={(checked: boolean | 'indeterminate'): void =>
               setIsPinned(Boolean(checked))
@@ -368,6 +369,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
         </Label>
         <Label className='flex items-center gap-2 text-white cursor-pointer hover:text-blue-200 transition-colors'>
           <Checkbox
+            aria-label='Archived'
             checked={isArchived}
             onCheckedChange={(checked: boolean | 'indeterminate'): void =>
               setIsArchived(Boolean(checked))
@@ -378,6 +380,7 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
         </Label>
         <Label className='flex items-center gap-2 text-white cursor-pointer hover:text-blue-200 transition-colors'>
           <Checkbox
+            aria-label='Favorite'
             checked={isFavorite}
             onCheckedChange={(checked: boolean | 'indeterminate'): void =>
               setIsFavorite(Boolean(checked))

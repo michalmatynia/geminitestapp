@@ -10,13 +10,13 @@ import {
   VALIDATOR_SCOPE_DESCRIPTIONS,
   type ValidatorScope,
 } from '@/features/admin/pages/validator-scope';
-import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine/pages/AdminPromptEngineValidationPatternsPage';
+import { AdminPromptEngineValidationPatternsPage } from '@/features/admin/components/AdminPromptEngineValidationPatternsPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { formatAdminAiEyebrow } from '@/shared/ui';
 import {
   ValidatorDocsTooltipsProvider,
   ValidatorSettings,
-} from '@/features/products';
+} from '@/features/admin/components/AdminValidatorSettings';
 import { Button, ClientOnly, FormSection, SectionHeader } from '@/shared/ui';
 
 

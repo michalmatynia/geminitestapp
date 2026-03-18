@@ -303,7 +303,13 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
       {isOpen && !disabled && (
         <>
           {/* Backdrop */}
-          <div className='fixed inset-0 z-40' onClick={() => setIsOpen(false)} aria-hidden='true' />
+          <button
+            type='button'
+            className='fixed inset-0 z-40 cursor-pointer border-0 bg-transparent p-0'
+            onClick={() => setIsOpen(false)}
+            aria-label='Close dropdown'
+            tabIndex={-1}
+          />
 
           {/* Dropdown Content */}
           <div

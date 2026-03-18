@@ -45,7 +45,10 @@ type RouteHandler<P extends Params = Params> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
-type RouteModule<P extends Params = Params> = Partial<Record<HttpMethod, RouteHandler<P>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
+type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
+type PatternToken = string | { param: string };
+type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -63,14 +66,14 @@ const methodNotAllowed = async (
   return response;
 };
 
-const getAllowedMethods = <P extends Params>(module: RouteModule<P>): HttpMethod[] =>
+const getAllowedMethods = (module: RouteModule): HttpMethod[] =>
   HTTP_METHODS.filter((method) => typeof module[method] === 'function');
 
-const dispatch = async <P extends Params>(
-  module: RouteModule<P>,
+const dispatch = async (
+  module: RouteModule,
   method: HttpMethod,
   request: NextRequest,
-  params: P | undefined,
+  params: Params | undefined,
   source: string
 ): Promise<Response> => {
   const handler = module[method];
@@ -80,7 +83,7 @@ const dispatch = async <P extends Params>(
       ? methodNotAllowed(request, allowed, source)
       : notFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as P)) });
+  return handler(request, { params: Promise.resolve(params ?? ({} as Params)) });
 };
 
 const getPathSegments = (request: NextRequest): string[] => {
@@ -93,6 +96,66 @@ const getPathSegments = (request: NextRequest): string[] => {
   return remainder ? remainder.split('/').filter(Boolean) : [];
 };
 
+const param = (name: string): PatternToken => ({ param: name });
+
+const matchPattern = (pattern: PatternToken[], segments: string[]): Params | null => {
+  if (pattern.length !== segments.length) {
+    return null;
+  }
+  const params: Params = {};
+  for (let index = 0; index < pattern.length; index += 1) {
+    const token = pattern[index];
+    if (!token) {
+      return null;
+    }
+    const segment = segments[index];
+    if (!segment) {
+      return null;
+    }
+    if (typeof token === 'string') {
+      if (token !== segment) {
+        return null;
+      }
+      continue;
+    }
+    params[token.param] = segment;
+  }
+  return params;
+};
+
+const ROUTES: RouteDefinition[] = [
+  { pattern: ['health'], module: health },
+  { pattern: ['db-action'], module: dbAction },
+  { pattern: ['update'], module: update },
+  { pattern: ['settings'], module: settings },
+  { pattern: ['settings', 'maintenance'], module: settingsMaintenance },
+  { pattern: ['runs', 'queue-status'], module: runsQueueStatus },
+  { pattern: ['runs', 'enqueue'], module: runsEnqueue },
+  { pattern: ['runs', 'dead-letter', 'requeue'], module: runsDeadLetterRequeue },
+  { pattern: ['runs', param('runId'), 'stream'], module: runStream },
+  { pattern: ['runs', param('runId'), 'cancel'], module: runCancel },
+  { pattern: ['runs', param('runId'), 'resume'], module: runResume },
+  { pattern: ['runs', param('runId'), 'retry-node'], module: runRetryNode },
+  { pattern: ['runs'], module: runsIndex },
+  { pattern: ['runs', param('runId')], module: runById },
+  { pattern: ['runtime-analytics', 'summary'], module: runtimeAnalyticsSummary },
+  { pattern: ['runtime-analytics', 'insights'], module: runtimeAnalyticsInsights },
+  { pattern: ['trigger-buttons', 'cleanup-fixtures'], module: triggerButtonsCleanup },
+  { pattern: ['trigger-buttons', 'reorder'], module: triggerButtonsReorder },
+  { pattern: ['trigger-buttons'], module: triggerButtons },
+  { pattern: ['trigger-buttons', param('id')], module: triggerButtonsById },
+  { pattern: ['validation', 'docs-snapshot'], module: validationDocsSnapshot },
+  { pattern: ['playwright', param('runId'), 'artifacts', param('file')], module: playwrightArtifact },
+  { pattern: ['playwright', param('runId')], module: playwrightRun },
+  { pattern: ['playwright'], module: playwright },
+  { pattern: ['portable-engine', 'schema', 'diff'], module: portableEngineSchemaDiff },
+  { pattern: ['portable-engine', 'schema'], module: portableEngineSchema },
+  { pattern: ['portable-engine', 'trend-snapshots'], module: portableEngineTrendSnapshots },
+  { pattern: ['portable-engine', 'remediation-dead-letters', 'replay-history'], module: portableEngineRemediationDeadLettersReplay },
+  { pattern: ['portable-engine', 'remediation-dead-letters'], module: portableEngineRemediationDeadLetters },
+  { pattern: ['portable-engine', 'remediation-webhook'], module: portableEngineRemediationWebhook },
+];
+
 const routeAiPaths = (
   method: HttpMethod,
   request: NextRequest,
@@ -102,125 +165,12 @@ const routeAiPaths = (
   if (segments.length === 0) {
     return notFound(request, source);
   }
-
-  const [first, second, third, fourth] = segments;
-
-  if (first === 'health' && segments.length === 1) {
-    return dispatch(health, method, request, undefined, source);
-  }
-
-  if (first === 'db-action' && segments.length === 1) {
-    return dispatch(dbAction, method, request, undefined, source);
-  }
-
-  if (first === 'update' && segments.length === 1) {
-    return dispatch(update, method, request, undefined, source);
-  }
-
-  if (first === 'settings') {
-    if (segments.length === 1) {
-      return dispatch(settings, method, request, undefined, source);
+  for (const route of ROUTES) {
+    const params = matchPattern(route.pattern, segments);
+    if (!params) {
+      continue;
     }
-    if (second === 'maintenance' && segments.length === 2) {
-      return dispatch(settingsMaintenance, method, request, undefined, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'runs') {
-    if (second === 'queue-status' && segments.length === 2) {
-      return dispatch(runsQueueStatus, method, request, undefined, source);
-    }
-    if (second === 'enqueue' && segments.length === 2) {
-      return dispatch(runsEnqueue, method, request, undefined, source);
-    }
-    if (second === 'dead-letter' && third === 'requeue' && segments.length === 3) {
-      return dispatch(runsDeadLetterRequeue, method, request, undefined, source);
-    }
-    if (second && third === 'stream' && segments.length === 3) {
-      return dispatch(runStream, method, request, { runId: second }, source);
-    }
-    if (second && third === 'cancel' && segments.length === 3) {
-      return dispatch(runCancel, method, request, { runId: second }, source);
-    }
-    if (second && third === 'resume' && segments.length === 3) {
-      return dispatch(runResume, method, request, { runId: second }, source);
-    }
-    if (second && third === 'retry-node' && segments.length === 3) {
-      return dispatch(runRetryNode, method, request, { runId: second }, source);
-    }
-    if (segments.length === 1) {
-      return dispatch(runsIndex, method, request, undefined, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(runById, method, request, { runId: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'runtime-analytics') {
-    if (second === 'summary' && segments.length === 2) {
-      return dispatch(runtimeAnalyticsSummary, method, request, undefined, source);
-    }
-    if (second === 'insights' && segments.length === 2) {
-      return dispatch(runtimeAnalyticsInsights, method, request, undefined, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'trigger-buttons') {
-    if (second === 'cleanup-fixtures' && segments.length === 2) {
-      return dispatch(triggerButtonsCleanup, method, request, undefined, source);
-    }
-    if (second === 'reorder' && segments.length === 2) {
-      return dispatch(triggerButtonsReorder, method, request, undefined, source);
-    }
-    if (segments.length === 1) {
-      return dispatch(triggerButtons, method, request, undefined, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(triggerButtonsById, method, request, { id: second }, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'validation' && second === 'docs-snapshot' && segments.length === 2) {
-    return dispatch(validationDocsSnapshot, method, request, undefined, source);
-  }
-
-  if (first === 'playwright') {
-    if (second && third === 'artifacts' && fourth && segments.length === 4) {
-      return dispatch(playwrightArtifact, method, request, { runId: second, file: fourth }, source);
-    }
-    if (second && segments.length === 2) {
-      return dispatch(playwrightRun, method, request, { runId: second }, source);
-    }
-    if (segments.length === 1) {
-      return dispatch(playwright, method, request, undefined, source);
-    }
-    return notFound(request, source);
-  }
-
-  if (first === 'portable-engine') {
-    if (second === 'schema' && third === 'diff' && segments.length === 3) {
-      return dispatch(portableEngineSchemaDiff, method, request, undefined, source);
-    }
-    if (second === 'schema' && segments.length === 2) {
-      return dispatch(portableEngineSchema, method, request, undefined, source);
-    }
-    if (second === 'trend-snapshots' && segments.length === 2) {
-      return dispatch(portableEngineTrendSnapshots, method, request, undefined, source);
-    }
-    if (second === 'remediation-dead-letters' && third === 'replay-history' && segments.length === 3) {
-      return dispatch(portableEngineRemediationDeadLettersReplay, method, request, undefined, source);
-    }
-    if (second === 'remediation-dead-letters' && segments.length === 2) {
-      return dispatch(portableEngineRemediationDeadLetters, method, request, undefined, source);
-    }
-    if (second === 'remediation-webhook' && segments.length === 2) {
-      return dispatch(portableEngineRemediationWebhook, method, request, undefined, source);
-    }
-    return notFound(request, source);
+    return dispatch(route.module, method, request, params, source);
   }
 
   return notFound(request, source);

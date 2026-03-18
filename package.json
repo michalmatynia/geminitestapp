@@ -339,6 +339,7 @@
     "@tiptap/starter-kit": "^3.20.1",
     "@types/nodemailer": "^7.0.11",
     "@types/turndown": "^5.0.6",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.70.4",
     "class-variance-authority": "^0.7.1",

@@ -1,38 +1,41 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
-import { KangurGameClockQuizWidget } from '@/features/kangur/ui/components/KangurGameClockQuizWidget';
-import { KangurGameAdditionQuizWidget } from '@/features/kangur/ui/components/KangurGameAdditionQuizWidget';
-import { KangurGameDivisionQuizWidget } from '@/features/kangur/ui/components/KangurGameDivisionQuizWidget';
-import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/KangurGameGeometryTrainingWidget';
 import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
 import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget';
 import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
 import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
-import { KangurGameKangurSessionWidget } from '@/features/kangur/ui/components/KangurGameKangurSessionWidget';
-import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
-import { KangurGameMultiplicationQuizWidget } from '@/features/kangur/ui/components/KangurGameMultiplicationQuizWidget';
 import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/KangurGameNavigationWidget';
-import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
-import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
-import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
-import { KangurGameSubtractionQuizWidget } from '@/features/kangur/ui/components/KangurGameSubtractionQuizWidget';
-import { KangurGameLogicalPatternsQuizWidget } from '@/features/kangur/ui/components/KangurGameLogicalPatternsQuizWidget';
-import { KangurGameLogicalClassificationQuizWidget } from '@/features/kangur/ui/components/KangurGameLogicalClassificationQuizWidget';
-import { KangurGameLogicalAnalogiesQuizWidget } from '@/features/kangur/ui/components/KangurGameLogicalAnalogiesQuizWidget';
-import { KangurGameEnglishSentenceQuizWidget } from '@/features/kangur/ui/components/KangurGameEnglishSentenceQuizWidget';
-import { KangurGameEnglishPartsOfSpeechQuizWidget } from '@/features/kangur/ui/components/KangurGameEnglishPartsOfSpeechQuizWidget';
 import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
 import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
+
+// Lazy-load quiz/session widgets — only the active screen is downloaded
+const KangurGameCalendarTrainingWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameCalendarTrainingWidget').then(m => ({ default: m.KangurGameCalendarTrainingWidget })));
+const KangurGameClockQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameClockQuizWidget').then(m => ({ default: m.KangurGameClockQuizWidget })));
+const KangurGameAdditionQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameAdditionQuizWidget').then(m => ({ default: m.KangurGameAdditionQuizWidget })));
+const KangurGameDivisionQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameDivisionQuizWidget').then(m => ({ default: m.KangurGameDivisionQuizWidget })));
+const KangurGameGeometryTrainingWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameGeometryTrainingWidget').then(m => ({ default: m.KangurGameGeometryTrainingWidget })));
+const KangurGameKangurSessionWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameKangurSessionWidget').then(m => ({ default: m.KangurGameKangurSessionWidget })));
+const KangurGameKangurSetupWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameKangurSetupWidget').then(m => ({ default: m.KangurGameKangurSetupWidget })));
+const KangurGameMultiplicationQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameMultiplicationQuizWidget').then(m => ({ default: m.KangurGameMultiplicationQuizWidget })));
+const KangurGameOperationSelectorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameOperationSelectorWidget').then(m => ({ default: m.KangurGameOperationSelectorWidget })));
+const KangurGameQuestionWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameQuestionWidget').then(m => ({ default: m.KangurGameQuestionWidget })));
+const KangurGameResultWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameResultWidget').then(m => ({ default: m.KangurGameResultWidget })));
+const KangurGameSubtractionQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameSubtractionQuizWidget').then(m => ({ default: m.KangurGameSubtractionQuizWidget })));
+const KangurGameLogicalPatternsQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameLogicalPatternsQuizWidget').then(m => ({ default: m.KangurGameLogicalPatternsQuizWidget })));
+const KangurGameLogicalClassificationQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameLogicalClassificationQuizWidget').then(m => ({ default: m.KangurGameLogicalClassificationQuizWidget })));
+const KangurGameLogicalAnalogiesQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameLogicalAnalogiesQuizWidget').then(m => ({ default: m.KangurGameLogicalAnalogiesQuizWidget })));
+const KangurGameEnglishSentenceQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameEnglishSentenceQuizWidget').then(m => ({ default: m.KangurGameEnglishSentenceQuizWidget })));
+const KangurGameEnglishPartsOfSpeechQuizWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameEnglishPartsOfSpeechQuizWidget').then(m => ({ default: m.KangurGameEnglishPartsOfSpeechQuizWidget })));
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import {
   KangurGameRuntimeBoundary,

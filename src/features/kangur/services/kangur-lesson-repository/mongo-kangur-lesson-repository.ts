@@ -83,6 +83,8 @@ const toLesson = (doc: MongoKangurLessonDocument): KangurLesson => ({
   activeBg: doc.activeBg,
   sortOrder: doc.sortOrder,
   enabled: doc.enabled,
+  ...(doc.sectionId ? { sectionId: doc.sectionId } : {}),
+  ...(doc.subsectionId ? { subsectionId: doc.subsectionId } : {}),
 });
 
 export const mongoKangurLessonRepository: KangurLessonRepository = {

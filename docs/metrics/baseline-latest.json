@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-18T09:01:32.819Z",
+  "generatedAt": "2026-03-18T11:31:55.006Z",
   "source": {
-    "totalFiles": 6680,
-    "totalLines": 1080158,
+    "totalFiles": 6759,
+    "totalLines": 1082437,
     "useClientFiles": 1,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -26,43 +26,43 @@
     "topRouteHotspots": [
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 383
-      },
-      {
-        "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
-        "lines": 339
+        "lines": 282
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
-        "lines": 289
+        "lines": 236
       },
       {
-        "path": "src/app/api/ai-paths/[[...path]]/route.ts",
-        "lines": 256
-      },
-      {
-        "path": "src/app/api/databases/[[...path]]/route.ts",
-        "lines": 229
+        "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
+        "lines": 230
       },
       {
         "path": "src/app/api/agentcreator/[[...path]]/route.ts",
         "lines": 214
       },
       {
+        "path": "src/app/api/ai-paths/[[...path]]/route.ts",
+        "lines": 206
+      },
+      {
+        "path": "src/app/api/databases/[[...path]]/route.ts",
+        "lines": 204
+      },
+      {
         "path": "src/app/api/chatbot/[[...path]]/route.ts",
-        "lines": 172
+        "lines": 169
       },
       {
         "path": "src/app/api/agent/leases/route.ts",
         "lines": 122
       },
       {
-        "path": "src/app/api/kangur/[[...path]]/route.ts",
-        "lines": 80
-      },
-      {
         "path": "src/app/api/agent/resources/route.ts",
         "lines": 59
+      },
+      {
+        "path": "src/app/api/kangur/[[...path]]/route.ts",
+        "lines": 57
       },
       {
         "path": "src/app/api/agent/approval-gates/route.ts",
@@ -114,7 +114,7 @@
     "sharedToFeaturesTotalImports": 1
   },
   "architecture": {
-    "crossFeatureEdgePairs": 8,
+    "crossFeatureEdgePairs": 4,
     "topCrossFeatureEdges": [
       {
         "edge": "kangur -> cms",
@@ -129,36 +129,20 @@
         "references": 2
       },
       {
-        "edge": "admin -> observability",
-        "references": 1
-      },
-      {
-        "edge": "admin -> prompt-engine",
-        "references": 1
-      },
-      {
-        "edge": "admin -> products",
-        "references": 1
-      },
-      {
         "edge": "ai -> files",
-        "references": 1
-      },
-      {
-        "edge": "cms -> admin",
         "references": 1
       }
     ],
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1224,
-        "lines": 266658
+        "files": 1274,
+        "lines": 268903
       },
       {
         "feature": "ai",
-        "files": 1029,
-        "lines": 208457
+        "files": 1030,
+        "lines": 208484
       },
       {
         "feature": "case-resolver",
@@ -167,8 +151,8 @@
       },
       {
         "feature": "cms",
-        "files": 329,
-        "lines": 53077
+        "files": 334,
+        "lines": 53146
       },
       {
         "feature": "products",
@@ -188,7 +172,7 @@
       {
         "feature": "notesapp",
         "files": 86,
-        "lines": 12887
+        "lines": 12890
       },
       {
         "feature": "foldertree",
@@ -202,8 +186,8 @@
       },
       {
         "feature": "admin",
-        "files": 39,
-        "lines": 7773
+        "files": 41,
+        "lines": 7781
       },
       {
         "feature": "auth",
@@ -227,8 +211,8 @@
       },
       {
         "feature": "prompt-engine",
-        "files": 14,
-        "lines": 4007
+        "files": 21,
+        "lines": 4074
       },
       {
         "feature": "case-resolver-capture",
@@ -238,7 +222,7 @@
       {
         "feature": "observability",
         "files": 20,
-        "lines": 3123
+        "lines": 3101
       },
       {
         "feature": "product-sync",
@@ -479,74 +463,6 @@
   "hotspots": {
     "topFilesByLines": [
       {
-        "path": "src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts",
-        "lines": 1459
-      },
-      {
-        "path": "src/features/kangur/ui/components/animations/AgenticCodingAnimations.tsx",
-        "lines": 1436
-      },
-      {
-        "path": "src/features/kangur/ui/components/WebDevelopmentReactComponentsLesson.data.tsx",
-        "lines": 1377
-      },
-      {
-        "path": "src/shared/contracts/kangur-ai-tutor-content.ts",
-        "lines": 1189
-      },
-      {
-        "path": "src/features/kangur/cms-builder/defaults/game-defaults.ts",
-        "lines": 1188
-      },
-      {
-        "path": "src/features/kangur/ui/components/ClockLesson.tsx",
-        "lines": 1164
-      },
-      {
-        "path": "src/shared/contracts/kangur.ts",
-        "lines": 1150
-      },
-      {
-        "path": "src/features/kangur/services/local-kangur-platform-duels.ts",
-        "lines": 1144
-      },
-      {
-        "path": "src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx",
-        "lines": 1137
-      },
-      {
-        "path": "src/features/kangur/ui/components/KangurAssignmentManager.tsx",
-        "lines": 1133
-      },
-      {
-        "path": "src/features/kangur/ui/components/GeometrySymmetryGame.tsx",
-        "lines": 1113
-      },
-      {
-        "path": "src/features/cms/components/page-builder/registry/block-definitions-content.ts",
-        "lines": 1112
-      },
-      {
-        "path": "src/features/kangur/ui/context/KangurAiTutorRuntime.shared.ts",
-        "lines": 1087
-      },
-      {
-        "path": "src/features/kangur/admin/AdminKangurObservabilityPage.test.tsx",
-        "lines": 1077
-      },
-      {
-        "path": "src/features/prompt-engine/components/RuleItem.tsx",
-        "lines": 1075
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/__tests__/canvas-connection-preview.test.tsx",
-        "lines": 1055
-      },
-      {
-        "path": "src/features/kangur/themes/others.ts",
-        "lines": 1054
-      },
-      {
         "path": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
         "lines": 1051
       },
@@ -567,10 +483,6 @@
         "lines": 1035
       },
       {
-        "path": "src/features/kangur/ui/components/AgenticCodingMiniGames.tsx",
-        "lines": 1029
-      },
-      {
         "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
         "lines": 1000
       },
@@ -579,34 +491,102 @@
         "lines": 999
       },
       {
+        "path": "src/shared/contracts/kangur.ts",
+        "lines": 998
+      },
+      {
         "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
         "lines": 991
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
+        "lines": 986
+      },
+      {
+        "path": "src/features/kangur/ui/pages/Game.tsx",
+        "lines": 986
       },
       {
         "path": "src/features/kangur/server/knowledge-graph/retrieval.ts",
         "lines": 984
       },
       {
-        "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.tsx",
-        "lines": 983
-      },
-      {
-        "path": "src/features/kangur/ui/pages/Game.tsx",
-        "lines": 983
-      },
-      {
         "path": "src/shared/contracts/cms.ts",
         "lines": 974
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
+        "lines": 973
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-plan.test.ts",
+        "lines": 958
+      },
+      {
+        "path": "src/features/kangur/ui/KangurLoginPage.tsx",
+        "lines": 956
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
+        "lines": 953
+      },
+      {
+        "path": "src/shared/contracts/ai-paths-core/nodes.ts",
+        "lines": 953
+      },
+      {
+        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
+        "lines": 946
+      },
+      {
+        "path": "src/features/ai/image-studio/components/VersionNodeMapCanvas.tsx",
+        "lines": 945
+      },
+      {
+        "path": "src/features/kangur/ui/components/SubtractingLesson.tsx",
+        "lines": 942
+      },
+      {
+        "path": "src/features/kangur/ui/components/GeometryPerimeterDrawingGame.tsx",
+        "lines": 937
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts",
+        "lines": 936
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
+        "lines": 935
+      },
+      {
+        "path": "src/features/cms/components/page-builder/registry/block-definitions-media.ts",
+        "lines": 932
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",
+        "lines": 931
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
+        "lines": 931
+      },
+      {
+        "path": "src/features/kangur/admin/appearance/ThemePreviewPanel.tsx",
+        "lines": 929
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/canvas-sidebar.tsx",
+        "lines": 926
+      },
+      {
+        "path": "src/features/cms/components/page-builder/PreviewBlock.tsx",
+        "lines": 926
       }
     ],
     "topPagesByLines": [
       {
         "path": "src/app/(frontend)/[...slug]/page.tsx",
-        "lines": 88
-      },
-      {
-        "path": "src/app/(frontend)/preview/[id]/page.tsx",
-        "lines": 67
+        "lines": 59
       },
       {
         "path": "src/app/(frontend)/page.tsx",
@@ -619,6 +599,10 @@
       {
         "path": "src/app/(admin)/admin/agentcreator/page.tsx",
         "lines": 45
+      },
+      {
+        "path": "src/app/(frontend)/preview/[id]/page.tsx",
+        "lines": 38
       },
       {
         "path": "src/app/(frontend)/kangur/login/page.tsx",
@@ -683,8 +667,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 45,
-    "depthGte4Chains": 1,
-    "forwardingComponents": 47
+    "candidateChains": 43,
+    "depthGte4Chains": 0,
+    "forwardingComponents": 48
   }
 }

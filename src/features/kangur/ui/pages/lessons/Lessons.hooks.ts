@@ -16,6 +16,7 @@ import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjec
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import type {
@@ -45,6 +46,7 @@ export function useLessonsLogic() {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
+  const isMobile = useKangurMobileBreakpoint();
 
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
@@ -53,6 +55,7 @@ export function useLessonsLogic() {
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
   const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
+  const activeLessonScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { assignments } = useKangurAssignments({
     enabled: isDeferredContentReady && canAccessParentAssignments,
@@ -235,6 +238,14 @@ export function useLessonsLogic() {
     const scrollToTarget = (): boolean => {
       const target = activeLessonNavigationRef.current ?? activeLessonHeaderRef.current;
       if (!target) return false;
+      const scrollContainer = isMobile ? activeLessonScrollRef.current : null;
+      if (scrollContainer) {
+        const containerTop = scrollContainer.getBoundingClientRect().top;
+        const delta = target.getBoundingClientRect().top - containerTop;
+        const nextTop = Math.max(0, scrollContainer.scrollTop + delta);
+        scrollContainer.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
+        return Math.abs(delta) <= 8;
+      }
       const delta = target.getBoundingClientRect().top - resolveTopOffset();
       const nextTop = Math.max(0, window.scrollY + delta);
       window.scrollTo({ top: nextTop, left: 0, behavior: 'auto' });
@@ -246,7 +257,7 @@ export function useLessonsLogic() {
     };
     if (!scrollToTarget()) frameId = window.requestAnimationFrame(scrollLoop);
     return () => { if (frameId !== null) window.cancelAnimationFrame(frameId); };
-  }, [activeLesson?.id]);
+  }, [activeLesson?.id, isMobile]);
 
   return {
     auth,
@@ -274,6 +285,7 @@ export function useLessonsLogic() {
     activeLessonNavigationRef,
     activeLessonHeaderRef,
     activeLessonContentRef,
+    activeLessonScrollRef,
     isSecretLessonActive,
     setIsSecretLessonActive,
   };

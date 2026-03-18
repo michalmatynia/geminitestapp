@@ -128,6 +128,12 @@ STATE MANAGEMENT
 -Scan for deeply nested props (prop drilling) and introduce React Context (with useContext) to supply common data/state
 -If multiple components need access to user data, create a UserContext that provides this data to all children without prop drilling.
 
+ transition from monolithic to granular
+     architecture.
+
+› run refactor  improvement of a  table‑driven router
+    (pattern → handler) to replace the long if chain. Prepare a plan
+
 UI: LAYOUT
 - make mobile responsive
 

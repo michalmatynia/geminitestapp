@@ -880,9 +880,12 @@ export function KangurPrimaryNavigation({
       }`}
       aria-hidden={!isMobileMenuOpen}
     >
-      <div
-        className='absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)]'
+      <button
+        type='button'
+        className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0'
         onClick={closeMobileMenu}
+        aria-label='Close navigation menu'
+        tabIndex={-1}
       />
       <div
         role='dialog'

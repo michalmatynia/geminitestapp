@@ -1,9 +1,10 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -441,7 +442,7 @@ export default function SubtractingGardenGame({
                 Zabierz {round.b} swiecacych punktów
               </p>
             </div>
-            <DragDropContext onDragEnd={handleDragEnd}>
+            <KangurDragDropContext onDragEnd={handleDragEnd}>
               <AnimatePresence mode='wait'>
                 <motion.div
                   key={roundIndex}
@@ -641,7 +642,7 @@ export default function SubtractingGardenGame({
                   </KangurPanelRow>
                 </motion.div>
               </AnimatePresence>
-            </DragDropContext>
+            </KangurDragDropContext>
           </div>
         </div>
       </KangurGlassPanel>

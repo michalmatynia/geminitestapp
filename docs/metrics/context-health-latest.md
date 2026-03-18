@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-18'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,26 +8,27 @@ canonical: true
 ---
 # Context Health Check
 
-Generated at: 2026-03-17T10:00:06.361Z
+Generated at: 2026-03-18T20:02:35.108Z
 
 ## Summary
 
 - Status: PASSED
-- Context files scanned: 250
+- Context files scanned: 240
 - Errors: 0
 - Warnings: 0
-- Info: 5
+- Info: 6
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| context-missing-split | 0 | 0 | 5 |
+| context-missing-split | 0 | 0 | 6 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| INFO | context-missing-split | src/features/ai/ai-paths/context/AiPathsContext.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/cms/components/frontend/CmsStorefrontAppearance.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPanelBody.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |
 | INFO | context-missing-split | src/features/kangur/ui/components/KangurAiTutorPortal.context.tsx | Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization. |

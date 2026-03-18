@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -210,13 +211,13 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
 
 export const useBindingsState = (): BindingsState => {
   const ctx = React.useContext(BindingsStateContext);
-  if (!ctx) throw new Error('useBindingsState must be used within BindingsProvider');
+  if (!ctx) throw internalError('useBindingsState must be used within BindingsProvider');
   return ctx;
 };
 
 export const useBindingsActions = (): BindingsActions => {
   const ctx = React.useContext(BindingsActionsContext);
-  if (!ctx) throw new Error('useBindingsActions must be used within BindingsProvider');
+  if (!ctx) throw internalError('useBindingsActions must be used within BindingsProvider');
   return ctx;
 };
 

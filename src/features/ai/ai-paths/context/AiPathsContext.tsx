@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, type ReactNode, Dispatch, SetStateAction } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 
 export type AdminAiPathsWorkspaceTab = 'canvas' | 'paths' | 'docs';
@@ -58,7 +59,7 @@ export function AiPathsProvider({ children }: { children: ReactNode }): React.JS
 export function useAiPaths() {
   const context = useContext(AiPathsContext);
   if (!context) {
-    throw new Error('useAiPaths must be used within an AiPathsProvider');
+    throw internalError('useAiPaths must be used within an AiPathsProvider');
   }
   return context;
 }

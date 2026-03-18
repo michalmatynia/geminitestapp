@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 import { cn } from '@/features/kangur/shared/utils';
 import {
   KangurButton,
@@ -122,7 +123,7 @@ export function GroupSum({
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <KangurDragDropContext onDragEnd={onDragEnd}>
       <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Podziel {total} piłek na dwie grupy sumujące się do{' '}
@@ -271,6 +272,6 @@ export function GroupSum({
           </motion.div>
         )}
       </div>
-    </DragDropContext>
+    </KangurDragDropContext>
   );
 }

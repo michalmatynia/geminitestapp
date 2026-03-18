@@ -1,4 +1,5 @@
 import { type FormEvent, type JSX, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useTurnstile } from './use-turnstile';
@@ -30,6 +31,7 @@ export function SignupForm({
   captchaError,
   isCaptchaRequired = false,
 }: SignupFormProps): JSX.Element {
+  const translations = useTranslations('KangurLogin');
   const [password, setPassword] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -65,10 +67,10 @@ export function SignupForm({
       ref={formRef}
       onSubmit={handleSubmit}
       className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
-      aria-label='Formularz rejestracji rodzica'
+      aria-label={translations('signupFormAriaLabel')}
     >
       <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <div className='text-sm font-medium text-slate-700'>Email rodzica</div>
+        <div className='text-sm font-medium text-slate-700'>{translations('parentEmailLabel')}</div>
         <div className='rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500'>
           {email}
         </div>
@@ -76,21 +78,21 @@ export function SignupForm({
 
       <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
         <label htmlFor='new-password' className='text-sm font-medium text-slate-700'>
-          Ustaw hasło
+          {translations('setPasswordLabel')}
         </label>
         <input
           id='new-password'
           type='password'
-          aria-label='Ustaw hasło'
+          aria-label={translations('setPasswordLabel')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isLoading}
           className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-          placeholder='Minimum 8 znaków'
+          placeholder={translations('setPasswordPlaceholder')}
           autoComplete='new-password'
         />
         <p className='text-xs text-slate-500'>
-          Hasło musi mieć co najmniej 8 znaków.
+          {translations('passwordRequirement')}
         </p>
       </div>
 
@@ -99,7 +101,7 @@ export function SignupForm({
           <div
             ref={captchaContainerRef}
             className='min-h-[65px] self-center'
-            aria-label='Weryfikacja bezpieczeństwa'
+            aria-label={translations('securityVerificationLabel')}
           />
           {captchaError && (
             <p className='text-center text-xs font-medium text-rose-600' role='alert'>
@@ -128,7 +130,7 @@ export function SignupForm({
         disabled={isLoading || !password.trim() || (isCaptchaRequired && !captchaToken)}
         className='mt-2 w-full justify-center rounded-xl font-bold'
       >
-        {isLoading ? 'Tworzenie konta...' : 'Utwórz konto'}
+        {isLoading ? translations('createAccountSubmitting') : translations('createAccount')}
       </KangurButton>
     </form>
   );
@@ -149,12 +151,14 @@ export function VerificationView({
   notice?: string | null;
   debugUrl?: string | null;
 }): JSX.Element {
+  const translations = useTranslations('KangurLogin');
+
   return (
     <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full text-center`}>
       <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-        <h3 className='text-xl font-bold text-slate-900'>Sprawdź skrzynkę</h3>
+        <h3 className='text-xl font-bold text-slate-900'>{translations('checkInboxTitle')}</h3>
         <p className='text-sm text-slate-600'>
-          Wysłaliśmy link potwierdzający na adres:
+          {translations('verificationSentTo')}
           <br />
           <span className='font-semibold text-slate-900'>{email}</span>
         </p>
@@ -162,7 +166,7 @@ export function VerificationView({
 
       <div className='rounded-xl bg-indigo-50 px-6 py-4'>
         <p className='text-sm font-medium text-indigo-900'>
-          Kliknij link w e-mailu, aby aktywować konto.
+          {translations('verificationAction')}
         </p>
       </div>
 
@@ -184,7 +188,9 @@ export function VerificationView({
         
         {debugUrl && process.env.NODE_ENV !== 'production' && (
           <div className={`mt-4 ${KANGUR_STACK_COMPACT_CLASSNAME} rounded-lg border border-slate-200 bg-slate-50 p-3 text-left`}>
-            <p className='text-xs font-bold text-slate-500 uppercase tracking-wider'>Debug Link (Dev Only)</p>
+            <p className='text-xs font-bold text-slate-500 uppercase tracking-wider'>
+              {translations('debugLinkLabel')}
+            </p>
             <a 
               href={debugUrl} 
               className='break-all text-xs font-mono text-indigo-600 underline'

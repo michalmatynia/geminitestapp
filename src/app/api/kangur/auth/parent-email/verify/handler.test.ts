@@ -54,7 +54,9 @@ describe('kangur parent email verify handler', () => {
       requestContext
     );
 
-    expect(verifyKangurParentEmailMock).toHaveBeenCalledWith('verify-token-1');
+    expect(verifyKangurParentEmailMock).toHaveBeenCalledWith('verify-token-1', {
+      locale: 'pl',
+    });
     await expect(response.json()).resolves.toEqual({
       ok: true,
       email: 'parent@example.com',

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-18'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,13 +8,13 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-17T09:54:59.465Z
+Generated at: 2026-03-18T19:19:40.111Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 289
-- Method exports scanned: 433
+- Routes scanned: 292
+- Method exports scanned: 436
 - Errors: 0
 - Warnings: 0
 - CSRF exemptions: 47

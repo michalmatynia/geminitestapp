@@ -8,7 +8,7 @@ import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelO
 import {
   useIntegrationConnections,
   useIntegrations,
-} from '@/features/integrations/hooks/useIntegrationQueries';
+} from '@/features/integrations';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   logKangurClientError,

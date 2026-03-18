@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { internalError } from '@/shared/errors/app-error';
 
 type ExamNavigationContextValue = {
   onPrev: () => void;
@@ -18,7 +19,7 @@ export const ExamNavigationProvider = ExamNavigationContext.Provider;
 export function useExamNavigation() {
   const context = useContext(ExamNavigationContext);
   if (!context) {
-    throw new Error('useExamNavigation must be used within an ExamNavigationProvider');
+    throw internalError('useExamNavigation must be used within an ExamNavigationProvider');
   }
   return context;
 }

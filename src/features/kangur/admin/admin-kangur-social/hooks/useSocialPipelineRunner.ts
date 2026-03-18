@@ -97,6 +97,15 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       );
     }, PIPELINE_TIMEOUT_MS);
 
+    // Prevent HMR/Turbopack page reloads from aborting in-flight fetches.
+    // Playwright page visits trigger Turbopack on-demand compilation of shared
+    // modules, which can send "full reload" HMR signals to this browser tab.
+    const blockUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', blockUnload);
+
     try {
       // Step 0: Load documentation context
       currentStep = 'loading_context';
@@ -158,6 +167,14 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         return;
       }
       if (pipelineTimedOut) { console.log('[PIPELINE] Timed out after Step 1'); return; }
+
+      // Playwright page visits trigger Turbopack on-demand compilation of shared
+      // modules. Wait for the dev server to finish recompiling before making
+      // further API requests, otherwise they fail with "Failed to fetch".
+      console.log('[PIPELINE] Waiting 15s for dev server to settle after Playwright captures...');
+      toast('Pipeline: waiting for dev server to stabilize...', { variant: 'default' });
+      await new Promise((resolve) => setTimeout(resolve, 15_000));
+      if (pipelineTimedOut) { console.log('[PIPELINE] Timed out during settle'); return; }
 
       // Derive addon IDs and assets locally to avoid stale closure.
       // Read latest state from depsRef so we see any updates from re-renders.
@@ -234,9 +251,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       const generatedPost = await withRetry(
         () => api.post<KangurSocialPost>('/api/kangur/social-posts/generate',
           generatePayload,
-          { timeout: 180_000 }
+          { timeout: 360_000 }
         ),
-        { maxAttempts: 3, delayMs: 3000 }
+        { maxAttempts: 5, delayMs: 5000 }
       );
       console.log('[PIPELINE] Step 3 result: id=%s, titlePl=%s', generatedPost?.id, generatedPost?.titlePl?.slice(0, 50));
       // Immediately sync editor with generated content
@@ -313,6 +330,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       );
     } finally {
       clearTimeout(pipelineTimeoutId);
+      window.removeEventListener('beforeunload', blockUnload);
     }
   }, [toast, queryClient]);
 

@@ -7,22 +7,24 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import type { KangurParentEmailVerify } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export async function postKangurParentEmailVerifyHandler(
-  _req: Request,
+  req: Request,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  const { locale, t } = await getSiteTranslator({ request: req });
   await auth().catch((error) => {
     void ErrorSystem.captureException(error);
     return null;
   });
   const body = ctx.body as KangurParentEmailVerify | undefined;
   if (!body) {
-    throw badRequestError('Invalid payload.');
+    throw badRequestError(t('KangurAuthApi.invalidPayload'));
   }
 
-  const result = await verifyKangurParentEmail(body.token);
-  const tutorContent = await getKangurAiTutorContent('pl');
+  const result = await verifyKangurParentEmail(body.token, { locale });
+  const tutorContent = await getKangurAiTutorContent(locale);
 
   return NextResponse.json({
     ok: true,

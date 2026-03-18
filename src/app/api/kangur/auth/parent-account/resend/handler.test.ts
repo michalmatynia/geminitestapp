@@ -63,6 +63,7 @@ describe('kangur parent account resend handler', () => {
     expect(resendKangurParentVerificationEmailMock).toHaveBeenCalledWith({
       email: 'parent@example.com',
       callbackUrl: '/tests?focus=division',
+      locale: 'pl',
       request: expect.any(NextRequest),
     });
     await expect(response.json()).resolves.toEqual({

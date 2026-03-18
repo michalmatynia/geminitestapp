@@ -40,6 +40,7 @@ import {
   validationError,
 } from '@/features/kangur/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { getSiteTranslator, type SiteTranslator } from '@/shared/lib/i18n/server-translator';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 
@@ -54,8 +55,6 @@ type KangurParentAccountCreateResult = {
 };
 
 const DEFAULT_PUBLIC_APP_URL = 'http://localhost:3000';
-const PARENT_EMAIL_CONFLICT_MESSAGE =
-  'Konto z tym emailem już istnieje. Zaloguj się emailem i hasłem.';
 type ActiveEmailVerificationChallenge = Awaited<
   ReturnType<typeof findActiveEmailVerificationChallengeByEmail>
 >;
@@ -74,14 +73,17 @@ const buildParentDisplayName = (email: string): string => {
   return localPart.slice(0, 120);
 };
 
-const formatRetryAfterLabel = (retryAfterMs: number): string => {
+const getParentEmailConflictMessage = (t: SiteTranslator): string =>
+  t('KangurAuthApi.parentEmailConflict');
+
+const formatRetryAfterLabel = (retryAfterMs: number, t: SiteTranslator): string => {
   const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
   if (seconds < 60) {
-    return `${seconds} s`;
+    return t('KangurLogin.cooldownSeconds', { count: seconds });
   }
 
   const minutes = Math.ceil(seconds / 60);
-  return `${minutes} min`;
+  return t('KangurLogin.cooldownMinutes', { count: minutes });
 };
 
 const readParentVerificationEmailSettings = async (): Promise<KangurParentVerificationEmailSettings> => {
@@ -104,7 +106,8 @@ const getKangurParentVerificationRetryAfterMs = (
 
 const assertKangurParentVerificationSendAllowed = (
   activeChallenge: ActiveEmailVerificationChallenge,
-  resendCooldownMs: number
+  resendCooldownMs: number,
+  t: SiteTranslator
 ): void => {
   const retryAfterMs = getKangurParentVerificationRetryAfterMs(activeChallenge, resendCooldownMs);
   if (!retryAfterMs) {
@@ -112,7 +115,9 @@ const assertKangurParentVerificationSendAllowed = (
   }
 
   throw rateLimitedError(
-    `Email potwierdzający został już wysłany. Poczekaj ${formatRetryAfterLabel(retryAfterMs)} i spróbuj ponownie.`,
+    t('KangurAuthApi.verificationAlreadySent', {
+      label: formatRetryAfterLabel(retryAfterMs, t),
+    }),
     retryAfterMs
   );
 };
@@ -157,58 +162,61 @@ const buildAbsoluteKangurLoginUrl = (input: {
   return resolved.toString();
 };
 
-const assertUserLoginAllowed = async (userId: string): Promise<void> => {
+const assertUserLoginAllowed = async (userId: string, t: SiteTranslator): Promise<void> => {
   const security = await getAuthSecurityProfile(userId);
   if (security.bannedAt) {
-    throw forbiddenError('This account is banned.');
+    throw forbiddenError(t('AuthApi.accountBanned'));
   }
   if (security.disabledAt) {
-    throw forbiddenError('This account is disabled.');
+    throw forbiddenError(t('AuthApi.accountDisabled'));
   }
 };
 
-const mapParentPasswordIssue = (issue: string): string => {
+const mapParentPasswordIssue = (issue: string, t: SiteTranslator): string => {
   const trimmed = issue.trim();
   const lengthMatch = trimmed.match(/^Password must be at least (\d+) characters\.$/);
   if (lengthMatch) {
-    return `Hasło musi mieć co najmniej ${lengthMatch[1]} znaków.`;
+    return t('KangurAuthApi.passwordMinLength', { count: Number(lengthMatch[1]) });
   }
   if (trimmed.includes('uppercase')) {
-    return 'Hasło musi zawierać co najmniej jedną wielką literę.';
+    return t('KangurAuthApi.passwordUppercase');
   }
   if (trimmed.includes('lowercase')) {
-    return 'Hasło musi zawierać co najmniej jedną małą literę.';
+    return t('KangurAuthApi.passwordLowercase');
   }
   if (trimmed.includes('number')) {
-    return 'Hasło musi zawierać co najmniej jedną cyfrę.';
+    return t('KangurAuthApi.passwordNumber');
   }
   if (trimmed.includes('symbol')) {
-    return 'Hasło musi zawierać co najmniej jeden znak specjalny.';
+    return t('KangurAuthApi.passwordSymbol');
   }
   return trimmed;
 };
 
-const resolveParentPasswordIssues = (issues: string[]): string[] => {
-  const normalized = issues.map(mapParentPasswordIssue).filter(Boolean);
+const resolveParentPasswordIssues = (issues: string[], t: SiteTranslator): string[] => {
+  const normalized = issues.map((issue) => mapParentPasswordIssue(issue, t)).filter(Boolean);
   return Array.from(new Set(normalized));
 };
 
-const buildParentPasswordErrorMessage = (issues: string[]): string => {
+const buildParentPasswordErrorMessage = (issues: string[], t: SiteTranslator): string => {
   if (issues.length === 0) {
-    return 'Hasło nie spełnia wymagań bezpieczeństwa.';
+    return t('KangurAuthApi.passwordTooWeak');
   }
   if (issues.length === 1) {
-    return issues[0] ?? 'Hasło nie spełnia wymagań bezpieczeństwa.';
+    return issues[0] ?? t('KangurAuthApi.passwordTooWeak');
   }
   return issues.join(' ');
 };
 
-const assertValidParentPassword = async (password: string): Promise<void> => {
+const assertValidParentPassword = async (
+  password: string,
+  t: SiteTranslator
+): Promise<void> => {
   const policy = await getAuthSecurityPolicy();
   const passwordCheck = validatePasswordStrength(password, policy);
   if (!passwordCheck.ok) {
-    const issues = resolveParentPasswordIssues(passwordCheck.errors);
-    throw validationError(buildParentPasswordErrorMessage(issues), { issues });
+    const issues = resolveParentPasswordIssues(passwordCheck.errors, t);
+    throw validationError(buildParentPasswordErrorMessage(issues, t), { issues });
   }
 };
 
@@ -223,6 +231,7 @@ const ensureParentRoleAssigned = async (userId: string): Promise<void> => {
 const finalizeParentAccountWithoutVerification = async (input: {
   email: string;
   password: string;
+  t: SiteTranslator;
 }): Promise<{
   email: string;
   created: boolean;
@@ -230,14 +239,14 @@ const finalizeParentAccountWithoutVerification = async (input: {
 }> => {
   const existingUser = await findAuthUserByEmail(input.email);
   if (existingUser) {
-    await assertUserLoginAllowed(existingUser.id);
+    await assertUserLoginAllowed(existingUser.id, input.t);
     if (existingUser.emailVerified) {
-      throw conflictError(PARENT_EMAIL_CONFLICT_MESSAGE);
+      throw conflictError(getParentEmailConflictMessage(input.t));
     }
     let user = existingUser;
     let hasPassword = Boolean(user.passwordHash);
     if (!hasPassword) {
-      await assertValidParentPassword(input.password);
+      await assertValidParentPassword(input.password, input.t);
       const updatedUser = await setAuthUserPassword(user.id, input.password);
       if (!updatedUser?.email) {
         throw internalError('Nie udało się zapisać hasła rodzica.');
@@ -260,14 +269,14 @@ const finalizeParentAccountWithoutVerification = async (input: {
     };
   }
 
-  await assertValidParentPassword(input.password);
+  await assertValidParentPassword(input.password, input.t);
   const passwordHash = await hash(input.password, 12);
   const user = await createAuthUserWithEmail({
     email: input.email,
     name: buildParentDisplayName(input.email),
     passwordHash,
     emailVerified: new Date(),
-    duplicateErrorMessage: PARENT_EMAIL_CONFLICT_MESSAGE,
+    duplicateErrorMessage: getParentEmailConflictMessage(input.t),
   });
   if (!user?.email) {
     throw internalError('Nie udało się utworzyć konta rodzica.');
@@ -283,8 +292,9 @@ const finalizeParentAccountWithoutVerification = async (input: {
 const buildVerificationEmailContent = async (input: {
   email: string;
   verificationUrl: string;
+  locale?: string | null;
 }): Promise<{ subject: string; text: string; html: string }> => {
-  const tutorContent = await getKangurAiTutorContent('pl');
+  const tutorContent = await getKangurAiTutorContent(input.locale ?? 'pl');
   const verificationCopy = tutorContent.parentVerification;
   const greetingLine = formatKangurAiTutorTemplate(verificationCopy.emailGreetingTemplate, {
     displayName: buildParentDisplayName(input.email),
@@ -323,10 +333,12 @@ const sendKangurParentVerificationEmail = async (input: {
   created: boolean;
   hasPassword: boolean;
   verificationUrl: string;
+  locale?: string | null;
 }): Promise<void> => {
   const emailContent = await buildVerificationEmailContent({
     email: input.email,
     verificationUrl: input.verificationUrl,
+    locale: input.locale,
   });
 
   await sendAuthEmail({
@@ -350,7 +362,9 @@ export const createKangurParentAccount = async (input: {
   password: string;
   callbackUrl?: string | null;
   request?: Request | null;
+  locale?: string | null;
 }): Promise<KangurParentAccountCreateResult> => {
+  const { locale, t } = await getSiteTranslator({ locale: input.locale });
   const email = normalizeAuthEmail(input.email);
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
   const parentVerificationSettings = await readParentVerificationEmailSettings();
@@ -361,6 +375,7 @@ export const createKangurParentAccount = async (input: {
     const result = await finalizeParentAccountWithoutVerification({
       email,
       password: input.password,
+      t,
     });
     const origin = resolveAppOrigin(input.request);
     const verificationUrl = buildAbsoluteKangurLoginUrl({
@@ -384,8 +399,8 @@ export const createKangurParentAccount = async (input: {
 
   if (!existingUser) {
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
-    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
-    await assertValidParentPassword(input.password);
+    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs, t);
+    await assertValidParentPassword(input.password, t);
     const passwordHash = await hash(input.password, 12);
     verificationToken = await createEmailVerificationChallenge({
       email,
@@ -399,16 +414,16 @@ export const createKangurParentAccount = async (input: {
     created = true;
     hasPassword = true;
   } else {
-    await assertUserLoginAllowed(existingUser.id);
+    await assertUserLoginAllowed(existingUser.id, t);
     if (existingUser.emailVerified) {
-      throw conflictError(PARENT_EMAIL_CONFLICT_MESSAGE);
+      throw conflictError(getParentEmailConflictMessage(t));
     }
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
-    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
+    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs, t);
 
     let user = existingUser;
     if (!(typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0)) {
-      await assertValidParentPassword(input.password);
+      await assertValidParentPassword(input.password, t);
       const updatedUser = await setAuthUserPassword(user.id, input.password);
       if (!updatedUser?.email) {
         throw internalError('Nie udało się zapisać hasła rodzica.');
@@ -439,6 +454,7 @@ export const createKangurParentAccount = async (input: {
       created,
       hasPassword,
       verificationUrl,
+      locale,
     });
   }
 
@@ -457,7 +473,9 @@ export const resendKangurParentVerificationEmail = async (input: {
   email: string;
   callbackUrl?: string | null;
   request?: Request | null;
+  locale?: string | null;
 }): Promise<KangurParentAccountCreateResult> => {
+  const { locale, t } = await getSiteTranslator({ locale: input.locale });
   const email = normalizeAuthEmail(input.email);
   const callbackUrl = normalizeOptionalString(input.callbackUrl);
   const parentVerificationSettings = await readParentVerificationEmailSettings();
@@ -465,19 +483,19 @@ export const resendKangurParentVerificationEmail = async (input: {
   const notificationSuppressed =
     isKangurParentVerificationNotificationsSuppressed(parentVerificationSettings);
   if (!parentVerificationSettings.requireEmailVerification) {
-    throw conflictError('Weryfikacja e-maila jest wyłączona dla tego projektu.');
+    throw conflictError(t('KangurAuthApi.emailVerificationDisabled'));
   }
   const existingUser = await findAuthUserByEmail(email);
   let hasPassword = false;
   let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
 
   if (existingUser) {
-    await assertUserLoginAllowed(existingUser.id);
+    await assertUserLoginAllowed(existingUser.id, t);
     if (existingUser.emailVerified) {
-      throw conflictError(PARENT_EMAIL_CONFLICT_MESSAGE);
+      throw conflictError(getParentEmailConflictMessage(t));
     }
     const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
-    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs);
+    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs, t);
 
     verificationToken = await createEmailVerificationChallenge({
       userId: existingUser.id,
@@ -488,11 +506,9 @@ export const resendKangurParentVerificationEmail = async (input: {
   } else {
     const pendingVerification = await findActiveEmailVerificationChallengeByEmail(email);
     if (pendingVerification?.pendingRegistration?.source !== 'kangur_parent') {
-      throw forbiddenError(
-        'Nie znalezlismy oczekujacego konta rodzica dla tego emaila. Utworz konto ponownie.'
-      );
+      throw forbiddenError(t('KangurAuthApi.pendingParentAccountMissing'));
     }
-    assertKangurParentVerificationSendAllowed(pendingVerification, resendCooldownMs);
+    assertKangurParentVerificationSendAllowed(pendingVerification, resendCooldownMs, t);
 
     verificationToken = await createEmailVerificationChallenge({
       email,
@@ -516,6 +532,7 @@ export const resendKangurParentVerificationEmail = async (input: {
       created: false,
       hasPassword,
       verificationUrl,
+      locale,
     });
   }
 
@@ -530,14 +547,18 @@ export const resendKangurParentVerificationEmail = async (input: {
   };
 };
 
-export const verifyKangurParentEmail = async (tokenId: string): Promise<{
+export const verifyKangurParentEmail = async (
+  tokenId: string,
+  options?: { locale?: string | null }
+): Promise<{
   email: string;
   callbackUrl: string | null;
   emailVerified: boolean;
 }> => {
+  const { t } = await getSiteTranslator({ locale: options?.locale });
   const token = await consumeEmailVerificationChallenge(tokenId);
   if (!token) {
-    throw forbiddenError('This email verification link is no longer valid.');
+    throw forbiddenError(t('KangurAuthApi.emailVerificationLinkInvalid'));
   }
 
   const pendingRegistration = token.pendingRegistration;
@@ -545,7 +566,7 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
     pendingRegistration?.source === 'kangur_parent' ? await findAuthUserByEmail(token.email) : null;
 
   if (user) {
-    await assertUserLoginAllowed(user.id);
+    await assertUserLoginAllowed(user.id, t);
   }
 
   if (pendingRegistration?.source === 'kangur_parent' && !user) {
@@ -554,7 +575,7 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
       name: pendingRegistration.name ?? buildParentDisplayName(token.email),
       passwordHash: pendingRegistration.passwordHash,
       emailVerified: new Date(),
-      duplicateErrorMessage: PARENT_EMAIL_CONFLICT_MESSAGE,
+      duplicateErrorMessage: getParentEmailConflictMessage(t),
     });
   } else if (user && !user.emailVerified) {
     user = await markAuthUserEmailVerified(user.id);
@@ -582,22 +603,22 @@ export const verifyKangurParentEmail = async (tokenId: string): Promise<{
 export const setKangurParentPassword = async (input: {
   userId: string;
   password: string;
+  locale?: string | null;
 }): Promise<{
   email: string;
   hasPassword: boolean;
 }> => {
+  const { t } = await getSiteTranslator({ locale: input.locale });
   const user = await findAuthUserById(input.userId);
   if (!user?.email) {
-    throw forbiddenError('This parent account is no longer available.');
+    throw forbiddenError(t('KangurAuthApi.parentAccountUnavailable'));
   }
 
   if (typeof user.passwordHash === 'string' && user.passwordHash.trim().length > 0) {
-    throw conflictError(
-      'Hasło dla tego konta jest już ustawione. Możesz logowac się emailem i hasłem.'
-    );
+    throw conflictError(t('KangurAuthApi.passwordAlreadySet'));
   }
 
-  await assertValidParentPassword(input.password);
+  await assertValidParentPassword(input.password, t);
 
   const updatedUser = await setAuthUserPassword(user.id, input.password);
   if (!updatedUser?.email) {

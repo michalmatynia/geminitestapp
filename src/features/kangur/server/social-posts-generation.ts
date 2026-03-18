@@ -173,18 +173,26 @@ export async function generateKangurSocialPostDraft(
     let parsed: Partial<KangurSocialPostDraft> = {};
     try {
       parsed = JSON.parse(res.text) as Partial<KangurSocialPostDraft>;
-    } catch (error) {
-      void ErrorSystem.captureException(error, {
-        service: 'kangur.social-posts.generate',
-        action: 'parseDraft',
-        durationMs: Date.now() - startedAt,
-        modelId: modelId || null,
-        docReferenceCount: docReferences.length,
-        resolvedDocCount: docs.length,
-        imageAddonCount: imageAddons.length,
-        notesLength,
-      });
-      parsed = {};
+    } catch {
+      // Models (especially Ollama) often wrap JSON in markdown fences or
+      // return free-form text. Try to extract JSON from the response first,
+      // then fall back to using the raw text as body content.
+      const jsonMatch = res.text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch?.[1]) {
+        try {
+          parsed = JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialPostDraft>;
+        } catch {
+          parsed = {};
+        }
+      }
+      // If still empty, use the raw response as body content so the user
+      // gets something to edit rather than completely empty fields.
+      if (!parsed.titlePl && !parsed.bodyPl && !parsed.bodyEn) {
+        const raw = res.text.trim();
+        if (raw.length > 0) {
+          parsed = { bodyPl: raw, bodyEn: raw };
+        }
+      }
     }
 
     const titlePl = (parsed.titlePl ?? '').trim();

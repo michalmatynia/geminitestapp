@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -509,7 +510,7 @@ export default function EnglishSentenceStructureGame({
             <div className='rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-800'>
               {orderTokens.join(' ')}
             </div>
-            <DragDropContext onDragEnd={handleOrderDragEnd}>
+            <KangurDragDropContext onDragEnd={handleOrderDragEnd}>
               <Droppable droppableId={`order-${round.id}`} direction='vertical'>
                 {(provided) => (
                   <div
@@ -584,7 +585,7 @@ export default function EnglishSentenceStructureGame({
                   </div>
                 )}
               </Droppable>
-            </DragDropContext>
+            </KangurDragDropContext>
           </div>
         ) : null}
 

@@ -10,7 +10,7 @@ import {
   enqueuePlaywrightNodeRun,
   readPlaywrightNodeArtifact,
   type PlaywrightNodeRunArtifact,
-} from '@/features/ai/ai-paths/services/playwright-node-runner';
+} from '@/features/ai/server';
 import {
   getDiskPathFromPublicPath,
   uploadToConfiguredStorage,

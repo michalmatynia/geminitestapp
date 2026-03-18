@@ -10,6 +10,7 @@ import { createLoginChallenge } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export const payloadSchema = z.object({
   email: z.string().trim().email(),
@@ -18,8 +19,9 @@ export const payloadSchema = z.object({
 });
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const { t } = await getSiteTranslator({ request: req });
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
-  if (!data) throw badRequestError('Invalid payload');
+  if (!data) throw badRequestError(t('AuthApi.invalidPayload'));
 
   const email = data.email;
   const password = data.password;
@@ -46,7 +48,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       {
         ok: false,
         code: allowed.reason,
-        message: 'Too many attempts. Please try again later.',
+        message: t('AuthApi.tooManyAttempts'),
         lockedUntil: allowed.lockedUntil?.toISOString() ?? null,
       },
       { status: 429 }
@@ -67,7 +69,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'INVALID_CREDENTIALS',
-      message: 'Invalid email or password.',
+      message: t('AuthApi.invalidCredentials'),
     });
   }
 
@@ -84,7 +86,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'PASSWORD_SETUP_REQUIRED',
-      message: 'Password setup is required before email verification can continue.',
+      message: t('AuthApi.passwordSetupRequired'),
     });
   }
 
@@ -101,7 +103,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'INVALID_CREDENTIALS',
-      message: 'Invalid email or password.',
+      message: t('AuthApi.invalidCredentials'),
     });
   }
 
@@ -122,7 +124,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'ACCOUNT_BANNED',
-      message: 'This account is banned.',
+      message: t('AuthApi.accountBanned'),
     });
   }
   if (security.disabledAt) {
@@ -138,7 +140,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'ACCOUNT_DISABLED',
-      message: 'This account is disabled.',
+      message: t('AuthApi.accountDisabled'),
     });
   }
   if (requiresVerifiedEmail && !user.emailVerified) {
@@ -154,7 +156,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'EMAIL_UNVERIFIED',
-      message: 'Email verification is required.',
+      message: t('AuthApi.emailVerificationRequired'),
     });
   }
   if (security.allowedIps.length > 0 && ip) {
@@ -172,7 +174,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       return NextResponse.json({
         ok: false,
         code: 'IP_NOT_ALLOWED',
-        message: 'This IP is not allowed for the account.',
+        message: t('AuthApi.ipNotAllowed'),
       });
     }
   }
@@ -191,7 +193,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     return NextResponse.json({
       ok: false,
       code: 'INVALID_CREDENTIALS',
-      message: 'Invalid email or password.',
+      message: t('AuthApi.invalidCredentials'),
     });
   }
 

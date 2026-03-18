@@ -1,8 +1,9 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
@@ -387,7 +388,7 @@ export default function EnglishPrepositionsOrderGame({
         dataTestId='english-prepositions-order-progress-bar'
         totalRounds={TOTAL_ROUNDS}
       />
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <KangurDragDropContext onDragEnd={handleDragEnd}>
         <KangurGlassPanel
           className={cn('w-full', KANGUR_PANEL_GAP_CLASSNAME)}
           padding='lg'
@@ -478,7 +479,7 @@ export default function EnglishPrepositionsOrderGame({
             )}
           </div>
         </KangurGlassPanel>
-      </DragDropContext>
+      </KangurDragDropContext>
     </KangurPracticeGameStage>
   );
 }

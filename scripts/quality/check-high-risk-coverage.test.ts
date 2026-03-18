@@ -133,4 +133,50 @@ describe('analyzeHighRiskCoverage', () => {
       }),
     ]);
   });
+
+  it('falls back to merged high-risk domain summaries when the default report is missing', () => {
+    const root = createTempRoot();
+
+    writeJson(root, 'coverage/high-risk/api/coverage-summary.json', {
+      total: {},
+      'src/app/api/health/route.ts': {
+        lines: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        statements: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        functions: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        branches: { total: 10, covered: 8, skipped: 0, pct: 80 },
+      },
+    });
+    writeJson(root, 'coverage/high-risk/shared-lib/coverage-summary.json', {
+      total: {},
+      'src/shared/lib/api/handler.ts': {
+        lines: { total: 20, covered: 16, skipped: 0, pct: 80 },
+        statements: { total: 20, covered: 16, skipped: 0, pct: 80 },
+        functions: { total: 20, covered: 16, skipped: 0, pct: 80 },
+        branches: { total: 20, covered: 14, skipped: 0, pct: 70 },
+      },
+    });
+
+    const report = analyzeHighRiskCoverage({
+      root,
+      targets: [
+        {
+          id: 'api-routes',
+          label: 'API Routes',
+          directory: 'src/app/api',
+          thresholds: { lines: 80, statements: 80, functions: 80, branches: 70 },
+        },
+        {
+          id: 'shared-lib',
+          label: 'Shared Lib',
+          directory: 'src/shared/lib',
+          thresholds: { lines: 75, statements: 75, functions: 75, branches: 65 },
+        },
+      ],
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.coverageSummaryPath).toBe('coverage/high-risk/*/coverage-summary.json (merged)');
+    expect(report.summary.warningCount).toBe(0);
+    expect(report.summary.matchedTargetCount).toBe(2);
+  });
 });

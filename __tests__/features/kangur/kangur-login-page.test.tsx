@@ -5,9 +5,11 @@
 import { render, screen, waitFor } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { NextIntlClientProvider } from 'next-intl';
 import { setStoredActiveLearnerId } from '@/features/kangur/services/kangur-active-learner';
-import type { AnchorHTMLAttributes, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ReactElement, ReactNode } from 'react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import plMessages from '@/i18n/messages/pl.json';
 
 const {
   trackKangurClientEventMock,
@@ -73,6 +75,13 @@ import {
   resolveKangurLoginCallbackNavigation,
 } from '@/features/kangur/ui/KangurLoginPage';
 
+const renderWithIntl = (element: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      {element}
+    </NextIntlClientProvider>
+  );
+
 describe('KangurLoginPage', () => {
   const originalLocation = window.location;
 
@@ -105,7 +114,7 @@ describe('KangurLoginPage', () => {
   });
 
   it('uses the shared Kangur surface and keeps the parent auth controls visible by default', () => {
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     expect(screen.getByTestId('kangur-login-shell')).toHaveClass(
       'glass-panel',
@@ -133,7 +142,7 @@ describe('KangurLoginPage', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'adachild');
     const passwordInput = screen
@@ -159,7 +168,7 @@ describe('KangurLoginPage', () => {
     vi.stubGlobal('fetch', fetchMock);
     useSearchParamsMock.mockReturnValue(new URLSearchParams({ callbackUrl }));
 
-    render(<KangurLoginPage defaultCallbackUrl='/kangur' />);
+    renderWithIntl(<KangurLoginPage defaultCallbackUrl='/kangur' />);
 
     await user.type(screen.getByTestId('kangur-login-identifier-input'), 'adachild');
     const passwordInput = screen

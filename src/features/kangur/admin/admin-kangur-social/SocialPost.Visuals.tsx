@@ -380,7 +380,7 @@ export function SocialPostVisuals({
                         <a
                           href={addon.sourceUrl}
                           target='_blank'
-                          rel='noreferrer'
+                          rel='noopener noreferrer'
                           className='text-[11px] text-muted-foreground underline'
                         >
                           Source

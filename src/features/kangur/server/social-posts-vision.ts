@@ -1,6 +1,7 @@
 import 'server-only';
 
 import fs from 'fs/promises';
+import path from 'path';
 
 import mime from 'mime-types';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
@@ -93,7 +94,13 @@ const readImageDataUrl = async (
       };
     }
 
-    const diskPath = getDiskPathFromPublicPath(source);
+    // Batch capture stores absolute temp paths (e.g. /var/tmp/libapp-uploads/...)
+    // to avoid writing into public/ which triggers Turbopack HMR page reloads.
+    // Paths starting with /uploads/ are public URL paths that need resolution
+    // via getDiskPathFromPublicPath, NOT direct filesystem reads.
+    const diskPath = path.isAbsolute(source) && !source.startsWith('/uploads/')
+      ? source
+      : getDiskPathFromPublicPath(source);
     const buffer = await fs.readFile(diskPath);
     const lookup = mime.lookup(diskPath);
     const contentType = (typeof lookup === 'string' ? lookup : null) || 'image/png';
@@ -299,13 +306,23 @@ export async function analyzeKangurSocialVisuals(
     } = {};
     try {
       parsed = JSON.parse(res.text) as Partial<KangurSocialVisualAnalysis>;
-    } catch (error) {
-      void ErrorSystem.captureException(error, {
-        service: 'kangur.social-posts.visual-analysis',
-        action: 'parseResponse',
-        modelId,
-      });
-      parsed = {};
+    } catch {
+      // Try extracting JSON from markdown code fences (common with Ollama models)
+      const jsonMatch = res.text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch?.[1]) {
+        try {
+          parsed = JSON.parse(jsonMatch[1].trim()) as Partial<KangurSocialVisualAnalysis>;
+        } catch {
+          parsed = {};
+        }
+      }
+      if (!parsed.summary) {
+        // Use raw text as the summary so the pipeline still has visual context
+        const raw = res.text.trim();
+        if (raw.length > 0) {
+          parsed = { summary: raw };
+        }
+      }
     }
 
     const summaryText =

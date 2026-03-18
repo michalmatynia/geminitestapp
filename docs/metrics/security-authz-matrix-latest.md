@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-18'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,19 +8,19 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-17T09:55:02.961Z
+Generated at: 2026-03-18T19:19:43.875Z
 
 ## Summary
 
-- Status: PASSED
-- Route files scanned: 280
+- Status: WARN
+- Route files scanned: 283
 - Route methods scanned: 214
 - Public methods: 14
 - Protected methods: 200
 - Signed ingress methods: 0
 - Actor-scoped methods: 0
 - Errors: 0
-- Warnings: 0
+- Warnings: 1
 
 ## Route Classification
 
@@ -138,10 +138,10 @@ Generated at: 2026-03-17T09:55:02.961Z
 | image-studio/[[...path]] | PUT | protected | - |
 | image-studio/[[...path]] | PATCH | protected | - |
 | image-studio/[[...path]] | DELETE | protected | - |
-| kangur/[[...path]] | GET | protected | `auth()` |
-| kangur/[[...path]] | POST | protected | `auth()` |
-| kangur/[[...path]] | PATCH | protected | `auth()` |
-| kangur/[[...path]] | DELETE | protected | `auth()` |
+| kangur/[[...path]] | GET | protected | - |
+| kangur/[[...path]] | POST | protected | - |
+| kangur/[[...path]] | PATCH | protected | - |
+| kangur/[[...path]] | DELETE | protected | - |
 | kangur/auth/learner-signin | POST | public | - |
 | kangur/auth/learner-signout | POST | public | `actor/session resolver` |
 | kangur/auth/parent-account/create | POST | protected | `auth()` |
@@ -202,7 +202,7 @@ Generated at: 2026-03-17T09:55:02.961Z
 | settings/cache | GET | protected | `access helper` |
 | settings/database/sync | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | settings/heavy | GET | protected | `access helper` |
-| settings/lite | GET | protected | `access helper` |
+| settings/lite | GET | protected | - |
 | settings/migrate/backfill-keys | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | settings/providers | GET | protected | `access helper` |
 | settings | GET | protected | `access helper` |
@@ -245,10 +245,13 @@ Generated at: 2026-03-17T09:55:02.961Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| authz-privileged-route-missing-explicit-permission-gate | 0 | 1 | 0 |
 
 ## Issues
 
-No authorization coverage issues detected.
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | authz-privileged-route-missing-explicit-permission-gate | src/app/api/settings/lite/route.ts:10:14 | GET settings/lite relies on basic session auth without an explicit permission/access helper gate. |
 
 ## Notes
 

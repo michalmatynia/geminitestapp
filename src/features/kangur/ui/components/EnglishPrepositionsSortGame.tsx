@@ -1,6 +1,6 @@
 'use client';
 
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -31,6 +31,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   addXp,
   createLessonPracticeReward,
@@ -504,7 +505,7 @@ export default function EnglishPrepositionsSortGame({
         dataTestId='english-prepositions-sort-progress-bar'
         totalRounds={TOTAL_ROUNDS}
       />
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <KangurDragDropContext onDragEnd={handleDragEnd}>
         <KangurGlassPanel
           className={cn('w-full', KANGUR_PANEL_GAP_CLASSNAME)}
           padding='lg'
@@ -687,7 +688,7 @@ export default function EnglishPrepositionsSortGame({
             )}
           </div>
         </KangurGlassPanel>
-      </DragDropContext>
+      </KangurDragDropContext>
     </KangurPracticeGameStage>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { Droppable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 import {
   KangurButton,
   KangurInfoCard,
@@ -120,7 +121,7 @@ export function CompleteEquation({
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <KangurDragDropContext onDragEnd={onDragEnd}>
       <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
         <p className='text-lg font-bold [color:var(--kangur-page-text)]'>
           Przeciągnij piłki tak, żeby uzupełnić równanie:
@@ -243,6 +244,6 @@ export function CompleteEquation({
           </motion.div>
         )}
       </div>
-    </DragDropContext>
+    </KangurDragDropContext>
   );
 }

@@ -16,21 +16,20 @@ import type { KangurParentAccountCreate } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
-
-const PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE =
-  'Wysyłka e-maili potwierdzających jest obecnie wyłączona. Skontaktuj się z administratorem.';
+import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export async function postKangurParentAccountCreateHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  const { locale, t } = await getSiteTranslator({ request: req });
   await auth().catch((error) => {
     void ErrorSystem.captureException(error);
     return null;
   });
   const body = ctx.body as KangurParentAccountCreate | undefined;
   if (!body) {
-    throw badRequestError('Invalid payload.');
+    throw badRequestError(t('KangurAuthApi.invalidPayload'));
   }
 
   const rawParentVerificationSettings = await readStoredSettingValue(
@@ -47,8 +46,8 @@ export async function postKangurParentAccountCreateHandler(
   if (captchaResult.required && !captchaResult.ok) {
     throw badRequestError(
       captchaResult.reason === 'missing-token'
-        ? 'Potwierdź, że nie jesteś botem.'
-        : 'Nie udało się zweryfikować Captcha. Spróbuj ponownie.'
+        ? t('KangurAuthApi.captchaMissing')
+        : t('KangurAuthApi.captchaVerificationFailed')
     );
   }
 
@@ -57,8 +56,9 @@ export async function postKangurParentAccountCreateHandler(
     password: body.password,
     callbackUrl: body.callbackUrl,
     request: req,
+    locale,
   });
-  const tutorContent = await getKangurAiTutorContent('pl');
+  const tutorContent = await getKangurAiTutorContent(locale);
   const notificationSuppressed = result.notificationSuppressed === true;
   const verificationSkipped = result.emailVerified === true;
 
@@ -70,9 +70,9 @@ export async function postKangurParentAccountCreateHandler(
     hasPassword: result.hasPassword,
     retryAfterMs: result.retryAfterMs,
     message: verificationSkipped
-      ? 'Konto rodzica jest gotowe. Zaloguj się e-mailem i hasłem.'
+      ? t('KangurAuthApi.parentAccountReady')
       : notificationSuppressed
-        ? PARENT_VERIFICATION_NOTIFICATIONS_DISABLED_MESSAGE
+        ? t('KangurAuthApi.notificationsDisabled')
         : result.created
           ? tutorContent.parentVerification.createSuccessMessage
           : tutorContent.parentVerification.createResentMessage,

@@ -1,4 +1,5 @@
 import { type FormEvent, type JSX, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurLoginPageProps } from './login-context';
@@ -25,6 +26,7 @@ export function LoginForm({
   notice,
   defaultIdentifier = '',
 }: LoginFormProps): JSX.Element {
+  const translations = useTranslations('KangurLogin');
   const { parentAuthMode } = useKangurLoginPageProps();
   const [identifier, setIdentifier] = useState(defaultIdentifier);
   const [password, setPassword] = useState('');
@@ -69,22 +71,22 @@ export function LoginForm({
       ref={loginFormRef}
       onSubmit={handleSubmit}
       className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
-      aria-label='Formularz logowania'
+      aria-label={translations('loginFormAriaLabel')}
     >
       <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
         <label htmlFor='identifier' className='text-sm font-medium text-slate-700'>
-          Email lub nick ucznia
+          {translations('identifierLabel')}
         </label>
         <input
           ref={identifierInputRef}
           id='identifier'
           type='text'
-          aria-label='Email lub nick ucznia'
+          aria-label={translations('identifierLabel')}
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           disabled={isLoading}
           className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-          placeholder='Wpisz email lub nick'
+          placeholder={translations('identifierPlaceholder')}
           autoComplete='username'
           autoCapitalize='off'
           autoCorrect='off'
@@ -94,17 +96,17 @@ export function LoginForm({
       {showPassword && (
         <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
           <label htmlFor='password' className='text-sm font-medium text-slate-700'>
-            Hasło
+            {translations('passwordLabel')}
           </label>
           <input
             id='password'
             type='password'
-            aria-label='Hasło'
+            aria-label={translations('passwordLabel')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
             className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-            placeholder='Wpisz hasło'
+            placeholder={translations('passwordPlaceholder')}
             autoComplete='current-password'
           />
         </div>
@@ -129,7 +131,7 @@ export function LoginForm({
         disabled={isLoading || !identifier.trim() || (showPassword && !password)}
         className='mt-2 w-full justify-center rounded-xl font-bold'
       >
-        {isLoading ? 'Logowanie...' : 'Zaloguj się'}
+        {isLoading ? translations('loginSubmitting') : translations('loginSubmit')}
       </KangurButton>
     </form>
   );
@@ -142,6 +144,8 @@ export function SocialLogins({
   onGoogleSignIn: () => void;
   isLoading: boolean;
 }): JSX.Element {
+  const translations = useTranslations('KangurLogin');
+
   return (
     <div className={`mt-6 ${KANGUR_STACK_RELAXED_CLASSNAME}`}>
       <div className='relative flex items-center justify-center'>
@@ -149,7 +153,7 @@ export function SocialLogins({
           <div className='w-full border-t border-slate-200' />
         </div>
         <span className='relative bg-white px-4 text-xs font-medium uppercase text-slate-500'>
-          Lub kontynuuj przez
+          {translations('continueWith')}
         </span>
       </div>
 

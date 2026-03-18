@@ -8,27 +8,24 @@ canonical: true
 ---
 # API Error Sources Check
 
-Generated at: 2026-03-18T16:09:03.837Z
+Generated at: 2026-03-18T19:19:39.610Z
 
 ## Summary
 
-- Status: WARN
+- Status: PASSED
 - Route files scanned: 283
 - Handler files scanned: 380
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| unchecked-req-json | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | unchecked-req-json | src/app/api/kangur/social-posts/[id]/publish/handler.ts:31 | req.json() without parseJsonBody or Zod schema. Use parseJsonBody() for consistent validation. |
+All API error sources are consistent.
 
 ## Notes
 

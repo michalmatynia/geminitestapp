@@ -180,13 +180,13 @@ export default function SocialUpdates(): React.JSX.Element {
             )}
           </div>
           {latestPost.linkedinUrl ? (
-            <a
-              href={latestPost.linkedinUrl}
-              target='_blank'
-              rel='noreferrer'
-              className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
-              onClick={() =>
-                trackKangurClientEvent('kangur_social_updates_link_click', {
+          <a
+            href={latestPost.linkedinUrl}
+            target='_blank'
+            rel='noopener noreferrer'
+            className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
+            onClick={() =>
+              trackKangurClientEvent('kangur_social_updates_link_click', {
                   postId: latestPost.id,
                   url: latestPost.linkedinUrl,
                 })

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronsLeft } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import {
   hasKangurLessonDocumentContent,
@@ -51,6 +51,9 @@ export function ActiveLessonView() {
   const isMobile = useKangurMobileBreakpoint();
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
+  const [isHubListActive, setIsHubListActive] = useState(false);
+  const [hasLessonBackAction, setHasLessonBackAction] = useState(false);
+  const [lessonBackLabel, setLessonBackLabel] = useState('Wróć do tematów');
 
   if (!activeLesson) return null;
 
@@ -84,16 +87,71 @@ export function ActiveLessonView() {
 
   void activeLessonNavigationContent;
 
+  const updateLessonContentState = useCallback((): void => {
+    const container = activeLessonContentRef.current;
+    if (!container) return;
+    const hubNode = container.querySelector('[data-kangur-lesson-hub="true"]');
+    const nextIsHubActive = Boolean(hubNode);
+    setIsHubListActive((prev) => (prev === nextIsHubActive ? prev : nextIsHubActive));
+    const backButton = container.querySelector('[data-kangur-lesson-back="true"]');
+    const hasBackAction = backButton instanceof HTMLButtonElement;
+    setHasLessonBackAction((prev) => (prev === hasBackAction ? prev : hasBackAction));
+    if (hasBackAction) {
+      const nextLabel =
+        backButton.getAttribute('data-kangur-lesson-back-label') ||
+        backButton.getAttribute('aria-label') ||
+        backButton.textContent?.trim() ||
+        'Wróć do tematów';
+      setLessonBackLabel((prev) => (prev === nextLabel ? prev : nextLabel));
+    } else {
+      setLessonBackLabel((prev) => (prev === 'Wróć do tematów' ? prev : 'Wróć do tematów'));
+    }
+  }, [activeLessonContentRef]);
+
   useEffect(() => {
-    if (!isMobile) return undefined;
+    if (!isMobile) {
+      setIsHubListActive(false);
+      setHasLessonBackAction(false);
+      setLessonBackLabel('Wróć do tematów');
+      return;
+    }
+
+    const container = activeLessonContentRef.current;
+    if (!container) return;
+
+    updateLessonContentState();
+
+    let mutationObserver: MutationObserver | null = null;
+    if (typeof MutationObserver !== 'undefined') {
+      mutationObserver = new MutationObserver(() => {
+        window.requestAnimationFrame(updateLessonContentState);
+      });
+      mutationObserver.observe(container, { childList: true, subtree: true });
+    }
+
+    const frameId = window.requestAnimationFrame(updateLessonContentState);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      mutationObserver?.disconnect();
+    };
+  }, [activeLesson.id, activeLessonContentRef, isMobile, updateLessonContentState]);
+
+  const shouldLockScroll = isMobile && !isHubListActive;
+
+  useEffect(() => {
+    if (!shouldLockScroll) {
+      unlockKangurLessonScroll();
+      return;
+    }
     lockKangurLessonScroll();
     return () => {
       unlockKangurLessonScroll();
     };
-  }, [isMobile, activeLesson.id]);
+  }, [shouldLockScroll, activeLesson.id]);
 
   useEffect(() => {
-    if (!isMobile) return undefined;
+    if (!shouldLockScroll) return undefined;
     const node = activeLessonScrollRef.current;
     if (!node) return undefined;
     const preventScroll = (event: Event): void => {
@@ -105,7 +163,7 @@ export function ActiveLessonView() {
       node.removeEventListener('wheel', preventScroll);
       node.removeEventListener('touchmove', preventScroll);
     };
-  }, [activeLesson.id, activeLessonScrollRef, isMobile]);
+  }, [activeLesson.id, activeLessonScrollRef, shouldLockScroll]);
 
   const updateScrollButtons = useCallback((): void => {
     const container = activeLessonScrollRef.current;
@@ -118,7 +176,7 @@ export function ActiveLessonView() {
   }, [activeLessonScrollRef]);
 
   useEffect(() => {
-    if (!isMobile) {
+    if (!shouldLockScroll) {
       setCanScrollUp(false);
       setCanScrollDown(false);
       return;
@@ -156,7 +214,7 @@ export function ActiveLessonView() {
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
     };
-  }, [activeLesson.id, activeLessonScrollRef, isMobile, updateScrollButtons]);
+  }, [activeLesson.id, activeLessonScrollRef, shouldLockScroll, updateScrollButtons]);
 
   const handleScrollBy = useCallback(
     (direction: 'up' | 'down'): void => {
@@ -169,6 +227,15 @@ export function ActiveLessonView() {
     },
     [activeLessonScrollRef, updateScrollButtons]
   );
+
+  const handleBackToTopics = useCallback((): void => {
+    const container = activeLessonContentRef.current;
+    if (!container) return;
+    const backButton = container.querySelector('[data-kangur-lesson-back="true"]');
+    if (backButton instanceof HTMLButtonElement) {
+      backButton.click();
+    }
+  }, [activeLessonContentRef]);
 
   const headerSection = !isMobile ? (
     <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
@@ -276,20 +343,36 @@ export function ActiveLessonView() {
         onBack={() => handleSelectLesson(null)}
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
-        {isMobile ? (
+        {shouldLockScroll ? (
           <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(100dvh-var(--kangur-top-bar-height,88px))]'>
-            {canScrollUp ? (
-              <KangurButton
-                fullWidth
-                size='sm'
-                variant='surface'
-                className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-                onClick={() => handleScrollBy('up')}
-                aria-label='Przewiń w górę'
-              >
-                <ChevronUp className='h-4 w-4' aria-hidden='true' />
-                Przewiń w górę
-              </KangurButton>
+            {canScrollUp || hasLessonBackAction ? (
+              <div className='flex w-full gap-2'>
+                {hasLessonBackAction ? (
+                  <KangurButton
+                    size='sm'
+                    variant='surface'
+                    className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                    onClick={handleBackToTopics}
+                    aria-label={lessonBackLabel}
+                    title={lessonBackLabel}
+                  >
+                    <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
+                    <span className='sr-only'>{lessonBackLabel}</span>
+                  </KangurButton>
+                ) : null}
+                {canScrollUp ? (
+                  <KangurButton
+                    size='sm'
+                    variant='surface'
+                    className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                    onClick={() => handleScrollBy('up')}
+                    aria-label='Przewiń w górę'
+                  >
+                    <ChevronUp className='h-4 w-4' aria-hidden='true' />
+                    Przewiń w górę
+                  </KangurButton>
+                ) : null}
+              </div>
             ) : null}
             <div
               ref={activeLessonScrollRef}

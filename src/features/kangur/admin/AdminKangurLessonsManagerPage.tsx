@@ -56,11 +56,11 @@ import {
   appendMissingKangurLessonsByComponent,
   KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
   KANGUR_LOGICAL_THINKING_LESSON_COMPONENT_IDS,
-  KANGUR_LESSON_LIBRARY,
   KANGUR_LESSON_SORT_ORDER_GAP,
   canonicalizeKangurLessons,
   createKangurLessonId,
 } from '../settings';
+import { useKangurLessonTemplates } from '../ui/hooks/useKangurLessonTemplates';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { AdminKangurLessonsManagerTreePanel } from './components/AdminKangurLessonsManagerTreePanel';
@@ -118,6 +118,12 @@ export function AdminKangurLessonsManagerPage({
   const updateLessonDocuments = useUpdateKangurLessonDocuments();
   const { toast } = useToast();
   const isLoading = lessonsQuery.isLoading || lessonDocumentsQuery.isLoading;
+
+  const templatesQuery = useKangurLessonTemplates();
+  const lessonTemplateMap = useMemo(
+    () => new Map((templatesQuery.data ?? []).map((t) => [t.componentId, t])),
+    [templatesQuery.data],
+  );
 
   const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const lessonDocuments = useMemo(
@@ -379,7 +385,7 @@ export function AdminKangurLessonsManagerPage({
   };
 
   const applyTemplateForComponent = useCallback((componentId: KangurLessonComponentId): void => {
-    const template = KANGUR_LESSON_LIBRARY[componentId];
+    const template = lessonTemplateMap.get(componentId);
     if (!template) return;
     setFormData((current) => ({
       ...current,
@@ -392,7 +398,7 @@ export function AdminKangurLessonsManagerPage({
       color: template.color,
       activeBg: template.activeBg,
     }));
-  }, []);
+  }, [lessonTemplateMap]);
 
   const handleSaveLesson = async (): Promise<void> => {
     const lessonId = editingLesson?.id ?? createKangurLessonId();

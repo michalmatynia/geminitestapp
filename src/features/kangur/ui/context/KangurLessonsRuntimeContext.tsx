@@ -27,6 +27,7 @@ import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssign
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
 
 import {
   getLessonAssignmentTimestamp,
@@ -66,6 +67,11 @@ export function KangurLessonsRuntimeProvider({
       includeArchived: false,
     },
   });
+  const { data: lessonTemplates = [] } = useKangurLessonTemplates();
+  const lessonTemplateMap = useMemo(
+    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
+    [lessonTemplates],
+  );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const lessonDocumentsQuery = useKangurLessonDocuments();
   const lessons = useMemo((): KangurLesson[] => lessonsQuery.data ?? [], [lessonsQuery.data]);
@@ -191,7 +197,7 @@ export function KangurLessonsRuntimeProvider({
       return;
     }
 
-    const focusSubject = resolveFocusedLessonSubject(focusToken);
+    const focusSubject = resolveFocusedLessonSubject(focusToken, lessonTemplateMap);
     if (focusSubject && focusSubject !== subject) {
       setSubject(focusSubject);
       return;
@@ -210,7 +216,7 @@ export function KangurLessonsRuntimeProvider({
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     const nextHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
     window.history.replaceState({}, '', nextHref);
-  }, [activeLessonId, basePath, lessons, setSubject, subject]);
+  }, [activeLessonId, basePath, lessons, lessonTemplateMap, setSubject, subject]);
 
   const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] ?? null : null;

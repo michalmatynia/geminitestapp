@@ -116,29 +116,52 @@ describe('ActiveLessonView mobile scroll controls', () => {
     vi.clearAllMocks();
   });
 
-  it('locks vertical scroll and uses arrow controls on mobile', async () => {
+  it('locks vertical scroll and toggles arrow controls on mobile', async () => {
     const { unmount } = render(<ActiveLessonView />);
 
     await act(async () => {});
 
     const scrollContainer = screen.getByTestId('kangur-lesson-scroll-container') as HTMLDivElement;
+    Object.defineProperty(scrollContainer, 'clientHeight', { value: 100, configurable: true });
+    Object.defineProperty(scrollContainer, 'scrollHeight', { value: 400, configurable: true });
+    scrollContainer.scrollTop = 0;
+
+    await act(async () => {
+      scrollContainer.dispatchEvent(new Event('scroll'));
+    });
+
     const scrollByMock = vi.fn();
     const scrollToMock = vi.fn();
     scrollContainer.scrollBy = scrollByMock;
     scrollContainer.scrollTo = scrollToMock;
 
-    const upButton = screen.getByRole('button', { name: 'Przewiń w górę' });
     const downButton = screen.getByRole('button', { name: 'Przewiń w dół' });
 
     fireEvent.click(downButton);
-    fireEvent.click(upButton);
 
     expect(scrollByMock).toHaveBeenCalledWith(
       expect.objectContaining({ top: 240, behavior: 'smooth' })
     );
+
+    expect(screen.queryByRole('button', { name: 'Przewiń w górę' })).toBeNull();
+
+    scrollContainer.scrollTop = 200;
+    await act(async () => {
+      scrollContainer.dispatchEvent(new Event('scroll'));
+    });
+
+    const upButton = screen.getByRole('button', { name: 'Przewiń w górę' });
+    fireEvent.click(upButton);
     expect(scrollByMock).toHaveBeenCalledWith(
       expect.objectContaining({ top: -240, behavior: 'smooth' })
     );
+
+    scrollContainer.scrollTop = 300;
+    await act(async () => {
+      scrollContainer.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(screen.queryByRole('button', { name: 'Przewiń w dół' })).toBeNull();
 
     expect(document.documentElement.style.overflow).toBe('hidden');
     expect(document.body.style.overflow).toBe('hidden');

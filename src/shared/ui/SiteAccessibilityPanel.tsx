@@ -1,6 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import type { JSX } from 'react';
 
 import { Button } from '@/shared/ui/button';
 import {
@@ -21,11 +23,34 @@ const ACCESSIBILITY_FEATURES = [
   'Dialogs and menus keep focus inside and close with the Escape key.',
 ];
 
-export function SiteAccessibilityPanel(): React.JSX.Element | null {
+export function SiteAccessibilityPanel(): JSX.Element | null {
   const pathname = usePathname();
   const isKangurRoute = pathname?.startsWith('/kangur');
+  const [isKangurShell, setIsKangurShell] = useState(() =>
+    typeof document !== 'undefined' && document.body.dataset.kangurShell === 'true'
+  );
 
-  if (isKangurRoute) {
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const checkShell = () => {
+      setIsKangurShell(document.body.dataset.kangurShell === 'true');
+    };
+
+    checkShell();
+
+    const observer = new MutationObserver(checkShell);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-kangur-shell'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (isKangurRoute || isKangurShell) {
     return null;
   }
 

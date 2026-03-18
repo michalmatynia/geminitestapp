@@ -7,6 +7,7 @@ import {
 } from '@/features/cms/public';
 import {
   KANGUR_BASE_PATH,
+  KANGUR_MAIN_PAGE_KEY,
   getKangurPageHref,
   resolveKangurFeaturePageRoute,
 } from '@/features/kangur/config/routing';
@@ -28,7 +29,6 @@ import {
 } from '@/features/kangur/utils/custom-css';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 import { cn } from '@/features/kangur/shared/utils';
-import { KangurAccessibilityPanel } from '@/features/kangur/ui/components/KangurAccessibilityPanel';
 
 import type { CSSProperties, JSX, KeyboardEvent } from 'react';
 
@@ -42,6 +42,7 @@ export function KangurFeaturePageShell(): JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
   const appearanceMode = appearance?.mode ?? 'default';
+  const showFooter = !embedded && pageKey === KANGUR_MAIN_PAGE_KEY;
   const kangurAppearance = useKangurStorefrontAppearance();
   const classOverrides = useKangurClassOverrides();
   const customCssEnabled = useMemo(() => {
@@ -113,6 +114,18 @@ export function KangurFeaturePageShell(): JSX.Element {
     };
   }, [pageKey, requestedPath]);
 
+  useEffect(() => {
+    if (embedded || typeof document === 'undefined') {
+      return;
+    }
+
+    document.body.dataset.kangurShell = 'true';
+
+    return () => {
+      delete document.body.dataset.kangurShell;
+    };
+  }, [embedded]);
+
   return (
     <div
       className={cn(
@@ -136,26 +149,27 @@ export function KangurFeaturePageShell(): JSX.Element {
       >
         Przejdź do głównej treści
       </a>
-      {!embedded && <KangurAccessibilityPanel />}
       <div className='w-full min-w-0 flex-1'>
         <KangurFeatureApp />
       </div>
-      <footer className='w-full border-t border-white/10 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [color:var(--kangur-page-muted-text)] sm:px-6'>
-        <span>Creator credentials: Michał Matynia · created 2026 · </span>
-        <a
-          className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-          href={getKangurPageHref('SocialUpdates', basePath)}
-        >
-          Social updates
-        </a>
-        <span> · </span>
-        <a
-          className='font-semibold [color:var(--kangur-page-text)] hover:underline'
-          href='mailto:mmatynia@gmail.com'
-        >
-          contact: mmatynia@gmail.com
-        </a>
-      </footer>
+      {showFooter ? (
+        <footer className='hidden w-full border-t border-white/10 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [color:var(--kangur-page-muted-text)] sm:block sm:px-6'>
+          <span>Creator credentials: Michał Matynia · created 2026 · </span>
+          <a
+            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
+            href={getKangurPageHref('SocialUpdates', basePath)}
+          >
+            Social updates
+          </a>
+          <span> · </span>
+          <a
+            className='font-semibold [color:var(--kangur-page-text)] hover:underline'
+            href='mailto:mmatynia@gmail.com'
+          >
+            contact: mmatynia@gmail.com
+          </a>
+        </footer>
+      ) : null}
     </div>
   );
 }

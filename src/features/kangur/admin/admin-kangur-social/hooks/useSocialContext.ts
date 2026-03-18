@@ -84,15 +84,20 @@ export function useSocialContext(deps: SocialContextDeps) {
         }
         d.setContextSummary(summary);
         if (persist) {
-          if (useDirect) {
-            await api.patch<KangurSocialPost>(`/api/kangur/social-posts/${d.activePost.id}`, {
-              updates: { contextSummary: summary },
-            });
-          } else {
-            await patchMutationRef.current.mutateAsync({
-              id: d.activePost.id,
-              updates: { contextSummary: summary },
-            });
+          try {
+            if (useDirect) {
+              await api.patch<KangurSocialPost>(`/api/kangur/social-posts/${d.activePost.id}`, {
+                updates: { contextSummary: summary },
+              });
+            } else {
+              await patchMutationRef.current.mutateAsync({
+                id: d.activePost.id,
+                updates: { contextSummary: summary },
+              });
+            }
+          } catch {
+            // Post may not exist server-side yet (e.g. pipeline runs before first save).
+            // Context is already set in local state — persist failure is non-fatal.
           }
         }
         if (notify) {

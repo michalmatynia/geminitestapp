@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/features/kangur/shared/ui';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
@@ -20,12 +21,14 @@ import {
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
 
 export function useSocialSettings() {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const queryClient = useQueryClient();
   const updateSetting = useUpdateSetting();
   const brainModelOptions = useBrainModelOptions({ capability: 'kangur_social.post_generation' });
   const visionModelOptions = useBrainModelOptions({ capability: 'kangur_social.visual_analysis' });
@@ -60,6 +63,7 @@ export function useSocialSettings() {
     () => persistedSocialSettings.batchCapturePresetIds
   );
   const hasManualBatchBaseUrlRef = useRef(false);
+  const persistedRef = useRef(persistedSocialSettings);
 
   const normalizeBatchCaptureBaseUrl = useCallback((value: string): string | null => {
     const trimmed = value.trim();
@@ -117,6 +121,15 @@ export function useSocialSettings() {
         key: KANGUR_SOCIAL_SETTINGS_KEY,
         value: serializeSetting(payload),
       });
+      queryClient.setQueryData<Map<string, string>>(
+        QUERY_KEYS.settings.scope('light'),
+        (current) => {
+          const next = new Map(current ?? []);
+          next.set(KANGUR_SOCIAL_SETTINGS_KEY, serializeSetting(payload));
+          return next;
+        }
+      );
+      settingsStore.refetch();
       toast('Kangur Social settings saved.', { variant: 'success' });
     } catch (error) {
       void ErrorSystem.captureException(error);
@@ -132,6 +145,8 @@ export function useSocialSettings() {
     linkedinConnectionId,
     normalizedBatchCaptureBaseUrl,
     normalizedBatchCapturePresetIds,
+    queryClient,
+    settingsStore,
     toast,
     updateSetting,
     visionModelId,
@@ -187,6 +202,32 @@ export function useSocialSettings() {
   useEffect(() => {
     setBatchCapturePresetIds(persistedSocialSettings.batchCapturePresetIds);
   }, [persistedSocialSettings.batchCapturePresetIds]);
+
+  useEffect(() => {
+    const prev = persistedRef.current;
+    if (prev.brainModelId !== persistedSocialSettings.brainModelId) {
+      setBrainModelId((current) =>
+        current === prev.brainModelId ? persistedSocialSettings.brainModelId : current
+      );
+    }
+    if (prev.visionModelId !== persistedSocialSettings.visionModelId) {
+      setVisionModelId((current) =>
+        current === prev.visionModelId ? persistedSocialSettings.visionModelId : current
+      );
+    }
+    if (prev.linkedinConnectionId !== persistedSocialSettings.linkedinConnectionId) {
+      setLinkedinConnectionId((current) =>
+        current === prev.linkedinConnectionId
+          ? persistedSocialSettings.linkedinConnectionId
+          : current
+      );
+    }
+    persistedRef.current = persistedSocialSettings;
+  }, [
+    persistedSocialSettings.brainModelId,
+    persistedSocialSettings.linkedinConnectionId,
+    persistedSocialSettings.visionModelId,
+  ]);
 
   return {
     linkedinConnectionId,

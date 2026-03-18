@@ -225,6 +225,17 @@ export function AdminKangurSocialPage(): React.JSX.Element {
       headerActions={
         <>
           <Button
+            size='sm'
+            onClick={() => {
+              void handleSaveSettings();
+            }}
+            disabled={!isSettingsDirty || isSavingSettings}
+            variant={isSettingsDirty ? 'success' : 'outline'}
+            className={isSettingsDirty ? 'shadow-[0_0_18px_rgba(16,185,129,0.28)]' : undefined}
+          >
+            {isSavingSettings ? 'Saving settings...' : 'Save Social settings'}
+          </Button>
+          <Button
             variant='outline'
             size='sm'
             onClick={() => {
@@ -232,16 +243,6 @@ export function AdminKangurSocialPage(): React.JSX.Element {
             }}
           >
             New draft
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              void handleSaveSettings();
-            }}
-            disabled={!isSettingsDirty || isSavingSettings}
-          >
-            {isSavingSettings ? 'Saving settings...' : 'Save Social settings'}
           </Button>
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/brain?tab=routing'>AI Brain routing</Link>

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
@@ -22,6 +23,10 @@ export default async function LocalizedKangurLoginPage({
 }: LocalizedKangurAliasLoginPageProps): Promise<JSX.Element> {
   const { locale } = await params;
   const resolvedLocale = normalizeSiteLocale(locale);
+  const translations = await getTranslations({
+    locale: resolvedLocale,
+    namespace: 'KangurPublic',
+  });
   const shouldRedirectToCanonical =
     shouldApplyFrontPageAppSelection() && process.env.NODE_ENV === 'production';
 
@@ -40,7 +45,7 @@ export default async function LocalizedKangurLoginPage({
   }
 
   return (
-    <Suspense fallback={<div className='sr-only'>Ladowanie Kangura...</div>}>
+    <Suspense fallback={<div className='sr-only'>{translations('routeLoading')}</div>}>
       <KangurFeatureRouteShell />
     </Suspense>
   );

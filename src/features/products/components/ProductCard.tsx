@@ -31,9 +31,10 @@ export default function ProductCard(props: ProductCardProps): React.JSX.Element 
     product.name_pl ??
     product.name_de ??
     translations('fallbackTitle');
-  const name = localizedName && localizedName.trim().length > 0
-    ? localizedName
-    : translations('fallbackTitle');
+  const name =
+    localizedName && localizedName.trim().length > 0
+      ? localizedName
+      : translations('fallbackTitle');
   const linkHref = `/products/${product.id}`;
   const cardClassName = className ? `h-full ${className}` : 'h-full';
   const ariaLabel = name
@@ -42,12 +43,12 @@ export default function ProductCard(props: ProductCardProps): React.JSX.Element 
   const price =
     typeof product.price === 'number'
       ? new Intl.NumberFormat(
-        locale === 'pl' ? 'pl-PL' : locale === 'de' ? 'de-DE' : 'en-US',
-        {
-        style: 'currency',
-        currency: 'USD',
-        }
-      ).format(product.price)
+          locale === 'pl' ? 'pl-PL' : locale === 'de' ? 'de-DE' : 'en-US',
+          {
+            style: 'currency',
+            currency: 'USD',
+          }
+        ).format(product.price)
       : '—';
 
   return (

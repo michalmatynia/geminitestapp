@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
@@ -394,6 +395,7 @@ export function KangurPageTransitionSkeleton({
   reason?: 'boot' | 'navigation';
   variant?: KangurRouteTransitionSkeletonVariant | null;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurPublic');
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
   const resolvedVariant =
@@ -418,7 +420,7 @@ export function KangurPageTransitionSkeleton({
       }}
     >
       <div className='sr-only' role='status' aria-live='polite'>
-        {reason === 'boot' ? 'Loading Kangur app' : 'Loading Kangur page'}
+        {reason === 'boot' ? translations('loadingApp') : translations('loadingPage')}
       </div>
       <KangurStandardPageLayout
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}

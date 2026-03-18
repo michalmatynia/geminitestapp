@@ -4,7 +4,10 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import enMessages from '@/i18n/messages/en.json';
 
 const { usePathnameMock } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
@@ -16,6 +19,18 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next/link', () => ({
   default: ({
+    children,
+    href,
+    ...rest
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
     children,
     href,
     ...rest
@@ -42,7 +57,7 @@ import { DEFAULT_MENU_SETTINGS } from '@/shared/contracts/cms-menu';
 
 describe('CmsMenu accessibility', () => {
   beforeEach(() => {
-    usePathnameMock.mockReturnValue('/about');
+    usePathnameMock.mockReturnValue('/en/about');
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -60,9 +75,11 @@ describe('CmsMenu accessibility', () => {
 
   const renderMenu = (menu: typeof DEFAULT_MENU_SETTINGS) =>
     render(
-      <CmsStorefrontAppearanceProvider initialMode='default'>
-        <CmsMenu menu={menu} />
-      </CmsStorefrontAppearanceProvider>
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <CmsStorefrontAppearanceProvider initialMode='default'>
+          <CmsMenu menu={menu} />
+        </CmsStorefrontAppearanceProvider>
+      </NextIntlClientProvider>
     );
 
   it('announces site navigation, current page state, and external link behavior', () => {
@@ -109,14 +126,16 @@ describe('CmsMenu accessibility', () => {
 
   it('renders storefront appearance controls and updates the navbar mode', () => {
     render(
-      <CmsStorefrontAppearanceProvider initialMode='default'>
-        <CmsMenu
-          menu={{
-            ...DEFAULT_MENU_SETTINGS,
-            items: [{ id: 'home', label: 'Home', url: '/', imageUrl: '' }],
-          }}
-        />
-      </CmsStorefrontAppearanceProvider>
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <CmsStorefrontAppearanceProvider initialMode='default'>
+          <CmsMenu
+            menu={{
+              ...DEFAULT_MENU_SETTINGS,
+              items: [{ id: 'home', label: 'Home', url: '/', imageUrl: '' }],
+            }}
+          />
+        </CmsStorefrontAppearanceProvider>
+      </NextIntlClientProvider>
     );
 
     const navigation = screen.getByRole('navigation', { name: 'Site navigation' });

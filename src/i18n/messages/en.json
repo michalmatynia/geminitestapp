@@ -215,5 +215,24 @@
     "catalogReadyDescription": "Showcase tags, categories, and inventory status.",
     "confidentDisplayTitle": "Confident display",
     "confidentDisplayDescription": "Highlight pricing, specs, and availability at a glance."
+  },
+  "CmsMenu": {
+    "siteNavigation": "Site navigation",
+    "expandNavigation": "Expand navigation",
+    "collapseNavigation": "Collapse navigation",
+    "opensInNewTab": "opens in a new tab",
+    "siteAppearance": "Site appearance"
+  },
+  "KangurPublic": {
+    "routeLoading": "Loading Kangur...",
+    "entryLoading": "Loading Kangur...",
+    "loaderStatus": "Loading",
+    "loaderSrLabel": "Loading the Kangur app",
+    "errorTitle": "Kangur encountered an error",
+    "errorDescription": "Something went wrong while loading the Kangur application.",
+    "tryAgain": "Try again",
+    "backToHome": "Back to Kangur",
+    "loadingApp": "Loading Kangur app",
+    "loadingPage": "Loading Kangur page"
   }
 }

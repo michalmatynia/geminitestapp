@@ -267,26 +267,25 @@ describe('CachedProductMutations', () => {
       expect(queryCache.get('products:list:{}', [])).toBeNull();
     });
 
-    it('invalidateAll clears all products-prefixed keys via pattern', () => {
-      // withQueryCache stores keys as "query:<keyGeneratorResult>:<params>"
-      // so keys like "products:list:{}" are stored as "query:products:list:{}:[]"
+    it('invalidateAll clears query-prefixed product cache entries and keeps unrelated keys', () => {
       queryCache.set('products:list:{}', [], ['p1'], { tags: ['products:list'] });
       queryCache.set('products:count:{}', [], 3, { tags: ['products:count'] });
+      queryCache.set('products:paged:{}', [], { products: ['p1'], total: 1 }, {
+        tags: ['products:paged', 'products:list'],
+      });
       queryCache.set('categories:list', [], ['c1'], { tags: ['categories:list'] });
 
       ProductCacheHelpers.invalidateAll();
 
-      // Pattern /^products:/ does NOT match "query:products:…" keys (known limitation)
-      // This test documents the current behaviour and will need updating if the
-      // pattern is fixed to /^query:products:/ for full coverage.
       const listAfter = queryCache.get('products:list:{}', []);
+      const countAfter = queryCache.get('products:count:{}', []);
+      const pagedAfter = queryCache.get('products:paged:{}', []);
       const categoriesAfter = queryCache.get('categories:list', []);
 
-      // categories: unaffected regardless
+      expect(listAfter).toBeNull();
+      expect(countAfter).toBeNull();
+      expect(pagedAfter).toBeNull();
       expect(categoriesAfter).toEqual(['c1']);
-      // products:list — will be null if the pattern matches; document what currently happens
-      // (tag-based invalidation in createProduct/deleteProduct ensures correctness in practice)
-      expect(typeof listAfter === 'object' || listAfter === null).toBe(true);
     });
   });
 });

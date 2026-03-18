@@ -1,11 +1,22 @@
 import { render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
+
+import enMessages from '@/i18n/messages/en.json';
 
 import { KangurAppLoader } from './KangurAppLoader';
 
+const renderWithIntl = (element: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='en' messages={enMessages}>
+      {element}
+    </NextIntlClientProvider>
+  );
+
 describe('KangurAppLoader', () => {
   it('renders the larger classic loader card with accessible boot loader markers', () => {
-    render(<KangurAppLoader visible />);
+    renderWithIntl(<KangurAppLoader visible />);
 
     const loader = screen.getByTestId('kangur-app-loader');
     const panel = screen.getByTestId('kangur-app-loader-panel');
@@ -19,7 +30,7 @@ describe('KangurAppLoader', () => {
   });
 
   it('does not render when hidden', () => {
-    render(<KangurAppLoader visible={false} />);
+    renderWithIntl(<KangurAppLoader visible={false} />);
 
     expect(screen.queryByTestId('kangur-app-loader')).not.toBeInTheDocument();
   });

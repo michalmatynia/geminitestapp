@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import React from 'react';
 import type { KangurStorefrontAppearanceMode } from '@/features/kangur/storefront-appearance-settings';
 
@@ -16,11 +17,13 @@ export function KangurPublicAppEntry({
   basePath: string;
   initialMode?: KangurStorefrontAppearanceMode;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurPublic');
+
   return (
     <React.Suspense
       fallback={
         <div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
-          Loading Kangur...
+          {translations('entryLoading')}
         </div>
       }
     >

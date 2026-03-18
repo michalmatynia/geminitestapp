@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 
@@ -21,13 +22,14 @@ export function KangurAppLoader({
   detail,
   srLabel,
 }: KangurAppLoaderProps): React.JSX.Element {
+  const translations = useTranslations('KangurPublic');
   const prefersReducedMotion = useReducedMotion();
   const [hasMounted, setHasMounted] = useState(false);
   const [colorPhase, setColorPhase] = useState<'mono' | 'paint' | 'color'>('mono');
   const copyTitle = title?.trim() || 'StudiQ';
-  const copyStatus = status?.trim() || 'Loading';
+  const copyStatus = status?.trim() || translations('loaderStatus');
   const copyDetail = detail?.trim() || null;
-  const screenReaderLabel = srLabel?.trim() || 'Ladowanie aplikacji StudiQ';
+  const screenReaderLabel = srLabel?.trim() || translations('loaderSrLabel');
 
   useEffect(() => {
     setHasMounted(true);

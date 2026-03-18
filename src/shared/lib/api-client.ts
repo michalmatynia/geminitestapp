@@ -93,6 +93,7 @@ export async function apiClient<T>(
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let bodyTimer: ReturnType<typeof setTimeout> | undefined;
 
   try {
     const fetchPromise = fetch(url, config);
@@ -108,11 +109,31 @@ export async function apiClient<T>(
         ])
         : await fetchPromise;
 
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+
     if (response.status === 204) {
       return {} as T;
     }
 
-    const data: unknown = await response.json().catch(() => null);
+    const bodyTimeout = Math.max(timeout, 30_000);
+    const data: unknown = await Promise.race<unknown>([
+      response.text().then((text) => {
+        if (!text) return null;
+        try {
+          return JSON.parse(text);
+        } catch {
+          return null;
+        }
+      }),
+      new Promise<never>((_, reject) => {
+        bodyTimer = setTimeout(() => {
+          reject(new Error(`Response body timeout after ${bodyTimeout}ms`));
+        }, bodyTimeout);
+      }),
+    ]);
 
     if (response.ok) {
       return data as T;
@@ -196,6 +217,9 @@ export async function apiClient<T>(
   } finally {
     if (timer) {
       clearTimeout(timer);
+    }
+    if (bodyTimer) {
+      clearTimeout(bodyTimer);
     }
   }
 }

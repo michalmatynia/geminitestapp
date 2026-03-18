@@ -215,5 +215,24 @@
     "catalogReadyDescription": "Zeigt Tags, Kategorien und Lagerstatus klar an.",
     "confidentDisplayTitle": "Sichere Präsentation",
     "confidentDisplayDescription": "Hebt Preis, Details und Verfügbarkeit klar hervor."
+  },
+  "CmsMenu": {
+    "siteNavigation": "Seitennavigation",
+    "expandNavigation": "Navigation erweitern",
+    "collapseNavigation": "Navigation reduzieren",
+    "opensInNewTab": "wird in einem neuen Tab geoffnet",
+    "siteAppearance": "Seitendarstellung"
+  },
+  "KangurPublic": {
+    "routeLoading": "Kangur wird geladen...",
+    "entryLoading": "Kangur wird geladen...",
+    "loaderStatus": "Wird geladen",
+    "loaderSrLabel": "Kangur-Anwendung wird geladen",
+    "errorTitle": "In Kangur ist ein Fehler aufgetreten",
+    "errorDescription": "Beim Laden der Kangur-Anwendung ist ein Fehler aufgetreten.",
+    "tryAgain": "Erneut versuchen",
+    "backToHome": "Zuruck zu Kangur",
+    "loadingApp": "Kangur-App wird geladen",
+    "loadingPage": "Kangur-Seite wird geladen"
   }
 }

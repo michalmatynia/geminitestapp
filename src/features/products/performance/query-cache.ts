@@ -186,7 +186,13 @@ export const ProductCacheHelpers = {
   },
 
   invalidateAll: (): void => {
+    queryCache.invalidateByTag('products:list');
+    queryCache.invalidateByTag('products:count');
+    queryCache.invalidateByTag('products:paged');
+    queryCache.invalidateByTag('products:ids');
+    queryCache.invalidateByTag('products:search');
     queryCache.invalidateByPattern(/^products:/);
+    queryCache.invalidateByPattern(/^query:products:/);
   },
 
   getTags: {

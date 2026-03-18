@@ -215,5 +215,24 @@
     "catalogReadyDescription": "Eksponuje tagi, kategorie i stan magazynowy.",
     "confidentDisplayTitle": "Czytelna prezentacja",
     "confidentDisplayDescription": "Podkreśla cenę, specyfikację i dostępność."
+  },
+  "CmsMenu": {
+    "siteNavigation": "Nawigacja strony",
+    "expandNavigation": "Rozwin nawigacje",
+    "collapseNavigation": "Zwin nawigacje",
+    "opensInNewTab": "otwiera sie w nowej karcie",
+    "siteAppearance": "Wyglad strony"
+  },
+  "KangurPublic": {
+    "routeLoading": "Ladowanie Kangura...",
+    "entryLoading": "Ladowanie Kangura...",
+    "loaderStatus": "Ladowanie",
+    "loaderSrLabel": "Ladowanie aplikacji Kangur",
+    "errorTitle": "Wystapil blad w Kangurze",
+    "errorDescription": "Wystapil problem podczas ladowania aplikacji Kangur.",
+    "tryAgain": "Sprobuj ponownie",
+    "backToHome": "Wroc do Kangura",
+    "loadingApp": "Ladowanie aplikacji Kangur",
+    "loadingPage": "Ladowanie strony Kangura"
   }
 }

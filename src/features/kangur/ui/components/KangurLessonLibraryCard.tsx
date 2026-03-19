@@ -1,4 +1,5 @@
 import React, { type AriaAttributes, type ComponentProps } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
@@ -30,6 +31,7 @@ export function KangurLessonLibraryCardAside({
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   className?: string;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
   const masteryAccent = masteryPresentation.badgeAccent;
   const assignmentPriority = lessonAssignment?.priority;
 
@@ -57,7 +59,7 @@ export function KangurLessonLibraryCardAside({
         />
       ) : completedLessonAssignment ? (
         <KangurStatusChip accent='emerald' className='uppercase tracking-[0.14em]' size='sm'>
-          Zadanie zamknięte
+          {translations('closedAssignment')}
         </KangurStatusChip>
       ) : null}
     </div>
@@ -77,6 +79,7 @@ export function KangurLessonLibraryCardFooter({
   completedLessonAssignment: KangurAssignmentSnapshot | null;
   masteryPresentation: LessonMasteryPresentation;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
   const footerChips = [
     lesson.contentMode === 'document' && hasDocumentContent ? (
       <KangurStatusChip
@@ -85,7 +88,7 @@ export function KangurLessonLibraryCardFooter({
         className='uppercase tracking-[0.14em]'
         size='sm'
       >
-        Wlasna zawartosc
+        {translations('customContent')}
       </KangurStatusChip>
     ) : null,
     lessonAssignment ? (
@@ -95,7 +98,7 @@ export function KangurLessonLibraryCardFooter({
         className='uppercase tracking-[0.14em]'
         size='sm'
       >
-        Priorytet rodzica
+        {translations('parentPriority')}
       </KangurStatusChip>
     ) : completedLessonAssignment ? (
       <KangurStatusChip
@@ -104,7 +107,7 @@ export function KangurLessonLibraryCardFooter({
         className='uppercase tracking-[0.14em]'
         size='sm'
       >
-        Ukończone dla rodzica
+        {translations('completedForParent')}
       </KangurStatusChip>
     ) : null,
   ].filter(Boolean);
@@ -121,7 +124,9 @@ export function KangurLessonLibraryCardFooter({
         </div>
       ) : completedLessonAssignment ? (
         <div className='mt-2 break-words text-xs font-semibold text-emerald-600'>
-          Zadanie od rodzica zostało już wykonane. {completedLessonAssignment.progress.summary}
+          {translations('completedAssignmentSummary', {
+            summary: completedLessonAssignment.progress.summary,
+          })}
         </div>
       ) : null}
     </>
@@ -147,6 +152,7 @@ type KangurLessonLibraryCardProps = {
 } & Pick<ComponentProps<typeof KangurIconSummaryOptionCard>, 'emphasis'>;
 
 export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.libraryCard');
   const {
     ariaCurrent,
     buttonClassName,
@@ -168,7 +174,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     <KangurIconSummaryOptionCard
       accent='indigo'
       buttonClassName={cn('w-full text-left', buttonClassName)}
-      aria-label={`Lekcja: ${lesson.title}`}
+      aria-label={translations('ariaLabel', { title: lesson.title })}
       aria-current={ariaCurrent}
       data-doc-id={dataDocId}
       data-testid={itemTestId}

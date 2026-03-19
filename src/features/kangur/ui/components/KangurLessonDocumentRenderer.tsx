@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
@@ -169,12 +170,13 @@ function renderTextBlock(
 function renderSvgBlock(
   block: KangurLessonSvgBlock,
   key: string,
+  translate: (key: string) => string,
   options?: { fillHeight?: boolean }
 ): React.JSX.Element {
   const svgLabel =
     block.ttsDescription?.trim() ||
     block.title.trim() ||
-    'Ilustracja do tej sekcji lekcji.';
+    translate('svgAltFallback');
 
   return (
     <KangurSurfacePanel
@@ -226,10 +228,11 @@ function renderSvgBlock(
 function renderImageBlock(
   block: KangurLessonImageBlock,
   key: string,
+  translate: (key: string) => string,
   options?: { fillHeight?: boolean }
 ): React.JSX.Element {
   const hasSource = block.src.trim().length > 0;
-  const altText = block.altText?.trim() || block.title.trim() || 'Lesson illustration';
+  const altText = block.altText?.trim() || block.title.trim() || translate('imageAltFallback');
 
   return (
     <KangurSurfacePanel
@@ -286,7 +289,7 @@ function renderImageBlock(
                   🖼️
                 </span>
               }
-              title='Image block has no source yet.'
+              title={translate('imageMissingSource')}
             />
           )}
         </KangurMediaFrame>
@@ -311,14 +314,15 @@ function renderActivityBlock(
 function renderInlineBlock(
   block: KangurLessonInlineBlock,
   key: string,
+  translate: (key: string) => string,
   options?: { fillHeight?: boolean }
 ): React.JSX.Element {
   if (block.type === 'svg') {
-    return renderSvgBlock(block, key, options);
+    return renderSvgBlock(block, key, translate, options);
   }
 
   if (block.type === 'image') {
-    return renderImageBlock(block, key, options);
+    return renderImageBlock(block, key, translate, options);
   }
 
   return renderTextBlock(block, key, options);
@@ -358,8 +362,15 @@ const CALLOUT_STYLES: Record<
   },
 };
 
-function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React.JSX.Element {
-  const style = CALLOUT_STYLES[block.variant];
+function renderCalloutBlock(
+  block: KangurLessonCalloutBlock,
+  key: string,
+  translate: (key: string) => string
+): React.JSX.Element {
+  const style = {
+    ...CALLOUT_STYLES[block.variant],
+    label: translate(`callouts.${block.variant}`),
+  };
   return (
     <div
       key={key}
@@ -388,9 +399,9 @@ function renderCalloutBlock(block: KangurLessonCalloutBlock, key: string): React
 type QuizState = { selectedId: string | null; revealed: boolean };
 
 function KangurLessonQuizBlockView(
-  props: { block: KangurLessonQuizBlock }
+  props: { block: KangurLessonQuizBlock; translate: (key: string, values?: Record<string, string | number>) => string }
 ): React.JSX.Element {
-  const { block } = props;
+  const { block, translate } = props;
   const [state, setState] = React.useState<QuizState>({ selectedId: null, revealed: false });
 
   const handleSelect = (choiceId: string): void => {
@@ -453,7 +464,7 @@ function KangurLessonQuizBlockView(
               }}
               onClick={(): void => handleSelect(choice.id)}
               disabled={state.revealed}
-              aria-label={`Odpowiedź: ${choice.text}`}
+              aria-label={translate('quizAnswerAria', { answer: choice.text })}
               aria-pressed={isSelected}
             >
               {choice.text}
@@ -474,6 +485,7 @@ function KangurLessonQuizBlockView(
 function renderQuizBlock(
   block: KangurLessonQuizBlock,
   key: string,
+  translate: (key: string, values?: Record<string, string | number>) => string,
   renderMode: 'lesson' | 'editor'
 ): React.JSX.Element {
   if (renderMode === 'editor') {
@@ -485,7 +497,7 @@ function renderQuizBlock(
         style={{ borderColor: 'var(--kangur-soft-card-border)' }}
       >
         <KangurSectionEyebrow className='mb-2 text-xs tracking-wide'>
-          Quiz
+          {translate('quizEyebrow')}
         </KangurSectionEyebrow>
         <KangurProse
           className='mb-3 text-sm font-semibold leading-6 [color:var(--kangur-page-text)]'
@@ -521,10 +533,14 @@ function renderQuizBlock(
     );
   }
 
-  return <KangurLessonQuizBlockView key={key} block={block} />;
+  return <KangurLessonQuizBlockView key={key} block={block} translate={translate} />;
 }
 
-function renderGridBlock(block: KangurLessonGridBlock, key: string): React.JSX.Element {
+function renderGridBlock(
+  block: KangurLessonGridBlock,
+  key: string,
+  translate: (key: string) => string
+): React.JSX.Element {
   return (
     <KangurSurfacePanel
       accent='violet'
@@ -573,7 +589,7 @@ function renderGridBlock(block: KangurLessonGridBlock, key: string): React.JSX.E
             )}
             style={getGridItemPlacementStyle(item.columnStart, item.rowStart)}
           >
-            {renderInlineBlock(item.block, item.block.id, { fillHeight: true })}
+            {renderInlineBlock(item.block, item.block.id, translate, { fillHeight: true })}
           </div>
         ))}
       </div>
@@ -584,6 +600,7 @@ function renderGridBlock(block: KangurLessonGridBlock, key: string): React.JSX.E
 export function KangurLessonDocumentRenderer(
   props: KangurLessonDocumentRendererProps
 ): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.documentRenderer');
   const { document, className, renderMode = 'lesson', activePageId } = props;
   const allPages = resolveKangurLessonDocumentPages(document);
   const pages = activePageId ? allPages.filter((page) => page.id === activePageId) : allPages;
@@ -615,7 +632,7 @@ export function KangurLessonDocumentRenderer(
                 <KangurSummaryPanel
                   accent='emerald'
                   description={page.sectionDescription?.trim() || undefined}
-                  label='Section'
+                  label={translations('sectionLabel')}
                   labelAccent='emerald'
                   padding='lg'
                   title={page.sectionTitle?.trim() || undefined}
@@ -626,7 +643,7 @@ export function KangurLessonDocumentRenderer(
                 <KangurSummaryPanel
                   accent='slate'
                   description={page.description?.trim() || undefined}
-                  label={`Page ${pageIndex + 1}`}
+                  label={translations('pageLabel', { index: pageIndex + 1 })}
                   labelAccent='slate'
                   padding='lg'
                   title={page.title?.trim() || undefined}
@@ -638,27 +655,27 @@ export function KangurLessonDocumentRenderer(
                   accent='slate'
                   description={
                     renderMode === 'editor'
-                      ? 'Add text, images, SVGs, or an activity block to start composing this page.'
+                      ? translations('editorEmptyDescription')
                       : undefined
                   }
                   padding='xl'
-                  title='This page has no blocks yet.'
+                  title={translations('noBlocksTitle')}
                 />
               ) : (
                 page.blocks.map((block) => {
                   if (block.type === 'grid') {
-                    return renderGridBlock(block, block.id);
+                    return renderGridBlock(block, block.id, translations);
                   }
                   if (block.type === 'activity') {
                     return renderActivityBlock(block, block.id, renderMode);
                   }
                   if (block.type === 'callout') {
-                    return renderCalloutBlock(block, block.id);
+                    return renderCalloutBlock(block, block.id, translations);
                   }
                   if (block.type === 'quiz') {
-                    return renderQuizBlock(block, block.id, renderMode);
+                    return renderQuizBlock(block, block.id, translations, renderMode);
                   }
-                  return renderInlineBlock(block, block.id);
+                  return renderInlineBlock(block, block.id, translations);
                 })
               )}
             </KangurGlassPanel>

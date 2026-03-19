@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
@@ -40,18 +41,20 @@ import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRou
 type LearnerProfileTabId = 'overview' | 'ai-mood';
 
 const PROFILE_TABS: Array<
-  IdLabelOptionDto<LearnerProfileTabId> & { mobileLabel: string; docId: string }
+  IdLabelOptionDto<LearnerProfileTabId> & { labelKey: string; mobileLabelKey: string; docId: string }
 > = [
   {
     id: 'overview',
-    label: 'Profil ucznia',
-    mobileLabel: 'Profil',
+    label: '',
+    labelKey: 'tabs.overview',
+    mobileLabelKey: 'tabs.overviewMobile',
     docId: 'learner_profile_tab_overview',
   },
   {
     id: 'ai-mood',
-    label: 'Relacja z AI Tutorem',
-    mobileLabel: 'AI Tutor',
+    label: '',
+    labelKey: 'tabs.aiMood',
+    mobileLabelKey: 'tabs.aiMoodMobile',
     docId: 'learner_profile_tab_ai_mood',
   },
 ];
@@ -63,7 +66,9 @@ function LearnerProfileContent(): React.JSX.Element {
   const auth = useKangurAuth();
   const isAuthenticated = auth.isAuthenticated ?? Boolean(auth.user);
   const { push: navigateTo } = useKangurRouteNavigator();
+  const { basePath } = useKangurRouting();
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('profile');
+  const translations = useTranslations('KangurLearnerProfilePage');
 
   const [activeTab, setActiveTab] = useState<LearnerProfileTabId>('overview');
   const tutorAnchorRef = useRef<HTMLDivElement>(null);
@@ -98,9 +103,9 @@ function LearnerProfileContent(): React.JSX.Element {
   if (isAuthenticated && !user) {
     return (
       <div className='flex h-[60vh] flex-col items-center justify-center gap-4 text-center'>
-        <p className='text-orange-200/60'>Nie udało się załadować profilu.</p>
-        <KangurButton variant='surface' onClick={() => navigateTo('/kangur')}>
-          Wróć do strony głównej
+        <p className='text-orange-200/60'>{translations('loadError')}</p>
+        <KangurButton variant='surface' onClick={() => navigateTo(basePath)}>
+          {translations('backToHome')}
         </KangurButton>
       </div>
     );
@@ -114,7 +119,7 @@ function LearnerProfileContent(): React.JSX.Element {
     >
       <KangurLearnerProfileHeroWidget />
       <h2 className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-        Statystyki ucznia
+        {translations('statsHeading')}
       </h2>
 
       <div className='flex flex-col gap-6 lg:flex-row'>
@@ -122,7 +127,7 @@ function LearnerProfileContent(): React.JSX.Element {
           <div
             className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} self-start`}
             role='tablist'
-            aria-label='Profil ucznia'
+            aria-label={translations('tabListLabel')}
           >
             {PROFILE_TABS.map((tab) => (
               <KangurButton
@@ -135,8 +140,8 @@ function LearnerProfileContent(): React.JSX.Element {
                 aria-selected={activeTab === tab.id}
                 tabIndex={activeTab === tab.id ? 0 : -1}
               >
-                <span className='hidden sm:inline'>{tab.label}</span>
-                <span className='sm:hidden'>{tab.mobileLabel}</span>
+                <span className='hidden sm:inline'>{translations(tab.labelKey)}</span>
+                <span className='sm:hidden'>{translations(tab.mobileLabelKey)}</span>
               </KangurButton>
             ))}
           </div>

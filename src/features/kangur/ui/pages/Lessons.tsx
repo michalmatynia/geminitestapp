@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
@@ -13,6 +14,7 @@ import { ActiveLessonView } from './lessons/Lessons.ActiveLesson';
 import { unlockKangurLessonScroll } from './lessons/lessons-scroll-lock';
 
 function LessonsContent() {
+  const pageTranslations = useTranslations('KangurLessonsPage');
   const {
     auth,
     basePath,
@@ -38,7 +40,7 @@ function LessonsContent() {
   const lessonTutorContext = {
     surface: 'lesson' as const,
     contentId: activeLesson?.id ?? 'lesson:list',
-    title: activeLesson?.title ?? 'Lekcje',
+    title: activeLesson?.title ?? pageTranslations('pageTitle'),
     assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id,
   };
 

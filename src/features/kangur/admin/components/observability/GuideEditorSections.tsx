@@ -7,6 +7,33 @@ import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/token
 import { useKangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditorContext';
 import { SURFACE_OPTIONS, FOCUS_KIND_OPTIONS, stringifyLineList, parseLineList } from './guide-editor-utils';
 
+const getTranslationStatusBadgeVariant = (status: string): 'outline' | 'secondary' | 'warning' => {
+  switch (status) {
+    case 'manual':
+      return 'secondary';
+    case 'missing':
+    case 'source-copy':
+      return 'warning';
+    default:
+      return 'outline';
+  }
+};
+
+const formatTranslationStatusLabel = (locale: string, status: string): string => {
+  switch (status) {
+    case 'manual':
+      return `${locale.toUpperCase()} manual`;
+    case 'scaffolded':
+      return `${locale.toUpperCase()} scaffolded`;
+    case 'source-copy':
+      return `${locale.toUpperCase()} source copy`;
+    case 'missing':
+      return `${locale.toUpperCase()} missing`;
+    default:
+      return `${locale.toUpperCase()} source`;
+  }
+};
+
 export function RenderValidationIssues({
   issues,
 }: {
@@ -56,6 +83,7 @@ export function FieldValidationWrapper({
 export function EntryHeader(): React.JSX.Element | null {
   const {
     selectedEntry,
+    selectedEntryTranslationStatuses,
     totalEntries,
     isSaving,
     onDuplicate,
@@ -76,6 +104,18 @@ export function EntryHeader(): React.JSX.Element | null {
           Edit one native guide record at a time. These records describe Kangur
           surfaces and sections without relying on AI model generation.
         </p>
+        {selectedEntryTranslationStatuses.length > 0 ? (
+          <div className='mt-2 flex flex-wrap gap-2'>
+            {selectedEntryTranslationStatuses.map(({ locale, status }) => (
+              <Badge
+                key={`${selectedEntry.id}-${locale}`}
+                variant={getTranslationStatusBadgeVariant(status)}
+              >
+                {formatTranslationStatusLabel(locale, status)}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div className='flex flex-wrap gap-2'>
         <Button type='button' variant='outline' size='sm' onClick={onDuplicate} disabled={isSaving}>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
@@ -7,6 +8,10 @@ import { unpublishKangurSocialPost } from '@/features/kangur/server/social-posts
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
+
+const bodySchema = z.object({
+  keepLocal: z.boolean().optional(),
+});
 
 export async function postKangurSocialPostUnpublishHandler(
   req: NextRequest,
@@ -23,24 +28,28 @@ export async function postKangurSocialPostUnpublishHandler(
     throw notFoundError('Social post not found.');
   }
 
+  const parsed = bodySchema.parse(ctx.body ?? {});
   const startedAt = Date.now();
   try {
-    const deleted = await unpublishKangurSocialPost(post);
+    const result = await unpublishKangurSocialPost(post, { keepLocal: parsed.keepLocal });
     void logKangurServerEvent({
       source: 'kangur.social-posts.unpublish',
-      message: 'Kangur social post unpublished from LinkedIn',
+      message: parsed.keepLocal
+        ? 'Kangur social post unpublished from LinkedIn (kept locally)'
+        : 'Kangur social post unpublished from LinkedIn',
       request: req,
       requestContext: ctx,
       actor,
       statusCode: 200,
       context: {
-        postId: deleted.id,
-        status: deleted.status,
-        linkedinPostId: deleted.linkedinPostId ?? null,
+        postId: result.id,
+        status: result.status,
+        linkedinPostId: result.linkedinPostId ?? null,
+        keepLocal: parsed.keepLocal ?? false,
         durationMs: Date.now() - startedAt,
       },
     });
-    return NextResponse.json(deleted, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'kangur.social-posts.unpublish',

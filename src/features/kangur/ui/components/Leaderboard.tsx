@@ -1,4 +1,5 @@
 import { Trophy, User, Ghost } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -34,6 +35,7 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
 };
 
 export default function Leaderboard(): React.JSX.Element {
+  const translations = useTranslations('KangurGameWidgets.leaderboard');
   const { entry: leaderboardContent } = useKangurPageContentEntry('game-home-leaderboard');
   const { emptyStateLabel, items, loading, operationFilters, userFilters } =
     useKangurLeaderboardState();
@@ -49,7 +51,7 @@ export default function Leaderboard(): React.JSX.Element {
       <div className={`mb-4 ${KANGUR_CENTER_ROW_CLASSNAME}`}>
         <Trophy className='text-amber-400 w-6 h-6 flex-shrink-0' aria-hidden='true' />
         <h3 className='break-words text-lg font-extrabold [color:var(--kangur-page-text)] sm:text-xl'>
-          {leaderboardContent?.title ?? 'Najlepsze wyniki'}
+          {leaderboardContent?.title ?? translations('title')}
         </h3>
       </div>
 
@@ -105,8 +107,8 @@ export default function Leaderboard(): React.JSX.Element {
           accent='slate'
           align='center'
           data-testid='leaderboard-loading'
-          description='Pobieramy najnowsze wyniki uczniów.'
-          title='Ładowanie...'
+          description={translations('loadingDescription')}
+          title={translations('loadingTitle')}
           role='status'
           aria-live='polite'
           aria-atomic='true'
@@ -116,7 +118,7 @@ export default function Leaderboard(): React.JSX.Element {
           accent='slate'
           align='center'
           data-testid='leaderboard-empty'
-          description='Zmień filtr albo wróć później, gdy pojawia się nowe podejścia.'
+          description={translations('emptyDescription')}
           title={emptyStateLabel}
         />
       ) : (
@@ -151,7 +153,7 @@ export default function Leaderboard(): React.JSX.Element {
                         accent='indigo'
                         data-testid={`leaderboard-account-icon-${item.id}`}
                         size='sm'
-                        title='Zalogowany'
+                        title={translations('account.registered')}
                       >
                         <User aria-hidden='true' className='w-3 h-3' />
                       </KangurIconBadge>
@@ -160,7 +162,7 @@ export default function Leaderboard(): React.JSX.Element {
                         accent='slate'
                         data-testid={`leaderboard-account-icon-${item.id}`}
                         size='sm'
-                        title='Anonim'
+                        title={translations('account.anonymous')}
                       >
                         <Ghost aria-hidden='true' className='w-3 h-3' />
                       </KangurIconBadge>

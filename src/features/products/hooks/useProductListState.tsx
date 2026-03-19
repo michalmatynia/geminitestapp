@@ -544,7 +544,7 @@ export function useProductListState(): ProductListContextType & {
     getRowId: getProductRowId,
     isLoading: !isMounted || isLoading,
     skeletonRows: tableSkeleton,
-    maxHeight: 'calc(100vh - 280px)',
+    maxHeight: 'calc(100vh - 200px)',
     stickyHeader: true,
     isCreateOpen,
     isPromptOpen,

@@ -14,7 +14,7 @@ export const querySchema = z.object({
 
 export async function getKangurSocialPostContextHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
   const actor = await resolveKangurActor(req);
   if (actor.role !== 'admin') {

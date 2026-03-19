@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurIconBadge,
@@ -11,6 +12,8 @@ import {
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 
 export default function UserNotRegisteredError(): React.JSX.Element {
+  const translations = useTranslations('KangurUserAccess');
+
   return (
     <KangurStandardPageLayout
       tone='learn'
@@ -34,16 +37,15 @@ export default function UserNotRegisteredError(): React.JSX.Element {
 
           <div className='mt-6'>
             <KangurStatusChip accent='amber' labelStyle='eyebrow'>
-              Dostęp ograniczony
+              {translations('restricted')}
             </KangurStatusChip>
           </div>
 
           <h1 className='mt-4 text-3xl font-extrabold tracking-tight text-slate-900'>
-            To konto nie ma jeszcze dostępu do Kangura
+            {translations('title')}
           </h1>
           <p className='mt-4 text-base leading-7 text-slate-600'>
-            Wygląda na to, że Twoje konto nie zostało jeszcze dodane do aplikacji. Skontaktuj się z
-            administratorem, aby poprosić o dostęp.
+            {translations('description')}
           </p>
 
           <KangurInfoCard
@@ -52,11 +54,11 @@ export default function UserNotRegisteredError(): React.JSX.Element {
             padding='lg'
             tone='muted'
           >
-            <p className='text-sm font-semibold text-slate-900'>Jeśli to pomyłka, sprawdź:</p>
+            <p className='text-sm font-semibold text-slate-900'>{translations('checkLabel')}</p>
             <ul className='mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600'>
-              <li>czy jesteś zalogowany na właściwym koncie,</li>
-              <li>czy administrator przyznał temu kontu dostęp,</li>
-              <li>czy ponowne zalogowanie rozwiązuje problem.</li>
+              <li>{translations('checkCurrentAccount')}</li>
+              <li>{translations('checkAccessGranted')}</li>
+              <li>{translations('checkSignInAgain')}</li>
             </ul>
           </KangurInfoCard>
         </div>

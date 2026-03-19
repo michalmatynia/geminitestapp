@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import {
@@ -31,6 +32,7 @@ const buildAssignmentHref = (
 };
 
 export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.questSummary');
   const { basePath, progress, user } = useKangurLearnerProfileRuntime();
   const { subject } = useKangurSubjectFocus();
   const activeLearner = user?.activeLearner ?? null;
@@ -79,7 +81,7 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
             description={dailyQuest.progress.summary}
             progressAccent={dailyQuestAccent}
             progressLabel={`${dailyQuest.progress.percent}%`}
-            questLabel={dailyQuest.assignment.questLabel ?? 'Misja dnia'}
+            questLabel={dailyQuest.assignment.questLabel ?? translations('defaultQuestLabel')}
             rewardAccent={dailyQuest.reward.status === 'claimed' ? 'emerald' : dailyQuestAccent}
             rewardLabel={dailyQuest.reward.label}
             title={
@@ -94,7 +96,7 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
 
       <div className='text-left' data-testid='kangur-learner-profile-track-summary'>
         <KangurSectionEyebrow as='p' className='mb-2 tracking-[0.18em]'>
-          Ścieżki postępu ucznia
+          {translations('tracksHeading')}
         </KangurSectionEyebrow>
         <KangurHeroMilestoneSummary
           className='mb-3'

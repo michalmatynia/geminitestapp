@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import {
@@ -71,6 +72,9 @@ function buildLessonGroups(
 }
 
 export function KangurLessonsCatalogWidget(): JSX.Element {
+  const pageTranslations = useTranslations('KangurLessonsPage');
+  const widgetTranslations = useTranslations('KangurLessonsWidgets');
+  const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
   const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
   const {
     orderedLessons,
@@ -87,7 +91,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);
 
   const renderLessonCard = (lesson: (typeof orderedLessons)[number]) => {
-    const masteryPresentation = getLessonMasteryPresentation(lesson, progress);
+    const masteryPresentation = getLessonMasteryPresentation(lesson, progress, masteryTranslations);
     const lessonAssignment = lessonAssignmentsByComponent.get(lesson.componentId) ?? null;
     const completedLessonAssignment = !lessonAssignment
       ? completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null
@@ -117,15 +121,13 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
   if (orderedLessons.length === 0) {
     return (
-      <KangurEmptyState
-        accent='indigo'
-        className='w-full'
-        description={
-          emptyStateContent?.summary ?? 'Włącz lekcje w panelu admina, aby pojawiły się tutaj.'
-        }
-        padding='xl'
-        title={emptyStateContent?.title ?? 'Brak aktywnych lekcji'}
-      />
+        <KangurEmptyState
+          accent='indigo'
+          className='w-full'
+        description={emptyStateContent?.summary ?? widgetTranslations('emptyDescription')}
+          padding='xl'
+        title={emptyStateContent?.title ?? pageTranslations('emptyTitle')}
+        />
     );
   }
 
@@ -206,7 +208,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                         >
                           <div className='min-w-0'>
                             <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                              {entry.group.typeLabel ?? 'Grupa'}
+                              {entry.group.typeLabel ?? pageTranslations('groupTypeLabel')}
                             </div>
                             <div className='mt-1 text-lg font-semibold text-slate-900'>
                               {entry.group.label}
@@ -231,7 +233,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
                                 >
                                   <div className='min-w-0'>
                                     <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                                      {subsection.typeLabel ?? 'Subsection'}
+                                      {subsection.typeLabel ?? pageTranslations('subsectionTypeLabel')}
                                     </div>
                                     <div className='mt-1 text-base font-semibold text-slate-900'>
                                       {subsection.label}

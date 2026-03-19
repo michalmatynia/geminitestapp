@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import KangurBadgeTrackGrid from '@/features/kangur/ui/components/KangurBadgeTrackGrid';
 import { KangurSectionEyebrow } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
@@ -44,14 +45,15 @@ export function KangurBadgeTrackSection({
   dataTestIdPrefix,
   emptyTestId,
   gridClassName,
-  heading = 'Ścieżki odznak',
+  heading,
   headingAs = 'p',
   headingClassName,
   progress,
 }: KangurBadgeTrackSectionProps): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.sessions');
   const headerProps = {
     className: headingClassName,
-    heading,
+    heading: heading ?? translations('badgeTracksHeading'),
     headingAs,
   };
   const gridProps = {

@@ -50,9 +50,9 @@ describe('Kangur error boundary', () => {
       'kangur-premium-bg',
       'min-h-screen'
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+    fireEvent.click(screen.getByRole('button', { name: 'tryAgain' }));
     expect(reset).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('link', { name: 'Back to Kangur' })).toHaveAttribute('href', '/kangur');
+    expect(screen.getByRole('link', { name: 'backToHome' })).toHaveAttribute('href', '/kangur');
   });
 
   it('logs the error payload on render', () => {

@@ -253,13 +253,9 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    expect(screen.getByText('Brak profilu ucznia')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Dodaj ucznia' })).toHaveAttribute(
+    expect(screen.getByText('home.missingLearnerTitle')).toBeInTheDocument();
+    expect(screen.getByText('home.missingLearnerDescription')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'home.addLearner' })).toHaveAttribute(
       'href',
       '/kangur/parent-dashboard'
     );
@@ -273,7 +269,7 @@ describe('Game page', () => {
 
     render(<Game />);
 
-    const progressHeading = screen.getByRole('heading', { level: 3, name: 'Ranking i postęp' });
+    const progressHeading = screen.getByRole('heading', { level: 3, name: 'home.progressHeading' });
     const progressSection = progressHeading.closest('section');
 
     expect(progressSection).not.toBeNull();

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Card } from '@/features/kangur/shared/ui';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
+import type { KangurAiTutorNativeGuideEntryTranslationStatus } from './observability/KangurAiTutorNativeGuideEntryEditorContext';
 
 import {
   KangurAiTutorNativeGuideEntryEditorProvider,
@@ -25,6 +26,7 @@ type Props = {
   selectedEntry: KangurAiTutorNativeGuideEntry | null;
   totalEntries: number;
   isSaving: boolean;
+  selectedEntryTranslationStatuses: KangurAiTutorNativeGuideEntryTranslationStatus[];
   selectedEntryValidationIssues: KangurAiTutorOnboardingValidationIssue[];
   followUpActionsEditorValue: string;
   onFollowUpActionsEditorValueChange: (value: string) => void;

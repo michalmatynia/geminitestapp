@@ -1,12 +1,54 @@
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
+import type { KangurAiTutorNativeGuideTranslationStatus } from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
 import { Badge, Card } from '@/features/kangur/shared/ui';
+
+type EntryTranslationStatus = {
+  locale: string;
+  status: KangurAiTutorNativeGuideTranslationStatus;
+};
 
 type Props = {
   entries: KangurAiTutorNativeGuideEntry[];
   selectedEntryId: string | null;
   onSelect: (entryId: string) => void;
   entryValidationCounts: Map<string, { total: number; blocking: number }>;
+  translationStatusByEntryId: Map<string, EntryTranslationStatus[]>;
   className: string;
+};
+
+const getTranslationStatusBadgeVariant = (
+  status: KangurAiTutorNativeGuideTranslationStatus
+): 'outline' | 'secondary' | 'warning' => {
+  switch (status) {
+    case 'manual':
+      return 'secondary';
+    case 'missing':
+    case 'source-copy':
+      return 'warning';
+    case 'source-locale':
+    case 'scaffolded':
+    default:
+      return 'outline';
+  }
+};
+
+const formatTranslationStatusLabel = (
+  locale: string,
+  status: KangurAiTutorNativeGuideTranslationStatus
+): string => {
+  switch (status) {
+    case 'manual':
+      return `${locale.toUpperCase()} manual`;
+    case 'scaffolded':
+      return `${locale.toUpperCase()} scaffolded`;
+    case 'source-copy':
+      return `${locale.toUpperCase()} source copy`;
+    case 'missing':
+      return `${locale.toUpperCase()} missing`;
+    case 'source-locale':
+    default:
+      return `${locale.toUpperCase()} source`;
+  }
 };
 
 export function KangurAiTutorNativeGuideEntryList({
@@ -14,6 +56,7 @@ export function KangurAiTutorNativeGuideEntryList({
   selectedEntryId,
   onSelect,
   entryValidationCounts,
+  translationStatusByEntryId,
   className,
 }: Props): React.JSX.Element {
   const cardClassName = className;
@@ -31,6 +74,7 @@ export function KangurAiTutorNativeGuideEntryList({
             total: 0,
             blocking: 0,
           };
+          const translationStatuses = translationStatusByEntryId.get(entry.id) ?? [];
           return (
             <button
               key={entry.id}
@@ -66,6 +110,14 @@ export function KangurAiTutorNativeGuideEntryList({
                     {entryIssueSummary.total === 1 ? '' : 's'}
                   </Badge>
                 ) : null}
+                {translationStatuses.map(({ locale, status }) => (
+                  <Badge
+                    key={`${entry.id}-${locale}`}
+                    variant={getTranslationStatusBadgeVariant(status)}
+                  >
+                    {formatTranslationStatusLabel(locale, status)}
+                  </Badge>
+                ))}
               </div>
             </button>
           );

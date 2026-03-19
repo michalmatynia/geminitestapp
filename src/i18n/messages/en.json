@@ -56,6 +56,10 @@
     "loginTitle": "StudiQ Login",
     "pageNotFoundTitle": "Page Not Found"
   },
+  "Metadata": {
+    "siteDescription": "StudiQ admin workspace and storefront.",
+    "previewTitle": "Preview {id}"
+  },
   "FallbackHome": {
     "Dividers": {
       "editorial": "Editorial",
@@ -235,6 +239,151 @@
     "loadingApp": "Loading Kangur app",
     "loadingPage": "Loading Kangur page"
   },
+  "KangurShell": {
+    "creatorCredentials": "Creator credentials: {name} · created {year} ·",
+    "socialUpdates": "Social updates",
+    "contactLabel": "contact: {email}"
+  },
+  "KangurLessonsPage": {
+    "pageTitle": "Lessons",
+    "introDescription": "Choose a topic and jump straight into practice or review.",
+    "loadingDescription": "Lessons will be ready shortly.",
+    "emptyTitle": "No active lessons",
+    "emptyDescription": "No active lessons for the {ageGroup} group.",
+    "groupTypeLabel": "Group",
+    "subsectionTypeLabel": "Subsection"
+  },
+  "KangurLearnerProfilePage": {
+    "tabs": {
+      "overview": "Learner profile",
+      "overviewMobile": "Profile",
+      "aiMood": "Relationship with the AI Tutor",
+      "aiMoodMobile": "AI Tutor"
+    },
+    "loadError": "The profile could not be loaded.",
+    "backToHome": "Back to home",
+    "statsHeading": "Learner stats",
+    "tabListLabel": "Learner profile"
+  },
+  "KangurGamePage": {
+    "questionProgress": "Question {current}/{total}",
+    "resultProgress": "Result {score}/{total}",
+    "activityTitle": "Game: {title}",
+    "statusAnnouncement": "View: {label}",
+    "screens": {
+      "home": {
+        "label": "Start screen",
+        "description": "Choose how to practise and start the next session."
+      },
+      "training": {
+        "label": "Training setup",
+        "description": "Configure mixed training and choose the question range."
+      },
+      "kangur_setup": {
+        "label": "Mathematical Kangaroo session setup",
+        "description": "Prepare a Mathematical Kangaroo session."
+      },
+      "kangur": {
+        "label": "Mathematical Kangaroo session",
+        "description": "Solve Mathematical Kangaroo tasks step by step."
+      },
+      "calendar_quiz": {
+        "label": "Calendar practice",
+        "description": "Practise reading dates and calendar relationships."
+      },
+      "geometry_quiz": {
+        "label": "Shapes practice",
+        "description": "Practise shapes and spatial relationships."
+      },
+      "clock_quiz": {
+        "label": "Clock practice",
+        "description": "Practise reading hours and minutes."
+      },
+      "addition_quiz": {
+        "label": "Addition quiz",
+        "description": "A quick addition quiz."
+      },
+      "subtraction_quiz": {
+        "label": "Subtraction quiz",
+        "description": "A quick subtraction quiz."
+      },
+      "division_quiz": {
+        "label": "Division quiz",
+        "description": "A quick division quiz."
+      },
+      "multiplication_quiz": {
+        "label": "Multiplication quiz",
+        "description": "A quick multiplication-table quiz."
+      },
+      "logical_patterns_quiz": {
+        "label": "Patterns quiz",
+        "description": "Complete patterns and sequences in a quick quiz."
+      },
+      "logical_classification_quiz": {
+        "label": "Classification quiz",
+        "description": "Sort items and find shared traits."
+      },
+      "logical_analogies_quiz": {
+        "label": "Analogies quiz",
+        "description": "Practise analogies and relationships in quick rounds."
+      },
+      "english_sentence_quiz": {
+        "label": "Sentence structure quiz",
+        "description": "Practise sentence order, questions, and conjunctions in English."
+      },
+      "english_parts_of_speech_quiz": {
+        "label": "Parts of speech quiz",
+        "description": "Sort words by parts of speech in short rounds."
+      },
+      "operation": {
+        "label": "Game type selection",
+        "description": "Choose the type of maths game and its difficulty level."
+      },
+      "playing": {
+        "label": "Question to solve",
+        "description": "Solve the current question without hints and with a final answer ready."
+      },
+      "result": {
+        "label": "Game result",
+        "description": "Review the game result and decide what to practise next."
+      }
+    },
+    "home": {
+      "actionsLabel": "Start and activity selection",
+      "parentSuggestionsHeading": "Parent suggestions",
+      "missingLearnerTitle": "No learner profile",
+      "missingLearnerDescription": "Add or choose a learner profile in the section below to see progress and today's missions.",
+      "addLearner": "Add learner",
+      "questHeading": "Mission for the learner",
+      "summaryHeading": "Progress summary",
+      "priorityAssignmentsHeading": "Priority assignments",
+      "priorityAssignmentsTitle": "Priority assignments",
+      "priorityAssignmentsEmpty": "No active assignments from the parent.",
+      "progressHeading": "Ranking and progress",
+      "leaderboardLabel": "Ranking",
+      "progressLabel": "Player progress"
+    },
+    "result": {
+      "leaderboardLabel": "Ranking after the round"
+    }
+  },
+  "KangurPageNotFound": {
+    "unknownPage": "unknown",
+    "title": "Page not found",
+    "description": "The page \"{pageName}\" could not be found in this application.",
+    "adminNoteLabel": "Admin note",
+    "adminNoteDescription": "This could mean that the AI has not implemented this page yet.",
+    "goHome": "Go home"
+  },
+  "KangurUserAccess": {
+    "restricted": "Restricted access",
+    "title": "This account does not have access to Kangur yet",
+    "description": "It looks like your account has not been added to the app yet. Contact an administrator to request access.",
+    "checkLabel": "If this is a mistake, check:",
+    "checkCurrentAccount": "that you are signed in with the correct account,",
+    "checkAccessGranted": "that an administrator has granted access to this account,",
+    "checkSignInAgain": "whether signing in again resolves the problem."
+  },
   "KangurLogin": {
     "defaultLoginTitle": "Sign in",
     "defaultSessionTitle": "Kangur sign in",
@@ -326,5 +475,247 @@
     "passwordLowercase": "The password must contain at least one lowercase letter.",
     "passwordNumber": "The password must contain at least one number.",
     "passwordSymbol": "The password must contain at least one special character."
+  },
+  "KangurGameWidgets": {
+    "quizBackButton": "Back to previous page",
+    "returnToGameHome": "Back to Let's play",
+    "homeHero": {
+      "title": "Your progress",
+      "summary": "Check the next milestone and the tasks worth closing today."
+    },
+    "homeQuest": {
+      "defaultLabel": "Mission of the day",
+      "status": {
+        "completed": "Mission completed",
+        "inProgress": "Mission in progress",
+        "notStarted": "Mission waiting"
+      },
+      "targetPrefix": "Target:",
+      "streakPrefix": "Streak:",
+      "pacePrefix": "Pace:",
+      "trackPrefix": "Momentum:",
+      "directionPrefix": "Direction:"
+    },
+    "priorityAssignments": {
+      "title": "Priority assignments",
+      "emptyDescription": "No active assignments from the parent.",
+      "loading": "Loading priority assignments...",
+      "zeroCount": "0 assignments"
+    },
+    "kangurSession": {
+      "recommendationLabel": "Recommended path"
+    },
+    "leaderboard": {
+      "title": "Top scores",
+      "loadingTitle": "Loading...",
+      "loadingDescription": "Fetching the latest learner scores.",
+      "emptyDescription": "Change the filter or come back later when new attempts appear.",
+      "emptyStateLabel": "No scores for these filters.",
+      "currentUserBadge": "You",
+      "errors": {
+        "loadScores": "Could not load scores."
+      },
+      "account": {
+        "registered": "Signed in",
+        "anonymous": "Anonymous"
+      },
+      "userFilters": {
+        "all": "All",
+        "registered": "Signed in",
+        "anonymous": "Anonymous"
+      },
+      "operations": {
+        "all": "All",
+        "addition": "Addition",
+        "subtraction": "Subtraction",
+        "multiplication": "Multiplication",
+        "division": "Division",
+        "decimals": "Fractions",
+        "powers": "Powers",
+        "roots": "Roots",
+        "clock": "Clock",
+        "calendar": "Calendar",
+        "geometry": "Geometry",
+        "mixed": "Mixed",
+        "english_basics": "Basics",
+        "english_parts_of_speech": "Parts of speech",
+        "english_sentence_structure": "Sentence structure",
+        "english_subject_verb_agreement": "Subject-verb agreement",
+        "english_articles": "Articles",
+        "english_prepositions_time_place": "Time and place prepositions",
+        "alphabet_basics": "Alphabet",
+        "alphabet_copy": "Copy letters",
+        "alphabet_syllables": "Syllables",
+        "geometry_shape_recognition": "Geometry"
+      }
+    }
+  },
+  "KangurAssignmentsList": {
+    "count": {
+      "one": "{count} assignment",
+      "few": "{count} assignments",
+      "many": "{count} assignments"
+    },
+    "emptyLabel": "No assignments to show.",
+    "compactEyebrow": "Quick overview",
+    "fullEyebrow": "Assigned tasks",
+    "lastActivityPrefix": "Last activity:",
+    "progressLabel": "Progress",
+    "timeLimitButtonLabel": "Time limit",
+    "reassigning": "Assigning...",
+    "reassign": "Assign again",
+    "archive": "Archive"
+  },
+  "KangurLearnerProfileWidgets": {
+    "hero": {
+      "title": "Learner profile",
+      "avatarLabel": "Learner avatar",
+      "signIn": "Sign in to sync progress",
+      "createParentAccount": "Create a parent account"
+    },
+    "levelProgress": {
+      "title": "Level progress",
+      "summary": "Check the current level, total XP, and the remaining distance to the next threshold.",
+      "totalXpLine": "Level {level} · {xp} XP total",
+      "xpToNextLevel": "To level {level}: {xp} XP",
+      "maxLevelReached": "Maximum level reached"
+    },
+    "lessonMastery": {
+      "title": "Lesson mastery",
+      "summary": "Check topics to revisit and the strongest areas based on saved lessons.",
+      "dateMissing": "no date",
+      "attemptsLine": "Attempts: {attempts} · last score {lastScore}%",
+      "bestScoreLine": "Best score: {bestScore}% · Last attempt: {date}",
+      "trackedSummary": "Tracked: {tracked} · mastered: {mastered} · to review: {review}",
+      "trackedBadge": "{count} lessons with saved progress",
+      "emptyDescription": "There are no saved lesson attempts yet. Finish any lesson to see strengths and review areas.",
+      "reviewTitle": "To review",
+      "reviewEmpty": "All tracked lessons are at a safe level.",
+      "strongestTitle": "Strongest lessons",
+      "strongestEmpty": "Finish a few lessons first to see the strongest areas."
+    },
+    "overview": {
+      "title": "Performance overview",
+      "summary": "The key metrics of the day: accuracy, mission, goal, and badges in one view.",
+      "avatarSaveError": "Could not save the avatar.",
+      "avatarTitle": "Learner avatar",
+      "avatarDescription": "Choose the hero that will be visible in the learner profile.",
+      "avatarGroupLabel": "Choose avatar",
+      "averageAccuracyDescription": "Best session: {value}%",
+      "averageAccuracyLabel": "Average accuracy",
+      "streakDescription": "Longest: {value} days",
+      "streakLabel": "Day streak",
+      "xpTodayDescription": "7 days: +{weeklyXp} XP · average {averageXp} XP per session",
+      "xpTodayLabel": "XP today",
+      "guidedRoundsDescription": "To badge: {badge} · {summary}",
+      "guidedRoundsUnlocked": "All badges for the recommended path are unlocked.",
+      "guidedRoundsLabel": "Recommended rounds",
+      "dailyQuestMissing": "A new mission will appear with progress.",
+      "dailyQuestLoading": "Loading the mission of the day...",
+      "dailyQuestLabel": "Mission of the day",
+      "dailyGoalDescription": "Completion: {value}%",
+      "dailyGoalLabel": "Daily goal",
+      "badgesDescription": "Next: {badge} · {summary}",
+      "badgesUnlocked": "All badges unlocked",
+      "badgesLabel": "Badges"
+    },
+    "performance": {
+      "title": "Learner performance",
+      "summary": "See the rhythm of the last seven days and the accuracy for each operation.",
+      "activityHeading": "7-day activity",
+      "todayChip": "Today: +{xp} XP",
+      "weeklyChip": "7 days: +{xp} XP",
+      "averageChip": "Average: {xp} XP per session",
+      "guidedChipPrefix": "Recommended: {count} ·",
+      "guidedChipUnlocked": "all path badges unlocked",
+      "activityBarTitle": "{count} games, average {accuracy}%",
+      "operationsHeading": "Results by operation",
+      "emptyTitle": "No operation data.",
+      "emptyDescription": "Play a few tasks to see accuracy for each operation.",
+      "train": "Train",
+      "operationStats": "Attempts: {attempts} · XP per session: {averageXp} · Total: {totalXp} XP · Best accuracy: {bestScore}%"
+    },
+    "questSummary": {
+      "defaultQuestLabel": "Mission of the day",
+      "tracksHeading": "Learner progress tracks"
+    },
+    "recommendations": {
+      "title": "Plan for today",
+      "summary": "A short list of the next steps based on recent results and activity.",
+      "emptyDescription": "No recommendations to display."
+    },
+    "sessions": {
+      "title": "Session history",
+      "summary": "Check recent attempts and the badge tracks built by regular play.",
+      "recentSessionsHeading": "Recent sessions",
+      "loadingTitle": "Loading history...",
+      "loadingDescription": "Checking the learner's recent attempts.",
+      "errorDescription": "Try refreshing the profile in a moment.",
+      "emptyTitle": "No played sessions.",
+      "emptyDescription": "The first sessions will appear here automatically.",
+      "badgeTracksHeading": "Badge tracks"
+    }
+  },
+  "KangurLessonsWidgets": {
+    "emptyDescription": "Enable lessons in the admin panel to show them here.",
+    "mastery": {
+      "new": "New",
+      "noSavedPractice": "No saved practice",
+      "mastered": "Mastered {percent}%",
+      "completedBest": "Completed {completions}× · best score {percent}%",
+      "inProgress": "In progress {percent}%",
+      "completedLast": "Completed {completions}× · last score {percent}%",
+      "revisit": "Revisit {percent}%"
+    },
+    "libraryCard": {
+      "closedAssignment": "Assignment closed",
+      "customContent": "Custom content",
+      "parentPriority": "Parent priority",
+      "completedForParent": "Completed for the parent",
+      "completedAssignmentSummary": "The parent assignment has already been completed. {summary}",
+      "ariaLabel": "Lesson: {title}"
+    },
+    "navigation": {
+      "ariaLabel": "Lesson navigation",
+      "previousLesson": "Previous lesson: {title}",
+      "noPreviousLesson": "No previous lesson",
+      "previousShort": "Previous",
+      "nextLesson": "Next lesson: {title}",
+      "noNextLesson": "No next lesson",
+      "nextShort": "Next"
+    },
+    "activeHeader": {
+      "narrator": {
+        "loading": "Preparing...",
+        "pause": "Pause",
+        "read": "Read",
+        "resume": "Resume"
+      },
+      "parentPriority": "Parent priority",
+      "completedForParent": "Completed for the parent",
+      "backToLessons": "Back to lesson list",
+      "fallbackTitle": "Lesson",
+      "subsectionType": {
+        "game": "Game",
+        "lesson": "Lesson"
+      }
+    },
+    "documentRenderer": {
+      "svgAltFallback": "Illustration for this lesson section.",
+      "imageAltFallback": "Lesson illustration",
+      "imageMissingSource": "Image block has no source yet.",
+      "callouts": {
+        "info": "Info",
+        "tip": "Hint",
+        "warning": "Warning",
+        "success": "Success"
+      },
+      "quizAnswerAria": "Answer: {answer}",
+      "quizEyebrow": "Quiz",
+      "sectionLabel": "Section",
+      "pageLabel": "Page {index}",
+      "editorEmptyDescription": "Add text, images, SVGs, or an activity block to start composing this page.",
+      "noBlocksTitle": "This page has no blocks yet."
+    }
   }
 }

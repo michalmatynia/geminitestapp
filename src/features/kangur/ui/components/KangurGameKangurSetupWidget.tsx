@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKangurWordmark';
@@ -15,6 +16,7 @@ type KangurGameKangurSetupWidgetProps = {
 export function KangurGameKangurSetupWidget({
   onBack,
 }: KangurGameKangurSetupWidgetProps = {}): React.JSX.Element | null {
+  const gamePageTranslations = useTranslations('KangurGamePage');
   const { handleHome, handleStartKangur, progress, screen } = useKangurGameRuntime();
   const recommendedMode = useMemo(() => getRecommendedKangurMode(progress), [progress]);
   const resolvedOnBack = onBack ?? handleHome;
@@ -25,12 +27,12 @@ export function KangurGameKangurSetupWidget({
 
   return (
     <KangurGameSetupStage
-      description='Wybierz edycję konkursu i zestaw zadań do rozwiązania.'
+      description={gamePageTranslations('screens.kangur_setup.description')}
       momentumMode='kangur'
       onBack={resolvedOnBack}
       progress={progress}
       testId='kangur-game-kangur-setup-top-section'
-      title='Kangur'
+      title={gamePageTranslations('screens.kangur_setup.label')}
       visualTitle={
         <KangurKangurWordmark
           className='mx-auto'

@@ -12,6 +12,7 @@ import {
   HIGH_RISK_COVERAGE_REPORTS_DIRECTORY,
   HIGH_RISK_COVERAGE_SUMMARY_PATH,
   mergeHighRiskCoverageSummaries,
+  selectHighRiskCoverageDomains,
 } from './lib/high-risk-coverage-baseline.mjs';
 
 describe('high-risk coverage baseline helper', () => {
@@ -70,7 +71,7 @@ describe('high-risk coverage baseline helper', () => {
     expect(highRiskCoverageDomains).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'api',
+          id: 'api-routes',
           reportsDirectory: 'coverage/high-risk/api',
           coverageIncludeGlobs: ['src/app/api/**'],
         }),
@@ -86,6 +87,17 @@ describe('high-risk coverage baseline helper', () => {
         }),
       ])
     );
+  });
+
+  it('filters selected high-risk coverage domains by id', () => {
+    const selectedDomains = selectHighRiskCoverageDomains({
+      ids: ['ai-paths', 'shared-contracts'],
+    });
+
+    expect(selectedDomains.map((domain) => domain.id)).toEqual([
+      'ai-paths',
+      'shared-contracts',
+    ]);
   });
 
   it('discovers and deduplicates only real test files under the targeted roots', () => {

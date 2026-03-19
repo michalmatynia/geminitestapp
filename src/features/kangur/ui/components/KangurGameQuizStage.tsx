@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import LessonActivityStage from '@/features/kangur/ui/components/LessonActivityStage';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -15,17 +16,17 @@ type KangurGameQuizStageProps = {
   children:
     | ReactNode
     | ((helpers: { handleHome: () => void }) => ReactNode);
-  description: ReactNode;
+  description?: ReactNode;
   icon: string;
   screen: KangurGameScreen;
   shellClassName?: string;
   shellTestId: string;
-  title: string;
+  title?: string;
 };
 
 export function KangurGameQuizStage({
   accent,
-  backButtonLabel = 'Wróć do poprzedniej strony',
+  backButtonLabel,
   backScreen = 'operation',
   children,
   description,
@@ -35,6 +36,8 @@ export function KangurGameQuizStage({
   shellTestId,
   title,
 }: KangurGameQuizStageProps): React.JSX.Element | null {
+  const gamePageTranslations = useTranslations('KangurGamePage');
+  const gameWidgetTranslations = useTranslations('KangurGameWidgets');
   const { handleHome, screen: activeScreen, setScreen } = useKangurGameRuntime();
 
   if (activeScreen !== screen) {
@@ -42,17 +45,21 @@ export function KangurGameQuizStage({
   }
 
   const content = typeof children === 'function' ? children({ handleHome }) : children;
+  const resolvedBackButtonLabel = backButtonLabel ?? gameWidgetTranslations('quizBackButton');
+  const resolvedTitle = title ?? gamePageTranslations(`screens.${screen}.label` as never);
+  const resolvedDescription =
+    description ?? gamePageTranslations(`screens.${screen}.description` as never);
 
   return (
     <LessonActivityStage
       accent={accent}
-      backButtonLabel={backButtonLabel}
-      description={description}
+      backButtonLabel={resolvedBackButtonLabel}
+      description={resolvedDescription}
       icon={icon}
       onBack={() => setScreen(backScreen)}
       shellClassName={shellClassName}
       shellTestId={shellTestId}
-      title={title}
+      title={resolvedTitle}
     >
       {content}
     </LessonActivityStage>

@@ -463,6 +463,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           }
 
           const params = await routeContext.params;
+          handlerContext.params = params as Record<string, string | string[]>;
 
           if (options.paramsSchema) {
             const validation = options.paramsSchema.safeParse(params);

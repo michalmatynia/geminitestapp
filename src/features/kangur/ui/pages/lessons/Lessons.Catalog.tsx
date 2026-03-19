@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
 import { getKangurAgeGroupLabel } from '@/features/kangur/lessons/lesson-catalog';
 import {
@@ -45,6 +46,8 @@ type LessonGroup = {
 };
 
 export function LessonsCatalog() {
+  const translations = useTranslations('KangurLessonsPage');
+  const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
   const {
     subject,
     ageGroup,
@@ -141,8 +144,8 @@ export function LessonsCatalog() {
   });
 
   const lessonListIntroDescription = isDeferredContentReady
-    ? (lessonListIntroContent?.summary ?? 'Wybierz temat i przejdź od razu do praktyki lub powtórki.')
-    : 'Lekcje zaraz będą gotowe.';
+    ? (lessonListIntroContent?.summary ?? translations('introDescription'))
+    : translations('loadingDescription');
 
   const renderLessonEntries = () => {
     let lessonIndex = 0;
@@ -159,7 +162,7 @@ export function LessonsCatalog() {
           dataDocId='lessons_library_entry'
           iconTestId={`lesson-library-icon-${lesson.id}`}
           onSelect={() => handleSelectLesson(lesson.id)}
-          masteryPresentation={getLessonMasteryPresentation(lesson, progress)}
+          masteryPresentation={getLessonMasteryPresentation(lesson, progress, masteryTranslations)}
           lessonAssignment={lessonAssignmentsByComponent.get(lesson.componentId) ?? null}
           completedLessonAssignment={completedLessonAssignmentsByComponent.get(lesson.componentId) ?? null}
           hasDocumentContent={hasKangurLessonDocumentContent(lessonDocuments[lesson.id])}
@@ -187,7 +190,7 @@ export function LessonsCatalog() {
             >
               <div className='min-w-0'>
                 <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                  {entry.group.typeLabel ?? 'Grupa'}
+                  {entry.group.typeLabel ?? translations('groupTypeLabel')}
                 </div>
                 <div className='mt-1 text-lg font-semibold text-slate-900'>{entry.group.label}</div>
               </div>
@@ -203,7 +206,7 @@ export function LessonsCatalog() {
                     <div key={subsection.id} className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>
                       <div className='min-w-0'>
                         <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500'>
-                          {subsection.typeLabel ?? 'Subsection'}
+                          {subsection.typeLabel ?? translations('subsectionTypeLabel')}
                         </div>
                         <div className='mt-1 text-base font-semibold text-slate-900'>
                           {subsection.label}
@@ -250,7 +253,7 @@ export function LessonsCatalog() {
           headingTestId='kangur-lessons-list-heading'
           onBack={handleGoBack}
           testId='lessons-list-intro-card'
-          title={lessonListIntroContent?.title ?? 'Lekcje'}
+          title={lessonListIntroContent?.title ?? translations('pageTitle')}
           visualTitle={<KangurLessonsWordmark className='mx-auto' data-testid='kangur-lessons-heading-art' />}
         />
       </div>
@@ -262,8 +265,11 @@ export function LessonsCatalog() {
           {orderedLessons.length === 0 ? (
             <KangurEmptyState
               accent='indigo'
-              description={lessonListEmptyStateContent?.summary ?? `Brak aktywnych lekcji dla grupy ${ageGroupLabel}.`}
-              title={lessonListEmptyStateContent?.title ?? 'Brak aktywnych lekcji'}
+              description={
+                lessonListEmptyStateContent?.summary ??
+                translations('emptyDescription', { ageGroup: ageGroupLabel })
+              }
+              title={lessonListEmptyStateContent?.title ?? translations('emptyTitle')}
             />
           ) : (
             <div className={`flex w-full flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`}>

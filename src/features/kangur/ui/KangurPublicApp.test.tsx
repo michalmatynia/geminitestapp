@@ -127,7 +127,7 @@ describe('KangurPublicApp', () => {
     render(<KangurPublicApp slug={['broken']} basePath='/' />);
 
     expect(await screen.findByTestId('kangur-error-shell')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /back to kangur/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: /backToHome/i })).toHaveAttribute('href', '/');
     expect(logKangurClientErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Kaboom' }),
       expect.objectContaining({

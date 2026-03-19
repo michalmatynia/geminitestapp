@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -22,6 +24,7 @@ export function KangurGameHomeHeroWidget({
   showIntro = true,
   showAssignmentSpotlight = true,
 }: KangurGameHomeHeroWidgetProps = {}): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameWidgets');
   const runtime = useKangurGameRuntime();
   const { entry: heroContent } = useKangurPageContentEntry('game-home-hero');
   const { basePath, progress, screen, user } = runtime;
@@ -33,10 +36,8 @@ export function KangurGameHomeHeroWidget({
     return null;
   }
 
-  const heroTitle = heroContent?.title ?? 'Twój postęp';
-  const heroSummary =
-    heroContent?.summary ??
-    'Sprawdź najbliższy kamień milowy i zadania, które warto domknąć dziś.';
+  const heroTitle = heroContent?.title ?? translations('homeHero.title');
+  const heroSummary = heroContent?.summary ?? translations('homeHero.summary');
   const intro = showIntro ? (
     <KangurPanelIntro
       className='space-y-2'

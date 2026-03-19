@@ -1,20 +1,25 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { KangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
 import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 
 export function KangurGameLogicalClassificationQuizWidget(): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameWidgets');
+
   return (
     <KangurGameQuizStage
       accent='teal'
-      description='Grupuj elementy i znajdź wspólne cechy.'
       icon='📦'
       screen='logical_classification_quiz'
       shellTestId='kangur-logical-classification-quiz-top-section'
-      title='Quiz klasyfikacji'
     >
       {({ handleHome }) => (
-        <LogicalClassificationGame finishLabel='Wróć do Grajmy' onFinish={handleHome} />
+        <LogicalClassificationGame
+          finishLabel={translations('returnToGameHome')}
+          onFinish={handleHome}
+        />
       )}
     </KangurGameQuizStage>
   );

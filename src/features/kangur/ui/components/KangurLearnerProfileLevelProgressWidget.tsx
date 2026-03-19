@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import {
   KangurGlassPanel,
@@ -8,12 +11,13 @@ import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_PANEL_ROW_MD_CLASSNAME } from '@/fea
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.levelProgress');
   const { snapshot, xpToNextLevel } = useKangurLearnerProfileRuntime();
   const { entry: levelProgressContent } = useKangurPageContentEntry('learner-profile-level-progress');
-  const sectionTitle = levelProgressContent?.title ?? 'Postęp poziomu';
+  const sectionTitle = levelProgressContent?.title ?? translations('title');
   const sectionSummary =
     levelProgressContent?.summary ??
-    'Zobacz aktualny poziom, łączne XP i brakujący dystans do następnego progu.';
+    translations('summary');
 
   return (
     <KangurGlassPanel
@@ -28,7 +32,10 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
             <>
               <p>{sectionSummary}</p>
               <p>
-                Poziom {snapshot.level.level} · {snapshot.totalXp} XP łącznie
+                {translations('totalXpLine', {
+                  level: snapshot.level.level,
+                  xp: snapshot.totalXp,
+                })}
               </p>
             </>
           }
@@ -39,8 +46,11 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
         />
         <div className='text-sm [color:var(--kangur-page-muted-text)]'>
           {snapshot.nextLevel
-            ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
-            : 'Maksymalny poziom osiągnięty'}
+            ? translations('xpToNextLevel', {
+              level: snapshot.nextLevel.level,
+              xp: xpToNextLevel,
+            })
+            : translations('maxLevelReached')}
         </div>
       </div>
 

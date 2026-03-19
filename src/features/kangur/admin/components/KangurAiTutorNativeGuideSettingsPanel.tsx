@@ -13,9 +13,15 @@ import {
   type KangurAiTutorNativeGuideEntry,
   type KangurAiTutorNativeGuideStore,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
+import {
+  buildKangurAiTutorNativeGuideTranslationStatusByEntryId,
+  summarizeKangurAiTutorNativeGuideTranslationStatuses,
+  type KangurAiTutorNativeGuideTranslationStatus,
+} from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
+import { getEnabledSiteLocaleCodes } from '@/shared/lib/i18n/site-locale';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Card, FormField, FormSection, Textarea, useToast } from '@/features/kangur/shared/ui';
@@ -31,6 +37,9 @@ import { KangurAiTutorNativeGuideValidationSummary } from './KangurAiTutorNative
 
 
 const AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE = 'pl';
+const AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().filter(
+  (locale) => locale !== AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
+);
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
@@ -84,6 +93,11 @@ type NativeGuideManifestCoverageRow = {
   disabledGuideIds: string[];
 };
 
+type EntryTranslationStatus = {
+  locale: string;
+  status: KangurAiTutorNativeGuideTranslationStatus;
+};
+
 export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
@@ -95,6 +109,10 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [translationStoresByLocale, setTranslationStoresByLocale] = useState<
+    Record<string, KangurAiTutorNativeGuideStore | null>
+  >({});
+  const [isTranslationStatusLoading, setIsTranslationStatusLoading] = useState(true);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [followUpActionsEditorValue, setFollowUpActionsEditorValue] = useState('');
   const validatorPatternListsRaw = settingsStore.get(VALIDATOR_PATTERN_LISTS_KEY);
@@ -212,6 +230,56 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
       attentionRows,
     };
   }, [parsedState.store]);
+  const translationStatusesByLocale = useMemo(() => {
+    const sourceStore = parsedState.store;
+    if (!sourceStore) {
+      return new Map<string, Map<string, KangurAiTutorNativeGuideTranslationStatus>>();
+    }
+
+    return new Map(
+      AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.map((locale) => [
+        locale,
+        buildKangurAiTutorNativeGuideTranslationStatusByEntryId({
+          locale,
+          sourceStore,
+          localizedStore: translationStoresByLocale[locale] ?? null,
+          sourceLocale: AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE,
+        }),
+      ])
+    );
+  }, [parsedState.store, translationStoresByLocale]);
+  const translationStatusByEntryId = useMemo(() => {
+    const statuses = new Map<string, EntryTranslationStatus[]>();
+    if (!parsedState.store) {
+      return statuses;
+    }
+
+    for (const entry of parsedState.store.entries) {
+      statuses.set(
+        entry.id,
+        AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.map((locale) => ({
+          locale,
+          status: translationStatusesByLocale.get(locale)?.get(entry.id) ?? 'missing',
+        }))
+      );
+    }
+
+    return statuses;
+  }, [parsedState.store, translationStatusesByLocale]);
+  const translationStatusSummaries = useMemo(
+    () =>
+      AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.map((locale) => ({
+        locale,
+        summary: summarizeKangurAiTutorNativeGuideTranslationStatuses(
+          translationStatusesByLocale.get(locale)?.values() ?? []
+        ),
+      })),
+    [translationStatusesByLocale]
+  );
+  const selectedEntryTranslationStatuses = useMemo(
+    () => (selectedEntry ? translationStatusByEntryId.get(selectedEntry.id) ?? [] : []),
+    [selectedEntry, translationStatusByEntryId]
+  );
 
   useEffect(() => {
     setFollowUpActionsEditorValue(
@@ -219,40 +287,84 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
     );
   }, [selectedEntry]);
 
-  const loadStore = async (): Promise<void> => {
-    setIsLoading(true);
-    const store = await withKangurClientError(
-      {
-        source: 'kangur.admin.native-guides',
-        action: 'load-store',
-        description: 'Loads AI Tutor native guides for the admin editor.',
-        context: { locale: AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE },
-      },
-      async () => {
-        const response = await api.get<KangurAiTutorNativeGuideStore>(
-          `/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(
-            AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
-          )}`,
+  const loadTranslationStores = async (): Promise<
+    Record<string, KangurAiTutorNativeGuideStore | null>
+  > => {
+    if (AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.length === 0) {
+      return {};
+    }
+
+    const localizedStores = await Promise.all(
+      AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.map(async (locale) => {
+        const store = await withKangurClientError(
           {
-            cache: 'no-store',
+            source: 'kangur.admin.native-guides',
+            action: 'load-translation-store',
+            description: 'Loads localized AI Tutor native guides for translation indicators.',
+            context: { locale },
+          },
+          async () => {
+            const response = await api.get<KangurAiTutorNativeGuideStore>(
+              `/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(locale)}`,
+              {
+                cache: 'no-store',
+              }
+            );
+            return parseKangurAiTutorNativeGuideStore(response);
+          },
+          {
+            fallback: null,
+            onError: () => {
+              // Translation indicators are additive. Keep the editor usable if a locale fetch fails.
+            },
           }
         );
-        return parseKangurAiTutorNativeGuideStore(response);
-      },
-      {
-        fallback: null,
-        onError: (error) => {
-          toast(
-            error instanceof Error
-              ? error.message
-              : 'Failed to load Kangur AI Tutor native guides.',
+
+        return [locale, store] as const;
+      })
+    );
+
+    return Object.fromEntries(localizedStores);
+  };
+
+  const loadStore = async (): Promise<void> => {
+    setIsLoading(true);
+    setIsTranslationStatusLoading(true);
+    const [store, localizedStores] = await Promise.all([
+      withKangurClientError(
+        {
+          source: 'kangur.admin.native-guides',
+          action: 'load-store',
+          description: 'Loads AI Tutor native guides for the admin editor.',
+          context: { locale: AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE },
+        },
+        async () => {
+          const response = await api.get<KangurAiTutorNativeGuideStore>(
+            `/api/kangur/ai-tutor/native-guide?locale=${encodeURIComponent(
+              AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
+            )}`,
             {
-              variant: 'error',
+              cache: 'no-store',
             }
           );
+          return parseKangurAiTutorNativeGuideStore(response);
         },
-      }
-    );
+        {
+          fallback: null,
+          onError: (error) => {
+            toast(
+              error instanceof Error
+                ? error.message
+                : 'Failed to load Kangur AI Tutor native guides.',
+              {
+                variant: 'error',
+              }
+            );
+          },
+        }
+      ),
+      loadTranslationStores(),
+    ]);
 
     if (store) {
       const serialized = stringifyNativeGuideStore(store);
@@ -260,7 +372,9 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
       setPersistedEditorValue(serialized);
       setSelectedEntryId(store.entries[0]?.id ?? null);
     }
+    setTranslationStoresByLocale(localizedStores);
     setIsLoading(false);
+    setIsTranslationStatusLoading(false);
   };
 
   useEffect(() => {
@@ -609,6 +723,56 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
           </Card>
         ) : null}
 
+        {AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.length > 0 ? (
+          <Card
+            variant='subtle'
+            padding='md'
+            className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'
+          >
+            <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+              <div>
+                <div className='text-sm font-semibold text-foreground'>Translation status</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Shows which localized native-guide entries still match scaffolded copy and
+                  which ones already diverge with manual translation edits.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Badge variant={isTranslationStatusLoading ? 'warning' : 'outline'}>
+                  {isTranslationStatusLoading
+                    ? 'Loading translation badges...'
+                    : `${AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.length} locales tracked`}
+                </Badge>
+              </div>
+            </div>
+
+            <div className='mt-3 grid gap-3 md:grid-cols-2'>
+              {translationStatusSummaries.map(({ locale, summary }) => (
+                <div
+                  key={locale}
+                  className='rounded-xl border border-border/60 bg-card/40 px-3 py-3 text-sm'
+                >
+                  <div className='flex items-center justify-between gap-2'>
+                    <div className='font-semibold text-foreground'>{locale.toUpperCase()}</div>
+                    <Badge variant='outline'>
+                      {summary.manual + summary.scaffolded + summary['source-copy'] + summary.missing}{' '}
+                      entries
+                    </Badge>
+                  </div>
+                  <div className='mt-2 flex flex-wrap gap-2'>
+                    <Badge variant='secondary'>{summary.manual} manual</Badge>
+                    <Badge variant='outline'>{summary.scaffolded} scaffolded</Badge>
+                    <Badge variant='warning'>{summary['source-copy']} source copy</Badge>
+                    {summary.missing > 0 ? (
+                      <Badge variant='warning'>{summary.missing} missing</Badge>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        ) : null}
+
         {parsedState.store ? (
           <div
             className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 xl:grid-cols-[280px_minmax(0,1fr)]`}
@@ -618,6 +782,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
               selectedEntryId={selectedEntryId}
               onSelect={setSelectedEntryId}
               entryValidationCounts={entryValidationCounts}
+              translationStatusByEntryId={translationStatusByEntryId}
               className={SETTINGS_INSET_CARD_CLASS_NAME}
             />
 
@@ -625,6 +790,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
               selectedEntry={selectedEntry}
               totalEntries={parsedState.store.entries.length}
               isSaving={isSaving}
+              selectedEntryTranslationStatuses={selectedEntryTranslationStatuses}
               selectedEntryValidationIssues={selectedEntryValidationIssues}
               followUpActionsEditorValue={followUpActionsEditorValue}
               onFollowUpActionsEditorValueChange={setFollowUpActionsEditorValue}

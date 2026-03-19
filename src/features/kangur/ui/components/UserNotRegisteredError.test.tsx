@@ -15,17 +15,16 @@ describe('UserNotRegisteredError', () => {
       'glass-panel',
       'border-amber-200/80'
     );
-    expect(screen.getByText('Dostęp ograniczony')).toHaveClass(
+    expect(screen.getByText('restricted')).toHaveClass(
       'text-[11px]',
       'uppercase',
       'tracking-[0.18em]'
     );
-    expect(
-      screen.getByRole('heading', { name: 'To konto nie ma jeszcze dostępu do Kangura' })
-    ).toHaveClass('text-3xl', 'font-extrabold');
-    expect(
-      screen.getByText(/Twoje konto nie zostało jeszcze dodane do aplikacji/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText('Jeśli to pomyłka, sprawdź:')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'title' })).toHaveClass(
+      'text-3xl',
+      'font-extrabold'
+    );
+    expect(screen.getByText('description')).toBeInTheDocument();
+    expect(screen.getByText('checkLabel')).toBeInTheDocument();
   });
 });

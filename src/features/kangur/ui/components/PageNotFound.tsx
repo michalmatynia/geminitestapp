@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import {
@@ -35,13 +36,14 @@ type PageNotFoundAuthState = {
 };
 
 export function PageNotFound(): React.JSX.Element {
+  const translations = useTranslations('KangurPageNotFound');
   const routeNavigator = useKangurRouteNavigator();
   const { requestedPath, basePath } = useKangurRouting();
 
   const pageName = useMemo(() => {
     const embeddedHostPath = getKangurEmbeddedHostPath(basePath);
     if (embeddedHostPath) {
-      const fallbackName = requestedPath?.replace(/^\/+/, '') || 'unknown';
+      const fallbackName = requestedPath?.replace(/^\/+/, '') || translations('unknownPage');
       return withKangurClientErrorSync(
         {
           source: 'page-not-found',
@@ -56,7 +58,8 @@ export function PageNotFound(): React.JSX.Element {
         () => {
           const parsed = new URL(requestedPath || embeddedHostPath, 'https://kangur.local');
           return (
-            readKangurUrlParam(parsed.searchParams, KANGUR_EMBED_QUERY_PARAM, basePath) || 'unknown'
+            readKangurUrlParam(parsed.searchParams, KANGUR_EMBED_QUERY_PARAM, basePath) ||
+            translations('unknownPage')
           );
         },
         { fallback: fallbackName }
@@ -64,14 +67,14 @@ export function PageNotFound(): React.JSX.Element {
     }
 
     if (!requestedPath || requestedPath.length === 0) {
-      return 'unknown';
+      return translations('unknownPage');
     }
     if (!requestedPath.startsWith(basePath)) {
-      return requestedPath.replace(/^\/+/, '') || 'unknown';
+      return requestedPath.replace(/^\/+/, '') || translations('unknownPage');
     }
     const suffix = requestedPath.slice(basePath.length).replace(/^\/+/, '');
-    return suffix || 'unknown';
-  }, [basePath, requestedPath]);
+    return suffix || translations('unknownPage');
+  }, [basePath, requestedPath, translations]);
 
   const { data: authData, isFetched } = useQuery<PageNotFoundAuthState>({
     queryKey: QUERY_KEYS.auth.user(),
@@ -119,12 +122,10 @@ export function PageNotFound(): React.JSX.Element {
 
           <div className='space-y-3'>
             <h2 className='text-2xl font-medium [color:var(--kangur-page-text)]'>
-              Page Not Found
+              {translations('title')}
             </h2>
             <p className='leading-relaxed [color:var(--kangur-page-muted-text)]'>
-              The page{' '}
-              <span className='font-medium [color:var(--kangur-page-text)]'>"{pageName}"</span>{' '}
-              could not be found in this application.
+              {translations('description', { pageName })}
             </p>
           </div>
 
@@ -133,7 +134,7 @@ export function PageNotFound(): React.JSX.Element {
               accent='amber'
               className='mt-8 text-left'
               data-testid='page-not-found-admin-note'
-              description='This could mean that the AI has not implemented this page yet.'
+              description={translations('adminNoteDescription')}
               label={
                 <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
                   <KangurAccentDot
@@ -142,7 +143,7 @@ export function PageNotFound(): React.JSX.Element {
                     data-testid='page-not-found-admin-dot'
                     size='sm'
                   />
-                  Admin Note
+                  {translations('adminNoteLabel')}
                 </span>
               }
               labelAccent='amber'
@@ -164,7 +165,7 @@ export function PageNotFound(): React.JSX.Element {
               variant='primary'
             >
               <Home aria-hidden='true' className='w-4 h-4' />
-              Go Home
+              {translations('goHome')}
             </KangurButton>
           </div>
         </div>

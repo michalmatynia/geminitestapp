@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useMemo, useState, type MouseEvent } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
@@ -101,10 +102,17 @@ const useKangurAssignmentsListRuntime = (): KangurAssignmentsListRuntimeContextV
   };
 };
 
-const formatAssignmentCountLabel = (count: number): string => {
-  if (count === 1) return '1 zadanie';
-  if (count >= 2 && count <= 4) return `${count} zadania`;
-  return `${count} zadań`;
+const formatAssignmentCountLabel = (
+  count: number,
+  translate: (key: string, values?: Record<string, string | number>) => string
+): string => {
+  if (count === 1) {
+    return translate('count.one', { count });
+  }
+  if (count >= 2 && count <= 4) {
+    return translate('count.few', { count });
+  }
+  return translate('count.many', { count });
 };
 
 const resolveCountdownLabel = (
@@ -133,6 +141,7 @@ const shouldHandleAssignmentClick = (event: MouseEvent<HTMLAnchorElement>): bool
 };
 
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
+  const translations = useTranslations('KangurAssignmentsList');
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
@@ -217,7 +226,9 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
           </KangurMetaText>
         ) : null}
         {item.lastActivityLabel ? (
-          <KangurMetaText>Ostatnia aktywność: {item.lastActivityLabel}</KangurMetaText>
+          <KangurMetaText>
+            {translations('lastActivityPrefix')} {item.lastActivityLabel}
+          </KangurMetaText>
         ) : null}
       </div>
     </KangurInfoCard>
@@ -225,6 +236,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 }
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
+  const translations = useTranslations('KangurAssignmentsList');
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
@@ -270,7 +282,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         accent='indigo'
         className='mt-5 rounded-[24px]'
         description={item.progressSummary}
-        label='Postęp'
+        label={translations('progressLabel')}
         padding='md'
       >
         <KangurProgressBar
@@ -295,7 +307,9 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
               </KangurMetaText>
             ) : null}
             {item.lastActivityLabel ? (
-              <KangurMetaText>Ostatnia aktywność: {item.lastActivityLabel}</KangurMetaText>
+              <KangurMetaText>
+                {translations('lastActivityPrefix')} {item.lastActivityLabel}
+              </KangurMetaText>
             ) : null}
           </div>
         ) : null}
@@ -318,8 +332,8 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         </KangurButton>
         {onTimeLimitClick ? (
           <KangurButton
-            aria-label='Czas na wykonanie'
-            title='Czas na wykonanie'
+            aria-label={translations('timeLimitButtonLabel')}
+            title={translations('timeLimitButtonLabel')}
             className='w-full sm:w-auto sm:px-3'
             type='button'
             onClick={() => onTimeLimitClick(item.id)}
@@ -338,7 +352,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
             variant='ghost'
             disabled={isReassigning}
           >
-            {isReassigning ? 'Przypisywanie...' : 'Przypisz ponownie'}
+            {isReassigning ? translations('reassigning') : translations('reassign')}
           </KangurButton>
         ) : null}
         {onArchive ? (
@@ -349,7 +363,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
             size='sm'
             variant='ghost'
           >
-            Archiwizuj
+            {translations('archive')}
           </KangurButton>
         ) : null}
       </div>
@@ -361,7 +375,7 @@ export function KangurAssignmentsList({
   items,
   title,
   summary,
-  emptyLabel = 'Brak zadań do pokazania.',
+  emptyLabel,
   compact = false,
   showTimeCountdown = false,
   onItemActionClick,
@@ -370,7 +384,8 @@ export function KangurAssignmentsList({
   onReassign,
   reassigningId,
 }: KangurAssignmentsListProps): React.JSX.Element {
-  const emptyStateDescription = emptyLabel;
+  const translations = useTranslations('KangurAssignmentsList');
+  const emptyStateDescription = emptyLabel ?? translations('emptyLabel');
   const panelSummary = summary;
   const panelTitle = title;
   const archiveContextValue = { onArchive, onTimeLimitClick, onReassign, reassigningId };
@@ -415,13 +430,13 @@ export function KangurAssignmentsList({
             <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
               <KangurPanelIntro
                 description={panelSummary}
-                eyebrow='Szybki podgląd'
+                eyebrow={translations('compactEyebrow')}
                 title={panelTitle}
                 titleAs='div'
                 titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
               />
               <KangurSectionEyebrow className='tracking-[0.18em]'>
-                {formatAssignmentCountLabel(items.length)}
+                {formatAssignmentCountLabel(items.length, translations)}
               </KangurSectionEyebrow>
             </div>
             {items.length === 0 ? (
@@ -459,13 +474,13 @@ export function KangurAssignmentsList({
             <div className={`mb-5 ${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-start sm:justify-between`}>
               <KangurPanelIntro
                 description={panelSummary}
-                eyebrow='Przydzielone zadania'
+                eyebrow={translations('fullEyebrow')}
                 title={panelTitle}
                 titleAs='div'
                 titleClassName='text-lg font-extrabold tracking-tight sm:text-xl'
               />
               <KangurStatusChip accent='slate' labelStyle='caps'>
-                {items.length} zadań
+                {formatAssignmentCountLabel(items.length, translations)}
               </KangurStatusChip>
             </div>
             {items.length === 0 ? (

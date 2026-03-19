@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
@@ -43,12 +44,13 @@ const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
 };
 
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.sessions');
   const { isLoadingScores, progress, scoresError, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: sessionsContent } = useKangurPageContentEntry('learner-profile-sessions');
-  const sectionTitle = sessionsContent?.title ?? 'Historia sesji';
+  const sectionTitle = sessionsContent?.title ?? translations('title');
   const sectionSummary =
     sessionsContent?.summary ??
-    'Sprawdź ostatnie podejścia oraz ścieżki odznak budowane przez regularną grę.';
+    translations('summary');
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -64,21 +66,21 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
           surface='mistStrong'
           variant='soft'
         >
-          <KangurPanelSectionHeading>Ostatnie sesje</KangurPanelSectionHeading>
+          <KangurPanelSectionHeading>{translations('recentSessionsHeading')}</KangurPanelSectionHeading>
           {isLoadingScores ? (
             <KangurEmptyState
               accent='slate'
               align='center'
               data-testid='learner-profile-sessions-loading'
-              description='Sprawdzamy ostatnie podejścia ucznia.'
-              title='Ładowanie historii...'
+              description={translations('loadingDescription')}
+              title={translations('loadingTitle')}
             />
           ) : scoresError ? (
             <KangurEmptyState
               accent='rose'
               align='center'
               data-testid='learner-profile-sessions-error'
-              description='Spróbuj odświeżyć profil za chwilę.'
+              description={translations('errorDescription')}
               title={scoresError}
             />
           ) : snapshot.recentSessions.length === 0 ? (
@@ -86,8 +88,8 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
               accent='slate'
               align='center'
               data-testid='learner-profile-sessions-empty'
-              description='Pierwsze sesje pojawią się tutaj automatycznie.'
-              title='Brak rozegranych sesji.'
+              description={translations('emptyDescription')}
+              title={translations('emptyTitle')}
             />
           ) : (
             <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
@@ -121,6 +123,7 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
             dataTestIdPrefix='learner-profile-badge-track'
             emptyTestId='learner-profile-badges-empty'
             gridClassName='grid-cols-1'
+            heading={translations('badgeTracksHeading')}
             progress={progress}
           />
         </KangurGlassPanel>

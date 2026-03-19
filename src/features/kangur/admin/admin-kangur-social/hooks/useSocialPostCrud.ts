@@ -166,13 +166,14 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
 
   const handleQuickPublishPost = async (
     postId: string,
-    mode: KangurSocialPublishMode = 'published'
+    mode: KangurSocialPublishMode = 'published',
+    options?: { skipImages?: boolean }
   ): Promise<void> => {
     if (!postId) return;
     if (publishMutation.isPending || publishingPostId) return;
     setPublishingPostId(postId);
     try {
-      const published = await publishMutation.mutateAsync({ id: postId, mode });
+      const published = await publishMutation.mutateAsync({ id: postId, mode, skipImages: options?.skipImages });
       const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
       queryClient.setQueryData<KangurSocialPost[]>(queryKey, (current) => {
         const entries = current ?? [];
@@ -202,23 +203,36 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     }
   };
 
-  const handleUnpublishPost = async (postId: string): Promise<void> => {
+  const handleUnpublishPost = async (
+    postId: string,
+    options?: { keepLocal?: boolean }
+  ): Promise<void> => {
     if (!postId) return;
     if (unpublishMutation.isPending || unpublishingPostId) return;
+    const keepLocal = options?.keepLocal ?? false;
     setUnpublishingPostId(postId);
     try {
-      const deleted = await unpublishMutation.mutateAsync(postId);
+      const result = await unpublishMutation.mutateAsync({ id: postId, keepLocal });
       const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
-      let nextEntries: KangurSocialPost[] = [];
-      queryClient.setQueryData<KangurSocialPost[]>(queryKey, (current) => {
-        const entries = current ?? [];
-        nextEntries = entries.filter((entry) => entry.id !== deleted.id);
-        return nextEntries;
-      });
-      deps.setActivePostId((current) =>
-        current === postId ? nextEntries[0]?.id ?? null : current
-      );
-      toast('Post unpublished and removed.', { variant: 'success' });
+
+      if (keepLocal) {
+        queryClient.setQueryData<KangurSocialPost[]>(queryKey, (current) => {
+          const entries = current ?? [];
+          return entries.map((entry) => (entry.id === result.id ? result : entry));
+        });
+        toast('Unpublished from LinkedIn. Post kept as draft.', { variant: 'success' });
+      } else {
+        let nextEntries: KangurSocialPost[] = [];
+        queryClient.setQueryData<KangurSocialPost[]>(queryKey, (current) => {
+          const entries = current ?? [];
+          nextEntries = entries.filter((entry) => entry.id !== result.id);
+          return nextEntries;
+        });
+        deps.setActivePostId((current) =>
+          current === postId ? nextEntries[0]?.id ?? null : current
+        );
+        toast('Post unpublished and removed.', { variant: 'success' });
+      }
     } catch (error) {
       void ErrorSystem.captureException(error);
       logKangurClientError(error, {

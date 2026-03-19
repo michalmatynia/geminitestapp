@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -74,8 +74,6 @@ describe('ProductListHeader', () => {
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
-      showTriggerRunFeedback: true,
-      setShowTriggerRunFeedback: vi.fn(),
     });
     useProductListFiltersContextMock.mockReturnValue({
       page: 1,
@@ -95,20 +93,16 @@ describe('ProductListHeader', () => {
     });
   });
 
-  it('toggles the global trigger run feedback preference from the header button', () => {
-    const setShowTriggerRunFeedback = vi.fn();
+  it('does not render the show statuses button in the header', () => {
     useProductListHeaderActionsContextMock.mockReturnValue({
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
-      showTriggerRunFeedback: true,
-      setShowTriggerRunFeedback,
     });
 
     render(<ProductListHeader />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Hide trigger run pills' })[0]);
-
-    expect(setShowTriggerRunFeedback).toHaveBeenCalledWith(false);
+    expect(screen.queryByRole('button', { name: 'Hide trigger run pills' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show trigger run pills' })).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
@@ -33,6 +33,7 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
+import { buildKangurAiTutorNativeGuideLocaleScaffold } from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
 
 import { KangurAiTutorNativeGuideSettingsPanel } from './KangurAiTutorNativeGuideSettingsPanel';
 
@@ -110,5 +111,49 @@ describe('KangurAiTutorNativeGuideSettingsPanel', () => {
     expect(screen.getByText('1 section needs attention')).toBeInTheDocument();
     expect(screen.getByText('SharedChrome: Akcja logowania w nawigacji')).toBeInTheDocument();
     expect(screen.getByText('Missing guide ids: auth-login-action')).toBeInTheDocument();
+  });
+
+  it('shows scaffolded, manual, and source-copy translation badges for guide entries', async () => {
+    const englishStore = buildKangurAiTutorNativeGuideLocaleScaffold({
+      locale: 'en',
+      sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+    });
+    const germanStore = buildKangurAiTutorNativeGuideLocaleScaffold({
+      locale: 'de',
+      sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+      existingStore: {
+        locale: 'de',
+        entries: [
+          {
+            ...buildKangurAiTutorNativeGuideLocaleScaffold({
+              locale: 'de',
+              sourceStore: DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
+            }).entries.find((entry) => entry.id === 'auth-overview')!,
+            title: 'Eigene Auth Uebersicht',
+          },
+        ],
+      },
+    });
+
+    apiGetMock.mockImplementation(async (path: string) => {
+      if (path === '/api/kangur/ai-tutor/native-guide?locale=en') {
+        return englishStore;
+      }
+      if (path === '/api/kangur/ai-tutor/native-guide?locale=de') {
+        return germanStore;
+      }
+      return DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE;
+    });
+
+    render(<KangurAiTutorNativeGuideSettingsPanel />);
+
+    const authOverviewButton = await screen.findByRole('button', {
+      name: new RegExp(repairKangurPolishCopy('Ekran logowania i zakładania konta'), 'i'),
+    });
+
+    expect(within(authOverviewButton).getByText('EN scaffolded')).toBeInTheDocument();
+    expect(within(authOverviewButton).getByText('DE manual')).toBeInTheDocument();
+    expect(screen.getAllByText('37 source copy')).toHaveLength(2);
+    expect(screen.getAllByText('1 manual')).toHaveLength(1);
   });
 });

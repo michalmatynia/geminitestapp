@@ -68,14 +68,14 @@ describe('integration linkedin callback handler', () => {
             access_token: 'token-1',
             expires_in: 3600,
             token_type: 'Bearer',
-            scope: 'r_liteprofile w_member_social',
+            scope: 'openid profile w_member_social',
           }),
           { status: 200, headers: { 'content-type': 'application/json' } }
         );
       }
-      if (url.startsWith('https://api.linkedin.com/v2/me')) {
+      if (url.startsWith('https://api.linkedin.com/v2/userinfo')) {
         return new Response(
-          JSON.stringify({ id: 'person-1', vanityName: 'kangur' }),
+          JSON.stringify({ sub: 'person-1', name: 'kangur' }),
           { status: 200, headers: { 'content-type': 'application/json' } }
         );
       }
@@ -105,6 +105,7 @@ describe('integration linkedin callback handler', () => {
         linkedinAccessToken: 'enc:token-1',
         linkedinPersonUrn: 'urn:li:person:person-1',
         linkedinProfileUrl: 'https://www.linkedin.com/in/kangur',
+        linkedinScope: 'openid profile w_member_social',
       })
     );
     expect(response.headers.get('location')).toContain('linkedin=connected');

@@ -9,6 +9,7 @@ import {
   highRiskCoverageDomains,
   HIGH_RISK_COVERAGE_SUMMARY_PATH,
   mergeHighRiskCoverageSummaries,
+  selectHighRiskCoverageDomains,
 } from './lib/high-risk-coverage-baseline.mjs';
 
 const args = process.argv.slice(2);
@@ -23,6 +24,10 @@ const parseCoverageConcurrency = (value) => {
 };
 
 const coverageConcurrency = parseCoverageConcurrency(process.env.HIGH_RISK_COVERAGE_CONCURRENCY);
+const selectedTargetIds = String(process.env.HIGH_RISK_COVERAGE_TARGETS ?? '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
 
 const runCommand = ({ command, commandArgs, env }) =>
   new Promise((resolve) => {
@@ -72,9 +77,21 @@ const runCommand = ({ command, commandArgs, env }) =>
 const run = async () => {
   const coverageSummaryAbsolutePath = path.join(root, HIGH_RISK_COVERAGE_SUMMARY_PATH);
   const coverageReportsAbsolutePath = path.dirname(coverageSummaryAbsolutePath);
-  fs.rmSync(coverageReportsAbsolutePath, { force: true, recursive: true });
+  const selectedDomains = selectHighRiskCoverageDomains({
+    domains: highRiskCoverageDomains,
+    ids: selectedTargetIds,
+  });
 
-  const coverageDomains = highRiskCoverageDomains
+  if (selectedTargetIds.length === 0) {
+    fs.rmSync(coverageReportsAbsolutePath, { force: true, recursive: true });
+  } else {
+    fs.rmSync(coverageSummaryAbsolutePath, { force: true });
+    for (const domain of selectedDomains) {
+      fs.rmSync(path.join(root, domain.reportsDirectory), { force: true, recursive: true });
+    }
+  }
+
+  const coverageDomains = selectedDomains
     .map((domain) => ({
       ...domain,
       testFiles: collectHighRiskCoverageTestFiles({ root, testRoots: domain.testRoots }),
@@ -155,9 +172,20 @@ const run = async () => {
     process.exit(failedCoverageRun.exitCode ?? 1);
   }
 
+  const preservedSummaryPaths =
+    selectedTargetIds.length === 0
+      ? []
+      : highRiskCoverageDomains
+          .filter((domain) => !selectedTargetIds.includes(domain.id))
+          .map((domain) => `${domain.reportsDirectory}/coverage-summary.json`)
+          .filter((summaryPath) => fs.existsSync(path.join(root, summaryPath)));
+
   const mergedCoverageSummary = mergeHighRiskCoverageSummaries({
     root,
-    summaryPaths: coverageRuns.map((coverageRun) => coverageRun.coverageSummaryPath),
+    summaryPaths: [
+      ...preservedSummaryPaths,
+      ...coverageRuns.map((coverageRun) => coverageRun.coverageSummaryPath),
+    ],
   });
   fs.mkdirSync(coverageReportsAbsolutePath, { recursive: true });
   fs.writeFileSync(coverageSummaryAbsolutePath, `${JSON.stringify(mergedCoverageSummary, null, 2)}\n`, 'utf8');
@@ -185,6 +213,9 @@ const run = async () => {
     commandArgs: checkArgs,
     env: {
       COVERAGE_SUMMARY_PATH: HIGH_RISK_COVERAGE_SUMMARY_PATH,
+      ...(selectedTargetIds.length > 0
+        ? { HIGH_RISK_COVERAGE_TARGETS: selectedTargetIds.join(',') }
+        : {}),
     },
   });
 

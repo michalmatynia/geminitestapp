@@ -427,7 +427,32 @@ describe('KangurFeatureApp', () => {
 
     render(<KangurFeatureApp />);
 
-    expect(screen.getByTestId('kangur-route-content')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
+  });
+
+  it('keeps the app loader visible while cached theme settings are refreshing', () => {
+    routingStateMock.mockReturnValue({
+      pageKey: 'Game',
+      embedded: false,
+      requestedPath: '/kangur',
+      basePath: '/kangur',
+    });
+
+    settingsStoreStateMock.mockReturnValue({
+      map: new Map(),
+      isLoading: false,
+      isFetching: true,
+      error: null,
+      get: vi.fn(),
+      getBoolean: vi.fn(),
+      getNumber: vi.fn(),
+      refetch: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-app-loader')).toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-route-content')).toBeNull();
   });
 });

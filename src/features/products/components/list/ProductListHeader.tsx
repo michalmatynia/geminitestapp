@@ -69,8 +69,6 @@ export const ProductListHeader = memo(function ProductListHeader({
     onCreateProduct,
     onCreateFromDraft,
     activeDrafts,
-    showTriggerRunFeedback,
-    setShowTriggerRunFeedback,
   } = useProductListHeaderActionsContext();
   const {
     page,
@@ -131,16 +129,17 @@ export const ProductListHeader = memo(function ProductListHeader({
   );
 
   const renderCreateActions = (): React.JSX.Element => (
-    <div className='flex flex-wrap items-center gap-2'>
+    <div className='flex flex-wrap items-center gap-1'>
       <Button
         onClick={onCreateProduct}
-        size='icon-lg'
         variant='outline'
         aria-label='Create new product'
-        title={'Create new product'}>
-        <PlusIcon className='h-6 w-6' />
+        title='Create new product'
+        className='h-7 w-7 rounded-full border border-white/20 bg-transparent p-0 text-white transition-colors hover:border-white/40 hover:bg-white/10'
+      >
+        <PlusIcon className='h-3 w-3' />
       </Button>
-      <div className='flex flex-wrap items-center gap-1.5'>
+      <div className='flex flex-wrap items-center gap-1'>
         {activeDrafts.map((draft: ProductDraft) => {
           const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
           const iconColor = resolveDraftIconColor(draft);
@@ -148,24 +147,48 @@ export const ProductListHeader = memo(function ProductListHeader({
             <Button
               key={draft.id}
               onClick={() => onCreateFromDraft?.(draft.id)}
-              className='h-8 w-8 rounded-full border border-white/20 bg-transparent p-0 text-white transition-colors hover:border-white/40 hover:bg-white/10'
+              className='h-7 w-7 rounded-full border border-white/20 bg-transparent p-0 text-white transition-colors hover:border-white/40 hover:bg-white/10'
               aria-label={`Create product from ${draft.name}`}
               title={draft.name}
             >
               {IconComponent ? (
                 <IconComponent
-                  className='h-3.5 w-3.5'
+                  className='h-3 w-3'
                   style={iconColor ? { color: iconColor } : undefined}
                 />
               ) : (
-                <Package
-                  className='h-3.5 w-3.5'
-                  style={iconColor ? { color: iconColor } : undefined}
-                />
+                <Package className='h-3 w-3' style={iconColor ? { color: iconColor } : undefined} />
               )}
             </Button>
           );
-        })}
+      })}
+    </div>
+  </div>
+  );
+
+  const renderTitleWithActions = (): React.JSX.Element => (
+    <div className='flex items-center gap-2'>
+      <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
+      <div className='shrink-0'>{renderCreateActions()}</div>
+    </div>
+  );
+
+  const renderCreateActionsMobile = (): React.JSX.Element => (
+    <div className='flex items-start justify-between gap-2'>
+      <div>
+        <div className='space-y-1'>
+          {renderTitleWithActions()}
+          {renderHeaderBreadcrumb()}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCreateActionsDesktop = (): React.JSX.Element => (
+    <div className='flex items-start justify-between gap-2'>
+      <div className='space-y-1'>
+        {renderTitleWithActions()}
+        {renderHeaderBreadcrumb()}
       </div>
     </div>
   );
@@ -211,18 +234,6 @@ export const ProductListHeader = memo(function ProductListHeader({
           entityType='product'
           className='w-full flex-nowrap sm:w-auto'
         />
-        <Button
-          type='button'
-          size='sm'
-          variant='outline'
-          onClick={() => setShowTriggerRunFeedback(!showTriggerRunFeedback)}
-          aria-label={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
-          title={showTriggerRunFeedback ? 'Hide trigger run pills' : 'Show trigger run pills'}
-          className='h-8 w-full gap-1.5 px-2 text-xs sm:w-auto'
-        >
-          {showTriggerRunFeedback ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
-          <span>{showTriggerRunFeedback ? 'Hide Statuses' : 'Show Statuses'}</span>
-        </Button>
       </div>
     </>
   );
@@ -247,11 +258,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       {showHeader && (
         <div className='space-y-3'>
           <div className='space-y-3 lg:hidden'>
-            <div>
-              <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
-              {renderHeaderBreadcrumb()}
-              <div className='mt-3'>{renderCreateActions()}</div>
-            </div>
+            {renderCreateActionsMobile()}
 
             <div className='space-y-3'>
               <div className='relative z-10 flex justify-center'>{renderPaginationControl()}</div>
@@ -263,16 +270,13 @@ export const ProductListHeader = memo(function ProductListHeader({
           </div>
 
           <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
-            <div className='min-w-0'>
-              <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
-              {renderHeaderBreadcrumb()}
-              <div className='mt-3'>{renderCreateActions()}</div>
-            </div>
+            <div className='min-w-0'>{renderCreateActionsDesktop()}</div>
 
-            <div className='relative z-10 flex justify-center pt-1'>{renderPaginationControl()}</div>
+            <div className='relative z-10 flex justify-center' aria-hidden='true'></div>
 
-            <div className='relative z-0 flex w-full flex-col gap-3 pt-1'>
-              <div className='flex w-full items-center justify-end gap-2 lg:flex-nowrap'>
+            <div className='relative z-0 flex w-full min-w-0 flex-col gap-3 pt-1'>
+              <div className='flex w-full flex-wrap items-center justify-end gap-2'>
+                {renderPaginationControl()}
                 {renderSelectorsAndTriggers()}
               </div>
               {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}

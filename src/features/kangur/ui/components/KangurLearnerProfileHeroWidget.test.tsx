@@ -89,15 +89,15 @@ describe('KangurLearnerProfileHeroWidget', () => {
       )
     ).toBeNull();
     expect(
-      screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
+      screen.getByRole('button', { name: 'signIn' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Utwórz konto rodzica' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'createParentAccount' })).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto rodzica' }));
+    fireEvent.click(screen.getByRole('button', { name: 'signIn' }));
+    fireEvent.click(screen.getByRole('button', { name: 'createParentAccount' }));
 
     expect(openLoginModal).toHaveBeenCalledTimes(2);
     expect(openLoginModal).toHaveBeenLastCalledWith(null, {
@@ -161,7 +161,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
       screen.getByTestId('kangur-learner-profile-hero-milestone-track-mastery')
     ).toHaveTextContent('Mistrzostwo');
     expect(
-      screen.queryByRole('button', { name: 'Zaloguj się, aby synchronizować postęp' })
+      screen.queryByRole('button', { name: 'signIn' })
     ).not.toBeInTheDocument();
   });
 });

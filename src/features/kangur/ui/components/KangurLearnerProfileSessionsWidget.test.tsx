@@ -106,10 +106,10 @@ describe('KangurLearnerProfileSessionsWidget', () => {
     render(<KangurLearnerProfileSessionsWidget />);
 
     expect(screen.getByTestId('learner-profile-session-session-1')).toBeInTheDocument();
-    expect(screen.getByText('Ostatnie sesje')).toHaveClass(
+    expect(screen.getByText('recentSessionsHeading')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('Ścieżki odznak')).toHaveClass(
+    expect(screen.getByText('badgeTracksHeading')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByText('Zegar')).toHaveClass('[color:var(--kangur-page-text)]');

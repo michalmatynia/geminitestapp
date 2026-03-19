@@ -31,8 +31,8 @@ export function SocialPostList({
   posts: KangurSocialPost[];
   activePostId: string | null;
   onSelectPost: (id: string) => void;
-  onPublishPost?: (post: KangurSocialPost, mode?: 'published' | 'draft') => void;
-  onUnpublishPost?: (post: KangurSocialPost) => void;
+  onPublishPost?: (post: KangurSocialPost, options?: { skipImages?: boolean }) => void;
+  onUnpublishPost?: (post: KangurSocialPost, options?: { keepLocal?: boolean }) => void;
   publishPendingId?: string | null;
   unpublishPendingId?: string | null;
   onDeletePost?: (post: KangurSocialPost) => void;
@@ -139,16 +139,17 @@ export function SocialPostList({
                       <DropdownMenuContent align='end' className='w-56'>
                         <DropdownMenuLabel>Publish options</DropdownMenuLabel>
                         <DropdownMenuItem
-                          onSelect={() => onPublishPost(post, 'published')}
+                          onSelect={() => onPublishPost(post)}
                           disabled={publishPending || unpublishPending || !canPublish}
                         >
                           Publish to LinkedIn
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onSelect={() => onPublishPost(post, 'draft')}
+                          onSelect={() => onPublishPost(post, { skipImages: true })}
                           disabled={publishPending || unpublishPending || !canPublish}
                         >
-                          Publish as draft
+                          Publish without images
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -186,11 +187,17 @@ export function SocialPostList({
                       ) : null}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
+                        onSelect={() => onUnpublishPost(post, { keepLocal: true })}
+                        disabled={unpublishPending || !post.linkedinPostId}
+                      >
+                        Unpublish from LinkedIn
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onSelect={() => onUnpublishPost(post)}
                         className='text-destructive focus:text-destructive'
                         disabled={unpublishPending || !post.linkedinPostId}
                       >
-                        Unpublish (delete)
+                        Unpublish and delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

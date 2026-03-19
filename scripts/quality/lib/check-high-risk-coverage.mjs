@@ -9,6 +9,31 @@ const DEFAULT_COVERAGE_SUMMARY_PATH = 'coverage/coverage-summary.json';
 const HIGH_RISK_COVERAGE_REPORTS_DIRECTORY = 'coverage/high-risk';
 const HIGH_RISK_COVERAGE_SUMMARY_GLOB_LABEL = 'coverage/high-risk/*/coverage-summary.json (merged)';
 
+const normalizeSelectedIds = (ids) => {
+  if (!Array.isArray(ids)) {
+    return [];
+  }
+
+  return [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))];
+};
+
+const selectHighRiskCoverageTargets = ({ targets, targetIds }) => {
+  const normalizedIds = normalizeSelectedIds(targetIds);
+  if (normalizedIds.length === 0) {
+    return targets;
+  }
+
+  const targetById = new Map(targets.map((target) => [target.id, target]));
+  const unknownIds = normalizedIds.filter((id) => !targetById.has(id));
+  if (unknownIds.length > 0) {
+    throw new Error(
+      `Unknown high-risk coverage target id(s): ${unknownIds.join(', ')}. Expected one of: ${targets.map((target) => target.id).join(', ')}.`
+    );
+  }
+
+  return normalizedIds.map((id) => targetById.get(id));
+};
+
 const toRepoRelativeCoverageKey = (root, filePath) => {
   if (typeof filePath !== 'string' || filePath.length === 0) {
     return null;
@@ -146,7 +171,12 @@ export const analyzeHighRiskCoverage = ({
   root = process.cwd(),
   coverageSummaryPath = process.env.COVERAGE_SUMMARY_PATH ?? DEFAULT_COVERAGE_SUMMARY_PATH,
   targets = highRiskCoverageTargets,
+  targetIds = String(process.env.HIGH_RISK_COVERAGE_TARGETS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
 } = {}) => {
+  const selectedTargets = selectHighRiskCoverageTargets({ targets, targetIds });
   const issues = [];
   const coverageSummary = readCoverageSummary(root, coverageSummaryPath);
 
@@ -169,14 +199,14 @@ export const analyzeHighRiskCoverage = ({
       status: summary.status,
       summary: {
         ...summary,
-        targetCount: targets.length,
+        targetCount: selectedTargets.length,
         matchedTargetCount: 0,
         passingTargetCount: 0,
         failingTargetCount: 0,
-        uncoveredTargetCount: targets.length,
+        uncoveredTargetCount: selectedTargets.length,
       },
       coverageSummaryPath,
-      targets: targets.map((target) => ({
+      targets: selectedTargets.map((target) => ({
         id: target.id,
         label: target.label,
         directory: target.directory,
@@ -199,7 +229,7 @@ export const analyzeHighRiskCoverage = ({
     }))
     .filter((entry) => typeof entry.filePath === 'string' && entry.filePath.length > 0);
 
-  const targetSummaries = targets.map((target) => {
+  const targetSummaries = selectedTargets.map((target) => {
     const prefix = `${target.directory.replace(/\\/g, '/')}/`;
     const matchingEntries = fileEntries
       .filter((entry) => entry.filePath.startsWith(prefix))

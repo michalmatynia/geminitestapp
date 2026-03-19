@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -25,6 +26,7 @@ import {
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { translateClockTrainingWithFallback } from './clock-training-i18n';
 
 import type {
   ClockChallengeMedal,
@@ -79,7 +81,7 @@ type ClockFeedback = {
 
 export default function ClockTrainingGame(props: ClockTrainingGameProps): React.JSX.Element {
   const {
-    completionPrimaryActionLabel = 'Zakończ ćwiczenie ✅',
+    completionPrimaryActionLabel,
     enableAdaptiveRetry = true,
     hideModeSwitch = false,
     initialMode = 'practice',
@@ -94,6 +96,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     showTaskTitle = true,
     showTimeDisplay = true,
   } = props;
+  const translations = useTranslations('KangurMiniGames');
   const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
   const [tasks, setTasks] = useState<ClockTask[]>(() =>
     resolveClockPracticeTaskSet(section, practiceTasks)
@@ -115,11 +118,23 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   const [challengeMedal, setChallengeMedal] = useState<ClockChallengeMedal | null>(null);
   const sessionStartedAtRef = useRef(Date.now());
   const advanceTimeoutRef = useRef<number | null>(null);
-  const trainingSectionContent = getClockTrainingSectionContent(section);
+  const trainingSectionContent = getClockTrainingSectionContent(section, translations);
+  const resolvedCompletionPrimaryActionLabel =
+    completionPrimaryActionLabel ??
+    translateClockTrainingWithFallback(
+      translations,
+      'actions.finish',
+      'Zakończ ćwiczenie ✅'
+    );
 
   const task = tasks[current];
   if (!task) {
-    return <KangurInlineFallback data-testid='clock-training-empty' title='Brak zadania.' />;
+    return (
+      <KangurInlineFallback
+        data-testid='clock-training-empty'
+        title={translateClockTrainingWithFallback(translations, 'emptyState', 'Brak zadania.')}
+      />
+    );
   }
   const currentTaskNumber = Math.min(current + 1, tasks.length);
   const showStandalonePracticeSummary = done && gameMode === 'practice' && !onPracticeCompleted;
@@ -229,10 +244,15 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         }
         setFeedback(
           feedbackOverride ??
-            buildClockCorrectFeedback(section, expectedTask, {
-              gameMode,
-              streak: challengeStreak + 1,
-            })
+            buildClockCorrectFeedback(
+              section,
+              expectedTask,
+              {
+                gameMode,
+                streak: challengeStreak + 1,
+              },
+              translations
+            )
         );
       } else {
         if (gameMode === 'challenge') {
@@ -246,7 +266,8 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             actualMinutes,
             expectedTask.hours,
             expectedTask.minutes,
-            section
+            section,
+            translations
           );
 
         if (gameMode === 'practice' && enableAdaptiveRetry) {
@@ -258,7 +279,11 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             setRetryAddedCount((value) => value + 1);
             selectedFeedback = {
               ...selectedFeedback,
-              details: `${selectedFeedback.details} Dodaliśmy krótką powtórkę tego zadania.`,
+              details: `${selectedFeedback.details} ${translateClockTrainingWithFallback(
+                translations,
+                'adaptiveRetryAdded',
+                'Dodaliśmy krótką powtórkę tego zadania.'
+              )}`,
             };
           }
         }
@@ -307,6 +332,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
       onPracticeSuccess,
       retryCounts,
       score,
+      translations,
       tasks,
       section,
     ]
@@ -333,7 +359,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         actualMinutes: task.minutes,
         expectedTask: task,
         feedbackOverride: {
-          ...buildClockTimeoutFeedback(section, task),
+          ...buildClockTimeoutFeedback(section, task, translations),
         },
       });
       return;
@@ -346,7 +372,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     return () => {
       window.clearTimeout(timerId);
     };
-  }, [challengeTimeLeft, done, feedback, gameMode, resolveAttempt, task, section]);
+  }, [challengeTimeLeft, done, feedback, gameMode, resolveAttempt, task, section, translations]);
 
   useEffect(() => () => clearAdvanceTimeout(), [clearAdvanceTimeout]);
 
@@ -364,7 +390,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         challengeBestStreak={challengeBestStreak}
         retryAddedCount={retryAddedCount}
         section={section}
-        completionPrimaryActionLabel={completionPrimaryActionLabel}
+        completionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
         onFinish={completionAction}
         onRestart={() => resetSession(gameMode)}
       />
@@ -390,7 +416,11 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             size='sm'
             variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
           >
-            Tryb Nauka
+            {translateClockTrainingWithFallback(
+              translations,
+              'mode.practice',
+              'Tryb Nauka'
+            )}
           </KangurButton>
           <KangurButton
             data-testid='clock-mode-challenge'
@@ -399,7 +429,11 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             size='sm'
             variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
           >
-            Tryb Wyzwanie
+            {translateClockTrainingWithFallback(
+              translations,
+              'mode.challenge',
+              'Tryb Wyzwanie'
+            )}
           </KangurButton>
         </div>
       ) : null}
@@ -436,7 +470,11 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             className='text-xs font-bold uppercase tracking-[0.16em]'
             data-testid='clock-challenge-pill'
           >
-            Wyzwanie
+            {translateClockTrainingWithFallback(
+              translations,
+              'challengePill',
+              'Wyzwanie'
+            )}
           </KangurStatusChip>
           <KangurStatusChip
             accent='amber'
@@ -450,7 +488,16 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             className='gap-2 text-xs font-bold'
             data-testid='clock-challenge-streak'
           >
-            🔥 Seria {Math.min(current + 1, tasks.length)}/{tasks.length}
+            🔥{' '}
+            {translateClockTrainingWithFallback(
+              translations,
+              'seriesProgress',
+              `Seria ${Math.min(current + 1, tasks.length)}/${tasks.length}`,
+              {
+                current: Math.min(current + 1, tasks.length),
+                total: tasks.length,
+              }
+            )}
           </KangurStatusChip>
         </div>
       ) : (
@@ -460,7 +507,15 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
             className='gap-2 text-xs font-bold'
             data-testid='clock-practice-series'
           >
-            Seria {Math.min(current + 1, tasks.length)}/{tasks.length}
+            {translateClockTrainingWithFallback(
+              translations,
+              'seriesProgress',
+              `Seria ${Math.min(current + 1, tasks.length)}/${tasks.length}`,
+              {
+                current: Math.min(current + 1, tasks.length),
+                total: tasks.length,
+              }
+            )}
           </KangurStatusChip>
           {retryAddedCount > 0 ? (
             <KangurStatusChip
@@ -468,7 +523,12 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
               className='text-xs font-semibold'
               data-testid='clock-retry-count'
             >
-              Powtórki adaptacyjne: {retryAddedCount}
+              {translateClockTrainingWithFallback(
+                translations,
+                'adaptiveRetriesWithCount',
+                `Powtórki adaptacyjne: ${retryAddedCount}`,
+                { count: retryAddedCount }
+              )}
             </KangurStatusChip>
           ) : null}
         </div>
@@ -478,7 +538,15 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
           className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'
           data-testid='clock-task-progress-label'
         >
-          Zadanie {currentTaskNumber} z {tasks.length}
+          {translateClockTrainingWithFallback(
+            translations,
+            'taskProgress',
+            `Zadanie ${currentTaskNumber} z ${tasks.length}`,
+            {
+              current: currentTaskNumber,
+              total: tasks.length,
+            }
+          )}
         </p>
         <div className='flex items-center gap-1.5' data-testid='clock-task-progress-pills'>
           {tasks.map((_, index) => {
@@ -513,7 +581,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         tone='accent'
       >
         <p data-testid='clock-task-prompt' className='text-xs font-semibold text-amber-700/80 mt-1'>
-          {buildClockTaskPrompt(task, section)}
+          {buildClockTaskPrompt(task, section, translations)}
         </p>
       </KangurSummaryPanel>
 

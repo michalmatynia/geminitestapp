@@ -221,11 +221,14 @@ vi.mock('next/link', () => ({
     </a>
   ),
 }));
-vi.mock('@/features/kangur/observability/client', () => ({
-  trackKangurClientEvent: trackKangurClientEventMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-}));
+vi.mock('@/features/kangur/observability/client', () => {
+  const mocks = globalThis.__kangurClientErrorMocks();
+  return {
+    trackKangurClientEvent: mocks.trackKangurClientEventMock,
+    withKangurClientError: mocks.withKangurClientError,
+    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+  };
+});
 let KangurAiTutorWidget: typeof import('@/features/kangur/ui/components/KangurAiTutorWidget').KangurAiTutorWidget;
 class MockSpeechSynthesisUtterance {
   text: string;

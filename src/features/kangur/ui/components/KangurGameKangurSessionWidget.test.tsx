@@ -47,7 +47,7 @@ describe('KangurGameKangurSessionWidget', () => {
 
     expect(screen.getByTestId('kangur-kangur-session-recommendation-card')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-kangur-session-recommendation-chip')).toHaveTextContent(
-      'Polecony kierunek'
+      'kangurSession.recommendationLabel'
     );
     expect(screen.getByTestId('kangur-kangur-session-recommendation-label')).toHaveTextContent(
       'Gotowosc konkursowa'

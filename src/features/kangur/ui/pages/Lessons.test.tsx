@@ -10,16 +10,48 @@ const {
   useKangurSubjectFocusMock,
   useKangurAuthMock,
   lessonCardPropsMock,
+  lessonsWordmarkPropsMock,
+  localeState,
   tutorSessionSyncPropsMock,
   lessonsState,
 } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   lessonCardPropsMock: vi.fn(),
+  lessonsWordmarkPropsMock: vi.fn(),
+  localeState: {
+    value: 'pl' as 'de' | 'en' | 'pl',
+  },
   tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
   },
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeState.value,
+  useTranslations:
+    (namespace?: string) =>
+    (key: string) =>
+      (
+        {
+          'KangurLessonsPage.pageTitle': {
+            de: 'Lektionen',
+            en: 'Lessons',
+            pl: 'Lekcje',
+          },
+          'KangurLessonsPage.loadingDescription': {
+            de: 'Die Lektionen sind gleich bereit.',
+            en: 'The lessons will be ready in a moment.',
+            pl: 'Lekcje zaraz beda gotowe.',
+          },
+          'KangurLessonsPage.introDescription': {
+            de: 'Wahle eine Lektion und starte mit dem Lernen.',
+            en: 'Choose a lesson and start learning.',
+            pl: 'Wybierz lekcje i zacznij nauke.',
+          },
+        } as const
+      )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/config/routing', () => ({
@@ -60,12 +92,24 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonsWordmark', () => ({
-  KangurLessonsWordmark: () => <div data-testid='mock-lessons-wordmark' />,
+  KangurLessonsWordmark: (props: unknown) => {
+    lessonsWordmarkPropsMock(props);
+    return <div data-testid='mock-lessons-wordmark' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
-  KangurPageIntroCard: ({ title }: { title: string }) => (
-    <div data-testid='mock-lessons-intro'>{title}</div>
+  KangurPageIntroCard: ({
+    title,
+    visualTitle,
+  }: {
+    title: string;
+    visualTitle?: React.ReactNode;
+  }) => (
+    <div data-testid='mock-lessons-intro'>
+      <span>{title}</span>
+      {visualTitle}
+    </div>
   ),
 }));
 
@@ -240,6 +284,7 @@ const lessonsFixture = [
 describe('Lessons page subject filtering', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    localeState.value = 'pl';
     if (!window.requestAnimationFrame) {
       Object.defineProperty(window, 'requestAnimationFrame', {
         value: (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0),
@@ -306,8 +351,24 @@ describe('Lessons page subject filtering', () => {
       expect.objectContaining({
         sessionContext: expect.objectContaining({
           contentId: 'lesson:list',
-          title: 'pageTitle',
+          title: 'Lekcje',
         }),
+      })
+    );
+  });
+
+  it('passes the localized German lessons label into the lessons wordmark', () => {
+    localeState.value = 'de';
+
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(lessonsWordmarkPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Lektionen',
+        locale: 'de',
       })
     );
   });

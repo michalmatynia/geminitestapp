@@ -9,11 +9,14 @@ const {
   withKangurClientErrorSync,
 } = vi.hoisted(() => globalThis.__kangurClientErrorMocks());
 
-vi.mock('@/features/kangur/observability/client', () => ({
-  trackKangurClientEvent: trackKangurClientEventMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-}));
+vi.mock('@/features/kangur/observability/client', () => {
+  const mocks = globalThis.__kangurClientErrorMocks();
+  return {
+    trackKangurClientEvent: mocks.trackKangurClientEventMock,
+    withKangurClientError: mocks.withKangurClientError,
+    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+  };
+});
 
 vi.mock('./KangurAiTutorWidget.storage', () => ({
   clearPersistedTutorAvatarPosition: vi.fn(),

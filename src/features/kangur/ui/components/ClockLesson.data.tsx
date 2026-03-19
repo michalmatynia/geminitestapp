@@ -7,9 +7,22 @@ import type {
   SectionId,
 } from './ClockLesson.types';
 import type { ClockTrainingSectionId } from './clock-training-utils';
-import { COMBINED_SLIDES } from './ClockLesson.data.combined';
-import { HOURS_SLIDES } from './ClockLesson.data.hours';
-import { MINUTES_SLIDES } from './ClockLesson.data.minutes';
+import {
+  buildClockCombinedSlides,
+  CLOCK_COMBINED_SLIDES_COPY_PL,
+  COMBINED_SLIDES,
+} from './ClockLesson.data.combined';
+import {
+  buildClockHoursSlides,
+  CLOCK_HOURS_SLIDES_COPY_PL,
+  HOURS_SLIDES,
+} from './ClockLesson.data.hours';
+import {
+  buildClockMinutesSlides,
+  CLOCK_MINUTES_SLIDES_COPY_PL,
+  MINUTES_SLIDES,
+} from './ClockLesson.data.minutes';
+import type { WidenLessonCopy } from './ClockLesson.i18n';
 
 export type {
   ClockHubId,
@@ -22,28 +35,172 @@ export type {
   SectionId,
   TrainingCardId,
 } from './ClockLesson.types';
-export { COMBINED_SLIDES, HOURS_SLIDES, MINUTES_SLIDES };
+export {
+  buildClockCombinedSlides,
+  buildClockHoursSlides,
+  buildClockMinutesSlides,
+  CLOCK_COMBINED_SLIDES_COPY_PL,
+  CLOCK_HOURS_SLIDES_COPY_PL,
+  CLOCK_MINUTES_SLIDES_COPY_PL,
+  COMBINED_SLIDES,
+  HOURS_SLIDES,
+  MINUTES_SLIDES,
+};
 
-export const LESSON_SECTIONS: LessonSection[] = [
+export const CLOCK_LESSON_COPY_PL = {
+  lessonTitle: 'Nauka zegara',
+  lessonSections: {
+    hours: {
+      title: 'Sekcja 1: Godziny (krótka wskazówka)',
+      subtitle: 'Uczymy się tylko krótkiej wskazówki i pełnych godzin (:00).',
+    },
+    minutes: {
+      title: 'Sekcja 2: Minuty (długa wskazówka)',
+      subtitle: 'Uczymy się tylko długiej wskazówki i mapy minut.',
+    },
+    combined: {
+      title: 'Sekcja 3: Godziny i Minuty razem',
+      subtitle: 'Łączymy obie wskazówki i odczytujemy pełny czas.',
+    },
+  },
+  hubSections: {
+    hours: {
+      title: 'Godziny',
+      description: 'Krótka wskazówka i pełne godziny',
+    },
+    minutes: {
+      title: 'Minuty',
+      description: 'Długa wskazówka i liczenie co 5',
+    },
+    combined: {
+      title: 'Łączenie wskazówek',
+      description: 'Czytaj pełny czas na zegarze',
+    },
+    gameHours: {
+      title: 'Ćwiczenie: Godziny',
+      description: 'Trenuj pełne godziny i krótką wskazówkę',
+    },
+    gameMinutes: {
+      title: 'Ćwiczenie: Minuty',
+      description: 'Ćwicz długą wskazówkę i minuty co 5',
+    },
+    gameCombined: {
+      title: 'Ćwiczenie: Pełny czas',
+      description: 'Łącz godziny i minuty w pełny odczyt czasu',
+    },
+    combinedLockedDescription: 'Odblokuj po ukończeniu Godzin i Minut.',
+    lockedLabel: 'Zablokowane',
+  },
+  trainingSlides: {
+    hours: {
+      title: 'Ćwiczenie: Godziny',
+      tts:
+        'Teraz przechodzisz do praktyki pełnych godzin. Ustawiaj krótką wskazówkę tak jak w pierwszym panelu ćwiczenia godzin.',
+    },
+    minutes: {
+      title: 'Ćwiczenie: Minuty',
+      tts:
+        'Teraz przechodzisz do praktyki minut. Ustawiaj długą wskazówkę tak jak w pierwszym panelu ćwiczenia minut.',
+    },
+    combined: {
+      title: 'Ćwiczenie: Pełny czas',
+      tts:
+        'Teraz przechodzisz do praktyki pełnego czasu. Ustawiaj obie wskazówki tak jak w pierwszym panelu ćwiczenia pełnego czasu.',
+    },
+  },
+  training: {
+    panelLabel: 'zadanie',
+    goToPanel: 'Przejdź do panelu {label}',
+    previousPanel: 'Poprzedni panel',
+    nextPanel: 'Następny panel',
+    finishLesson: 'Zakończ lekcję ✅',
+    openChallenge: 'Otwórz wyzwanie',
+    nextTask: 'Następne zadanie',
+    backToTopics: 'Wróć do tematów',
+    leaveChallengeTitle: 'Opuścić wyzwanie?',
+    leaveChallengeMessage:
+      'Jeśli opuścisz Tryb Wyzwanie teraz, to wyzwanie zostanie niezaliczone.',
+    stay: 'Zostań',
+    leaveChallenge: 'Opuść wyzwanie',
+  },
+} as const;
+
+export type ClockLessonCopy = WidenLessonCopy<typeof CLOCK_LESSON_COPY_PL>;
+
+export const buildClockLessonSections = (
+  copy: ClockLessonCopy,
+  hoursSlides: LessonSlide[],
+  minutesSlides: LessonSlide[],
+  combinedSlides: LessonSlide[]
+): LessonSection[] => [
   {
     id: 'hours',
-    title: 'Sekcja 1: Godziny (krótka wskazówka)',
-    subtitle: 'Uczymy się tylko krótkiej wskazówki i pełnych godzin (:00).',
-    slides: HOURS_SLIDES,
+    title: copy.lessonSections.hours.title,
+    subtitle: copy.lessonSections.hours.subtitle,
+    slides: hoursSlides,
   },
   {
     id: 'minutes',
-    title: 'Sekcja 2: Minuty (długa wskazówka)',
-    subtitle: 'Uczymy się tylko długiej wskazówki i mapy minut.',
-    slides: MINUTES_SLIDES,
+    title: copy.lessonSections.minutes.title,
+    subtitle: copy.lessonSections.minutes.subtitle,
+    slides: minutesSlides,
   },
   {
     id: 'combined',
-    title: 'Sekcja 3: Godziny i Minuty razem',
-    subtitle: 'Łączymy obie wskazówki i odczytujemy pełny czas.',
-    slides: COMBINED_SLIDES,
+    title: copy.lessonSections.combined.title,
+    subtitle: copy.lessonSections.combined.subtitle,
+    slides: combinedSlides,
   },
 ];
+
+export const buildClockHubSections = (copy: ClockLessonCopy): ClockHubSection[] => [
+  {
+    id: 'hours',
+    emoji: '🔴',
+    title: copy.hubSections.hours.title,
+    description: copy.hubSections.hours.description,
+  },
+  {
+    id: 'minutes',
+    emoji: '🟢',
+    title: copy.hubSections.minutes.title,
+    description: copy.hubSections.minutes.description,
+  },
+  {
+    id: 'combined',
+    emoji: '🕐',
+    title: copy.hubSections.combined.title,
+    description: copy.hubSections.combined.description,
+  },
+  {
+    id: 'game_hours',
+    emoji: '🎯',
+    title: copy.hubSections.gameHours.title,
+    description: copy.hubSections.gameHours.description,
+    isGame: true,
+  },
+  {
+    id: 'game_minutes',
+    emoji: '🟢',
+    title: copy.hubSections.gameMinutes.title,
+    description: copy.hubSections.gameMinutes.description,
+    isGame: true,
+  },
+  {
+    id: 'game_combined',
+    emoji: '🕐',
+    title: copy.hubSections.gameCombined.title,
+    description: copy.hubSections.gameCombined.description,
+    isGame: true,
+  },
+];
+
+export const LESSON_SECTIONS: LessonSection[] = buildClockLessonSections(
+  CLOCK_LESSON_COPY_PL,
+  HOURS_SLIDES,
+  MINUTES_SLIDES,
+  COMBINED_SLIDES
+);
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   hours: HOURS_SLIDES,
@@ -51,47 +208,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
   combined: COMBINED_SLIDES,
 };
 
-export const HUB_SECTIONS: ClockHubSection[] = [
-  {
-    id: 'hours',
-    emoji: '🔴',
-    title: 'Godziny',
-    description: 'Krótka wskazówka i pełne godziny',
-  },
-  {
-    id: 'minutes',
-    emoji: '🟢',
-    title: 'Minuty',
-    description: 'Długa wskazówka i liczenie co 5',
-  },
-  {
-    id: 'combined',
-    emoji: '🕐',
-    title: 'Łączenie wskazówek',
-    description: 'Czytaj pełny czas na zegarze',
-  },
-  {
-    id: 'game_hours',
-    emoji: '🎯',
-    title: 'Ćwiczenie: Godziny',
-    description: 'Trenuj pełne godziny i krótką wskazówkę',
-    isGame: true,
-  },
-  {
-    id: 'game_minutes',
-    emoji: '🟢',
-    title: 'Ćwiczenie: Minuty',
-    description: 'Ćwicz długą wskazówkę i minuty co 5',
-    isGame: true,
-  },
-  {
-    id: 'game_combined',
-    emoji: '🕐',
-    title: 'Ćwiczenie: Pełny czas',
-    description: 'Łącz godziny i minuty w pełny odczyt czasu',
-    isGame: true,
-  },
-];
+export const HUB_SECTIONS: ClockHubSection[] = buildClockHubSections(CLOCK_LESSON_COPY_PL);
 
 export const TRAINING_SECTIONS: Array<ClockHubSection & { isGame: true }> = HUB_SECTIONS.filter(
   (section): section is ClockHubSection & { isGame: true } => section.isGame === true

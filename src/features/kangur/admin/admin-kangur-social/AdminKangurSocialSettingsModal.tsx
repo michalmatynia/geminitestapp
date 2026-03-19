@@ -24,7 +24,10 @@ import type {
   KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddonsBatchResult } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
-import type { AddonFormState } from './AdminKangurSocialPage.Constants';
+import {
+  BRAIN_MODEL_DEFAULT_VALUE,
+  type AddonFormState,
+} from './AdminKangurSocialPage.Constants';
 
 type SelectOption = {
   value: string;
@@ -60,6 +63,8 @@ type AdminKangurSocialSettingsModalProps = {
   createAddonPending: boolean;
   batchCaptureBaseUrl: string;
   batchCapturePresetIds: string[];
+  batchCapturePresetLimit: number | null;
+  effectiveBatchCapturePresetCount: number;
   batchCapturePending: boolean;
   batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   activePost: KangurSocialPost | null;
@@ -92,6 +97,7 @@ type AdminKangurSocialSettingsModalProps = {
   onApplyDocUpdates: () => Promise<void>;
   onHandleCreateAddon: () => Promise<void>;
   onBatchCaptureBaseUrlChange: (value: string) => void;
+  onBatchCapturePresetLimitChange: (value: string) => void;
   onToggleCapturePreset: (id: string) => void;
   onSelectAllCapturePresets: () => void;
   onClearCapturePresets: () => void;
@@ -109,15 +115,15 @@ export function AdminKangurSocialSettingsModal(
     onSave,
     isSaving,
     hasUnsavedChanges,
-    brainModelId: _brainModelId,
-    visionModelId: _visionModelId,
+    brainModelId,
+    visionModelId,
     projectUrl,
     brainModelBadgeLabel,
     visionModelBadgeLabel,
-    brainModelSelectOptions: _brainModelSelectOptions,
-    visionModelSelectOptions: _visionModelSelectOptions,
-    brainModelLoading: _brainModelLoading,
-    visionModelLoading: _visionModelLoading,
+    brainModelSelectOptions,
+    visionModelSelectOptions,
+    brainModelLoading,
+    visionModelLoading,
     linkedinConnectionId,
     linkedInOptions,
     linkedinIntegration,
@@ -130,6 +136,8 @@ export function AdminKangurSocialSettingsModal(
     createAddonPending,
     batchCaptureBaseUrl,
     batchCapturePresetIds,
+    batchCapturePresetLimit,
+    effectiveBatchCapturePresetCount,
     batchCapturePending,
     batchCaptureResult,
     activePost,
@@ -150,8 +158,8 @@ export function AdminKangurSocialSettingsModal(
     canGenerateDraft,
     generateDraftBlockedReason,
     socialVisionWarning,
-    onBrainModelChange: _onBrainModelChange,
-    onVisionModelChange: _onVisionModelChange,
+    onBrainModelChange,
+    onVisionModelChange,
     onLinkedInConnectionChange,
     onProjectUrlChange,
     onDocReferenceInputChange,
@@ -162,6 +170,7 @@ export function AdminKangurSocialSettingsModal(
     onApplyDocUpdates,
     onHandleCreateAddon,
     onBatchCaptureBaseUrlChange,
+    onBatchCapturePresetLimitChange,
     onToggleCapturePreset,
     onSelectAllCapturePresets,
     onClearCapturePresets,
@@ -178,6 +187,12 @@ export function AdminKangurSocialSettingsModal(
   const selectedPostTitle =
     activePost?.titlePl?.trim() || activePost?.titleEn?.trim() || 'selected post';
   const suggestedDocUpdates = activePost?.visualDocUpdates ?? [];
+  const batchCaptureLimitSummary =
+    batchCapturePresetIds.length === 0
+      ? 'No capture presets selected yet.'
+      : batchCapturePresetLimit == null
+        ? `Playwright will capture all ${batchCapturePresetIds.length} selected presets in each run.`
+        : `Playwright will capture up to ${effectiveBatchCapturePresetCount} of ${batchCapturePresetIds.length} selected presets in each run.`;
 
   if (!open) return null;
 
@@ -186,7 +201,7 @@ export function AdminKangurSocialSettingsModal(
       open
       onClose={onClose}
       title='Social Settings'
-      subtitle='AI Brain routing and project references for StudiQ Social generation.'
+      subtitle='Choose StudiQ Social models from the AI Brain catalog and manage project references.'
       onSave={onSave}
       isSaving={isSaving}
       disableCloseWhileSaving
@@ -238,13 +253,27 @@ export function AdminKangurSocialSettingsModal(
                 <Badge variant='outline'>{brainModelBadgeLabel}</Badge>
               </div>
               <div className='mt-3 space-y-3 text-sm text-muted-foreground'>
-                <p>StudiQ Social reads its generation model directly from AI Brain routing.</p>
+                <p>Available models are provided by AI Brain. Choose a specific model or keep the routing default.</p>
+                <FormField
+                  label='Selected brain model'
+                  description='Use Brain routing follows the current AI Brain default for this capability.'
+                >
+                  <SelectSimple
+                    value={brainModelId ?? BRAIN_MODEL_DEFAULT_VALUE}
+                    onValueChange={onBrainModelChange}
+                    options={brainModelSelectOptions}
+                    ariaLabel='Selected brain model'
+                    title='Selected brain model'
+                    disabled={brainModelLoading}
+                    variant='subtle'
+                  />
+                </FormField>
                 {brainModelBadgeLabel === 'Not configured' ? (
                   <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-900 dark:text-amber-200'>
-                    No AI Brain model is assigned for this capability yet.
+                    No model is currently active. Choose one from the list or assign AI Brain routing for this capability.
                   </div>
                 ) : (
-                  <p>Current AI Brain route: {brainModelBadgeLabel}</p>
+                  <p>Current effective model: {brainModelBadgeLabel}</p>
                 )}
                 <a
                   href='/admin/brain?tab=routing'
@@ -270,13 +299,27 @@ export function AdminKangurSocialSettingsModal(
                 <Badge variant='outline'>{visionModelBadgeLabel}</Badge>
               </div>
               <div className='mt-3 space-y-3 text-sm text-muted-foreground'>
-                <p>Visual analysis also resolves its model from AI Brain routing.</p>
+                <p>Available vision models are provided by AI Brain. Choose a specific model or keep the routing default.</p>
+                <FormField
+                  label='Selected vision model'
+                  description='Use Brain routing follows the current AI Brain default for visual analysis.'
+                >
+                  <SelectSimple
+                    value={visionModelId ?? BRAIN_MODEL_DEFAULT_VALUE}
+                    onValueChange={onVisionModelChange}
+                    options={visionModelSelectOptions}
+                    ariaLabel='Selected vision model'
+                    title='Selected vision model'
+                    disabled={visionModelLoading}
+                    variant='subtle'
+                  />
+                </FormField>
                 {visionModelBadgeLabel === 'Not configured' ? (
                   <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-900 dark:text-amber-200'>
-                    No AI Brain model is assigned for visual analysis yet.
+                    No vision model is currently active. Choose one from the list or assign AI Brain routing for this capability.
                   </div>
                 ) : (
-                  <p>Current AI Brain route: {visionModelBadgeLabel}</p>
+                  <p>Current effective model: {visionModelBadgeLabel}</p>
                 )}
                 <a
                   href='/admin/brain?tab=routing'
@@ -712,6 +755,19 @@ export function AdminKangurSocialSettingsModal(
                 value={batchCaptureBaseUrl}
                 onChange={(event) => onBatchCaptureBaseUrlChange(event.target.value)}
               />
+              <FormField
+                label='Screenshots per run'
+                description='Uses the first N selected presets in the preset list order. Leave empty to capture all selected presets.'
+              >
+                <Input
+                  type='number'
+                  min={1}
+                  inputMode='numeric'
+                  placeholder='All selected presets'
+                  value={batchCapturePresetLimit ?? ''}
+                  onChange={(event) => onBatchCapturePresetLimitChange(event.target.value)}
+                />
+              </FormField>
               <div className='flex flex-wrap items-center gap-2'>
                 <Button
                   type='button'
@@ -732,6 +788,9 @@ export function AdminKangurSocialSettingsModal(
                 <div className='text-[11px] text-muted-foreground'>
                   {batchCapturePresetIds.length} preset
                   {batchCapturePresetIds.length === 1 ? '' : 's'} selected.
+                </div>
+                <div className='text-[11px] text-muted-foreground'>
+                  {batchCaptureLimitSummary}
                 </div>
               </div>
               <div className='grid gap-2 sm:grid-cols-2'>
@@ -780,13 +839,15 @@ export function AdminKangurSocialSettingsModal(
                   {batchCapturePending ? 'Capturing presets...' : 'Capture presets'}
                 </Button>
                 <div className='text-xs text-muted-foreground'>
-                  Captures common Kangur screens and stores new add-ons.
+                  Captures common Kangur screens and stores new add-ons using the configured preset limit.
                 </div>
               </div>
               {batchCaptureResult ? (
                 <div className='space-y-2 text-xs text-muted-foreground'>
                   <div>
-                    Run {batchCaptureResult.runId}. Created {batchCaptureResult.addons.length}{' '}
+                    Run {batchCaptureResult.runId}. Used{' '}
+                    {batchCaptureResult.usedPresetCount ?? batchCapturePresetIds.length} preset
+                    {(batchCaptureResult.usedPresetCount ?? batchCapturePresetIds.length) === 1 ? '' : 's'} and created {batchCaptureResult.addons.length}{' '}
                     add-on{batchCaptureResult.addons.length === 1 ? '' : 's'} with{' '}
                     {batchCaptureResult.failures.length} failure
                     {batchCaptureResult.failures.length === 1 ? '' : 's'}.

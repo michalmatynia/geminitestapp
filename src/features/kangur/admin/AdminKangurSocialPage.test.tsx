@@ -281,7 +281,9 @@ const buildHookState = () => ({
   brainModelId: 'gpt-4.1-mini',
   visionModelId: 'gpt-4.1',
   canGenerateSocialDraft: true,
+  canRunFreshCapturePipeline: false,
   socialDraftBlockedReason: null,
+  socialBatchCaptureBlockedReason: null,
   socialVisionWarning: null,
   projectUrl: 'https://studiq.example.com/project',
   setProjectUrl: vi.fn(),
@@ -293,6 +295,9 @@ const buildHookState = () => ({
   batchCaptureBaseUrl: 'https://studiq.example.com',
   setBatchCaptureBaseUrl: vi.fn(),
   batchCapturePresetIds: [],
+  batchCapturePresetLimit: null,
+  setBatchCapturePresetLimit: vi.fn(),
+  effectiveBatchCapturePresetCount: 0,
   batchCaptureResult: null,
   deleteError: null,
   clearDeleteError: vi.fn(),
@@ -364,7 +369,14 @@ const buildHookState = () => ({
   handleLinkedInConnectionChange: vi.fn(),
   resolveDocReferences: vi.fn(() => []),
   pipelineStep: 'idle',
+  pipelineProgress: null,
+  pipelineErrorMessage: null,
   handleRunFullPipeline: vi.fn(),
+  handleRunFullPipelineWithFreshCapture: vi.fn(),
+  captureOnlyPending: false,
+  captureOnlyMessage: null,
+  captureOnlyErrorMessage: null,
+  handleCaptureImagesOnly: vi.fn(),
   publishingPostId: null,
   unpublishingPostId: null,
   contextSummary: null,
@@ -434,6 +446,8 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByRole('tab', { name: 'Capture' })).toBeInTheDocument();
     expect(screen.getByText('Brain model')).toBeInTheDocument();
     expect(screen.getByText('Vision model')).toBeInTheDocument();
+    expect(screen.getByLabelText('Selected brain model')).toHaveValue('gpt-4.1-mini');
+    expect(screen.getByLabelText('Selected vision model')).toHaveValue('gpt-4.1');
     expect(screen.getByLabelText('Project URL')).toHaveValue('https://studiq.example.com/project');
     expect(screen.getByLabelText('Documentation references')).toHaveValue('');
     expect(screen.getByLabelText('Notes for the Brain generator')).toHaveValue('');

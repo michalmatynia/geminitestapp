@@ -1,9 +1,15 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useId, useState } from 'react';
+import type { TranslationValues } from 'use-intl';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
+import {
+  translateKangurMiniGameWithFallback,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurGlassPanel,
   KangurProgressBar,
@@ -44,6 +50,31 @@ type AnalogClockSmallProps = {
   minutes: number;
   ariaLabel?: string;
 };
+
+const interpolateQuestionCardTemplate = (
+  template: string,
+  values?: TranslationValues
+): string => {
+  if (!values) {
+    return template;
+  }
+
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    const value = values[key];
+    return value === undefined ? match : String(value);
+  });
+};
+
+const translateQuestionCard = (
+  translate: KangurMiniGameTranslate | undefined,
+  key: string,
+  fallback: string,
+  values?: TranslationValues
+): string =>
+  interpolateQuestionCardTemplate(
+    translateKangurMiniGameWithFallback(translate, `questionCard.${key}`, fallback, values),
+    values
+  );
 
 function AnalogClockSmall({
   hours,
@@ -133,6 +164,7 @@ export default function QuestionCard({
   answerMode = 'client',
   serverResult = null,
 }: QuestionCardProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const questionHeadingId = useId();
   const questionDescriptionId = useId();
   const choicesGroupId = useId();
@@ -193,9 +225,97 @@ export default function QuestionCard({
   const clockMinutes = Number.parseInt(clockParts?.[2] ?? '0', 10);
   const normalizedClockHours = ((clockHours % 12) + 12) % 12 || 12;
   const normalizedClockMinutes = Math.max(0, Math.min(59, clockMinutes));
-  const clockAriaLabel = `Zegar analogowy pokazuje godzinę ${normalizedClockHours}:${String(
-    normalizedClockMinutes
-  ).padStart(2, '0')}.`;
+  const clockTime = `${normalizedClockHours}:${String(normalizedClockMinutes).padStart(2, '0')}`;
+  const clockAriaLabel = translateQuestionCard(
+    translations,
+    'clockAriaLabel',
+    'Zegar analogowy pokazuje godzinę {time}.',
+    { time: clockTime }
+  );
+  const progressLabel = translateQuestionCard(
+    translations,
+    'progressLabel',
+    'Pytanie {questionNumber} z {total}',
+    { questionNumber, total }
+  );
+  const timerAriaLabel = translateQuestionCard(
+    translations,
+    'timerAriaLabel',
+    'Pozostały czas'
+  );
+  const timerValueText = translateQuestionCard(
+    translations,
+    'timerValueText',
+    '{timeLeft} sekund pozostało',
+    { timeLeft }
+  );
+  const clockTitle = translateQuestionCard(
+    translations,
+    'clockTitle',
+    'Którą godzinę pokazuje zegar?'
+  );
+  const clockDescription = translateQuestionCard(
+    translations,
+    'clockDescription',
+    'Wybierz odpowiedź, która pasuje do położenia wskazówek.'
+  );
+  const defaultDescription = translateQuestionCard(
+    translations,
+    'defaultDescription',
+    'Jaka jest odpowiedź?'
+  );
+  const choicesAriaLabel = translateQuestionCard(
+    translations,
+    'choicesAriaLabel',
+    'Odpowiedzi'
+  );
+  const answerChoiceCorrectStatus = translateQuestionCard(
+    translations,
+    'choiceStatus.correct',
+    'poprawna'
+  );
+  const answerChoiceIncorrectStatus = translateQuestionCard(
+    translations,
+    'choiceStatus.incorrect',
+    'niepoprawna'
+  );
+  const answerChoiceNotChosenStatus = translateQuestionCard(
+    translations,
+    'choiceStatus.notChosen',
+    'nie wybrano'
+  );
+  const correctResultLabel = translateQuestionCard(
+    translations,
+    'result.correct',
+    '🎉 Dobrze!'
+  );
+  const timedOutResultLabel = translateQuestionCard(
+    translations,
+    'result.timedOut',
+    '⏰ Czas minął!'
+  );
+  const incorrectResultLabel = translateQuestionCard(
+    translations,
+    'result.incorrect',
+    '❌ Nie tym razem.'
+  );
+  const checkingResultLabel = translateQuestionCard(
+    translations,
+    'result.checking',
+    'Sprawdzamy odpowiedź…'
+  );
+  const timedOutAnswerResultLabel = translateQuestionCard(
+    translations,
+    'result.timedOutAnswer',
+    '⏰ Czas minął! Odpowiedź: {answer}',
+    { answer: String(question.answer ?? '') }
+  );
+  const answerIsResultLabel = translateQuestionCard(
+    translations,
+    'result.answerIs',
+    '❌ Odpowiedź to {answer}',
+    { answer: String(question.answer ?? '') }
+  );
 
   const choicesDescriptionId = showResult
     ? `${questionDescriptionId} ${resultMessageId}`
@@ -217,13 +337,13 @@ export default function QuestionCard({
         aria-atomic='true'
         className='text-sm font-semibold [color:var(--kangur-page-muted-text)]'
       >
-        Pytanie {questionNumber} z {total}
+        {progressLabel}
       </div>
 
       <KangurProgressBar
         accent={timerAccent}
-        aria-label='Pozostały czas'
-        aria-valuetext={`${timeLeft} sekund pozostało`}
+        aria-label={timerAriaLabel}
+        aria-valuetext={timerValueText}
         aria-live='off'
         data-testid='question-card-timer-bar'
         size='lg'
@@ -248,7 +368,7 @@ export default function QuestionCard({
         {isClockQuestion ? (
           <div className='flex flex-col items-center gap-2'>
             <h3 id={questionHeadingId} className='text-xl font-bold [color:var(--kangur-page-text)]'>
-              Którą godzinę pokazuje zegar?
+              {clockTitle}
             </h3>
             <AnalogClockSmall
               ariaLabel={clockAriaLabel}
@@ -256,7 +376,7 @@ export default function QuestionCard({
               minutes={normalizedClockMinutes}
             />
             <div id={questionDescriptionId} className='text-sm [color:var(--kangur-page-muted-text)]'>
-              Wybierz odpowiedź, która pasuje do położenia wskazówek.
+              {clockDescription}
             </div>
           </div>
         ) : (
@@ -268,7 +388,7 @@ export default function QuestionCard({
               {question.question}
             </h3>
             <div id={questionDescriptionId} className='text-sm [color:var(--kangur-page-muted-text)]'>
-              Jaka jest odpowiedź?
+              {defaultDescription}
             </div>
           </>
         )}
@@ -280,7 +400,7 @@ export default function QuestionCard({
         className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'
         id={choicesGroupId}
         role='group'
-        aria-label='Odpowiedzi'
+        aria-label={choicesAriaLabel}
       >
         {question.choices.map((choice) => {
           let accent: KangurAccent = 'indigo';
@@ -330,15 +450,20 @@ export default function QuestionCard({
             <KangurAnswerChoiceCard
               accent={accent}
               aria-disabled={showResult}
-              aria-label={`Odpowiedź ${String(choice)}${
+              aria-label={`${translateQuestionCard(
+                translations,
+                'answerChoiceAriaLabel',
+                'Odpowiedź {choice}',
+                { choice: String(choice) }
+              )}${
                 showResult && resolvedServerResult
                   ? resolvedServerResult.correct && selected === choice
-                    ? ', poprawna'
+                    ? `, ${answerChoiceCorrectStatus}`
                     : resolvedServerResult.correct && selected !== choice
-                      ? ', nie wybrano'
+                      ? `, ${answerChoiceNotChosenStatus}`
                       : resolvedServerResult.correct === false && selected === choice
-                        ? ', niepoprawna'
-                        : ', nie wybrano'
+                        ? `, ${answerChoiceIncorrectStatus}`
+                        : `, ${answerChoiceNotChosenStatus}`
                   : ''
               }`}
               aria-pressed={selected === choice}
@@ -392,16 +517,16 @@ export default function QuestionCard({
             {isServerMode
               ? resolvedServerResult
                 ? resolvedServerResult.correct
-                  ? '🎉 Dobrze!'
+                  ? correctResultLabel
                   : resolvedServerResult.timedOut
-                    ? '⏰ Czas minął!'
-                    : '❌ Nie tym razem.'
-                : 'Sprawdzamy odpowiedź…'
+                    ? timedOutResultLabel
+                    : incorrectResultLabel
+                : checkingResultLabel
               : selected === question.answer
-                ? '🎉 Dobrze!'
+                ? correctResultLabel
                 : timeLeft <= 0
-                  ? `⏰ Czas minął! Odpowiedź: ${question.answer}`
-                  : `❌ Odpowiedź to ${question.answer}`}
+                  ? timedOutAnswerResultLabel
+                  : answerIsResultLabel}
           </motion.div>
         )}
       </AnimatePresence>

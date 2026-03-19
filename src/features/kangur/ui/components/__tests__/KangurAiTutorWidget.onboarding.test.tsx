@@ -182,11 +182,14 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/observability/client', () => ({
-  trackKangurClientEvent: mocks.trackKangurClientEventMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-}));
+vi.mock('@/features/kangur/observability/client', () => {
+  const mocks = globalThis.__kangurClientErrorMocks();
+  return {
+    trackKangurClientEvent: mocks.trackKangurClientEventMock,
+    withKangurClientError: mocks.withKangurClientError,
+    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+  };
+});
 
 let KangurAiTutorWidget: any;
 

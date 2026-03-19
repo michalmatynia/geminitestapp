@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-18'
+last_reviewed: '2026-03-19'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:kangur'
@@ -17,7 +17,7 @@ creation, release summaries, and AI agent prompts.
 
 ## Window
 
-This summary covers changes merged between 2026-03-05 and 2026-03-18 (inclusive).
+This summary covers changes merged between 2026-03-06 and 2026-03-19 (inclusive).
 Update this section whenever the reporting window changes.
 
 ## Refresh cadence
@@ -31,7 +31,62 @@ npm run docs:kangur:recent-features:refresh
 Then review and update the narrative sections above using the auto inventory
 output as input.
 
-## Most recent feature addition: LinkedIn social post pipeline (2026-03-17)
+## Most recent feature addition: multilingual navigation polish (2026-03-19)
+
+Kangur navigation now has a real language dropdown, cleaner locale switching,
+and more stable cross-locale transitions across desktop and mobile shells.
+
+Highlights:
+
+- The language switcher moved from a cycle button to a compact dropdown with all
+  enabled locales.
+- Dropdown styling now derives from the active Kangur theme, so hover/selected
+  states stay readable in daily and nightly appearances.
+- Mobile navigation places the language selector beside the theme selector at
+  the top of the menu.
+- Locale changes now hand off to the route skeleton immediately, including
+  nav-level micro skeletons, to avoid visible rerender flashes during language
+  switches.
+- Navigation labels and related accessibility copy now resolve through
+  `next-intl` instead of hardcoded Polish strings.
+
+Key paths:
+
+- Language switcher: `src/features/kangur/ui/components/KangurLanguageSwitcher.tsx`
+- Primary nav shell: `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx`
+- Route transition state: `src/features/kangur/ui/context/KangurRouteTransitionContext.tsx`
+- Transition overlay: `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx`
+
+## Localized SVG section wordmarks across the app (2026-03-19)
+
+Top-level Kangur section headings now use locale-aware SVG wordmarks instead of
+mixed hardcoded Polish art or plain text fallbacks.
+
+Highlights:
+
+- Lessons, `Let's play`, Kangur setup, and Training headings now render
+  translated SVG labels with the same font sizing and visual contract as the
+  original Polish wordmarks.
+- Tests, Parent Dashboard, and the Duels lobby now also use dedicated SVG
+  section labels, keeping the same curved-wordmark style across more app
+  surfaces.
+- German and English labels no longer fall back to English or Polish art when a
+  translated locale label is available.
+- The shared text-wordmark base keeps non-Polish section headings visually
+  consistent without stretching translated labels.
+
+Key paths:
+
+- Shared SVG text base: `src/features/kangur/ui/components/KangurTextWordmark.tsx`
+- Lessons wordmark: `src/features/kangur/ui/components/KangurLessonsWordmark.tsx`
+- `Let's play` wordmark: `src/features/kangur/ui/components/KangurGrajmyWordmark.tsx`
+- Kangur setup wordmark: `src/features/kangur/ui/components/KangurKangurWordmark.tsx`
+- Training wordmark: `src/features/kangur/ui/components/KangurTreningWordmark.tsx`
+- Tests wordmark: `src/features/kangur/ui/components/KangurTestsWordmark.tsx`
+- Parent dashboard wordmark: `src/features/kangur/ui/components/KangurParentDashboardWordmark.tsx`
+- Duels wordmark: `src/features/kangur/ui/components/KangurDuelsWordmark.tsx`
+
+## LinkedIn social post pipeline (2026-03-17)
 
 Kangur now ships a full LinkedIn post workflow in the admin UI, including
 bilingual generation, visuals, scheduling, doc updates, and publish automation
@@ -200,30 +255,30 @@ into AI prompts.
 ## Change inventory (auto)
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_START -->
-Generated at 2026-03-17T19:43:32.490Z UTC.
+Generated at 2026-03-19T20:12:35.523Z UTC.
 
-Window (UTC): 2026-03-04 to 2026-03-17.
-Commits scanned: 148.
-Files touched: 1335.
+Window (UTC): 2026-03-06 to 2026-03-19.
+Commits scanned: 151.
+Files touched: 1531.
 
 Top paths:
-- Top path: `src/features/kangur/ui` (668 files)
-- Top path: `src/features/kangur/admin` (150 files)
-- Top path: `src/features/kangur/server` (74 files)
-- Top path: `src/features/kangur/services` (59 files)
-- Top path: `src/features/kangur/legacy` (42 files)
+- Top path: `src/features/kangur/ui` (836 files)
+- Top path: `src/features/kangur/admin` (174 files)
+- Top path: `src/features/kangur/server` (80 files)
+- Top path: `src/features/kangur/services` (66 files)
 - Top path: `src/features/kangur/shared` (35 files)
 - Top path: `src/app/api/kangur/ai-tutor` (33 files)
 - Top path: `src/app/api/kangur/auth` (32 files)
+- Top path: `src/features/kangur/cms-builder` (24 files)
 
 Latest commits:
-- Commit: `8de07d2c2` (2026-03-17) SD
-- Commit: `c6e79a16d` (2026-03-17) SD
-- Commit: `20328a782` (2026-03-17) DS
-- Commit: `61dc05260` (2026-03-17) DSD
-- Commit: `96f6faaba` (2026-03-17) DS
-- Commit: `e25635022` (2026-03-17) SD
-- Commit: `273c51b66` (2026-03-17) SDDS
-- Commit: `c03399b46` (2026-03-17) DS
+- Commit: `c9ccdd15f` (2026-03-19) DS
+- Commit: `a5ec75e36` (2026-03-19) S
+- Commit: `295c8eb41` (2026-03-19) FSD
+- Commit: `1927e0ddc` (2026-03-19) SD
+- Commit: `f25c8627f` (2026-03-18) SD
+- Commit: `63ef41b70` (2026-03-18) SDDS
+- Commit: `b5e3f22bf` (2026-03-18) SDDS
+- Commit: `e9db9ad08` (2026-03-18) SD
 
 <!-- AUTO-GENERATED:RECENT_FEATURES_END -->

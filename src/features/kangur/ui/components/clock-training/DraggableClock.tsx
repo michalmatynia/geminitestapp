@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   KangurAccentDot,
   KangurButton,
@@ -28,6 +29,7 @@ import {
   type Hand,
   type MinuteSnapMode,
 } from '../clock-training-utils';
+import { translateClockTrainingWithFallback } from '../clock-training-i18n';
 
 export type DraggableClockProps = {
   onSubmit: (hours: number, minutes: number) => void;
@@ -56,6 +58,7 @@ export function DraggableClock({
   submitNextStep = null,
   submitLocked = false,
 }: DraggableClockProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const [cycleMinutes, setCycleMinutes] = useState(0);
   const [minuteSnapMode, setMinuteSnapMode] = useState<MinuteSnapMode>('5min');
   const [activeHand, setActiveHand] = useState<Hand | null>(null);
@@ -182,10 +185,22 @@ export function DraggableClock({
   };
   const submitButtonLabel =
     submitFeedback === 'correct'
-      ? 'Dobrze! ✅'
+      ? translateClockTrainingWithFallback(
+          translations,
+          'submit.correct',
+          'Dobrze! ✅'
+        )
       : submitFeedback === 'wrong'
-        ? 'Błąd! ❌'
-        : 'Sprawdź! ✅';
+        ? translateClockTrainingWithFallback(
+            translations,
+            'submit.wrong',
+            'Błąd! ❌'
+          )
+        : translateClockTrainingWithFallback(
+            translations,
+            'submit.idle',
+            'Sprawdź! ✅'
+          );
 
   return (
     <div className={`flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -214,7 +229,11 @@ export function DraggableClock({
             size='sm'
             variant={minuteSnapMode === '5min' ? 'segmentActive' : 'segment'}
           >
-            Skok co 5 min
+            {translateClockTrainingWithFallback(
+              translations,
+              'snapMode.step5',
+              'Skok co 5 min'
+            )}
           </KangurButton>
           <KangurButton
             type='button'
@@ -224,7 +243,11 @@ export function DraggableClock({
             size='sm'
             variant={minuteSnapMode === '1min' ? 'segmentActive' : 'segment'}
           >
-            Dokładnie co 1 min
+            {translateClockTrainingWithFallback(
+              translations,
+              'snapMode.step1',
+              'Dokładnie co 1 min'
+            )}
           </KangurButton>
         </div>
       ) : null}
@@ -232,21 +255,49 @@ export function DraggableClock({
         const interactionHint =
           submitFeedback === 'correct'
             ? submitNextStep === 'summary'
-              ? 'Dobra odpowiedź. Za chwilę podsumowanie.'
+              ? translateClockTrainingWithFallback(
+                  translations,
+                  'interactionHint.correct.summary',
+                  'Dobra odpowiedź. Za chwilę podsumowanie.'
+                )
               : submitNextStep === 'next-stage'
-                ? 'Dobra odpowiedź. Za chwilę kolejny etap.'
-                : 'Dobra odpowiedź. Za chwilę następne zadanie.'
+                ? translateClockTrainingWithFallback(
+                    translations,
+                    'interactionHint.correct.nextStage',
+                    'Dobra odpowiedź. Za chwilę kolejny etap.'
+                  )
+                : translateClockTrainingWithFallback(
+                    translations,
+                    'interactionHint.correct.nextTask',
+                    'Dobra odpowiedź. Za chwilę następne zadanie.'
+                  )
             : submitFeedback === 'wrong'
               ? submitNextStep === 'summary'
-                ? 'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
+                ? translateClockTrainingWithFallback(
+                    translations,
+                    'interactionHint.wrong.summary',
+                    'Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.'
+                  )
                 : submitNextStep === 'next-stage'
-                  ? 'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
-                  : 'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
+                  ? translateClockTrainingWithFallback(
+                      translations,
+                      'interactionHint.wrong.nextStage',
+                      'Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.'
+                    )
+                  : translateClockTrainingWithFallback(
+                      translations,
+                      'interactionHint.wrong.nextTask',
+                      'Sprawdziliśmy odpowiedź. Za chwilę następne zadanie.'
+                    )
               : section === 'minutes'
                 ? null
                 : section === 'hours'
                   ? null
-                  : 'Wskazówka godzin przesuwa się płynnie razem z minutami.';
+                  : translateClockTrainingWithFallback(
+                      translations,
+                      'interactionHint.idle.mixed',
+                      'Wskazówka godzin przesuwa się płynnie razem z minutami.'
+                    );
 
         if (!interactionHint) {
           return null;
@@ -430,7 +481,11 @@ export function DraggableClock({
             data-testid='clock-hour-legend-dot'
             size='md'
           />
-          Godziny (krótka)
+          {translateClockTrainingWithFallback(
+            translations,
+            'legend.hourHand',
+            'Godziny (krótka)'
+          )}
         </span>
         <span className='flex items-center gap-1'>
           <KangurAccentDot
@@ -439,7 +494,11 @@ export function DraggableClock({
             data-testid='clock-minute-legend-dot'
             size='md'
           />
-          Minuty (długa)
+          {translateClockTrainingWithFallback(
+            translations,
+            'legend.minuteHand',
+            'Minuty (długa)'
+          )}
         </span>
       </div>
 

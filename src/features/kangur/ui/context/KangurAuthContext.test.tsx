@@ -81,7 +81,13 @@ const AUTHENTICATED_USER = {
 };
 
 const AuthProbe = (): React.JSX.Element => {
-  const { canAccessParentAssignments, isLoadingAuth, logout, navigateToLogin } = useKangurAuth();
+  const {
+    canAccessParentAssignments,
+    isLoadingAuth,
+    isLoggingOut,
+    logout,
+    navigateToLogin,
+  } = useKangurAuth();
 
   return (
     <div>
@@ -98,6 +104,7 @@ const AuthProbe = (): React.JSX.Element => {
         Logout
       </button>
       <div data-testid='kangur-auth-loading'>{String(isLoadingAuth)}</div>
+      <div data-testid='kangur-auth-logout-pending'>{String(Boolean(isLoggingOut))}</div>
       <div data-testid='kangur-parent-assignment-access'>
         {String(canAccessParentAssignments)}
       </div>
@@ -249,6 +256,48 @@ it('exposes assignment access only when auth resolves an active learner session'
 
     expect(logoutMock).toHaveBeenCalledTimes(1);
     expect(meMock).toHaveBeenCalledTimes(2);
+    expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores repeated logout clicks while the logout request is still in flight', async () => {
+    const user = userEvent.setup();
+    let resolveLogout: (() => void) | null = null;
+
+    meMock.mockResolvedValueOnce(AUTHENTICATED_USER);
+    meMock.mockRejectedValueOnce({ status: 401 });
+    logoutMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveLogout = resolve;
+        })
+    );
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+      expect(screen.getByTestId('kangur-auth-logout-pending')).toHaveTextContent('false');
+    });
+
+    const logoutButton = screen.getByRole('button', { name: 'Logout' });
+    await user.click(logoutButton);
+    await user.click(logoutButton);
+
+    expect(logoutMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('kangur-auth-logout-pending')).toHaveTextContent('true');
+
+    resolveLogout?.();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-auth-logout-pending')).toHaveTextContent('false');
+    });
+
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -116,6 +116,9 @@ describe('createKangurSocialImageAddonsBatch', () => {
     expect(result.addons).toHaveLength(2);
     expect(result.failures).toHaveLength(0);
     expect(result.runId).toBe('run-123');
+    expect(result.requestedPresetCount).toBe(2);
+    expect(result.usedPresetCount).toBe(2);
+    expect(result.usedPresetIds).toEqual(['game', 'lessons']);
   });
 
   it('filters presets by presetIds when provided', async () => {
@@ -130,6 +133,36 @@ describe('createKangurSocialImageAddonsBatch', () => {
 
     expect(result.addons).toHaveLength(1);
     expect(result.addons[0]?.presetId).toBe('game');
+    expect(result.requestedPresetCount).toBe(1);
+    expect(result.usedPresetCount).toBe(1);
+    expect(result.usedPresetIds).toEqual(['game']);
+  });
+
+  it('limits captures to the configured number of selected presets', async () => {
+    mocks.enqueuePlaywrightNodeRunMock.mockResolvedValue(
+      makeCompletedRun(['game'])
+    );
+
+    const result = await createKangurSocialImageAddonsBatch({
+      baseUrl: 'https://kangur.app',
+      presetLimit: 1,
+    });
+
+    expect(result.requestedPresetCount).toBe(2);
+    expect(result.usedPresetCount).toBe(1);
+    expect(result.usedPresetIds).toEqual(['game']);
+    expect(result.addons).toHaveLength(1);
+    expect(mocks.enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: {
+            captures: [
+              expect.objectContaining({ id: 'game' }),
+            ],
+          },
+        }),
+      })
+    );
   });
 
   it('throws when no presets match the provided ids', async () => {

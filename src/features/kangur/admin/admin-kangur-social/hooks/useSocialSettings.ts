@@ -65,6 +65,9 @@ export function useSocialSettings() {
   const [batchCapturePresetIds, setBatchCapturePresetIds] = useState<string[]>(
     () => persistedSocialSettings.batchCapturePresetIds
   );
+  const [batchCapturePresetLimit, setBatchCapturePresetLimit] = useState<number | null>(
+    persistedSocialSettings.batchCapturePresetLimit
+  );
   const hasManualBatchBaseUrlRef = useRef(false);
   const persistedRef = useRef(persistedSocialSettings);
 
@@ -93,6 +96,11 @@ export function useSocialSettings() {
     () => normalizePresetIds(batchCapturePresetIds),
     [batchCapturePresetIds, normalizePresetIds]
   );
+  const normalizedBatchCapturePresetLimit = useMemo(() => {
+    if (batchCapturePresetLimit == null) return null;
+    const normalized = Math.floor(batchCapturePresetLimit);
+    return normalized > 0 ? normalized : null;
+  }, [batchCapturePresetLimit]);
 
   const arePresetSetsEqual = useCallback((left: string[], right: string[]): boolean => {
     if (left.length !== right.length) return false;
@@ -103,8 +111,11 @@ export function useSocialSettings() {
   const normalizedProjectUrl = projectUrl.trim() || null;
 
   const isSettingsDirty =
+    persistedSocialSettings.brainModelId !== brainModelId ||
+    persistedSocialSettings.visionModelId !== visionModelId ||
     persistedSocialSettings.linkedinConnectionId !== linkedinConnectionId ||
     persistedSocialSettings.batchCaptureBaseUrl !== normalizedBatchCaptureBaseUrl ||
+    persistedSocialSettings.batchCapturePresetLimit !== normalizedBatchCapturePresetLimit ||
     persistedSocialSettings.projectUrl !== normalizedProjectUrl ||
     !arePresetSetsEqual(
       persistedSocialSettings.batchCapturePresetIds,
@@ -114,9 +125,12 @@ export function useSocialSettings() {
   const handleSaveSettings = useCallback(async (): Promise<void> => {
     if (updateSetting.isPending) return;
     const payload = {
+      brainModelId: brainModelId ?? null,
+      visionModelId: visionModelId ?? null,
       linkedinConnectionId: linkedinConnectionId ?? null,
       batchCaptureBaseUrl: normalizedBatchCaptureBaseUrl,
       batchCapturePresetIds: normalizedBatchCapturePresetIds,
+      batchCapturePresetLimit: normalizedBatchCapturePresetLimit,
       projectUrl: normalizedProjectUrl,
     };
     try {
@@ -144,14 +158,17 @@ export function useSocialSettings() {
       toast('Failed to save social settings.', { variant: 'error' });
     }
   }, [
+    brainModelId,
     linkedinConnectionId,
     normalizedBatchCaptureBaseUrl,
+    normalizedBatchCapturePresetLimit,
     normalizedBatchCapturePresetIds,
     normalizedProjectUrl,
     queryClient,
     settingsStore,
     toast,
     updateSetting,
+    visionModelId,
   ]);
 
   const handleBrainModelChange = (value: string): void => {
@@ -173,6 +190,20 @@ export function useSocialSettings() {
         typeof value === 'function' ? value(prev) : value
       );
     }, []);
+
+  const handleBatchCapturePresetLimitChange = useCallback((value: string): void => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setBatchCapturePresetLimit(null);
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) {
+      return;
+    }
+    const normalized = Math.floor(parsed);
+    setBatchCapturePresetLimit(normalized > 0 ? normalized : null);
+  }, []);
 
   const handleToggleCapturePreset = (presetId: string): void => {
     setBatchCapturePresetIds((prev) =>
@@ -204,6 +235,10 @@ export function useSocialSettings() {
   useEffect(() => {
     setBatchCapturePresetIds(persistedSocialSettings.batchCapturePresetIds);
   }, [persistedSocialSettings.batchCapturePresetIds]);
+
+  useEffect(() => {
+    setBatchCapturePresetLimit(persistedSocialSettings.batchCapturePresetLimit);
+  }, [persistedSocialSettings.batchCapturePresetLimit]);
 
   useEffect(() => {
     const prev = persistedRef.current;
@@ -252,6 +287,8 @@ export function useSocialSettings() {
     setBatchCaptureBaseUrl: handleBatchCaptureBaseUrlChange,
     batchCapturePresetIds,
     setBatchCapturePresetIds,
+    batchCapturePresetLimit: normalizedBatchCapturePresetLimit,
+    setBatchCapturePresetLimit: handleBatchCapturePresetLimitChange,
     isSettingsDirty,
     isSavingSettings: updateSetting.isPending,
     handleSaveSettings,

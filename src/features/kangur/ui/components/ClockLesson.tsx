@@ -1,7 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { KangurConfirmModal } from '@/features/kangur/ui/components/KangurConfirmModal';
@@ -25,13 +26,15 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import { ClockTrainingSlide } from './ClockLesson.visuals';
 import ClockTrainingGame from './ClockTrainingGame';
 import {
-  COMBINED_SLIDES,
-  HUB_SECTIONS,
-  HOURS_SLIDES,
-  MINUTES_SLIDES,
-  SLIDES,
+  buildClockCombinedSlides,
+  buildClockHoursSlides,
+  buildClockHubSections,
+  buildClockMinutesSlides,
+  CLOCK_COMBINED_SLIDES_COPY_PL,
+  CLOCK_HOURS_SLIDES_COPY_PL,
+  CLOCK_LESSON_COPY_PL,
+  CLOCK_MINUTES_SLIDES_COPY_PL,
   TRAINING_PANEL_TASKS,
-  TRAINING_SECTIONS,
   type ClockChallengeMedal,
   type ClockHubId,
   type ClockHubSection,
@@ -41,36 +44,97 @@ import {
   type SectionId,
   type TrainingCardId,
 } from './ClockLesson.data';
+import type { ClockLessonTranslate, WidenLessonCopy } from './ClockLesson.i18n';
+import { translateClockLesson } from './ClockLesson.i18n';
 import type { ClockChallengeResult, ClockTrainingSectionId } from './clock-training-utils';
 
 export { HUB_SECTIONS, LESSON_SECTIONS, SLIDES } from './ClockLesson.data';
 
+const localizeClockCopy = <T,>(
+  source: T,
+  prefix: string,
+  translate: ClockLessonTranslate
+): WidenLessonCopy<T> => {
+  if (typeof source === 'string') {
+    if (/\{\w+\}/.test(source)) {
+      return source as WidenLessonCopy<T>;
+    }
+    return translateClockLesson(translate, prefix, source) as WidenLessonCopy<T>;
+  }
+
+  if (source === null || typeof source !== 'object') {
+    return source as WidenLessonCopy<T>;
+  }
+
+  if (Array.isArray(source)) {
+    return source.map((item, index) =>
+      localizeClockCopy(item, `${prefix}.${index}`, translate)
+    ) as WidenLessonCopy<T>;
+  }
+
+  return Object.fromEntries(
+    Object.entries(source).map(([key, value]) => [
+      key,
+      localizeClockCopy(value, prefix ? `${prefix}.${key}` : key, translate),
+    ])
+  ) as WidenLessonCopy<T>;
+};
+
 export default function ClockLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.clock');
   const [sectionProgressSnapshot, setSectionProgressSnapshot] = useState<
     Partial<Record<SectionId, { viewedCount: number; totalCount: number }>>
   >({});
-  const runtimeSlides = useRef<Record<SectionId, LessonSlide[]> | null>(null);
-
-  if (runtimeSlides.current === null) {
-    runtimeSlides.current = {
+  const copy = useMemo(
+    () => localizeClockCopy(CLOCK_LESSON_COPY_PL, '', translations),
+    [translations]
+  );
+  const localizedHoursCopy = useMemo(
+    () => localizeClockCopy(CLOCK_HOURS_SLIDES_COPY_PL, 'slides.hours', translations),
+    [translations]
+  );
+  const localizedMinutesCopy = useMemo(
+    () => localizeClockCopy(CLOCK_MINUTES_SLIDES_COPY_PL, 'slides.minutes', translations),
+    [translations]
+  );
+  const localizedCombinedCopy = useMemo(
+    () => localizeClockCopy(CLOCK_COMBINED_SLIDES_COPY_PL, 'slides.combined', translations),
+    [translations]
+  );
+  const hoursSlides = useMemo(() => buildClockHoursSlides(localizedHoursCopy), [localizedHoursCopy]);
+  const minutesSlides = useMemo(
+    () => buildClockMinutesSlides(localizedMinutesCopy),
+    [localizedMinutesCopy]
+  );
+  const combinedSlides = useMemo(
+    () => buildClockCombinedSlides(localizedCombinedCopy),
+    [localizedCombinedCopy]
+  );
+  const localizedHubSections = useMemo(() => buildClockHubSections(copy), [copy]);
+  const localizedTrainingSections = useMemo(
+    () =>
+      localizedHubSections.filter(
+        (section): section is ClockHubSection & { isGame: true } => section.isGame === true
+      ),
+    [localizedHubSections]
+  );
+  const runtimeSlides = useMemo<Record<SectionId, LessonSlide[]>>(
+    () => ({
       hours: [
-        ...HOURS_SLIDES,
+        ...hoursSlides,
         {
-          title: 'Ćwiczenie: Godziny',
-          tts: 'Teraz przechodzisz do praktyki pełnych godzin. Ustawiaj krótką wskazówkę tak jak w pierwszym panelu ćwiczenia godzin.',
+          title: copy.trainingSlides.hours.title,
+          tts: copy.trainingSlides.hours.tts,
           content: (
-            <ClockTrainingSlide
-              section='hours'
-              practiceTasks={TRAINING_PANEL_TASKS.hours.learn}
-            />
+            <ClockTrainingSlide section='hours' practiceTasks={TRAINING_PANEL_TASKS.hours.learn} />
           ),
         },
       ],
       minutes: [
-        ...MINUTES_SLIDES,
+        ...minutesSlides,
         {
-          title: 'Ćwiczenie: Minuty',
-          tts: 'Teraz przechodzisz do praktyki minut. Ustawiaj długą wskazówkę tak jak w pierwszym panelu ćwiczenia minut.',
+          title: copy.trainingSlides.minutes.title,
+          tts: copy.trainingSlides.minutes.tts,
           content: (
             <ClockTrainingSlide
               section='minutes'
@@ -80,10 +144,10 @@ export default function ClockLesson(): React.JSX.Element {
         },
       ],
       combined: [
-        ...COMBINED_SLIDES,
+        ...combinedSlides,
         {
-          title: 'Ćwiczenie: Pełny czas',
-          tts: 'Teraz przechodzisz do praktyki pełnego czasu. Ustawiaj obie wskazówki tak jak w pierwszym panelu ćwiczenia pełnego czasu.',
+          title: copy.trainingSlides.combined.title,
+          tts: copy.trainingSlides.combined.tts,
           content: (
             <ClockTrainingSlide
               section='combined'
@@ -92,8 +156,9 @@ export default function ClockLesson(): React.JSX.Element {
           ),
         },
       ],
-    };
-  }
+    }),
+    [combinedSlides, copy, hoursSlides, minutesSlides]
+  );
 
   const lessonCompletionAwardedRef = useRef(false);
   const isHoursComplete =
@@ -162,9 +227,9 @@ export default function ClockLesson(): React.JSX.Element {
         if (!section.isGame && section.id === 'combined' && !isCombinedUnlocked) {
           return {
             ...section,
-            description: 'Odblokuj po ukończeniu Godzin i Minut.',
+            description: copy.hubSections.combinedLockedDescription,
             locked: true,
-            lockedLabel: 'Zablokowane',
+            lockedLabel: copy.hubSections.lockedLabel,
           };
         }
 
@@ -201,7 +266,7 @@ export default function ClockLesson(): React.JSX.Element {
         };
       });
     },
-    [completedTrainingPanelsBySection, isCombinedUnlocked]
+    [completedTrainingPanelsBySection, copy, isCombinedUnlocked]
   );
 
   const buildTrainingConfig = (
@@ -209,7 +274,8 @@ export default function ClockLesson(): React.JSX.Element {
     hubId: TrainingCardId
   ) => {
     const currentTrainingSection =
-      TRAINING_SECTIONS.find((section) => section.id === hubId) ?? TRAINING_SECTIONS[0];
+      localizedTrainingSections.find((section) => section.id === hubId) ??
+      localizedTrainingSections[0];
     if (!currentTrainingSection) {
       return null;
     }
@@ -304,7 +370,7 @@ export default function ClockLesson(): React.JSX.Element {
         activeClassName: 'bg-indigo-500',
         completedClassName: 'bg-indigo-300',
         id: 'pick_one',
-        label: 'zadanie',
+        label: copy.training.panelLabel,
       },
     ];
     const currentTrainingPanelIndex = trainingPanels.findIndex(
@@ -335,7 +401,12 @@ export default function ClockLesson(): React.JSX.Element {
 
                 requestTrainingExitAction({ kind: 'panel', panel: panel.id });
               }}
-              aria-label={`Przejdź do panelu ${panel.label}`}
+              aria-label={translateClockLesson(
+                translations,
+                'training.goToPanel',
+                CLOCK_LESSON_COPY_PL.training.goToPanel,
+                { label: panel.label }
+              )}
               aria-current={isActive ? 'step' : undefined}
               className={cn(
                 KANGUR_STEP_PILL_CLASSNAME,
@@ -364,12 +435,12 @@ export default function ClockLesson(): React.JSX.Element {
                   panel: trainingPanels[currentTrainingPanelIndex - 1]!.id,
                 })
               }
-              aria-label='Poprzedni panel'
+              aria-label={copy.training.previousPanel}
               className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
               data-testid='clock-lesson-training-prev-button'
               size='sm'
               type='button'
-              title='Poprzedni panel'
+              title={copy.training.previousPanel}
               variant='surface'
             >
               <ChevronLeft aria-hidden='true' className='h-4 w-4 flex-shrink-0' />
@@ -387,12 +458,12 @@ export default function ClockLesson(): React.JSX.Element {
                   panel: trainingPanels[currentTrainingPanelIndex + 1]!.id,
                 })
               }
-              aria-label='Następny panel'
+              aria-label={copy.training.nextPanel}
               className='w-full justify-center px-5 shadow-sm [border-color:var(--kangur-soft-card-border)] sm:min-w-[72px] sm:w-auto'
               data-testid='clock-lesson-training-next-button'
               size='sm'
               type='button'
-              title='Następny panel'
+              title={copy.training.nextPanel}
               variant='surface'
             >
               <ChevronRight aria-hidden='true' className='h-4 w-4 flex-shrink-0' />
@@ -432,12 +503,12 @@ export default function ClockLesson(): React.JSX.Element {
         key={`${trainingSectionId}-${currentTrainingPanel}`}
         completionPrimaryActionLabel={
           currentTrainingPanel === 'challenge'
-            ? 'Zakończ lekcję ✅'
+            ? copy.training.finishLesson
             : nextTrainingPanel === 'challenge'
-              ? 'Otwórz wyzwanie'
+              ? copy.training.openChallenge
               : nextTrainingPanel
-                ? 'Następne zadanie'
-                : 'Wróć do tematów'
+                ? copy.training.nextTask
+                : copy.training.backToTopics
         }
         enableAdaptiveRetry={false}
         hideModeSwitch
@@ -485,10 +556,10 @@ export default function ClockLesson(): React.JSX.Element {
         <>
           {trainingBody(onBack)}
           <KangurConfirmModal
-            cancelText='Zostań'
-            confirmText='Opuść wyzwanie'
+            cancelText={copy.training.stay}
+            confirmText={copy.training.leaveChallenge}
             isOpen={pendingTrainingExitAction !== null}
-            message='Jeśli opuścisz Tryb Wyzwanie teraz, to wyzwanie zostanie niezaliczone.'
+            message={copy.training.leaveChallengeMessage}
             onClose={() => setPendingTrainingExitAction(null)}
             onConfirm={() => {
               if (!pendingTrainingExitAction) {
@@ -499,7 +570,7 @@ export default function ClockLesson(): React.JSX.Element {
               setPendingTrainingExitAction(null);
               executeTrainingExitAction(action, onBack);
             }}
-            title='Ouścić wyzwanie?'
+            title={copy.training.leaveChallengeTitle}
           />
         </>
       ),
@@ -532,9 +603,9 @@ export default function ClockLesson(): React.JSX.Element {
       progressMode='panel'
       lessonId='clock'
       lessonEmoji='🕐'
-      lessonTitle='Nauka zegara'
-      sections={HUB_SECTIONS}
-      slides={runtimeSlides.current ?? SLIDES}
+      lessonTitle={copy.lessonTitle}
+      sections={localizedHubSections}
+      slides={runtimeSlides}
       gradientClass='kangur-gradient-accent-indigo-reverse'
       progressDotClassName='bg-indigo-200'
       dotActiveClass='bg-indigo-500'

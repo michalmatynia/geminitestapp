@@ -83,6 +83,9 @@ const parseDisplayedTime = (value: string): { hours: number; minutes: number } =
   return { hours, minutes };
 };
 
+const getByExactTextContent = (expected: string[]): HTMLElement =>
+  screen.getByText((content) => expected.includes(content));
+
 const hourToAngle = (hours: number): number => (hours % 12) * 30;
 const minuteToAngle = (minutes: number): number => minutes * 6;
 
@@ -697,8 +700,13 @@ describe('ClockTrainingGame drag interactions', () => {
     });
 
     expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
-    expect(screen.getByText('shared.scoreLabel: 0/1')).toBeInTheDocument();
-    expect(screen.getByText('clockTraining.summary.hours.retry')).toHaveClass(
+    expect(getByExactTextContent(['shared.scoreLabel: 0/1', 'Wynik: 0/1'])).toBeInTheDocument();
+    expect(
+      getByExactTextContent([
+        'clockTraining.summary.hours.retry',
+        'Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę.',
+      ])
+    ).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' })).toBeInTheDocument();

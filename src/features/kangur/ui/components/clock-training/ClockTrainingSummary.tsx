@@ -125,7 +125,7 @@ export function ClockTrainingSummary({
           className='px-4 py-2 text-sm font-bold'
           data-testid='clock-challenge-medal'
         >
-          {getClockChallengeMedalLabel(challengeMedal)}
+          {getClockChallengeMedalLabel(challengeMedal, translations)}
         </KangurStatusChip>
       ) : null}
       {gameMode === 'challenge' ? (

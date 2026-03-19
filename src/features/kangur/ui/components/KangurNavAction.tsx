@@ -11,6 +11,7 @@ export type KangurNavActionProps = {
   active?: boolean;
   ariaLabel?: string;
   className?: string;
+  disabled?: boolean;
   docId?: string;
   elementRef?: Ref<HTMLButtonElement>;
   href?: string;
@@ -32,6 +33,7 @@ export function KangurNavAction({
   active = false,
   ariaLabel,
   className,
+  disabled = false,
   docId,
   elementRef,
   href,
@@ -59,6 +61,7 @@ export function KangurNavAction({
         data-nav-state={transitionActive ? 'transitioning' : 'idle'}
         data-testid={testId}
         onClick={onClick}
+        disabled={disabled}
         size={size}
         title={title}
         variant={resolvedVariant}
@@ -83,6 +86,7 @@ export function KangurNavAction({
       data-doc-id={docId}
       data-nav-state={transitionActive ? 'transitioning' : 'idle'}
       data-testid={testId}
+      disabled={disabled}
       onClick={onClick}
       ref={elementRef}
       size={size}

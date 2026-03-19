@@ -32,7 +32,7 @@ const mocks = vi.hoisted(() => {
   const activateSelectionGlowMock = vi.fn().mockReturnValue(false);
   const clearSelectionMock = vi.fn();
   const clearSelectionGlowMock = vi.fn();
-  const trackKangurClientEventMock = vi.fn();
+  const trackKangurClientEventMock = globalThis.__kangurClientErrorMocks().trackKangurClientEventMock;
   const useKangurPageContentEntryMock = vi.fn();
   const speechSynthesisMock = {
     speak: vi.fn(),
@@ -178,11 +178,14 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/observability/client', () => ({
-  trackKangurClientEvent: mocks.trackKangurClientEventMock,
-  withKangurClientError,
-  withKangurClientErrorSync,
-}));
+vi.mock('@/features/kangur/observability/client', () => {
+  const mocks = globalThis.__kangurClientErrorMocks();
+  return {
+    trackKangurClientEvent: mocks.trackKangurClientEventMock,
+    withKangurClientError: mocks.withKangurClientError,
+    withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+  };
+});
 
 let KangurAiTutorWidget: any;
 

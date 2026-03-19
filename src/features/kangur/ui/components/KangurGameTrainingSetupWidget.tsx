@@ -10,9 +10,11 @@ import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTre
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
 import { translateRecommendationWithFallback } from '@/features/kangur/ui/services/recommendation-i18n';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
   const gamePageTranslations = useTranslations('KangurGamePage');
   const recommendationTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
   const { activePracticeAssignment, basePath, handleHome, handleStartTraining, progress, screen } =
@@ -24,6 +26,16 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
         translate: recommendationTranslations,
       }),
     [locale, progress, recommendationTranslations]
+  );
+  const trainingSetupTitle = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'screens.training.label',
+    'Trening mieszany'
+  );
+  const trainingWordmarkLabel = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'screens.training.wordmarkLabel',
+    normalizedLocale === 'pl' ? 'Trening' : 'Training'
   );
 
   if (screen !== 'training') {
@@ -52,16 +64,14 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
       onBack={handleHome}
       progress={progress}
       testId='kangur-game-training-top-section'
-      title={translateRecommendationWithFallback(
-        gamePageTranslations,
-        'screens.training.label',
-        'Trening mieszany'
-      )}
+      title={trainingSetupTitle}
       visualTitle={
         <KangurTreningWordmark
           className='mx-auto'
           data-testid='kangur-training-heading-art'
           idPrefix='kangur-game-training-heading'
+          label={trainingWordmarkLabel}
+          locale={locale}
         />
       }
     >

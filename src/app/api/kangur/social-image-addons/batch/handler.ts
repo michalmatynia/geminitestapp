@@ -11,6 +11,7 @@ import { forbiddenError } from '@/shared/errors/app-error';
 const bodySchema = z.object({
   baseUrl: z.string().trim().url().optional(),
   presetIds: z.array(z.string().trim().min(1)).optional(),
+  presetLimit: z.number().int().positive().nullable().optional(),
 });
 
 export async function postKangurSocialImageAddonsBatchHandler(
@@ -32,6 +33,7 @@ export async function postKangurSocialImageAddonsBatchHandler(
     const result = await createKangurSocialImageAddonsBatch({
       baseUrl,
       presetIds: parsed.presetIds ?? null,
+      presetLimit: parsed.presetLimit ?? null,
       createdBy: actor.actorId,
       forwardCookies: requestCookies || null,
     });

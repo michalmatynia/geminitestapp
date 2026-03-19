@@ -116,8 +116,8 @@ const PAGE_ACCESS_BOT_OPTIONS: SelectSimpleOption[] = [
 ];
 
 const PAGE_ACCESS_FILTER_DEFAULTS = {
-  range: '24h' as AnalyticsRange,
-  scope: 'public' as AnalyticsScope | 'all',
+  range: '7d' as AnalyticsRange,
+  scope: 'all' as AnalyticsScope | 'all',
   country: '',
   referrerHost: '',
   browser: '',
@@ -230,8 +230,8 @@ export function SystemLogsContent(): React.JSX.Element {
   const [connectionsFiltersOpen, setConnectionsFiltersOpen] = React.useState(false);
   const [connectionsSearch, setConnectionsSearch] = React.useState('');
   const [localConnectionsSearch, setLocalConnectionsSearch] = React.useState('');
-  const [connectionsRange, setConnectionsRange] = React.useState<AnalyticsRange>('24h');
-  const [connectionsScope, setConnectionsScope] = React.useState<AnalyticsScope | 'all'>('public');
+  const [connectionsRange, setConnectionsRange] = React.useState<AnalyticsRange>('7d');
+  const [connectionsScope, setConnectionsScope] = React.useState<AnalyticsScope | 'all'>('all');
   const [connectionsCountry, setConnectionsCountry] = React.useState('');
   const [connectionsReferrerHost, setConnectionsReferrerHost] = React.useState('');
   const [connectionsBrowser, setConnectionsBrowser] = React.useState('');
@@ -652,8 +652,8 @@ export function SystemLogsContent(): React.JSX.Element {
                   events={pageAccessEvents}
                   isLoading={connectionsQuery.isLoading}
                   title=''
-                  emptyTitle='No page access events yet'
-                  emptyDescription='Tracked pageviews will appear here once visitors reach the site.'
+                  emptyTitle='No page access events in this range'
+                  emptyDescription='No tracked pageviews matched the current time range or filters. Try 30d or clear filters.'
                   showTypeColumn={false}
                 />
               </div>

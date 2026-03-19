@@ -272,6 +272,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
           imageAddonIds: deps.imageAddonIds,
           docReferences: deps.resolveDocReferences(),
           linkedinConnectionId: deps.linkedinConnectionId ?? null,
+          brainModelId: deps.brainModelId ?? null,
+          visionModelId: deps.visionModelId ?? null,
           publishError: null,
         },
       });
@@ -315,6 +317,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
           imageAddonIds: deps.imageAddonIds,
           docReferences: deps.resolveDocReferences(),
           linkedinConnectionId: deps.linkedinConnectionId ?? null,
+          brainModelId: deps.brainModelId ?? null,
+          visionModelId: deps.visionModelId ?? null,
           publishError: null,
         },
       });

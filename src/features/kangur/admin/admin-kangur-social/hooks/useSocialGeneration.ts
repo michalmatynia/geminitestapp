@@ -43,7 +43,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
     if (!deps.canGenerateDraft) {
       toast(
         deps.generateDraftBlockedReason ??
-          'Assign an AI Brain model for StudiQ Social Post Generation first.',
+          'Choose a StudiQ Social post model in Settings or assign AI Brain routing first.',
         { variant: 'warning' }
       );
       return;
@@ -58,6 +58,8 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         postId: deps.activePost.id,
         docReferences: deps.resolveDocReferences(),
         notes: deps.generationNotes,
+        modelId: deps.brainModelId ?? undefined,
+        visionModelId: deps.visionModelId ?? undefined,
         imageAddonIds: deps.imageAddonIds,
         projectUrl: deps.projectUrl || undefined,
       });

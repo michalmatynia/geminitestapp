@@ -17,6 +17,7 @@ import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGr
 import { KangurParentDashboardLearnerManagementWidget } from '@/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
+import { KangurParentDashboardWordmark } from '@/features/kangur/ui/components/KangurParentDashboardWordmark';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
@@ -97,6 +98,7 @@ export function KangurParentDashboardHeroWidget({
   const { openLoginModal } = useKangurLoginModal();
   const { entry: guestHeroContent } = useKangurPageContentEntry('parent-dashboard-guest-hero');
   const { entry: dashboardHeroContent } = useKangurPageContentEntry('parent-dashboard-hero');
+  const parentWordmarkLabel = translations('hero.parentTitle');
   const handleGoHome = (): void => {
     routeNavigator.push(getKangurHomeHref(basePath), {
       acknowledgeMs: PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS,
@@ -130,6 +132,15 @@ export function KangurParentDashboardHeroWidget({
         onBack={handleGoHome}
         testId='kangur-parent-dashboard-hero'
         title={guestHeroContent?.title ?? translations('hero.unauthenticated.title')}
+        visualTitle={
+          <KangurParentDashboardWordmark
+            className='mx-auto'
+            data-testid='kangur-parent-dashboard-heading-art'
+            idPrefix='kangur-parent-dashboard-heading'
+            label={parentWordmarkLabel}
+            locale={locale}
+          />
+        }
       >
         <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
           <KangurButton
@@ -180,6 +191,15 @@ export function KangurParentDashboardHeroWidget({
         onBack={handleGoToProfile}
         testId='kangur-parent-dashboard-hero'
         title={translations('hero.restricted.title')}
+        visualTitle={
+          <KangurParentDashboardWordmark
+            className='mx-auto'
+            data-testid='kangur-parent-dashboard-heading-art'
+            idPrefix='kangur-parent-dashboard-heading'
+            label={parentWordmarkLabel}
+            locale={locale}
+          />
+        }
       >
         <KangurButton
           className='w-full sm:w-auto'
@@ -233,6 +253,15 @@ export function KangurParentDashboardHeroWidget({
       onBack={handleGoToProfile}
       testId='kangur-parent-dashboard-hero'
       title={dashboardHeroContent?.title ?? translations('hero.parentTitle')}
+      visualTitle={
+        <KangurParentDashboardWordmark
+          className='mx-auto'
+          data-testid='kangur-parent-dashboard-heading-art'
+          idPrefix='kangur-parent-dashboard-heading'
+          label={parentWordmarkLabel}
+          locale={locale}
+        />
+      }
     >
       {showLearnerManagement ? (
         <div className='mt-4 text-left' ref={learnerManagementAnchorRef}>

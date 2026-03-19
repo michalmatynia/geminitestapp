@@ -70,6 +70,7 @@ import type {
   KangurRouteAction,
 } from '@/features/kangur/shared/contracts/kangur';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type LessonQuizDefinition = {
   accent: KangurAccent;
@@ -707,6 +708,7 @@ const getOperationSelectorRecommendation = (
 
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const locale = useLocale();
+  const normalizedLocale = normalizeSiteLocale(locale);
   const gamePageTranslations = useTranslations('KangurGamePage');
   const recommendationTranslations = useTranslations('KangurGameRecommendations');
   const trainingSetupTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
@@ -769,6 +771,16 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     gamePageTranslations,
     'operationSelector.title',
     'Grajmy!'
+  );
+  const trainingSetupTitle = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'screens.training.label',
+    'Trening mieszany'
+  );
+  const trainingWordmarkLabel = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'screens.training.wordmarkLabel',
+    normalizedLocale === 'pl' ? 'Trening' : 'Training'
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
@@ -1173,17 +1185,15 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             onBack={handleHome}
             showBackButton={false}
             testId='kangur-game-training-top-section'
-            title={translateRecommendationWithFallback(
-              gamePageTranslations,
-              'screens.training.label',
-              'Trening mieszany'
-            )}
+            title={trainingSetupTitle}
             titleId='kangur-game-training-heading'
             visualTitle={
               <KangurTreningWordmark
                 className='mx-auto'
                 data-testid='kangur-training-heading-art'
                 idPrefix='kangur-game-training-heading'
+                label={trainingWordmarkLabel}
+                locale={locale}
               />
             }
           />

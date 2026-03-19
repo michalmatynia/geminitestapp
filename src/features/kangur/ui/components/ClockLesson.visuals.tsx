@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import { useKangurUnifiedLessonBack } from '@/features/kangur/ui/lessons/lesson-components';
 
 import ClockTrainingGame from './ClockTrainingGame';
@@ -24,10 +26,17 @@ export const ClockTrainingSlide = ({
   practiceTasks,
 }: ClockTrainingSlideProps): React.JSX.Element => {
   const returnToHub = useKangurUnifiedLessonBack();
+  const lessonChrome = useTranslations('KangurLessonChrome');
+  const backToTopicsLabel = (() => {
+    const translated = lessonChrome('backToTopics');
+    return translated === 'backToTopics' || translated.endsWith('.backToTopics')
+      ? 'Wróć do tematów'
+      : translated;
+  })();
 
   return (
     <ClockTrainingGame
-      completionPrimaryActionLabel='Wróć do tematów'
+      completionPrimaryActionLabel={backToTopicsLabel}
       enableAdaptiveRetry={false}
       hideModeSwitch
       onFinish={returnToHub}

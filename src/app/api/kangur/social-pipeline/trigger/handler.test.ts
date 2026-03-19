@@ -91,6 +91,7 @@ describe('social pipeline trigger handler', () => {
         jobType: 'manual-post-pipeline',
         input: {
           postId: 'post-1',
+          captureMode: 'fresh_capture',
           editorState: {
             titlePl: 'Tytul',
             titleEn: 'Title',
@@ -101,6 +102,7 @@ describe('social pipeline trigger handler', () => {
           imageAddonIds: [],
           batchCaptureBaseUrl: 'https://example.com',
           batchCapturePresetIds: ['preset-1'],
+          batchCapturePresetLimit: 1,
           linkedinConnectionId: null,
           brainModelId: 'brain-1',
           visionModelId: 'vision-1',
@@ -115,6 +117,8 @@ describe('social pipeline trigger handler', () => {
       type: 'manual-post-pipeline',
       input: expect.objectContaining({
         postId: 'post-1',
+        captureMode: 'fresh_capture',
+        batchCapturePresetLimit: 1,
         actorId: 'admin-1',
         forwardCookies: 'session=abc123',
       }),

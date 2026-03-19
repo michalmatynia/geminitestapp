@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -14,6 +14,7 @@ import {
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+import { KangurTestsWordmark } from '@/features/kangur/ui/components/KangurTestsWordmark';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -82,6 +83,7 @@ const resolveFocusedSuiteId = (
 };
 
 export default function Tests(): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurTests');
   const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
@@ -375,6 +377,15 @@ export default function Tests(): React.JSX.Element {
                 onBack={handleGoBack}
                 testId='tests-list-intro-card'
                 title={translations('title')}
+                visualTitle={
+                  <KangurTestsWordmark
+                    className='mx-auto'
+                    data-testid='kangur-tests-heading-art'
+                    idPrefix='kangur-tests-heading'
+                    label={translations('title')}
+                    locale={locale}
+                  />
+                }
               />
             </div>
             {suites.length === 0 ? (

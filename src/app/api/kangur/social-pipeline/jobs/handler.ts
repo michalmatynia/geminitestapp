@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurSocialPipelineQueue } from '@/features/kangur/workers/kangurSocialPipelineQueue';
+import { kangurSocialManualPipelineProgressSchema } from '@/shared/contracts/kangur-social-pipeline';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
@@ -21,6 +22,7 @@ type PipelineJobRecord = {
   id: string;
   status: string;
   data: unknown;
+  progress: unknown;
   result: unknown;
   failedReason: string | null;
   processedOn: number | null;
@@ -52,6 +54,40 @@ const sanitizeJobData = (data: unknown): unknown => {
   };
 };
 
+const sanitizeJobProgress = (
+  progress: unknown,
+  options?: { full?: boolean }
+): unknown => {
+  const parsed = kangurSocialManualPipelineProgressSchema.safeParse(progress);
+  if (!parsed.success) return null;
+
+  const value = parsed.data;
+  const summary = {
+    type: value.type,
+    step: value.step,
+    captureMode: value.captureMode,
+    message: value.message,
+    updatedAt: value.updatedAt,
+    contextDocCount: value.contextDocCount,
+    addonsCreated: value.addonsCreated,
+    captureFailureCount: value.captureFailureCount,
+    requestedPresetCount: value.requestedPresetCount,
+    usedPresetCount: value.usedPresetCount,
+    runId: value.runId,
+  };
+
+  if (!options?.full) {
+    return summary;
+  }
+
+  return {
+    ...summary,
+    contextSummary: value.contextSummary,
+    captureFailures: value.captureFailures,
+    usedPresetIds: value.usedPresetIds,
+  };
+};
+
 const sanitizeJobResult = (
   result: unknown,
   options?: { full?: boolean }
@@ -62,6 +98,7 @@ const sanitizeJobResult = (
   const manual = result as {
     type: 'manual-post-pipeline';
     postId?: string;
+    captureMode?: string;
     addonsCreated?: number;
     failures?: number;
     runId?: string;
@@ -77,6 +114,7 @@ const sanitizeJobResult = (
   const summary = {
     type: manual.type,
     postId: manual.postId ?? null,
+    captureMode: manual.captureMode ?? 'fresh_capture',
     addonsCreated: manual.addonsCreated ?? 0,
     failures: manual.failures ?? 0,
     runId: manual.runId ?? null,
@@ -109,6 +147,7 @@ const serializeJob = async (
     id: job.id ?? 'unknown',
     status,
     data: sanitizeJobData(job.data),
+    progress: sanitizeJobProgress(job.progress, options),
     result: sanitizeJobResult(job.returnvalue ?? null, options),
     failedReason: job.failedReason ?? null,
     processedOn,

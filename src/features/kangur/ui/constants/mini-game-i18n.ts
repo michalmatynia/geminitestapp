@@ -1,13 +1,15 @@
+import type { TranslationValues } from 'use-intl';
+
 export type KangurMiniGameTranslate = (
   key: string,
-  values?: Record<string, string | number | boolean | null>
+  values?: TranslationValues
 ) => string;
 
 export const translateKangurMiniGameWithFallback = (
   translate: KangurMiniGameTranslate | undefined,
   key: string,
   fallback: string,
-  values?: Record<string, string | number | boolean | null>
+  values?: TranslationValues
 ): string => {
   if (!translate) {
     return fallback;

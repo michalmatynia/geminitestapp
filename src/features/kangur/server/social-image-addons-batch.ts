@@ -114,6 +114,7 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 type BatchCaptureInput = {
   baseUrl: string;
   presetIds?: string[] | null;
+  presetLimit?: number | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
 };
@@ -122,6 +123,9 @@ type BatchCaptureResult = {
   addons: KangurSocialImageAddon[];
   failures: Array<{ id: string; reason: string }>;
   runId: string;
+  requestedPresetCount: number;
+  usedPresetCount: number;
+  usedPresetIds: string[];
 };
 
 const resolveArtifactByName = (
@@ -203,10 +207,18 @@ export async function createKangurSocialImageAddonsBatch(
   const startedAt = Date.now();
   const baseUrl = input.baseUrl.trim().replace(/\/+$/, '');
   const presetIds = (input.presetIds ?? []).map((id) => id.trim()).filter(Boolean);
-  const presets =
+  const requestedPresets =
     presetIds.length > 0
       ? KANGUR_SOCIAL_CAPTURE_PRESETS.filter((preset) => presetIds.includes(preset.id))
       : KANGUR_SOCIAL_CAPTURE_PRESETS;
+  const normalizedPresetLimit =
+    typeof input.presetLimit === 'number' && Number.isFinite(input.presetLimit)
+      ? Math.max(1, Math.floor(input.presetLimit))
+      : null;
+  const presets =
+    normalizedPresetLimit == null
+      ? requestedPresets
+      : requestedPresets.slice(0, normalizedPresetLimit);
 
   if (!baseUrl) {
     throw operationFailedError('Base URL is required for batch capture.');
@@ -379,5 +391,12 @@ export async function createKangurSocialImageAddonsBatch(
     failureCount: failures.length,
   });
 
-  return { addons, failures, runId: run.runId };
+  return {
+    addons,
+    failures,
+    runId: run.runId,
+    requestedPresetCount: requestedPresets.length,
+    usedPresetCount: presets.length,
+    usedPresetIds: presets.map((preset) => preset.id),
+  };
 }

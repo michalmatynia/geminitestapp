@@ -10,6 +10,7 @@ import {
   KANGUR_DAILY_CRYSTAL_THEME,
   KANGUR_LOGO_GLOW_THEME,
   KANGUR_NIGHTLY_AURORA_THEME,
+  KANGUR_NIGHTLY_NOCTURNE_THEME,
   KANGUR_SUNSET_HORIZON_THEME,
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,
@@ -22,11 +23,12 @@ type CliOptions = {
 
 type SettingDoc = MongoPersistedStringSettingRecord<string, Date>;
 
-const SETTINGS_COLLECTION = 'settings';
+const SETTINGS_COLLECTION = 'kangur_settings';
 const DAILY_BLOOM_ID = 'kangur-daily-bloom';
 const DAILY_CRYSTAL_ID = 'kangur-daily-crystal';
 const LOGO_GLOW_ID = 'kangur-logo-glow';
 const NIGHTLY_AURORA_ID = 'kangur-nightly-aurora';
+const NIGHTLY_NOCTURNE_ID = 'kangur-nightly-nocturne';
 const SUNSET_HORIZON_ID = 'kangur-sunset-horizon';
 
 const parseArgs = (argv: string[]): CliOptions => {
@@ -91,6 +93,17 @@ const buildNightlyAuroraEntry = (
   updatedAt,
 });
 
+const buildNightlyNocturneEntry = (
+  createdAt: string,
+  updatedAt: string
+): KangurThemeCatalogEntry => ({
+  id: NIGHTLY_NOCTURNE_ID,
+  name: 'Nightly Nocturne',
+  settings: KANGUR_NIGHTLY_NOCTURNE_THEME as ThemeSettings,
+  createdAt,
+  updatedAt,
+});
+
 const buildDailyCrystalEntry = (
   createdAt: string,
   updatedAt: string
@@ -137,8 +150,8 @@ async function main(): Promise<void> {
     const collection = db.collection<SettingDoc>(SETTINGS_COLLECTION);
 
     const existing = await collection.findOne(
-      { key: KANGUR_THEME_CATALOG_KEY },
-      { projection: { value: 1 } }
+      { $or: [{ _id: KANGUR_THEME_CATALOG_KEY }, { key: KANGUR_THEME_CATALOG_KEY }] },
+      { projection: { _id: 1, key: 1, value: 1 } }
     );
     const currentValue = existing?.value
       ? decodeSettingValue(KANGUR_THEME_CATALOG_KEY, existing.value)
@@ -148,6 +161,7 @@ async function main(): Promise<void> {
     const existingDailyCrystal = catalog.find((entry) => entry.id === DAILY_CRYSTAL_ID);
     const existingLogoGlow = catalog.find((entry) => entry.id === LOGO_GLOW_ID);
     const existingNightly = catalog.find((entry) => entry.id === NIGHTLY_AURORA_ID);
+    const existingNightlyNocturne = catalog.find((entry) => entry.id === NIGHTLY_NOCTURNE_ID);
     const existingSunset = catalog.find((entry) => entry.id === SUNSET_HORIZON_ID);
     const nowIso = new Date().toISOString();
 
@@ -178,6 +192,7 @@ async function main(): Promise<void> {
       upsert(DAILY_CRYSTAL_ID, buildDailyCrystalEntry, existingDailyCrystal);
       upsert(LOGO_GLOW_ID, buildLogoGlowEntry, existingLogoGlow);
       upsert(NIGHTLY_AURORA_ID, buildNightlyAuroraEntry, existingNightly);
+      upsert(NIGHTLY_NOCTURNE_ID, buildNightlyNocturneEntry, existingNightlyNocturne);
       upsert(SUNSET_HORIZON_ID, buildSunsetHorizonEntry, existingSunset);
 
       return next;
@@ -188,13 +203,15 @@ async function main(): Promise<void> {
 
     if (!options.dryRun && hasChanges) {
       await collection.updateOne(
-        { key: KANGUR_THEME_CATALOG_KEY },
+        { $or: [{ _id: KANGUR_THEME_CATALOG_KEY }, { key: KANGUR_THEME_CATALOG_KEY }] },
         {
           $set: {
+            key: KANGUR_THEME_CATALOG_KEY,
             value: encodeSettingValue(KANGUR_THEME_CATALOG_KEY, nextValue),
             updatedAt: new Date(),
           },
           $setOnInsert: {
+            _id: KANGUR_THEME_CATALOG_KEY,
             createdAt: new Date(),
           },
         },
@@ -214,6 +231,7 @@ async function main(): Promise<void> {
             [DAILY_CRYSTAL_ID]: Boolean(existingDailyCrystal),
             [LOGO_GLOW_ID]: Boolean(existingLogoGlow),
             [NIGHTLY_AURORA_ID]: Boolean(existingNightly),
+            [NIGHTLY_NOCTURNE_ID]: Boolean(existingNightlyNocturne),
             [SUNSET_HORIZON_ID]: Boolean(existingSunset),
           },
         },

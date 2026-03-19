@@ -3768,5 +3768,270 @@
     "previousPanel": "Poprzedni panel",
     "nextPanel": "Następny panel",
     "panelLabel": "Panel {index}"
+  },
+  "KangurAssignmentsRuntime": {
+    "catalog": {
+      "groups": {
+        "time": "Czas",
+        "geometry": "Geometria",
+        "logic": "Logika",
+        "lesson": "Lekcja",
+        "hint": "Podpowiedź"
+      },
+      "lesson": {
+        "descriptionTemplate": "{description}. Przypisz uczniowi jedną świeżą powtórkę tej lekcji.",
+        "createDescriptionTemplate": "Powtórz lekcję \"{title}\" i zakończ jedną dodatkową sesję."
+      },
+      "practice": {
+        "practiceMixed": {
+          "title": "Trening mieszany",
+          "description": "Przypisz przekrojowy trening z różnymi typami pytań.",
+          "badge": "Trening",
+          "createTitle": "Trening mieszany",
+          "createDescription": "Wykonaj mieszany trening i utrzymaj regularność pracy."
+        },
+        "practiceAddition": {
+          "title": "Trening: Dodawanie",
+          "description": "Jedna sesja dodawania z celem 80% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Dodawanie",
+          "createDescription": "Rozwiąż sesję dodawania i osiągnij co najmniej 80% skuteczności."
+        },
+        "practiceSubtraction": {
+          "title": "Trening: Odejmowanie",
+          "description": "Jedna sesja odejmowania z celem 80% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Odejmowanie",
+          "createDescription": "Rozwiąż sesję odejmowania i osiągnij co najmniej 80% skuteczności."
+        },
+        "practiceMultiplication": {
+          "title": "Trening: Mnożenie",
+          "description": "Jedna sesja mnożenia z celem 80% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Mnożenie",
+          "createDescription": "Rozwiąż sesję mnożenia i osiągnij co najmniej 80% skuteczności."
+        },
+        "practiceDivision": {
+          "title": "Trening: Dzielenie",
+          "description": "Jedna sesja dzielenia z celem 80% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Dzielenie",
+          "createDescription": "Rozwiąż sesję dzielenia i osiągnij co najmniej 80% skuteczności."
+        },
+        "practiceDecimals": {
+          "title": "Trening: Ułamki",
+          "description": "Jedna sesja ułamków z celem 75% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Ułamki",
+          "createDescription": "Rozwiąż sesję ułamków i osiągnij co najmniej 75% skuteczności."
+        },
+        "practicePowers": {
+          "title": "Trening: Potęgi",
+          "description": "Jedna sesja potęg z celem 75% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Potęgi",
+          "createDescription": "Rozwiąż sesję potęg i osiągnij co najmniej 75% skuteczności."
+        },
+        "practiceRoots": {
+          "title": "Trening: Pierwiastki",
+          "description": "Jedna sesja pierwiastków z celem 75% poprawnych odpowiedzi.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Pierwiastki",
+          "createDescription": "Rozwiąż sesję pierwiastków i osiągnij co najmniej 75% skuteczności."
+        },
+        "practiceClock": {
+          "title": "Trening: Zegar",
+          "description": "Sesja ćwiczeń z godzinami, minutami i pełnym czasem na zegarze.",
+          "badge": "Praktyka",
+          "createTitle": "Praktyka: Zegar",
+          "createDescription": "Wykonaj zegarowy trening i sprawdź odczytywanie godzin, minut oraz pełnego czasu."
+        }
+      }
+    },
+    "priority": {
+      "high": "Priorytet wysoki",
+      "medium": "Priorytet średni",
+      "low": "Priorytet niski"
+    },
+    "status": {
+      "completed": "Ukończone",
+      "inProgress": "W trakcie",
+      "new": "Nowe"
+    },
+    "time": {
+      "hoursMinutes": "{hours} godz. {minutes} min",
+      "hoursOnly": "{hours} godz.",
+      "minutesOnly": "{minutes} min",
+      "timeLimitLabel": "Czas na wykonanie: {label}",
+      "expired": "Czas minął",
+      "remainingHoursMinutes": "Pozostało: {hours} godz. {minutes} min",
+      "remainingMinutesSeconds": "Pozostało: {minutes} min {seconds} s",
+      "remainingSeconds": "Pozostało: {seconds} s"
+    },
+    "actions": {
+      "openLesson": "Otwórz lekcję",
+      "startTraining": "Uruchom trening",
+      "trainNow": "Trenuj teraz"
+    },
+    "operations": {
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnożenie",
+      "division": "Dzielenie",
+      "decimals": "Ułamki",
+      "powers": "Potęgi",
+      "roots": "Pierwiastki",
+      "clock": "Zegar",
+      "mixed": "Trening mieszany"
+    },
+    "banner": {
+      "activeHelper": "W tej sesji realizujesz przydzielone zadanie.",
+      "completedHelper": "Zadanie od rodzica zostało ukończone w tej sesji.",
+      "queueHelper": "Najbliższy priorytet w praktyce: {label}.",
+      "parentPriority": "Priorytet rodzica"
+    },
+    "spotlight": {
+      "title": "Sugestie od Rodzica"
+    }
+  },
+  "KangurScoreHistory": {
+    "loading": {
+      "title": "Ładowanie wyników...",
+      "description": "Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu."
+    },
+    "empty": {
+      "description": "Brak zapisanych wyników."
+    },
+    "summary": {
+      "totalGames": "Gier łącznie",
+      "averageAccuracy": "Śr. skuteczność",
+      "perfectGames": "Idealne wyniki"
+    },
+    "window": {
+      "title": "Obraz ostatnich {days} dni",
+      "weeklySessions": "Sesje tygodnia",
+      "weeklySummary": "Średnia {accuracy}% · idealne {perfect}",
+      "weeklyXp": "XP: +{xp} · średnio {average} na sesję",
+      "lastActivityPrefix": "Ostatnia aktywność:"
+    },
+    "relative": {
+      "noActivity": "Brak aktywności",
+      "today": "Dzisiaj",
+      "yesterday": "Wczoraj",
+      "daysAgo": "{days} dni temu"
+    },
+    "trend": {
+      "label": "Trend tygodnia",
+      "newRange": "Nowy zakres",
+      "context": {
+        "insufficient": "Potrzeba starszych wyników do porównania.",
+        "up": "Wzrost z {previous}% na {recent}%.",
+        "down": "Spadek z {previous}% na {recent}%.",
+        "flat": "Stabilnie: {recent}% tydzień do tygodnia."
+      }
+    },
+    "strongest": {
+      "label": "Mocna strona",
+      "empty": "Za mało danych na wskazanie przewagi."
+    },
+    "weakest": {
+      "label": "Do wsparcia",
+      "empty": "Potrzeba więcej niż jednego typu zadania, aby wskazać obszar do wsparcia.",
+      "reviewLesson": "Powtórz lekcję"
+    },
+    "shared": {
+      "noData": "Brak danych",
+      "operationSummary": "Średnio {accuracy}% · próby {attempts} · +{xp} XP / sesję"
+    },
+    "byOperation": {
+      "heading": "Wyniki wg operacji"
+    },
+    "recent": {
+      "heading": "Ostatnie gry"
+    },
+    "operations": {
+      "alphabet": "Alfabet",
+      "alphabet_basics": "Alfabet",
+      "alphabet_copy": "Przepisz litery",
+      "alphabet_syllables": "Sylaby",
+      "alphabet_words": "Pierwsze słowa",
+      "alphabet_matching": "Dopasuj litery",
+      "alphabet_sequence": "Kolejność liter",
+      "geometry_shape_recognition": "Geometria",
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnożenie",
+      "division": "Dzielenie",
+      "decimals": "Ułamki",
+      "powers": "Potęgi",
+      "roots": "Pierwiastki",
+      "clock": "Zegar",
+      "calendar": "Kalendarz",
+      "geometry": "Geometria",
+      "logical": "Logiczne myślenie",
+      "mixed": "Trening mieszany",
+      "english_basics": "Podstawy",
+      "english_parts_of_speech": "Części mowy",
+      "english_sentence_structure": "Szyk zdania",
+      "english_subject_verb_agreement": "Zgoda podmiotu",
+      "english_articles": "Przedimki",
+      "english_prepositions_time_place": "Przyimki czasu i miejsca"
+    }
+  },
+  "KangurCmsRuntime": {
+    "common": {
+      "playerFallback": "Graczu"
+    },
+    "progress": {
+      "totalXpLabel": "{xp} XP lacznie",
+      "xpIntoLevelLabel": "{xp} XP"
+    },
+    "assignments": {
+      "actions": {
+        "returnToPractice": "Wroc do praktyki"
+      },
+      "description": {
+        "returnToPractice": "Wroc do praktyki i kontynuuj wyzwanie."
+      },
+      "title": {
+        "continuePractice": "Kontynuuj praktyke"
+      },
+      "countLabel": "{count} zadan",
+      "priority": {
+        "high": "Priorytet wysoki",
+        "medium": "Priorytet sredni",
+        "low": "Priorytet niski",
+        "self": "Priorytet wlasny",
+        "session": "Sesja praktyki"
+      },
+      "progress": {
+        "completedPercent": "{percent}% ukonczono",
+        "none": "Brak aktywnego zadania."
+      },
+      "helper": {
+        "activeSession": "W tej sesji realizujesz przydzielone zadanie.",
+        "nextPractice": "Najblizszy priorytet w praktyce: {operation}.",
+        "nextStep": "Nastepny krok w praktyce."
+      },
+      "eyebrow": {
+        "completedParent": "Ukonczone zadanie od rodzica",
+        "parent": "Zadanie od rodzica",
+        "followUp": "Dalsza praktyka"
+      }
+    },
+    "operationSelector": {
+      "greetingLabel": "Czesc, {playerName}! 👋"
+    },
+    "result": {
+      "title": "Swietna robota, {playerName}!",
+      "starsLabel": "{stars} / 3 gwiazdki",
+      "timeTakenLabel": "{seconds}s",
+      "message": {
+        "perfect": "Idealny wynik! Jestes gwiazda matematyki.",
+        "great": "Niesamowita robota! Tak trzymaj.",
+        "good": "Dobra robota! Cwiczenie czyni mistrza.",
+        "tryAgain": "Probuj dalej. Dasz rade."
+      }
+    }
   }
 }

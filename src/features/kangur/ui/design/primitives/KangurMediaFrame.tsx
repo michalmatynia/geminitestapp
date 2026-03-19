@@ -3,19 +3,33 @@ import * as React from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 
-import { KANGUR_SURFACE_CARD_CLASSNAME, type KangurAccent } from '../tokens';
+import {
+  KANGUR_ACCENT_THEME_VARS,
+  KANGUR_SURFACE_CARD_CLASSNAME,
+  type KangurAccent,
+} from '../tokens';
+
+const buildMediaFrameAccentClassName = (
+  accent: keyof typeof KANGUR_ACCENT_THEME_VARS,
+  gradientClassName: string
+): string =>
+  cn(
+    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,${KANGUR_ACCENT_THEME_VARS[accent].end})]`,
+    'bg-gradient-to-br',
+    gradientClassName
+  );
 
 export const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
   variants: {
     accent: {
-      indigo: 'border-indigo-100 bg-gradient-to-br kangur-gradient-accent-soft-indigo',
-      violet: 'border-violet-100 bg-gradient-to-br kangur-gradient-accent-soft-violet',
-      emerald: 'border-emerald-100 bg-gradient-to-br kangur-gradient-accent-soft-emerald',
-      sky: 'border-sky-100 bg-gradient-to-br kangur-gradient-accent-soft-sky',
-      amber: 'border-amber-100 bg-gradient-to-br kangur-gradient-accent-soft-amber',
-      rose: 'border-rose-100 bg-gradient-to-br kangur-gradient-accent-soft-rose',
-      teal: 'border-teal-100 bg-gradient-to-br kangur-gradient-accent-soft-teal',
-      slate: 'border-slate-200/85 bg-gradient-to-br kangur-gradient-accent-soft-slate',
+      indigo: buildMediaFrameAccentClassName('indigo', 'kangur-gradient-accent-soft-indigo'),
+      violet: buildMediaFrameAccentClassName('violet', 'kangur-gradient-accent-soft-violet'),
+      emerald: buildMediaFrameAccentClassName('emerald', 'kangur-gradient-accent-soft-emerald'),
+      sky: buildMediaFrameAccentClassName('sky', 'kangur-gradient-accent-soft-sky'),
+      amber: buildMediaFrameAccentClassName('amber', 'kangur-gradient-accent-soft-amber'),
+      rose: buildMediaFrameAccentClassName('rose', 'kangur-gradient-accent-soft-rose'),
+      teal: buildMediaFrameAccentClassName('teal', 'kangur-gradient-accent-soft-teal'),
+      slate: 'bg-gradient-to-br kangur-gradient-accent-soft-slate [border-color:var(--kangur-soft-card-border)]',
     },
     padding: {
       sm: 'kangur-media-padding-sm',

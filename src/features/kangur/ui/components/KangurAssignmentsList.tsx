@@ -119,7 +119,8 @@ const formatAssignmentCountLabel = (
 const resolveCountdownLabel = (
   item: KangurAssignmentListItem,
   now: number,
-  showTimeCountdown: boolean
+  showTimeCountdown: boolean,
+  localizer: Parameters<typeof resolveKangurAssignmentCountdownLabel>[1]
 ): string | null =>
   showTimeCountdown
     ? resolveKangurAssignmentCountdownLabel({
@@ -128,7 +129,7 @@ const resolveCountdownLabel = (
         createdAt: item.createdAt,
         status: item.status,
         now,
-      })
+      }, localizer)
     : null;
 
 const shouldHandleAssignmentClick = (event: MouseEvent<HTMLAnchorElement>): boolean => {
@@ -144,10 +145,14 @@ const shouldHandleAssignmentClick = (event: MouseEvent<HTMLAnchorElement>): bool
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
-  const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown);
+  const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
+    locale,
+    translate: runtimeTranslations,
+  });
   const subjectLabel = getLocalizedKangurSubjectLabel(item.subject, locale, item.subjectLabel);
 
   return (
@@ -241,12 +246,16 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { onArchive, onTimeLimitClick, onReassign, reassigningId } =
     useKangurAssignmentsListArchive();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
-  const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown);
+  const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown, {
+    locale,
+    translate: runtimeTranslations,
+  });
   const canReassign = Boolean(onReassign && item.status === 'completed');
   const isReassigning = Boolean(reassigningId && reassigningId === item.id);
   const subjectLabel = getLocalizedKangurSubjectLabel(item.subject, locale, item.subjectLabel);

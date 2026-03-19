@@ -1,7 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 
 import { getLocalizedKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog-i18n';
@@ -46,6 +46,7 @@ export function KangurAssignmentSpotlight({
   enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
   const locale = useLocale();
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
@@ -89,21 +90,24 @@ export function KangurAssignmentSpotlight({
     createdAt: assignment.createdAt,
     status: assignment.progress.status,
     now,
+  }, {
+    locale,
+    translate: runtimeTranslations,
   });
 
   return (
     <KangurGlassPanel
       className='mx-auto w-full max-w-3xl'
-      data-testid='kangur-assignment-spotlight-shell'
-      padding='md'
-      surface='mist'
-      variant='elevated'
-    >
-      <div className='px-3 pt-2 sm:px-4'>
-        <div className='text-[1.6rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
-          Sugestie od Rodzica
+        data-testid='kangur-assignment-spotlight-shell'
+        padding='md'
+        surface='mist'
+        variant='elevated'
+      >
+        <div className='px-3 pt-2 sm:px-4'>
+          <div className='text-[1.6rem] font-extrabold tracking-tight [color:var(--kangur-page-text)] sm:text-[2rem]'>
+          {runtimeTranslations('spotlight.title')}
+          </div>
         </div>
-      </div>
 
       <KangurGlassPanel
         className='relative mt-4'
@@ -197,7 +201,10 @@ export function KangurAssignmentSpotlight({
             transitionAcknowledgeMs={110}
             transitionSourceId={transitionSourceId}
           >
-            {getKangurAssignmentActionLabel(assignment)}
+            {getKangurAssignmentActionLabel(assignment, {
+              locale,
+              translate: runtimeTranslations,
+            })}
           </Link>
         </KangurButton>
       </KangurGlassPanel>

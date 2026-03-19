@@ -145,7 +145,7 @@ export function KangurFeaturePageShell({
   return (
     <div
       className={cn(
-        'relative flex w-full min-w-0 flex-col overflow-x-hidden kangur-premium-bg text-slate-800',
+        'relative flex w-full min-w-0 flex-col overflow-x-hidden kangur-premium-bg',
         embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
         shellClassOverride
       )}
@@ -169,7 +169,7 @@ export function KangurFeaturePageShell({
         <KangurFeatureApp />
       </div>
       {showFooter ? (
-        <footer className='hidden w-full border-t border-white/10 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [color:var(--kangur-page-muted-text)] sm:block sm:px-6'>
+        <footer className='hidden w-full border-t px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_62%,transparent)] [color:var(--kangur-page-muted-text)] sm:block sm:px-6'>
           <span>
             {shellTranslations('creatorCredentials', {
               name: 'Michał Matynia',

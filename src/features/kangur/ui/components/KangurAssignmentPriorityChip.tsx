@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
@@ -18,6 +19,8 @@ type KangurAssignmentPriorityChipProps = Omit<
 export function KangurAssignmentPriorityChip(
   props: KangurAssignmentPriorityChipProps
 ): React.JSX.Element {
+  const locale = useLocale();
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const { accent, labelOverride, priority, ...restProps } = props;
 
   return (
@@ -25,7 +28,11 @@ export function KangurAssignmentPriorityChip(
       accent={accent ?? resolveKangurAssignmentPriorityAccent(priority)}
       {...restProps}
     >
-      {labelOverride ?? formatKangurAssignmentPriorityLabel(priority)}
+      {labelOverride ??
+        formatKangurAssignmentPriorityLabel(priority, {
+          locale,
+          translate: runtimeTranslations,
+        })}
     </KangurStatusChip>
   );
 }

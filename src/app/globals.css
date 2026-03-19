@@ -1451,19 +1451,33 @@
   .glass-panel {
     backdrop-filter: blur(20px);
     background: var(
-      --kangur-glass-panel-background,
-      linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.58) 100%)
-    );
-    border: 1px solid var(--kangur-glass-panel-border, rgba(255, 255, 255, 0.78));
-    box-shadow: var(--kangur-glass-panel-shadow, 0 20px 60px rgba(168, 175, 216, 0.18));
-    color: var(--kangur-page-text, #334155);
+      --kangur-panel-surface-background,
+      var(
+        --kangur-glass-panel-background,
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.58) 100%)
+      )
+    ) !important;
+    border: 1px solid
+      var(--kangur-panel-surface-border, var(--kangur-glass-panel-border, rgba(255, 255, 255, 0.78))) !important;
+    box-shadow: var(
+      --kangur-panel-surface-shadow,
+      var(--kangur-glass-panel-shadow, 0 20px 60px rgba(168, 175, 216, 0.18))
+    ) !important;
+    color: var(--kangur-panel-surface-text, var(--kangur-page-text, #334155)) !important;
   }
 
   .soft-card {
-    background: var(--kangur-soft-card-background, #ffffff);
-    border: 1px solid var(--kangur-soft-card-border, #eef1f7);
-    box-shadow: var(--kangur-soft-card-shadow, 0 10px 28px rgba(33, 49, 91, 0.08));
-    color: var(--kangur-soft-card-text, #334155);
+    background: var(
+      --kangur-soft-surface-background,
+      var(--kangur-soft-card-background, #ffffff)
+    ) !important;
+    border: 1px solid
+      var(--kangur-soft-surface-border, var(--kangur-soft-card-border, #eef1f7)) !important;
+    box-shadow: var(
+      --kangur-soft-surface-shadow,
+      var(--kangur-soft-card-shadow, 0 10px 28px rgba(33, 49, 91, 0.08))
+    ) !important;
+    color: var(--kangur-soft-surface-text, var(--kangur-soft-card-text, #334155)) !important;
   }
 
   .kangur-lessons-panel {
@@ -1478,11 +1492,14 @@
   .kangur-segmented-control {
     backdrop-filter: blur(20px);
     background: var(
-      --kangur-nav-group-background,
-      linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.58) 100%)
-    );
-    border-color: var(--kangur-nav-group-border, rgba(255, 255, 255, 0.78));
-    box-shadow: 0 20px 40px -30px rgba(94, 110, 160, 0.38);
+      --kangur-nav-surface-background,
+      var(
+        --kangur-nav-group-background,
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.58) 100%)
+      )
+    ) !important;
+    border-color: var(--kangur-nav-surface-border, var(--kangur-nav-group-border, rgba(255, 255, 255, 0.78))) !important;
+    box-shadow: 0 20px 40px -30px rgba(94, 110, 160, 0.38) !important;
   }
 
   .kangur-nav-group {
@@ -1496,9 +1513,9 @@
 
   .kangur-nav-item,
   .kangur-segmented-control-item {
-    background: transparent;
-    border-color: transparent;
-    color: var(--kangur-nav-item-text, #64748b);
+    background: transparent !important;
+    border-color: transparent !important;
+    color: var(--kangur-nav-item-text, #64748b) !important;
     font-size: var(--kangur-pill-font-size, 14px);
     padding-block: var(--kangur-pill-padding-y, 10px);
     padding-inline: var(--kangur-pill-padding-x, 16px);
@@ -1663,10 +1680,10 @@
 
   .kangur-nav-item:hover,
   .kangur-segmented-control-item:hover {
-    background: var(--kangur-nav-item-hover-background, rgba(255, 255, 255, 0.78));
-    border-color: var(--kangur-nav-item-hover-border, rgba(255, 255, 255, 0.8));
-    box-shadow: 0 10px 18px -16px rgba(148, 163, 184, 0.7);
-    color: var(--kangur-nav-item-hover-text, #334155);
+    background: var(--kangur-nav-item-hover-background, rgba(255, 255, 255, 0.78)) !important;
+    border-color: var(--kangur-nav-item-hover-border, rgba(255, 255, 255, 0.8)) !important;
+    box-shadow: 0 10px 18px -16px rgba(148, 163, 184, 0.7) !important;
+    color: var(--kangur-nav-item-hover-text, #334155) !important;
   }
 
   .kangur-nav-item-active,
@@ -1674,37 +1691,51 @@
     background: var(
       --kangur-nav-item-active-background,
       linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 242, 255, 0.92) 100%)
-    );
-    border-color: var(--kangur-nav-item-active-border, rgba(224, 231, 255, 0.9));
+    ) !important;
+    border-color: var(--kangur-nav-item-active-border, rgba(224, 231, 255, 0.9)) !important;
     box-shadow:
       0 14px 24px -18px rgba(99, 102, 241, 0.42),
-      0 0 0 1px rgba(224, 231, 255, 0.8);
-    color: var(--kangur-nav-item-active-text, #4338ca);
+      0 0 0 1px rgba(224, 231, 255, 0.8) !important;
+    color: var(--kangur-nav-item-active-text, #4338ca) !important;
   }
 
   .kangur-nav-item-active:hover,
   .kangur-segmented-control-item-active:hover {
-    color: var(--kangur-nav-item-active-text, #4338ca);
+    color: var(--kangur-nav-item-active-text, #4338ca) !important;
   }
 
   .kangur-text-field {
-    background: var(--kangur-text-field-background, rgba(255, 255, 255, 0.92));
+    background: var(--kangur-text-field-background, rgba(255, 255, 255, 0.92)) !important;
     border-radius: var(--kangur-input-radius, 22px);
-    border-color: var(--kangur-text-field-border, rgba(226, 232, 240, 0.92));
+    border-color: var(--kangur-text-field-border, rgba(226, 232, 240, 0.92)) !important;
     box-shadow: 0 18px 44px -38px rgba(15, 23, 42, 0.18);
-    color: var(--kangur-text-field-text, #334155);
+    color: var(--kangur-text-field-text, #334155) !important;
     font-size: var(--kangur-input-font-size, 14px);
     min-height: var(--kangur-input-height, 50px);
   }
 
   .kangur-text-field::placeholder {
-    color: var(--kangur-text-field-placeholder, #94a3b8);
+    color: var(--kangur-text-field-placeholder, #94a3b8) !important;
+  }
+
+  .kangur-text-field:focus,
+  .kangur-text-field:focus-visible {
+    border-color: var(
+      --kangur-text-field-focus-border,
+      var(--kangur-text-field-border, rgba(226, 232, 240, 0.92))
+    ) !important;
+  }
+
+  .kangur-text-field:focus-visible {
+    box-shadow:
+      0 0 0 2px var(--kangur-text-field-focus-ring, transparent),
+      0 18px 44px -38px rgba(15, 23, 42, 0.18) !important;
   }
 
   .kangur-text-field:disabled {
-    background: var(--kangur-text-field-disabled-background, rgba(241, 245, 249, 0.92));
-    border-color: var(--kangur-text-field-disabled-border, rgba(226, 232, 240, 0.92));
-    color: var(--kangur-page-muted-text, #64748b);
+    background: var(--kangur-text-field-disabled-background, rgba(241, 245, 249, 0.92)) !important;
+    border-color: var(--kangur-text-field-disabled-border, rgba(226, 232, 240, 0.92)) !important;
+    color: var(--kangur-page-muted-text, #64748b) !important;
   }
 
   [data-kangur-appearance] {

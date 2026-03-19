@@ -3155,80 +3155,80 @@
       "lessonTitle": "Addition",
       "sections": {
         "basics": {
-          "title": "Addition basics",
-          "description": "What is addition? Single-digit addition + animation"
+          "title": "Grundlagen der Addition",
+          "description": "Was ist Addition? Einstellige Addition + Animation"
         },
         "crossTen": {
-          "title": "Adding past 10",
-          "description": "Make 10, then add the rest"
+          "title": "Über die 10 addieren",
+          "description": "Erst bis 10 ergänzen, dann den Rest addieren"
         },
         "doubleDigit": {
-          "title": "Two-digit addition",
-          "description": "Tens and ones separately"
+          "title": "Zweistellige Addition",
+          "description": "Zehner und Einer getrennt"
         },
         "remember": {
-          "title": "Remember!",
-          "description": "Addition rules"
+          "title": "Merke!",
+          "description": "Regeln der Addition"
         },
         "synthesis": {
-          "title": "Addition synthesis",
-          "description": "Rhythmic answer lanes and quick sums"
+          "title": "Addition im Überblick",
+          "description": "Rhythmische Antwortspuren und schnelle Summen"
         },
         "game": {
-          "title": "Ball game",
-          "description": "Practise addition by moving balls"
+          "title": "Ballspiel",
+          "description": "Übe Addition, indem du Bälle bewegst"
         }
       },
       "slides": {
         "basics": {
           "meaning": {
-            "title": "What does it mean to add?",
-            "lead": "Addition means joining two groups together to count how many there are in all.",
-            "partLabel": "Part",
-            "totalLabel": "Whole",
-            "caption": "Part + part makes a whole.",
+            "title": "Was bedeutet Addieren?",
+            "lead": "Addition bedeutet, zwei Gruppen zusammenzulegen, um zu zählen, wie viele es insgesamt sind.",
+            "partLabel": "Teil",
+            "totalLabel": "Ganzes",
+            "caption": "Teil + Teil ergibt ein Ganzes.",
             "startLabel": "Start",
-            "combineLabel": "Join",
-            "resultLabel": "Result"
+            "combineLabel": "Zusammen",
+            "resultLabel": "Ergebnis"
           },
           "singleDigit": {
-            "title": "Single-digit addition",
-            "lead": "You can count on your fingers or in your head. Start with the bigger number!",
-            "step1": "Start with the bigger number: 4",
-            "step2": "Count up three steps: 5, 6, 7",
-            "step3": "The last number is the answer: 7 ✓",
-            "staircaseLabel": "Steps",
-            "countUpLabel": "counting on",
-            "caption": "Start at 4 and take three steps: 5, 6, 7.",
-            "startLargeChip": "Start with the bigger one",
-            "countUpChip": "Count on",
-            "quickResultChip": "Fast answer"
+            "title": "Einstellige Addition",
+            "lead": "Du kannst an den Fingern oder im Kopf zählen. Starte mit der größeren Zahl!",
+            "step1": "Starte mit der größeren Zahl: 4",
+            "step2": "Zähle drei Schritte weiter: 5, 6, 7",
+            "step3": "Die letzte Zahl ist die Antwort: 7 ✓",
+            "staircaseLabel": "Schritte",
+            "countUpLabel": "weiterzählen",
+            "caption": "Starte bei 4 und gehe drei Schritte weiter: 5, 6, 7.",
+            "startLargeChip": "Mit der größeren beginnen",
+            "countUpChip": "Weiterzählen",
+            "quickResultChip": "Schnelle Antwort"
           },
           "motion": {
-            "title": "Addition in motion",
-            "lead": "The animation shows how two groups move and join into one sum.",
-            "caption": "The dots join into one group and create the sum.",
-            "groupA": "Group A",
-            "groupB": "Group B",
-            "sum": "Sum"
+            "title": "Addition in Bewegung",
+            "lead": "Die Animation zeigt, wie sich zwei Gruppen bewegen und zu einer Summe zusammenkommen.",
+            "caption": "Die Punkte verbinden sich zu einer Gruppe und bilden die Summe.",
+            "groupA": "Gruppe A",
+            "groupB": "Gruppe B",
+            "sum": "Summe"
           }
         },
         "crossTen": {
           "overTen": {
-            "title": "Adding across 10",
-            "lead": "When the sum goes past 10, you can make 10 first and then add the rest.",
-            "caption": "7 + 3 = 10, 2 left, so 10 + 2 = 12 ✓",
-            "step1Title": "Step 1",
-            "step1Text": "Make 10: 7 + 3 = 10",
-            "step2Title": "Step 2",
-            "step2Text": "Add the rest: +2",
-            "targetLabel": "Goal: 10",
-            "remainingChip": "+2 left"
+            "title": "Über die 10 addieren",
+            "lead": "Wenn die Summe über 10 geht, kannst du zuerst 10 bilden und dann den Rest addieren.",
+            "caption": "7 + 3 = 10, 2 übrig, also 10 + 2 = 12 ✓",
+            "step1Title": "Schritt 1",
+            "step1Text": "Bilde 10: 7 + 3 = 10",
+            "step2Title": "Schritt 2",
+            "step2Text": "Addiere den Rest: +2",
+            "targetLabel": "Ziel: 10",
+            "remainingChip": "+2 übrig"
           },
           "numberLine": {
-            "title": "Jumps on the number line",
-            "lead": "Jump to 10 first, then add the rest.",
-            "caption": "8 + 2 = 10, 3 left, so 10 + 3 = 13.",
+            "title": "Sprünge auf der Zahlenlinie",
+            "lead": "Springe zuerst bis 10, dann addiere den Rest.",
+            "caption": "8 + 2 = 10, 3 übrig, also 10 + 3 = 13.",
             "startChip": "Start 8",
             "plusTwoChip": "+2",
             "tenChip": "10",
@@ -3236,467 +3236,467 @@
             "resultChip": "13"
           },
           "tenFrame": {
-            "title": "Ten frame",
-            "lead": "Fill the missing spaces to 10, then add the rest next to it.",
-            "caption": "First +3 to make 10, then +2 more.",
-            "miniPlanTitle": "Mini plan",
+            "title": "Zehnerfeld",
+            "lead": "Fülle zuerst die fehlenden Felder bis 10 und lege dann den Rest daneben.",
+            "caption": "Zuerst +3 bis zur 10, dann noch +2.",
+            "miniPlanTitle": "Mini-Plan",
             "steps": [
-              "Fill the ten frame to 10",
-              "Add the rest next to it",
-              "Join both parts into the answer"
+              "Fülle das Zehnerfeld bis 10",
+              "Lege den Rest daneben",
+              "Verbinde beide Teile zur Antwort"
             ]
           }
         },
         "doubleDigit": {
           "intro": {
-            "title": "Two-digit addition",
-            "lead": "Add tens and ones separately!",
-            "tensLabel": "Tens",
-            "onesLabel": "Ones",
-            "schemeTitle": "Pattern",
-            "schemeCaption": "tens + ones"
+            "title": "Zweistellige Addition",
+            "lead": "Addiere Zehner und Einer getrennt!",
+            "tensLabel": "Zehner",
+            "onesLabel": "Einer",
+            "schemeTitle": "Muster",
+            "schemeCaption": "Zehner + Einer"
           },
           "motion": {
-            "title": "Two-digit addition in motion",
-            "lead": "First add the tens, then the ones. The animation shows how both groups join into the answer.",
-            "caption": "Tens: 20 + 10, ones: 4 + 3."
+            "title": "Zweistellige Addition in Bewegung",
+            "lead": "Zuerst addierst du die Zehner, dann die Einer. Die Animation zeigt, wie beide Gruppen zur Antwort zusammenkommen.",
+            "caption": "Zehner: 20 + 10, Einer: 4 + 3."
           },
           "blocks": {
-            "title": "Tens and ones blocks",
-            "lead": "Colour blocks show that tens and ones join separately.",
-            "caption": "First 20 + 10, then 4 + 3. The sum is built from both parts.",
-            "tensChip": "Tens",
-            "onesChip": "Ones",
-            "sumChip": "Sum"
+            "title": "Zehner- und Einerblöcke",
+            "lead": "Farbige Blöcke zeigen, dass Zehner und Einer getrennt zusammenkommen.",
+            "caption": "Erst 20 + 10, dann 4 + 3. Die Summe entsteht aus beiden Teilen.",
+            "tensChip": "Zehner",
+            "onesChip": "Einer",
+            "sumChip": "Summe"
           },
           "columns": {
-            "title": "Tens and ones columns",
-            "lead": "Place the numbers in columns: tens under tens, ones under ones. Then add them separately.",
-            "caption": "First the tens, then the ones. The answer is built from both columns.",
-            "tensLabel": "Tens",
-            "onesLabel": "Ones"
+            "title": "Zehner- und Einer-Spalten",
+            "lead": "Ordne die Zahlen in Spalten: Zehner unter Zehner, Einer unter Einer. Dann addierst du sie getrennt.",
+            "caption": "Zuerst die Zehner, dann die Einer. Die Antwort entsteht aus beiden Spalten.",
+            "tensLabel": "Zehner",
+            "onesLabel": "Einer"
           },
           "abacus": {
-            "title": "Abacus",
-            "lead": "The abacus helps move the beads: tens and ones separately, then read the sum.",
-            "caption": "The beads move toward one shared sum.",
-            "tensChip": "Tens",
-            "onesChip": "Ones",
-            "sumChip": "Sum"
+            "title": "Abakus",
+            "lead": "Der Abakus hilft beim Verschieben der Kugeln: Zehner und Einer getrennt, dann liest du die Summe ab.",
+            "caption": "Die Kugeln bewegen sich auf eine gemeinsame Summe zu.",
+            "tensChip": "Zehner",
+            "onesChip": "Einer",
+            "sumChip": "Summe"
           }
         },
         "remember": {
           "rules": {
-            "title": "Addition rules",
-            "orderChip": "Order: 3 + 5 = 5 + 3",
-            "zeroChip": "Adding 0: 7 + 0 = 7",
-            "startChip": "Start with the bigger number",
-            "groupChip": "Group to 10",
-            "pairsTitle": "Pairs to 10",
-            "pairsText": "Look for pairs: 6 + 4 = 10",
-            "doublesTitle": "Doubles",
-            "doublesText": "Doubles give a quick answer: 5 + 5 = 10",
-            "groupingTitle": "Grouping",
+            "title": "Regeln der Addition",
+            "orderChip": "Reihenfolge: 3 + 5 = 5 + 3",
+            "zeroChip": "0 addieren: 7 + 0 = 7",
+            "startChip": "Mit der größeren Zahl beginnen",
+            "groupChip": "Zur 10 bündeln",
+            "pairsTitle": "Paare bis 10",
+            "pairsText": "Suche Paare: 6 + 4 = 10",
+            "doublesTitle": "Doppelzahlen",
+            "doublesText": "Doppelzahlen geben schnell eine Antwort: 5 + 5 = 10",
+            "groupingTitle": "Gruppieren",
             "groupingText": "(2 + 3) + 4 = 2 + (3 + 4)",
-            "pathTitle": "Path",
-            "pathStep1Title": "Find pairs to 10",
+            "pathTitle": "Weg",
+            "pathStep1Title": "Paare bis 10 finden",
             "pathStep1Text": "6 + 4, 7 + 3, 8 + 2",
-            "pathStep2Title": "Use doubles",
+            "pathStep2Title": "Doppelzahlen nutzen",
             "pathStep2Text": "5 + 5, 6 + 6",
-            "pathStep3Title": "Group numbers",
-            "pathStep3Text": "Start with the easier sum"
+            "pathStep3Title": "Zahlen gruppieren",
+            "pathStep3Text": "Beginne mit der einfacheren Summe"
           },
           "commutative": {
-            "title": "Swap the addends",
-            "label": "Swap the addends",
-            "description": "Swap the order and compare the answer.",
-            "caption": "Change the order and the answer stays the same."
+            "title": "Summanden vertauschen",
+            "label": "Summanden vertauschen",
+            "description": "Vertausche die Reihenfolge und vergleiche die Antwort.",
+            "caption": "Die Reihenfolge ändert sich, die Antwort bleibt gleich."
           },
           "associative": {
-            "title": "Brackets and grouping",
-            "bracketsLabel": "Brackets",
-            "groupingLabel": "grouping",
-            "description": "See that different grouping gives the same answer.",
-            "caption": "Group numbers so they are easier to add."
+            "title": "Klammern und Gruppieren",
+            "bracketsLabel": "Klammern",
+            "groupingLabel": "Gruppierung",
+            "description": "Sieh, dass eine andere Gruppierung dieselbe Antwort ergibt.",
+            "caption": "Gruppiere Zahlen so, dass sie leichter zu addieren sind."
           },
           "zero": {
-            "title": "Zero = no change",
-            "zeroLabel": "Zero",
-            "noChangeLabel": "no change",
-            "description": "Add zero and see what happens.",
-            "caption": "Adding 0 does not change the answer."
+            "title": "Null = keine Veränderung",
+            "zeroLabel": "Null",
+            "noChangeLabel": "keine Veränderung",
+            "description": "Addiere null und sieh, was passiert.",
+            "caption": "0 zu addieren verändert die Antwort nicht."
           },
           "makeTen": {
-            "title": "Make 10",
-            "label": "Make 10",
-            "description": "Look for pairs that make 10.",
-            "caption": "Look for pairs that make 10."
+            "title": "10 bilden",
+            "label": "10 bilden",
+            "description": "Suche Paare, die 10 ergeben.",
+            "caption": "Suche Paare, die 10 ergeben."
           },
           "doubles": {
-            "title": "Doubles",
-            "label": "Doubles",
-            "description": "Repeat the same number and count faster.",
-            "caption": "Repeat the same number for a quick answer."
+            "title": "Doppelzahlen",
+            "label": "Doppelzahlen",
+            "description": "Wiederhole dieselbe Zahl und zähle schneller.",
+            "caption": "Mit derselben Zahl findest du schneller die Antwort."
           }
         }
       },
       "game": {
-        "stageTitle": "Ball game!"
+        "stageTitle": "Ballspiel!"
       },
       "synthesis": {
-        "stageTitle": "Addition synthesis"
+        "stageTitle": "Addition im Überblick"
       }
     },
     "subtracting": {
-      "lessonTitle": "Subtraction",
+      "lessonTitle": "Subtraktion",
       "sections": {
         "basics": {
-          "title": "Subtraction basics",
-          "description": "What is subtraction? Single-digit subtraction"
+          "title": "Grundlagen der Subtraktion",
+          "description": "Was ist Subtraktion? Einstellige Subtraktion"
         },
         "crossTen": {
-          "title": "Subtracting across 10",
-          "description": "Break through 10"
+          "title": "Über die 10 subtrahieren",
+          "description": "Durch die 10 hindurch"
         },
         "doubleDigit": {
-          "title": "Two-digit subtraction",
-          "description": "Tens and ones separately"
+          "title": "Zweistellige Subtraktion",
+          "description": "Zehner und Einer getrennt"
         },
         "remember": {
-          "title": "Remember!",
-          "description": "Subtraction rules"
+          "title": "Merke!",
+          "description": "Regeln der Subtraktion"
         },
         "game": {
-          "title": "Subtraction game",
-          "description": "Drag and remove objects"
+          "title": "Subtraktionsspiel",
+          "description": "Objekte ziehen und wegnehmen"
         }
       },
       "animations": {
         "subtractingSvg": {
-          "ariaLabel": "Subtraction animation: 5 dots minus 2 dots leaves 3 dots."
+          "ariaLabel": "Subtraktionsanimation: 5 Punkte minus 2 Punkte ergeben 3 Punkte."
         },
         "numberLine": {
-          "ariaLabel": "Number line animation: 13 minus 5 as jumps to 10 and beyond."
+          "ariaLabel": "Zahlenlinien-Animation: 13 minus 5 als Sprünge zur 10 und weiter."
         },
         "tenFrame": {
-          "ariaLabel": "Ten-frame animation: subtracting 13 minus 5."
+          "ariaLabel": "Zehnerfeld-Animation: 13 minus 5 subtrahieren."
         },
         "differenceBar": {
-          "ariaLabel": "Difference animation: 12 minus 7 leaves 5.",
-          "differenceLabel": "difference 5"
+          "ariaLabel": "Differenz-Animation: 12 minus 7 ergibt 5.",
+          "differenceLabel": "Differenz 5"
         },
         "abacus": {
-          "ariaLabel": "Abacus animation: subtracting tens and ones separately.",
-          "tensLabel": "Tens",
-          "onesLabel": "Ones",
+          "ariaLabel": "Abakus-Animation: Zehner und Einer getrennt subtrahieren.",
+          "tensLabel": "Zehner",
+          "onesLabel": "Einer",
           "startLabel": "Start",
-          "subtractLabel": "Subtract",
-          "resultLabel": "Result"
+          "subtractLabel": "Subtrahieren",
+          "resultLabel": "Ergebnis"
         }
       },
       "slides": {
         "basics": {
           "meaning": {
-            "title": "What does it mean to subtract?",
-            "lead": "Subtraction means taking a part away from a group. We ask: how many are left?"
+            "title": "Was bedeutet Subtrahieren?",
+            "lead": "Subtraktion bedeutet, einen Teil von einer Gruppe wegzunehmen. Wir fragen: Wie viel bleibt übrig?"
           },
           "singleDigit": {
-            "title": "Single-digit subtraction",
-            "lead": "Move back on the number line or count how much is missing to reach the answer.",
-            "step1": "Start at 9",
-            "step2": "Move back 4 steps: 8, 7, 6, 5",
-            "step3": "The last number is the answer: 5 ✓"
+            "title": "Einstellige Subtraktion",
+            "lead": "Gehe auf der Zahlenlinie zurück oder zähle, wie viel bis zur Antwort fehlt.",
+            "step1": "Starte bei 9",
+            "step2": "Gehe 4 Schritte zurück: 8, 7, 6, 5",
+            "step3": "Die letzte Zahl ist die Antwort: 5 ✓"
           },
           "motion": {
-            "title": "Subtraction in motion (SVG)",
-            "lead": "The animation shows how we take some dots away and the answer stays behind.",
-            "caption": "Two dots move away, three stay."
+            "title": "Subtraktion in Bewegung (SVG)",
+            "lead": "Die Animation zeigt, wie wir einige Punkte wegnehmen und die Antwort übrig bleibt.",
+            "caption": "Zwei Punkte gehen weg, drei bleiben."
           }
         },
         "crossTen": {
           "overTen": {
-            "title": "Subtracting across 10",
-            "lead": "Split the subtrahend into two parts: first move down to 10, then subtract the rest.",
+            "title": "Über die 10 subtrahieren",
+            "lead": "Teile die Zahl, die du abziehst, in zwei Teile: zuerst gehst du bis zur 10 herunter, dann ziehst du den Rest ab.",
             "caption": "13 − 3 = 10, 10 − 2 = 8 ✓",
-            "step1Title": "Step 1",
-            "step1Text": "Split 5 into 3 + 2",
-            "step2Title": "Step 2",
-            "step2Text": "Subtract 3: 13 − 3 = 10",
-            "step3Title": "Step 3",
-            "step3Text": "Subtract 2: 10 − 2 = 8"
+            "step1Title": "Schritt 1",
+            "step1Text": "Teile 5 in 3 + 2",
+            "step2Title": "Schritt 2",
+            "step2Text": "Subtrahiere 3: 13 − 3 = 10",
+            "step3Title": "Schritt 3",
+            "step3Text": "Subtrahiere 2: 10 − 2 = 8"
           },
           "numberLine": {
-            "title": "Backward jumps on the number line",
-            "lead": "First go to 10, then keep moving back.",
-            "caption": "13 − 3 = 10, then 10 − 2 = 8."
+            "title": "Rückwärtssprünge auf der Zahlenlinie",
+            "lead": "Gehe zuerst bis 10, dann weiter zurück.",
+            "caption": "13 − 3 = 10, dann 10 − 2 = 8."
           },
           "tenFrame": {
-            "title": "Ten frame",
-            "lead": "Take away the part above 10 first, then the rest from the frame.",
-            "caption": "First remove 3, then 2 more."
+            "title": "Zehnerfeld",
+            "lead": "Nimm zuerst den Teil über 10 weg, dann den Rest aus dem Feld.",
+            "caption": "Entferne zuerst 3, dann noch 2."
           }
         },
         "doubleDigit": {
           "intro": {
-            "title": "Two-digit subtraction",
-            "lead": "Subtract tens and ones separately!",
-            "tensLabel": "Tens",
-            "onesLabel": "Ones"
+            "title": "Zweistellige Subtraktion",
+            "lead": "Subtrahiere Zehner und Einer getrennt!",
+            "tensLabel": "Zehner",
+            "onesLabel": "Einer"
           },
           "abacus": {
-            "title": "Abacus",
-            "lead": "The abacus shows subtracting tens and ones separately.",
-            "caption": "Take the beads away, then read the answer."
+            "title": "Abakus",
+            "lead": "Der Abakus zeigt, wie Zehner und Einer getrennt subtrahiert werden.",
+            "caption": "Nimm die Kugeln weg und lies dann die Antwort ab."
           }
         },
         "remember": {
           "rules": {
-            "title": "Subtraction rules",
-            "orderChip": "Order matters: 7 − 3 ≠ 3 − 7",
-            "zeroChip": "Subtracting 0: 8 − 0 = 8",
-            "checkChip": "Check with addition: 5 + 3 = 8",
-            "breakChip": "Break it into steps: 13 − 5 = 10 − 2",
-            "stepBackTitle": "Move back in steps",
-            "stepBackLead": "Start with the bigger number: 9 − 4",
+            "title": "Regeln der Subtraktion",
+            "orderChip": "Die Reihenfolge ist wichtig: 7 − 3 ≠ 3 − 7",
+            "zeroChip": "0 subtrahieren: 8 − 0 = 8",
+            "checkChip": "Mit Addition prüfen: 5 + 3 = 8",
+            "breakChip": "In Schritte zerlegen: 13 − 5 = 10 − 2",
+            "stepBackTitle": "Schrittweise zurückgehen",
+            "stepBackLead": "Starte mit der größeren Zahl: 9 − 4",
             "stepBackPath": "9 -> 8 -> 7 -> 6 -> 5",
-            "checkTitle": "Check with addition",
-            "checkLead": "If answer + subtrahend equals the starting number, it is correct.",
+            "checkTitle": "Mit Addition prüfen",
+            "checkLead": "Wenn Antwort + die abgezogene Zahl wieder die Ausgangszahl ergibt, ist es richtig.",
             "checkEquation": "5 + 3 = 8",
-            "orderTitle": "Order matters",
-            "orderLead": "7 − 3 is not the same as 3 − 7.",
-            "motionTitle": "Subtraction in motion",
-            "motionLead": "You take a part away and watch what is left.",
-            "motionCaption": "Two dots move away, three stay.",
-            "pathTitle": "Path",
-            "pathStep1Title": "Split the subtrahend",
+            "orderTitle": "Die Reihenfolge ist wichtig",
+            "orderLead": "7 − 3 ist nicht dasselbe wie 3 − 7.",
+            "motionTitle": "Subtraktion in Bewegung",
+            "motionLead": "Du nimmst einen Teil weg und beobachtest, was übrig bleibt.",
+            "motionCaption": "Zwei Punkte gehen weg, drei bleiben.",
+            "pathTitle": "Weg",
+            "pathStep1Title": "Die Zahl aufteilen",
             "pathStep1Text": "5 = 3 + 2",
-            "pathStep2Title": "Go down to 10",
+            "pathStep2Title": "Bis zur 10 gehen",
             "pathStep2Text": "13 − 3 = 10",
-            "pathStep3Title": "Subtract the rest",
+            "pathStep3Title": "Den Rest subtrahieren",
             "pathStep3Text": "10 − 2 = 8",
-            "pathStep4Title": "Check with addition",
+            "pathStep4Title": "Mit Addition prüfen",
             "pathStep4Text": "8 + 5 = 13"
           },
           "backJumps": {
-            "title": "Backward jumps",
-            "label": "Jumps on the line",
-            "lead": "Move back in two steps: to 10, then farther.",
+            "title": "Rückwärtssprünge",
+            "label": "Sprünge auf der Linie",
+            "lead": "Gehe in zwei Schritten zurück: bis 10, dann weiter.",
             "caption": "13 − 5 = 8."
           },
           "tenFrame": {
-            "title": "Ten frame",
-            "label": "Ten frame",
-            "lead": "First remove the part above 10, then the rest from the frame.",
+            "title": "Zehnerfeld",
+            "label": "Zehnerfeld",
+            "lead": "Entferne zuerst den Teil über 10, dann den Rest aus dem Feld.",
             "caption": "13 − 5 = 8."
           },
           "checkAddition": {
-            "title": "Check the answer with addition",
-            "label": "Checking",
-            "lead": "Add the subtrahend to the answer and see if you return to the starting number.",
-            "caption": "If addition matches, the subtraction is correct."
+            "title": "Prüfe die Antwort mit Addition",
+            "label": "Prüfen",
+            "lead": "Addiere die abgezogene Zahl zur Antwort und schau, ob du zur Ausgangszahl zurückkommst.",
+            "caption": "Wenn die Addition passt, ist die Subtraktion richtig."
           },
           "difference": {
-            "title": "Difference between numbers",
-            "label": "Difference",
-            "lead": "Compare two numbers and see how much is missing to the larger one.",
-            "caption": "The difference is the missing part."
+            "title": "Differenz zwischen Zahlen",
+            "label": "Differenz",
+            "lead": "Vergleiche zwei Zahlen und sieh, wie viel bis zur größeren fehlt.",
+            "caption": "Die Differenz ist der fehlende Teil."
           }
         }
       },
       "game": {
-        "stageTitle": "Subtraction game!"
+        "stageTitle": "Subtraktionsspiel!"
       }
     },
     "geometryPerimeter": {
-      "lessonTitle": "Perimeter of shapes",
+      "lessonTitle": "Umfang von Formen",
       "sections": {
         "intro": {
-          "title": "What is perimeter?",
-          "description": "Definition and counting rule"
+          "title": "Was ist Umfang?",
+          "description": "Definition und Zählregel"
         },
         "kwadrat": {
-          "title": "Perimeter of a square",
-          "description": "Formula: 4 × a"
+          "title": "Umfang eines Quadrats",
+          "description": "Formel: 4 × a"
         },
         "prostokan": {
-          "title": "Perimeter of a rectangle",
-          "description": "Formula: 2 × (a + b)"
+          "title": "Umfang eines Rechtecks",
+          "description": "Formel: 2 × (a + b)"
         },
         "podsumowanie": {
-          "title": "Summary",
-          "description": "All formulas together"
+          "title": "Zusammenfassung",
+          "description": "Alle Formeln zusammen"
         },
         "game": {
-          "title": "Game: Draw the perimeter",
-          "description": "Trace on the grid and choose the perimeter"
+          "title": "Spiel: Zeichne den Umfang",
+          "description": "Fahre das Raster nach und wähle den Umfang"
         }
       },
       "slides": {
         "intro": {
-          "title": "What is perimeter?",
-          "lead": "Perimeter is the total length of the outline of a shape. We add all the sides.",
-          "callout": "We go all the way around the shape and add the sides.",
-          "caption": "We measure perimeter in centimeters (cm), meters (m), and so on."
+          "title": "Was ist Umfang?",
+          "lead": "Der Umfang ist die gesamte Länge des Randes einer Figur. Wir addieren alle Seiten.",
+          "callout": "Wir gehen einmal ganz um die Figur herum und addieren die Seiten.",
+          "caption": "Wir messen den Umfang zum Beispiel in Zentimetern (cm) oder Metern (m)."
         },
         "kwadrat": {
-          "title": "Perimeter of a square",
-          "sideLabel": "Each side is 3 cm",
-          "equation": "Perimeter = 3 + 3 + 3 + 3 = 12 cm",
-          "formulaTitle": "Formula for a square:",
-          "formulaCaption": "where a is the side length",
-          "example": "Example: a = 5 cm -> P = 4 × 5 = 20 cm"
+          "title": "Umfang eines Quadrats",
+          "sideLabel": "Jede Seite ist 3 cm lang",
+          "equation": "Umfang = 3 + 3 + 3 + 3 = 12 cm",
+          "formulaTitle": "Formel für ein Quadrat:",
+          "formulaCaption": "dabei ist a die Seitenlänge",
+          "example": "Beispiel: a = 5 cm -> U = 4 × 5 = 20 cm"
         },
         "prostokan": {
-          "title": "Perimeter of a rectangle",
-          "sidesLabel": "Sides: 6 cm, 4 cm, 6 cm, 4 cm",
-          "equation": "Perimeter = 6 + 4 + 6 + 4 = 20 cm",
-          "formulaTitle": "Formula for a rectangle:",
-          "formulaCaption": "where a and b are the side lengths",
-          "example": "Example: a = 6, b = 4 -> P = 2 × (6 + 4) = 20 cm",
-          "oppositeCaption": "Opposite sides are equal - add the pairs.",
-          "sumCaption": "Add all lengths: P = 6 + 4 + 6 + 4 = 20"
+          "title": "Umfang eines Rechtecks",
+          "sidesLabel": "Seiten: 6 cm, 4 cm, 6 cm, 4 cm",
+          "equation": "Umfang = 6 + 4 + 6 + 4 = 20 cm",
+          "formulaTitle": "Formel für ein Rechteck:",
+          "formulaCaption": "dabei sind a und b die Seitenlängen",
+          "example": "Beispiel: a = 6, b = 4 -> U = 2 × (6 + 4) = 20 cm",
+          "oppositeCaption": "Gegenüberliegende Seiten sind gleich - addiere die Paare.",
+          "sumCaption": "Addiere alle Längen: U = 6 + 4 + 6 + 4 = 20"
         },
         "podsumowanie": {
-          "summaryTitle": "Summary",
-          "item1": "Perimeter is the sum of all sides.",
-          "item2": "For a square: P = 4 × a",
-          "item3": "For a rectangle: P = 2 × (a + b)",
-          "item4": "A perimeter unit can be cm or m, for example.",
-          "item5": "Always check whether you added each side only once.",
-          "traceTitle": "Summary in motion",
-          "traceCaption": "Perimeter is one full lap around the shape.",
-          "sidesTitle": "Summary: pairs of sides",
-          "sidesCaption": "Add the side pairs: a + a, b + b."
+          "summaryTitle": "Zusammenfassung",
+          "item1": "Der Umfang ist die Summe aller Seiten.",
+          "item2": "Für ein Quadrat: U = 4 × a",
+          "item3": "Für ein Rechteck: U = 2 × (a + b)",
+          "item4": "Eine Umfangseinheit kann zum Beispiel cm oder m sein.",
+          "item5": "Prüfe immer, ob du jede Seite nur einmal addiert hast.",
+          "traceTitle": "Zusammenfassung in Bewegung",
+          "traceCaption": "Der Umfang ist eine volle Runde um die Figur.",
+          "sidesTitle": "Zusammenfassung: Seitenpaare",
+          "sidesCaption": "Addiere die Seitenpaare: a + a, b + b."
         }
       },
       "game": {
-        "stageTitle": "Game: Draw the perimeter"
+        "stageTitle": "Spiel: Zeichne den Umfang"
       }
     },
     "clock": {
-      "lessonTitle": "Learning the clock",
+      "lessonTitle": "Die Uhr lernen",
       "lessonSections": {
         "hours": {
-          "title": "Section 1: Hours (short hand)",
-          "subtitle": "We learn only the short hand and full hours (:00)."
+          "title": "Abschnitt 1: Stunden (kurzer Zeiger)",
+          "subtitle": "Wir lernen nur den kurzen Zeiger und volle Stunden (:00)."
         },
         "minutes": {
-          "title": "Section 2: Minutes (long hand)",
-          "subtitle": "We learn only the long hand and the minute map."
+          "title": "Abschnitt 2: Minuten (langer Zeiger)",
+          "subtitle": "Wir lernen nur den langen Zeiger und die Minutenkarte."
         },
         "combined": {
-          "title": "Section 3: Hours and Minutes Together",
-          "subtitle": "We combine both hands and read the full time."
+          "title": "Abschnitt 3: Stunden und Minuten zusammen",
+          "subtitle": "Wir verbinden beide Zeiger und lesen die ganze Uhrzeit."
         }
       },
       "hubSections": {
         "hours": {
-          "title": "Hours",
-          "description": "Short hand and full hours"
+          "title": "Stunden",
+          "description": "Kurzer Zeiger und volle Stunden"
         },
         "minutes": {
-          "title": "Minutes",
-          "description": "Long hand and counting by fives"
+          "title": "Minuten",
+          "description": "Langer Zeiger und Zählen in Fünferschritten"
         },
         "combined": {
-          "title": "Combining the hands",
-          "description": "Read the full time on the clock"
+          "title": "Beide Zeiger zusammen",
+          "description": "Lies die ganze Uhrzeit auf der Uhr"
         },
         "gameHours": {
-          "title": "Practice: Hours",
-          "description": "Train full hours and the short hand"
+          "title": "Übung: Stunden",
+          "description": "Trainiere volle Stunden und den kurzen Zeiger"
         },
         "gameMinutes": {
-          "title": "Practice: Minutes",
-          "description": "Train the long hand and minutes by fives"
+          "title": "Übung: Minuten",
+          "description": "Trainiere den langen Zeiger und Minuten in Fünferschritten"
         },
         "gameCombined": {
-          "title": "Practice: Full time",
-          "description": "Combine hours and minutes into a full time reading"
+          "title": "Übung: Ganze Uhrzeit",
+          "description": "Verbinde Stunden und Minuten zu einer vollständigen Uhrzeit"
         },
-        "combinedLockedDescription": "Unlock after completing Hours and Minutes.",
-        "lockedLabel": "Locked"
+        "combinedLockedDescription": "Wird freigeschaltet, nachdem Stunden und Minuten abgeschlossen sind.",
+        "lockedLabel": "Gesperrt"
       },
       "slides": {
         "hours": {
           "whatShortHand": {
-            "title": "What does the short hand show?",
-            "tts": "The short hand shows the hour. In this section we look only at it.",
-            "clockThreeLabel": "Short hand at 3",
-            "clockEightLabel": "Short hand at 8",
-            "animationCaption": "The short hand jumps from hour to hour.",
-            "caption": "We look at the short hand. It tells us what hour it is."
+            "title": "Was zeigt der kurze Zeiger?",
+            "tts": "Der kurze Zeiger zeigt die Stunde. In diesem Abschnitt schauen wir nur auf ihn.",
+            "clockThreeLabel": "Kurzer Zeiger auf 3",
+            "clockEightLabel": "Kurzer Zeiger auf 8",
+            "animationCaption": "Der kurze Zeiger springt von Stunde zu Stunde.",
+            "caption": "Wir schauen auf den kurzen Zeiger. Er sagt uns, welche Stunde es ist."
           },
           "fullHours": {
-            "title": "Full hours (:00)",
-            "tts": "When it is a full hour, we read only the hour from the short hand.",
+            "title": "Volle Stunden (:00)",
+            "tts": "Wenn es eine volle Stunde ist, lesen wir nur die Stunde am kurzen Zeiger ab.",
             "oneLabel": "1:00",
             "sixLabel": "6:00",
             "elevenLabel": "11:00",
-            "animationCaption": "It is a full hour when the long hand points to 12.",
-            "caption": "In this section we practise only reading the hour: 1, 6, 11."
+            "animationCaption": "Es ist eine volle Stunde, wenn der lange Zeiger auf 12 zeigt.",
+            "caption": "In diesem Abschnitt üben wir nur, die Stunde zu lesen: 1, 6, 11."
           },
           "quickTest": {
-            "title": "Quick hours test",
-            "tts": "Look only at the short hand and say the hour. We ignore minutes.",
-            "clockLabel": "What hour is it?",
-            "animationCaption": "Focus on the short hand and name the hour.",
-            "stepTitle": "Step:",
-            "stepText": "1. Find the short hand.\n2. Read the number it points to.",
-            "result": "Result: 9:00"
+            "title": "Schneller Stundentest",
+            "tts": "Schau nur auf den kurzen Zeiger und nenne die Stunde. Die Minuten ignorieren wir.",
+            "clockLabel": "Wie viel Uhr ist es?",
+            "animationCaption": "Konzentriere dich auf den kurzen Zeiger und nenne die Stunde.",
+            "stepTitle": "Schritt:",
+            "stepText": "1. Finde den kurzen Zeiger.\n2. Lies die Zahl, auf die er zeigt.",
+            "result": "Ergebnis: 9:00"
           }
         },
         "minutes": {
           "whatLongHand": {
-            "title": "What does the long hand show?",
-            "tts": "The long hand shows minutes. In this section we focus only on minutes.",
-            "clockLabel": "Long hand = minutes",
-            "animationCaption": "The long hand makes one full turn in 60 minutes.",
-            "caption": "The long hand moves around the dial and tells us how many minutes have passed."
+            "title": "Was zeigt der lange Zeiger?",
+            "tts": "Der lange Zeiger zeigt die Minuten. In diesem Abschnitt konzentrieren wir uns nur auf die Minuten.",
+            "clockLabel": "Langer Zeiger = Minuten",
+            "animationCaption": "Der lange Zeiger macht in 60 Minuten eine volle Runde.",
+            "caption": "Der lange Zeiger bewegt sich über das Zifferblatt und zeigt uns, wie viele Minuten vergangen sind."
           },
           "fiveMinuteMap": {
-            "title": "Minute map by fives",
-            "tts": "Each number means the next five minutes: 1 means 5, 2 means 10, 3 means 15, and so on.",
-            "fifteenLabel": "3 = 15 min",
-            "thirtyLabel": "6 = 30 min",
-            "fortyFiveLabel": "9 = 45 min",
-            "animationCaption": "We jump by 5 minutes: :00, :05, :10, :15...",
-            "caption": "Remember: every next number means +5 minutes."
+            "title": "Minutenkarte in Fünferschritten",
+            "tts": "Jede Zahl bedeutet die nächsten fünf Minuten: 1 bedeutet 5, 2 bedeutet 10, 3 bedeutet 15 und so weiter.",
+            "fifteenLabel": "3 = 15 Min.",
+            "thirtyLabel": "6 = 30 Min.",
+            "fortyFiveLabel": "9 = 45 Min.",
+            "animationCaption": "Wir springen in 5-Minuten-Schritten: :00, :05, :10, :15...",
+            "caption": "Merke: Jede nächste Zahl bedeutet +5 Minuten."
           },
           "quickTest": {
-            "title": "Quick minutes test",
-            "tts": "Look only at the long hand and name the minutes.",
-            "clockLabel": "How many minutes is that?",
-            "animationCaption": "Every small tick is 1 minute.",
-            "stepTitle": "Step:",
-            "stepText": "The long hand stands at 7.\n7 × 5 = 35 minutes.",
-            "result": "Result: :35"
+            "title": "Schneller Minutentest",
+            "tts": "Schau nur auf den langen Zeiger und nenne die Minuten.",
+            "clockLabel": "Wie viele Minuten sind das?",
+            "animationCaption": "Jeder kleine Strich ist 1 Minute.",
+            "stepTitle": "Schritt:",
+            "stepText": "Der lange Zeiger steht auf 7.\n7 × 5 = 35 Minuten.",
+            "result": "Ergebnis: :35"
           }
         },
         "combined": {
           "combineHands": {
-            "title": "How do we combine both hands?",
-            "tts": "First we read the hour from the short hand, then the minutes from the long hand.",
-            "clockLabel": "Example: 8:30",
-            "animationCaption": "The short hand shows the hour, the long hand shows the minutes.",
-            "stepsTitle": "Steps:",
-            "step1": "1. Short hand: hour = 8",
-            "step2": "2. Long hand: minutes = 30",
-            "result": "Result: 8:30"
+            "title": "Wie verbinden wir beide Zeiger?",
+            "tts": "Zuerst lesen wir die Stunde am kurzen Zeiger, dann die Minuten am langen Zeiger.",
+            "clockLabel": "Beispiel: 8:30",
+            "animationCaption": "Der kurze Zeiger zeigt die Stunde, der lange die Minuten.",
+            "stepsTitle": "Schritte:",
+            "step1": "1. Kurzer Zeiger: Stunde = 8",
+            "step2": "2. Langer Zeiger: Minuten = 30",
+            "result": "Ergebnis: 8:30"
           },
           "quarterPastQuarterTo": {
-            "title": "Quarter past and quarter to",
-            "tts": "When the long hand is on 3, it is quarter past, and on 9 it is quarter to the next hour.",
-            "quarterPastLabel": "5:15 - quarter past 5",
-            "quarterToLabel": "5:45 - quarter to 6",
-            "animationCaption": "Minutes 15 and 45 are quarter hours.",
-            "caption": "We read the hour and minutes at the same time."
+            "title": "Viertel nach und Viertel vor",
+            "tts": "Wenn der lange Zeiger auf 3 steht, ist es Viertel nach, und auf 9 ist es Viertel vor der nächsten Stunde.",
+            "quarterPastLabel": "5:15 - Viertel nach 5",
+            "quarterToLabel": "5:45 - Viertel vor 6",
+            "animationCaption": "15 und 45 Minuten sind Viertelstunden.",
+            "caption": "Wir lesen Stunde und Minuten gleichzeitig."
           },
           "readyForPractice": {
-            "title": "Ready for practice",
-            "tts": "Now you can read hours and minutes together. Move on to practice.",
-            "animationCaption": "Half an hour is :30, with the long hand on 6.",
-            "caption": "Great job! You can:\n🔴 read hours,\n🟢 read minutes,\n✅ combine both hands into the full time."
+            "title": "Bereit zum Üben",
+            "tts": "Jetzt kannst du Stunden und Minuten zusammen lesen. Weiter geht's mit dem Üben.",
+            "animationCaption": "Eine halbe Stunde ist :30, der lange Zeiger steht dann auf der 6.",
+            "caption": "Super gemacht! Du kannst:\n🔴 Stunden lesen,\n🟢 Minuten lesen,\n✅ beide Zeiger zur ganzen Uhrzeit verbinden."
           }
         }
       },
@@ -3731,42 +3731,307 @@
       },
       "trainingSlides": {
         "hours": {
-          "title": "Practice: Hours",
-          "tts": "Now you move to full-hour practice. Set the short hand just like in the first hours practice panel."
+          "title": "Übung: Stunden",
+          "tts": "Jetzt wechselst du zur Übung mit vollen Stunden. Stelle den kurzen Zeiger genau wie im ersten Stunden-Übungsfeld ein."
         },
         "minutes": {
-          "title": "Practice: Minutes",
-          "tts": "Now you move to minute practice. Set the long hand just like in the first minutes practice panel."
+          "title": "Übung: Minuten",
+          "tts": "Jetzt wechselst du zur Minutenübung. Stelle den langen Zeiger genau wie im ersten Minuten-Übungsfeld ein."
         },
         "combined": {
-          "title": "Practice: Full time",
-          "tts": "Now you move to full-time practice. Set both hands just like in the first full-time practice panel."
+          "title": "Übung: Ganze Uhrzeit",
+          "tts": "Jetzt wechselst du zur Übung mit ganzen Uhrzeiten. Stelle beide Zeiger genau wie im ersten Übungsfeld ein."
         }
       },
       "training": {
-        "panelLabel": "task",
-        "goToPanel": "Go to panel {label}",
-        "previousPanel": "Previous panel",
-        "nextPanel": "Next panel",
-        "finishLesson": "Finish lesson ✅",
-        "openChallenge": "Open challenge",
-        "nextTask": "Next task",
-        "backToTopics": "Back to topics",
-        "leaveChallengeTitle": "Leave the challenge?",
-        "leaveChallengeMessage": "If you leave Challenge Mode now, this challenge will not count as completed.",
-        "stay": "Stay",
-        "leaveChallenge": "Leave challenge"
+        "panelLabel": "Aufgabe",
+        "goToPanel": "Gehe zu Aufgabe {label}",
+        "previousPanel": "Vorherige Aufgabe",
+        "nextPanel": "Nächste Aufgabe",
+        "finishLesson": "Lektion abschließen ✅",
+        "openChallenge": "Herausforderung öffnen",
+        "nextTask": "Nächste Aufgabe",
+        "backToTopics": "Zurück zu den Themen",
+        "leaveChallengeTitle": "Herausforderung verlassen?",
+        "leaveChallengeMessage": "Wenn du den Herausforderungsmodus jetzt verlässt, zählt diese Herausforderung nicht als abgeschlossen.",
+        "stay": "Bleiben",
+        "leaveChallenge": "Herausforderung verlassen"
       }
     }
   },
   "KangurLessonChrome": {
-    "lessonNavigation": "Lesson navigation",
-    "openSecretPanel": "Open secret panel",
-    "secretPanelTitle": "Secret panel",
-    "backToTopics": "Back to topics",
-    "panelsNavigation": "Panel navigation",
-    "previousPanel": "Previous panel",
-    "nextPanel": "Next panel",
+    "lessonNavigation": "Lektionsnavigation",
+    "openSecretPanel": "Geheimes Panel öffnen",
+    "secretPanelTitle": "Geheimes Panel",
+    "backToTopics": "Zurück zu den Themen",
+    "panelsNavigation": "Panelnavigation",
+    "previousPanel": "Vorheriges Panel",
+    "nextPanel": "Nächstes Panel",
     "panelLabel": "Panel {index}"
+  },
+  "KangurAssignmentsRuntime": {
+    "catalog": {
+      "groups": {
+        "time": "Zeit",
+        "geometry": "Geometrie",
+        "logic": "Logik",
+        "lesson": "Lektion",
+        "hint": "Hinweis"
+      },
+      "lesson": {
+        "descriptionTemplate": "{description}. Weise dem Lernenden eine frische Wiederholung dieser Lektion zu.",
+        "createDescriptionTemplate": "Wiederhole die Lektion \"{title}\" und schliesse eine zusaetzliche Sitzung ab."
+      },
+      "practice": {
+        "practiceMixed": {
+          "title": "Gemischtes Training",
+          "description": "Weise ein bereichsuebergreifendes Training mit verschiedenen Fragetypen zu.",
+          "badge": "Training",
+          "createTitle": "Gemischtes Training",
+          "createDescription": "Schliesse ein gemischtes Training ab und halte den Lernrhythmus."
+        },
+        "practiceAddition": {
+          "title": "Training: Addition",
+          "description": "Eine Additionssitzung mit dem Ziel von 80% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Addition",
+          "createDescription": "Schliesse eine Additionssitzung ab und erreiche mindestens 80% Genauigkeit."
+        },
+        "practiceSubtraction": {
+          "title": "Training: Subtraktion",
+          "description": "Eine Subtraktionssitzung mit dem Ziel von 80% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Subtraktion",
+          "createDescription": "Schliesse eine Subtraktionssitzung ab und erreiche mindestens 80% Genauigkeit."
+        },
+        "practiceMultiplication": {
+          "title": "Training: Multiplikation",
+          "description": "Eine Multiplikationssitzung mit dem Ziel von 80% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Multiplikation",
+          "createDescription": "Schliesse eine Multiplikationssitzung ab und erreiche mindestens 80% Genauigkeit."
+        },
+        "practiceDivision": {
+          "title": "Training: Division",
+          "description": "Eine Divisionssitzung mit dem Ziel von 80% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Division",
+          "createDescription": "Schliesse eine Divisionssitzung ab und erreiche mindestens 80% Genauigkeit."
+        },
+        "practiceDecimals": {
+          "title": "Training: Brueche",
+          "description": "Eine Bruchsitzung mit dem Ziel von 75% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Brueche",
+          "createDescription": "Schliesse eine Bruchsitzung ab und erreiche mindestens 75% Genauigkeit."
+        },
+        "practicePowers": {
+          "title": "Training: Potenzen",
+          "description": "Eine Potenzsitzung mit dem Ziel von 75% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Potenzen",
+          "createDescription": "Schliesse eine Potenzsitzung ab und erreiche mindestens 75% Genauigkeit."
+        },
+        "practiceRoots": {
+          "title": "Training: Wurzeln",
+          "description": "Eine Wurzelsitzung mit dem Ziel von 75% richtigen Antworten.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Wurzeln",
+          "createDescription": "Schliesse eine Wurzelsitzung ab und erreiche mindestens 75% Genauigkeit."
+        },
+        "practiceClock": {
+          "title": "Training: Uhr",
+          "description": "Eine Praxissitzung mit Stunden, Minuten und voller Uhrzeit auf der Uhr.",
+          "badge": "Praxis",
+          "createTitle": "Praxis: Uhr",
+          "createDescription": "Schliesse das Uhrtraining ab und pruefe das Lesen von Stunden, Minuten und voller Uhrzeit."
+        }
+      }
+    },
+    "priority": {
+      "high": "Hohe Prioritaet",
+      "medium": "Mittlere Prioritaet",
+      "low": "Niedrige Prioritaet"
+    },
+    "status": {
+      "completed": "Abgeschlossen",
+      "inProgress": "In Arbeit",
+      "new": "Neu"
+    },
+    "time": {
+      "hoursMinutes": "{hours} Std. {minutes} Min.",
+      "hoursOnly": "{hours} Std.",
+      "minutesOnly": "{minutes} Min.",
+      "timeLimitLabel": "Zeitlimit: {label}",
+      "expired": "Die Zeit ist abgelaufen",
+      "remainingHoursMinutes": "Verbleibend: {hours} Std. {minutes} Min.",
+      "remainingMinutesSeconds": "Verbleibend: {minutes} Min. {seconds} Sek.",
+      "remainingSeconds": "Verbleibend: {seconds} Sek."
+    },
+    "actions": {
+      "openLesson": "Lektion oeffnen",
+      "startTraining": "Training starten",
+      "trainNow": "Jetzt trainieren"
+    },
+    "operations": {
+      "addition": "Addition",
+      "subtraction": "Subtraktion",
+      "multiplication": "Multiplikation",
+      "division": "Division",
+      "decimals": "Brueche",
+      "powers": "Potenzen",
+      "roots": "Wurzeln",
+      "clock": "Uhr",
+      "mixed": "Gemischtes Training"
+    },
+    "banner": {
+      "activeHelper": "In dieser Sitzung bearbeitest du die zugewiesene Aufgabe.",
+      "completedHelper": "Die Aufgabe der Eltern wurde in dieser Sitzung abgeschlossen.",
+      "queueHelper": "Naechste Prioritaet in der Praxis: {label}.",
+      "parentPriority": "Prioritaet der Eltern"
+    },
+    "spotlight": {
+      "title": "Vorschlaege der Eltern"
+    }
+  },
+  "KangurScoreHistory": {
+    "loading": {
+      "title": "Ergebnisse werden geladen...",
+      "description": "Wir laden die neuesten Ergebnisse und bereiten die Fortschrittsübersicht vor."
+    },
+    "empty": {
+      "description": "Keine gespeicherten Ergebnisse."
+    },
+    "summary": {
+      "totalGames": "Spiele insgesamt",
+      "averageAccuracy": "Durchschn. Genauigkeit",
+      "perfectGames": "Perfekte Ergebnisse"
+    },
+    "window": {
+      "title": "Überblick über die letzten {days} Tage",
+      "weeklySessions": "Sitzungen dieser Woche",
+      "weeklySummary": "Durchschnitt {accuracy}% · perfekt {perfect}",
+      "weeklyXp": "XP: +{xp} · durchschnittlich {average} pro Sitzung",
+      "lastActivityPrefix": "Letzte Aktivität:"
+    },
+    "relative": {
+      "noActivity": "Keine Aktivität",
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "daysAgo": "vor {days} Tagen"
+    },
+    "trend": {
+      "label": "Wochentrend",
+      "newRange": "Neuer Bereich",
+      "context": {
+        "insufficient": "Zum Vergleichen werden ältere Ergebnisse benötigt.",
+        "up": "Anstieg von {previous}% auf {recent}%.",
+        "down": "Rückgang von {previous}% auf {recent}%.",
+        "flat": "Stabil: {recent}% Woche zu Woche."
+      }
+    },
+    "strongest": {
+      "label": "Starke Seite",
+      "empty": "Nicht genug Daten, um eine Stärke zu erkennen."
+    },
+    "weakest": {
+      "label": "Braucht Unterstützung",
+      "empty": "Wir brauchen mehr als einen Aufgabentyp, um einen Förderbereich zu erkennen.",
+      "reviewLesson": "Lektion wiederholen"
+    },
+    "shared": {
+      "noData": "Keine Daten",
+      "operationSummary": "Durchschnitt {accuracy}% · Versuche {attempts} · +{xp} XP / Sitzung"
+    },
+    "byOperation": {
+      "heading": "Ergebnisse nach Operation"
+    },
+    "recent": {
+      "heading": "Letzte Spiele"
+    },
+    "operations": {
+      "alphabet": "Alphabet",
+      "alphabet_basics": "Alphabet",
+      "alphabet_copy": "Buchstaben abschreiben",
+      "alphabet_syllables": "Silben",
+      "alphabet_words": "Erste Wörter",
+      "alphabet_matching": "Buchstaben zuordnen",
+      "alphabet_sequence": "Buchstabenreihenfolge",
+      "geometry_shape_recognition": "Geometrie",
+      "addition": "Addition",
+      "subtraction": "Subtraktion",
+      "multiplication": "Multiplikation",
+      "division": "Division",
+      "decimals": "Brüche",
+      "powers": "Potenzen",
+      "roots": "Wurzeln",
+      "clock": "Uhr",
+      "calendar": "Kalender",
+      "geometry": "Geometrie",
+      "logical": "Logisches Denken",
+      "mixed": "Gemischtes Training",
+      "english_basics": "Grundlagen",
+      "english_parts_of_speech": "Wortarten",
+      "english_sentence_structure": "Satzbau",
+      "english_subject_verb_agreement": "Subjekt-Verb-Kongruenz",
+      "english_articles": "Artikel",
+      "english_prepositions_time_place": "Präpositionen für Zeit und Ort"
+    }
+  },
+  "KangurCmsRuntime": {
+    "common": {
+      "playerFallback": "Spieler"
+    },
+    "progress": {
+      "totalXpLabel": "{xp} XP gesamt",
+      "xpIntoLevelLabel": "{xp} XP"
+    },
+    "assignments": {
+      "actions": {
+        "returnToPractice": "Zuruck zur Praxis"
+      },
+      "description": {
+        "returnToPractice": "Kehre zur Praxis zuruck und setze die Herausforderung fort."
+      },
+      "title": {
+        "continuePractice": "Praxis fortsetzen"
+      },
+      "countLabel": "{count} Aufgaben",
+      "priority": {
+        "high": "Hohe Prioritat",
+        "medium": "Mittlere Prioritat",
+        "low": "Niedrige Prioritat",
+        "self": "Eigene Prioritat",
+        "session": "Praxisrunde"
+      },
+      "progress": {
+        "completedPercent": "{percent}% abgeschlossen",
+        "none": "Keine aktive Aufgabe."
+      },
+      "helper": {
+        "activeSession": "In dieser Sitzung bearbeitest du die zugewiesene Aufgabe.",
+        "nextPractice": "Nachste Prioritat in der Praxis: {operation}.",
+        "nextStep": "Nachster Schritt in der Praxis."
+      },
+      "eyebrow": {
+        "completedParent": "Abgeschlossene Elternaufgabe",
+        "parent": "Elternaufgabe",
+        "followUp": "Weitere Praxis"
+      }
+    },
+    "operationSelector": {
+      "greetingLabel": "Hallo, {playerName}! 👋"
+    },
+    "result": {
+      "title": "Starke Arbeit, {playerName}!",
+      "starsLabel": "{stars} / 3 Sterne",
+      "timeTakenLabel": "{seconds}s",
+      "message": {
+        "perfect": "Perfektes Ergebnis! Du bist ein Mathe-Star.",
+        "great": "Grossartige Arbeit! Weiter so.",
+        "good": "Gute Arbeit! Ubung bringt Fortschritt.",
+        "tryAgain": "Versuch es weiter. Du schaffst das."
+      }
+    }
   }
 }

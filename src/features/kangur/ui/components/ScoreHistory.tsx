@@ -1,6 +1,8 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
+import type { TranslationValues } from 'use-intl';
 
 import {
   appendKangurUrlParams,
@@ -29,15 +31,10 @@ import { loadScopedKangurScores } from '@/features/kangur/ui/services/learner-pr
 import {
   SCORE_INSIGHT_WINDOW_DAYS,
   buildKangurScoreInsights,
+  resolveKangurScoreOperationInfo,
 } from '@/features/kangur/ui/services/score-insights';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
-
-
-type OperationLabel = {
-  label: string;
-  emoji: string;
-};
 
 type OperationBreakdown = {
   total: number;
@@ -50,26 +47,6 @@ type ScoreHistoryProps = {
   playerName?: string | null;
   createdBy?: string | null;
   basePath?: string | null;
-};
-
-const OP_LABELS: Record<string, OperationLabel> = {
-  addition: { label: 'Dodawanie', emoji: '➕' },
-  subtraction: { label: 'Odejmowanie', emoji: '➖' },
-  multiplication: { label: 'Mnożenie', emoji: '✖️' },
-  division: { label: 'Dzielenie', emoji: '➗' },
-  decimals: { label: 'Ułamki', emoji: '🔢' },
-  powers: { label: 'Potęgi', emoji: '⚡' },
-  roots: { label: 'Pierwiastki', emoji: '√' },
-  clock: { label: 'Zegar', emoji: '🕐' },
-  calendar: { label: 'Kalendarz', emoji: '📅' },
-  geometry: { label: 'Geometria', emoji: '🔷' },
-  mixed: { label: 'Mieszane', emoji: '🎲' },
-  english_basics: { label: 'Podstawy', emoji: '🗣️' },
-  english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
-  english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
-  english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
-  english_articles: { label: 'Przedimki', emoji: '📰' },
-  english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
 const OP_ACCENTS: Record<string, KangurAccent> = {
@@ -95,14 +72,48 @@ const OP_ACCENTS: Record<string, KangurAccent> = {
 const kangurPlatform = getKangurPlatform();
 
 const SCORE_FETCH_LIMIT = 30;
-const formatRelativeLastPlayed = (value: string | null): string => {
+const interpolateScoreHistoryTemplate = (
+  template: string,
+  values?: TranslationValues
+): string => {
+  if (!values) {
+    return template;
+  }
+
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    const value = values[key];
+    return value === undefined ? match : String(value);
+  });
+};
+
+const translateScoreHistoryWithFallback = (
+  translate: ((key: string, values?: TranslationValues) => string) | undefined,
+  key: string,
+  fallback: string,
+  values?: TranslationValues
+): string => {
+  if (!translate) {
+    return interpolateScoreHistoryTemplate(fallback, values);
+  }
+
+  const translated = translate(key, values);
+  return interpolateScoreHistoryTemplate(
+    translated === key || translated.endsWith(`.${key}`) ? fallback : translated,
+    values
+  );
+};
+
+const formatRelativeLastPlayed = (
+  value: string | null,
+  translate: ((key: string, values?: TranslationValues) => string) | undefined
+): string => {
   if (!value) {
-    return 'Brak aktywności';
+    return translateScoreHistoryWithFallback(translate, 'relative.noActivity', 'Brak aktywności');
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'Brak aktywności';
+    return translateScoreHistoryWithFallback(translate, 'relative.noActivity', 'Brak aktywności');
   }
 
   const today = new Date();
@@ -112,17 +123,25 @@ const formatRelativeLastPlayed = (value: string | null): string => {
     (todayMidnight.getTime() - playedMidnight.getTime()) / (24 * 60 * 60 * 1000)
   );
   if (diffDays <= 0) {
-    return 'Dzisiaj';
+    return translateScoreHistoryWithFallback(translate, 'relative.today', 'Dzisiaj');
   }
   if (diffDays === 1) {
-    return 'Wczoraj';
+    return translateScoreHistoryWithFallback(translate, 'relative.yesterday', 'Wczoraj');
   }
-  return `${diffDays} dni temu`;
+  return translateScoreHistoryWithFallback(
+    translate,
+    'relative.daysAgo',
+    '{days} dni temu',
+    { days: diffDays }
+  );
 };
 
-const formatTrendValue = (deltaAccuracy: number | null): string => {
+const formatTrendValue = (
+  deltaAccuracy: number | null,
+  translate: ((key: string, values?: TranslationValues) => string) | undefined
+): string => {
   if (deltaAccuracy === null) {
-    return 'Nowy zakres';
+    return translateScoreHistoryWithFallback(translate, 'trend.newRange', 'Nowy zakres');
   }
   if (deltaAccuracy > 0) {
     return `+${deltaAccuracy} pp`;
@@ -131,18 +150,44 @@ const formatTrendValue = (deltaAccuracy: number | null): string => {
 };
 
 const formatTrendContext = (
-  trend: ReturnType<typeof buildKangurScoreInsights>['trend']
+  trend: ReturnType<typeof buildKangurScoreInsights>['trend'],
+  translate: ((key: string, values?: TranslationValues) => string) | undefined
 ): string => {
   if (trend.previousAverageAccuracy === null) {
-    return 'Potrzeba starszych wyników do porównania.';
+    return translateScoreHistoryWithFallback(
+      translate,
+      'trend.context.insufficient',
+      'Potrzeba starszych wyników do porównania.'
+    );
   }
   if (trend.direction === 'up') {
-    return `Wzrost z ${trend.previousAverageAccuracy}% na ${trend.recentAverageAccuracy}%.`;
+    return translateScoreHistoryWithFallback(
+      translate,
+      'trend.context.up',
+      'Wzrost z {previous}% na {recent}%.',
+      {
+        previous: trend.previousAverageAccuracy,
+        recent: trend.recentAverageAccuracy,
+      }
+    );
   }
   if (trend.direction === 'down') {
-    return `Spadek z ${trend.previousAverageAccuracy}% na ${trend.recentAverageAccuracy}%.`;
+    return translateScoreHistoryWithFallback(
+      translate,
+      'trend.context.down',
+      'Spadek z {previous}% na {recent}%.',
+      {
+        previous: trend.previousAverageAccuracy,
+        recent: trend.recentAverageAccuracy,
+      }
+    );
   }
-  return `Stabilnie: ${trend.recentAverageAccuracy}% tydzień do tygodnia.`;
+  return translateScoreHistoryWithFallback(
+    translate,
+    'trend.context.flat',
+    'Stabilnie: {recent}% tydzień do tygodnia.',
+    { recent: trend.recentAverageAccuracy }
+  );
 };
 
 const buildLessonFocusHref = (basePath: string, operation: string): string =>
@@ -166,6 +211,9 @@ export default function ScoreHistory({
   createdBy = null,
   basePath = null,
 }: ScoreHistoryProps): React.JSX.Element {
+  const locale = useLocale();
+  const translations = useTranslations('KangurScoreHistory');
+  const operationTranslations = useTranslations('KangurScoreHistory.operations');
   const { subject } = useKangurSubjectFocus();
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -234,7 +282,17 @@ export default function ScoreHistory({
     () => scores.filter((score) => resolveKangurScoreSubject(score) === subject),
     [scores, subject]
   );
-  const insights = useMemo(() => buildKangurScoreInsights(subjectScores), [subjectScores]);
+  const scoreInsightsLocalizer = useMemo(
+    () => ({
+      translateOperationLabel: (operation: string, fallback: string) =>
+        translateScoreHistoryWithFallback(operationTranslations, operation, fallback),
+    }),
+    [operationTranslations]
+  );
+  const insights = useMemo(
+    () => buildKangurScoreInsights(subjectScores, new Date(), scoreInsightsLocalizer),
+    [scoreInsightsLocalizer, subjectScores]
+  );
   const weakestLessonHref =
     basePath && insights.weakestOperation
       ? buildLessonFocusHref(basePath, insights.weakestOperation.operation)
@@ -246,9 +304,17 @@ export default function ScoreHistory({
         accent='slate'
         align='center'
         data-testid='score-history-loading'
-        description='Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu.'
+        description={translateScoreHistoryWithFallback(
+          translations,
+          'loading.description',
+          'Pobieramy ostatnie wyniki i przygotowujemy podsumowanie postępu.'
+        )}
         padding='lg'
-        title='Ładowanie wyników...'
+        title={translateScoreHistoryWithFallback(
+          translations,
+          'loading.title',
+          'Ładowanie wyników...'
+        )}
         role='status'
         aria-live='polite'
         aria-atomic='true'
@@ -257,7 +323,16 @@ export default function ScoreHistory({
   }
 
   if (subjectScores.length === 0) {
-    return <KangurEmptyState description='Brak zapisanych wyników.' padding='lg' />;
+    return (
+      <KangurEmptyState
+        description={translateScoreHistoryWithFallback(
+          translations,
+          'empty.description',
+          'Brak zapisanych wyników.'
+        )}
+        padding='lg'
+      />
+    );
   }
 
   const avgAccuracy = Math.round(
@@ -284,21 +359,29 @@ export default function ScoreHistory({
           accent='sky'
           align='center'
           data-testid='score-history-total-games'
-          label='Gier łącznie'
+          label={translateScoreHistoryWithFallback(translations, 'summary.totalGames', 'Gier łącznie')}
           value={subjectScores.length}
         />
         <KangurMetricCard
           accent='emerald'
           align='center'
           data-testid='score-history-average-accuracy'
-          label='Śr. skuteczność'
+          label={translateScoreHistoryWithFallback(
+            translations,
+            'summary.averageAccuracy',
+            'Śr. skuteczność'
+          )}
           value={`${avgAccuracy}%`}
         />
         <KangurMetricCard
           accent='amber'
           align='center'
           data-testid='score-history-perfect-games'
-          label='Idealne wyniki'
+          label={translateScoreHistoryWithFallback(
+            translations,
+            'summary.perfectGames',
+            'Idealne wyniki'
+          )}
           value={
             subjectScores.filter((score) => score.correct_answers === score.total_questions).length
           }
@@ -307,64 +390,134 @@ export default function ScoreHistory({
 
       <KangurGlassPanel padding='md' surface='mistStrong' variant='soft'>
         <KangurPanelSectionHeading tone='slate'>
-          Obraz ostatnich {SCORE_INSIGHT_WINDOW_DAYS} dni
+          {translateScoreHistoryWithFallback(
+            translations,
+            'window.title',
+            'Obraz ostatnich {days} dni',
+            { days: SCORE_INSIGHT_WINDOW_DAYS }
+          )}
         </KangurPanelSectionHeading>
         <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
-          <KangurMetricCard accent='sky' label='Sesje tygodnia' value={insights.recentGames}>
+          <KangurMetricCard
+            accent='sky'
+            label={translateScoreHistoryWithFallback(
+              translations,
+              'window.weeklySessions',
+              'Sesje tygodnia'
+            )}
+            value={insights.recentGames}
+          >
             <p className='text-xs text-sky-800/80'>
-              Średnia {insights.recentAverageAccuracy}% · idealne {insights.recentPerfectGames}
+              {translateScoreHistoryWithFallback(
+                translations,
+                'window.weeklySummary',
+                'Średnia {accuracy}% · idealne {perfect}',
+                {
+                  accuracy: insights.recentAverageAccuracy,
+                  perfect: insights.recentPerfectGames,
+                }
+              )}
             </p>
             <p className='mt-1 text-xs text-sky-800/80'>
-              XP: +{insights.recentXpEarned} · średnio {insights.averageXpPerRecentGame} na sesję
+              {translateScoreHistoryWithFallback(
+                translations,
+                'window.weeklyXp',
+                'XP: +{xp} · średnio {average} na sesję',
+                {
+                  xp: insights.recentXpEarned,
+                  average: insights.averageXpPerRecentGame,
+                }
+              )}
             </p>
             <p className='mt-2 text-[11px] text-sky-800/70'>
-              Ostatnia aktywność: {formatRelativeLastPlayed(insights.lastPlayedAt)}
+              {translateScoreHistoryWithFallback(
+                translations,
+                'window.lastActivityPrefix',
+                'Ostatnia aktywność:'
+              )}{' '}
+              {formatRelativeLastPlayed(insights.lastPlayedAt, translations)}
             </p>
           </KangurMetricCard>
 
           <KangurMetricCard
             accent='violet'
-            label='Trend tygodnia'
-            value={formatTrendValue(insights.trend.deltaAccuracy)}
+            label={translateScoreHistoryWithFallback(
+              translations,
+              'trend.label',
+              'Trend tygodnia'
+            )}
+            value={formatTrendValue(insights.trend.deltaAccuracy, translations)}
           >
-            <p className='text-xs text-violet-800/80'>{formatTrendContext(insights.trend)}</p>
+            <p className='text-xs text-violet-800/80'>
+              {formatTrendContext(insights.trend, translations)}
+            </p>
           </KangurMetricCard>
 
           <KangurMetricCard
             accent='emerald'
-            label='Mocna strona'
+            label={translateScoreHistoryWithFallback(
+              translations,
+              'strongest.label',
+              'Mocna strona'
+            )}
             value={
               insights.strongestOperation
                 ? `${insights.strongestOperation.emoji} ${insights.strongestOperation.label}`
-                : 'Brak danych'
+                : translateScoreHistoryWithFallback(translations, 'shared.noData', 'Brak danych')
             }
             valueClassName='text-base leading-tight sm:text-lg'
           >
             {insights.strongestOperation ? (
               <p className='text-xs text-emerald-800/80'>
-                Średnio {insights.strongestOperation.averageAccuracy}% · próby{' '}
-                {insights.strongestOperation.attempts} · +{insights.strongestOperation.averageXpEarned} XP / sesję
+                {translateScoreHistoryWithFallback(
+                  translations,
+                  'shared.operationSummary',
+                  'Średnio {accuracy}% · próby {attempts} · +{xp} XP / sesję',
+                  {
+                    accuracy: insights.strongestOperation.averageAccuracy,
+                    attempts: insights.strongestOperation.attempts,
+                    xp: insights.strongestOperation.averageXpEarned,
+                  }
+                )}
               </p>
             ) : (
-              <p className='text-sm text-emerald-800/80'>Za mało danych na wskazanie przewagi.</p>
+              <p className='text-sm text-emerald-800/80'>
+                {translateScoreHistoryWithFallback(
+                  translations,
+                  'strongest.empty',
+                  'Za mało danych na wskazanie przewagi.'
+                )}
+              </p>
             )}
           </KangurMetricCard>
 
           <KangurMetricCard
             accent='rose'
-            label='Do wsparcia'
+            label={translateScoreHistoryWithFallback(
+              translations,
+              'weakest.label',
+              'Do wsparcia'
+            )}
             value={
               insights.weakestOperation
                 ? `${insights.weakestOperation.emoji} ${insights.weakestOperation.label}`
-                : 'Brak danych'
+                : translateScoreHistoryWithFallback(translations, 'shared.noData', 'Brak danych')
             }
             valueClassName='text-base leading-tight sm:text-lg'
           >
             {insights.weakestOperation ? (
               <>
                 <p className='text-xs text-rose-800/80'>
-                  Średnio {insights.weakestOperation.averageAccuracy}% · próby{' '}
-                  {insights.weakestOperation.attempts} · +{insights.weakestOperation.averageXpEarned} XP / sesję
+                  {translateScoreHistoryWithFallback(
+                    translations,
+                    'shared.operationSummary',
+                    'Średnio {accuracy}% · próby {attempts} · +{xp} XP / sesję',
+                    {
+                      accuracy: insights.weakestOperation.averageAccuracy,
+                      attempts: insights.weakestOperation.attempts,
+                      xp: insights.weakestOperation.averageXpEarned,
+                    }
+                  )}
                 </p>
                 {weakestLessonHref && (
                   <KangurButton asChild className='mt-3 w-full sm:w-auto' size='sm' variant='surface'>
@@ -374,14 +527,22 @@ export default function ScoreHistory({
                       transitionAcknowledgeMs={110}
                       transitionSourceId='score-history:weakest-lesson'
                     >
-                      Powtórz lekcję
+                      {translateScoreHistoryWithFallback(
+                        translations,
+                        'weakest.reviewLesson',
+                        'Powtórz lekcję'
+                      )}
                     </Link>
                   </KangurButton>
                 )}
               </>
             ) : (
               <p className='text-sm text-rose-800/80'>
-                Potrzeba więcej niż jednego typu zadania, aby wskazać obszar do wsparcia.
+                {translateScoreHistoryWithFallback(
+                  translations,
+                  'weakest.empty',
+                  'Potrzeba więcej niż jednego typu zadania, aby wskazać obszar do wsparcia.'
+                )}
               </p>
             )}
           </KangurMetricCard>
@@ -389,11 +550,17 @@ export default function ScoreHistory({
       </KangurGlassPanel>
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-        <KangurPanelSectionHeading tone='slate'>Wyniki wg operacji</KangurPanelSectionHeading>
+        <KangurPanelSectionHeading tone='slate'>
+          {translateScoreHistoryWithFallback(
+            translations,
+            'byOperation.heading',
+            'Wyniki wg operacji'
+          )}
+        </KangurPanelSectionHeading>
         <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
           {Object.entries(opBreakdown).map(([operation, data]) => {
             const percent = Math.round((data.correct / data.total) * 100);
-            const info = OP_LABELS[operation] ?? { label: operation, emoji: '❓' };
+            const info = resolveKangurScoreOperationInfo(operation, scoreInsightsLocalizer);
             const progressAccent = percent >= 80 ? 'emerald' : percent >= 50 ? 'amber' : 'rose';
             return (
               <div key={operation} className='flex items-start kangur-panel-gap sm:items-center'>
@@ -420,11 +587,11 @@ export default function ScoreHistory({
 
       <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
         <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500'>
-          Ostatnie gry
+          {translateScoreHistoryWithFallback(translations, 'recent.heading', 'Ostatnie gry')}
         </p>
         <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} max-h-64 overflow-y-auto`}>
           {subjectScores.map((score) => {
-            const info = OP_LABELS[score.operation] ?? { label: score.operation, emoji: '❓' };
+            const info = resolveKangurScoreOperationInfo(score.operation, scoreInsightsLocalizer);
             const percent = Math.round(
               ((score.correct_answers || 0) / (score.total_questions || 10)) * 100
             );
@@ -441,7 +608,7 @@ export default function ScoreHistory({
                 scoreAccent={resolveAccuracyAccent(percent)}
                 scoreTestId={`score-history-recent-score-${score.id}`}
                 scoreText={`${score.correct_answers}/${score.total_questions || 10}`}
-                subtitle={new Date(score.created_date).toLocaleDateString('pl-PL')}
+                subtitle={new Date(score.created_date).toLocaleDateString(locale)}
                 subtitleClassName='text-slate-400'
                 title={info.label}
                 titleClassName='text-sm font-semibold text-slate-700'

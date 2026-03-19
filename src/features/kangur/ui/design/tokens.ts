@@ -116,78 +116,84 @@ type KangurAccentStyles = {
   mutedText: string;
 };
 
+type KangurAccentThemeVars = {
+  start: string;
+  end: string;
+};
+
+export const KANGUR_ACCENT_THEME_VARS: Record<KangurAccent, KangurAccentThemeVars> = {
+  indigo: {
+    start: 'var(--kangur-accent-indigo-start,#a855f7)',
+    end: 'var(--kangur-accent-indigo-end,#6366f1)',
+  },
+  violet: {
+    start: 'var(--kangur-accent-violet-start,#8b5cf6)',
+    end: 'var(--kangur-accent-violet-end,#d946ef)',
+  },
+  emerald: {
+    start: 'var(--kangur-accent-emerald-start,#10b981)',
+    end: 'var(--kangur-accent-emerald-end,#06b6d4)',
+  },
+  sky: {
+    start: 'var(--kangur-accent-sky-start,#38bdf8)',
+    end: 'var(--kangur-accent-sky-end,#818cf8)',
+  },
+  amber: {
+    start: 'var(--kangur-accent-amber-start,#fb923c)',
+    end: 'var(--kangur-accent-amber-end,#facc15)',
+  },
+  rose: {
+    start: 'var(--kangur-accent-rose-start,#f87171)',
+    end: 'var(--kangur-accent-rose-end,#f472b6)',
+  },
+  teal: {
+    start: 'var(--kangur-accent-teal-start,#3b82f6)',
+    end: 'var(--kangur-accent-teal-end,#2dd4bf)',
+  },
+  slate: {
+    start: 'var(--kangur-accent-slate-start,#94a3b8)',
+    end: 'var(--kangur-accent-slate-end,#475569)',
+  },
+};
+
 const buildAccentStyles = ({
-  accentColor,
-  accentSurface,
-  glow,
+  start,
+  end,
 }: {
-  accentColor: string;
-  accentSurface: string;
-  glow: string;
+  start: string;
+  end: string;
 }): KangurAccentStyles => ({
   icon: cn(
-    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,${accentSurface})]`,
-    `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${accentColor})]`
+    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,${start})]`,
+    `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${end})]`
   ),
   badge: cn(
-    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,${accentSurface})]`,
-    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,${accentSurface})]`,
-    `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${accentColor})]`
+    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,${start})]`,
+    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,${start})]`,
+    `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${end})]`
   ),
   activeCard: cn(
-    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,${accentSurface})]`,
-    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,${accentSurface})]`,
-    `shadow-[0_24px_60px_-42px_${glow}]`
+    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,${end})]`,
+    `[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,${start})]`,
+    `shadow-[0_24px_60px_-42px_color-mix(in_srgb,${end}_32%,transparent)]`
   ),
   hoverCard: cn(
-    `hover:[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_54%,${accentSurface})]`,
-    `hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,${accentSurface})]`
+    `hover:[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_54%,${end})]`,
+    `hover:[background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,${start})]`
   ),
-  activeText: `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${accentColor})]`,
-  mutedText: `[color:color-mix(in_srgb,var(--kangur-page-text)_54%,${accentColor})]`,
+  activeText: `[color:color-mix(in_srgb,var(--kangur-page-text)_72%,${end})]`,
+  mutedText: `[color:color-mix(in_srgb,var(--kangur-page-text)_54%,${end})]`,
 });
 
 export const KANGUR_ACCENT_STYLES: Record<KangurAccent, KangurAccentStyles> = {
-  indigo: buildAccentStyles({
-    accentColor: 'rgb(79_70_229)',
-    accentSurface: 'rgb(224_231_255)',
-    glow: 'rgba(99,102,241,0.38)',
-  }),
-  violet: buildAccentStyles({
-    accentColor: 'rgb(124_58_237)',
-    accentSurface: 'rgb(237_233_254)',
-    glow: 'rgba(139,92,246,0.34)',
-  }),
-  emerald: buildAccentStyles({
-    accentColor: 'rgb(4_120_87)',
-    accentSurface: 'rgb(209_250_229)',
-    glow: 'rgba(16,185,129,0.3)',
-  }),
-  sky: buildAccentStyles({
-    accentColor: 'rgb(3_105_161)',
-    accentSurface: 'rgb(224_242_254)',
-    glow: 'rgba(14,165,233,0.3)',
-  }),
-  amber: buildAccentStyles({
-    accentColor: 'rgb(180_83_9)',
-    accentSurface: 'rgb(254_243_199)',
-    glow: 'rgba(245,158,11,0.3)',
-  }),
-  rose: buildAccentStyles({
-    accentColor: 'rgb(190_24_93)',
-    accentSurface: 'rgb(255_228_230)',
-    glow: 'rgba(244,63,94,0.28)',
-  }),
-  teal: buildAccentStyles({
-    accentColor: 'rgb(15_118_110)',
-    accentSurface: 'rgb(204_251_241)',
-    glow: 'rgba(20,184,166,0.3)',
-  }),
-  slate: buildAccentStyles({
-    accentColor: 'rgb(71_85_105)',
-    accentSurface: 'rgb(226_232_240)',
-    glow: 'rgba(15,23,42,0.24)',
-  }),
+  indigo: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.indigo),
+  violet: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.violet),
+  emerald: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.emerald),
+  sky: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.sky),
+  amber: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.amber),
+  rose: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.rose),
+  teal: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.teal),
+  slate: buildAccentStyles(KANGUR_ACCENT_THEME_VARS.slate),
 };
 
 export const KANGUR_SURFACE_CARD_CLASSNAME =

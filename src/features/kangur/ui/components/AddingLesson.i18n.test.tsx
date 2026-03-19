@@ -26,12 +26,19 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
 }));
 
 import enMessages from '@/i18n/messages/en.json';
+import deMessages from '@/i18n/messages/de.json';
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-const renderLesson = (ui: ReactNode = <AddingLesson />) =>
+const renderLesson = (
+  ui: ReactNode = <AddingLesson />,
+  options: { locale?: string; messages?: typeof enMessages } = {}
+) =>
   render(
-    <NextIntlClientProvider locale='en' messages={enMessages}>
+    <NextIntlClientProvider
+      locale={options.locale ?? 'en'}
+      messages={options.messages ?? enMessages}
+    >
       <KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>
     </NextIntlClientProvider>
   );
@@ -98,5 +105,36 @@ describe('AddingLesson i18n', () => {
     fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
 
     expect(screen.getByRole('button', { name: /Swap the addends/i })).toBeInTheDocument();
+  });
+
+  it('renders German hub labels and representative slide copy', () => {
+    const { unmount } = renderLesson(<AddingLesson />, {
+      locale: 'de',
+      messages: deMessages,
+    });
+
+    expect(screen.getByRole('button', { name: /Grundlagen der Addition/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Über die 10 addieren/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Zweistellige Addition/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Merke!/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Addition basics/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Grundlagen der Addition/i }));
+
+    expect(screen.getByText('Was bedeutet Addieren?')).toBeInTheDocument();
+    expect(screen.getByText('Teil + Teil ergibt ein Ganzes.')).toBeInTheDocument();
+    expect(screen.queryByText('What does it mean to add?')).not.toBeInTheDocument();
+
+    unmount();
+
+    renderLesson(<AddingLesson />, {
+      locale: 'de',
+      messages: deMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Über die 10 addieren/i }));
+
+    expect(screen.getByText('Wenn die Summe über 10 geht, kannst du zuerst 10 bilden und dann den Rest addieren.')).toBeInTheDocument();
+    expect(screen.getByText('+2 übrig')).toBeInTheDocument();
   });
 });

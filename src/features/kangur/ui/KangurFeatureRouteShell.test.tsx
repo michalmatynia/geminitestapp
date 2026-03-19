@@ -89,6 +89,7 @@ describe('KangurFeatureRouteShell', () => {
       'min-h-[100dvh]',
       'kangur-premium-bg'
     );
+    expect(screen.getByTestId('kangur-route-shell')).not.toHaveClass('text-slate-800');
     expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',

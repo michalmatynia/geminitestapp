@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -75,6 +76,7 @@ const resolveHeaderCopy = (value: string | null | undefined): string | null => {
 };
 
 function KangurActiveLessonHeaderActions(): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.activeHeader');
   const { onBack, backButtonLabel, lesson, lessonDocument, lessonContentRef, headerActionsTestId } =
     useKangurActiveLessonHeaderContext();
 
@@ -100,10 +102,10 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
         lessonDocument={lessonDocument}
         lessonContentRef={lessonContentRef}
         displayMode='icon'
-        loadingLabel='Przygotowywanie...'
-        pauseLabel='Pauza'
-        readLabel='Czytaj'
-        resumeLabel='Wznów'
+        loadingLabel={translations('narrator.loading')}
+        pauseLabel={translations('narrator.pause')}
+        readLabel={translations('narrator.read')}
+        resumeLabel={translations('narrator.resume')}
         showFeedback
       />
       <KangurActiveLessonHeaderBody />
@@ -113,6 +115,7 @@ function KangurActiveLessonHeaderActions(): React.JSX.Element {
 }
 
 function KangurActiveLessonHeaderBody(): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.activeHeader');
   const {
     displayTitle,
     displayDescription,
@@ -133,7 +136,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
       data-testid={priorityChipTestId}
       size='sm'
     >
-      Priorytet Rodzica
+      {translations('parentPriority')}
     </KangurStatusChip>
   ) : completedActiveLessonAssignment ? (
     <KangurStatusChip
@@ -142,7 +145,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
       data-testid={completedChipTestId}
       size='sm'
     >
-      Ukończone dla rodzica
+      {translations('completedForParent')}
     </KangurStatusChip>
   ) : null;
 
@@ -237,22 +240,26 @@ export function KangurActiveLessonHeader({
   priorityChipTestId,
   completedChipTestId,
   onBack,
-  backButtonLabel = 'Wróć do listy lekcji',
+  backButtonLabel,
   titleOverride,
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
+  const translations = useTranslations('KangurLessonsWidgets.activeHeader');
   const subsectionSummary: KangurLessonSubsectionSummary | null = useKangurLessonSubsectionSummary();
   const lessonHeaderTestId = headerTestId;
+  const resolvedBackButtonLabel = backButtonLabel ?? translations('backToLessons');
   const displayTitle =
     resolveHeaderCopy(subsectionSummary?.title) ??
     resolveHeaderCopy(lesson.title) ??
     resolveHeaderCopy(titleOverride) ??
-    'Lekcja';
+    translations('fallbackTitle');
   const displayDescription =
     resolveHeaderCopy(subsectionSummary?.description) ??
     resolveHeaderCopy(lesson.description) ??
     resolveHeaderCopy(descriptionOverride) ??
     '';
-  const subsectionTypeLabel = subsectionSummary?.isGame ? 'Gra' : 'Lekcja';
+  const subsectionTypeLabel = subsectionSummary?.isGame
+    ? translations('subsectionType.game')
+    : translations('subsectionType.lesson');
   const headerAnchorRef = useRef<HTMLDivElement | null>(null);
   const subsectionAnchorKey = subsectionSummary
     ? `${subsectionSummary.isGame ? 'game' : 'lesson'}:${subsectionSummary.title}:${subsectionSummary.description}`
@@ -271,7 +278,7 @@ export function KangurActiveLessonHeader({
     priorityChipTestId,
     completedChipTestId,
     onBack,
-    backButtonLabel,
+    backButtonLabel: resolvedBackButtonLabel,
     displayTitle,
     displayDescription,
     subsectionSummary,

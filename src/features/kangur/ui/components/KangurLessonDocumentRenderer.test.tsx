@@ -193,13 +193,13 @@ describe('KangurLessonDocumentRenderer', () => {
       />
     );
 
-    expect(screen.getByText('Page 1')).toBeInTheDocument();
+    expect(screen.getAllByText('pageLabel')).toHaveLength(2);
     expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveClass(
       'glass-panel',
       'border-white/70',
       'bg-white/45'
     );
-    expect(screen.getAllByText('Section')).toHaveLength(2);
+    expect(screen.getAllByText('sectionLabel')).toHaveLength(2);
     expect(screen.getByText('Introduction')).toBeInTheDocument();
     expect(screen.getByText('Get oriented before the lesson starts')).toBeInTheDocument();
     expect(screen.getByText('Intro')).toBeInTheDocument();
@@ -301,7 +301,7 @@ describe('KangurLessonDocumentRenderer', () => {
       'bg-white/45',
       'border-dashed'
     );
-    expect(screen.getAllByText('Section')[0].parentElement).toHaveClass(
+    expect(screen.getAllByText('sectionLabel')[0].parentElement).toHaveClass(
       'soft-card',
       'border'
     );
@@ -316,12 +316,12 @@ describe('KangurLessonDocumentRenderer', () => {
       'border-amber-100',
       'kangur-gradient-accent-soft-amber'
     );
-    expect(screen.getByText('This page has no blocks yet.').parentElement).toHaveClass(
+    expect(screen.getByText('noBlocksTitle').parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Image block has no source yet.').parentElement).toHaveClass(
+    expect(screen.getByText('imageMissingSource').parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
       '[border-color:var(--kangur-soft-card-border)]'

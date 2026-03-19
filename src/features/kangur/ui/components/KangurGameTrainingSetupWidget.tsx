@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { KangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
@@ -10,6 +11,7 @@ import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRun
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
 
 export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
+  const gamePageTranslations = useTranslations('KangurGamePage');
   const { activePracticeAssignment, basePath, handleHome, handleStartTraining, progress, screen } =
     useKangurGameRuntime();
   const suggestedTraining = useMemo(() => getRecommendedTrainingSetup(progress), [progress]);
@@ -31,12 +33,12 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
           </div>
         ) : null
       }
-      description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+      description={gamePageTranslations('screens.training.description')}
       momentumMode='training'
       onBack={handleHome}
       progress={progress}
       testId='kangur-game-training-top-section'
-      title='Trening'
+      title={gamePageTranslations('screens.training.label')}
       visualTitle={
         <KangurTreningWordmark
           className='mx-auto'

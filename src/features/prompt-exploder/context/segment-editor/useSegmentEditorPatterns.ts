@@ -13,7 +13,6 @@ import {
   normalizeLearningText,
   templateSimilarityScore,
 } from '../../template-learning';
-import type { PromptExploderLearnedTemplate } from '../../types';
 import type { DocumentState } from '../DocumentContext';
 import type { PromptExploderSettingsState } from '../SettingsContext';
 import type {

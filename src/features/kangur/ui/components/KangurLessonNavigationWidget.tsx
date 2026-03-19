@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useKangurLessonSubsectionNavigationActive } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
@@ -25,6 +28,7 @@ export function KangurLessonNavigationWidget({
   sectionTitle,
   align = 'center',
 }: KangurLessonNavigationWidgetProps = {}): JSX.Element | null {
+  const translations = useTranslations('KangurLessonsWidgets.navigation');
   const runtime = useOptionalKangurLessonsRuntime();
   const isSubsectionNavigationActive = useKangurLessonSubsectionNavigationActive();
   const prevLesson = overridePrevLesson ?? runtime?.prevLesson ?? null;
@@ -51,7 +55,7 @@ export function KangurLessonNavigationWidget({
   return (
     <nav
       className={navClassName}
-      aria-label='Nawigacja między lekcjami'
+      aria-label={translations('ariaLabel')}
     >
       {sectionTitle || sectionSummary ? (
         <KangurPanelIntro
@@ -64,7 +68,7 @@ export function KangurLessonNavigationWidget({
       <div
         className={buttonGroupClassName}
         role='group'
-        aria-label='Nawigacja między lekcjami'
+        aria-label={translations('ariaLabel')}
       >
         <KangurButton
           onClick={prevLesson ? () => handleSelectLesson(prevLesson.id) : undefined}
@@ -74,13 +78,19 @@ export function KangurLessonNavigationWidget({
           variant='surface'
           data-doc-id='lessons_prev_next'
           aria-label={
-            prevLesson ? `Poprzednia lekcja: ${prevLesson.title}` : 'Brak poprzedniej lekcji'
+            prevLesson
+              ? translations('previousLesson', { title: prevLesson.title })
+              : translations('noPreviousLesson')
           }
-          title={prevLesson ? `Poprzednia lekcja: ${prevLesson.title}` : 'Brak poprzedniej lekcji'}
+          title={
+            prevLesson
+              ? translations('previousLesson', { title: prevLesson.title })
+              : translations('noPreviousLesson')
+          }
         >
           <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
-          <span className='text-xs font-semibold text-slate-600 sm:hidden'>Poprzednia</span>
-          <span className='sr-only'>{prevLesson?.title ?? 'Brak poprzedniej lekcji'}</span>
+          <span className='text-xs font-semibold text-slate-600 sm:hidden'>{translations('previousShort')}</span>
+          <span className='sr-only'>{prevLesson?.title ?? translations('noPreviousLesson')}</span>
         </KangurButton>
 
         <KangurButton
@@ -91,12 +101,18 @@ export function KangurLessonNavigationWidget({
           variant='surface'
           data-doc-id='lessons_prev_next'
           aria-label={
-            nextLesson ? `Następna lekcja: ${nextLesson.title}` : 'Brak następnej lekcji'
+            nextLesson
+              ? translations('nextLesson', { title: nextLesson.title })
+              : translations('noNextLesson')
           }
-          title={nextLesson ? `Następna lekcja: ${nextLesson.title}` : 'Brak następnej lekcji'}
+          title={
+            nextLesson
+              ? translations('nextLesson', { title: nextLesson.title })
+              : translations('noNextLesson')
+          }
         >
-          <span className='text-xs font-semibold text-slate-600 sm:hidden'>Następna</span>
-          <span className='sr-only'>{nextLesson?.title ?? 'Brak następnej lekcji'}</span>
+          <span className='text-xs font-semibold text-slate-600 sm:hidden'>{translations('nextShort')}</span>
+          <span className='sr-only'>{nextLesson?.title ?? translations('noNextLesson')}</span>
           <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
         </KangurButton>
       </div>

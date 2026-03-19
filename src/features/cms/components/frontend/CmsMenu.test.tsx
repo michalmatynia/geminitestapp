@@ -93,7 +93,7 @@ describe('CmsMenu accessibility', () => {
       showItemImages: true,
     });
 
-    expect(screen.getByRole('navigation', { name: 'Site navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'siteNavigation' })).toBeInTheDocument();
     expect(screen.getByRole('list')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('aria-current', 'page');
@@ -111,7 +111,7 @@ describe('CmsMenu accessibility', () => {
       ],
     });
 
-    const toggle = screen.getByRole('button', { name: 'Collapse navigation' });
+    const toggle = screen.getByRole('button', { name: 'collapseNavigation' });
     const list = screen.getByRole('list');
 
     expect(toggle).toHaveAttribute('aria-controls', list.id);
@@ -138,7 +138,7 @@ describe('CmsMenu accessibility', () => {
       </NextIntlClientProvider>
     );
 
-    const navigation = screen.getByRole('navigation', { name: 'Site navigation' });
+    const navigation = screen.getByRole('navigation', { name: 'siteNavigation' });
     const themeToggleButton = screen.getByRole('button', { name: 'Switch to Dark theme' });
 
     expect(navigation).toHaveAttribute('data-appearance-mode', 'default');

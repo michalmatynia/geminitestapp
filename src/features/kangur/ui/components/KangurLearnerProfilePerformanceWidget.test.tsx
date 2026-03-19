@@ -124,26 +124,25 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     render(<KangurLearnerProfilePerformanceWidget />);
 
     expect(screen.getByTestId('learner-profile-xp-summary-today')).toHaveTextContent(
-      'Dziś: +28 XP'
+      'todayChip'
     );
     expect(screen.getByTestId('learner-profile-xp-summary-weekly')).toHaveTextContent(
-      '7 dni: +112 XP'
+      'weeklyChip'
     );
     expect(screen.getByTestId('learner-profile-xp-summary-average')).toHaveTextContent(
-      'Średnio: 120 XP na sesję'
+      'averageChip'
     );
     expect(screen.queryByTestId('learner-profile-xp-summary-guided')).toBeNull();
     expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-08')).toHaveAttribute(
       'title',
-      '1 gier, średnia 100%'
+      'activityBarTitle'
     );
     expect(screen.getByTestId('learner-profile-operation-progress-clock')).toHaveAttribute(
       'aria-valuenow',
       '83'
     );
-    expect(screen.getByText(/XP na sesję: 28/)).toBeInTheDocument();
-    expect(screen.getByText(/Łącznie: 84 XP/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Trenuj' })).toHaveAttribute(
+    expect(screen.getByText('operationStats')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'train' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=clock'
     );
@@ -165,7 +164,7 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     render(<KangurLearnerProfilePerformanceWidget />);
 
     expect(screen.getByTestId('learner-profile-xp-summary-guided')).toHaveTextContent(
-      'Polecone: 2 · Trzymam kierunek 2/3 rundy'
+      'guidedChipPrefix'
     );
   });
 

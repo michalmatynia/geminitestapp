@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  KANGUR_LEADERBOARD_OPERATION_OPTIONS,
-  KANGUR_LEADERBOARD_USER_OPTIONS,
-  buildKangurLeaderboardItems,
-  filterKangurLeaderboardScores,
-  type KangurLeaderboardItem as SharedKangurLeaderboardItem,
-  type KangurLeaderboardUserFilter as SharedKangurLeaderboardUserFilter,
-  type KangurLeaderboardUserFilterIcon as SharedKangurLeaderboardUserFilterIcon,
-} from '@kangur/core';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
@@ -192,20 +184,68 @@ const ALL_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> = {
   ...AGENTIC_CODING_OPERATION_LABELS,
 };
 
-const buildOperationOptions = (subject: KangurLessonSubject): KangurLeaderboardOperationOption[] =>
+const TRANSLATED_OPERATION_IDS = new Set([
+  'all',
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+  'clock',
+  'calendar',
+  'geometry',
+  'mixed',
+  'english_basics',
+  'english_parts_of_speech',
+  'english_sentence_structure',
+  'english_subject_verb_agreement',
+  'english_articles',
+  'english_prepositions_time_place',
+  'alphabet_basics',
+  'alphabet_copy',
+  'alphabet_syllables',
+  'geometry_shape_recognition',
+]);
+
+const translateOperationInfo = (
+  operation: string,
+  info: KangurLeaderboardOperationLabel,
+  translate: (key: string) => string
+): KangurLeaderboardOperationLabel => ({
+  emoji: info.emoji,
+  label: TRANSLATED_OPERATION_IDS.has(operation)
+    ? translate(`operations.${operation}`)
+    : info.label,
+});
+
+const buildOperationOptions = (
+  subject: KangurLessonSubject,
+  translate: (key: string) => string
+): KangurLeaderboardOperationOption[] =>
   Object.entries(OPERATION_LABELS_BY_SUBJECT[subject]).map(([id, info]) => ({
     id,
-    ...info,
+    ...translateOperationInfo(id, info, translate),
   }));
 
-const USER_OPTIONS: Array<IdLabelOptionDto<KangurLeaderboardUserFilter> & { icon: KangurLeaderboardUserFilterIcon }> = [
-  { id: 'all', label: 'Wszyscy', icon: null },
-  { id: 'registered', label: 'Zalogowani', icon: 'user' },
-  { id: 'anonymous', label: 'Anonimowi', icon: 'ghost' },
+const buildUserOptions = (
+  translate: (key: string) => string
+): Array<IdLabelOptionDto<KangurLeaderboardUserFilter> & { icon: KangurLeaderboardUserFilterIcon }> => [
+  { id: 'all', label: translate('userFilters.all'), icon: null },
+  { id: 'registered', label: translate('userFilters.registered'), icon: 'user' },
+  { id: 'anonymous', label: translate('userFilters.anonymous'), icon: 'ghost' },
 ];
 
-const getOperationInfo = (operation: string): KangurLeaderboardOperationLabel =>
-  ALL_OPERATION_LABELS[operation] ?? { emoji: '❓', label: operation };
+const getOperationInfo = (
+  operation: string,
+  translate: (key: string) => string
+): KangurLeaderboardOperationLabel =>
+  translateOperationInfo(
+    operation,
+    ALL_OPERATION_LABELS[operation] ?? { emoji: '❓', label: operation },
+    translate
+  );
 
 const normalizeXpEarned = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
@@ -213,6 +253,7 @@ const normalizeXpEarned = (value: unknown): number | null =>
 export const useKangurLeaderboardState = (
   options: UseKangurLeaderboardStateOptions = {}
 ): UseKangurLeaderboardStateResult => {
+  const translations = useTranslations('KangurGameWidgets.leaderboard');
   const enabled = options.enabled ?? true;
   const limit = typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
@@ -271,7 +312,7 @@ export const useKangurLeaderboardState = (
             action: 'loadScores',
           });
           setScores([]);
-          setError('Nie udało się pobrać wyników.');
+          setError(translations('errors.loadScores'));
         }
       } finally {
         if (isActive) {
@@ -285,12 +326,13 @@ export const useKangurLeaderboardState = (
     return () => {
       isActive = false;
     };
-  }, [enabled, subject]);
+  }, [enabled, subject, translations]);
 
   const operationOptions = useMemo(
-    () => buildOperationOptions(subject),
-    [subject]
+    () => buildOperationOptions(subject, translations),
+    [subject, translations]
   );
+  const userOptions = useMemo(() => buildUserOptions(translations), [translations]);
 
   useEffect(() => {
     if (operationOptions.some((option) => option.id === operationFilter)) {
@@ -320,20 +362,26 @@ export const useKangurLeaderboardState = (
     () =>
       visibleScores.map((score, index) => {
         const isRegistered = Boolean(score.created_by);
-        const operationInfo = getOperationInfo(score.operation);
+        const operationInfo = getOperationInfo(score.operation, translations);
         const medal = index < MEDALS.length ? MEDALS[index]! : null;
         const xpEarned = normalizeXpEarned(score.xp_earned);
         const isCurrentUser =
           Boolean(currentUser?.email) && score.created_by === (currentUser?.email ?? null);
 
         return {
-          accountLabel: isRegistered ? 'Zalogowany' : 'Anonim',
-          currentUserBadgeLabel: 'Ty',
+          accountLabel: isRegistered
+            ? translations('account.registered')
+            : translations('account.anonymous'),
+          currentUserBadgeLabel: translations('currentUserBadge'),
           id: score.id,
           isCurrentUser,
           isMedal: medal !== null,
           isRegistered,
-          metaLabel: `${operationInfo.emoji} ${operationInfo.label} · ${isRegistered ? 'Zalogowany' : 'Anonim'}`,
+          metaLabel: `${operationInfo.emoji} ${operationInfo.label} · ${
+            isRegistered
+              ? translations('account.registered')
+              : translations('account.anonymous')
+          }`,
           operationEmoji: operationInfo.emoji,
           operationLabel: operationInfo.label,
           operationSummary: `${operationInfo.emoji} ${operationInfo.label}`,
@@ -345,7 +393,7 @@ export const useKangurLeaderboardState = (
           xpLabel: xpEarned !== null ? `+${xpEarned} XP` : null,
         };
       }),
-    [currentUser?.activeLearner?.id, currentUser?.email, visibleScores]
+    [currentUser?.email, translations, visibleScores]
   );
 
   const operationFilters = useMemo(
@@ -364,7 +412,7 @@ export const useKangurLeaderboardState = (
 
   const userFilters = useMemo(
     () =>
-      KANGUR_LEADERBOARD_USER_OPTIONS.map((option) => ({
+      userOptions.map((option) => ({
         displayLabel: option.label,
         icon: option.icon,
         id: option.id,
@@ -374,12 +422,12 @@ export const useKangurLeaderboardState = (
           setUserFilter(option.id);
         },
       })),
-    [userFilter]
+    [userFilter, userOptions]
   );
 
   return {
     currentUser,
-    emptyStateLabel: error ?? 'Brak wyników dla tych filtrow.',
+    emptyStateLabel: error ?? translations('emptyStateLabel'),
     error,
     items,
     loading,

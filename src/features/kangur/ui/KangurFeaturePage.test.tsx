@@ -1,7 +1,9 @@
+import { NextIntlClientProvider } from 'next-intl';
 import { render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+import enMessages from '@/i18n/messages/en.json';
 
 const {
   setKangurClientObservabilityContextMock,
@@ -92,6 +94,13 @@ vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
 
 import { KangurFeaturePage } from '@/features/kangur/ui/KangurFeaturePage';
 
+const renderWithIntl = (ui: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='en' messages={enMessages}>
+      {ui}
+    </NextIntlClientProvider>
+  );
+
 describe('KangurFeaturePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -107,7 +116,7 @@ describe('KangurFeaturePage', () => {
   });
 
   it('does not lock body scroll when rendering an embedded page mount', () => {
-    render(
+    renderWithIntl(
       <KangurFeaturePage
         slug={['lessons']}
         basePath={buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')}
@@ -121,7 +130,7 @@ describe('KangurFeaturePage', () => {
 
   it('locks body scroll when forceBodyScrollLock is enabled for embedded mounts', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a');
-    const { unmount } = render(
+    const { unmount } = renderWithIntl(
       <KangurFeaturePage
         slug={['lessons']}
         basePath={embeddedBasePath}
@@ -140,7 +149,7 @@ describe('KangurFeaturePage', () => {
   });
 
   it('renders the persistent shell for embedded Kangur mounts', () => {
-    render(
+    renderWithIntl(
       <KangurFeaturePage
         slug={['lessons']}
         basePath={buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')}
@@ -152,6 +161,8 @@ describe('KangurFeaturePage', () => {
       'kangur-premium-bg',
       'min-h-full'
     );
+    expect(screen.getByTestId('kangur-feature-page-shell')).toHaveAttribute('lang', 'pl');
+    expect(screen.getByRole('link', { name: 'skipToMainContent' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
@@ -167,7 +178,7 @@ describe('KangurFeaturePage', () => {
   });
 
   it('uses the full-screen shell for direct Kangur page mounts', () => {
-    render(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
+    renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
 
     expect(screen.getByTestId('kangur-feature-page-shell')).toHaveClass(
       'kangur-premium-bg',
@@ -183,7 +194,7 @@ describe('KangurFeaturePage', () => {
   });
 
   it('supports direct root-mounted Kangur page mounts', () => {
-    render(<KangurFeaturePage slug={['tests']} basePath='/' />);
+    renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/' />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Tests',
@@ -195,7 +206,7 @@ describe('KangurFeaturePage', () => {
   });
 
   it('supports direct competition route mounts', () => {
-    render(<KangurFeaturePage slug={['competition']} basePath='/kangur' />);
+    renderWithIntl(<KangurFeaturePage slug={['competition']} basePath='/kangur' />);
 
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Competition',
@@ -208,14 +219,18 @@ describe('KangurFeaturePage', () => {
 
   it('keeps the embedded shell node mounted when the requested embedded page changes', () => {
     const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a');
-    const { rerender } = render(
+    const { rerender } = renderWithIntl(
       <KangurFeaturePage slug={['lessons']} basePath={embeddedBasePath} embedded />
     );
 
     const shell = screen.getByTestId('kangur-feature-page-shell');
     shell.setAttribute('data-e2e-shell-marker', 'persist');
 
-    rerender(<KangurFeaturePage slug={['tests']} basePath={embeddedBasePath} embedded />);
+    rerender(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <KangurFeaturePage slug={['tests']} basePath={embeddedBasePath} embedded />
+      </NextIntlClientProvider>
+    );
 
     expect(screen.getByTestId('kangur-feature-page-shell')).toHaveAttribute(
       'data-e2e-shell-marker',

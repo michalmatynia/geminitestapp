@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -17,13 +18,14 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 const LEARNER_PROFILE_RECOMMENDATION_ROUTE_ACKNOWLEDGE_MS = 110;
 
 export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.recommendations');
   const { basePath, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: recommendationsContent } =
     useKangurPageContentEntry('learner-profile-recommendations');
-  const sectionTitle = recommendationsContent?.title ?? 'Plan na dziś';
+  const sectionTitle = recommendationsContent?.title ?? translations('title');
   const sectionSummary =
     recommendationsContent?.summary ??
-    'Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.';
+    translations('summary');
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
@@ -35,7 +37,7 @@ export function KangurLearnerProfileRecommendationsWidget(): React.JSX.Element {
       />
 
       {snapshot.recommendations.length === 0 ? (
-        <KangurEmptyState description='Brak rekomendacji do wyświetlenia.' padding='md' />
+        <KangurEmptyState description={translations('emptyDescription')} padding='md' />
       ) : (
         <div className='grid grid-cols-1 kangur-panel-gap lg:grid-cols-3'>
           {snapshot.recommendations.map((recommendation) => {

@@ -45,14 +45,14 @@ describe('Kangur game training widgets', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByRole('heading', { name: /ćwiczenia z kalendarzem/i })).toHaveClass(
+    expect(screen.getByRole('heading', { name: 'screens.calendar_quiz.label' })).toHaveClass(
       'text-lg',
       'sm:text-xl'
     );
-    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'quizBackButton' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    fireEvent.click(screen.getByRole('button', { name: 'quizBackButton' }));
 
     expect(setScreen).toHaveBeenCalledWith('operation');
   });
@@ -83,14 +83,14 @@ describe('Kangur game training widgets', () => {
       'border-white/88',
       'bg-white/94'
     );
-    expect(screen.getByRole('heading', { name: /ćwiczenia z figurami/i })).toHaveClass(
+    expect(screen.getByRole('heading', { name: 'screens.geometry_quiz.label' })).toHaveClass(
       'text-lg',
       'sm:text-xl'
     );
-    expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'quizBackButton' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    fireEvent.click(screen.getByRole('button', { name: 'quizBackButton' }));
 
     expect(setScreen).toHaveBeenCalledWith('operation');
   });

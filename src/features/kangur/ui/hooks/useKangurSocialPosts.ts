@@ -187,6 +187,7 @@ export type KangurSocialPublishMode = 'published' | 'draft';
 export type KangurSocialPostPublishInput = {
   id: string;
   mode?: KangurSocialPublishMode;
+  skipImages?: boolean;
 };
 
 export const usePublishKangurSocialPost = (): MutationResult<
@@ -195,9 +196,10 @@ export const usePublishKangurSocialPost = (): MutationResult<
 > =>
   createUpdateMutationV2<KangurSocialPost, KangurSocialPostPublishInput>({
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'publish'],
-    mutationFn: async ({ id, mode }: KangurSocialPostPublishInput): Promise<KangurSocialPost> =>
+    mutationFn: async ({ id, mode, skipImages }: KangurSocialPostPublishInput): Promise<KangurSocialPost> =>
       await api.post<KangurSocialPost>(`/api/kangur/social-posts/${id}/publish`, {
         ...(mode ? { mode } : {}),
+        ...(skipImages ? { skipImages } : {}),
       }),
     invalidate: invalidateSocialPosts,
     meta: {
@@ -210,11 +212,18 @@ export const usePublishKangurSocialPost = (): MutationResult<
     },
   });
 
-export const useUnpublishKangurSocialPost = (): MutationResult<KangurSocialPost, string> =>
-  createUpdateMutationV2<KangurSocialPost, string>({
+export type KangurSocialPostUnpublishInput = {
+  id: string;
+  keepLocal?: boolean;
+};
+
+export const useUnpublishKangurSocialPost = (): MutationResult<KangurSocialPost, KangurSocialPostUnpublishInput> =>
+  createUpdateMutationV2<KangurSocialPost, KangurSocialPostUnpublishInput>({
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'unpublish'],
-    mutationFn: async (postId: string): Promise<KangurSocialPost> =>
-      await api.post<KangurSocialPost>(`/api/kangur/social-posts/${postId}/unpublish`),
+    mutationFn: async ({ id, keepLocal }: KangurSocialPostUnpublishInput): Promise<KangurSocialPost> =>
+      await api.post<KangurSocialPost>(`/api/kangur/social-posts/${id}/unpublish`, {
+        ...(keepLocal ? { keepLocal } : {}),
+      }),
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.useUnpublishKangurSocialPost',

@@ -10,11 +10,13 @@ const {
   useKangurSubjectFocusMock,
   useKangurAuthMock,
   lessonCardPropsMock,
+  tutorSessionSyncPropsMock,
   lessonsState,
 } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
   useKangurAuthMock: vi.fn(),
   lessonCardPropsMock: vi.fn(),
+  tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
   },
@@ -78,7 +80,10 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  KangurAiTutorSessionSync: () => null,
+  KangurAiTutorSessionSync: (props: unknown) => {
+    tutorSessionSyncPropsMock(props);
+    return null;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -269,6 +274,7 @@ describe('Lessons page subject filtering', () => {
       canAccessParentAssignments: false,
     });
     lessonCardPropsMock.mockClear();
+    tutorSessionSyncPropsMock.mockClear();
   });
 
   afterEach(() => {
@@ -287,6 +293,22 @@ describe('Lessons page subject filtering', () => {
     expect(screen.getByTestId('lesson-card-lesson-english')).toBeInTheDocument();
     expect(lessonCardPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'lesson-english', subject: 'english' })
+    );
+  });
+
+  it('uses the translated page title in the tutor session context when no lesson is active', () => {
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionContext: expect.objectContaining({
+          contentId: 'lesson:list',
+          title: 'pageTitle',
+        }),
+      })
     );
   });
 });

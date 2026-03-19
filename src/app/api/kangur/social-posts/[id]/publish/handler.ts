@@ -14,6 +14,7 @@ import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
 const bodySchema = z.object({
   mode: z.enum(['draft', 'published']).optional(),
+  skipImages: z.boolean().optional(),
 });
 
 export async function postKangurSocialPostPublishHandler(
@@ -36,7 +37,7 @@ export async function postKangurSocialPostPublishHandler(
 
   const startedAt = Date.now();
   try {
-    const published = await publishKangurSocialPost(post, { mode });
+    const published = await publishKangurSocialPost(post, { mode, skipImages: parsed.skipImages });
     void logKangurServerEvent({
       source: 'kangur.social-posts.publish',
       message: 'Kangur social post published to LinkedIn',

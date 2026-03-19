@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import KangurGame from '@/features/kangur/ui/components/KangurGame';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
@@ -6,6 +8,7 @@ import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameWidgets');
   const { activeSessionRecommendation, kangurMode, screen, setScreen } = useKangurGameRuntime();
 
   if (screen !== 'kangur') {
@@ -35,7 +38,7 @@ export function KangurGameKangurSessionWidget(): React.JSX.Element | null {
               {activeSessionRecommendation.label}
             </KangurStatusChip>
           }
-          label='Polecony kierunek'
+          label={translations('kangurSession.recommendationLabel')}
           labelSize='sm'
           labelStyle='caps'
           labelTestId='kangur-kangur-session-recommendation-chip'

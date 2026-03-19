@@ -49,7 +49,10 @@ const NAVIGATION_SKELETON_DELAY_MS = 140;
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
     useKangurAuth();
-  const { isLoading: isLoadingSettings } = useSettingsStore();
+  const {
+    isLoading: isLoadingSettings,
+    isFetching: isFetchingSettings,
+  } = useSettingsStore();
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -76,15 +79,14 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
-  const isThemeLoading = isLoadingSettings;
+  const isThemeLoading = isLoadingSettings || isFetchingSettings;
   const canRenderRouteWhileLoading = resolvedPageKey === 'Game' || resolvedPageKey === 'Lessons';
   const shouldShowBootLoader = (isBootLoading && !canRenderRouteWhileLoading) || isThemeLoading;
-  const isBootOrThemeLoading = isBootLoading || isThemeLoading;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent =
-    (isBootOrThemeLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
+    isThemeLoading || (isBootLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const bootSkeletonShownAtRef = useRef<number | null>(

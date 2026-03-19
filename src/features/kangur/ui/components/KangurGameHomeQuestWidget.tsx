@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import {
@@ -44,12 +45,6 @@ const buildAssignmentHref = (
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
-const QUEST_STATUS_LABELS = {
-  completed: 'Misja ukończona',
-  in_progress: 'Misja w toku',
-  not_started: 'Misja czeka',
-} as const;
-
 const QUEST_STATUS_ACCENTS = {
   completed: 'emerald',
   in_progress: 'indigo',
@@ -61,6 +56,7 @@ const HOME_QUEST_ROUTE_ACKNOWLEDGE_MS = 110;
 export function KangurGameHomeQuestWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeQuestWidgetProps = {}): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameWidgets');
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen } = runtime;
   const { subject } = useKangurSubjectFocus();
@@ -90,6 +86,11 @@ export function KangurGameHomeQuestWidget({
   }
 
   const assignment = quest.assignment;
+  const questStatusLabels = {
+    completed: translations('homeQuest.status.completed'),
+    in_progress: translations('homeQuest.status.inProgress'),
+    not_started: translations('homeQuest.status.notStarted'),
+  } as const;
 
   return (
     <KangurGlassPanel
@@ -107,7 +108,7 @@ export function KangurGameHomeQuestWidget({
               data-testid='kangur-home-quest-label'
               labelStyle='caps'
             >
-              {assignment.questLabel ?? 'Misja dnia'}
+              {assignment.questLabel ?? translations('homeQuest.defaultLabel')}
             </KangurStatusChip>
             <KangurAssignmentPriorityChip
               data-testid='kangur-home-quest-priority'
@@ -119,7 +120,7 @@ export function KangurGameHomeQuestWidget({
               data-testid='kangur-home-quest-status'
               labelStyle='caps'
             >
-              {QUEST_STATUS_LABELS[quest.progress.status]}
+              {questStatusLabels[quest.progress.status]}
             </KangurStatusChip>
             {quest.reward.xp > 0 ? (
               <KangurStatusChip
@@ -164,7 +165,7 @@ export function KangurGameHomeQuestWidget({
               labelStyle='compact'
               size='sm'
             >
-              Cel: {assignment.target}
+              {translations('homeQuest.targetPrefix')} {assignment.target}
             </KangurStatusChip>
             <KangurStatusChip
               accent='slate'
@@ -191,7 +192,7 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  Seria: {currentWinStreak}
+                  {translations('homeQuest.streakPrefix')} {currentWinStreak}
                   </KangurStatusChip>
                 ) : null}
                 {averageXpPerSession > 0 ? (
@@ -201,7 +202,7 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  Tempo: {averageXpPerSession} XP / grę
+                  {translations('homeQuest.pacePrefix')} {averageXpPerSession} XP / gre
                   </KangurStatusChip>
                 ) : null}
                 {visibleLeadingTrack ? (
@@ -211,7 +212,7 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  Na fali: {visibleLeadingTrack.label}
+                  {translations('homeQuest.trackPrefix')} {visibleLeadingTrack.label}
                   </KangurStatusChip>
                 ) : null}
                 {guidedMomentum.completedSessions > 0 ? (
@@ -221,7 +222,7 @@ export function KangurGameHomeQuestWidget({
                     labelStyle='compact'
                     size='sm'
                   >
-                  Kierunek: {guidedMomentum.summary}
+                  {translations('homeQuest.directionPrefix')} {guidedMomentum.summary}
                   </KangurStatusChip>
                 ) : null}
               </div>

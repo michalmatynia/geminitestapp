@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { LogIn } from 'lucide-react';
 
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
@@ -15,6 +16,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
+  const translations = useTranslations('KangurLearnerProfileWidgets.hero');
   const { user, progress } = useKangurLearnerProfileRuntime();
   const { openLoginModal } = useKangurLoginModal();
   const activeLearner = user?.activeLearner ?? null;
@@ -41,7 +43,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
       showDescription={false}
       showHeading={false}
       testId='kangur-learner-profile-hero'
-      title='Profil ucznia'
+      title={translations('title')}
     >
       {user ? (
         <div className={`mb-4 w-full ${KANGUR_SPACED_ROW_CLASSNAME} items-center sm:justify-center sm:gap-4`}>
@@ -60,7 +62,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
           </div>
           <div className='text-center sm:text-left'>
             <p className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-              Avatar ucznia
+              {translations('avatarLabel')}
             </p>
             <p className='text-lg font-bold text-slate-800'>{displayName}</p>
           </div>
@@ -84,7 +86,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
             variant='surface'
             data-doc-id='profile_login'
           >
-            <LogIn aria-hidden='true' className='h-4 w-4' /> Zaloguj się, aby synchronizować postęp
+            <LogIn aria-hidden='true' className='h-4 w-4' /> {translations('signIn')}
           </KangurButton>
           <KangurButton
             className='w-full sm:w-auto'
@@ -95,7 +97,7 @@ export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
             type='button'
             variant='primary'
           >
-            Utwórz konto rodzica
+            {translations('createParentAccount')}
           </KangurButton>
         </div>
       ) : null}

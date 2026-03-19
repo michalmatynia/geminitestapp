@@ -8,7 +8,7 @@ const METRIC_KEYS = ['lines', 'statements', 'functions', 'branches'];
 
 export const highRiskCoverageDomains = [
   {
-    id: 'api',
+    id: 'api-routes',
     label: 'API',
     reportsDirectory: `${HIGH_RISK_COVERAGE_REPORTS_DIRECTORY}/api`,
     coverageIncludeGlobs: ['src/app/api/**'],
@@ -54,6 +54,34 @@ const ignoredDirectoryNames = new Set(['.git', '.next', 'coverage', 'node_module
 const vitestFilePattern = /\.(?:test|spec)\.(?:ts|tsx)$/;
 
 const normalizePath = (value) => value.split(path.sep).join('/');
+
+const normalizeSelectedIds = (ids) => {
+  if (!Array.isArray(ids)) {
+    return [];
+  }
+
+  return [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))];
+};
+
+export const selectHighRiskCoverageDomains = ({
+  domains = highRiskCoverageDomains,
+  ids = [],
+} = {}) => {
+  const normalizedIds = normalizeSelectedIds(ids);
+  if (normalizedIds.length === 0) {
+    return domains;
+  }
+
+  const domainById = new Map(domains.map((domain) => [domain.id, domain]));
+  const unknownIds = normalizedIds.filter((id) => !domainById.has(id));
+  if (unknownIds.length > 0) {
+    throw new Error(
+      `Unknown high-risk coverage target id(s): ${unknownIds.join(', ')}. Expected one of: ${domains.map((domain) => domain.id).join(', ')}.`
+    );
+  }
+
+  return normalizedIds.map((id) => domainById.get(id));
+};
 
 const collectTestFilesUnderAbsolutePath = ({ absolutePath, files, root }) => {
   if (!fs.existsSync(absolutePath)) {

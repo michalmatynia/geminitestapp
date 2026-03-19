@@ -140,12 +140,12 @@ describe('KangurGameHomeHeroWidget', () => {
     render(<KangurGameHomeHeroWidget />);
 
     expect(screen.getByTestId('kangur-home-hero-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('Twój postęp');
+    expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent('homeHero.title');
     expect(screen.getByTestId('kangur-home-hero-milestone-shell')).toHaveTextContent(
       'milestone-summary'
     );
     expect(screen.getByTestId('kangur-home-hero-copy')).toHaveTextContent(
-      'Sprawdź najbliższy kamień milowy i zadania, które warto domknąć dziś.'
+      'homeHero.summary'
     );
     expect(screen.queryByText('spotlight:/kangur')).toBeNull();
   });

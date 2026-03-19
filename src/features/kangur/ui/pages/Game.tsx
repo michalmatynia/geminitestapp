@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
@@ -78,50 +79,6 @@ const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   'english_parts_of_speech_quiz',
 ]);
 
-const GAME_SCREEN_LABELS: Record<KangurGameScreen, string> = {
-  home: 'Ekran startowy',
-  training: 'Konfiguracja treningu',
-  kangur_setup: 'Konfiguracja sesji Kangura Matematycznego',
-  kangur: 'Sesja Kangura Matematycznego',
-  calendar_quiz: 'Ćwiczenia z kalendarzem',
-  geometry_quiz: 'Ćwiczenia z figurami',
-  clock_quiz: 'Ćwiczenia z zegarem',
-  addition_quiz: 'Quiz dodawania',
-  subtraction_quiz: 'Quiz odejmowania',
-  division_quiz: 'Quiz dzielenia',
-  multiplication_quiz: 'Quiz mnożenia',
-  logical_patterns_quiz: 'Quiz wzorców',
-  logical_classification_quiz: 'Quiz klasyfikacji',
-  logical_analogies_quiz: 'Quiz analogii',
-  english_sentence_quiz: 'Quiz składni zdania',
-  english_parts_of_speech_quiz: 'Quiz części mowy',
-  operation: 'Wybór rodzaju gry',
-  playing: 'Pytanie do rozwiązania',
-  result: 'Wynik gry',
-};
-
-const GAME_SCREEN_DESCRIPTIONS: Record<KangurGameScreen, string> = {
-  home: 'Wybierz sposób ćwiczenia i rozpocznij kolejną sesję.',
-  training: 'Skonfiguruj trening mieszany i dobierz zakres pytań.',
-  kangur_setup: 'Przygotuj sesję Kangura Matematycznego.',
-  kangur: 'Rozwiązuj zadania Kangura Matematycznego krok po kroku.',
-  calendar_quiz: 'Ćwicz odczytywanie dat i zależności w kalendarzu.',
-  geometry_quiz: 'Ćwicz figury, kształty i zależności przestrzenne.',
-  clock_quiz: 'Ćwicz odczytywanie godzin i minut.',
-  addition_quiz: 'Szybki quiz z dodawania.',
-  subtraction_quiz: 'Szybki quiz z odejmowania.',
-  division_quiz: 'Szybki quiz z dzielenia.',
-  multiplication_quiz: 'Szybki quiz z tabliczki mnożenia.',
-  logical_patterns_quiz: 'Uzupełniaj wzorce i ciągi w szybkim quizie.',
-  logical_classification_quiz: 'Porządkuj elementy i znajdź wspólne cechy.',
-  logical_analogies_quiz: 'Ćwicz analogie i relacje w szybkich rundach.',
-  english_sentence_quiz: 'Ćwicz szyk zdania, pytania i spójniki po angielsku.',
-  english_parts_of_speech_quiz: 'Sortuj słowa według części mowy w krótkich rundach.',
-  operation: 'Wybierz rodzaj matematycznej gry i poziom trudności.',
-  playing: 'Rozwiąż aktualne pytanie bez podpowiedzi z gotową odpowiedzią.',
-  result: 'Sprawdź wynik gry i zdecyduj, co ćwiczyć dalej.',
-};
-
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
   if (!heading) {
     return;
@@ -147,6 +104,7 @@ const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
 };
 
 function GameContent(): React.JSX.Element {
+  const translations = useTranslations('KangurGamePage');
   const runtime = useKangurGameRuntime();
   const { basePath, progress, screen, user, xpToast } = runtime;
   const routeTransitionState = useOptionalKangurRouteTransitionState();
@@ -185,7 +143,11 @@ function GameContent(): React.JSX.Element {
   const operationSelectorRef = useRef<HTMLDivElement | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
-  const currentScreenLabel = GAME_SCREEN_LABELS[screen];
+  const getScreenLabel = (screenKey: KangurGameScreen): string =>
+    translations(`screens.${screenKey}.label`);
+  const getScreenDescription = (screenKey: KangurGameScreen): string =>
+    translations(`screens.${screenKey}.description`);
+  const currentScreenLabel = getScreenLabel(screen);
   const learnerId = user?.activeLearner?.id ?? null;
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
   const tutorActivityContentId = useMemo(() => {
@@ -245,9 +207,15 @@ function GameContent(): React.JSX.Element {
       : null;
     const questionProgressLabel =
       screen === 'playing'
-        ? `Pytanie ${runtime.currentQuestionIndex + 1}/${runtime.totalQuestions}`
+        ? translations('questionProgress', {
+            current: runtime.currentQuestionIndex + 1,
+            total: runtime.totalQuestions,
+          })
         : screen === 'result'
-          ? `Wynik ${runtime.score}/${runtime.totalQuestions}`
+          ? translations('resultProgress', {
+              score: runtime.score,
+              total: runtime.totalQuestions,
+            })
           : null;
     const focusKind =
       screen === 'playing'
@@ -266,7 +234,7 @@ function GameContent(): React.JSX.Element {
       surface: 'game',
       contentId: tutorActivityContentId,
       title: currentScreenLabel,
-      description: GAME_SCREEN_DESCRIPTIONS[screen],
+      description: getScreenDescription(screen),
       ...(assignmentSummary ? { assignmentSummary } : {}),
       ...(activeGameAssignment?.id ? { assignmentId: activeGameAssignment.id } : {}),
       ...(questionText ? { currentQuestion: questionText } : {}),
@@ -290,14 +258,15 @@ function GameContent(): React.JSX.Element {
     runtime.totalQuestions,
     screen,
     tutorActivityContentId,
+    translations,
   ]);
   const learnerActivityTitle = useMemo(() => {
     const assignmentTitle = activeGameAssignment?.title?.trim();
     if (assignmentTitle) {
-      return `Gra: ${assignmentTitle}`;
+      return translations('activityTitle', { title: assignmentTitle });
     }
-    return `Gra: ${currentScreenLabel}`;
-  }, [activeGameAssignment?.title, currentScreenLabel]);
+    return translations('activityTitle', { title: currentScreenLabel });
+  }, [activeGameAssignment?.title, currentScreenLabel, translations]);
   useKangurLearnerActivityPing({
     activity: {
       kind: 'game',
@@ -329,7 +298,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: 'game:home',
-      label: 'Start i wybór aktywności',
+      label: translations('home.actionsLabel'),
     },
   });
   useKangurTutorAnchor({
@@ -341,7 +310,7 @@ function GameContent(): React.JSX.Element {
     priority: 110,
     metadata: {
       contentId: 'game:home',
-      label: 'Misja dla ucznia',
+      label: translations('home.questHeading'),
     },
   });
   useKangurTutorAnchor({
@@ -353,7 +322,7 @@ function GameContent(): React.JSX.Element {
     priority: 100,
     metadata: {
       contentId: 'game:home',
-      label: 'Priorytetowe zadania',
+      label: translations('home.priorityAssignmentsHeading'),
     },
   });
   useKangurTutorAnchor({
@@ -365,7 +334,7 @@ function GameContent(): React.JSX.Element {
     priority: 90,
     metadata: {
       contentId: 'game:home',
-      label: 'Ranking',
+      label: translations('home.leaderboardLabel'),
     },
   });
   useKangurTutorAnchor({
@@ -377,7 +346,7 @@ function GameContent(): React.JSX.Element {
     priority: 80,
     metadata: {
       contentId: 'game:home',
-      label: 'Postęp gracza',
+      label: translations('home.progressLabel'),
     },
   });
   useKangurTutorAnchor({
@@ -389,7 +358,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'training' ? tutorActivityContentId : null,
-      label: 'Konfiguracja treningu',
+      label: getScreenLabel('training'),
     },
   });
   useKangurTutorAnchor({
@@ -401,7 +370,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'kangur_setup' ? tutorActivityContentId : null,
-      label: 'Konfiguracja sesji Kangura Matematycznego',
+      label: getScreenLabel('kangur_setup'),
     },
   });
   useKangurTutorAnchor({
@@ -413,7 +382,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'kangur' ? tutorActivityContentId : null,
-      label: 'Sesja Kangura Matematycznego',
+      label: getScreenLabel('kangur'),
     },
   });
   useKangurTutorAnchor({
@@ -425,7 +394,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'calendar_quiz' ? tutorActivityContentId : null,
-      label: 'Ćwiczenia z kalendarzem',
+      label: getScreenLabel('calendar_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -437,7 +406,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null,
-      label: 'Ćwiczenia z figurami',
+      label: getScreenLabel('geometry_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -449,7 +418,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'clock_quiz' ? tutorActivityContentId : null,
-      label: 'Ćwiczenia z zegarem',
+      label: getScreenLabel('clock_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -461,7 +430,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'addition_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz dodawania',
+      label: getScreenLabel('addition_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -473,7 +442,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'subtraction_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz odejmowania',
+      label: getScreenLabel('subtraction_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -485,7 +454,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'division_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz dzielenia',
+      label: getScreenLabel('division_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -497,7 +466,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'multiplication_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz mnożenia',
+      label: getScreenLabel('multiplication_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -509,7 +478,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'logical_patterns_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz wzorców',
+      label: getScreenLabel('logical_patterns_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -521,7 +490,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'logical_classification_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz klasyfikacji',
+      label: getScreenLabel('logical_classification_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -533,7 +502,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'logical_analogies_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz analogii',
+      label: getScreenLabel('logical_analogies_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -545,7 +514,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'english_sentence_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz składni zdania',
+      label: getScreenLabel('english_sentence_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -557,7 +526,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'english_parts_of_speech_quiz' ? tutorActivityContentId : null,
-      label: 'Quiz części mowy',
+      label: getScreenLabel('english_parts_of_speech_quiz'),
     },
   });
   useKangurTutorAnchor({
@@ -569,7 +538,7 @@ function GameContent(): React.JSX.Element {
     priority: 120,
     metadata: {
       contentId: screen === 'operation' ? tutorActivityContentId : null,
-      label: 'Wybór rodzaju gry',
+      label: getScreenLabel('operation'),
     },
   });
   useKangurTutorAnchor({
@@ -581,7 +550,7 @@ function GameContent(): React.JSX.Element {
     priority: 110,
     metadata: {
       contentId: screen === 'result' ? tutorActivityContentId : null,
-      label: 'Wynik gry',
+      label: getScreenLabel('result'),
       assignmentId: activeGameAssignment?.id ?? null,
     },
   });
@@ -594,7 +563,7 @@ function GameContent(): React.JSX.Element {
     priority: 100,
     metadata: {
       contentId: screen === 'result' ? tutorActivityContentId : null,
-      label: 'Ranking po rundzie',
+      label: translations('result.leaderboardLabel'),
     },
   });
 
@@ -634,7 +603,7 @@ function GameContent(): React.JSX.Element {
       ref={screenRef}
     >
       <h2 id={GAME_SCREEN_TITLE_ID} ref={screenHeadingRef} tabIndex={-1} className='sr-only'>
-        {GAME_SCREEN_LABELS[screenKey]}
+        {getScreenLabel(screenKey)}
       </h2>
       {children}
     </motion.div>
@@ -664,7 +633,7 @@ function GameContent(): React.JSX.Element {
         navigation={<KangurGameNavigationWidget />}
         afterNavigation={(
           <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-            Widok: {currentScreenLabel}
+            {translations('statusAnnouncement', { label: currentScreenLabel })}
           </div>
         )}
         containerProps={{
@@ -691,7 +660,7 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-parent-assignment-heading'
                     >
                       <h3 id='kangur-home-parent-assignment-heading' className='sr-only'>
-                        Sugestie od Rodzica
+                        {translations('home.parentSuggestionsHeading')}
                       </h3>
                       <KangurAssignmentSpotlight
                         basePath={basePath}
@@ -709,8 +678,8 @@ function GameContent(): React.JSX.Element {
                         align='left'
                         className='text-left'
                         padding='md'
-                        title='Brak profilu ucznia'
-                        description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
+                        title={translations('home.missingLearnerTitle')}
+                        description={translations('home.missingLearnerDescription')}
                       >
                         <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} w-full sm:items-center`}>
                           <KangurButton
@@ -726,7 +695,7 @@ function GameContent(): React.JSX.Element {
                               transitionAcknowledgeMs={110}
                               transitionSourceId='game-home-parent-add-learner'
                             >
-                              Dodaj ucznia
+                              {translations('home.addLearner')}
                             </Link>
                           </KangurButton>
                         </div>
@@ -742,7 +711,7 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-quest-heading'
                     >
                       <h3 id='kangur-home-quest-heading' className='sr-only'>
-                        Misja dla ucznia
+                        {translations('home.questHeading')}
                       </h3>
                       <KangurGameHomeQuestWidget hideWhenScreenMismatch={false} />
                     </section>
@@ -755,7 +724,7 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-hero-heading'
                     >
                       <h3 id='kangur-home-hero-heading' className='sr-only'>
-                        Podsumowanie postępu
+                        {translations('home.summaryHeading')}
                       </h3>
                       <KangurGameHomeHeroWidget
                         hideWhenScreenMismatch={false}
@@ -773,13 +742,13 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-assignments-heading'
                     >
                       <h3 id='kangur-home-assignments-heading' className='sr-only'>
-                        Priorytetowe zadania
+                        {translations('home.priorityAssignmentsHeading')}
                       </h3>
                       <KangurPriorityAssignments
                         basePath={basePath}
                         enabled={canAccessParentAssignments}
-                        title='Priorytetowe zadania'
-                        emptyLabel='Brak aktywnych zadań od rodzica.'
+                        title={translations('home.priorityAssignmentsTitle')}
+                        emptyLabel={translations('home.priorityAssignmentsEmpty')}
                       />
                     </section>
                   ) : null}
@@ -791,7 +760,7 @@ function GameContent(): React.JSX.Element {
                       aria-labelledby='kangur-home-progress-heading'
                     >
                       <h3 id='kangur-home-progress-heading' className='sr-only'>
-                        Ranking i postęp
+                        {translations('home.progressHeading')}
                       </h3>
                       <div
                         ref={homeLeaderboardRef}

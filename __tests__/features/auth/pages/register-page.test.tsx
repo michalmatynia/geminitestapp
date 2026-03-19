@@ -74,18 +74,18 @@ describe('RegisterPage', () => {
 
   it('renders correctly', () => {
     renderPage();
-    expect(screen.getByRole('heading', { name: /create account/i })).toBeInTheDocument();
-    const nameInput = screen.getByLabelText(/full name/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/^password$/i, { selector: 'input' });
+    expect(screen.getByRole('heading', { name: 'title' })).toBeInTheDocument();
+    const nameInput = screen.getByLabelText('nameLabel');
+    const emailInput = screen.getByLabelText('emailLabel');
+    const passwordInput = screen.getByLabelText('passwordLabel', { selector: 'input' });
     expect(nameInput).toBeInTheDocument();
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
     expect(nameInput).toHaveAttribute('autocomplete', 'name');
     expect(emailInput).toHaveAttribute('autocomplete', 'email');
     expect(passwordInput).toHaveAttribute('autocomplete', 'new-password');
-    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /create account/i }).closest('form')).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'submit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'submit' }).closest('form')).toHaveAttribute(
       'aria-busy',
       'false'
     );
@@ -103,9 +103,9 @@ describe('RegisterPage', () => {
 
     renderPage();
 
-    await user.type(screen.getByLabelText(/email/i), 'new@example.com');
-    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
-    await user.click(screen.getByRole('button', { name: /create account/i }));
+    await user.type(screen.getByLabelText('emailLabel'), 'new@example.com');
+    await user.type(screen.getByLabelText('passwordLabel', { selector: 'input' }), 'password123');
+    await user.click(screen.getByRole('button', { name: 'submit' }));
 
     await waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
@@ -131,8 +131,8 @@ describe('RegisterPage', () => {
 
     renderPage();
 
-    expect(screen.getByText(/self-service registration is disabled/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /create account/i })).toBeDisabled();
+    expect(screen.getByText('signupDisabled')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'submit' })).toBeDisabled();
   });
 
   it('shows error from registration failure', async () => {
@@ -147,9 +147,9 @@ describe('RegisterPage', () => {
 
     renderPage();
 
-    await user.type(screen.getByLabelText(/email/i), 'taken@example.com');
-    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
-    await user.click(screen.getByRole('button', { name: /create account/i }));
+    await user.type(screen.getByLabelText('emailLabel'), 'taken@example.com');
+    await user.type(screen.getByLabelText('passwordLabel', { selector: 'input' }), 'password123');
+    await user.click(screen.getByRole('button', { name: 'submit' }));
 
     expect(await screen.findByText(/email already taken/i)).toBeInTheDocument();
   });

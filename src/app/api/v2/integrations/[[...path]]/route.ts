@@ -18,7 +18,8 @@ import * as allegroDisconnect from '../[id]/connections/[connectionId]/allegro/d
 import * as allegroRequest from '../[id]/connections/[connectionId]/allegro/request/route-handler';
 import * as allegroTest from '../[id]/connections/[connectionId]/allegro/test/route-handler';
 import * as linkedinAuthorize from '../[id]/connections/[connectionId]/linkedin/authorize/route-handler';
-import * as linkedinCallback from '../[id]/connections/[connectionId]/linkedin/callback/route-handler';
+import * as linkedinCallbackLegacy from '../[id]/connections/[connectionId]/linkedin/callback/route-handler';
+import * as linkedinCallbackStable from '../linkedin/callback/route-handler';
 import * as linkedinDisconnect from '../[id]/connections/[connectionId]/linkedin/disconnect/route-handler';
 import * as baseInventories from '../[id]/connections/[connectionId]/base/inventories/route-handler';
 import * as baseProducts from '../[id]/connections/[connectionId]/base/products/route-handler';
@@ -169,8 +170,9 @@ const ROUTES: RouteDefinition[] = [
   { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'disconnect'], module: allegroDisconnect },
   { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'request'], module: allegroRequest },
   { pattern: [param('id'), 'connections', param('connectionId'), 'allegro', 'test'], module: allegroTest },
+  { pattern: ['linkedin', 'callback'], module: linkedinCallbackStable },
   { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'authorize'], module: linkedinAuthorize },
-  { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'callback'], module: linkedinCallback },
+  { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'callback'], module: linkedinCallbackLegacy },
   { pattern: [param('id'), 'connections', param('connectionId'), 'linkedin', 'disconnect'], module: linkedinDisconnect },
   { pattern: [param('id'), 'connections', param('connectionId'), 'base', 'inventories'], module: baseInventories },
   { pattern: [param('id'), 'connections', param('connectionId'), 'base', 'products'], module: baseProducts },

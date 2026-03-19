@@ -12,7 +12,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const TOKEN_URL =
   process.env['LINKEDIN_TOKEN_URL'] ?? 'https://www.linkedin.com/oauth/v2/accessToken';
 const API_BASE_URL = process.env['LINKEDIN_API_BASE_URL'] ?? 'https://api.linkedin.com/v2';
-const DEFAULT_SCOPE = process.env['LINKEDIN_OAUTH_SCOPE'] ?? 'r_liteprofile w_member_social';
+const DEFAULT_SCOPE = process.env['LINKEDIN_OAUTH_SCOPE'] ?? 'openid profile w_member_social';
 const ENV_CLIENT_ID = process.env['LINKEDIN_APP_KEY_SECRET']?.trim() ?? null;
 const ENV_CLIENT_SECRET = process.env['LINKEDIN_APP_CLIENT_SECRET']?.trim() ?? null;
 
@@ -27,8 +27,8 @@ type LinkedInTokenResponse = {
 };
 
 type LinkedInProfileResponse = {
-  id?: string;
-  vanityName?: string;
+  sub?: string;
+  name?: string;
 };
 
 const toErrorRedirect = (origin: string, reason: string): string => {
@@ -49,7 +49,7 @@ const fetchLinkedInProfile = async (
   accessToken: string
 ): Promise<LinkedInProfileResponse | null> => {
   const profileRes = await fetch(
-    `${API_BASE_URL}/me?projection=(id,vanityName)`,
+    `${API_BASE_URL}/userinfo`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -253,11 +253,11 @@ export async function GET_handler(
 
     stage = 'profile';
     const profile = await fetchLinkedInProfile(payload.access_token);
-    profileResolved = Boolean(profile?.id);
-    profileHasVanity = Boolean(profile?.vanityName);
-    const personUrn = profile?.id ? `urn:li:person:${profile.id}` : null;
-    const profileUrl = profile?.vanityName
-      ? `https://www.linkedin.com/in/${profile.vanityName}`
+    profileResolved = Boolean(profile?.sub);
+    profileHasVanity = Boolean(profile?.name);
+    const personUrn = profile?.sub ? `urn:li:person:${profile.sub}` : null;
+    const profileUrl = profile?.name
+      ? `https://www.linkedin.com/in/${encodeURIComponent(profile.name)}`
       : null;
 
     stage = 'update';

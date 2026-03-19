@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -24,12 +25,13 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 const LEARNER_PROFILE_PERFORMANCE_ROUTE_ACKNOWLEDGE_MS = 110;
 
 export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.performance');
   const { basePath, maxWeeklyGames, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: performanceContent } = useKangurPageContentEntry('learner-profile-performance');
-  const sectionTitle = performanceContent?.title ?? 'Skuteczność ucznia';
+  const sectionTitle = performanceContent?.title ?? translations('title');
   const sectionSummary =
     performanceContent?.summary ??
-    'Zobacz rytm ostatnich siedmiu dni i skuteczność dla poszczególnych operacji.';
+    translations('summary');
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -45,23 +47,25 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
         surface='mistStrong'
         variant='soft'
       >
-        <KangurPanelSectionHeading>Aktywność 7 dni</KangurPanelSectionHeading>
+        <KangurPanelSectionHeading>{translations('activityHeading')}</KangurPanelSectionHeading>
         <div className={`mb-4 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
           <KangurStatusChip accent='violet' data-testid='learner-profile-xp-summary-today'>
-            Dziś: +{snapshot.todayXpEarned} XP
+            {translations('todayChip', { xp: snapshot.todayXpEarned })}
           </KangurStatusChip>
           <KangurStatusChip accent='indigo' data-testid='learner-profile-xp-summary-weekly'>
-            7 dni: +{snapshot.weeklyXpEarned} XP
+            {translations('weeklyChip', { xp: snapshot.weeklyXpEarned })}
           </KangurStatusChip>
           <KangurStatusChip accent='teal' data-testid='learner-profile-xp-summary-average'>
-            Średnio: {snapshot.averageXpPerSession} XP na sesję
+            {translations('averageChip', { xp: snapshot.averageXpPerSession })}
           </KangurStatusChip>
           {snapshot.recommendedSessionsCompleted > 0 ? (
             <KangurStatusChip accent='sky' data-testid='learner-profile-xp-summary-guided'>
-              Polecone: {snapshot.recommendedSessionsCompleted} ·{' '}
+              {translations('guidedChipPrefix', {
+                count: snapshot.recommendedSessionsCompleted,
+              })}{' '}
               {snapshot.recommendedSessionNextBadgeName
                 ? `${snapshot.recommendedSessionNextBadgeName} ${snapshot.recommendedSessionSummary}`
-                : 'wszystkie odznaki kierunku odblokowane'}
+                : translations('guidedChipUnlocked')}
             </KangurStatusChip>
           ) : null}
         </div>
@@ -77,7 +81,10 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   accent='indigo'
                   active={point.games > 0}
                   data-testid={`learner-profile-weekly-activity-${point.dateKey}`}
-                  title={`${point.games} gier, średnia ${point.averageAccuracy}%`}
+                  title={translations('activityBarTitle', {
+                    count: point.games,
+                    accuracy: point.averageAccuracy,
+                  })}
                   value={heightPercent}
                 />
                 <div className='text-[11px] [color:var(--kangur-page-muted-text)]'>{point.label}</div>
@@ -88,16 +95,16 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
       </KangurGlassPanel>
 
       <KangurGlassPanel className='xl:col-span-2' padding='lg' surface='solid' variant='subtle'>
-        <KangurPanelSectionHeading>Wyniki wg operacji</KangurPanelSectionHeading>
+        <KangurPanelSectionHeading>{translations('operationsHeading')}</KangurPanelSectionHeading>
         <div className='flex flex-col kangur-panel-gap'>
           {snapshot.operationPerformance.length === 0 ? (
             <KangurEmptyState
               accent='slate'
               align='center'
               data-testid='learner-profile-operation-empty'
-              description='Rozegraj kilka zadań, aby zobaczyć skuteczność dla poszczególnych operacji.'
+              description={translations('emptyDescription')}
               padding='md'
-              title='Brak danych o operacjach.'
+              title={translations('emptyTitle')}
             />
           ) : (
             snapshot.operationPerformance.map((item) => (
@@ -121,7 +128,7 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                         }
                         transitionSourceId={`learner-profile-performance:${item.operation}`}
                       >
-                        Trenuj
+                        {translations('train')}
                       </Link>
                     </KangurButton>
                   </div>
@@ -133,8 +140,12 @@ export function KangurLearnerProfilePerformanceWidget(): React.JSX.Element {
                   value={item.averageAccuracy}
                 />
                 <div className='mt-1 text-[11px] [color:var(--kangur-page-muted-text)]'>
-                  Próby: {item.attempts} · XP na sesję: {item.averageXpPerSession} · Łącznie:{' '}
-                  {item.totalXpEarned} XP · Najlepsza skuteczność: {item.bestScore}%
+                  {translations('operationStats', {
+                    attempts: item.attempts,
+                    averageXp: item.averageXpPerSession,
+                    totalXp: item.totalXpEarned,
+                    bestScore: item.bestScore,
+                  })}
                 </div>
               </div>
             ))

@@ -117,6 +117,7 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
   return (
     <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
       <StandardDataTablePanel
+        variant='flat'
         header={headerContent}
         alerts={alertsContent}
         actions={actionsContent}

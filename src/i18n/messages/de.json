@@ -56,6 +56,10 @@
     "loginTitle": "StudiQ Anmeldung",
     "pageNotFoundTitle": "Seite nicht gefunden"
   },
+  "Metadata": {
+    "siteDescription": "StudiQ Admin-Arbeitsbereich und Storefront.",
+    "previewTitle": "Vorschau {id}"
+  },
   "FallbackHome": {
     "Dividers": {
       "editorial": "Editorial",
@@ -235,6 +239,151 @@
     "loadingApp": "Kangur-App wird geladen",
     "loadingPage": "Kangur-Seite wird geladen"
   },
+  "KangurShell": {
+    "creatorCredentials": "Erstellt von: {name} · erstellt {year} ·",
+    "socialUpdates": "Social Updates",
+    "contactLabel": "Kontakt: {email}"
+  },
+  "KangurLessonsPage": {
+    "pageTitle": "Lektionen",
+    "introDescription": "Wahle ein Thema und springe direkt in die Ubung oder Wiederholung.",
+    "loadingDescription": "Die Lektionen sind gleich bereit.",
+    "emptyTitle": "Keine aktiven Lektionen",
+    "emptyDescription": "Keine aktiven Lektionen fur die Gruppe {ageGroup}.",
+    "groupTypeLabel": "Gruppe",
+    "subsectionTypeLabel": "Unterabschnitt"
+  },
+  "KangurLearnerProfilePage": {
+    "tabs": {
+      "overview": "Lernendenprofil",
+      "overviewMobile": "Profil",
+      "aiMood": "Beziehung zum KI-Tutor",
+      "aiMoodMobile": "KI-Tutor"
+    },
+    "loadError": "Das Profil konnte nicht geladen werden.",
+    "backToHome": "Zuruck zur Startseite",
+    "statsHeading": "Statistiken des Lernenden",
+    "tabListLabel": "Lernendenprofil"
+  },
+  "KangurGamePage": {
+    "questionProgress": "Frage {current}/{total}",
+    "resultProgress": "Ergebnis {score}/{total}",
+    "activityTitle": "Spiel: {title}",
+    "statusAnnouncement": "Ansicht: {label}",
+    "screens": {
+      "home": {
+        "label": "Startbildschirm",
+        "description": "Wahle eine Ubungsform und starte die nachste Sitzung."
+      },
+      "training": {
+        "label": "Training einrichten",
+        "description": "Konfiguriere das gemischte Training und wahl den Fragenbereich."
+      },
+      "kangur_setup": {
+        "label": "Mathe-Kanguru-Sitzung einrichten",
+        "description": "Bereite eine Mathe-Kanguru-Sitzung vor."
+      },
+      "kangur": {
+        "label": "Mathe-Kanguru-Sitzung",
+        "description": "Lose Mathe-Kanguru-Aufgaben Schritt fur Schritt."
+      },
+      "calendar_quiz": {
+        "label": "Kalenderubung",
+        "description": "Ube das Lesen von Daten und Zusammenhangen im Kalender."
+      },
+      "geometry_quiz": {
+        "label": "Formenubung",
+        "description": "Ube Formen und raumliche Beziehungen."
+      },
+      "clock_quiz": {
+        "label": "Uhrzeitubung",
+        "description": "Ube das Lesen von Stunden und Minuten."
+      },
+      "addition_quiz": {
+        "label": "Additionsquiz",
+        "description": "Ein schnelles Additionsquiz."
+      },
+      "subtraction_quiz": {
+        "label": "Subtraktionsquiz",
+        "description": "Ein schnelles Subtraktionsquiz."
+      },
+      "division_quiz": {
+        "label": "Divisionsquiz",
+        "description": "Ein schnelles Divisionsquiz."
+      },
+      "multiplication_quiz": {
+        "label": "Multiplikationsquiz",
+        "description": "Ein schnelles Einmaleins-Quiz."
+      },
+      "logical_patterns_quiz": {
+        "label": "Musterquiz",
+        "description": "Erganz Muster und Reihen in einem schnellen Quiz."
+      },
+      "logical_classification_quiz": {
+        "label": "Klassifikationsquiz",
+        "description": "Ordne Elemente und finde gemeinsame Merkmale."
+      },
+      "logical_analogies_quiz": {
+        "label": "Analogiequiz",
+        "description": "Ube Analogien und Beziehungen in kurzen Runden."
+      },
+      "english_sentence_quiz": {
+        "label": "Satzbauquiz",
+        "description": "Ube Satzstellung, Fragen und Konjunktionen auf Englisch."
+      },
+      "english_parts_of_speech_quiz": {
+        "label": "Wortartenquiz",
+        "description": "Sortiere Worter nach Wortarten in kurzen Runden."
+      },
+      "operation": {
+        "label": "Spieltyp auswahlen",
+        "description": "Wahle die Art des Mathe-Spiels und die Schwierigkeit."
+      },
+      "playing": {
+        "label": "Zu losende Frage",
+        "description": "Lose die aktuelle Frage ohne Hinweise und mit einer fertigen Antwort."
+      },
+      "result": {
+        "label": "Spielergebnis",
+        "description": "Sieh dir das Ergebnis an und entscheide, was du als Nachstes uben willst."
+      }
+    },
+    "home": {
+      "actionsLabel": "Start und Aktivitatsauswahl",
+      "parentSuggestionsHeading": "Vorschlage der Eltern",
+      "missingLearnerTitle": "Kein Lernendenprofil",
+      "missingLearnerDescription": "Fuge im Abschnitt unten ein Lernendenprofil hinzu oder wahle eines aus, um Fortschritt und Tagesmissionen zu sehen.",
+      "addLearner": "Lernenden hinzufugen",
+      "questHeading": "Mission fur den Lernenden",
+      "summaryHeading": "Fortschrittsubersicht",
+      "priorityAssignmentsHeading": "Prioritatsaufgaben",
+      "priorityAssignmentsTitle": "Prioritatsaufgaben",
+      "priorityAssignmentsEmpty": "Keine aktiven Aufgaben von den Eltern.",
+      "progressHeading": "Ranking und Fortschritt",
+      "leaderboardLabel": "Ranking",
+      "progressLabel": "Fortschritt des Spielers"
+    },
+    "result": {
+      "leaderboardLabel": "Ranking nach der Runde"
+    }
+  },
+  "KangurPageNotFound": {
+    "unknownPage": "unbekannt",
+    "title": "Seite nicht gefunden",
+    "description": "Die Seite \"{pageName}\" wurde in dieser Anwendung nicht gefunden.",
+    "adminNoteLabel": "Admin-Hinweis",
+    "adminNoteDescription": "Das kann bedeuten, dass die KI diese Seite noch nicht implementiert hat.",
+    "goHome": "Zur Startseite"
+  },
+  "KangurUserAccess": {
+    "restricted": "Eingeschränkter Zugriff",
+    "title": "Dieses Konto hat noch keinen Zugriff auf Kangur",
+    "description": "Es sieht so aus, als wäre dein Konto noch nicht zur App hinzugefügt worden. Kontaktiere einen Administrator, um Zugriff anzufordern.",
+    "checkLabel": "Falls das ein Fehler ist, prüfe:",
+    "checkCurrentAccount": "ob du mit dem richtigen Konto angemeldet bist,",
+    "checkAccessGranted": "ob ein Administrator diesem Konto Zugriff gewährt hat,",
+    "checkSignInAgain": "ob eine erneute Anmeldung das Problem löst."
+  },
   "KangurLogin": {
     "defaultLoginTitle": "Anmelden",
     "defaultSessionTitle": "Anmeldung bei Kangur",
@@ -326,5 +475,247 @@
     "passwordLowercase": "Das Passwort muss mindestens einen Kleinbuchstaben enthalten.",
     "passwordNumber": "Das Passwort muss mindestens eine Zahl enthalten.",
     "passwordSymbol": "Das Passwort muss mindestens ein Sonderzeichen enthalten."
+  },
+  "KangurGameWidgets": {
+    "quizBackButton": "Zuruck zur vorherigen Seite",
+    "returnToGameHome": "Zuruck zu Lasst uns spielen",
+    "homeHero": {
+      "title": "Dein Fortschritt",
+      "summary": "Prufe den nachsten Meilenstein und die Aufgaben, die du heute abschliessen solltest."
+    },
+    "homeQuest": {
+      "defaultLabel": "Mission des Tages",
+      "status": {
+        "completed": "Mission abgeschlossen",
+        "inProgress": "Mission lauft",
+        "notStarted": "Mission wartet"
+      },
+      "targetPrefix": "Ziel:",
+      "streakPrefix": "Serie:",
+      "pacePrefix": "Tempo:",
+      "trackPrefix": "Im Fluss:",
+      "directionPrefix": "Richtung:"
+    },
+    "priorityAssignments": {
+      "title": "Prioritatsaufgaben",
+      "emptyDescription": "Keine aktiven Aufgaben von den Eltern.",
+      "loading": "Prioritatsaufgaben werden geladen...",
+      "zeroCount": "0 Aufgaben"
+    },
+    "kangurSession": {
+      "recommendationLabel": "Empfohlene Richtung"
+    },
+    "leaderboard": {
+      "title": "Beste Ergebnisse",
+      "loadingTitle": "Laden...",
+      "loadingDescription": "Die neuesten Ergebnisse der Lernenden werden geladen.",
+      "emptyDescription": "Andere den Filter oder komm spater wieder, wenn neue Versuche erscheinen.",
+      "emptyStateLabel": "Keine Ergebnisse fur diese Filter.",
+      "currentUserBadge": "Du",
+      "errors": {
+        "loadScores": "Die Ergebnisse konnten nicht geladen werden."
+      },
+      "account": {
+        "registered": "Angemeldet",
+        "anonymous": "Anonym"
+      },
+      "userFilters": {
+        "all": "Alle",
+        "registered": "Angemeldet",
+        "anonymous": "Anonym"
+      },
+      "operations": {
+        "all": "Alle",
+        "addition": "Addition",
+        "subtraction": "Subtraktion",
+        "multiplication": "Multiplikation",
+        "division": "Division",
+        "decimals": "Bruche",
+        "powers": "Potenzen",
+        "roots": "Wurzeln",
+        "clock": "Uhr",
+        "calendar": "Kalender",
+        "geometry": "Geometrie",
+        "mixed": "Gemischt",
+        "english_basics": "Grundlagen",
+        "english_parts_of_speech": "Wortarten",
+        "english_sentence_structure": "Satzbau",
+        "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
+        "english_articles": "Artikel",
+        "english_prepositions_time_place": "Zeit- und Ortsprapositionen",
+        "alphabet_basics": "Alphabet",
+        "alphabet_copy": "Buchstaben abschreiben",
+        "alphabet_syllables": "Silben",
+        "geometry_shape_recognition": "Geometrie"
+      }
+    }
+  },
+  "KangurAssignmentsList": {
+    "count": {
+      "one": "{count} Aufgabe",
+      "few": "{count} Aufgaben",
+      "many": "{count} Aufgaben"
+    },
+    "emptyLabel": "Keine Aufgaben zum Anzeigen.",
+    "compactEyebrow": "Schnellubersicht",
+    "fullEyebrow": "Zugewiesene Aufgaben",
+    "lastActivityPrefix": "Letzte Aktivitat:",
+    "progressLabel": "Fortschritt",
+    "timeLimitButtonLabel": "Zeitlimit",
+    "reassigning": "Wird neu zugewiesen...",
+    "reassign": "Erneut zuweisen",
+    "archive": "Archivieren"
+  },
+  "KangurLearnerProfileWidgets": {
+    "hero": {
+      "title": "Lernendenprofil",
+      "avatarLabel": "Avatar des Lernenden",
+      "signIn": "Anmelden, um den Fortschritt zu synchronisieren",
+      "createParentAccount": "Elternkonto erstellen"
+    },
+    "levelProgress": {
+      "title": "Level-Fortschritt",
+      "summary": "Sieh dir das aktuelle Level, die gesamten XP und den fehlenden Abstand zur nachsten Stufe an.",
+      "totalXpLine": "Level {level} · {xp} XP insgesamt",
+      "xpToNextLevel": "Bis Level {level}: {xp} XP",
+      "maxLevelReached": "Maximales Level erreicht"
+    },
+    "lessonMastery": {
+      "title": "Lektionsbeherrschung",
+      "summary": "Prufe Themen zur Wiederholung und die starksten Bereiche anhand gespeicherter Lektionen.",
+      "dateMissing": "kein Datum",
+      "attemptsLine": "Versuche: {attempts} · letztes Ergebnis {lastScore}%",
+      "bestScoreLine": "Bestes Ergebnis: {bestScore}% · Letzter Versuch: {date}",
+      "trackedSummary": "Verfolgt: {tracked} · beherrscht: {mastered} · zur Wiederholung: {review}",
+      "trackedBadge": "{count} Lektionen mit Fortschritt",
+      "emptyDescription": "Es gibt noch keine gespeicherten Lektionsversuche. Schliesse eine beliebige Lektion ab, um Starken und Wiederholungsbereiche zu sehen.",
+      "reviewTitle": "Zur Wiederholung",
+      "reviewEmpty": "Alle verfolgten Lektionen sind auf einem sicheren Niveau.",
+      "strongestTitle": "Starkste Lektionen",
+      "strongestEmpty": "Schliesse zuerst ein paar Lektionen ab, um die starksten Bereiche zu sehen."
+    },
+    "overview": {
+      "title": "Leistungsuberblick",
+      "summary": "Die wichtigsten Kennzahlen des Tages: Genauigkeit, Mission, Ziel und Abzeichen in einer Ansicht.",
+      "avatarSaveError": "Der Avatar konnte nicht gespeichert werden.",
+      "avatarTitle": "Avatar des Lernenden",
+      "avatarDescription": "Wahle die Figur, die im Lernendenprofil sichtbar sein wird.",
+      "avatarGroupLabel": "Avatar auswahlen",
+      "averageAccuracyDescription": "Beste Sitzung: {value}%",
+      "averageAccuracyLabel": "Durchschnittliche Genauigkeit",
+      "streakDescription": "Langste: {value} Tage",
+      "streakLabel": "Tagesserie",
+      "xpTodayDescription": "7 Tage: +{weeklyXp} XP · durchschnittlich {averageXp} XP pro Sitzung",
+      "xpTodayLabel": "XP heute",
+      "guidedRoundsDescription": "Bis zum Abzeichen: {badge} · {summary}",
+      "guidedRoundsUnlocked": "Alle Abzeichen des empfohlenen Pfads sind freigeschaltet.",
+      "guidedRoundsLabel": "Empfohlene Runden",
+      "dailyQuestMissing": "Eine neue Mission erscheint mit dem Fortschritt.",
+      "dailyQuestLoading": "Die Mission des Tages wird geladen...",
+      "dailyQuestLabel": "Mission des Tages",
+      "dailyGoalDescription": "Erfullung: {value}%",
+      "dailyGoalLabel": "Tagesziel",
+      "badgesDescription": "Nachstes: {badge} · {summary}",
+      "badgesUnlocked": "Alle Abzeichen freigeschaltet",
+      "badgesLabel": "Abzeichen"
+    },
+    "performance": {
+      "title": "Leistung des Lernenden",
+      "summary": "Sieh dir den Rhythmus der letzten sieben Tage und die Genauigkeit fur einzelne Operationen an.",
+      "activityHeading": "7-Tage-Aktivitat",
+      "todayChip": "Heute: +{xp} XP",
+      "weeklyChip": "7 Tage: +{xp} XP",
+      "averageChip": "Durchschnitt: {xp} XP pro Sitzung",
+      "guidedChipPrefix": "Empfohlen: {count} ·",
+      "guidedChipUnlocked": "alle Abzeichen des Pfads freigeschaltet",
+      "activityBarTitle": "{count} Spiele, Durchschnitt {accuracy}%",
+      "operationsHeading": "Ergebnisse nach Operation",
+      "emptyTitle": "Keine Operationsdaten.",
+      "emptyDescription": "Spiele ein paar Aufgaben, um die Genauigkeit fur einzelne Operationen zu sehen.",
+      "train": "Trainieren",
+      "operationStats": "Versuche: {attempts} · XP pro Sitzung: {averageXp} · Insgesamt: {totalXp} XP · Beste Genauigkeit: {bestScore}%"
+    },
+    "questSummary": {
+      "defaultQuestLabel": "Mission des Tages",
+      "tracksHeading": "Fortschrittspfade des Lernenden"
+    },
+    "recommendations": {
+      "title": "Plan fur heute",
+      "summary": "Eine kurze Liste der nachsten Schritte auf Basis der letzten Ergebnisse und der Aktivitat.",
+      "emptyDescription": "Keine Empfehlungen zum Anzeigen."
+    },
+    "sessions": {
+      "title": "Sitzungsverlauf",
+      "summary": "Prufe die letzten Versuche und die Abzeichenpfade, die durch regelmassiges Spielen aufgebaut werden.",
+      "recentSessionsHeading": "Letzte Sitzungen",
+      "loadingTitle": "Verlauf wird geladen...",
+      "loadingDescription": "Die letzten Versuche des Lernenden werden gepruft.",
+      "errorDescription": "Versuche das Profil gleich noch einmal zu aktualisieren.",
+      "emptyTitle": "Keine gespielten Sitzungen.",
+      "emptyDescription": "Die ersten Sitzungen erscheinen hier automatisch.",
+      "badgeTracksHeading": "Abzeichenpfade"
+    }
+  },
+  "KangurLessonsWidgets": {
+    "emptyDescription": "Aktiviere Lektionen im Admin-Bereich, damit sie hier erscheinen.",
+    "mastery": {
+      "new": "Neu",
+      "noSavedPractice": "Keine gespeicherte Praxis",
+      "mastered": "Beherrscht {percent}%",
+      "completedBest": "Abgeschlossen {completions}× · bestes Ergebnis {percent}%",
+      "inProgress": "In Arbeit {percent}%",
+      "completedLast": "Abgeschlossen {completions}× · letztes Ergebnis {percent}%",
+      "revisit": "Wiederholen {percent}%"
+    },
+    "libraryCard": {
+      "closedAssignment": "Aufgabe geschlossen",
+      "customContent": "Eigener Inhalt",
+      "parentPriority": "Elternprioritat",
+      "completedForParent": "Fur die Eltern abgeschlossen",
+      "completedAssignmentSummary": "Die Aufgabe der Eltern wurde bereits erledigt. {summary}",
+      "ariaLabel": "Lektion: {title}"
+    },
+    "navigation": {
+      "ariaLabel": "Lektionsnavigation",
+      "previousLesson": "Vorherige Lektion: {title}",
+      "noPreviousLesson": "Keine vorherige Lektion",
+      "previousShort": "Zuruck",
+      "nextLesson": "Nachste Lektion: {title}",
+      "noNextLesson": "Keine nachste Lektion",
+      "nextShort": "Weiter"
+    },
+    "activeHeader": {
+      "narrator": {
+        "loading": "Vorbereitung...",
+        "pause": "Pause",
+        "read": "Lesen",
+        "resume": "Fortsetzen"
+      },
+      "parentPriority": "Elternprioritat",
+      "completedForParent": "Fur die Eltern abgeschlossen",
+      "backToLessons": "Zuruck zur Lektionsliste",
+      "fallbackTitle": "Lektion",
+      "subsectionType": {
+        "game": "Spiel",
+        "lesson": "Lektion"
+      }
+    },
+    "documentRenderer": {
+      "svgAltFallback": "Illustration fur diesen Lektionsabschnitt.",
+      "imageAltFallback": "Lektionsillustration",
+      "imageMissingSource": "Der Bildblock hat noch keine Quelle.",
+      "callouts": {
+        "info": "Info",
+        "tip": "Hinweis",
+        "warning": "Warnung",
+        "success": "Erfolg"
+      },
+      "quizAnswerAria": "Antwort: {answer}",
+      "quizEyebrow": "Quiz",
+      "sectionLabel": "Abschnitt",
+      "pageLabel": "Seite {index}",
+      "editorEmptyDescription": "Fuge Text, Bilder, SVGs oder einen Aktivitatsblock hinzu, um diese Seite zu erstellen.",
+      "noBlocksTitle": "Diese Seite hat noch keine Blocke."
+    }
   }
 }

@@ -29,8 +29,8 @@ const UPLOAD_RELATIONSHIP = 'urn:li:userGeneratedContent';
 const RESTLI_PROTOCOL_VERSION = '2.0.0';
 
 type LinkedInProfileResponse = {
-  id?: string;
-  vanityName?: string;
+  sub?: string;
+  name?: string;
 };
 
 type RegisteredUpload = {
@@ -53,7 +53,7 @@ const resolveContentType = (value: string | null | undefined): string | null => 
 
 const fetchLinkedInProfile = async (accessToken: string): Promise<LinkedInProfileResponse | null> => {
   const response = await fetch(
-    `${API_BASE_URL}/me?projection=(id,vanityName)`,
+    `${API_BASE_URL}/userinfo`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -140,15 +140,15 @@ const ensurePersonUrn = async (
   }
 
   const profile = await fetchLinkedInProfile(accessToken);
-  const personUrn = profile?.id ? `urn:li:person:${profile.id}` : null;
+  const personUrn = profile?.sub ? `urn:li:person:${profile.sub}` : null;
   if (!personUrn) {
     throw configurationError(
       'Unable to resolve LinkedIn profile. Reauthorize LinkedIn in Admin > Integrations.'
     );
   }
 
-  const profileUrl = profile?.vanityName
-    ? `https://www.linkedin.com/in/${profile.vanityName}`
+  const profileUrl = profile?.name
+    ? `https://www.linkedin.com/in/${encodeURIComponent(profile.name)}`
     : null;
 
   await repo.updateConnection(connectionId, {
@@ -279,10 +279,10 @@ const resolveImageAsset = async (
 
 export async function publishLinkedInPersonalPost(
   post: KangurSocialPost,
-  options?: { mode?: LinkedInPublishMode }
+  options?: { mode?: LinkedInPublishMode; skipImages?: boolean }
 ): Promise<LinkedInPublishResult> {
   const startedAt = Date.now();
-  const imageAssets = post.imageAssets ?? [];
+  const imageAssets = options?.skipImages ? [] : (post.imageAssets ?? []);
   const text =
     post.combinedBody?.trim() ||
     buildKangurSocialPostCombinedBody(post.bodyPl, post.bodyEn).trim();

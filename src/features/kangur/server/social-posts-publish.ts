@@ -21,7 +21,7 @@ export type KangurSocialPublishMode = 'published' | 'draft';
 
 export async function publishKangurSocialPost(
   post: KangurSocialPost,
-  options?: { mode?: KangurSocialPublishMode }
+  options?: { mode?: KangurSocialPublishMode; skipImages?: boolean }
 ): Promise<KangurSocialPost> {
   const now = new Date().toISOString();
   const startedAt = Date.now();
@@ -41,7 +41,7 @@ export async function publishKangurSocialPost(
   };
 
   try {
-    const result = await publishLinkedInPersonalPost(post, { mode: publishMode });
+    const result = await publishLinkedInPersonalPost(post, { mode: publishMode, skipImages: options?.skipImages });
     const updated = await updateKangurSocialPost(post.id, {
       status: nextStatus,
       publishedAt: publishMode === 'published' ? now : null,
@@ -84,15 +84,18 @@ export async function publishKangurSocialPost(
 }
 
 export async function unpublishKangurSocialPost(
-  post: KangurSocialPost
+  post: KangurSocialPost,
+  options?: { keepLocal?: boolean }
 ): Promise<KangurSocialPost> {
   const startedAt = Date.now();
+  const keepLocal = options?.keepLocal ?? false;
   const baseContext = {
     service: 'kangur.social-posts.unpublish',
     postId: post.id,
     status: post.status,
     linkedinConnectionId: post.linkedinConnectionId ?? null,
     linkedinPostId: post.linkedinPostId ?? null,
+    keepLocal,
   };
 
   if (post.status !== 'published') {
@@ -104,6 +107,25 @@ export async function unpublishKangurSocialPost(
 
   try {
     await deleteLinkedInPersonalPost(post);
+
+    if (keepLocal) {
+      const updated = await updateKangurSocialPost(post.id, {
+        status: 'draft',
+        linkedinPostId: null,
+        linkedinUrl: null,
+        publishedAt: null,
+        publishError: null,
+      });
+      if (!updated) {
+        throw notFoundError('Social post not found.');
+      }
+      void ErrorSystem.logInfo('Kangur social post unpublished (kept locally)', {
+        ...baseContext,
+        durationMs: Date.now() - startedAt,
+      });
+      return updated;
+    }
+
     const deleted = await deleteKangurSocialPost(post.id);
     if (!deleted) {
       throw notFoundError('Social post not found.');

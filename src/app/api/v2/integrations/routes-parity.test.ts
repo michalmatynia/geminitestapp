@@ -31,6 +31,7 @@ const migratedRouteHandlerPaths = [
   '[id]/connections/[connectionId]/linkedin/authorize/route-handler.ts',
   '[id]/connections/[connectionId]/linkedin/callback/route-handler.ts',
   '[id]/connections/[connectionId]/linkedin/disconnect/route-handler.ts',
+  'linkedin/callback/route-handler.ts',
   '[id]/connections/[connectionId]/base/inventories/route-handler.ts',
   '[id]/connections/[connectionId]/base/products/route-handler.ts',
   'products/[id]/base/sku-check/route-handler.ts',

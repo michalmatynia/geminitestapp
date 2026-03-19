@@ -55,6 +55,7 @@
     "seed:admin": "tsx scripts/db/seed-admin.ts",
     "seed:kangur:ai-tutor-knowledge-base": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/seed-kangur-ai-tutor-knowledge-base.ts",
     "backfill:kangur:ai-tutor-locales": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/backfill-kangur-ai-tutor-locales.ts",
+    "backfill:kangur:ai-tutor-native-guide-locales": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/backfill-kangur-ai-tutor-native-guide-locales.ts",
     "backfill:ai-paths-input-contracts": "tsx scripts/db/backfill-ai-paths-input-contracts.ts",
     "backfill:ai-paths-database-update-contract": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/backfill-ai-paths-database-update-contract.ts",
     "backfill:ai-paths-parameter-inference-target-path": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/backfill-ai-paths-parameter-inference-target-path.ts",

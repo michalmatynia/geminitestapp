@@ -593,6 +593,24 @@ vi.mock('next/link', () => ({
   }) => React.createElement('a', { href, ...props }, children),
 }));
 
+// Mock next-intl
+vi.mock('next-intl', () => {
+  const React = require('react');
+  return {
+    NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    useTranslations: () => vi.fn((key: string) => key),
+    useLocale: () => 'pl',
+  };
+});
+
+vi.mock('use-intl', () => ({
+  useLocale: () => 'pl',
+}));
+
+vi.mock('next-intl/server', () => ({
+  getTranslations: vi.fn(async () => vi.fn((key: string) => key)),
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/'),

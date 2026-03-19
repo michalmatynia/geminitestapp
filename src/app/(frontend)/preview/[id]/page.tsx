@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { JSX } from 'react';
 
 import { auth } from '@/features/auth/auth';
@@ -16,8 +17,9 @@ interface PreviewPageProps {
 
 export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
   const { id } = await params;
+  const metadataTranslations = await getTranslations('Metadata');
   return {
-    title: `Preview ${id}`,
+    title: metadataTranslations('previewTitle', { id }),
     robots: 'noindex,nofollow',
   };
 }

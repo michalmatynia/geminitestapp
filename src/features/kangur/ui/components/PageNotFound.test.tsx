@@ -65,17 +65,18 @@ describe('PageNotFound', () => {
   it('renders the home action as a hallmark pill CTA', async () => {
     render(<PageNotFound />, { wrapper: createWrapper() });
 
-    const homeButton = await screen.findByRole('button', { name: 'Go Home' });
+    const homeButton = await screen.findByRole('button', { name: 'goHome' });
 
     expect(screen.getByTestId('page-not-found-shell')).toHaveClass('kangur-premium-bg');
     expect(homeButton).toHaveClass('kangur-cta-pill', 'primary-cta');
     expect(screen.getByTestId('page-not-found-divider')).toHaveClass('h-0.5', 'w-16', 'bg-slate-200');
+    expect(screen.getByRole('heading', { name: 'title' })).toBeInTheDocument();
   });
 
   it('routes home through the app router instead of forcing a document reload', async () => {
     render(<PageNotFound />, { wrapper: createWrapper() });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Go Home' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'goHome' }));
 
     expect(routerPushMock).toHaveBeenCalledWith('/kangur', { scroll: false });
   });
@@ -92,7 +93,7 @@ describe('PageNotFound', () => {
       'text-left'
     );
     expect(screen.getByTestId('page-not-found-admin-dot')).toHaveClass('bg-amber-400');
-    expect(screen.getByText('Admin Note').parentElement).toHaveClass(
+    expect(screen.getByText('adminNoteLabel').parentElement).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'

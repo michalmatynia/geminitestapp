@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import {
   KangurCardTitle,
   KangurEmptyState,
@@ -19,14 +20,17 @@ type LessonMasteryInsightsProps = {
   sectionTitle?: React.ReactNode;
 };
 
-const formatCompletedAt = (value: string | null): string => {
+const formatCompletedAt = (
+  value: string | null,
+  translate: (key: string) => string
+): string => {
   if (!value) {
-    return 'brak daty';
+    return translate('dateMissing');
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'brak daty';
+    return translate('dateMissing');
   }
 
   return parsed.toLocaleDateString('pl-PL', {
@@ -52,6 +56,7 @@ type InsightListProps = {
 };
 
 const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.Element => {
+  const translations = useTranslations('KangurLearnerProfileWidgets.lessonMastery');
   const emptyStateDescription = emptyState;
 
   return (
@@ -81,7 +86,10 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                     {item.emoji} {item.title}
                   </KangurCardTitle>
                   <KangurMetaText as='div' className='mt-1' size='xs'>
-                    Próby: {item.attempts} · ostatni wynik {item.lastScorePercent}%
+                    {translations('attemptsLine', {
+                      attempts: item.attempts,
+                      lastScore: item.lastScorePercent,
+                    })}
                   </KangurMetaText>
                 </div>
                 <KangurStatusChip
@@ -93,8 +101,10 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                 </KangurStatusChip>
               </KangurPanelRow>
               <KangurMetaText as='div' className='mt-2' size='xs'>
-                Najlepszy wynik: {item.bestScorePercent}% · Ostatnia próba:{' '}
-                {formatCompletedAt(item.lastCompletedAt)}
+                {translations('bestScoreLine', {
+                  bestScore: item.bestScorePercent,
+                  date: formatCompletedAt(item.lastCompletedAt, translations),
+                })}
               </KangurMetaText>
             </KangurInfoCard>
           ))}
@@ -109,41 +119,46 @@ export default function LessonMasteryInsights({
   sectionSummary,
   sectionTitle,
 }: LessonMasteryInsightsProps): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.lessonMastery');
   const insights = buildLessonMasteryInsights(progress);
-  const resolvedSectionTitle = sectionTitle ?? 'Opanowanie lekcji';
+  const resolvedSectionTitle = sectionTitle ?? translations('title');
   const resolvedSectionSummary =
     sectionSummary ??
-    `Śledzone: ${insights.trackedLessons} · opanowane: ${insights.masteredLessons} · do powtórki: ${insights.lessonsNeedingPractice}`;
+    translations('trackedSummary', {
+      tracked: insights.trackedLessons,
+      mastered: insights.masteredLessons,
+      review: insights.lessonsNeedingPractice,
+    });
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-end sm:justify-between`}>
         <KangurPanelIntro description={resolvedSectionSummary} eyebrow={resolvedSectionTitle} />
         {insights.trackedLessons > 0 && (
-          <KangurStatusChip accent='indigo' size='md'>
-            {insights.trackedLessons} lekcji z zapisem
-          </KangurStatusChip>
-        )}
+        <KangurStatusChip accent='indigo' size='md'>
+            {translations('trackedBadge', { count: insights.trackedLessons })}
+        </KangurStatusChip>
+      )}
       </div>
 
       {insights.trackedLessons === 0 ? (
         <KangurEmptyState
           accent='slate'
           className='mt-4'
-          description='Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.'
+          description={translations('emptyDescription')}
           padding='lg'
         />
       ) : (
         <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 kangur-panel-gap'>
           <InsightList
-            title='Do powtórki'
+            title={translations('reviewTitle')}
             items={insights.weakest}
-            emptyState='Wszystkie śledzone lekcje są na bezpiecznym poziomie.'
+            emptyState={translations('reviewEmpty')}
           />
           <InsightList
-            title='Najmocniejsze lekcje'
+            title={translations('strongestTitle')}
             items={insights.strongest}
-            emptyState='Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.'
+            emptyState={translations('strongestEmpty')}
           />
         </div>
       )}

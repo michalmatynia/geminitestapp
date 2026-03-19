@@ -4,6 +4,12 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { validateKangurAiTutorOnboardingContent } from '@/features/kangur/ai-tutor-onboarding-validation';
 import {
+  buildKangurAiTutorContentTranslationStatusBySectionKey,
+  summarizeKangurAiTutorContentTranslationStatuses,
+  type KangurAiTutorContentTranslationStatus,
+  type KangurAiTutorContentTranslatableSectionKey,
+} from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
+import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
@@ -11,6 +17,7 @@ import {
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
+import { getEnabledSiteLocaleCodes } from '@/shared/lib/i18n/site-locale';
 import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Alert, Badge, Button, Card, FormField, FormSection, Input, Textarea, useToast } from '@/features/kangur/shared/ui';
@@ -22,6 +29,9 @@ import {
 
 
 const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
+const AI_TUTOR_CONTENT_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().filter(
+  (locale) => locale !== AI_TUTOR_CONTENT_EDITOR_LOCALE
+);
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
 const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
@@ -33,8 +43,99 @@ const AI_TUTOR_HOME_ONBOARDING_STEP_FIELDS = [
   { key: 'progress', label: 'Progress' },
 ] as const;
 
+const AI_TUTOR_CONTENT_SECTION_CARD_KEYS = [
+  {
+    key: 'guestIntro',
+    label: 'Guest intro',
+  },
+  {
+    key: 'homeOnboarding',
+    label: 'Home onboarding',
+  },
+  {
+    key: 'guidedCallout',
+    label: 'Guided callout',
+  },
+] as const satisfies ReadonlyArray<{
+  key: KangurAiTutorContentTranslatableSectionKey;
+  label: string;
+}>;
+
 const stringifyAiTutorContent = (content: KangurAiTutorContent): string =>
   `${JSON.stringify(content, null, 2)}\n`;
+
+type SectionTranslationStatus = {
+  locale: string;
+  status: KangurAiTutorContentTranslationStatus;
+};
+
+type SectionTranslationFilterStatus = Extract<
+  KangurAiTutorContentTranslationStatus,
+  'manual' | 'scaffolded' | 'source-copy'
+>;
+
+const AI_TUTOR_CONTENT_TRANSLATION_FILTER_OPTIONS = [
+  { status: 'manual', label: 'Manual' },
+  { status: 'scaffolded', label: 'Scaffolded' },
+  { status: 'source-copy', label: 'Source copy' },
+] as const satisfies ReadonlyArray<{
+  status: SectionTranslationFilterStatus;
+  label: string;
+}>;
+
+const getTranslationStatusBadgeVariant = (
+  status: KangurAiTutorContentTranslationStatus
+): 'outline' | 'secondary' | 'warning' => {
+  switch (status) {
+    case 'manual':
+      return 'secondary';
+    case 'missing':
+    case 'source-copy':
+      return 'warning';
+    case 'source-locale':
+    case 'scaffolded':
+    default:
+      return 'outline';
+  }
+};
+
+const getTranslationStatusFilterButtonVariant = (
+  status: SectionTranslationFilterStatus,
+  isActive: boolean
+): 'outline' | 'secondary' | 'info' | 'warning' => {
+  if (!isActive) {
+    return 'outline';
+  }
+
+  switch (status) {
+    case 'manual':
+      return 'secondary';
+    case 'scaffolded':
+      return 'info';
+    case 'source-copy':
+    default:
+      return 'warning';
+  }
+};
+
+const formatTranslationStatusLabel = (
+  locale: string,
+  status: KangurAiTutorContentTranslationStatus
+): string => {
+  switch (status) {
+    case 'manual':
+      return `${locale.toUpperCase()} manual`;
+    case 'scaffolded':
+      return `${locale.toUpperCase()} scaffolded`;
+    case 'source-copy':
+      return `${locale.toUpperCase()} source copy`;
+    case 'missing':
+      return `${locale.toUpperCase()} missing`;
+    case 'source-locale':
+    default:
+      return `${locale.toUpperCase()} source`;
+  }
+};
 
 export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
   const settingsStore = useSettingsStore();
@@ -46,39 +147,90 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
     useState<string>(() => stringifyAiTutorContent(DEFAULT_KANGUR_AI_TUTOR_CONTENT));
   const [isAiTutorContentLoading, setIsAiTutorContentLoading] = useState(true);
   const [isAiTutorContentSaving, setIsAiTutorContentSaving] = useState(false);
+  const [translationContentsByLocale, setTranslationContentsByLocale] = useState<
+    Record<string, KangurAiTutorContent | null>
+  >({});
+  const [isAiTutorContentTranslationStatusLoading, setIsAiTutorContentTranslationStatusLoading] =
+    useState(true);
+  const [activeTranslationStatusFilters, setActiveTranslationStatusFilters] = useState<
+    SectionTranslationFilterStatus[]
+  >([]);
   const rawValidatorPatternLists = settingsStore.get(VALIDATOR_PATTERN_LISTS_KEY);
   const rawPromptEngineSettings = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
+
+  const loadTranslationContents = async (): Promise<Record<string, KangurAiTutorContent | null>> => {
+    if (AI_TUTOR_CONTENT_TRANSLATION_LOCALES.length === 0) {
+      return {};
+    }
+
+    const localizedContents = await Promise.all(
+      AI_TUTOR_CONTENT_TRANSLATION_LOCALES.map(async (locale) => {
+        const content = await withKangurClientError(
+          {
+            source: 'kangur.admin.ai-tutor-content',
+            action: 'load-translation-content',
+            description: 'Loads localized AI Tutor content to derive translation status badges.',
+            context: { locale },
+          },
+          async () => {
+            const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+              params: { locale },
+              logError: false,
+            });
+            return parseKangurAiTutorContent(response);
+          },
+          {
+            fallback: null,
+            onError: () => {
+              // Translation status is additive; keep the editor usable if a locale fetch fails.
+            },
+          }
+        );
+
+        return [locale, content] as const;
+      })
+    );
+
+    return Object.fromEntries(localizedContents);
+  };
 
   useEffect(() => {
     let cancelled = false;
 
     void (async () => {
       setIsAiTutorContentLoading(true);
-      const content = await withKangurClientError(
-        {
-          source: 'kangur.admin.ai-tutor-content',
-          action: 'load-content',
-          description: 'Loads AI Tutor content for the admin editor.',
-          context: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
-        },
-        async () => {
-          const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
-            params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
-            logError: false,
-          });
-          return parseKangurAiTutorContent(response);
-        },
-        {
-          fallback: null,
-          onError: (error) => {
-            if (!cancelled) {
-              toast(error instanceof Error ? error.message : 'Failed to load AI Tutor content.', {
-                variant: 'error',
-              });
-            }
+      setIsAiTutorContentTranslationStatusLoading(true);
+      const [content, localizedContents] = await Promise.all([
+        withKangurClientError(
+          {
+            source: 'kangur.admin.ai-tutor-content',
+            action: 'load-content',
+            description: 'Loads AI Tutor content for the admin editor.',
+            context: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
           },
-        }
-      );
+          async () => {
+            const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+              params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+              logError: false,
+            });
+            return parseKangurAiTutorContent(response);
+          },
+          {
+            fallback: null,
+            onError: (error) => {
+              if (!cancelled) {
+                toast(
+                  error instanceof Error ? error.message : 'Failed to load AI Tutor content.',
+                  {
+                    variant: 'error',
+                  }
+                );
+              }
+            },
+          }
+        ),
+        loadTranslationContents(),
+      ]);
 
       if (!cancelled && content) {
         const nextValue = stringifyAiTutorContent(content);
@@ -87,7 +239,12 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       }
 
       if (!cancelled) {
+        setTranslationContentsByLocale(localizedContents);
+      }
+
+      if (!cancelled) {
         setIsAiTutorContentLoading(false);
+        setIsAiTutorContentTranslationStatusLoading(false);
       }
     })();
 
@@ -134,6 +291,90 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
     aiTutorContentEditorValue.trim() !== persistedAiTutorContentEditorValue.trim();
   const aiTutorContentBlockingIssues = aiTutorContentValidation?.blockingIssues ?? [];
   const hasAiTutorContentBlockingIssues = aiTutorContentBlockingIssues.length > 0;
+  const translationStatusesByLocale = useMemo(() => {
+    const sourceContent = parsedAiTutorContentState.content;
+    if (!sourceContent) {
+      return new Map<string, Map<KangurAiTutorContentTranslatableSectionKey, KangurAiTutorContentTranslationStatus>>();
+    }
+
+    return new Map(
+      AI_TUTOR_CONTENT_TRANSLATION_LOCALES.map((locale) => [
+        locale,
+        buildKangurAiTutorContentTranslationStatusBySectionKey({
+          locale,
+          sourceContent,
+          localizedContent: translationContentsByLocale[locale] ?? null,
+          sourceLocale: AI_TUTOR_CONTENT_EDITOR_LOCALE,
+        }),
+      ])
+    );
+  }, [parsedAiTutorContentState.content, translationContentsByLocale]);
+  const translationStatusSummaries = useMemo(
+    () =>
+      AI_TUTOR_CONTENT_TRANSLATION_LOCALES.map((locale) => ({
+        locale,
+        summary: summarizeKangurAiTutorContentTranslationStatuses(
+          translationStatusesByLocale.get(locale)?.values() ?? []
+        ),
+      })),
+    [translationStatusesByLocale]
+  );
+  const sectionTranslationStatuses = useMemo(() => {
+    const sectionStatuses = new Map<
+      KangurAiTutorContentTranslatableSectionKey,
+      SectionTranslationStatus[]
+    >();
+
+    for (const section of AI_TUTOR_CONTENT_SECTION_CARD_KEYS) {
+      sectionStatuses.set(
+        section.key,
+        AI_TUTOR_CONTENT_TRANSLATION_LOCALES.map((locale) => ({
+          locale,
+          status: translationStatusesByLocale.get(locale)?.get(section.key) ?? 'missing',
+        }))
+      );
+    }
+
+    return sectionStatuses;
+  }, [translationStatusesByLocale]);
+  const translationFilterMatchCounts = useMemo(
+    () =>
+      new Map(
+        AI_TUTOR_CONTENT_TRANSLATION_FILTER_OPTIONS.map(({ status }) => [
+          status,
+          AI_TUTOR_CONTENT_SECTION_CARD_KEYS.filter((section) =>
+            (sectionTranslationStatuses.get(section.key) ?? []).some(
+              (sectionStatus) => sectionStatus.status === status
+            )
+          ).length,
+        ])
+      ),
+    [sectionTranslationStatuses]
+  );
+  const visibleStructuredSections = useMemo(() => {
+    if (
+      isAiTutorContentTranslationStatusLoading ||
+      activeTranslationStatusFilters.length === 0
+    ) {
+      return AI_TUTOR_CONTENT_SECTION_CARD_KEYS;
+    }
+
+    return AI_TUTOR_CONTENT_SECTION_CARD_KEYS.filter((section) =>
+      (sectionTranslationStatuses.get(section.key) ?? []).some((sectionStatus) =>
+        activeTranslationStatusFilters.includes(
+          sectionStatus.status as SectionTranslationFilterStatus
+        )
+      )
+    );
+  }, [
+    activeTranslationStatusFilters,
+    isAiTutorContentTranslationStatusLoading,
+    sectionTranslationStatuses,
+  ]);
+  const visibleStructuredSectionKeys = useMemo(
+    () => new Set(visibleStructuredSections.map((section) => section.key)),
+    [visibleStructuredSections]
+  );
 
   const applyAiTutorContent = (nextContent: KangurAiTutorContent): void => {
     setAiTutorContentEditorValue(stringifyAiTutorContent(parseKangurAiTutorContent(nextContent)));
@@ -176,29 +417,33 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
 
   const handleReloadAiTutorContent = async (): Promise<void> => {
     setIsAiTutorContentLoading(true);
-    const content = await withKangurClientError(
-      {
-        source: 'kangur.admin.ai-tutor-content',
-        action: 'reload-content',
-        description: 'Reloads AI Tutor content from the server.',
-        context: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
-      },
-      async () => {
-        const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
-          params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
-          logError: false,
-        });
-        return parseKangurAiTutorContent(response);
-      },
-      {
-        fallback: null,
-        onError: (error) => {
-          toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
-            variant: 'error',
-          });
+    setIsAiTutorContentTranslationStatusLoading(true);
+    const [content, localizedContents] = await Promise.all([
+      withKangurClientError(
+        {
+          source: 'kangur.admin.ai-tutor-content',
+          action: 'reload-content',
+          description: 'Reloads AI Tutor content from the server.',
+          context: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
         },
-      }
-    );
+        async () => {
+          const response = await api.get<KangurAiTutorContent>('/api/kangur/ai-tutor/content', {
+            params: { locale: AI_TUTOR_CONTENT_EDITOR_LOCALE },
+            logError: false,
+          });
+          return parseKangurAiTutorContent(response);
+        },
+        {
+          fallback: null,
+          onError: (error) => {
+            toast(error instanceof Error ? error.message : 'Failed to reload AI Tutor content.', {
+              variant: 'error',
+            });
+          },
+        }
+      ),
+      loadTranslationContents(),
+    ]);
 
     if (content) {
       const nextValue = stringifyAiTutorContent(content);
@@ -206,7 +451,9 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       setPersistedAiTutorContentEditorValue(nextValue);
       toast('Kangur AI Tutor content reloaded.', { variant: 'success' });
     }
+    setTranslationContentsByLocale(localizedContents);
     setIsAiTutorContentLoading(false);
+    setIsAiTutorContentTranslationStatusLoading(false);
   };
 
   const handleSaveAiTutorContent = async (): Promise<void> => {
@@ -348,14 +595,135 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
           </div>
         ) : null}
 
+        {AI_TUTOR_CONTENT_TRANSLATION_LOCALES.length > 0 ? (
+          <Card
+            variant='subtle'
+            padding='md'
+            className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'
+          >
+            <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+              <div>
+                <div className='text-sm font-semibold text-foreground'>Translation status</div>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Compares the current Polish source content pack with localized Mongo documents to
+                  show which sections are still scaffolded, still match source copy, or already
+                  have manual translation edits.
+                </p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Badge
+                  variant={isAiTutorContentTranslationStatusLoading ? 'warning' : 'outline'}
+                >
+                  {isAiTutorContentTranslationStatusLoading
+                    ? 'Loading translation badges...'
+                    : `${AI_TUTOR_CONTENT_TRANSLATION_LOCALES.length} locales tracked`}
+                </Badge>
+              </div>
+            </div>
+
+            <div className='mt-3 grid gap-3 md:grid-cols-2'>
+              {translationStatusSummaries.map(({ locale, summary }) => (
+                <div
+                  key={locale}
+                  className='rounded-xl border border-border/60 bg-card/40 px-3 py-3 text-sm'
+                >
+                  <div className='flex items-center justify-between gap-2'>
+                    <div className='font-semibold text-foreground'>{locale.toUpperCase()}</div>
+                    <Badge variant='outline'>
+                      {summary.manual + summary.scaffolded + summary['source-copy'] + summary.missing}{' '}
+                      sections
+                    </Badge>
+                  </div>
+                  <div className='mt-2 flex flex-wrap gap-2'>
+                    <Badge variant='secondary'>{summary.manual} manual</Badge>
+                    <Badge variant='outline'>{summary.scaffolded} scaffolded</Badge>
+                    <Badge variant='warning'>{summary['source-copy']} source copy</Badge>
+                    {summary.missing > 0 ? (
+                      <Badge variant='warning'>{summary.missing} missing</Badge>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className='mt-4 rounded-xl border border-border/60 bg-card/35 px-3 py-3'>
+              <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
+                <div>
+                  <div className='text-sm font-semibold text-foreground'>
+                    Structured section filters
+                  </div>
+                  <p className='mt-1 text-sm text-muted-foreground'>
+                    Show only the structured sections where at least one tracked locale matches the
+                    selected translation status.
+                  </p>
+                </div>
+                <Badge variant='outline'>
+                  {visibleStructuredSections.length} of {AI_TUTOR_CONTENT_SECTION_CARD_KEYS.length}{' '}
+                  visible
+                </Badge>
+              </div>
+
+              <div className='mt-3 flex flex-wrap gap-2'>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant={activeTranslationStatusFilters.length === 0 ? 'secondary' : 'outline'}
+                  aria-pressed={activeTranslationStatusFilters.length === 0}
+                  aria-label='Show all structured sections'
+                  onClick={() => setActiveTranslationStatusFilters([])}
+                >
+                  All sections
+                </Button>
+                {AI_TUTOR_CONTENT_TRANSLATION_FILTER_OPTIONS.map(({ status, label }) => {
+                  const isActive = activeTranslationStatusFilters.includes(status);
+                  return (
+                    <Button
+                      key={status}
+                      type='button'
+                      size='xs'
+                      variant={getTranslationStatusFilterButtonVariant(status, isActive)}
+                      aria-pressed={isActive}
+                      aria-label={`Toggle ${label.toLowerCase()} sections filter`}
+                      onClick={() =>
+                        setActiveTranslationStatusFilters((current) =>
+                          current.includes(status)
+                            ? current.filter((currentStatus) => currentStatus !== status)
+                            : [...current, status]
+                        )
+                      }
+                    >
+                      {label}
+                      <span className='ml-1 text-xs opacity-80'>
+                        {translationFilterMatchCounts.get(status) ?? 0}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+        ) : null}
+
         {parsedAiTutorContentState.content ? (
           <div className='mt-4 space-y-4'>
+            {visibleStructuredSections.length === 0 ? (
+              <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+                No structured AI Tutor sections match the current translation status filters.
+              </Card>
+            ) : null}
+
+            {visibleStructuredSectionKeys.has('guestIntro') ? (
             <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
               <div className='flex items-center gap-2'>
                 <div className='text-sm font-semibold text-foreground'>
                   Structured onboarding editor
                 </div>
                 <Badge variant='secondary'>Guest intro</Badge>
+                {(sectionTranslationStatuses.get('guestIntro') ?? []).map(({ locale, status }) => (
+                  <Badge key={`guestIntro-${locale}`} variant={getTranslationStatusBadgeVariant(status)}>
+                    {formatTranslationStatusLabel(locale, status)}
+                  </Badge>
+                ))}
               </div>
               <p className='mt-1 text-sm text-muted-foreground'>
                 Edit the learner-facing onboarding copy directly. Changes still sync back into the full Mongo JSON below.
@@ -466,13 +834,25 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 {renderAiTutorContentIssues('guestIntro.help.description')}
               </FormField>
             </Card>
+            ) : null}
 
+            {visibleStructuredSectionKeys.has('homeOnboarding') ? (
             <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
               <div className='flex items-center gap-2'>
                 <div className='text-sm font-semibold text-foreground'>
                   Home onboarding
                 </div>
                 <Badge variant='secondary'>Walkthrough</Badge>
+                {(sectionTranslationStatuses.get('homeOnboarding') ?? []).map(
+                  ({ locale, status }) => (
+                    <Badge
+                      key={`homeOnboarding-${locale}`}
+                      variant={getTranslationStatusBadgeVariant(status)}
+                    >
+                      {formatTranslationStatusLabel(locale, status)}
+                    </Badge>
+                  )
+                )}
               </div>
               <p className='mt-1 text-sm text-muted-foreground'>
                 These fields drive the built-in home walkthrough shown before any model-based tutoring.
@@ -617,13 +997,25 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 ))}
               </div>
             </Card>
+            ) : null}
 
+            {visibleStructuredSectionKeys.has('guidedCallout') ? (
             <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
               <div className='flex items-center gap-2'>
                 <div className='text-sm font-semibold text-foreground'>
                   Guided onboarding buttons
                 </div>
                 <Badge variant='secondary'>Callout</Badge>
+                {(sectionTranslationStatuses.get('guidedCallout') ?? []).map(
+                  ({ locale, status }) => (
+                    <Badge
+                      key={`guidedCallout-${locale}`}
+                      variant={getTranslationStatusBadgeVariant(status)}
+                    >
+                      {formatTranslationStatusLabel(locale, status)}
+                    </Badge>
+                  )
+                )}
               </div>
               <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} mt-4 lg:grid-cols-3`}>
                 <FormField label='Back button'>
@@ -685,6 +1077,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 </FormField>
               </div>
             </Card>
+            ) : null}
           </div>
         ) : (
           <Card

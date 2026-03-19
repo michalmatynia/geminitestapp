@@ -1,6 +1,7 @@
 'use client';
 
 import { Award, BarChart2, Compass, Flame, Sparkles, Target } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { KANGUR_AVATAR_OPTIONS, getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
@@ -30,6 +31,7 @@ import { withKangurClientError } from '@/features/kangur/observability/client';
 const kangurPlatform = getKangurPlatform();
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
+  const translations = useTranslations('KangurLearnerProfileWidgets.overview');
   const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
   const { checkAppState } = useKangurAuthActions();
   const { subject } = useKangurSubjectFocus();
@@ -80,7 +82,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       {
         fallback: undefined,
         onError: () => {
-          setAvatarError('Nie udało się zapisać avatara.');
+          setAvatarError(translations('avatarSaveError'));
         },
       }
     );
@@ -93,9 +95,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-intro'
         description={
           overviewContent?.summary ??
-          'Najważniejsze wskaźniki dnia: skuteczność, misja, cel i odznaki w jednym widoku.'
+          translations('summary')
         }
-        eyebrow={overviewContent?.title ?? 'Przegląd wyników'}
+        eyebrow={overviewContent?.title ?? translations('title')}
       />
       <KangurGlassPanel
         className='flex w-full flex-col gap-4'
@@ -118,9 +120,9 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
               )}
             </div>
             <div>
-              <h3 className='text-base font-bold text-slate-800'>Avatar ucznia</h3>
+              <h3 className='text-base font-bold text-slate-800'>{translations('avatarTitle')}</h3>
               <KangurMetaText className='mt-1'>
-                Wybierz bohatera, który będzie widoczny w profilu ucznia.
+                {translations('avatarDescription')}
               </KangurMetaText>
             </div>
           </div>
@@ -131,7 +133,7 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         <div
           className='grid grid-cols-2 gap-3 min-[360px]:grid-cols-3 min-[420px]:grid-cols-4 sm:grid-cols-5'
           role='radiogroup'
-          aria-label='Wybierz avatar'
+          aria-label={translations('avatarGroupLabel')}
         >
           {KANGUR_AVATAR_OPTIONS.map((option) => {
             const isSelected = activeLearner?.avatarId === option.id;
@@ -168,10 +170,10 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='indigo'
         data-testid='learner-profile-overview-average-accuracy'
-        description={`Najlepsza sesja: ${snapshot.bestAccuracy}%`}
+        description={translations('averageAccuracyDescription', { value: snapshot.bestAccuracy })}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <BarChart2 aria-hidden='true' className='h-4 w-4' /> Średnia skuteczność
+            <BarChart2 aria-hidden='true' className='h-4 w-4' /> {translations('averageAccuracyLabel')}
           </span>
         }
         value={`${snapshot.averageAccuracy}%`}
@@ -180,10 +182,10 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='amber'
         data-testid='learner-profile-overview-streak'
-        description={`Najdłuższa: ${snapshot.longestStreakDays} dni`}
+        description={translations('streakDescription', { value: snapshot.longestStreakDays })}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Flame aria-hidden='true' className='h-4 w-4' /> Seria dni
+            <Flame aria-hidden='true' className='h-4 w-4' /> {translations('streakLabel')}
           </span>
         }
         value={snapshot.currentStreakDays}
@@ -192,10 +194,13 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='violet'
         data-testid='learner-profile-overview-xp-today'
-        description={`7 dni: +${snapshot.weeklyXpEarned} XP · średnio ${snapshot.averageXpPerSession} XP na sesję`}
+        description={translations('xpTodayDescription', {
+          weeklyXp: snapshot.weeklyXpEarned,
+          averageXp: snapshot.averageXpPerSession,
+        })}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Sparkles aria-hidden='true' className='h-4 w-4' /> XP dzisiaj
+            <Sparkles aria-hidden='true' className='h-4 w-4' /> {translations('xpTodayLabel')}
           </span>
         }
         value={`+${snapshot.todayXpEarned}`}
@@ -207,12 +212,15 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           data-testid='learner-profile-overview-guided-rounds'
           description={
             snapshot.recommendedSessionNextBadgeName
-              ? `Do odznaki: ${snapshot.recommendedSessionNextBadgeName} · ${snapshot.recommendedSessionSummary}`
-              : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+              ? translations('guidedRoundsDescription', {
+                badge: snapshot.recommendedSessionNextBadgeName,
+                summary: snapshot.recommendedSessionSummary,
+              })
+              : translations('guidedRoundsUnlocked')
           }
           label={
             <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-              <Compass aria-hidden='true' className='h-4 w-4' /> Polecone rundy
+              <Compass aria-hidden='true' className='h-4 w-4' /> {translations('guidedRoundsLabel')}
             </span>
           }
           value={snapshot.recommendedSessionsCompleted}
@@ -239,12 +247,12 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
           dailyQuest
             ? `${dailyQuest.progress.summary} · ${dailyQuest.reward.label}`
             : dailyQuest === null
-              ? 'Nowa misja pojawi się wraz z postępem.'
-              : 'Trwa ładowanie misji dnia...'
+              ? translations('dailyQuestMissing')
+              : translations('dailyQuestLoading')
         }
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Target aria-hidden='true' className='h-4 w-4' /> Misja dnia
+            <Target aria-hidden='true' className='h-4 w-4' /> {translations('dailyQuestLabel')}
           </span>
         }
         value={dailyQuest ? `${dailyQuest.progress.percent}%` : dailyQuest === null ? '—' : '...'}
@@ -268,10 +276,10 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
       <KangurMetricCard
         accent='teal'
         data-testid='learner-profile-overview-daily-goal'
-        description={`Wypełnienie: ${snapshot.dailyGoalPercent}%`}
+        description={translations('dailyGoalDescription', { value: snapshot.dailyGoalPercent })}
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Target aria-hidden='true' className='h-4 w-4' /> Cel dzienny
+            <Target aria-hidden='true' className='h-4 w-4' /> {translations('dailyGoalLabel')}
           </span>
         }
         value={`${snapshot.todayGames}/${snapshot.dailyGoalGames}`}
@@ -282,12 +290,15 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
         data-testid='learner-profile-overview-badges'
         description={
           nextBadge
-            ? `Następna: ${nextBadge.name} · ${nextBadge.summary}`
-            : 'Wszystkie odznaki odblokowane'
+            ? translations('badgesDescription', {
+              badge: nextBadge.name,
+              summary: nextBadge.summary,
+            })
+            : translations('badgesUnlocked')
         }
         label={
           <span className={KANGUR_INLINE_CENTER_ROW_CLASSNAME}>
-            <Award aria-hidden='true' className='h-4 w-4' /> Odznaki
+            <Award aria-hidden='true' className='h-4 w-4' /> {translations('badgesLabel')}
           </span>
         }
         value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}

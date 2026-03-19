@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
 import {
@@ -46,6 +47,9 @@ type KangurFeaturePageShellProps = {
 export function KangurFeaturePageShell({
   forceBodyScrollLock = false,
 }: KangurFeaturePageShellProps): JSX.Element {
+  const locale = useLocale();
+  const commonTranslations = useTranslations('Common');
+  const shellTranslations = useTranslations('KangurShell');
   const appearance = useOptionalCmsStorefrontAppearance();
   const { embedded, pageKey, requestedPath, basePath } = useKangurRoutingState();
   const appearanceMode = appearance?.mode ?? 'default';
@@ -148,37 +152,42 @@ export function KangurFeaturePageShell({
       data-appearance-mode={appearanceMode}
       data-kangur-appearance={appearanceMode}
       data-testid='kangur-feature-page-shell'
-      lang='pl'
+      lang={locale}
       style={shellStyle}
     >
       {customCss ? <style data-kangur-custom-css>{customCss}</style> : null}
       <a
         href={`#${KANGUR_MAIN_CONTENT_ID}`}
-        aria-label='Przejdź do głównej treści'
+        aria-label={commonTranslations('skipToMainContent')}
         className='sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70'
         onClick={focusSkipTarget}
         onKeyDown={handleSkipKeyDown}
       >
-        Przejdź do głównej treści
+        {commonTranslations('skipToMainContent')}
       </a>
       <div className='w-full min-w-0 flex-1'>
         <KangurFeatureApp />
       </div>
       {showFooter ? (
         <footer className='hidden w-full border-t border-white/10 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+24px)] text-center text-xs [color:var(--kangur-page-muted-text)] sm:block sm:px-6'>
-          <span>Creator credentials: Michał Matynia · created 2026 · </span>
+          <span>
+            {shellTranslations('creatorCredentials', {
+              name: 'Michał Matynia',
+              year: '2026',
+            })}
+          </span>
           <a
             className='font-semibold [color:var(--kangur-page-text)] hover:underline'
             href={getKangurPageHref('SocialUpdates', basePath)}
           >
-            Social updates
+            {shellTranslations('socialUpdates')}
           </a>
           <span> · </span>
           <a
             className='font-semibold [color:var(--kangur-page-text)] hover:underline'
             href='mailto:mmatynia@gmail.com'
           >
-            contact: mmatynia@gmail.com
+            {shellTranslations('contactLabel', { email: 'mmatynia@gmail.com' })}
           </a>
         </footer>
       ) : null}

@@ -10,14 +10,21 @@ import type { Metadata, Viewport } from 'next';
 import './fonts.css';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: {
-    default: 'StudiQ',
-    template: '%s | StudiQ',
-  },
-  description: 'StudiQ admin workspace and storefront.',
-  applicationName: 'StudiQ',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = DEFAULT_SITE_I18N_CONFIG.defaultLocale;
+  const routeTranslations = await getTranslations({ locale, namespace: 'Routes' });
+  const metadataTranslations = await getTranslations({ locale, namespace: 'Metadata' });
+  const siteTitle = routeTranslations('siteTitle');
+
+  return {
+    title: {
+      default: siteTitle,
+      template: `%s | ${siteTitle}`,
+    },
+    description: metadataTranslations('siteDescription'),
+    applicationName: siteTitle,
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',

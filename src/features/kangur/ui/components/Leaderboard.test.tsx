@@ -191,7 +191,7 @@ describe('Leaderboard', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('Brak wyników dla tych filtrow.')).toBeInTheDocument();
+    expect(screen.getByText('emptyStateLabel')).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content titles when available', async () => {

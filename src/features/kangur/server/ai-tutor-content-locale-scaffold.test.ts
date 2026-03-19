@@ -7,7 +7,9 @@ import {
 
 import {
   buildKangurAiTutorContentLocaleScaffold,
+  buildKangurAiTutorContentTranslationStatusBySectionKey,
   getKangurAiTutorContentLocaleOverlay,
+  summarizeKangurAiTutorContentTranslationStatuses,
 } from './ai-tutor-content-locale-scaffold';
 
 describe('ai tutor content locale scaffold', () => {
@@ -96,5 +98,37 @@ describe('ai tutor content locale scaffold', () => {
     expect(content.parentVerification.emailSubject).toBe(
       getKangurAiTutorContentLocaleOverlay('en').parentVerification?.emailSubject
     );
+  });
+
+  it('classifies manual, scaffolded, and source-copy content sections for localized stores', () => {
+    const scaffoldedContent = buildKangurAiTutorContentLocaleScaffold({
+      locale: 'en',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+    });
+    const manualContent = {
+      locale: 'en',
+      guestIntro: {
+        initial: {
+          headline: 'Custom guest intro headline',
+        },
+      },
+      homeOnboarding: scaffoldedContent.homeOnboarding,
+      common: DEFAULT_KANGUR_AI_TUTOR_CONTENT.common,
+    } satisfies Partial<KangurAiTutorContent>;
+
+    const statuses = buildKangurAiTutorContentTranslationStatusBySectionKey({
+      locale: 'en',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      localizedContent: manualContent,
+    });
+
+    expect(statuses.get('guestIntro')).toBe('manual');
+    expect(statuses.get('homeOnboarding')).toBe('scaffolded');
+    expect(statuses.get('common')).toBe('source-copy');
+
+    const summary = summarizeKangurAiTutorContentTranslationStatuses(statuses.values());
+    expect(summary.manual).toBeGreaterThan(0);
+    expect(summary.scaffolded).toBeGreaterThan(0);
+    expect(summary['source-copy']).toBeGreaterThan(0);
   });
 });

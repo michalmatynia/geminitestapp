@@ -179,4 +179,34 @@ describe('analyzeHighRiskCoverage', () => {
     expect(report.summary.warningCount).toBe(0);
     expect(report.summary.matchedTargetCount).toBe(2);
   });
+
+  it('limits the report to explicitly selected target ids', () => {
+    const root = createTempRoot();
+
+    writeJson(root, 'coverage/coverage-summary.json', {
+      total: {},
+      'src/app/api/health/route.ts': {
+        lines: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        statements: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        functions: { total: 10, covered: 9, skipped: 0, pct: 90 },
+        branches: { total: 10, covered: 8, skipped: 0, pct: 80 },
+      },
+      'src/features/ai/ai-paths/runtime/engine.ts': {
+        lines: { total: 10, covered: 8, skipped: 0, pct: 80 },
+        statements: { total: 10, covered: 8, skipped: 0, pct: 80 },
+        functions: { total: 10, covered: 8, skipped: 0, pct: 80 },
+        branches: { total: 10, covered: 7, skipped: 0, pct: 70 },
+      },
+    });
+
+    const report = analyzeHighRiskCoverage({
+      root,
+      targetIds: ['ai-paths'],
+    });
+
+    expect(report.status).toBe('passed');
+    expect(report.summary.targetCount).toBe(1);
+    expect(report.summary.matchedTargetCount).toBe(1);
+    expect(report.targets.map((target) => target.id)).toEqual(['ai-paths']);
+  });
 });

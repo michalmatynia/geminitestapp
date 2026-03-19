@@ -3,12 +3,19 @@
 import { createContext, useContext, ReactNode } from 'react';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
+import type { KangurAiTutorNativeGuideTranslationStatus } from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+
+export type KangurAiTutorNativeGuideEntryTranslationStatus = {
+  locale: string;
+  status: KangurAiTutorNativeGuideTranslationStatus;
+};
 
 export type KangurAiTutorNativeGuideEntryEditorContextValue = {
   selectedEntry: KangurAiTutorNativeGuideEntry | null;
   totalEntries: number;
   isSaving: boolean;
+  selectedEntryTranslationStatuses: KangurAiTutorNativeGuideEntryTranslationStatus[];
   selectedEntryValidationIssues: KangurAiTutorOnboardingValidationIssue[];
   followUpActionsEditorValue: string;
   onFollowUpActionsEditorValueChange: (value: string) => void;

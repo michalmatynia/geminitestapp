@@ -18,7 +18,8 @@ export const resolveFocusedLessonId = (focusToken: string, lessons: KangurLesson
 
 export const getLessonMasteryPresentation = (
   lesson: KangurLesson,
-  progress: ReturnType<typeof useKangurProgressState>
+  progress: ReturnType<typeof useKangurProgressState>,
+  translate: (key: string, values?: Record<string, string | number>) => string
 ): {
   statusLabel: string;
   summaryLabel: string;
@@ -27,31 +28,40 @@ export const getLessonMasteryPresentation = (
   const mastery = progress.lessonMastery[lesson.componentId];
   if (!mastery) {
     return {
-      statusLabel: 'Nowa',
-      summaryLabel: 'Brak zapisanej praktyki',
+      statusLabel: translate('new'),
+      summaryLabel: translate('noSavedPractice'),
       badgeAccent: 'slate',
     };
   }
 
   if (mastery.masteryPercent >= 85) {
     return {
-      statusLabel: `Opanowane ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukończono ${mastery.completions}× · najlepszy wynik ${mastery.bestScorePercent}%`,
+      statusLabel: translate('mastered', { percent: mastery.masteryPercent }),
+      summaryLabel: translate('completedBest', {
+        completions: mastery.completions,
+        percent: mastery.bestScorePercent,
+      }),
       badgeAccent: 'emerald',
     };
   }
 
   if (mastery.masteryPercent >= 60) {
     return {
-      statusLabel: `W trakcie ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
+      statusLabel: translate('inProgress', { percent: mastery.masteryPercent }),
+      summaryLabel: translate('completedLast', {
+        completions: mastery.completions,
+        percent: mastery.lastScorePercent,
+      }),
       badgeAccent: 'amber',
     };
   }
 
   return {
-    statusLabel: `Powtórz ${mastery.masteryPercent}%`,
-    summaryLabel: `Ukończono ${mastery.completions}× · ostatni wynik ${mastery.lastScorePercent}%`,
+    statusLabel: translate('revisit', { percent: mastery.masteryPercent }),
+    summaryLabel: translate('completedLast', {
+      completions: mastery.completions,
+      percent: mastery.lastScorePercent,
+    }),
     badgeAccent: 'rose',
   };
 };

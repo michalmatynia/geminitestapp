@@ -102,11 +102,11 @@ describe('KangurActiveLessonPanelWidget', () => {
       'border'
     );
     expect(screen.getByTestId('active-lesson-widget-parent-priority-chip')).toHaveTextContent(
-      'Priorytet Rodzica'
+      'parentPriority'
     );
     expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Skup się na prostych sumach.')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'backToLessons' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -165,7 +165,7 @@ describe('KangurActiveLessonPanelWidget', () => {
       'border'
     );
     expect(screen.getByTestId('active-lesson-widget-parent-completed-chip')).toHaveTextContent(
-      'Ukończone dla rodzica'
+      'completedForParent'
     );
     expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Zakonczone.')).toBeNull();
@@ -192,7 +192,7 @@ describe('KangurActiveLessonPanelWidget', () => {
 
     render(<KangurActiveLessonPanelWidget />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
+    fireEvent.click(screen.getByRole('button', { name: 'backToLessons' }));
 
     expect(clearActiveLessonMock).toHaveBeenCalledTimes(1);
   });

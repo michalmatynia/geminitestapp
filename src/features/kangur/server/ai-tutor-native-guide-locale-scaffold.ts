@@ -28,6 +28,29 @@ type KangurAiTutorNativeGuideLocaleOverlay = {
   entries: Record<string, GuideEntryOverlay>;
 };
 
+const TRANSLATABLE_ENTRY_KEYS = [
+  'title',
+  'shortDescription',
+  'fullDescription',
+  'hints',
+  'relatedGames',
+  'relatedTests',
+  'followUpActions',
+  'triggerPhrases',
+] as const;
+
+type ComparableNativeGuideEntry = Pick<
+  KangurAiTutorNativeGuideEntry,
+  (typeof TRANSLATABLE_ENTRY_KEYS)[number]
+>;
+
+export type KangurAiTutorNativeGuideTranslationStatus =
+  | 'source-locale'
+  | 'missing'
+  | 'source-copy'
+  | 'scaffolded'
+  | 'manual';
+
 const isPlainObject = (value: unknown): value is PlainRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -78,6 +101,25 @@ const action = (
   label: string,
   page: KangurAiTutorFollowUpAction['page']
 ): KangurAiTutorFollowUpAction => ({ id, label, page });
+
+const pickComparableEntry = (
+  entry: KangurAiTutorNativeGuideEntry | null | undefined
+): ComparableNativeGuideEntry | null => {
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    title: entry.title,
+    shortDescription: entry.shortDescription,
+    fullDescription: entry.fullDescription,
+    hints: entry.hints,
+    relatedGames: entry.relatedGames,
+    relatedTests: entry.relatedTests,
+    followUpActions: entry.followUpActions,
+    triggerPhrases: entry.triggerPhrases,
+  };
+};
 
 const GUIDE_COPY_BY_LOCALE: Record<string, Record<string, GuideEntryOverlay>> = {
   en: {
@@ -1152,4 +1194,80 @@ export const buildKangurAiTutorNativeGuideLocaleScaffold = (input: {
     locale,
     entries,
   });
+};
+
+export const buildKangurAiTutorNativeGuideTranslationStatusByEntryId = (input: {
+  locale: string;
+  sourceStore: KangurAiTutorNativeGuideStore;
+  localizedStore?: Partial<KangurAiTutorNativeGuideStore> | null;
+  sourceLocale?: string;
+}): Map<string, KangurAiTutorNativeGuideTranslationStatus> => {
+  const locale = normalizeSiteLocale(input.locale);
+  const sourceLocale = normalizeSiteLocale(input.sourceLocale ?? 'pl');
+  const sourceStore = parseKangurAiTutorNativeGuideStore(input.sourceStore);
+
+  if (locale === sourceLocale) {
+    return new Map(
+      sourceStore.entries.map((entry) => [entry.id, 'source-locale'] as const)
+    );
+  }
+
+  const localizedStore = input.localizedStore
+    ? mergeKangurAiTutorNativeGuideStore(
+        parseKangurAiTutorNativeGuideStore({
+          ...cloneValue(sourceStore),
+          locale,
+        }),
+        input.localizedStore
+      )
+    : null;
+  const scaffoldStore = buildKangurAiTutorNativeGuideLocaleScaffold({
+    locale,
+    sourceStore,
+  });
+  const localizedEntriesById = new Map(localizedStore?.entries.map((entry) => [entry.id, entry]) ?? []);
+  const scaffoldEntriesById = new Map(scaffoldStore.entries.map((entry) => [entry.id, entry]));
+
+  return new Map(
+    sourceStore.entries.map((sourceEntry) => {
+      const localizedEntry = localizedEntriesById.get(sourceEntry.id) ?? null;
+      if (!localizedEntry) {
+        return [sourceEntry.id, 'missing'] as const;
+      }
+
+      const sourceComparable = pickComparableEntry(sourceEntry);
+      const localizedComparable = pickComparableEntry(localizedEntry);
+      const scaffoldComparable = pickComparableEntry(
+        scaffoldEntriesById.get(sourceEntry.id) ?? null
+      );
+
+      if (serializeComparable(localizedComparable) === serializeComparable(sourceComparable)) {
+        return [sourceEntry.id, 'source-copy'] as const;
+      }
+
+      if (serializeComparable(localizedComparable) === serializeComparable(scaffoldComparable)) {
+        return [sourceEntry.id, 'scaffolded'] as const;
+      }
+
+      return [sourceEntry.id, 'manual'] as const;
+    })
+  );
+};
+
+export const summarizeKangurAiTutorNativeGuideTranslationStatuses = (
+  statuses: Iterable<KangurAiTutorNativeGuideTranslationStatus>
+): Record<KangurAiTutorNativeGuideTranslationStatus, number> => {
+  const summary: Record<KangurAiTutorNativeGuideTranslationStatus, number> = {
+    'source-locale': 0,
+    missing: 0,
+    'source-copy': 0,
+    scaffolded: 0,
+    manual: 0,
+  };
+
+  for (const status of statuses) {
+    summary[status] += 1;
+  }
+
+  return summary;
 };

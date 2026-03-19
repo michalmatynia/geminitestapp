@@ -247,6 +247,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/brain?tab=routing'>AI Brain routing</Link>
           </Button>
+          <Button asChild variant='outline' size='sm'>
+            <Link href='/admin/integrations'>Integrations</Link>
+          </Button>
         </>
       }
     >
@@ -260,11 +263,15 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           posts={posts}
           activePostId={activePostId}
           onSelectPost={setActivePostId}
-          onPublishPost={(post, mode): void => {
-            void handleQuickPublishPost(post.id, mode);
+          onPublishPost={(post, options): void => {
+            void handleQuickPublishPost(post.id, 'published', options);
           }}
-          onUnpublishPost={(post): void => {
-            setPostToUnpublish(post);
+          onUnpublishPost={(post, options): void => {
+            if (options?.keepLocal) {
+              void handleUnpublishPost(post.id, { keepLocal: true });
+            } else {
+              setPostToUnpublish(post);
+            }
           }}
           publishPendingId={publishingPostId}
           unpublishPendingId={unpublishingPostId}

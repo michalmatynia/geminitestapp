@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { cn } from '@/features/kangur/shared/utils';
@@ -22,13 +23,15 @@ export const KangurPageShell = ({
   className,
   children,
   skipLinkTargetId,
-  skipLinkLabel = 'Przejdź do głównej treści',
+  skipLinkLabel,
   'aria-hidden': ariaHidden,
   ...props
 }: KangurPageShellProps): React.JSX.Element => {
+  const commonTranslations = useTranslations('Common');
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
   const resolvedSkipLinkTargetId = skipLinkTargetId ?? KANGUR_MAIN_CONTENT_ID;
+  const resolvedSkipLinkLabel = skipLinkLabel ?? commonTranslations('skipToMainContent');
   const shouldRenderSkipLink =
     Boolean(resolvedSkipLinkTargetId) && ariaHidden !== true && ariaHidden !== 'true';
 
@@ -46,10 +49,10 @@ export const KangurPageShell = ({
       {shouldRenderSkipLink ? (
         <a
           href={`#${resolvedSkipLinkTargetId}`}
-          aria-label={skipLinkLabel}
+          aria-label={resolvedSkipLinkLabel}
           className='sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70'
         >
-          {skipLinkLabel}
+          {resolvedSkipLinkLabel}
         </a>
       ) : null}
       <div

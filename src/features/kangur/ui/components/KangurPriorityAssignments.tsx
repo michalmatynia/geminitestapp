@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 
 import KangurAssignmentsList from '@/features/kangur/ui/components/KangurAssignmentsList';
@@ -26,8 +27,6 @@ type KangurPriorityAssignmentsProps = {
   emptyLabel?: string;
 };
 
-const PRIORITY_ASSIGNMENTS_TITLE = 'Priorytetowe zadania';
-const PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION = 'Brak aktywnych zadań od rodzica.';
 const PRIORITY_ASSIGNMENTS_SECTION_ID = 'game-home-priority-assignments';
 
 export function KangurPriorityAssignments({
@@ -37,10 +36,13 @@ export function KangurPriorityAssignments({
   title,
   emptyLabel,
 }: KangurPriorityAssignmentsProps): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameWidgets');
   const { entry: assignmentsContent } = useKangurPageContentEntry(PRIORITY_ASSIGNMENTS_SECTION_ID);
-  const assignmentsTitle = title ?? assignmentsContent?.title ?? PRIORITY_ASSIGNMENTS_TITLE;
+  const assignmentsTitle =
+    title ?? assignmentsContent?.title ?? translations('priorityAssignments.title');
   const assignmentsSummary = assignmentsContent?.summary ?? undefined;
-  const emptyDescription = emptyLabel ?? PRIORITY_ASSIGNMENTS_EMPTY_DESCRIPTION;
+  const emptyDescription =
+    emptyLabel ?? translations('priorityAssignments.emptyDescription');
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
@@ -81,7 +83,7 @@ export function KangurPriorityAssignments({
         <KangurEmptyState
           accent='slate'
           className='text-sm'
-          description='Ładowanie priorytetowych zadań...'
+          description={translations('priorityAssignments.loading')}
           padding='lg'
           role='status'
           aria-live='polite'
@@ -124,7 +126,9 @@ export function KangurPriorityAssignments({
           <div className='text-2xl font-extrabold tracking-tight [color:var(--kangur-page-text)]'>
             {assignmentsTitle}
           </div>
-          <div className='text-sm font-medium [color:var(--kangur-page-muted-text)]'>0 zadań</div>
+          <div className='text-sm font-medium [color:var(--kangur-page-muted-text)]'>
+            {translations('priorityAssignments.zeroCount')}
+          </div>
         </div>
         {assignmentsSummary ? (
           <div className='mb-4 text-sm [color:var(--kangur-page-muted-text)]'>

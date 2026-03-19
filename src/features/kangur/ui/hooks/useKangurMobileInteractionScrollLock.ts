@@ -180,16 +180,15 @@ export const useKangurMobileInteractionScrollLock = (): {
   lock: () => void;
   unlock: () => void;
 } => {
-  const isMobile = window.matchMedia?.(MOBILE_MEDIA_QUERY).matches ?? false;
   const isLockedRef = useRef(false);
 
   const lock = useCallback((): void => {
-    if (!isMobile || isLockedRef.current) {
+    if (isLockedRef.current || !isMobileViewport()) {
       return;
     }
     isLockedRef.current = true;
     lockKangurMobileInteractionScroll();
-  }, [isMobile]);
+  }, []);
 
   const unlock = useCallback((): void => {
     if (!isLockedRef.current) {
@@ -200,7 +199,7 @@ export const useKangurMobileInteractionScrollLock = (): {
   }, []);
 
   useEffect(() => {
-    if (!isMobile && isLockedRef.current) {
+    if (!isMobileViewport() && isLockedRef.current) {
       isLockedRef.current = false;
       unlockKangurMobileInteractionScroll();
     }
@@ -211,7 +210,7 @@ export const useKangurMobileInteractionScrollLock = (): {
         unlockKangurMobileInteractionScroll();
       }
     };
-  }, [isMobile, unlock]);
+  }, [unlock]);
 
   return { lock, unlock };
 };

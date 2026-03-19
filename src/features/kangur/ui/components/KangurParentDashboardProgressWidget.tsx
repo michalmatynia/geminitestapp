@@ -4,6 +4,8 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
@@ -42,15 +44,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 
-const ACTIVE_ASSIGNMENTS_TITLE = 'Aktywne zadania';
-const ACTIVE_ASSIGNMENTS_EMPTY_LABEL = 'Brak aktywnych zadań dla ucznia.';
-const ACTIVE_ASSIGNMENTS_ERROR_LABEL = 'Nie udało się pobrać aktywnych zadań.';
-const ARCHIVE_ASSIGNMENT_ERROR_LABEL = 'Nie udało się zarchiwizować zadania.';
 const RECENT_ACTIVE_ASSIGNMENTS_LIMIT = 3;
-const RECENT_ACTIVE_ASSIGNMENTS_TITLE = 'Ostatnie aktywne zadania';
-const RECENT_ACTIVE_ASSIGNMENTS_SUMMARY =
-  'Szybki podgląd zadań, które uczeń ma aktualnie do wykonania.';
-const RECENT_ACTIVE_ASSIGNMENTS_EMPTY_LABEL = 'Brak aktywnych zadań dla ucznia.';
 
 const buildAssignmentHref = (
   basePath: string,
@@ -60,21 +54,23 @@ const buildAssignmentHref = (
   return action.query ? appendKangurUrlParams(href, action.query, basePath) : href;
 };
 
-const TASK_KIND_LABELS: Record<string, string> = {
-  game: 'Gra',
-  lesson: 'Lekcja',
-  test: 'Test',
-};
-
-const formatProgressTimestamp = (value: string | null | undefined): string => {
+const formatProgressTimestamp = ({
+  value,
+  locale,
+  fallback,
+}: {
+  value: string | null | undefined;
+  locale: string;
+  fallback: string;
+}): string => {
   if (!value) {
-    return 'Brak danych';
+    return fallback;
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'Brak danych';
+    return fallback;
   }
-  return new Intl.DateTimeFormat('pl-PL', {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
@@ -93,6 +89,8 @@ export function KangurParentDashboardProgressWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
+  const locale = useLocale();
+  const translations = useTranslations('KangurParentDashboard');
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
   const { subject } = useKangurSubjectFocus();
@@ -102,6 +100,24 @@ export function KangurParentDashboardProgressWidget({
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const [archiveError, setArchiveError] = useState<string | null>(null);
+  const taskKindLabels: Record<string, string> = {
+    game: translations('widgets.progress.taskKind.game'),
+    lesson: translations('widgets.progress.taskKind.lesson'),
+    test: translations('widgets.progress.taskKind.test'),
+  };
+  const formatTimestamp = (value: string | null | undefined): string =>
+    formatProgressTimestamp({
+      value,
+      locale,
+      fallback: translations('widgets.progress.timestampUnavailable'),
+    });
+  const activeAssignmentsTitle = translations('widgets.progress.assignments.activeTitle');
+  const activeAssignmentsEmptyLabel = translations('widgets.progress.assignments.activeEmpty');
+  const activeAssignmentsErrorLabel = translations('widgets.progress.assignments.loadError');
+  const archiveAssignmentErrorLabel = translations('widgets.progress.assignments.archiveError');
+  const recentAssignmentsTitle = translations('widgets.progress.assignments.recentTitle');
+  const recentAssignmentsSummary = translations('widgets.progress.assignments.recentSummary');
+  const recentAssignmentsEmptyLabel = translations('widgets.progress.assignments.recentEmpty');
   const {
     assignments,
     isLoading: assignmentsLoading,
@@ -211,7 +227,8 @@ export function KangurParentDashboardProgressWidget({
   const dailyQuestDescription = dailyQuest?.assignment.description ?? '';
   const dailyQuestProgressSummary = dailyQuest?.progress.summary ?? '';
   const dailyQuestProgressLabel = dailyQuest ? `${dailyQuest.progress.percent}%` : '';
-  const dailyQuestLabel = dailyQuest?.assignment.questLabel ?? 'Misja dnia';
+  const dailyQuestLabel =
+    dailyQuest?.assignment.questLabel ?? translations('widgets.progress.dailyQuest.questLabel');
   const dailyQuestRewardLabel = dailyQuest?.reward.label ?? '';
   const dailyQuestTitle = dailyQuest?.assignment.title ?? '';
 
@@ -232,7 +249,7 @@ export function KangurParentDashboardProgressWidget({
       {
         fallback: undefined,
         onError: () => {
-          setArchiveError(ARCHIVE_ASSIGNMENT_ERROR_LABEL);
+          setArchiveError(archiveAssignmentErrorLabel);
         },
       }
     );
@@ -243,17 +260,17 @@ export function KangurParentDashboardProgressWidget({
       <KangurWidgetIntro
         description={
           progressContent?.summary ??
-          'Sprawdź rytm nauki, poziom, misje dnia i główny kierunek dalszej pracy.'
+          translations('widgets.progress.description')
         }
-        title={progressContent?.title ?? 'Postęp ucznia'}
+        title={progressContent?.title ?? translations('widgets.progress.title')}
       />
       {dailyQuest ? (
         <KangurSummaryPanel
           accent='violet'
           className='mt-1'
           data-testid='parent-dashboard-daily-quest'
-          description='To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.'
-          label='Misja dnia ucznia'
+          description={translations('widgets.progress.dailyQuest.description')}
+          label={translations('widgets.progress.dailyQuest.label')}
         >
           <div className='mt-3 flex flex-col kangur-panel-gap rounded-[28px] border border-violet-200/80 bg-white/82 px-4 py-4'>
             <KangurDailyQuestHighlightCardContent
@@ -295,13 +312,17 @@ export function KangurParentDashboardProgressWidget({
       <KangurSummaryPanel
         accent='indigo'
         className='mt-1'
-        description='Ostatnie aktywności ucznia — każde zadanie, które otworzył.'
-        label='Otwarte zadania'
+        description={translations('widgets.progress.openedTasks.description')}
+        label={translations('widgets.progress.openedTasks.label')}
       >
         {openedTasks.length > 0 ? (
-          <ul className='mt-3 flex flex-col kangur-panel-gap' aria-label='Otwarte zadania ucznia'>
+          <ul
+            className='mt-3 flex flex-col kangur-panel-gap'
+            aria-label={translations('widgets.progress.openedTasks.listAria')}
+          >
             {openedTasks.map((task) => {
-              const kindLabel = TASK_KIND_LABELS[task.kind] ?? 'Aktywność';
+              const kindLabel =
+                taskKindLabels[task.kind] ?? translations('widgets.progress.taskKind.default');
               const isLocalHref = task.href.startsWith('/');
               return (
                 <li
@@ -313,7 +334,7 @@ export function KangurParentDashboardProgressWidget({
                       {task.title}
                     </div>
                     <KangurMetaText tone='slate'>
-                      {kindLabel} · {formatProgressTimestamp(task.openedAt)}
+                      {kindLabel} · {formatTimestamp(task.openedAt)}
                     </KangurMetaText>
                   </div>
                   {isLocalHref ? (
@@ -323,7 +344,7 @@ export function KangurParentDashboardProgressWidget({
                         transitionAcknowledgeMs={110}
                         transitionSourceId='parent-dashboard:opened-task'
                       >
-                        Otwórz
+                        {translations('widgets.progress.openedTasks.openAction')}
                       </Link>
                     </KangurButton>
                   ) : null}
@@ -333,7 +354,7 @@ export function KangurParentDashboardProgressWidget({
           </ul>
         ) : (
           <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
-            Brak zapisanych otwarć. Dane pojawią się, gdy uczeń uruchomi zadanie.
+            {translations('widgets.progress.openedTasks.empty')}
           </div>
         )}
       </KangurSummaryPanel>
@@ -347,7 +368,7 @@ export function KangurParentDashboardProgressWidget({
           <KangurEmptyState
             accent='slate'
             className='text-sm'
-            description='Ładowanie aktywnych zadań...'
+            description={translations('widgets.progress.assignments.loading')}
             padding='lg'
             role='status'
             aria-live='polite'
@@ -363,7 +384,7 @@ export function KangurParentDashboardProgressWidget({
         >
           <KangurSummaryPanel
             accent='rose'
-            description={ACTIVE_ASSIGNMENTS_ERROR_LABEL}
+            description={activeAssignmentsErrorLabel}
             padding='lg'
             tone='accent'
             role='alert'
@@ -375,9 +396,9 @@ export function KangurParentDashboardProgressWidget({
         <>
           <KangurAssignmentsList
             items={recentAssignmentItems}
-            title={RECENT_ACTIVE_ASSIGNMENTS_TITLE}
-            summary={RECENT_ACTIVE_ASSIGNMENTS_SUMMARY}
-            emptyLabel={RECENT_ACTIVE_ASSIGNMENTS_EMPTY_LABEL}
+            title={recentAssignmentsTitle}
+            summary={recentAssignmentsSummary}
+            emptyLabel={recentAssignmentsEmptyLabel}
             compact
           />
           {archiveError ? (
@@ -393,8 +414,8 @@ export function KangurParentDashboardProgressWidget({
           ) : null}
           <KangurAssignmentsList
             items={activeAssignmentItems}
-            title={ACTIVE_ASSIGNMENTS_TITLE}
-            emptyLabel={ACTIVE_ASSIGNMENTS_EMPTY_LABEL}
+            title={activeAssignmentsTitle}
+            emptyLabel={activeAssignmentsEmptyLabel}
             onArchive={(assignmentId) => void handleArchiveAssignment(assignmentId)}
           />
         </>
@@ -407,22 +428,35 @@ export function KangurParentDashboardProgressWidget({
       <KangurSummaryPanel
         accent='amber'
         className='mt-1'
-        description='Postęp lekcji zapisany panel po panelu.'
-        label='Postęp lekcji'
+        description={translations('widgets.progress.lessonProgress.description')}
+        label={translations('widgets.progress.lessonProgress.label')}
       >
         {lessonPanelCards.length > 0 ? (
-          <ul className='mt-3 flex flex-col kangur-panel-gap' aria-label='Postęp lekcji ucznia'>
-            {lessonPanelCards.map((entry) => (
+          <ul
+            className='mt-3 flex flex-col kangur-panel-gap'
+            aria-label={translations('widgets.progress.lessonProgress.listAria')}
+          >
+            {lessonPanelCards.map((entry) => {
+              const lessonTitle = getLocalizedKangurLessonTitle(
+                entry.lesson.componentId,
+                locale,
+                entry.lesson.title
+              );
+
+              return (
               <li key={entry.lesson.componentId}>
                 <KangurInfoCard className='rounded-[26px]' padding='lg'>
                   <div className='flex flex-col kangur-panel-gap'>
                     <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
                       <div>
                         <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-                          {entry.lesson.title}
+                          {lessonTitle}
                         </div>
                         <KangurMetaText tone='slate'>
-                          {entry.viewed}/{entry.total} paneli
+                          {translations('widgets.progress.lessonProgress.panelsCount', {
+                            viewed: entry.viewed,
+                            total: entry.total,
+                          })}
                         </KangurMetaText>
                       </div>
                       <div className='text-sm font-semibold text-amber-700'>
@@ -433,7 +467,9 @@ export function KangurParentDashboardProgressWidget({
                       accent='amber'
                       size='sm'
                       value={entry.percent}
-                      aria-label={`Postęp lekcji ${entry.lesson.title}`}
+                      aria-label={translations('widgets.progress.lessonProgress.aria', {
+                        title: lessonTitle,
+                      })}
                     />
                     <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
                       {entry.sections.map((section) => (
@@ -445,7 +481,10 @@ export function KangurParentDashboardProgressWidget({
                             {section.label}
                           </div>
                           <KangurMetaText tone='slate'>
-                            {section.viewedCount}/{section.totalCount} paneli
+                            {translations('widgets.progress.lessonProgress.sectionPanelsCount', {
+                              viewed: section.viewedCount,
+                              total: section.totalCount,
+                            })}
                           </KangurMetaText>
                         </div>
                       ))}
@@ -453,11 +492,12 @@ export function KangurParentDashboardProgressWidget({
                   </div>
                 </KangurInfoCard>
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : (
           <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
-            Brak danych o panelach. Dane pojawią się po wejściu ucznia w lekcje.
+            {translations('widgets.progress.lessonProgress.empty')}
           </div>
         )}
       </KangurSummaryPanel>

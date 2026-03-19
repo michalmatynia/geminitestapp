@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
-import { getKangurAgeGroupLabel } from '@/features/kangur/lessons/lesson-catalog';
+import { getLocalizedKangurAgeGroupLabel } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -46,6 +46,7 @@ type LessonGroup = {
 };
 
 export function LessonsCatalog() {
+  const locale = useLocale();
   const translations = useTranslations('KangurLessonsPage');
   const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
   const {
@@ -65,7 +66,7 @@ export function LessonsCatalog() {
   const { entry: lessonListIntroContent } = useKangurPageContentEntry('lessons-list-intro');
   const { entry: lessonListEmptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
 
-  const ageGroupLabel = getKangurAgeGroupLabel(ageGroup);
+  const ageGroupLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
 
   const { data: sections = [] } = useKangurLessonSections({ subject, ageGroup, enabledOnly: true });
   const [expandedLessonGroupId, setExpandedLessonGroupId] = useState<string | null>(null);

@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
 import { useMemo, useRef, useState } from 'react';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -17,6 +18,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -369,6 +374,7 @@ export default function EnglishPartsOfSpeechGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: EnglishPartsOfSpeechGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
     buildRoundState(ROUNDS[0]!)
@@ -482,7 +488,7 @@ export default function EnglishPartsOfSpeechGame({
       kind: correctCount === round.tokens.length ? 'success' : 'error',
       text:
         correctCount === round.tokens.length
-          ? 'Perfekcyjnie! Wszystkie słowa na miejscu.'
+          ? translations('englishPartsOfSpeech.feedback.roundPerfect')
           : `Masz ${correctCount}/${round.tokens.length} poprawnych. Sprawdź kolory i działaj dalej.`,
     });
     setSelectedTokenId(null);
@@ -612,7 +618,7 @@ export default function EnglishPartsOfSpeechGame({
           accent='sky'
           title={
             <KangurHeadline data-testid='english-parts-of-speech-summary-title'>
-              Wynik: {scoreRef.current}/{TOTAL_TOKENS}
+              {getKangurMiniGameScoreLabel(translations, scoreRef.current, TOTAL_TOKENS)}
             </KangurHeadline>
           }
         />
@@ -625,14 +631,19 @@ export default function EnglishPartsOfSpeechGame({
         <KangurPracticeGameSummaryProgress accent='sky' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Rozpoznajesz części mowy bezbłędnie.'
+            ? translations('englishPartsOfSpeech.summary.perfect')
             : percent >= 70
-              ? 'Świetnie! Jeszcze chwila i będzie idealnie.'
-              : 'Dobra robota! Spróbuj jeszcze raz i popraw wynik.'}
+              ? translations('englishPartsOfSpeech.summary.good')
+              : translations('englishPartsOfSpeech.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={
+            finishLabel === 'Wróć do tematów'
+              ? getKangurMiniGameFinishLabel(translations, 'topics')
+              : finishLabel
+          }
           onFinish={onFinish}
+          restartLabel={translations('shared.restart')}
           onRestart={() => {
             setRoundIndex(0);
             setRoundState(buildRoundState(ROUNDS[0]!));

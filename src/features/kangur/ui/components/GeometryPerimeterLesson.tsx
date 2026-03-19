@@ -217,10 +217,7 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
             shellTestId: 'geometry-perimeter-game-shell',
           },
           render: ({ onFinish }) => (
-            <GeometryPerimeterDrawingGame
-              finishLabel='Wróć do tematów'
-              onFinish={onFinish}
-            />
+            <GeometryPerimeterDrawingGame onFinish={onFinish} />
           ),
         },
       ]}

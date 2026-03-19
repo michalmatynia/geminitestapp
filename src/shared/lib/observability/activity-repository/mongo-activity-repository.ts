@@ -100,3 +100,12 @@ export const mongoActivityRepository: ActivityRepository = {
     await db.collection(COLLECTION).deleteOne({ _id: new ObjectId(id) });
   },
 };
+
+export async function clearActivityLogs(input?: {
+  before?: Date | null;
+}): Promise<{ deleted: number }> {
+  const db = await getMongoDb();
+  const query = input?.before ? { createdAt: { $lte: input.before } } : {};
+  const result = await db.collection<ActivityLogDoc>(COLLECTION).deleteMany(query);
+  return { deleted: result.deletedCount ?? 0 };
+}

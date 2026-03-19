@@ -32,6 +32,7 @@ export interface ConfirmModalProps {
   cancelText?: string;
   extraAction?: React.ReactNode;
   loading?: boolean;
+  confirmDisabled?: boolean;
   isDangerous?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   confirmPassword?: string;
@@ -54,6 +55,7 @@ type ConfirmModalRuntimeValue = {
   confirmPasswordLabel: string;
   resolvedDescription: string;
   hasSubtitle: boolean;
+  confirmDisabled: boolean;
 };
 
 const { Context: ConfirmModalRuntimeContext, useStrictContext: useConfirmModalRuntime } =
@@ -143,6 +145,7 @@ export function ConfirmModal({
   cancelText = 'Cancel',
   extraAction,
   loading = false,
+  confirmDisabled = false,
   isDangerous = false,
   size = 'sm',
   confirmPassword,
@@ -167,7 +170,7 @@ export function ConfirmModal({
   };
 
   const isConfirmDisabled =
-    loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
+    loading || confirmDisabled || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
   const resolvedDescription =
     modalSubtitle ??
     (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
@@ -195,6 +198,7 @@ export function ConfirmModal({
       confirmPasswordLabel,
       resolvedDescription,
       hasSubtitle: Boolean(modalSubtitle),
+      confirmDisabled,
     }),
     [
       loading,
@@ -209,6 +213,7 @@ export function ConfirmModal({
       confirmPasswordLabel,
       resolvedDescription,
       modalSubtitle,
+      confirmDisabled,
     ]
   );
 

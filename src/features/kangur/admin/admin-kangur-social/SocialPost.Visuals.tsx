@@ -342,7 +342,7 @@ export function SocialPostVisuals({
                         <div className='overflow-hidden rounded-lg border border-primary/40'>
                           <img
                             src={preview}
-                            alt={addon.title || 'Kangur social add-on'}
+                            alt={addon.title || 'Social add-on'}
                             className='h-28 w-full object-cover'
                             loading='lazy'
                           />
@@ -353,7 +353,7 @@ export function SocialPostVisuals({
                     <div className='overflow-hidden rounded-lg border border-border/50'>
                       <img
                         src={preview}
-                        alt={addon.title || 'Kangur social add-on'}
+                        alt={addon.title || 'Social add-on'}
                         className='h-32 w-full object-cover'
                         loading='lazy'
                       />
@@ -423,7 +423,7 @@ export function SocialPostVisuals({
                     <div className='overflow-hidden rounded-lg border border-border/50'>
                       <img
                         src={preview}
-                        alt={asset.filename ?? asset.id ?? 'Kangur social image'}
+                        alt={asset.filename ?? asset.id ?? 'Social image'}
                         className='h-32 w-full object-cover'
                         loading='lazy'
                       />
@@ -468,7 +468,7 @@ export function SocialPostVisuals({
           onOpenChange={setShowMediaLibrary}
           selectionMode='multiple'
           onSelect={handleAddImages}
-          title='Select Kangur social images'
+          title='Select social images'
         />
       </FormSection>
 

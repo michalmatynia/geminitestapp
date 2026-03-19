@@ -414,6 +414,13 @@ export const QUERY_KEYS = {
     all: ['analytics'] as const,
     summary: (range: string, scope: string) =>
       [...QUERY_KEYS.analytics.all, 'summary', range, scope] as const,
+    events: (filters: {
+      page: number;
+      pageSize: number;
+      range: string;
+      scope: string;
+      type: string;
+    }) => [...QUERY_KEYS.analytics.all, 'events', { filters }] as const,
     insights: (limit?: number) => [...QUERY_KEYS.analytics.all, 'insights', { limit }] as const,
   },
   playwright: {

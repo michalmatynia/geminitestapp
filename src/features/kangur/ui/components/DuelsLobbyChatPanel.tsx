@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -38,6 +39,8 @@ type DuelsLobbyChatPanelProps = {
 };
 
 export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.Element {
+  const chatTranslations = useTranslations('KangurDuels.chat');
+  const commonTranslations = useTranslations('KangurDuels.common');
   const { enabled, isOnline, canPost, relativeNow, activeLearnerId, onRequireLogin } = props;
   const {
     messages,
@@ -211,14 +214,14 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
         <div className='space-y-1'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <h3 id='kangur-lobby-chat-heading' className='text-xl font-semibold text-slate-900'>
-              Czat lobby
+              {chatTranslations('heading')}
             </h3>
             <KangurStatusChip accent='slate' size='sm'>
               {messages.length}
             </KangurStatusChip>
           </div>
           <p className='text-sm text-slate-600'>
-            Porozmawiaj z graczami, zanim dołączysz do pojedynku.
+            {chatTranslations('description')}
           </p>
         </div>
         <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
@@ -232,25 +235,27 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
               variant='secondary'
               className='w-full sm:w-auto'
             >
-              Nowe wiadomości ({unreadCount})
+              {chatTranslations('unreadButton', { count: unreadCount })}
             </KangurButton>
           ) : null}
           {!isOnline ? (
             <KangurStatusChip accent='rose' size='sm'>
-              Offline
+              {chatTranslations('chips.offline')}
             </KangurStatusChip>
           ) : isStreaming ? (
             <KangurStatusChip accent='emerald' size='sm'>
-              Na żywo
+              {chatTranslations('chips.live')}
             </KangurStatusChip>
           ) : (
             <KangurStatusChip accent='slate' size='sm'>
-              Odświeżanie
+              {chatTranslations('chips.refreshing')}
             </KangurStatusChip>
           )}
           {lastUpdatedAt ? (
             <KangurStatusChip accent='slate' size='sm'>
-              Aktualizacja {formatRelativeAge(lastUpdatedAt, relativeNow)}
+              {chatTranslations('updated', {
+                value: formatRelativeAge(lastUpdatedAt, relativeNow, commonTranslations),
+              })}
             </KangurStatusChip>
           ) : null}
           <KangurButton
@@ -260,10 +265,10 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             variant='ghost'
             disabled={isLoading}
             aria-busy={isLoading}
-            aria-label='Odśwież czat lobby'
+            aria-label={chatTranslations('refreshAria')}
             className='w-full sm:w-auto'
           >
-            {isLoading ? 'Odświeżamy…' : 'Odśwież'}
+            {isLoading ? chatTranslations('refreshing') : chatTranslations('refresh')}
           </KangurButton>
         </div>
       </KangurPanelRow>
@@ -293,7 +298,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
           </div>
         ) : !hasMessages ? (
           <div className='text-sm text-slate-600'>
-            Brak wiadomości. Napisz pierwszą, aby rozpocząć rozmowę.
+            {chatTranslations('empty')}
           </div>
         ) : (
           <div className={KANGUR_STACK_SPACED_CLASSNAME}>
@@ -307,7 +312,9 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                   disabled={isLoadingOlder}
                   aria-busy={isLoadingOlder}
                 >
-                  {isLoadingOlder ? 'Ładujemy…' : 'Załaduj starsze'}
+                  {isLoadingOlder
+                    ? chatTranslations('loadingOlder')
+                    : chatTranslations('loadOlder')}
                 </KangurButton>
               </div>
             ) : null}
@@ -355,17 +362,25 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                             'flex flex-wrap items-baseline gap-2',
                             isOwn ? 'justify-end' : null
                           )}
-                        >
+                          >
                           <span className='text-sm font-semibold text-slate-800'>
-                            {isOwn ? 'Ty' : message.senderName}
+                            {isOwn ? chatTranslations('you') : message.senderName}
                           </span>
                           <span className='text-xs text-slate-500'>
-                            {formatRelativeAge(message.createdAt, relativeNow)}
+                            {formatRelativeAge(
+                              message.createdAt,
+                              relativeNow,
+                              commonTranslations
+                            )}
                           </span>
                         </div>
                       ) : (
                         <div className='text-xs text-slate-500'>
-                          {formatRelativeAge(message.createdAt, relativeNow)}
+                          {formatRelativeAge(
+                            message.createdAt,
+                            relativeNow,
+                            commonTranslations
+                          )}
                         </div>
                       )}
                       <div
@@ -391,14 +406,14 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
         <KangurInfoCard accent='slate' padding='md' tone='accent' role='status'>
           <KangurPanelRow className='sm:items-center sm:justify-between'>
             <span className='text-sm text-slate-700'>
-              Zaloguj się, aby pisać na czacie.
+              {chatTranslations('loginPrompt')}
             </span>
             <KangurButton
               onClick={onRequireLogin}
               variant='secondary'
               className='w-full sm:w-auto'
             >
-              Zaloguj się
+              {chatTranslations('loginButton')}
             </KangurButton>
           </KangurPanelRow>
         </KangurInfoCard>
@@ -411,12 +426,12 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             onChange={(event) => setDraft(event.target.value)}
             placeholder={
               !enabled
-                ? 'Czat jest wstrzymany.'
+                ? chatTranslations('placeholders.paused')
                 : canPost
-                ? 'Napisz wiadomość do lobby…'
-                : 'Zaloguj się, aby pisać'
+                ? chatTranslations('placeholders.default')
+                : chatTranslations('placeholders.loginRequired')
             }
-            aria-label='Wiadomość na czacie lobby'
+            aria-label={chatTranslations('messageAria')}
             disabled={!enabled || !canPost || !isOnline || isSending}
             maxLength={maxMessageLength}
             onKeyDown={(event) => {
@@ -438,7 +453,7 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
             aria-busy={isSending}
             className='w-full sm:w-auto'
           >
-            {isSending ? 'Wysyłamy…' : 'Wyślij'}
+            {isSending ? chatTranslations('sending') : chatTranslations('send')}
           </KangurButton>
         </KangurPanelRow>
         <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} text-xs text-slate-500 sm:items-center sm:justify-between`}>
@@ -451,9 +466,9 @@ export function DuelsLobbyChatPanel(props: DuelsLobbyChatPanelProps): React.JSX.
                   : 'text-slate-500'
             )}
           >
-            Pozostało {remainingChars} znaków
+            {chatTranslations('remainingCharacters', { count: remainingChars })}
           </span>
-          {canPost && !isOnline ? <span>Brak połączenia z internetem.</span> : null}
+          {canPost && !isOnline ? <span>{chatTranslations('offlineNotice')}</span> : null}
         </div>
       </div>
     </KangurGlassPanel>

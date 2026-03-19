@@ -146,6 +146,7 @@ export type KangurSocialPostGenerationPayload = {
   modelId?: string;
   visionModelId?: string;
   imageAddonIds?: string[];
+  projectUrl?: string;
 };
 
 export type KangurSocialPostGenerationResult =

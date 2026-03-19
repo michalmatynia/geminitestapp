@@ -1,10 +1,19 @@
 'use client';
 
-import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
+import type {
+  AnalyticsEventFilterType,
+  AnalyticsEventsResponse,
+  AnalyticsScope,
+  AnalyticsSummary,
+} from '@/shared/contracts/analytics';
 import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
 import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
-import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
+import {
+  fetchAnalyticsEvents,
+  fetchAnalyticsSummary,
+  type AnalyticsRange,
+} from '@/shared/lib/analytics/api';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
@@ -35,6 +44,53 @@ export function useAnalyticsSummary(input?: {
 
       tags: ['analytics', 'summary'],
       description: 'Loads analytics summary.'},
+  });
+}
+
+export function useAnalyticsEvents(input?: {
+  page?: number;
+  pageSize?: number;
+  range?: AnalyticsRange;
+  scope?: AnalyticsScope | 'all';
+  type?: AnalyticsEventFilterType;
+  enabled?: boolean;
+}): SingleQuery<AnalyticsEventsResponse> {
+  const page = input?.page ?? 1;
+  const pageSize = input?.pageSize ?? 25;
+  const range = input?.range ?? '24h';
+  const scope = input?.scope ?? 'all';
+  const type = input?.type ?? 'all';
+  const enabled = input?.enabled ?? true;
+
+  const queryKey = analyticsKeys.events({
+    page,
+    pageSize,
+    range,
+    scope,
+    type,
+  });
+
+  return createSingleQueryV2({
+    id: `${range}-${scope}-${type}-${page}-${pageSize}`,
+    queryKey,
+    queryFn: () =>
+      fetchAnalyticsEvents({
+        page,
+        pageSize,
+        range,
+        scope,
+        type,
+      }),
+    enabled,
+    meta: {
+      source: 'analytics.hooks.useAnalyticsEvents',
+      operation: 'detail',
+      resource: 'analytics.events',
+      domain: 'analytics',
+      queryKey,
+      tags: ['analytics', 'events'],
+      description: 'Loads paginated analytics events.',
+    },
   });
 }
 

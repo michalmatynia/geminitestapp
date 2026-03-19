@@ -5,6 +5,7 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import {
   Badge,
@@ -116,7 +117,9 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
       title='Kangur Appearance'
       description={
         <div className='flex flex-wrap items-center gap-3'>
-          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <AdminFavoriteBreadcrumbRow>
+            <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
             Focused editing shell for lessons, tests, and content operations.

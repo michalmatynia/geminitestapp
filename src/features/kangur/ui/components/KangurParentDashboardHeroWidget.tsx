@@ -8,6 +8,7 @@ import {
   LogOut,
   UserRound,
 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { type RefObject, useMemo } from 'react';
 
 import { getKangurHomeHref, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
@@ -46,6 +47,8 @@ export function KangurParentDashboardHeroWidget({
   showLearnerManagement?: boolean;
   learnerManagementAnchorRef?: RefObject<HTMLDivElement | null>;
 }): React.JSX.Element {
+  const locale = useLocale();
+  const translations = useTranslations('KangurParentDashboard');
   const routeNavigator = useKangurRouteNavigator();
   const {
     activeLearner,
@@ -61,7 +64,9 @@ export function KangurParentDashboardHeroWidget({
   const activeLearnerId = activeLearner?.id ?? null;
   const hasActiveLearner = Boolean(activeLearnerId);
   const activeLearnerLabel =
-    activeLearner?.displayName?.trim() || activeLearner?.loginName?.trim() || 'ucznia';
+    activeLearner?.displayName?.trim() ||
+    activeLearner?.loginName?.trim() ||
+    translations('hero.learnerFallback');
   const { status: learnerActivityStatus, isLoading: isActivityLoading } =
     useKangurLearnerActivityStatus({
       enabled: canManageLearners && hasActiveLearner,
@@ -79,8 +84,10 @@ export function KangurParentDashboardHeroWidget({
         progress,
         lessons,
         basePath,
+        locale,
+        translate: (key, values) => translations(key, values),
       }),
-    [basePath, isActivityLoading, learnerActivityStatus, lessons, progress]
+    [basePath, isActivityLoading, learnerActivityStatus, lessons, locale, progress, translations]
   );
   const isLearnerOnline = learnerLiveState.isOnline;
   const activityLabel = learnerLiveState.label;
@@ -110,8 +117,8 @@ export function KangurParentDashboardHeroWidget({
 
   if (!isAuthenticated) {
     const guestDescription = guestHeroContent?.summary
-      ? `${guestHeroContent.summary} Jeśli nie masz jeszcze konta rodzica, załóż je bez opuszczania StudiQ.`
-      : 'Ten widok pokazuje prywatne postępy ucznia, więc wymaga konta rodzica. Jeśli go jeszcze nie masz, załóż je bez opuszczania StudiQ.';
+      ? `${guestHeroContent.summary} ${translations('hero.unauthenticated.summarySuffix')}`
+      : translations('hero.unauthenticated.description');
 
     return (
       <KangurPageIntroCard
@@ -122,7 +129,7 @@ export function KangurParentDashboardHeroWidget({
         showBackButton={false}
         onBack={handleGoHome}
         testId='kangur-parent-dashboard-hero'
-        title={guestHeroContent?.title ?? 'Panel Rodzica / Nauczyciela'}
+        title={guestHeroContent?.title ?? translations('hero.unauthenticated.title')}
       >
         <div className={KANGUR_PANEL_GRID_TO_ROW_CLASSNAME}>
           <KangurButton
@@ -135,7 +142,7 @@ export function KangurParentDashboardHeroWidget({
             data-doc-id='profile_login'
           >
             <LogIn className='h-5 w-5' />
-            Zaloguj się
+            {translations('hero.signIn')}
           </KangurButton>
           <KangurButton
             asChild
@@ -148,9 +155,9 @@ export function KangurParentDashboardHeroWidget({
                 openLoginModal(null, { authMode: 'create-account' });
               }}
               type='button'
-              aria-label='Utwórz konto rodzica'
+              aria-label={translations('hero.createParentAccountAria')}
             >
-              Utwórz konto rodzica
+              {translations('hero.createParentAccount')}
             </button>
           </KangurButton>
         </div>
@@ -160,8 +167,8 @@ export function KangurParentDashboardHeroWidget({
 
   if (!canManageLearners) {
     const restrictedDescription = guestHeroContent?.summary
-      ? `${guestHeroContent.summary} Ten widok jest dostępny tylko dla konta rodzica, które zarządza profilami uczniów.`
-      : 'Ten widok jest dostępny tylko dla konta rodzica, które zarządza profilami uczniów.';
+      ? `${guestHeroContent.summary} ${translations('hero.restricted.summarySuffix')}`
+      : translations('hero.restricted.description');
 
     return (
       <KangurPageIntroCard
@@ -172,7 +179,7 @@ export function KangurParentDashboardHeroWidget({
         showBackButton={false}
         onBack={handleGoToProfile}
         testId='kangur-parent-dashboard-hero'
-        title='Panel Rodzica'
+        title={translations('hero.restricted.title')}
       >
         <KangurButton
           className='w-full sm:w-auto'
@@ -181,7 +188,7 @@ export function KangurParentDashboardHeroWidget({
           variant='primary'
           data-doc-id='top_nav_profile'
         >
-          Wróć do profilu ucznia
+          {translations('hero.backToLearnerProfile')}
         </KangurButton>
       </KangurPageIntroCard>
     );
@@ -195,13 +202,13 @@ export function KangurParentDashboardHeroWidget({
       className='mx-auto w-full max-w-2xl'
       description={
         <>
-          Wybrany uczeń:{' '}
+          {translations('hero.selectedLearner')}:{' '}
           <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
-            {activeLearner?.displayName ?? 'Brak profilu ucznia'}
+            {activeLearner?.displayName ?? translations('hero.noLearnerTitle')}
           </span>
           .
           <span className='mt-1 block text-xs [color:var(--kangur-page-muted-text)]'>
-            {viewerRoleLabel ?? 'Rodzic'}:{' '}
+            {viewerRoleLabel ?? translations('hero.viewerRoleFallback')}:{' '}
             <span className='break-words font-semibold [color:var(--kangur-page-text)]'>
               {viewerName}
             </span>
@@ -218,14 +225,14 @@ export function KangurParentDashboardHeroWidget({
             variant='surface'
             data-doc-id='parent_open_create_learner'
           >
-            Dodaj ucznia
+            {translations('hero.addLearner')}
           </KangurButton>
         ) : null
       }
       showBackButton={false}
       onBack={handleGoToProfile}
       testId='kangur-parent-dashboard-hero'
-      title={dashboardHeroContent?.title ?? 'Panel Rodzica'}
+      title={dashboardHeroContent?.title ?? translations('hero.parentTitle')}
     >
       {showLearnerManagement ? (
         <div className='mt-4 text-left' ref={learnerManagementAnchorRef}>
@@ -236,8 +243,8 @@ export function KangurParentDashboardHeroWidget({
                 align='left'
                 className='text-left'
                 padding='md'
-                title='Brak profilu ucznia'
-                description='Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.'
+                title={translations('hero.noLearnerTitle')}
+                description={translations('hero.noLearnerDescription')}
               />
             </div>
           ) : null}
@@ -261,7 +268,7 @@ export function KangurParentDashboardHeroWidget({
                 transitionAcknowledgeMs={PARENT_DASHBOARD_ROUTE_ACKNOWLEDGE_MS}
                 transitionSourceId='parent-dashboard-hero:learner-activity'
               >
-                Otwórz aktywność
+                {translations('hero.openActivity')}
               </Link>
             </KangurButton>
           ) : null}
@@ -278,7 +285,8 @@ export function KangurParentDashboardHeroWidget({
               transitionSourceId='parent-dashboard-hero:profile'
               data-doc-id='top_nav_profile'
             >
-              <UserRound className='h-4 w-4' /> Profil {activeLearnerLabel}
+              <UserRound className='h-4 w-4' />
+              {translations('hero.profile', { learner: activeLearnerLabel })}
             </Link>
           </KangurButton>
         </div>
@@ -287,7 +295,10 @@ export function KangurParentDashboardHeroWidget({
       {showActions ? (
         <div className='flex flex-col items-center gap-2'>
           <div className='flex w-full justify-center'>
-            <KangurTopNavGroup label='Szybkie akcje rodzica' className='w-full sm:w-auto'>
+            <KangurTopNavGroup
+              label={translations('hero.quickActions')}
+              className='w-full sm:w-auto'
+            >
               <KangurNavAction
                 docId='top_nav_home'
                 href={getKangurHomeHref(basePath)}
@@ -299,7 +310,7 @@ export function KangurParentDashboardHeroWidget({
                 }}
                 variant='navigation'
               >
-                <Home className='h-4 w-4' /> Gra
+                <Home className='h-4 w-4' /> {translations('hero.nav.game')}
               </KangurNavAction>
               <KangurNavAction
                 docId='top_nav_lessons'
@@ -312,7 +323,7 @@ export function KangurParentDashboardHeroWidget({
                 }}
                 variant='navigation'
               >
-                <BookOpen className='h-4 w-4' /> Lekcje
+                <BookOpen className='h-4 w-4' /> {translations('hero.nav.lessons')}
               </KangurNavAction>
               <KangurNavAction
                 docId='top_nav_profile'
@@ -325,7 +336,7 @@ export function KangurParentDashboardHeroWidget({
                 }}
                 variant='navigation'
               >
-                <UserRound className='h-4 w-4' /> Profil
+                <UserRound className='h-4 w-4' /> {translations('hero.nav.profile')}
               </KangurNavAction>
               <KangurNavAction
                 docId='top_nav_parent_dashboard'
@@ -338,7 +349,7 @@ export function KangurParentDashboardHeroWidget({
                 }}
                 variant='navigationActive'
               >
-                <LayoutGrid className='h-4 w-4' /> Rodzic
+                <LayoutGrid className='h-4 w-4' /> {translations('hero.nav.parent')}
               </KangurNavAction>
             </KangurTopNavGroup>
           </div>
@@ -350,7 +361,7 @@ export function KangurParentDashboardHeroWidget({
             variant='ghost'
             data-doc-id='profile_logout'
           >
-            <LogOut className='h-4 w-4' /> Wyloguj
+            <LogOut className='h-4 w-4' /> {translations('hero.logout')}
           </KangurButton>
         </div>
       ) : null}

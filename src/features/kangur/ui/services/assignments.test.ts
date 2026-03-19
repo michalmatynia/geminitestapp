@@ -102,4 +102,39 @@ describe('buildKangurAssignments', () => {
       },
     });
   });
+
+  it('supports localized assignment copy through an optional localizer', () => {
+    const assignments = buildKangurAssignments(progressWithMastery, 1, {
+      translate: (key, values) => {
+        switch (key) {
+          case 'retry.title':
+            return `${values?.emoji} Review: ${values?.title}`;
+          case 'retry.descriptionCritical':
+            return `Critical area (${values?.masteryPercent}%).`;
+          case 'retry.targetPrimary':
+            return '1 review + min. 75% score';
+          case 'retry.progressLabel':
+            return `Progress: ${values?.masteryPercent}% / ${values?.targetPercent}%`;
+          case 'retry.questLabelCritical':
+            return 'Recovery mission';
+          case 'actions.openLesson':
+            return 'Open lesson';
+          default:
+            return key;
+        }
+      },
+    });
+
+    expect(assignments[0]).toMatchObject({
+      id: 'lesson-retry-division',
+      title: '➗ Review: Dzielenie',
+      description: 'Critical area (45%).',
+      target: '1 review + min. 75% score',
+      progressLabel: 'Progress: 45% / 75%',
+      questLabel: 'Recovery mission',
+      action: {
+        label: 'Open lesson',
+      },
+    });
+  });
 });

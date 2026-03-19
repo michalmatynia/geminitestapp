@@ -1,5 +1,8 @@
+'use client';
+
 import { motion } from 'framer-motion';
 import { Home, RotateCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -9,20 +12,9 @@ import {
   KangurPanelRow,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
+import { getKangurMiniGameAccuracyText } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurOperation } from '@/features/kangur/ui/types';
-
-const OPERATION_LABELS: Partial<Record<KangurOperation, string>> = {
-  addition: 'Dodawanie',
-  subtraction: 'Odejmowanie',
-  multiplication: 'Mnożenie',
-  division: 'Dzielenie',
-  decimals: 'Ułamki',
-  powers: 'Potęgi',
-  roots: 'Pierwiastki',
-  clock: 'Zegar',
-  mixed: 'Mieszane',
-};
 
 export type ResultScreenProps = {
   score: number;
@@ -43,9 +35,12 @@ export default function ResultScreen({
   onRestart,
   onHome,
 }: ResultScreenProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const stars = percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
-  const operationLabel = operation ? OPERATION_LABELS[operation] ?? operation : 'Mieszane';
+  const operationLabel = operation
+    ? translations(`resultScreen.operations.${operation}`)
+    : translations('resultScreen.operations.mixed');
   const handleRestartGame = (): void => {
     onRestart();
   };
@@ -55,12 +50,12 @@ export default function ResultScreen({
 
   const message =
     percent === 100
-      ? 'Idealny wynik! Jesteś gwiazdą matematyki! 🌟'
+      ? translations('resultScreen.summary.perfect')
       : percent >= 80
-        ? 'Niesamowita robota! Tak trzymaj! 🎉'
+        ? translations('resultScreen.summary.excellent')
         : percent >= 60
-          ? 'Dobra robota! Ćwiczenie czyni mistrza! 💪'
-          : 'Próbuj dalej. Dasz radę! 🚀';
+          ? translations('resultScreen.summary.good')
+          : translations('resultScreen.summary.retry');
 
   return (
     <motion.div
@@ -73,14 +68,14 @@ export default function ResultScreen({
         {'⭐'.repeat(stars)}
         {'☆'.repeat(3 - stars)}
       </KangurDisplayEmoji>
-      <p className='sr-only'>{`Ocena: ${stars} z 3 gwiazdek.`}</p>
+      <p className='sr-only'>{translations('resultScreen.starsAria', { stars })}</p>
       <KangurHeadline
         as='h2'
         data-testid='result-screen-title'
         id='kangur-result-heading'
         size='lg'
       >
-        Świetna robota, {playerName}!
+        {translations('resultScreen.heading')}, {playerName}!
       </KangurHeadline>
       <p
         role='status'
@@ -99,29 +94,37 @@ export default function ResultScreen({
       >
         <dl className='space-y-3 text-lg'>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>Wynik</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>
+              {translations('resultScreen.stats.score')}
+            </dt>
             <dd className='font-bold text-indigo-600'>
               {score} / {total}
             </dd>
           </KangurPanelRow>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>Dokładność</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>
+              {translations('resultScreen.stats.accuracy')}
+            </dt>
             <dd className='font-bold text-green-500'>{percent}%</dd>
           </KangurPanelRow>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>Czas</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>
+              {translations('resultScreen.stats.time')}
+            </dt>
             <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
           </KangurPanelRow>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>Temat</dt>
+            <dt className='[color:var(--kangur-page-muted-text)]'>
+              {translations('resultScreen.stats.topic')}
+            </dt>
             <dd className='font-bold text-purple-500'>{operationLabel}</dd>
           </KangurPanelRow>
         </dl>
         <KangurProgressBar
           accent='indigo'
           animated
-          aria-label='Dokładność odpowiedzi'
-          aria-valuetext={`${percent}% poprawnych odpowiedzi`}
+          aria-label={translations('resultScreen.progressAriaLabel')}
+          aria-valuetext={getKangurMiniGameAccuracyText(translations, percent)}
           className='mt-2'
           data-testid='result-screen-progress-bar'
           size='lg'
@@ -136,7 +139,7 @@ export default function ResultScreen({
           size='lg'
           variant='primary'
         >
-          <RotateCcw aria-hidden='true' className='w-5 h-5' /> Zagraj ponownie
+          <RotateCcw aria-hidden='true' className='w-5 h-5' /> {translations('resultScreen.actions.restart')}
         </KangurButton>
         <KangurButton
           className='w-full sm:w-auto'
@@ -144,7 +147,7 @@ export default function ResultScreen({
           size='lg'
           variant='surface'
         >
-          <Home aria-hidden='true' className='w-5 h-5' /> Strona główna
+          <Home aria-hidden='true' className='w-5 h-5' /> {translations('resultScreen.actions.home')}
         </KangurButton>
       </KangurPanelRow>
     </motion.div>

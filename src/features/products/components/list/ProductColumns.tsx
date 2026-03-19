@@ -35,6 +35,16 @@ import {
 
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
 
+const PRODUCT_TABLE_COLUMN_SIZES = {
+  select: 48,
+  image: 84,
+  price: 140,
+  stock: 88,
+  createdAt: 200,
+  integrations: 220,
+  actions: 64,
+} as const;
+
 type TriggerButtonBarProps = ComponentProps<
   typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
 >;
@@ -218,11 +228,12 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
   );
 
   return (
-    <div>
+    <div className='min-w-0 cursor-text select-text'>
       <button
         type='button'
+        title={nameValue || '—'}
         className={[
-          'inline whitespace-normal break-words',
+          'inline-block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-top',
           'select-text',
           'cursor-pointer hover:underline',
           'border-0 bg-transparent p-0 text-left',
@@ -239,8 +250,13 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
         {nameValue || '—'}
       </button>
 
-      <div className='flex items-center gap-1.5 text-sm text-gray-500'>
-        <span className={['select-text cursor-text'].join(' ')}>{normalizedSku || 'No SKU'}</span>
+      <div className='mt-1 flex min-w-0 items-center gap-1.5 text-sm text-gray-500'>
+        <span
+          className={['max-w-[10rem] truncate select-text cursor-text'].join(' ')}
+          title={normalizedSku || 'No SKU'}
+        >
+          {normalizedSku || 'No SKU'}
+        </span>
         <span aria-hidden='true' className='text-gray-600'>
           |
         </span>
@@ -496,12 +512,16 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     ),
     enableSorting: false,
     enableHiding: false,
+    size: PRODUCT_TABLE_COLUMN_SIZES.select,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.select },
   },
 
   {
     accessorKey: 'images',
     header: 'Image',
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <ImageCell row={row} />,
+    size: PRODUCT_TABLE_COLUMN_SIZES.image,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.image },
   },
 
   {
@@ -538,6 +558,8 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       );
     },
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <PriceCell row={row} />,
+    size: PRODUCT_TABLE_COLUMN_SIZES.price,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.price },
   },
 
   {
@@ -549,6 +571,8 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       </Button>
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => <StockCell row={row} />,
+    size: PRODUCT_TABLE_COLUMN_SIZES.stock,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.stock },
   },
 
   {
@@ -559,6 +583,8 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <ArrowUpDown className='ml-2 size-4' />
       </Button>
     ),
+    size: PRODUCT_TABLE_COLUMN_SIZES.createdAt,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.createdAt },
   },
 
   {
@@ -567,6 +593,8 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <IntegrationsCell row={row} />
     ),
+    size: PRODUCT_TABLE_COLUMN_SIZES.integrations,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.integrations },
   },
 
   {
@@ -575,5 +603,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <ActionsCell row={row} />
     ),
+    size: PRODUCT_TABLE_COLUMN_SIZES.actions,
+    meta: { widthPx: PRODUCT_TABLE_COLUMN_SIZES.actions },
   },
 ];

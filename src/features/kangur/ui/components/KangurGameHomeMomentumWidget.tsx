@@ -2,11 +2,18 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
+import { useLocale, useTranslations } from 'next-intl';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  resolveLocalizedRecommendationActivityLabel,
+  translateRecommendationWithFallback,
+  type RecommendationTranslate,
+} from '@/features/kangur/ui/services/recommendation-i18n';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -58,11 +65,16 @@ const buildAssignmentHref = (basePath: string, action: KangurRouteAction): strin
 
 const buildPracticeRecommendationAction = (
   operation: string | null,
-  averageAccuracy: number
+  averageAccuracy: number,
+  translate?: RecommendationTranslate
 ): KangurRouteAction => {
   if (!operation || !QUICK_START_OPERATIONS.has(operation)) {
     return {
-      label: 'Uruchom trening',
+      label: translateRecommendationWithFallback(
+        translate,
+        'homeMomentum.actions.startTraining',
+        'Uruchom trening'
+      ),
       page: 'Game',
       query: {
         quickStart: 'training',
@@ -71,7 +83,11 @@ const buildPracticeRecommendationAction = (
   }
 
   return {
-    label: 'Uruchom trening',
+    label: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.actions.startTraining',
+      'Uruchom trening'
+    ),
     page: 'Game',
     query: {
       quickStart: 'operation',
@@ -102,7 +118,9 @@ const resolveActivityOperation = (activityKey: string): string | null => {
 };
 
 const getWeakestLessonRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  locale: string,
+  translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const weakestLesson = Object.entries(progress.lessonMastery)
     .filter(([, entry]) => entry.attempts > 0 && entry.masteryPercent < 80)
@@ -117,24 +135,51 @@ const getWeakestLessonRecommendation = (
   if (!lesson) {
     return null;
   }
+  const lessonTitle = getLocalizedKangurLessonTitle(componentId, locale, lesson.title);
 
   return {
     accent: entry.masteryPercent < 60 ? 'rose' : 'amber',
     action: {
-      label: 'Otwórz lekcję',
+      label: translateRecommendationWithFallback(
+        translate,
+        'homeMomentum.actions.openLesson',
+        'Otwórz lekcję'
+      ),
       page: 'Lessons',
       query: {
         focus: componentId,
       },
     },
-    description: `Opanowanie ${entry.masteryPercent}%. Jedna krótka powtórka tej lekcji szybciej domknie kolejny próg mistrzostwa.`,
-    priorityLabel: entry.masteryPercent < 60 ? 'Priorytet wysoki' : 'Priorytet średni',
-    title: `Dziś warto: ${lesson.title}`,
+    description: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.weakestLesson.description',
+      `Opanowanie ${entry.masteryPercent}%. Jedna krótka powtórka tej lekcji szybciej domknie kolejny próg mistrzostwa.`,
+      { masteryPercent: entry.masteryPercent }
+    ),
+    priorityLabel:
+      entry.masteryPercent < 60
+        ? translateRecommendationWithFallback(
+            translate,
+            'homeMomentum.weakestLesson.priorityHigh',
+            'Priorytet wysoki'
+          )
+        : translateRecommendationWithFallback(
+            translate,
+            'homeMomentum.weakestLesson.priorityMedium',
+            'Priorytet średni'
+          ),
+    title: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.weakestLesson.title',
+      `Dziś warto: ${lessonTitle}`,
+      { title: lessonTitle }
+    ),
   };
 };
 
 const getStreakRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const gamesPlayed = progress.gamesPlayed ?? 0;
   const currentWinStreak = progress.currentWinStreak ?? 0;
@@ -146,7 +191,11 @@ const getStreakRecommendation = (
   return {
     accent: 'violet',
     action: {
-      label: 'Zagraj teraz',
+      label: translateRecommendationWithFallback(
+        translate,
+        'homeMomentum.actions.playNow',
+        'Zagraj teraz'
+      ),
       page: 'Game',
       query: {
         quickStart: 'training',
@@ -154,15 +203,40 @@ const getStreakRecommendation = (
     },
     description:
       currentWinStreak <= 0
-        ? 'Jedna krótka gra dzisiaj uruchomi nową serię i pomoże podtrzymać rytm nauki.'
-        : `Masz serię ${currentWinStreak}. Jeszcze jedna mocna runda dzisiaj ją rozpędzi.`,
-    priorityLabel: 'Priorytet średni',
-    title: currentWinStreak <= 0 ? 'Zbuduj serię na nowo' : 'Rozpędź aktualną serię',
+        ? translateRecommendationWithFallback(
+            translate,
+            'homeMomentum.streak.descriptionStart',
+            'Jedna krótka gra dzisiaj uruchomi nową serię i pomoże podtrzymać rytm nauki.'
+          )
+        : translateRecommendationWithFallback(
+            translate,
+            'homeMomentum.streak.descriptionContinue',
+            `Masz serię ${currentWinStreak}. Jeszcze jedna mocna runda dzisiaj ją rozpędzi.`,
+            { streak: currentWinStreak }
+          ),
+    priorityLabel: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.streak.priority',
+      'Priorytet średni'
+    ),
+    title:
+      currentWinStreak <= 0
+        ? translateRecommendationWithFallback(
+            translate,
+            'homeMomentum.streak.titleStart',
+            'Zbuduj serię na nowo'
+          )
+        : translateRecommendationWithFallback(
+            translate,
+            'homeMomentum.streak.titleContinue',
+            'Rozpędź aktualną serię'
+          ),
   };
 };
 
 const getGuidedRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const guidedMomentum = getRecommendedSessionMomentum(progress);
   if (guidedMomentum.completedSessions <= 0 || !guidedMomentum.nextBadgeName) {
@@ -170,24 +244,59 @@ const getGuidedRecommendation = (
   }
 
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const activityLabel = topActivity
+    ? resolveLocalizedRecommendationActivityLabel({
+        activityKey: topActivity.key,
+        fallbackLabel: topActivity.label,
+        translate,
+      })
+    : null;
   const action = buildPracticeRecommendationAction(
     resolveActivityOperation(topActivity?.key ?? ''),
-    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
+    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+    translate
   );
 
   return {
     accent: 'indigo',
     action,
     description: topActivity
-      ? `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} przybliża odznakę ${guidedMomentum.nextBadgeName}.`
-      : `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliża odznakę ${guidedMomentum.nextBadgeName}.`,
-    priorityLabel: 'Polecony kierunek',
-    title: `Dopnij: ${guidedMomentum.nextBadgeName}`,
+      ? translateRecommendationWithFallback(
+          translate,
+          'homeMomentum.guided.descriptionWithActivity',
+          `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda ${activityLabel?.toLowerCase()} przybliża odznakę ${guidedMomentum.nextBadgeName}.`,
+          {
+            summary: guidedMomentum.summary,
+            activity: activityLabel?.toLowerCase() ?? '',
+            nextBadgeName: guidedMomentum.nextBadgeName,
+          }
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'homeMomentum.guided.descriptionDefault',
+          `Masz już ${guidedMomentum.summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliża odznakę ${guidedMomentum.nextBadgeName}.`,
+          {
+            summary: guidedMomentum.summary,
+            nextBadgeName: guidedMomentum.nextBadgeName,
+          }
+        ),
+    priorityLabel: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.guided.priority',
+      'Polecony kierunek'
+    ),
+    title: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.guided.title',
+      `Dopnij: ${guidedMomentum.nextBadgeName}`,
+      { nextBadgeName: guidedMomentum.nextBadgeName }
+    ),
   };
 };
 
 const getTrackRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const track =
     getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }).find(
@@ -195,6 +304,13 @@ const getTrackRecommendation = (
         Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40)
     ) ?? null;
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const activityLabel = topActivity
+    ? resolveLocalizedRecommendationActivityLabel({
+        activityKey: topActivity.key,
+        fallbackLabel: topActivity.label,
+        translate,
+      })
+    : null;
 
   if (!track?.nextBadge) {
     return null;
@@ -202,48 +318,103 @@ const getTrackRecommendation = (
 
   const action = buildPracticeRecommendationAction(
     resolveActivityOperation(topActivity?.key ?? ''),
-    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress)
+    topActivity?.averageAccuracy ?? getProgressAverageAccuracy(progress),
+    translate
   );
 
   return {
     accent: 'indigo',
     action,
     description: topActivity
-      ? `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}. Najszybciej podbije to ${topActivity.label.toLowerCase()}.`
-      : `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}.`,
-    priorityLabel: 'Tempo postępu',
-    title: `Domknij tor: ${track.label}`,
+      ? translateRecommendationWithFallback(
+          translate,
+          'homeMomentum.track.descriptionWithActivity',
+          `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}. Najszybciej podbije to ${activityLabel?.toLowerCase()}.`,
+          {
+            track: track.label,
+            badge: track.nextBadge.name,
+            summary: track.nextBadge.summary,
+            activity: activityLabel?.toLowerCase() ?? '',
+          }
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'homeMomentum.track.descriptionDefault',
+          `Najbliżej jest teraz tor ${track.label}. Do odznaki ${track.nextBadge.name} brakuje: ${track.nextBadge.summary}.`,
+          {
+            track: track.label,
+            badge: track.nextBadge.name,
+            summary: track.nextBadge.summary,
+          }
+        ),
+    priorityLabel: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.track.priority',
+      'Tempo postępu'
+    ),
+    title: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.track.title',
+      `Domknij tor: ${track.label}`,
+      { track: track.label }
+    ),
   };
 };
 
 const getFallbackRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null => {
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
   if (!topActivity) {
     return null;
   }
+  const activityLabel = resolveLocalizedRecommendationActivityLabel({
+    activityKey: topActivity.key,
+    fallbackLabel: topActivity.label,
+    translate,
+  });
 
   return {
     accent: 'violet',
     action: buildPracticeRecommendationAction(
       resolveActivityOperation(topActivity.key),
-      topActivity.averageAccuracy
+      topActivity.averageAccuracy,
+      translate
     ),
-    description: `${topActivity.label} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy kandydat na kolejny mocny ruch.`,
-    priorityLabel: 'Dobra passa',
-    title: `Utrzymaj tempo w: ${topActivity.label}`,
+    description: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.fallback.description',
+      `${activityLabel} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy kandydat na kolejny mocny ruch.`,
+      {
+        activity: activityLabel,
+        averageXpPerSession: topActivity.averageXpPerSession,
+      }
+    ),
+    priorityLabel: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.fallback.priority',
+      'Dobra passa'
+    ),
+    title: translateRecommendationWithFallback(
+      translate,
+      'homeMomentum.fallback.title',
+      `Utrzymaj tempo w: ${activityLabel}`,
+      { activity: activityLabel }
+    ),
   };
 };
 
 const getHomeRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  locale: string,
+  translate?: RecommendationTranslate
 ): KangurHomeRecommendation | null =>
-  getWeakestLessonRecommendation(progress) ??
-  getGuidedRecommendation(progress) ??
-  getStreakRecommendation(progress) ??
-  getTrackRecommendation(progress) ??
-  getFallbackRecommendation(progress);
+  getWeakestLessonRecommendation(progress, locale, translate) ??
+  getGuidedRecommendation(progress, translate) ??
+  getStreakRecommendation(progress, translate) ??
+  getTrackRecommendation(progress, translate) ??
+  getFallbackRecommendation(progress, translate);
 
 const HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -260,7 +431,9 @@ export default function KangurGameHomeMomentumWidget({
   basePath,
   progress,
 }: KangurGameHomeMomentumWidgetProps): React.JSX.Element | null {
-  const recommendation = getHomeRecommendation(progress);
+  const locale = useLocale();
+  const translations = useTranslations('KangurGameRecommendations');
+  const recommendation = getHomeRecommendation(progress, locale, translations);
 
   if (!recommendation) {
     return null;

@@ -17,6 +17,8 @@ import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
+import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
+import { resolveValidatorFieldReplacement } from '@/features/products/lib/resolveValidatorFieldReplacement';
 import {
   ProductFormData,
   CatalogRecord,
@@ -59,12 +61,24 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
 ): React.JSX.Element {
   const { issue, currentCategoryLabel, proposedCategoryLabel, selectedCategoryId } = props;
 
-  const { setCategoryId } = useProductFormMetadata();
+  const { categories, setCategoryId } = useProductFormMetadata();
   const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
 
   const onReplace = useCallback((): void => {
     const currentValue = selectedCategoryId ?? '';
     const nextValue = getIssueReplacementPreview(currentValue, issue).trim();
+    const applied = applyValidatorFieldReplacement({
+      fieldName: 'categoryId',
+      replacementValue: nextValue,
+      categories,
+      getCurrentFieldValue: (fieldName: keyof ProductFormData) => {
+        if (fieldName === 'categoryId') return selectedCategoryId ?? '';
+        return '';
+      },
+      setFormFieldValue: () => {},
+      setCategoryId,
+    });
+    if (!applied) return;
     void acceptIssue({
       fieldName: 'categoryId',
       patternId: issue.patternId,
@@ -72,9 +86,7 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
       message: issue.message,
       replacementValue: issue.replacementValue,
     });
-    if (!nextValue || nextValue === currentValue) return;
-    setCategoryId(nextValue);
-  }, [acceptIssue, issue, selectedCategoryId, setCategoryId]);
+  }, [acceptIssue, categories, issue, selectedCategoryId, setCategoryId]);
 
   const onDeny = useCallback((): void => {
     void denyIssue({
@@ -335,8 +347,14 @@ export default function ProductFormOther(): React.JSX.Element {
                   ? (categoryNameById.get(selectedCategoryId) ?? selectedCategoryId)
                   : '(none)');
               const replacementId = issue.replacementValue?.trim() ?? '';
+              const resolvedReplacement = resolveValidatorFieldReplacement({
+                fieldName: 'categoryId',
+                replacementValue: replacementId,
+                categories,
+                categoryNameById,
+              });
               const proposedCategoryLabel = replacementId
-                ? (categoryNameById.get(replacementId) ?? replacementId)
+                ? resolvedReplacement?.displayValue ?? replacementId
                 : null;
               return (
                 <CategoryIssueHintRow

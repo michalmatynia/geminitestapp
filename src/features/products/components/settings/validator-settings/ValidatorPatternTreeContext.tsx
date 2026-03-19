@@ -21,6 +21,7 @@ export interface ValidatorPatternTreeContextValue {
   onDuplicatePattern: (pattern: ProductValidationPattern) => void;
   onDeletePattern: (pattern: ProductValidationPattern) => void;
   onTogglePattern: (pattern: ProductValidationPattern) => Promise<void>;
+  onOpenSemanticHistory: (patternId: string, auditKey: string) => void;
   onSaveSequenceGroup: (groupId: string) => Promise<void>;
   onUngroup: (groupId: string) => Promise<void>;
   isPending: boolean;

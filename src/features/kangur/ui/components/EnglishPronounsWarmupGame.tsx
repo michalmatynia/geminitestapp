@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -14,6 +15,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -105,6 +110,7 @@ export default function EnglishPronounsWarmupGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: EnglishPronounsWarmupGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -132,7 +138,7 @@ export default function EnglishPronounsWarmupGame({
     const isCorrect = selection === round.answer;
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
-      ? 'Świetnie! Trafione.'
+      ? translations('englishPronounsWarmup.feedback.correct')
       : `Prawidłowa odpowiedź: ${round.answer}.`;
 
     setScore(nextScore);
@@ -191,7 +197,7 @@ export default function EnglishPronounsWarmupGame({
           accent='sky'
           title={
             <KangurHeadline data-testid='english-pronouns-warmup-summary-title'>
-              Wynik: {score}/{TOTAL_ROUNDS}
+              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
             </KangurHeadline>
           }
         />
@@ -204,14 +210,19 @@ export default function EnglishPronounsWarmupGame({
         <KangurPracticeGameSummaryProgress accent='sky' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Rozgrzewka zaliczona.'
+            ? translations('englishPronounsWarmup.summary.perfect')
             : percent >= 70
-              ? 'Dobra robota!'
-              : 'Jeszcze jedna runda i będzie super.'}
+              ? translations('englishPronounsWarmup.summary.good')
+              : translations('englishPronounsWarmup.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={
+            finishLabel === 'Wróć do tematów'
+              ? getKangurMiniGameFinishLabel(translations, 'topics')
+              : finishLabel
+          }
           onFinish={onFinish}
+          restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
         />
       </KangurPracticeGameSummary>

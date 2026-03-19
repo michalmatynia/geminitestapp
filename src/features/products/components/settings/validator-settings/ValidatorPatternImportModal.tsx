@@ -314,6 +314,9 @@ export function ValidatorPatternImportModal({
                     <span className='font-semibold uppercase'>{operation.action}</span> |{' '}
                     {operation.code ?? operation.patternId ?? 'n/a'} | {operation.label}
                     {operation.reason ? ` | ${operation.reason}` : ''}
+                    {operation.semanticAudit?.summary
+                      ? ` | Semantic: ${operation.semanticAudit.summary}`
+                      : ''}
                   </p>
                 ))}
               </div>

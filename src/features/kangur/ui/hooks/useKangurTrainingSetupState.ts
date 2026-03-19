@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
@@ -35,31 +36,19 @@ type UseKangurTrainingSetupStateOptions = {
 };
 
 const ALL_CATEGORIES: Array<IdLabelOptionDto<KangurOperation> & { emoji: string }> = [
-  { id: 'addition', label: 'Dodawanie', emoji: '➕' },
-  { id: 'subtraction', label: 'Odejmowanie', emoji: '➖' },
-  { id: 'multiplication', label: 'Mnożenie', emoji: '✖️' },
-  { id: 'division', label: 'Dzielenie', emoji: '➗' },
-  { id: 'decimals', label: 'Ułamki', emoji: '🔢' },
-  { id: 'powers', label: 'Potęgi', emoji: '⚡' },
-  { id: 'roots', label: 'Pierwiastki', emoji: '√' },
+  { id: 'addition', label: '', emoji: '➕' },
+  { id: 'subtraction', label: '', emoji: '➖' },
+  { id: 'multiplication', label: '', emoji: '✖️' },
+  { id: 'division', label: '', emoji: '➗' },
+  { id: 'decimals', label: '', emoji: '🔢' },
+  { id: 'powers', label: '', emoji: '⚡' },
+  { id: 'roots', label: '', emoji: '√' },
 ];
 
 const QUESTION_COUNTS = [5, 10, 15, 20, 30] as const;
 const DEFAULT_SELECTED_CATEGORIES = ALL_CATEGORIES.map((category) => category.id);
 const DEFAULT_COUNT = 10;
 const DEFAULT_DIFFICULTY: KangurDifficulty = 'medium';
-
-const formatDifficultySummary = (difficulty: KangurDifficulty): string => {
-  if (difficulty === 'easy') {
-    return 'łatwy';
-  }
-
-  if (difficulty === 'hard') {
-    return 'trudny';
-  }
-
-  return 'średni';
-};
 
 const sanitizeSuggestedSelection = (
   selection?: KangurTrainingSelection | null
@@ -93,6 +82,7 @@ const sanitizeSuggestedSelection = (
 export const useKangurTrainingSetupState = (
   options: UseKangurTrainingSetupStateOptions = {}
 ) => {
+  const translations = useTranslations('KangurTrainingSetup');
   const active = options.active ?? true;
   const onStart = options.onStart;
   const suggestedSelection = sanitizeSuggestedSelection(options.suggestedSelection);
@@ -140,16 +130,16 @@ export const useKangurTrainingSetupState = (
   const categoryOptions = useMemo<KangurTrainingSetupCategoryOption[]>(
     () =>
       ALL_CATEGORIES.map((category) => ({
-        displayLabel: `${category.emoji} ${category.label}`,
+        displayLabel: `${category.emoji} ${translations(`categories.${category.id}`)}`,
         emoji: category.emoji,
         id: category.id,
-        label: category.label,
+        label: translations(`categories.${category.id}`),
         selected: selectedCategories.includes(category.id),
         select: (): void => {
           toggleCategory(category.id);
         },
       })),
-    [selectedCategories, toggleCategory]
+    [selectedCategories, toggleCategory, translations]
   );
 
   const countOptions = useMemo<KangurTrainingSetupCountOption[]>(
@@ -171,17 +161,20 @@ export const useKangurTrainingSetupState = (
       (Object.keys(DIFFICULTY_CONFIG) as KangurDifficulty[]).map((id) => {
         const config = DIFFICULTY_CONFIG[id];
         return {
-          displayLabel: `${config.emoji} ${config.label}`,
+          displayLabel: `${config.emoji} ${translations(`difficulty.${id}`)}`,
           id,
-          label: config.label,
-          metaLabel: `${config.timeLimit}s · zakres 1-${config.range}`,
+          label: translations(`difficulty.${id}`),
+          metaLabel: translations('difficultyMeta', {
+            seconds: config.timeLimit,
+            range: config.range,
+          }),
           selected: difficulty === id,
           select: (): void => {
             setDifficulty(id);
           },
         };
       }),
-    [difficulty]
+    [difficulty, translations]
   );
 
   return {
@@ -195,10 +188,14 @@ export const useKangurTrainingSetupState = (
     setDifficulty,
     startTraining,
     suggestedSelection,
-    summaryLabel: `Wybrano ${selectedCategories.length} kategorii, ${questionCount} pytań, poziom ${formatDifficultySummary(
-      difficulty
-    )}.`,
+    summaryLabel: translations('summaryLabel', {
+      categories: selectedCategories.length,
+      count: questionCount,
+      difficulty: translations(`difficultySummary.${difficulty}`),
+    }),
     toggleAllCategories,
-    toggleAllLabel: allSelected ? 'Odznacz wszystkie' : 'Zaznacz wszystkie',
+    toggleAllLabel: allSelected
+      ? translations('toggleAll.clear')
+      : translations('toggleAll.selectAll'),
   };
 };

@@ -72,7 +72,7 @@ const buildUnifiedDiff = (before: string, after: string): { diff: string; trunca
 const buildDocPatchSystemPrompt = (basePrompt: string): string => {
   const lines = [
     basePrompt.trim(),
-    'You are a documentation maintainer for Kangur and StudiQ.',
+    'You are a documentation maintainer for StudiQ.',
     'Your task is to merge proposed updates into the existing documentation file.',
     'The user will provide the current file content and a list of proposed updates.',
     'Proposed updates include a section title (optional), proposed text, and a reason for the change.',
@@ -129,7 +129,7 @@ async function patchDocFile(
   const modelId = brainConfig.modelId.trim();
   if (!modelId) {
     throw configurationError(
-      'Kangur Social Doc Patching model is missing. Configure it in AI Brain.'
+      'StudiQ Social Doc Patching model is missing. Configure it in AI Brain.'
     );
   }
 

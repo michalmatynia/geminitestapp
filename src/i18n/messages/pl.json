@@ -365,6 +365,246 @@
     },
     "result": {
       "leaderboardLabel": "Ranking po rundzie"
+    },
+    "operationSelector": {
+      "title": "Grajmy!",
+      "intro": {
+        "maths": "Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.",
+        "alphabet": "Wybierz literowa zabawe i cwicz alfabet.",
+        "geometry": "Wybierz zabawe z ksztaltami i cwicz geometrie.",
+        "language": "Wybierz typ gry jezykowej i przejdz od razu do cwiczen."
+      },
+      "quickPractice": {
+        "title": "Szybkie cwiczenia",
+        "description": "Szybkie quizy oparte na tematach z Lekcji.",
+        "groupAria": "{group} szybkie cwiczenia",
+        "cardAria": "Szybkie cwiczenie: {label}",
+        "gameChip": "Gra"
+      }
+    }
+  },
+  "KangurParentDashboard": {
+    "tabs": {
+      "title": "Zakładki panelu",
+      "description": "Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.",
+      "scores": "Wyniki",
+      "progress": "Postęp",
+      "assign": "Zadania",
+      "monitoring": "Monitorowanie",
+      "ai-tutor": "AI Tutor",
+      "mobile": {
+        "scores": "Wyniki",
+        "progress": "Postęp",
+        "assign": "Zadania",
+        "monitoring": "Monitoring",
+        "ai-tutor": "Tutor AI"
+      }
+    },
+    "hero": {
+      "unauthenticated": {
+        "title": "Panel Rodzica / Nauczyciela",
+        "description": "Ten widok pokazuje prywatne postępy ucznia, więc wymaga konta rodzica. Jeśli go jeszcze nie masz, załóż je bez opuszczania StudiQ.",
+        "summarySuffix": "Jeśli nie masz jeszcze konta rodzica, załóż je bez opuszczania StudiQ."
+      },
+      "signIn": "Zaloguj się",
+      "createParentAccount": "Utwórz konto rodzica",
+      "createParentAccountAria": "Utwórz konto rodzica",
+      "restricted": {
+        "title": "Panel Rodzica",
+        "description": "Ten widok jest dostępny tylko dla konta rodzica, które zarządza profilami uczniów.",
+        "summarySuffix": "Ten widok jest dostępny tylko dla konta rodzica, które zarządza profilami uczniów."
+      },
+      "backToLearnerProfile": "Wróć do profilu ucznia",
+      "selectedLearner": "Wybrany uczeń",
+      "viewerRoleFallback": "Rodzic",
+      "parentTitle": "Panel Rodzica",
+      "addLearner": "Dodaj ucznia",
+      "noLearnerTitle": "Brak profilu ucznia",
+      "noLearnerDescription": "Dodaj lub wybierz profil ucznia w sekcji poniżej, aby zobaczyć postęp i misje dnia.",
+      "openActivity": "Otwórz aktywność",
+      "profile": "Profil {learner}",
+      "quickActions": "Szybkie akcje rodzica",
+      "nav": {
+        "game": "Gra",
+        "lessons": "Lekcje",
+        "profile": "Profil",
+        "parent": "Rodzic"
+      },
+      "logout": "Wyloguj",
+      "learnerFallback": "ucznia",
+      "activity": {
+        "status": {
+          "loading": "Sprawdzanie",
+          "online": "Uczeń online",
+          "recent": "Uczeń ostatnio aktywny",
+          "offline": "Uczeń offline"
+        },
+        "loadingDescription": "Sprawdzamy bieżącą aktywność ucznia.",
+        "offlineDescription": "Brak bieżącej aktywności w aplikacji.",
+        "lessonFallback": "Lekcja",
+        "kind": {
+          "game": "Gra",
+          "lesson": "Lekcja",
+          "test": "Test",
+          "default": "Aktywność"
+        },
+        "description": {
+          "observability": {
+            "currentWithTitle": "Aktualnie: {title}.",
+            "recentWithTitle": "Ostatnio: {title}.",
+            "currentGeneric": "Uczeń jest aktywny w aplikacji.",
+            "offlineGeneric": "Brak bieżącej aktywności w aplikacji."
+          },
+          "activityLog": {
+            "currentWithTitle": "Niedawno otwarte: {title}.",
+            "recentWithTitle": "Ostatnio otwarte zadanie: {title}.",
+            "currentByKind": "Niedawno otwarte: {kind}.",
+            "recentByKind": "Ostatnio otwarte: {kind}."
+          },
+          "monitoring": {
+            "currentWithDetail": "Aktywność w panelach: {detail}.",
+            "recentWithDetail": "Ostatnia sesja w panelach: {detail}."
+          }
+        }
+      }
+    },
+    "page": {
+      "tabs": {
+        "scores": "Wyniki ucznia",
+        "progress": "Postęp ucznia",
+        "assign": "Zadania ucznia",
+        "monitoring": "Monitorowanie zadań",
+        "aiTutor": "Tutor-AI dla rodzica"
+      },
+      "dashboardTitle": "Panel rodzica: {tab}",
+      "dashboardTitleRestricted": "Panel rodzica bez dostępu",
+      "sessionDescriptionAuthenticated": "Dashboard rodzica z wynikami, postępem ucznia, zadaniami, monitoringiem i wsparciem Tutor-AI.",
+      "sessionDescriptionRestricted": "Widok ograniczonego dostępu do panelu rodzica.",
+      "anchors": {
+        "heroGuest": "Hero dashboardu rodzica bez dostępu",
+        "hero": "Hero dashboardu rodzica",
+        "learnerManagement": "Zarządzanie uczniami",
+        "tabs": "Zakładki dashboardu rodzica",
+        "scores": "Wyniki ucznia",
+        "progress": "Postęp ucznia",
+        "assignments": "Zadania ucznia",
+        "monitoring": "Monitorowanie zadań",
+        "aiTutor": "Tutor-AI dla rodzica"
+      }
+    },
+    "widgets": {
+      "assignments": {
+        "title": "Zadania ucznia",
+        "description": "Nadaj priorytet pracy i sprawdź, co jest aktywne albo wymaga przypomnienia."
+      },
+      "progress": {
+        "title": "Postęp ucznia",
+        "description": "Sprawdź rytm nauki, poziom, misje dnia i główny kierunek dalszej pracy.",
+        "timestampUnavailable": "Brak danych",
+        "taskKind": {
+          "game": "Gra",
+          "lesson": "Lekcja",
+          "test": "Test",
+          "default": "Aktywność"
+        },
+        "dailyQuest": {
+          "label": "Misja dnia ucznia",
+          "description": "To aktualna misja dnia ucznia, zsynchronizowana z widokiem gry i profilu.",
+          "questLabel": "Misja dnia"
+        },
+        "openedTasks": {
+          "label": "Otwarte zadania",
+          "description": "Ostatnie aktywności ucznia — każde zadanie, które otworzył.",
+          "listAria": "Otwarte zadania ucznia",
+          "openAction": "Otwórz",
+          "empty": "Brak zapisanych otwarć. Dane pojawią się, gdy uczeń uruchomi zadanie."
+        },
+        "assignments": {
+          "loading": "Ładowanie aktywnych zadań...",
+          "loadError": "Nie udało się pobrać aktywnych zadań.",
+          "archiveError": "Nie udało się zarchiwizować zadania.",
+          "recentTitle": "Ostatnie aktywne zadania",
+          "recentSummary": "Szybki podgląd zadań, które uczeń ma aktualnie do wykonania.",
+          "recentEmpty": "Brak aktywnych zadań dla ucznia.",
+          "activeTitle": "Aktywne zadania",
+          "activeEmpty": "Brak aktywnych zadań dla ucznia."
+        },
+        "lessonProgress": {
+          "label": "Postęp lekcji",
+          "description": "Postęp lekcji zapisany panel po panelu.",
+          "listAria": "Postęp lekcji ucznia",
+          "panelsCount": "{viewed}/{total} paneli",
+          "sectionPanelsCount": "{viewed}/{total} paneli",
+          "aria": "Postęp lekcji {title}",
+          "empty": "Brak danych o panelach. Dane pojawią się po wejściu ucznia w lekcje."
+        }
+      },
+      "monitoring": {
+        "title": "Monitorowanie zadań",
+        "description": "Monitoruj postęp przypisanych zadań, w tym sugestii StudiQ, aby utrzymać stały rytm nauki.",
+        "timestampUnavailable": "Brak danych",
+        "duration": {
+          "seconds": "{seconds}s",
+          "minutesSeconds": "{minutes}m {seconds}s"
+        },
+        "filters": {
+          "label": "Filtry",
+          "ariaLabel": "Filtrowanie interakcji",
+          "all": "Wszystkie",
+          "openedTask": "Zadania",
+          "lessonPanel": "Panele lekcji",
+          "session": "Sesje",
+          "dateFromLabel": "Data od",
+          "dateToLabel": "Data do",
+          "clear": "Wyczyść filtry"
+        },
+        "lessonPanelTime": {
+          "label": "Czas w panelach lekcji",
+          "description": "Czas spędzony w panelach lekcji podczas ostatniej sesji (liczony tylko przy aktywnej karcie).",
+          "lastSession": "Ostatnia sesja: {timestamp}",
+          "total": "{duration} łącznie",
+          "panelDefault": "Panel",
+          "panelNumber": "Panel {number}",
+          "empty": "Brak danych o czasie paneli. Dane pojawią się po przejściu ucznia przez lekcje."
+        },
+        "history": {
+          "label": "Historia interakcji",
+          "description": "Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz sesje logowania.",
+          "loadMoreError": "Nie udało się wczytać starszych interakcji.",
+          "loadError": "Nie udało się wczytać historii interakcji.",
+          "loadingTitle": "Ładowanie...",
+          "loadingDescription": "Ładujemy ostatnie interakcje ucznia.",
+          "errorDescription": "Spróbuj ponownie za chwilę.",
+          "filteredEmptyTitle": "Brak wyników.",
+          "filteredEmptyDescription": "Zmień filtry, aby zobaczyć więcej aktywności.",
+          "emptyTitle": "Brak aktywności.",
+          "emptyDescription": "Brak interakcji do pokazania.",
+          "loadingMore": "Ładowanie...",
+          "loadMore": "Pokaż starsze"
+        },
+        "interaction": {
+          "kind": {
+            "game": "Gra",
+            "lesson": "Lekcja",
+            "test": "Test",
+            "default": "Zadanie"
+          },
+          "openedTaskTitle": "Otwarte zadanie",
+          "openedTaskLabel": "Otwarte {kind}",
+          "lessonFallback": "Lekcja",
+          "lessonPanelLabel": "Aktywność w panelach",
+          "sessionLabel": "Sesja logowania",
+          "sessionDuration": "Czas trwania: {duration}",
+          "sessionEnded": "Sesja zakończona.",
+          "sessionInProgressWithDuration": "Sesja w toku · {duration}",
+          "sessionInProgress": "Sesja w toku.",
+          "learnerActivityLabel": "Aktywność ucznia",
+          "learnerActivityDescription": "Aktywność ucznia."
+        }
+      },
+      "aiTutor": {
+        "title": "Tutor-AI dla rodzica"
+      }
     }
   },
   "KangurPageNotFound": {
@@ -566,6 +806,267 @@
     "reassign": "Przypisz ponownie",
     "archive": "Archiwizuj"
   },
+  "KangurAssignmentManager": {
+    "catalog": {
+      "eyebrow": "Przydziel nowe zadanie",
+      "description": "Wyszukaj lekcje i zadania treningowe, a potem przypisz je uczniowi jako priorytet."
+    },
+    "suggested": {
+      "label": "Sugestie od StudiQ",
+      "description": "StudiQ podpowiada te zadania na podstawie aktualnych slabszych obszarow i rytmu pracy ucznia."
+    },
+    "search": {
+      "placeholder": "Szukaj po temacie, typie zadania lub slowie kluczowym...",
+      "label": "Szukaj zadan",
+      "title": "Szukaj zadan"
+    },
+    "filters": {
+      "all": "Wszystkie",
+      "time": "Czas",
+      "arithmetic": "Arytmetyka",
+      "geometry": "Geometria",
+      "logic": "Logika",
+      "practice": "Trening"
+    },
+    "actions": {
+      "unassignPending": "Cofanie...",
+      "unassign": "Cofnij przydzial",
+      "assignPending": "Przypisywanie...",
+      "assignSuggested": "Przypisz sugestie",
+      "assign": "Przypisz",
+      "setTime": "Ustaw czas",
+      "save": "Zapisz",
+      "saveAndAssign": "Zapisz i przypisz",
+      "saving": "Zapisywanie...",
+      "cancel": "Anuluj"
+    },
+    "feedback": {
+      "alreadyActive": "To zadanie jest juz aktywne.",
+      "assignError": "Nie udalo sie przypisac zadania.",
+      "assignSuccess": "Przypisano: {title}.",
+      "assignWithTimeLimitSuccess": "Przypisano: {title} z limitem czasu.",
+      "archiveError": "Nie udalo sie zarchiwizowac zadania.",
+      "archiveSuccess": "Zadanie przeniesiono do archiwum.",
+      "unassignError": "Nie udalo sie cofnac przydzialu.",
+      "unassignSuccess": "Cofnieto przydzial.",
+      "unassignSuccessWithTitle": "Cofnieto przydzial: {title}.",
+      "reassignError": "Nie udalo sie przypisac ponownie zadania.",
+      "reassignSuccess": "Zadanie przypisano ponownie.",
+      "reassignSuccessWithTitle": "Przypisano ponownie: {title}.",
+      "timeLimitSaveError": "Nie udalo sie zapisac czasu wykonania.",
+      "timeLimitRemoved": "Usunieto czas na wykonanie.",
+      "timeLimitSaved": "Zapisano czas na wykonanie."
+    },
+    "empty": {
+      "filtered": "Brak wynikow dla wybranego filtra."
+    },
+    "tracking": {
+      "eyebrow": "Monitorowanie zadan",
+      "description": "Szybki podglad tego, co uczen rozpoczal, zakonczyl albo nadal odklada.",
+      "metrics": {
+        "active": {
+          "label": "Aktywne",
+          "description": "zadania wymagajace dalszej pracy"
+        },
+        "notStarted": {
+          "label": "Do rozpoczecia",
+          "description": "uczen jeszcze nie ruszyl tych zadan"
+        },
+        "inProgress": {
+          "label": "W trakcie",
+          "description": "zadania, nad ktorymi uczen juz pracuje"
+        },
+        "completed": {
+          "label": "Ukonczone",
+          "description": "przydzialy zrealizowane przez ucznia"
+        },
+        "completionRate": {
+          "label": "Skutecznosc wykonania",
+          "description": "odsetek wszystkich niearchiwalnych zadan, ktore uczen ma juz zakonczone"
+        }
+      }
+    },
+    "lists": {
+      "eyebrow": "Lista zadan",
+      "ariaLabel": "Filtrowanie listy zadan",
+      "activeTab": "Aktywne ({count})",
+      "completedTab": "Ukonczone ({count})",
+      "activeTitle": "Aktywne zadania",
+      "activeEmpty": "Brak aktywnych zadan dla ucznia.",
+      "completedTitle": "Ukonczone zadania",
+      "completedEmpty": "Uczen nie zakonczyl jeszcze zadnych przypisanych zadan."
+    },
+    "timeLimit": {
+      "hoursMinutes": "{hours} godz. {minutes} min",
+      "hoursOnly": "{hours} godz.",
+      "minutesOnly": "{minutes} min"
+    },
+    "timeLimitModal": {
+      "title": "Czas na wykonanie",
+      "description": "Ustaw limit czasu dla zadania. Pozostaw puste, aby przypisac bez limitu.",
+      "closeAriaLabel": "Zamknij ustawienia czasu",
+      "eyebrow": "Czas na wykonanie",
+      "current": "Aktualnie: {value}",
+      "inputAriaLabel": "Czas na wykonanie w minutach",
+      "inputTitle": "Czas na wykonanie (minuty)",
+      "placeholder": "np. 30",
+      "helper": "Wpisz liczbe minut ({minMinutes}-{maxMinutes})."
+    },
+    "validation": {
+      "integerMinutes": "Podaj pelne minuty.",
+      "range": "Zakres: {minMinutes}-{maxMinutes} min."
+    }
+  },
+  "KangurLoginModal": {
+    "title": "Zaloguj sie",
+    "description": "Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.",
+    "closeAriaLabel": "Zamknij logowanie"
+  },
+  "KangurGameHomeActions": {
+    "sectionLabel": "Wybierz aktywnosc",
+    "actions": {
+      "lessons": "Lekcje",
+      "play": "Grajmy!",
+      "duels": "Pojedynki",
+      "kangur": "Kangur Matematyczny"
+    }
+  },
+  "KangurTests": {
+    "activityTitleWithSuite": "Test: {title}",
+    "activityTitleDefault": "Testy",
+    "emptyAdultTitle": "Testy dla doroslych w przygotowaniu",
+    "emptyAdultDescription": "Aktualnie dostepne sa testy dla 10-latkow.",
+    "emptyTitle": "Brak aktywnych testow",
+    "emptyDescription": "Wlacz testy w panelu admina, aby pojawily sie tutaj.",
+    "introDescription": "Wybierz zestaw testowy i przejdz przez pytania krok po kroku.",
+    "title": "Testy",
+    "listAria": "Lista testow",
+    "summary": {
+      "year": "Rok {year}",
+      "gradeLevel": "Poziom: {value}",
+      "category": "Kategoria: {value}"
+    },
+    "questionsCount": "{count} pytan",
+    "noQuestions": "Brak pytan",
+    "startTest": "Rozpocznij test",
+    "activeDescriptionFallback": "Przejdz przez pytania testowe i sprawdz wynik koncowy.",
+    "backToList": "Wroc do listy testow"
+  },
+  "KangurOperationSelector": {
+    "recommendedNow": "Polecamy teraz",
+    "actions": {
+      "startLesson": "Zacznij lekcje"
+    },
+    "descriptionNoAssignment": "Wejdz do serii pytan i cwicz we wlasnym tempie.",
+    "status": {
+      "parentAssignment": "Zadanie od rodzica",
+      "freePractice": "Trening swobodny"
+    },
+    "priority": {
+      "high": "Priorytet wysoki",
+      "medium": "Priorytet sredni",
+      "low": "Priorytet niski"
+    },
+    "difficulty": {
+      "easy": "Latwy",
+      "medium": "Sredni",
+      "hard": "Trudny"
+    },
+    "difficultyMeta": "{seconds}s · zakres 1-{range}",
+    "operations": {
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnozenie",
+      "division": "Dzielenie",
+      "decimals": "Ulamki",
+      "powers": "Potegi",
+      "roots": "Pierwiastki",
+      "clock": "Zegar",
+      "mixed": "Mieszane"
+    }
+  },
+  "KangurTrainingSetup": {
+    "categories": {
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnozenie",
+      "division": "Dzielenie",
+      "decimals": "Ulamki",
+      "powers": "Potegi",
+      "roots": "Pierwiastki"
+    },
+    "difficulty": {
+      "easy": "Latwy",
+      "medium": "Sredni",
+      "hard": "Trudny"
+    },
+    "difficultySummary": {
+      "easy": "latwy",
+      "medium": "sredni",
+      "hard": "trudny"
+    },
+    "difficultyMeta": "{seconds}s · zakres 1-{range}",
+    "summaryLabel": "Wybrano {categories} kategorii, {count} pytan, poziom {difficulty}.",
+    "toggleAll": {
+      "selectAll": "Zaznacz wszystkie",
+      "clear": "Odznacz wszystkie"
+    }
+  },
+  "KangurPlayerProgress": {
+    "fallbackTitle": "Postepy ucznia",
+    "fallbackSummary": "Zobacz poziom, serie, skutecznosc i najblizsze odznaki w jednym miejscu.",
+    "totalXpLine": "Poziom {level} · {xp} XP lacznie",
+    "nextLevel": "do poz. {level}: {xp} XP",
+    "maxLevel": "Maksymalny poziom!",
+    "metrics": {
+      "games": "Gier",
+      "lessons": "Lekcji",
+      "accuracy": "Skutecznosc",
+      "streak": "Seria",
+      "xpPerGame": "XP / gre"
+    },
+    "topActivityDescription": "{sessions} sesji · {xp} XP / gre",
+    "topActivityEyebrow": "Najczesciej cwiczysz",
+    "nextBadgeEyebrow": "Nastepna odznaka",
+    "guidedMomentumDescriptionWithBadge": "Do odznaki {badge}: {summary}",
+    "guidedMomentumDescriptionUnlocked": "Wszystkie odznaki polecanego kierunku odblokowane.",
+    "guidedMomentumEyebrow": "Polecony kierunek",
+    "guidedMomentumTitle": "{count} polecone rundy"
+  },
+  "KangurParentDashboardRuntime": {
+    "account": "Konto",
+    "viewerRole": {
+      "teacher": "Nauczyciel",
+      "parent": "Rodzic"
+    },
+    "validation": {
+      "missingLearnerData": "Wypelnij dane ucznia.",
+      "duplicateNick": "Ten nick jest juz zajety.",
+      "passwordMin": "Haslo ucznia musi miec co najmniej {count} znakow.",
+      "passwordPattern": "Haslo ucznia moze zawierac tylko litery i cyfry.",
+      "passwordCombined": "Haslo ucznia musi miec co najmniej {count} znakow i zawierac tylko litery oraz cyfry.",
+      "ageRange": "Wiek ucznia musi byc w zakresie 3-99.",
+      "displayNameMax": "Imie ucznia moze miec maks. 120 znakow.",
+      "loginNameMax": "Nick moze miec maks. 80 znakow.",
+      "loginNamePattern": "Nick moze zawierac tylko litery i cyfry.",
+      "passwordMax": "Haslo moze miec maks. {count} znakow."
+    },
+    "timeout": {
+      "create": "Tworzenie profilu trwa zbyt dlugo. Sprawdz polaczenie i sprobuj ponownie.",
+      "activate": "Aktywowanie profilu trwa zbyt dlugo. Sprobuj wybrac go recznie.",
+      "refresh": "Odswiezanie panelu trwa zbyt dlugo.",
+      "save": "Zapis profilu trwa zbyt dlugo. Sprobuj ponownie.",
+      "delete": "Usuwanie profilu trwa zbyt dlugo. Sprobuj ponownie."
+    },
+    "feedback": {
+      "createdButInactive": "Profil dodany, ale nie udalo sie go od razu aktywowac. Wybierz go z listy.",
+      "addLearnerError": "Nie udalo sie dodac ucznia.",
+      "saveSuccess": "Zapisano dane ucznia.",
+      "saveError": "Nie udalo sie zapisac zmian.",
+      "deleteSuccess": "Usunieto profil ucznia: {name}.",
+      "deleteError": "Nie udalo sie usunac profilu ucznia."
+    }
+  },
   "KangurLearnerProfileWidgets": {
     "hero": {
       "title": "Profil ucznia",
@@ -716,6 +1217,1214 @@
       "pageLabel": "Strona {index}",
       "editorEmptyDescription": "Dodaj tekst, obrazy, SVG albo blok aktywnosci, aby zaczac skladac te strone.",
       "noBlocksTitle": "Ta strona nie ma jeszcze blokow."
+    }
+  },
+  "KangurMiniGames": {
+    "shared": {
+      "restart": "Jeszcze raz",
+      "scoreLabel": "Wynik",
+      "pointsShort": "pkt",
+      "correctAnswersSuffix": "poprawnych odpowiedzi",
+      "finish": {
+        "lesson": "Wróć do lekcji",
+        "topics": "Wróć do tematów",
+        "play": "Wróć do Grajmy",
+        "back": "Wróć",
+        "menu": "Wróć do menu",
+        "done": "Zakończ lekcję ✅",
+        "end": "Zakończ"
+      }
+    },
+    "adding": {
+      "summary": {
+        "perfect": "Idealnie! Jesteś mistrzem dodawania!",
+        "good": "Świetna robota!",
+        "retry": "Nie poddawaj się!"
+      }
+    },
+    "subtraction": {
+      "summary": {
+        "perfect": "Idealnie! Mistrz odejmowania!",
+        "good": "Świetna robota!",
+        "retry": "Ćwicz dalej!"
+      }
+    },
+    "multiplication": {
+      "summary": {
+        "perfect": "Idealnie! Mistrz tabliczki!",
+        "good": "Świetna robota!",
+        "retry": "Ćwicz dalej!"
+      }
+    },
+    "division": {
+      "summary": {
+        "perfect": "Idealnie! Mistrz dzielenia!",
+        "good": "Świetna robota!",
+        "retry": "Ćwicz dalej!"
+      }
+    },
+    "divisionGroups": {
+      "summary": {
+        "perfect": "Idealnie! Dzielenie masz opanowane.",
+        "good": "Świetna robota!",
+        "retry": "Ćwicz dalej!"
+      },
+      "feedback": {
+        "assignAll": "Rozdziel wszystkie elementy.",
+        "checkRemainder": "Sprawdź, ile zostaje w reszcie.",
+        "equalGroups": "Upewnij się, że każda grupa ma tyle samo.",
+        "correct": "Brawo! Podział jest równy.",
+        "idle": "Przeciągnij lub kliknij elementy, aby podzielić je na grupy."
+      }
+    },
+    "calendarTraining": {
+      "progressAriaLabel": "Dokładność w ćwiczeniach z kalendarzem",
+      "summary": {
+        "perfect": "Idealnie! Świetnie znasz kalendarz!",
+        "retry": "Ćwicz dalej, a zostaniesz mistrzem kalendarza!"
+      }
+    },
+    "calendarInteractive": {
+      "progressAriaLabel": "Dokładność w interaktywnych zadaniach z kalendarza",
+      "summary": {
+        "mixed": {
+          "perfect": "Idealnie! Znasz kalendarz na wylot!",
+          "retry": "Świetnie! Ćwicz dalej zadania kalendarzowe.",
+          "encouragement": "Nie poddawaj się!"
+        },
+        "dni": {
+          "perfect": "Świetnie! Dni tygodnia i weekend rozpoznajesz bez wahania.",
+          "retry": "Poćwicz jeszcze dni tygodnia i weekendowe kolumny."
+        },
+        "miesiace": {
+          "perfect": "Świetnie! Miesiące i pory roku masz już dobrze uporządkowane.",
+          "retry": "Poćwicz jeszcze kolejność miesięcy i ich pory roku."
+        },
+        "data": {
+          "perfect": "Świetnie! Sprawnie odczytujesz daty z kalendarza.",
+          "retry": "Poćwicz jeszcze wyszukiwanie konkretnych dat w siatce kalendarza."
+        },
+        "sectionEncouragement": "Nie poddawaj się. Jeszcze kilka prób i ta sekcja będzie prostsza."
+      },
+      "section": {
+        "dni": {
+          "guidanceTitle": "Trening dni tygodnia",
+          "guidance": "Ćwiczysz nazwy dni tygodnia i rozpoznawanie weekendu w układzie kalendarza.",
+          "promptLabel": "Znajdź właściwy dzień tygodnia"
+        },
+        "miesiace": {
+          "guidanceTitle": "Trening miesięcy",
+          "guidance": "Ćwiczysz miesiące, ich kolejność oraz dopasowanie do odpowiedniej pory roku.",
+          "promptLabel": "Pracuj na miesiącach i porach roku"
+        },
+        "data": {
+          "guidanceTitle": "Trening dat",
+          "guidance": "Ćwiczysz odczytywanie dat i wskazywanie konkretnego dnia w siatce kalendarza.",
+          "promptLabel": "Odszukaj właściwą datę w kalendarzu"
+        }
+      },
+      "inRound": {
+        "previousMonth": "Poprzedni miesiąc",
+        "nextMonth": "Następny miesiąc",
+        "tryAgain": "Ups, to nie to. Spróbuj jeszcze raz!",
+        "done": "Zrobione",
+        "confirmMonth": "Kliknij, gdy uważasz, że jesteś na właściwym miesiącu.",
+        "chooseSeason": "Przeciągnij lub wybierz właściwą porę roku poniżej.",
+        "monthAria": "Miesiąc {monthName}"
+      },
+      "months": {
+        "january": "Styczeń",
+        "february": "Luty",
+        "march": "Marzec",
+        "april": "Kwiecień",
+        "may": "Maj",
+        "june": "Czerwiec",
+        "july": "Lipiec",
+        "august": "Sierpień",
+        "september": "Wrzesień",
+        "october": "Październik",
+        "november": "Listopad",
+        "december": "Grudzień"
+      },
+      "weekdays": {
+        "short": {
+          "mondayShort": "Pon",
+          "tuesdayShort": "Wt",
+          "wednesdayShort": "Śr",
+          "thursdayShort": "Czw",
+          "fridayShort": "Pt",
+          "saturdayShort": "Sob",
+          "sundayShort": "Nd"
+        },
+        "abbr": {
+          "mondayAbbr": "Pn",
+          "tuesdayAbbr": "Wt",
+          "wednesdayAbbr": "Śr",
+          "thursdayAbbr": "Cz",
+          "fridayAbbr": "Pt",
+          "saturdayAbbr": "So",
+          "sundayAbbr": "Nd"
+        },
+        "full": {
+          "monday": "Poniedziałek",
+          "tuesday": "Wtorek",
+          "wednesday": "Środa",
+          "thursday": "Czwartek",
+          "friday": "Piątek",
+          "saturday": "Sobota",
+          "sunday": "Niedziela"
+        },
+        "lookup": {
+          "monday": "poniedziałek",
+          "tuesday": "wtorek",
+          "wednesday": "środę",
+          "thursday": "czwartek",
+          "friday": "piątek",
+          "saturday": "sobotę",
+          "sunday": "niedzielę"
+        }
+      },
+      "weekends": {
+        "saturdays": "soboty",
+        "sundays": "niedziele"
+      },
+      "seasons": {
+        "spring": "Wiosna",
+        "summer": "Lato",
+        "autumn": "Jesień",
+        "winter": "Zima"
+      },
+      "tasks": {
+        "clickWeekday": "Kliknij dzień tygodnia: \"{dayLabel}\"",
+        "clickDate": "Kliknij datę w kalendarzu, która wypada w {weekdayName}",
+        "dragSeason": "Przeciągnij miesiąc \"{monthName}\" do właściwej pory roku",
+        "flipMonth": "Przejdź do miesiąca o numerze {monthNumber} ({monthName})",
+        "clickAllWeekends": "Kliknij wszystkie {dayName} w tym miesiącu"
+      }
+    },
+    "logicalPatterns": {
+      "summary": {
+        "perfect": "Perfekcyjnie! Rozpoznajesz wzorce w mgnieniu oka.",
+        "good": "Świetnie! Wzorce i ciągi idą Ci coraz lepiej.",
+        "retry": "Dobra próba! Spróbuj jeszcze raz i sprawdź reguły."
+      }
+    },
+    "logicalAnalogies": {
+      "summary": {
+        "perfect": "Idealnie! Rozpoznajesz relacje w każdym kontekście.",
+        "good": "Świetnie! Masz oko do relacji.",
+        "retry": "Dobra próba! Spróbuj jeszcze raz i zobacz różnice."
+      }
+    },
+    "logicalClassification": {
+      "summary": {
+        "perfect": "Perfekcyjnie! Świetnie klasyfikujesz.",
+        "good": "Super! Masz oko do grup i intruzów.",
+        "retry": "Dobra próba! Jeszcze kilka rund i będzie perfekcyjnie."
+      },
+      "feedback": {
+        "correct": "Brawo!",
+        "wrong": "To nie ten intruz."
+      }
+    },
+    "englishPronouns": {
+      "feedback": {
+        "correct": "Świetnie! Trafione."
+      },
+      "summary": {
+        "perfect": "Perfekcyjnie! Pronouns on point.",
+        "good": "Dobra robota!",
+        "retry": "Jeszcze jedna runda i będzie super."
+      }
+    },
+    "englishPronounsWarmup": {
+      "feedback": {
+        "correct": "Świetnie! Trafione."
+      },
+      "summary": {
+        "perfect": "Perfekcyjnie! Rozgrzewka zaliczona.",
+        "good": "Dobra robota!",
+        "retry": "Jeszcze jedna runda i będzie super."
+      }
+    },
+    "englishPrepositions": {
+      "feedback": {
+        "correct": "Świetnie! Trafione."
+      },
+      "summary": {
+        "perfect": "Perfekcyjnie! Prepositions opanowane.",
+        "good": "Dobra robota!",
+        "retry": "Jeszcze jedna runda i będzie super."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "hitsLabel": "{hits}/{total} trafień",
+        "check": "Sprawdź",
+        "next": "Dalej",
+        "seeResult": "Zobacz wynik",
+        "order": {
+          "modeLabel": "Szyk wyrazów",
+          "buildLabel": "Ułóż: {sentence}",
+          "dragInstruction": "Przeciągnij słowa, aby ustawić zdanie",
+          "sentenceAria": "Układanie zdania",
+          "shuffle": "Tasuj ponownie",
+          "feedback": {
+            "perfect": "Perfekcyjnie! Zdanie gotowe.",
+            "answer": "Poprawne zdanie: {answer}"
+          },
+          "rounds": {
+            "time-start": {
+              "prompt": "Ułóż zdanie o godzinie.",
+              "hint": "Godziny = at.",
+              "title": "Czas: początek"
+            },
+            "time-quiz": {
+              "prompt": "Ułóż zdanie o dniu tygodnia.",
+              "hint": "Dni = on.",
+              "title": "Czas: dzień"
+            },
+            "time-month": {
+              "prompt": "Ułóż zdanie o miesiącu.",
+              "hint": "Miesiące = in.",
+              "title": "Czas: miesiąc"
+            },
+            "place-notes": {
+              "prompt": "Ułóż zdanie o powierzchni.",
+              "hint": "Powierzchnia = on.",
+              "title": "Miejsce: powierzchnia"
+            },
+            "place-bus": {
+              "prompt": "Ułóż zdanie o punkcie.",
+              "hint": "Punkt spotkania = at.",
+              "title": "Miejsce: punkt"
+            },
+            "relation-between": {
+              "prompt": "Ułóż zdanie o relacji między punktami.",
+              "hint": "Pomiędzy = between.",
+              "title": "Relacje: between"
+            }
+          }
+        },
+        "sort": {
+          "modeLabel": "Przeciągnij i upuść",
+          "poolLabel": "Pula zwrotów",
+          "poolAria": "Pula zwrotów do sortowania",
+          "poolEmpty": "Pula pusta",
+          "binAria": "Koszyk {label}",
+          "missingPhrases": "Brakuje zwrotów",
+          "clearRound": "Wyczyść rundę",
+          "feedback": {
+            "perfect": "Perfekcyjnie! Wszystko na miejscu.",
+            "retry": "Sprawdź oznaczone przyimki."
+          },
+          "rounds": {
+            "time-sort": {
+              "prompt": "Przeciągnij zwroty do właściwego przyimka czasu.",
+              "hint": "Godziny = at, dni = on, miesiące = in.",
+              "title": "Sortowanie czasu"
+            },
+            "place-sort": {
+              "prompt": "Przeciągnij zwroty do właściwego przyimka miejsca.",
+              "hint": "Punkt = at, powierzchnia = on, wnętrze = in.",
+              "title": "Sortowanie miejsca"
+            },
+            "relations-sort": {
+              "prompt": "Przeciągnij zwroty do właściwej relacji przestrzennej.",
+              "hint": "between = pomiędzy, above = nad, below = pod.",
+              "title": "Sortowanie relacji"
+            }
+          },
+          "bins": {
+            "at": {
+              "description": "punkt w czasie / miejscu"
+            },
+            "on": {
+              "description": "dzień / powierzchnia"
+            },
+            "in": {
+              "description": "miesiąc / wnętrze"
+            },
+            "between": {
+              "description": "pomiędzy"
+            },
+            "above": {
+              "description": "nad"
+            },
+            "below": {
+              "description": "pod"
+            }
+          }
+        },
+        "wordAria": "Słowo: {token}"
+      }
+    },
+    "englishSentenceStructure": {
+      "summary": {
+        "excellent": "Świetny szyk zdania!",
+        "good": "Dobra robota, zostało parę szczegółów.",
+        "retry": "Zrób jeszcze jedną rundę i popraw szyk."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current} z {total}",
+        "timeLabel": "Czas: {seconds}s",
+        "fillPlaceholder": "Wpisz odpowiedź",
+        "fillAria": "Uzupełnij brakujące słowo",
+        "fillHelp": "Wpisz brakujące słowo, a potem kliknij „Sprawdź”.",
+        "check": "Sprawdź",
+        "checking": "Sprawdzam...",
+        "feedback": {
+          "correct": "Świetnie! Tak właśnie budujemy to zdanie.",
+          "incorrect": "Prawidłowa odpowiedź: {answer}."
+        },
+        "rounds": {
+          "svo-order": {
+            "prompt": "Wybierz zdanie w poprawnym szyku S + V + O.",
+            "hint": "Najpierw podmiot, potem czasownik, na końcu dopełnienie.",
+            "question": "Które zdanie jest poprawne?"
+          },
+          "order-words": {
+            "prompt": "Przeciągnij słowa, żeby ułożyć poprawne zdanie.",
+            "hint": "Zacznij od podmiotu, potem czasownik, potem reszta.",
+            "question": "Ułóż: My friend always finishes homework on time."
+          },
+          "do-question": {
+            "prompt": "Uzupełnij pytanie właściwym słowem.",
+            "hint": "Dla „you” używamy „do”.",
+            "question": "___ you play football on Saturdays?"
+          },
+          "connector-so": {
+            "prompt": "Szybka runda — masz kilka sekund!",
+            "hint": "Skutek -> so.",
+            "question": "I was late, ___ I texted my coach."
+          },
+          "frequency-adverb": {
+            "prompt": "Wybierz poprawne miejsce dla przysłówka.",
+            "hint": "Przysłówki częstotliwości stoją przed czasownikiem głównym.",
+            "question": "She ___ checks her notes after class."
+          },
+          "does-negative": {
+            "prompt": "Uzupełnij przeczenie.",
+            "hint": "She -> does not -> doesn't.",
+            "question": "She ___ like exams."
+          }
+        },
+        "orderTokenAria": "Słowo: {token}"
+      }
+    },
+    "englishSubjectVerbAgreement": {
+      "summary": {
+        "perfect": "Perfekcyjna zgodność.",
+        "good": "Dobra robota!",
+        "retry": "Jeszcze jedna runda i będzie super."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "modeLabel": "Kliknij",
+        "subjectLabel": "Podmiot",
+        "blank": "____",
+        "check": "Sprawdź",
+        "feedback": {
+          "correct": "Tak! Wszystko się zgadza.",
+          "incorrect": "Poprawna odpowiedź: {answer}."
+        },
+        "rounds": {
+          "streamer-goes": {
+            "prompt": "Kliknij czasownik, który pasuje do liczby pojedynczej.",
+            "hint": "Singular subject + -s."
+          },
+          "friends-try": {
+            "prompt": "Kliknij czasownik dla liczby mnogiej.",
+            "hint": "Plural subject = base verb."
+          },
+          "everyone-arrives": {
+            "prompt": "Wszyscy? Gramatycznie to dalej liczba pojedyncza.",
+            "hint": "Everyone = singular."
+          },
+          "there-are": {
+            "prompt": "There is/are zależy od rzeczownika po nim.",
+            "hint": "Two finals = plural."
+          },
+          "either-players": {
+            "prompt": "Either/or: czasownik zgadza się z najbliższym podmiotem.",
+            "hint": "Closest subject = players (plural)."
+          },
+          "pair-is": {
+            "prompt": "Fraza „pair of” liczy się jako liczba pojedyncza.",
+            "hint": "Pair = one set."
+          }
+        }
+      }
+    },
+    "englishPartsOfSpeech": {
+      "feedback": {
+        "roundPerfect": "Perfekcyjnie! Wszystkie słowa na miejscu."
+      },
+      "summary": {
+        "perfect": "Perfekcyjnie! Rozpoznajesz części mowy bezbłędnie.",
+        "good": "Świetnie! Jeszcze chwila i będzie idealnie.",
+        "retry": "Dobra robota! Spróbuj jeszcze raz i popraw wynik."
+      }
+    },
+    "geometryDrawing": {
+      "progressAriaLabel": "Dokładność w treningu figur",
+      "summary": {
+        "perfect": "Perfekcyjnie! Twoje figury są wzorowe.",
+        "good": "Świetna robota! Rysujesz coraz dokładniej.",
+        "retry": "Ćwicz dalej. Każda kolejna figura będzie lepsza."
+      }
+    },
+    "geometryBasics": {
+      "progressAriaLabel": "Dokładność w ćwiczeniach z podstaw geometrii",
+      "summary": {
+        "perfect": "Perfekcyjnie! Świetnie rozpoznajesz elementy geometrii.",
+        "good": "Bardzo dobrze! Jeszcze chwila i będzie perfekcyjnie.",
+        "retry": "Dobra próba! Spróbuj jeszcze raz, aby utrwalić pojęcia."
+      },
+      "inRound": {
+        "missionTitle": "Geo-misja: punkt, odcinek, bok, kąt",
+        "roundLabel": "Runda {current}/{total}",
+        "instruction": "Przeciągnij etykietę na oznaczone miejsce albo kliknij etykietę i potem planszę.",
+        "boardLabel": "Plansza",
+        "boardFilledAria": "Plansza: etykieta {label}",
+        "boardEmptyAria": "Plansza: upuść etykietę",
+        "dropLabel": "Upuść etykietę",
+        "labelsTitle": "Etykiety",
+        "poolLabel": "{count} w puli",
+        "poolEmpty": "Wszystkie etykiety użyte!",
+        "clear": "Wyczyść",
+        "check": "Sprawdź",
+        "next": "Dalej",
+        "seeResult": "Zobacz wynik",
+        "tileAria": "Etykieta: {label}",
+        "feedback": {
+          "correct": "Świetnie! To jest poprawna odpowiedź.",
+          "incorrect": "To nie to. Poprawnie: {label}."
+        },
+        "tiles": {
+          "point": "Punkt",
+          "segment": "Odcinek",
+          "side": "Bok",
+          "angle": "Kąt"
+        },
+        "rounds": {
+          "round-point": {
+            "title": "Punkt",
+            "prompt": "Rozpoznaj pojedyncze miejsce na planszy.",
+            "hint": "Punkt to jedna kropka bez długości i szerokości."
+          },
+          "round-segment": {
+            "title": "Odcinek",
+            "prompt": "Wskaż fragment łączący dwa punkty.",
+            "hint": "Odcinek ma początek i koniec — dwa punkty."
+          },
+          "round-side": {
+            "title": "Bok",
+            "prompt": "Znajdź bok figury.",
+            "hint": "Bok to odcinek należący do wielokąta."
+          },
+          "round-angle": {
+            "title": "Kąt",
+            "prompt": "Wskaż miejsce, gdzie spotykają się dwa odcinki.",
+            "hint": "Kąt to „rozwarcie” między ramionami."
+          }
+        }
+      }
+    },
+    "geometryPerimeter": {
+      "progressAriaLabel": "Skuteczność w grze o obwodach",
+      "summary": {
+        "perfect": "Perfekcyjnie! Obwody opanowane.",
+        "good": "Świetna robota! Jeszcze trochę i będzie perfekcja.",
+        "retry": "Dobra próba! Spróbuj ponownie."
+      },
+      "inRound": {
+        "keyboard": {
+          "started": "Rozpoczęto rysowanie klawiaturą.",
+          "finished": "Zakończono rysowanie klawiaturą.",
+          "cleared": "Wyczyszczono planszę i ustawiono kursor na środku.",
+          "restarted": "Rozpoczęto nową rundę obwodów.",
+          "ready": "Plansza gotowa do rysowania klawiaturą.",
+          "boardCleared": "Wyczyszczono planszę."
+        },
+        "errors": {
+          "noTask": "Brak zadania do oceny.",
+          "tooShort": "Narysuj figurę trochę dłużej, żeby można było ją ocenić.",
+          "tooSmall": "Narysuj większą figurę na kratkach.",
+          "alignToGrid": "Rysuj dokładnie po liniach kratki.",
+          "squareSize": "Spróbuj narysować kwadrat o boku {size} kratek.",
+          "rectangleSize": "Spróbuj narysować prostokąt {a} × {b} kratek.",
+          "adjustEdges": "Dopasuj boki dokładniej do linii kratki."
+        },
+        "feedback": {
+          "shapeAccepted": "Świetnie! Figura pasuje do zadania.",
+          "selectPerimeter": "Rysunek jest poprawny! Wybierz wynik obwodu.",
+          "pickAnswer": "Wybierz wynik obwodu.",
+          "correctPerimeter": "Brawo! Obwód to {perimeter} cm.",
+          "incorrectPerimeter": "Sprawdź obwód jeszcze raz. Poprawny wynik to {perimeter} cm."
+        },
+        "modeLabel": "Rysowanie obwodu",
+        "gridScale": "1 kratka = 1 cm",
+        "canvasAria": "Plansza do rysowania figury {shape}. Użyj myszy, dotyku lub klawiatury, aby narysować figurę.",
+        "canvasAriaFallback": "Plansza do rysowania figury.",
+        "drawOnGrid": "Rysuj po kratkach",
+        "inputHelp": "Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, a Escape czyści planszę.",
+        "clear": "Wyczyść",
+        "checkDrawing": "Sprawdź rysunek",
+        "checkPerimeter": "Sprawdź obwód",
+        "rounds": {
+          "square-3": {
+            "title": "Narysuj: kwadrat",
+            "hint": "Narysuj kwadrat o boku 3 kratki.",
+            "shapeName": "kwadrat"
+          },
+          "rect-6-4": {
+            "title": "Narysuj: prostokąt",
+            "hint": "Narysuj prostokąt 6 × 4 kratki.",
+            "shapeName": "prostokąt"
+          },
+          "rect-5-2": {
+            "title": "Narysuj: prostokąt",
+            "hint": "Narysuj prostokąt 5 × 2 kratki.",
+            "shapeName": "prostokąt"
+          },
+          "square-4": {
+            "title": "Narysuj: kwadrat",
+            "hint": "Narysuj kwadrat o boku 4 kratki.",
+            "shapeName": "kwadrat"
+          },
+          "rect-7-3": {
+            "title": "Narysuj: prostokąt",
+            "hint": "Narysuj prostokąt 7 × 3 kratki.",
+            "shapeName": "prostokąt"
+          }
+        },
+        "liveRegion": "Runda {current} z {total}. Narysuj figurę {shape}."
+      }
+    },
+    "geometrySymmetry": {
+      "progressAriaLabel": "Dokładność w grze o symetrii",
+      "summary": {
+        "perfect": "Idealnie! Twoje odbicia są perfekcyjne.",
+        "good": "Świetna robota! Symetria idzie Ci coraz lepiej.",
+        "retry": "Próbuj dalej — każda kolejna próba będzie dokładniejsza."
+      }
+    },
+    "subtractingGarden": {
+      "feedback": {
+        "correct": "Brawo! Zostało"
+      },
+      "summary": {
+        "perfect": "Idealnie! Odejmowanie masz w jednym palcu.",
+        "good": "Świetna robota!",
+        "retry": "Ćwicz dalej!"
+      }
+    },
+    "multiplicationArray": {
+      "summary": {
+        "title": "Zebrałeś {score}/{total} grup!",
+        "perfect": "Mistrz grupowania! Tabliczka zdobyta!",
+        "good": "Świetna robota! Prawie perfekcja!",
+        "retry": "Dobra próba! Graj dalej, aby ćwiczyć!"
+      },
+      "inRound": {
+        "header": "Dotknij każdą grupę, by ją zebrać!",
+        "collectedLabel": "Zebrane",
+        "targetLabel": "Cel",
+        "celebrationDetail": "{a} grup po {b} = {total} razem",
+        "progress": "Zebrane: {collected}/{total} grup — dotknij kolejną!"
+      }
+    },
+    "numberBalance": {
+      "summary": {
+        "solvedLabel": "Rozwiązane",
+        "averageTimeLabel": "Średni czas",
+        "opponentLabel": "Rywal",
+        "placeLabel": "Miejsce",
+        "outcome": {
+          "win": "Wygrana!",
+          "draw": "Remis!",
+          "loss": "Przegrana!"
+        }
+      },
+      "inRound": {
+        "errors": {
+          "start": "Nie udało się uruchomić meczu. Spróbuj ponownie.",
+          "save": "Nie udało się zapisać ruchu. Spróbuj ponownie."
+        },
+        "opponent": {
+          "ready": "Rywal: {score}",
+          "searching": "Rywal: ...",
+          "empty": "Rywal: -"
+        },
+        "waiting": {
+          "title": "Czekamy na drugiego gracza...",
+          "matchCode": "Kod meczu: {matchId}",
+          "copy": {
+            "idle": "Kopiuj kod",
+            "success": "Skopiowano!",
+            "error": "Nie udało się skopiować"
+          }
+        },
+        "selfLabel": "Ty: {score}",
+        "loading": "Ładowanie meczu...",
+        "player": {
+          "self": "Ty",
+          "other": "Gracz {index}"
+        },
+        "rank": "Miejsce: {rank}/{total}",
+        "leader": "Liderujesz",
+        "gap": "Strata do lidera: {scoreGap}",
+        "leaderBadge": "Lider",
+        "targetLabel": "Cel: {target}",
+        "sumLabel": "Suma: {sum}",
+        "instruction": "Przeciągnij liczby do obu stron, aby zgadzały się z celami.",
+        "aria": {
+          "leftSide": "Lewa strona wagi",
+          "rightSide": "Prawa strona wagi",
+          "tray": "Taca z liczbami"
+        },
+        "tileAria": "Liczba {value}",
+        "countdown": "Start za {seconds}…"
+      }
+    },
+    "kangurGame": {
+      "actions": {
+        "retry": "Spróbuj ponownie 🔁",
+        "menu": "Menu"
+      },
+      "summary": {
+        "perfect": "Idealny wynik! Jesteś mistrzem Kangura! 🦘",
+        "good": "Świetnie! Gotowy/a na konkurs!",
+        "fair": "Dobra robota! Ćwicz dalej!",
+        "retry": "Nie poddawaj się! Spróbuj jeszcze raz!"
+      }
+    },
+    "kangurExam": {
+      "actions": {
+        "backToMenu": "Wróć do menu"
+      },
+      "progressAriaLabel": "Dokładność odpowiedzi w teście Kangur",
+      "summary": {
+        "perfect": "Idealny wynik! Jesteś mistrzem Kangura! 🦘",
+        "good": "Świetnie! Gotowy/a na konkurs!",
+        "fair": "Dobra robota! Ćwicz dalej!",
+        "retry": "Nie poddawaj się! Spróbuj jeszcze raz!"
+      }
+    },
+    "resultScreen": {
+      "heading": "Świetna robota",
+      "starsAria": "Ocena: {stars} z 3 gwiazdek.",
+      "progressAriaLabel": "Dokładność odpowiedzi",
+      "summary": {
+        "perfect": "Idealny wynik! Jesteś gwiazdą matematyki! 🌟",
+        "excellent": "Niesamowita robota! Tak trzymaj! 🎉",
+        "good": "Dobra robota! Ćwiczenie czyni mistrza! 💪",
+        "retry": "Próbuj dalej. Dasz radę! 🚀"
+      },
+      "stats": {
+        "score": "Wynik",
+        "accuracy": "Dokładność",
+        "time": "Czas",
+        "topic": "Temat"
+      },
+      "actions": {
+        "restart": "Zagraj ponownie",
+        "home": "Strona główna"
+      },
+      "operations": {
+        "addition": "Dodawanie",
+        "subtraction": "Odejmowanie",
+        "multiplication": "Mnożenie",
+        "division": "Dzielenie",
+        "decimals": "Ułamki",
+        "powers": "Potęgi",
+        "roots": "Pierwiastki",
+        "clock": "Zegar",
+        "mixed": "Mieszane"
+      }
+    },
+    "clockTraining": {
+      "mode": {
+        "label": "Tryb",
+        "challenge": "Wyzwanie",
+        "practice": "Nauka"
+      },
+      "bestStreak": "Najlepsza seria",
+      "adaptiveRetries": "Powtórki adaptacyjne",
+      "progressAriaLabel": "Dokładność w treningu zegara",
+      "summary": {
+        "hours": {
+          "perfect": "Świetnie! Pewnie odczytujesz pełne godziny.",
+          "retry": "Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę."
+        },
+        "minutes": {
+          "perfect": "Świetnie! Długa wskazówka i minuty są już pod kontrolą.",
+          "retry": "Poćwicz jeszcze minuty, licząc kreski po 5 wokół tarczy."
+        },
+        "combined": {
+          "perfect": "Świetnie! Łączysz godziny i minuty w pełny odczyt czasu.",
+          "retry": "Poćwicz jeszcze wspólne ustawianie godzin i minut."
+        },
+        "default": {
+          "perfect": "Idealnie! Świetnie znasz zegar!",
+          "retry": "Ćwicz dalej, a będziesz mistrzem zegara!"
+        }
+      }
+    }
+  },
+  "KangurDuels": {
+    "common": {
+      "status": {
+        "session": {
+          "created": "Utworzony",
+          "waiting": "Czeka na graczy",
+          "ready": "Gotowy do startu",
+          "in_progress": "W trakcie",
+          "completed": "Zakonczony",
+          "aborted": "Przerwany"
+        },
+        "player": {
+          "invited": "Zaproszony",
+          "ready": "Gotowy",
+          "playing": "Gra",
+          "completed": "Zakonczono",
+          "left": "Opuscil"
+        }
+      },
+      "mode": {
+        "challenge": "Wyzwanie",
+        "quick_match": "Szybki pojedynek"
+      },
+      "operation": {
+        "addition": "Dodawanie",
+        "subtraction": "Odejmowanie",
+        "multiplication": "Mnozenie",
+        "division": "Dzielenie"
+      },
+      "difficulty": {
+        "easy": "Latwy",
+        "medium": "Sredni",
+        "hard": "Trudny"
+      },
+      "winner": {
+        "completed": "Pojedynek zakonczony.",
+        "score": "Wynik: {name}",
+        "wins": "Wygrywa {name}!",
+        "tie": "Remis!"
+      },
+      "relative": {
+        "missingData": "brak danych",
+        "justNow": "przed chwila",
+        "secondsAgo": "{count}s temu",
+        "minutesAgo": "{count} min temu",
+        "hoursAgo": "{count} godz. temu",
+        "daysAgo": "{count} dni temu"
+      }
+    },
+    "lobby": {
+      "countLabel": "{count} aktywnych",
+      "heading": "Lobby pojedynkow",
+      "description": "Wybierz ucznia, ktory czeka na pojedynek albo dodaj wlasne wyzwanie.",
+      "loading": "Ladowanie lobby pojedynkow...",
+      "publicListAria": "Publiczne pojedynki",
+      "publicCardAria": "Publiczne wyzwanie od {name}. {operation}, {difficulty}. {questionCount} pytan, {seconds} sekund na pytanie.",
+      "publicJoinAria": "Dolacz do pojedynku z {name}",
+      "publicLoginToJoinAria": "Zaloguj sie, aby dolaczyc do pojedynku z {name}",
+      "invite": {
+        "heading": "Zaproszenia",
+        "description": "Prywatne pojedynki, do ktorych zostales zaproszony.",
+        "listAria": "Zaproszenia prywatne",
+        "cardAria": "Prywatne zaproszenie od {name}. {operation}, {difficulty}. {questionCount} pytan, {seconds} sekund na pytanie.",
+        "meta": "Zaproszenie prywatne • {updated}",
+        "joinAria": "Dolacz do prywatnego pojedynku z {name}",
+        "loginToJoinAria": "Zaloguj sie, aby dolaczyc do prywatnego pojedynku z {name}"
+      },
+      "chips": {
+        "fresh": "Nowe",
+        "private": "Prywatny",
+        "public": "Publiczny",
+        "refreshPaused": "Odswiezanie wstrzymane",
+        "offline": "Brak polaczenia",
+        "connectionProblem": "Problem z polaczeniem",
+        "connectingLive": "Laczymy na zywo",
+        "live": "Na zywo",
+        "stale": "Dane moga byc nieaktualne"
+      },
+      "meta": {
+        "questionCount": "{count} pytan",
+        "secondsPerQuestion": "{seconds}s / pytanie",
+        "secondsCompact": "{seconds}s",
+        "estimatedDuration": "≈ {duration}",
+        "updated": "Aktualizacja {value}",
+        "fallbackEvery": "Awaryjnie co {seconds}s",
+        "autoEvery": "Auto co {seconds}s",
+        "visibleCount": "Widocznych: {count}",
+        "waitingForOpponent": "Czeka na przeciwnika • {updated}"
+      },
+      "guestBanner": {
+        "description": "Lobby jest widoczne dla gosci. Zaloguj sie, aby dolaczac do pojedynkow i tworzyc wlasne wyzwania."
+      },
+      "filters": {
+        "mode": {
+          "label": "Tryb",
+          "aria": "Filtruj lobby po trybie pojedynku",
+          "all": "Wszystkie tryby",
+          "challenge": "Wyzwania",
+          "quickMatch": "Szybkie pojedynki"
+        },
+        "operation": {
+          "label": "Dzialanie",
+          "aria": "Filtruj lobby po dzialaniu",
+          "all": "Wszystkie dzialania"
+        },
+        "difficulty": {
+          "label": "Poziom",
+          "aria": "Filtruj lobby po poziomie",
+          "all": "Wszystkie poziomy"
+        },
+        "sort": {
+          "label": "Sortowanie",
+          "aria": "Sortuj publiczne pojedynki",
+          "recent": "Najswiezsze",
+          "timeFast": "Najkrotszy czas",
+          "timeSlow": "Najdluzszy czas",
+          "questionsLow": "Najmniej pytan",
+          "questionsHigh": "Najwiecej pytan"
+        }
+      },
+      "empty": {
+        "noEntries": "Brak uczniow oczekujacych na pojedynek.",
+        "noMatches": "Brak wyzwan dla wybranego filtra."
+      },
+      "buttons": {
+        "refreshAria": "Odswiez lobby pojedynkow",
+        "refresh": "Odswiez",
+        "refreshing": "Odswiezamy...",
+        "retry": "Sprobuj ponownie",
+        "join": "Dolacz",
+        "connecting": "Laczymy...",
+        "loginToJoin": "Zaloguj sie, aby dolaczyc",
+        "loginToPlay": "Zaloguj sie, aby zagrac",
+        "createChallenge": "Stworz wlasne wyzwanie",
+        "loginToCreate": "Zaloguj sie, aby dodac wyzwanie",
+        "showAll": "Pokaz wszystkie"
+      }
+    },
+    "chat": {
+      "heading": "Czat lobby",
+      "description": "Porozmawiaj z graczami, zanim dolaczysz do pojedynku.",
+      "unreadButton": "Nowe wiadomosci ({count})",
+      "updated": "Aktualizacja {value}",
+      "refreshAria": "Odswiez czat lobby",
+      "refresh": "Odswiez",
+      "refreshing": "Odswiezamy...",
+      "empty": "Brak wiadomosci. Napisz pierwsza, aby rozpoczac rozmowe.",
+      "loadingOlder": "Ladujemy...",
+      "loadOlder": "Zaladuj starsze",
+      "you": "Ty",
+      "loginPrompt": "Zaloguj sie, aby pisac na czacie.",
+      "loginButton": "Zaloguj sie",
+      "messageAria": "Wiadomosc na czacie lobby",
+      "sending": "Wysylamy...",
+      "send": "Wyslij",
+      "remainingCharacters": "Pozostalo {count} znakow",
+      "offlineNotice": "Brak polaczenia z internetem.",
+      "chips": {
+        "offline": "Offline",
+        "live": "Na zywo",
+        "refreshing": "Odswiezanie"
+      },
+      "placeholders": {
+        "paused": "Czat jest wstrzymany.",
+        "default": "Napisz wiadomosc do lobby...",
+        "loginRequired": "Zaloguj sie, aby pisac"
+      }
+    },
+    "homeInvites": {
+      "loadError": "Nie udalo sie pobrac zaproszen do pojedynkow.",
+      "heading": "Zaproszenia do pojedynku",
+      "description": "Prywatne wyzwania od innych graczy.",
+      "sendInvite": "Wyslij zaproszenie",
+      "loading": "Ladujemy zaproszenia...",
+      "listAria": "Zaproszenia do pojedynku",
+      "cardAria": "Zaproszenie od {name}",
+      "meta": "{operation} • {difficulty} • {questionCount} pytan • {seconds}s / pytanie • {updated}",
+      "join": "Dolacz",
+      "empty": "Brak zaproszen. Wyslij wlasne wyzwanie, aby zaprosic znajomych."
+    }
+  },
+  "KangurAssignmentPanel": {
+    "heading": "Zadania",
+    "empty": "Brak proponowanych zadan. Zbierz najpierw troche postepu ucznia.",
+    "target": "Cel: {target}",
+    "completion": {
+      "none": "Brak zadan",
+      "allCompleted": "Wszystkie zadania ukonczone",
+      "progress": "Ukonczono {completed}/{total}"
+    },
+    "toggle": {
+      "markDone": "Oznacz {title} jako ukonczone",
+      "markUndone": "Oznacz {title} jako nieukonczone"
+    },
+    "priority": {
+      "high": "Priorytet wysoki",
+      "medium": "Priorytet sredni",
+      "low": "Priorytet niski"
+    }
+  },
+  "KangurAssignmentSuggestions": {
+    "actions": {
+      "openLesson": "Otworz lekcje",
+      "startTraining": "Uruchom trening",
+      "repeatLesson": "Powtorz lekcje"
+    },
+    "starter": {
+      "title": "Pierwsza lekcja startowa",
+      "description": "Uruchom pierwsza lekcje, aby zaczac zbierac dane o mocnych stronach ucznia.",
+      "target": "1 lekcja",
+      "progressLabel": "Postep: 0/1 lekcja",
+      "questLabel": "Misja startowa"
+    },
+    "retry": {
+      "title": "{emoji} Powtorka: {title}",
+      "descriptionCritical": "To jeden z najslabszych obszarow ({masteryPercent}%). Potrzebna jest szybka powtorka i kolejna proba.",
+      "descriptionDefault": "Lekcja ma jeszcze rezerwe ({masteryPercent}%). Jedna powtorka powinna ustabilizowac wynik.",
+      "targetPrimary": "1 powtorka + wynik min. 75%",
+      "targetSecondary": "1 powtorka + wynik min. 80%",
+      "progressLabel": "Postep: {masteryPercent}% / {targetPercent}%",
+      "questLabelCritical": "Misja ratunkowa",
+      "questLabelDefault": "Misja powtorkowa"
+    },
+    "mixed": {
+      "title": "Trening mieszany",
+      "descriptionNeedsPractice": "Po powtorkach uruchom trening mieszany, aby sprawdzic, czy umiejetnosci przenosza sie do praktyki.",
+      "descriptionDefault": "Podtrzymaj rytm nauki krotszym treningiem mieszanym obejmujacym kilka typow zadan.",
+      "target": "{questionCount} pytan",
+      "progressLabel": "Rytm dnia: {gamesPlayed} gier",
+      "progressLabelEmpty": "Rytm dnia: zacznij od pierwszej gry",
+      "questLabelNeedsPractice": "Misja dnia",
+      "questLabelDefault": "Quest rytmu"
+    },
+    "retain": {
+      "title": "{emoji} Utrwal mocna strone",
+      "description": "{title} jest stabilna ({masteryPercent}%). Krotkie utrwalenie pomoze utrzymac poziom.",
+      "target": "1 szybka powtorka",
+      "progressLabel": "Opanowanie: {masteryPercent}%",
+      "questLabel": "Quest utrwalenia"
+    }
+  },
+  "KangurGameRecommendations": {
+    "trainingSetup": {
+      "training": {
+        "starter": {
+          "description": "Lagodny start z dwiema kategoriami pomoze zlapac rytm bez przeciazenia na pierwszej sesji.",
+          "label": "Start",
+          "title": "Polecany trening na start"
+        },
+        "weakestLesson": {
+          "description": "Najslabszy temat to {title} ({masteryPercent}%). Jedna skupiona sesja szybciej odbuduje ten obszar.",
+          "label": "Nadrabiamy lekcje",
+          "title": "Polecany trening: {title}"
+        },
+        "topActivity": {
+          "description": "{activity} daje teraz srednio {averageXpPerSession} XP na gre. To najmocniejszy kandydat na kolejna sesje.",
+          "label": "Mocna passa",
+          "title": "Polecany trening: {activity}"
+        },
+        "mixed": {
+          "descriptionWithTrack": "Tor {track} jest najblizej kolejnej odznaki. Mieszany trening najlepiej podtrzyma postep w kilku kategoriach naraz.",
+          "descriptionDefault": "Mieszany trening utrzyma rytm i pomoze zlapac kolejne punkty XP w kilku kategoriach naraz.",
+          "labelTrack": "Tor odznak",
+          "labelDefault": "Tempo",
+          "title": "Polecany trening mieszany"
+        }
+      },
+      "mode": {
+        "gentle": {
+          "description": "Latwiejszy zestaw treningowy pozwoli wejsc w formule Kangura bez zbyt ostrego progu trudnosci.",
+          "label": "Lagodny start",
+          "title": "Polecamy zaczac od treningu 3-punktowego"
+        },
+        "competitionReady": {
+          "description": "Masz mocne tempo i wysoka skutecznosc. Pelny test konkursowy powinien dac najlepszy progres.",
+          "label": "Gotowosc konkursowa",
+          "title": "Polecamy pelny test konkursowy"
+        },
+        "challenge": {
+          "description": "Twoja skutecznosc jest juz wysoka. Zestaw za 5 punktow da lepsze wyzwanie i mocniejsza nagrode.",
+          "label": "Wyzwanie",
+          "title": "Polecamy zestaw 5-punktowy"
+        },
+        "strongStep": {
+          "description": "Sredni poziom trudnosci najlepiej podbije wynik bez zbyt ostrego skoku.",
+          "label": "Mocny krok",
+          "title": "Polecamy zestaw 4-punktowy"
+        },
+        "steadyStep": {
+          "description": "Zestaw 3-punktowy da jeszcze konkursowy rytm, ale pozostanie bezpieczniejszy niz trudniejsze warianty.",
+          "label": "Pewny krok",
+          "title": "Polecamy zestaw 3-punktowy"
+        }
+      },
+      "activityLabels": {
+        "addition": "Dodawanie",
+        "subtraction": "Odejmowanie",
+        "multiplication": "Mnozenie",
+        "division": "Dzielenie",
+        "decimals": "Ulamki",
+        "powers": "Potegi",
+        "roots": "Pierwiastki",
+        "mixed": "Trening mieszany",
+        "clock": "Zegar",
+        "calendar": "Kalendarz",
+        "geometry": "Geometria",
+        "logical": "Logiczne myslenie",
+        "english_basics": "Podstawy angielskiego",
+        "english_parts_of_speech": "Czesci mowy",
+        "english_sentence_structure": "Skladnia zdania",
+        "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
+        "english_prepositions_time_place": "Przyimki czasu i miejsca"
+      }
+    },
+    "setupMomentum": {
+      "quest": {
+        "titleCompleted": "Misja dnia czeka na odbior",
+        "titleTraining": "Ta sesja przybliza misje dnia",
+        "titleKangur": "Ta runda moze domknac misje dnia",
+        "label": "Misja dnia"
+      },
+      "guided": {
+        "descriptionKangur": "Ta runda pcha polecany kierunek do odznaki {badge}. {summary}.",
+        "descriptionTraining": "Ta sesja pcha polecany kierunek do odznaki {badge}. {summary}.",
+        "label": "Polecony kierunek",
+        "titleKangur": "Zagraj zgodnie z rytmem",
+        "titleTraining": "Dopnij polecany kierunek"
+      },
+      "nextBadge": {
+        "descriptionKangur": "Mocny wynik w tej rundzie przybliza odznake {badge}. {summary}.",
+        "descriptionTraining": "Ta sesja pcha odznake {badge}. {summary}.",
+        "label": "Nastepna odznaka",
+        "titleKangur": "Zagraj o kolejny prog",
+        "titleTraining": "Rozpedz kolejna nagrode"
+      },
+      "streak": {
+        "descriptionStart": "Jedna dobra sesja dzisiaj uruchomi nowa serie i podbije tempo nauki.",
+        "descriptionContinue": "Masz serie {streak}. Jeszcze jedna mocna runda utrwali rytm dnia.",
+        "label": "Seria",
+        "titleStart": "Zbuduj rytm od nowa",
+        "titleContinue": "Domknij kolejny krok serii"
+      },
+      "pace": {
+        "description": "Twoje aktualne tempo to {averageXpPerSession} XP na gre. Ta sesja pomoze utrzymac dobra passe.",
+        "label": "Tempo",
+        "titleKangur": "Wejdz z dobrym tempem",
+        "titleTraining": "Utrzymaj mocne tempo"
+      },
+      "chips": {
+        "streak": "Seria: {streak}",
+        "pace": "Tempo: {averageXpPerSession} XP / gre"
+      }
+    },
+    "homeMomentum": {
+      "actions": {
+        "openLesson": "Otworz lekcje",
+        "playNow": "Zagraj teraz",
+        "startTraining": "Uruchom trening"
+      },
+      "weakestLesson": {
+        "description": "Opanowanie {masteryPercent}%. Jedna krotka powtorka tej lekcji szybciej domknie kolejny prog mistrzostwa.",
+        "priorityHigh": "Priorytet wysoki",
+        "priorityMedium": "Priorytet sredni",
+        "title": "Dzis warto: {title}"
+      },
+      "streak": {
+        "descriptionStart": "Jedna krotka gra dzisiaj uruchomi nowa serie i pomoze podtrzymac rytm nauki.",
+        "descriptionContinue": "Masz serie {streak}. Jeszcze jedna mocna runda dzisiaj ja rozpedzi.",
+        "priority": "Priorytet sredni",
+        "titleStart": "Zbuduj serie na nowo",
+        "titleContinue": "Rozpedz aktualna serie"
+      },
+      "guided": {
+        "descriptionWithActivity": "Masz juz {summary} w poleconym rytmie. Jeszcze jedna mocna runda {activity} przybliza odznake {nextBadgeName}.",
+        "descriptionDefault": "Masz juz {summary} w poleconym rytmie. Jeszcze jedna mocna runda przybliza odznake {nextBadgeName}.",
+        "priority": "Polecony kierunek",
+        "title": "Dopnij: {nextBadgeName}"
+      },
+      "track": {
+        "descriptionWithActivity": "Najblizej jest teraz tor {track}. Do odznaki {badge} brakuje: {summary}. Najszybciej podbije to {activity}.",
+        "descriptionDefault": "Najblizej jest teraz tor {track}. Do odznaki {badge} brakuje: {summary}.",
+        "priority": "Tempo postepu",
+        "title": "Domknij tor: {track}"
+      },
+      "fallback": {
+        "description": "{activity} daje teraz srednio {averageXpPerSession} XP na gre. To najlepszy kandydat na kolejny mocny ruch.",
+        "priority": "Dobra passa",
+        "title": "Utrzymaj tempo w: {activity}"
+      }
+    },
+    "operationSelector": {
+      "actions": {
+        "playAddition": "Zagraj w dodawanie",
+        "playSubtraction": "Zagraj w odejmowanie",
+        "playMultiplication": "Zagraj w mnozenie",
+        "playDivision": "Zagraj w dzielenie",
+        "playClock": "Zagraj na zegarze",
+        "startMixedTraining": "Uruchom trening mieszany",
+        "playFractions": "Zagraj we ulamki",
+        "playPowers": "Zagraj w potegi",
+        "playRoots": "Zagraj w pierwiastki",
+        "practiceCalendar": "Cwicz kalendarz",
+        "practiceGeometry": "Cwicz figury",
+        "practiceSubtraction": "Cwicz odejmowanie",
+        "practiceDivision": "Cwicz dzielenie",
+        "practiceMultiplication": "Cwicz mnozenie",
+        "startTraining": "Uruchom trening",
+        "playNow": "Zagraj teraz"
+      },
+      "quest": {
+        "label": "Misja dnia"
+      },
+      "weakestLesson": {
+        "description": "Opanowanie {masteryPercent}%. Jedna dobra runda pomoze szybciej domknac ten temat przed kolejna lekcja.",
+        "label": "Nadrabiamy lekcje",
+        "title": "Najpierw popraw: {title}"
+      },
+      "track": {
+        "descriptionWithActivity": "Tor {track} jest najblizej nagrody. Najmocniej pcha go teraz {activity}.",
+        "descriptionDefault": "Tor {track} jest najblizej kolejnej odznaki.",
+        "label": "Tor odznak",
+        "title": "Rozpedz tor: {track}"
+      },
+      "guided": {
+        "descriptionWithActivity": "Masz juz {summary} w polecanym rytmie. Jeszcze jedna mocna runda {activity} pomoze domknac odznake {nextBadgeName}.",
+        "descriptionDefault": "Masz juz {summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoze domknac odznake {nextBadgeName}.",
+        "label": "Polecony kierunek",
+        "title": "Dopnij: {nextBadgeName}"
+      },
+      "fallback": {
+        "description": "{activity} daje teraz srednio {averageXpPerSession} XP na gre. To najlepszy ruch na kolejna runde.",
+        "label": "Mocna passa",
+        "title": "Zagraj dalej w: {activity}"
+      }
+    },
+    "activityLabels": {
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnozenie",
+      "division": "Dzielenie",
+      "decimals": "Ulamki",
+      "powers": "Potegi",
+      "roots": "Pierwiastki",
+      "mixed": "Trening mieszany",
+      "clock": "Zegar",
+      "calendar": "Kalendarz",
+      "geometry": "Geometria",
+      "logical": "Logiczne myslenie",
+      "english_basics": "Podstawy angielskiego",
+      "english_parts_of_speech": "Czesci mowy",
+      "english_sentence_structure": "Skladnia zdania",
+      "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
+      "english_prepositions_time_place": "Przyimki czasu i miejsca"
     }
   }
 }

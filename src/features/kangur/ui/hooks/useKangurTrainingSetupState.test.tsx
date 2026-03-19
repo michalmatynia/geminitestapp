@@ -17,14 +17,14 @@ describe('useKangurTrainingSetupState', () => {
     );
 
     expect(result.current.categoryOptions.filter((option) => option.selected)).toHaveLength(7);
-    expect(result.current.toggleAllLabel).toBe('Odznacz wszystkie');
+    expect(result.current.toggleAllLabel).toBe('toggleAll.clear');
 
     act(() => {
       result.current.toggleAllCategories();
     });
 
     expect(result.current.categoryOptions.filter((option) => option.selected)).toHaveLength(1);
-    expect(result.current.toggleAllLabel).toBe('Zaznacz wszystkie');
+    expect(result.current.toggleAllLabel).toBe('toggleAll.selectAll');
 
     act(() => {
       result.current.countOptions.find((option) => option.value === 20)?.select();

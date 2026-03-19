@@ -267,7 +267,9 @@ const resolveImageAsset = async (
     return { buffer: Buffer.from(arrayBuffer), contentType };
   }
 
-  const diskPath = getDiskPathFromPublicPath(source);
+  // Absolute temp paths (e.g. /var/tmp/libapp-uploads/...) are read directly;
+  // relative public paths go through getDiskPathFromPublicPath.
+  const diskPath = source.startsWith('/var/tmp/') ? source : getDiskPathFromPublicPath(source);
   const buffer = await fs.readFile(diskPath);
   const lookup = mime.lookup(diskPath);
   const inferredType = resolveContentType(typeof lookup === 'string' ? lookup : null);

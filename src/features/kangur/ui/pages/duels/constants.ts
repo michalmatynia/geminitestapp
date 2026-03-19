@@ -5,8 +5,6 @@ import {
 } from '@/features/kangur/shared/duels-config';
 import {
   DUEL_DIFFICULTY_EMOJIS,
-  DUEL_DIFFICULTY_LABELS,
-  DUEL_OPERATION_LABELS,
   DUEL_OPERATION_SYMBOLS,
 } from './duels-helpers';
 import type {
@@ -45,15 +43,44 @@ export const DUEL_QUESTION_COUNT_OPTIONS = [3, 5, 8, 10, 12, 15, 20] as const;
 export const DUEL_TIME_PER_QUESTION_OPTIONS = [5, 10, 15, 20, 30, 45, 60] as const;
 export const DUEL_BEST_OF_OPTIONS = [1, 3, 5, 7] as const;
 
+const DUEL_OPERATION_OPTION_LABELS: Record<KangurDuelOperation, string> = {
+  addition: 'Addition',
+  subtraction: 'Subtraction',
+  multiplication: 'Multiplication',
+  division: 'Division',
+};
+
+const DUEL_DIFFICULTY_OPTION_LABELS: Record<KangurDuelDifficulty, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+};
+
 export const DUEL_OPERATION_OPTIONS: Array<{
   value: KangurDuelOperation;
   label: string;
   symbol: string;
 }> = [
-  { value: 'addition', label: DUEL_OPERATION_LABELS.addition, symbol: DUEL_OPERATION_SYMBOLS.addition },
-  { value: 'subtraction', label: DUEL_OPERATION_LABELS.subtraction, symbol: DUEL_OPERATION_SYMBOLS.subtraction },
-  { value: 'multiplication', label: DUEL_OPERATION_LABELS.multiplication, symbol: DUEL_OPERATION_SYMBOLS.multiplication },
-  { value: 'division', label: DUEL_OPERATION_LABELS.division, symbol: DUEL_OPERATION_SYMBOLS.division },
+  {
+    value: 'addition',
+    label: DUEL_OPERATION_OPTION_LABELS.addition,
+    symbol: DUEL_OPERATION_SYMBOLS.addition,
+  },
+  {
+    value: 'subtraction',
+    label: DUEL_OPERATION_OPTION_LABELS.subtraction,
+    symbol: DUEL_OPERATION_SYMBOLS.subtraction,
+  },
+  {
+    value: 'multiplication',
+    label: DUEL_OPERATION_OPTION_LABELS.multiplication,
+    symbol: DUEL_OPERATION_SYMBOLS.multiplication,
+  },
+  {
+    value: 'division',
+    label: DUEL_OPERATION_OPTION_LABELS.division,
+    symbol: DUEL_OPERATION_SYMBOLS.division,
+  },
 ];
 
 export const DUEL_DIFFICULTY_OPTIONS: Array<{
@@ -61,9 +88,9 @@ export const DUEL_DIFFICULTY_OPTIONS: Array<{
   label: string;
   emoji: string;
 }> = [
-  { value: 'easy', label: DUEL_DIFFICULTY_LABELS.easy, emoji: DUEL_DIFFICULTY_EMOJIS.easy },
-  { value: 'medium', label: DUEL_DIFFICULTY_LABELS.medium, emoji: DUEL_DIFFICULTY_EMOJIS.medium },
-  { value: 'hard', label: DUEL_DIFFICULTY_LABELS.hard, emoji: DUEL_DIFFICULTY_EMOJIS.hard },
+  { value: 'easy', label: DUEL_DIFFICULTY_OPTION_LABELS.easy, emoji: DUEL_DIFFICULTY_EMOJIS.easy },
+  { value: 'medium', label: DUEL_DIFFICULTY_OPTION_LABELS.medium, emoji: DUEL_DIFFICULTY_EMOJIS.medium },
+  { value: 'hard', label: DUEL_DIFFICULTY_OPTION_LABELS.hard, emoji: DUEL_DIFFICULTY_EMOJIS.hard },
 ];
 
 export const DUEL_OPERATION_VALUES = new Set<KangurDuelOperation>(

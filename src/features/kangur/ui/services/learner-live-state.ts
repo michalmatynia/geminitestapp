@@ -7,9 +7,9 @@ const ONLINE_THRESHOLD_MS = 2 * 60 * 1000;
 const RECENT_THRESHOLD_MS = 15 * 60 * 1000;
 
 const ACTIVITY_KIND_LABELS: Record<string, string> = {
-  game: 'Gra',
-  lesson: 'Lekcja',
-  test: 'Test',
+  game: 'hero.activity.kind.game',
+  lesson: 'hero.activity.kind.lesson',
+  test: 'hero.activity.kind.test',
 };
 
 type LiveStateSource = 'observability' | 'activity_log' | 'monitoring' | 'none';
@@ -45,6 +45,8 @@ type BuildKangurLearnerLiveStateInput = {
   progress: Pick<KangurProgressState, 'openedTasks' | 'lessonPanelProgress'>;
   lessons: Array<Pick<KangurLesson, 'componentId' | 'title'>>;
   basePath: string;
+  locale: string;
+  translate: (key: string, values?: Record<string, string | number>) => string;
   now?: Date;
 };
 
@@ -64,7 +66,7 @@ const normalizeLabel = (value: string | null | undefined, fallback: string): str
   return fallback.replace(/_/g, ' ').trim();
 };
 
-const formatRelativeTime = (timestampMs: number, nowMs: number): string | null => {
+const formatRelativeTime = (timestampMs: number, nowMs: number, locale: string): string | null => {
   if (!Number.isFinite(timestampMs) || !Number.isFinite(nowMs)) {
     return null;
   }
@@ -72,19 +74,20 @@ const formatRelativeTime = (timestampMs: number, nowMs: number): string | null =
   if (diffMs < 0) {
     return null;
   }
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   if (diffMs < 45 * 1000) {
-    return 'przed chwilą';
+    return formatter.format(0, 'second');
   }
   const diffMinutes = Math.max(1, Math.round(diffMs / (60 * 1000)));
   if (diffMinutes < 60) {
-    return `${diffMinutes} min temu`;
+    return formatter.format(-diffMinutes, 'minute');
   }
   const diffHours = Math.max(1, Math.round(diffMinutes / 60));
   if (diffHours < 24) {
-    return `${diffHours} godz. temu`;
+    return formatter.format(-diffHours, 'hour');
   }
   const diffDays = Math.max(1, Math.round(diffHours / 24));
-  return `${diffDays} dni temu`;
+  return formatter.format(-diffDays, 'day');
 };
 
 const appendTimeHint = (description: string, timeLabel: string | null): string => {
@@ -123,7 +126,8 @@ const resolveLatestOpenedTask = (
 const resolveLatestMonitoringEntry = (
   lessonPanelProgress: NonNullable<KangurProgressState['lessonPanelProgress']>,
   lessonsById: Map<string, Pick<KangurLesson, 'componentId' | 'title'>>,
-  basePath: string
+  basePath: string,
+  lessonFallbackLabel: string
 ): LiveStateCandidate | null => {
   let latest: LiveStateCandidate | null = null;
   Object.entries(lessonPanelProgress).forEach(([lessonKey, sections]) => {
@@ -135,7 +139,7 @@ const resolveLatestMonitoringEntry = (
         return;
       }
       if (!latest || updatedAtMs > latest.updatedAtMs) {
-        const lessonTitle = lessonsById.get(lessonKey)?.title ?? 'Lekcja';
+        const lessonTitle = lessonsById.get(lessonKey)?.title ?? lessonFallbackLabel;
         const sectionLabel = normalizeLabel(entry.label, sectionId);
         latest = {
           source: 'monitoring',
@@ -155,37 +159,50 @@ const resolveLatestMonitoringEntry = (
 
 const resolveCandidateDescription = (
   candidate: LiveStateCandidate,
-  status: LiveStateStatus
+  status: LiveStateStatus,
+  translate: BuildKangurLearnerLiveStateInput['translate']
 ): string => {
   const isOnline = status === 'online';
   const title = candidate.title?.trim() ?? '';
 
   if (candidate.source === 'observability') {
     if (title) {
-      return isOnline ? `Aktualnie: ${title}.` : `Ostatnio: ${title}.`;
+      return translate(
+        isOnline
+          ? 'hero.activity.description.observability.currentWithTitle'
+          : 'hero.activity.description.observability.recentWithTitle',
+        { title }
+      );
     }
     return isOnline
-      ? 'Uczeń jest aktywny w aplikacji.'
-      : 'Brak bieżącej aktywności w aplikacji.';
+      ? translate('hero.activity.description.observability.currentGeneric')
+      : translate('hero.activity.description.observability.offlineGeneric');
   }
 
   if (candidate.source === 'activity_log') {
     if (title) {
-      return isOnline ? `Niedawno otwarte: ${title}.` : `Ostatnio otwarte zadanie: ${title}.`;
+      return translate(
+        isOnline
+          ? 'hero.activity.description.activityLog.currentWithTitle'
+          : 'hero.activity.description.activityLog.recentWithTitle',
+        { title }
+      );
     }
-    const kindLabel = ACTIVITY_KIND_LABELS[candidate.kind ?? ''] ?? 'Aktywność';
-    const normalized = kindLabel.toLowerCase();
+    const kindLabel = translate(
+      ACTIVITY_KIND_LABELS[candidate.kind ?? ''] ?? 'hero.activity.kind.default'
+    );
     return isOnline
-      ? `Niedawno otwarta ${normalized}.`
-      : `Ostatnio otwarta ${normalized}.`;
+      ? translate('hero.activity.description.activityLog.currentByKind', { kind: kindLabel })
+      : translate('hero.activity.description.activityLog.recentByKind', { kind: kindLabel });
   }
 
-  const lessonTitle = candidate.context?.lessonTitle ?? (title || 'Lekcja');
+  const lessonTitle =
+    candidate.context?.lessonTitle ?? (title || translate('hero.activity.lessonFallback'));
   const sectionLabel = candidate.context?.sectionLabel;
   const detail = sectionLabel ? `${lessonTitle} · ${sectionLabel}` : lessonTitle;
   return isOnline
-    ? `Aktywność w panelach: ${detail}.`
-    : `Ostatnia sesja w panelach: ${detail}.`;
+    ? translate('hero.activity.description.monitoring.currentWithDetail', { detail })
+    : translate('hero.activity.description.monitoring.recentWithDetail', { detail });
 };
 
 export const buildKangurLearnerLiveState = (
@@ -230,7 +247,8 @@ export const buildKangurLearnerLiveState = (
   const latestMonitoringEntry = resolveLatestMonitoringEntry(
     lessonPanelProgress,
     lessonsById,
-    input.basePath
+    input.basePath,
+    input.translate('hero.activity.lessonFallback')
   );
   if (latestMonitoringEntry) {
     candidates.push(latestMonitoringEntry);
@@ -240,8 +258,8 @@ export const buildKangurLearnerLiveState = (
     if (input.isActivityLoading) {
       return {
         status: 'loading',
-        label: 'Sprawdzanie',
-        description: 'Sprawdzamy bieżącą aktywność ucznia.',
+        label: input.translate('hero.activity.status.loading'),
+        description: input.translate('hero.activity.loadingDescription'),
         href: null,
         showLink: false,
         isOnline: false,
@@ -251,8 +269,8 @@ export const buildKangurLearnerLiveState = (
     }
     return {
       status: 'offline',
-      label: 'Uczeń offline',
-      description: 'Brak bieżącej aktywności w aplikacji.',
+      label: input.translate('hero.activity.status.offline'),
+      description: input.translate('hero.activity.offlineDescription'),
       href: null,
       showLink: false,
       isOnline: false,
@@ -271,8 +289,8 @@ export const buildKangurLearnerLiveState = (
   if (!firstCandidate) {
     return {
       status: 'offline',
-      label: 'Uczeń offline',
-      description: 'Brak bieżącej aktywności w aplikacji.',
+      label: input.translate('hero.activity.status.offline'),
+      description: input.translate('hero.activity.offlineDescription'),
       href: null,
       showLink: false,
       isOnline: false,
@@ -301,12 +319,15 @@ export const buildKangurLearnerLiveState = (
   const status: LiveStateStatus = isOnline ? 'online' : withinRecentWindow ? 'recent' : 'offline';
   const label =
     status === 'online'
-      ? 'Uczeń online'
+      ? input.translate('hero.activity.status.online')
       : status === 'recent'
-        ? 'Uczeń ostatnio aktywny'
-        : 'Uczeń offline';
-  const timeLabel = formatRelativeTime(bestCandidate.updatedAtMs, nowMs);
-  const description = appendTimeHint(resolveCandidateDescription(bestCandidate, status), timeLabel);
+        ? input.translate('hero.activity.status.recent')
+        : input.translate('hero.activity.status.offline');
+  const timeLabel = formatRelativeTime(bestCandidate.updatedAtMs, nowMs, input.locale);
+  const description = appendTimeHint(
+    resolveCandidateDescription(bestCandidate, status, input.translate),
+    timeLabel
+  );
   const href = bestCandidate.href ?? null;
   const showLink = Boolean(href && (status === 'online' || status === 'recent'));
 

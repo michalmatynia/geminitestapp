@@ -414,9 +414,20 @@ export async function getSystemLogMetrics(input: ListSystemLogsInput): Promise<S
   return getMongoSystemLogMetrics(filter);
 }
 
-export async function clearSystemLogs(before?: Date | null): Promise<{ deleted: number }> {
+export async function clearSystemLogs(input?: {
+  before?: Date | null;
+  level?: SystemLogLevel | null;
+}): Promise<{ deleted: number }> {
   const mongo = await getMongoDb();
-  const filter = before ? { createdAt: { $lte: before } } : {};
+  const filter: Filter<MongoSystemLogDoc> = {};
+
+  if (input?.before) {
+    filter.createdAt = { $lte: input.before };
+  }
+  if (input?.level) {
+    filter.level = input.level;
+  }
+
   const result = await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).deleteMany(filter);
   return { deleted: result.deletedCount ?? 0 };
 }

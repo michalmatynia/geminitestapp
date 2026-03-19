@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -44,7 +45,7 @@ import {
 } from './KangurAssignmentManager.cards';
 import { KangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
 import {
-  FILTER_OPTIONS,
+  FILTER_OPTION_VALUES,
   TIME_LIMIT_MINUTES_MAX,
   TIME_LIMIT_MINUTES_MIN,
   buildTrackerSummary,
@@ -61,6 +62,7 @@ export function KangurAssignmentManager({
   basePath,
   view = 'full',
 }: KangurAssignmentManagerProps): React.JSX.Element {
+  const translations = useTranslations('KangurAssignmentManager');
   const progress = useKangurProgressState();
   const { ageGroup } = useKangurAgeGroupFocus();
   const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
@@ -73,7 +75,9 @@ export function KangurAssignmentManager({
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; tone: 'indigo' | 'rose' } | null>(
+    null
+  );
   const [activeListTab, setActiveListTab] = useState<'active' | 'completed'>('active');
   const [timeLimitModalContext, setTimeLimitModalContext] = useState<TimeLimitModalContext | null>(
     null
@@ -123,6 +127,10 @@ export function KangurAssignmentManager({
     () => filterKangurAssignmentCatalog(catalog, searchTerm, activeFilter),
     [activeFilter, catalog, searchTerm]
   );
+  const filterOptions = FILTER_OPTION_VALUES.map((value) => ({
+    value,
+    label: translations(`filters.${value}`),
+  }));
   const assignedAssignmentsByKey = useMemo(() => {
     const map = new Map<string, KangurAssignmentSnapshot>();
     assignments
@@ -179,29 +187,40 @@ export function KangurAssignmentManager({
     [assignedTargetKeys, suggestedCatalog]
   );
   const timeLimitParsed = parseTimeLimitInput(timeLimitDraft);
+  const timeLimitParsedError = timeLimitParsed.errorKey
+    ? translations(timeLimitParsed.errorKey, {
+        minMinutes: TIME_LIMIT_MINUTES_MIN,
+        maxMinutes: TIME_LIMIT_MINUTES_MAX,
+      })
+    : null;
   const currentTimeLimit = isCreateTimeLimit ? null : timeLimitAssignment?.timeLimitMinutes ?? null;
   const canSaveTimeLimit = isCreateTimeLimit
-    ? Boolean(timeLimitCatalogItem) && !timeLimitParsed.error
+    ? Boolean(timeLimitCatalogItem) && !timeLimitParsed.errorKey
     : Boolean(timeLimitAssignment) &&
-      !timeLimitParsed.error &&
+      !timeLimitParsed.errorKey &&
       timeLimitParsed.value !== currentTimeLimit;
   const isTimeLimitSaveDisabled = isSavingTimeLimit || !canSaveTimeLimit;
-  const timeLimitPreview = formatTimeLimitValue(currentTimeLimit);
+  const timeLimitPreview = formatTimeLimitValue(currentTimeLimit, (key, values) =>
+    translations(`timeLimit.${key}`, values)
+  );
   const timeLimitSaveLabel = isSavingTimeLimit
-    ? 'Zapisywanie...'
+    ? translations('actions.saving')
     : isCreateTimeLimit
-      ? 'Zapisz i przypisz'
-      : 'Zapisz';
+      ? translations('actions.saveAndAssign')
+      : translations('actions.save');
 
-  const resolveActionErrorMessage = (error: unknown, fallback: string): string => {
+  const resolveActionErrorMessage = (
+    error: unknown,
+    fallbackKey: 'feedback.assignError' | 'feedback.reassignError'
+  ): string => {
     const status =
       typeof error === 'object' && error !== null && 'status' in error
         ? (error as { status?: unknown }).status
         : null;
     if (status === 409) {
-      return 'To zadanie jest już aktywne.';
+      return translations('feedback.alreadyActive');
     }
-    return fallback;
+    return translations(fallbackKey);
   };
 
   const assignCatalogItem = async (item: (typeof catalog)[number]): Promise<void> => {
@@ -226,12 +245,18 @@ export function KangurAssignmentManager({
         {
           fallback: false,
           onError: (error) => {
-            setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać zadania.'));
+            setFeedback({
+              message: resolveActionErrorMessage(error, 'feedback.assignError'),
+              tone: 'rose',
+            });
           },
         }
       );
       if (didAssign) {
-        setFeedback(`Przypisano: ${item.title}.`);
+        setFeedback({
+          message: translations('feedback.assignSuccess', { title: item.title }),
+          tone: 'indigo',
+        });
       }
     } finally {
       setPendingActionId(null);
@@ -266,12 +291,12 @@ export function KangurAssignmentManager({
         {
           fallback: false,
           onError: () => {
-            setFeedback('Nie udało się zarchiwizować zadania.');
+            setFeedback({ message: translations('feedback.archiveError'), tone: 'rose' });
           },
         }
       );
       if (didArchive) {
-        setFeedback('Zadanie przeniesiono do archiwum.');
+        setFeedback({ message: translations('feedback.archiveSuccess'), tone: 'indigo' });
       }
     } finally {
       setPendingActionId(null);
@@ -297,12 +322,17 @@ export function KangurAssignmentManager({
         {
           fallback: false,
           onError: () => {
-            setFeedback('Nie udało się cofnąć przydziału.');
+            setFeedback({ message: translations('feedback.unassignError'), tone: 'rose' });
           },
         }
       );
       if (didUnassign) {
-        setFeedback(title ? `Cofnięto przydział: ${title}.` : 'Cofnięto przydział.');
+        setFeedback({
+          message: title
+            ? translations('feedback.unassignSuccessWithTitle', { title })
+            : translations('feedback.unassignSuccess'),
+          tone: 'indigo',
+        });
       }
     } finally {
       setPendingActionId(null);
@@ -329,18 +359,20 @@ export function KangurAssignmentManager({
         {
           fallback: false,
           onError: (error) => {
-            setFeedback(
-              resolveActionErrorMessage(error, 'Nie udało się przypisać ponownie zadania.')
-            );
+            setFeedback({
+              message: resolveActionErrorMessage(error, 'feedback.reassignError'),
+              tone: 'rose',
+            });
           },
         }
       );
       if (didReassign) {
-        setFeedback(
-          assignment?.title
-            ? `Przypisano ponownie: ${assignment.title}.`
-            : 'Zadanie przypisano ponownie.'
-        );
+        setFeedback({
+          message: assignment?.title
+            ? translations('feedback.reassignSuccessWithTitle', { title: assignment.title })
+            : translations('feedback.reassignSuccess'),
+          tone: 'indigo',
+        });
       }
     } finally {
       setPendingActionId(null);
@@ -365,7 +397,7 @@ export function KangurAssignmentManager({
     }
 
     const parsed = parseTimeLimitInput(timeLimitDraft);
-    if (parsed.error) {
+    if (parsed.errorKey) {
       return;
     }
 
@@ -404,16 +436,18 @@ export function KangurAssignmentManager({
           {
             fallback: false,
             onError: () => {
-              setFeedback('Nie udało się zapisać czasu wykonania.');
+              setFeedback({ message: translations('feedback.timeLimitSaveError'), tone: 'rose' });
             },
           }
         );
         if (didUpdate) {
-          setFeedback(
-            nextValue === null
-              ? 'Usunięto czas na wykonanie.'
-              : 'Zapisano czas na wykonanie.'
-          );
+          setFeedback({
+            message:
+              nextValue === null
+                ? translations('feedback.timeLimitRemoved')
+                : translations('feedback.timeLimitSaved'),
+            tone: 'indigo',
+          });
           handleCloseTimeLimitModal();
         }
       } finally {
@@ -451,16 +485,23 @@ export function KangurAssignmentManager({
         {
           fallback: false,
           onError: (error) => {
-            setFeedback(resolveActionErrorMessage(error, 'Nie udało się przypisać zadania.'));
+            setFeedback({
+              message: resolveActionErrorMessage(error, 'feedback.assignError'),
+              tone: 'rose',
+            });
           },
         }
       );
       if (didAssign) {
-        setFeedback(
-          parsed.value === null
-            ? `Przypisano: ${timeLimitCatalogItem.title}.`
-            : `Przypisano: ${timeLimitCatalogItem.title} z limitem czasu.`
-        );
+        setFeedback({
+          message:
+            parsed.value === null
+              ? translations('feedback.assignSuccess', { title: timeLimitCatalogItem.title })
+              : translations('feedback.assignWithTimeLimitSuccess', {
+                  title: timeLimitCatalogItem.title,
+                }),
+          tone: 'indigo',
+        });
         handleCloseTimeLimitModal();
       }
     } finally {
@@ -486,7 +527,7 @@ export function KangurAssignmentManager({
         onTimeLimitDraftChange={setTimeLimitDraft}
         timeLimitTarget={timeLimitTarget}
         timeLimitPreview={timeLimitPreview}
-        timeLimitParsedError={timeLimitParsed.error}
+        timeLimitParsedError={timeLimitParsedError}
         isSaveDisabled={isTimeLimitSaveDisabled}
         saveLabel={timeLimitSaveLabel}
         minMinutes={TIME_LIMIT_MINUTES_MIN}
@@ -498,24 +539,24 @@ export function KangurAssignmentManager({
           padding='lg'
           surface='neutral'
           variant='soft'
-        >
-          <div className={`${KANGUR_PANEL_ROW_LG_CLASSNAME} lg:items-start lg:justify-between`}>
-            <div className='max-w-2xl'>
-              <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
-                Przydziel nowe zadanie
-              </KangurStatusChip>
-              <KangurCardDescription className='mt-3 text-slate-600' relaxed size='sm'>
-                Wyszukaj lekcje i zadania treningowe, a potem przypisz je uczniowi jako priorytet.
-              </KangurCardDescription>
+          >
+            <div className={`${KANGUR_PANEL_ROW_LG_CLASSNAME} lg:items-start lg:justify-between`}>
+              <div className='max-w-2xl'>
+                <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
+                  {translations('catalog.eyebrow')}
+                </KangurStatusChip>
+                <KangurCardDescription className='mt-3 text-slate-600' relaxed size='sm'>
+                  {translations('catalog.description')}
+                </KangurCardDescription>
+              </div>
             </div>
-          </div>
 
           {recommendedCatalog.length > 0 ? (
             <KangurSummaryPanel
               accent='indigo'
               className='mt-5'
-              description='StudiQ podpowiada te zadania na podstawie aktualnych słabszych obszarów i rytmu pracy ucznia.'
-              label='Sugestie od StudiQ'
+              description={translations('suggested.description')}
+              label={translations('suggested.label')}
             >
               <div className='mt-3 grid grid-cols-1 kangur-panel-gap xl:grid-cols-2'>
                 {recommendedCatalog.map((item) => {
@@ -566,7 +607,9 @@ export function KangurAssignmentManager({
                               size='sm'
                               variant='ghost'
                             >
-                              {isPending ? 'Cofanie...' : 'Cofnij przydział'}
+                              {isPending
+                                ? translations('actions.unassignPending')
+                                : translations('actions.unassign')}
                             </KangurButton>
                           ) : (
                             <KangurButton
@@ -577,12 +620,14 @@ export function KangurAssignmentManager({
                               size='sm'
                               variant='surface'
                             >
-                              {isPending ? 'Przypisywanie...' : 'Przypisz sugestię'}
+                              {isPending
+                                ? translations('actions.assignPending')
+                                : translations('actions.assignSuggested')}
                             </KangurButton>
                           )}
                           <KangurButton
-                            aria-label='Ustaw czas'
-                            title='Ustaw czas'
+                            aria-label={translations('actions.setTime')}
+                            title={translations('actions.setTime')}
                             className='w-full sm:w-auto sm:px-3'
                             type='button'
                             onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
@@ -606,16 +651,16 @@ export function KangurAssignmentManager({
             type='search'
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder='Szukaj po temacie, typie zadania lub słowie kluczowym...'
+            placeholder={translations('search.placeholder')}
             className='mt-5'
-            aria-label='Szukaj zadań'
-            title='Szukaj zadań'
+            aria-label={translations('search.label')}
+            title={translations('search.title')}
           />
 
           <div
             className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} mt-4 w-full sm:w-auto sm:flex-wrap sm:justify-start`}
           >
-            {FILTER_OPTIONS.map((option) => (
+            {filterOptions.map((option) => (
               <KangurButton
                 key={option.value}
                 type='button'
@@ -633,13 +678,9 @@ export function KangurAssignmentManager({
 
           {feedback ? (
             <KangurSummaryPanel
-              accent={
-                feedback.toLowerCase().includes('nie uda') || feedback.toLowerCase().includes('już')
-                  ? 'rose'
-                  : 'indigo'
-              }
+              accent={feedback.tone}
               className='mt-4'
-              description={feedback}
+              description={feedback.message}
               padding='sm'
               tone='accent'
               role='status'
@@ -717,7 +758,9 @@ export function KangurAssignmentManager({
                           variant='ghost'
                           className='w-full sm:w-auto'
                         >
-                          {isPending ? 'Cofanie...' : 'Cofnij przydział'}
+                          {isPending
+                            ? translations('actions.unassignPending')
+                            : translations('actions.unassign')}
                         </KangurButton>
                       ) : (
                         <KangurButton
@@ -728,12 +771,14 @@ export function KangurAssignmentManager({
                           variant='surface'
                           className='w-full sm:w-auto'
                         >
-                          {isPending ? 'Przypisywanie...' : 'Przypisz'}
+                          {isPending
+                            ? translations('actions.assignPending')
+                            : translations('actions.assign')}
                         </KangurButton>
                       )}
                       <KangurButton
-                        aria-label='Ustaw czas'
-                        title='Ustaw czas'
+                        aria-label={translations('actions.setTime')}
+                        title={translations('actions.setTime')}
                         className='w-full sm:w-auto sm:px-3'
                         type='button'
                         onClick={() => handleOpenTimeLimitModalForCatalog(item.id)}
@@ -754,7 +799,7 @@ export function KangurAssignmentManager({
             <KangurEmptyState
               accent='slate'
               className='mt-4 text-sm'
-              description='Brak wyników dla wybranego filtra.'
+              description={translations('empty.filtered')}
               padding='lg'
             />
           ) : null}
@@ -785,36 +830,36 @@ export function KangurAssignmentManager({
               className='w-fit'
               labelStyle='eyebrow'
             >
-              Monitorowanie zadań
+              {translations('tracking.eyebrow')}
             </KangurStatusChip>
             <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
-              Szybki podgląd tego, co uczeń rozpoczął, zakończył albo nadal odkłada.
+              {translations('tracking.description')}
             </KangurCardDescription>
           </div>
 
           <div className='mt-5 grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2 xl:grid-cols-4'>
             <KangurMetricCard
               accent='slate'
-              description='zadania wymagające dalszej pracy'
-              label='Aktywne'
+              description={translations('tracking.metrics.active.description')}
+              label={translations('tracking.metrics.active.label')}
               value={trackerSummary.activeCount}
             />
             <KangurMetricCard
               accent='amber'
-              description='uczeń jeszcze nie ruszył tych zadań'
-              label='Do rozpoczecia'
+              description={translations('tracking.metrics.notStarted.description')}
+              label={translations('tracking.metrics.notStarted.label')}
               value={trackerSummary.notStartedCount}
             />
             <KangurMetricCard
               accent='indigo'
-              description='zadania, nad którymi uczeń już pracuje'
-              label='W trakcie'
+              description={translations('tracking.metrics.inProgress.description')}
+              label={translations('tracking.metrics.inProgress.label')}
               value={trackerSummary.inProgressCount}
             />
             <KangurMetricCard
               accent='emerald'
-              description='przydziały zrealizowane przez ucznia'
-              label='Ukończone'
+              description={translations('tracking.metrics.completed.description')}
+              label={translations('tracking.metrics.completed.label')}
               value={trackerSummary.completedCount}
             />
           </div>
@@ -822,8 +867,8 @@ export function KangurAssignmentManager({
           <KangurMetricCard
             accent='slate'
             className='mt-4'
-            description='odsetek wszystkich niearchiwalnych zadań, które uczeń ma już zakończone'
-            label='Skuteczność wykonania'
+            description={translations('tracking.metrics.completionRate.description')}
+            label={translations('tracking.metrics.completionRate.label')}
             value={`${trackerSummary.completionRate}%`}
           />
         </KangurGlassPanel>
@@ -834,12 +879,12 @@ export function KangurAssignmentManager({
           {shouldShowListTabs ? (
             <div className='flex flex-col kangur-panel-gap'>
               <KangurStatusChip accent='slate' labelStyle='eyebrow'>
-                Lista zadań
+                {translations('lists.eyebrow')}
               </KangurStatusChip>
               <div
                 className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:max-w-sm`}
                 role='tablist'
-                aria-label='Filtrowanie listy zadań'
+                aria-label={translations('lists.ariaLabel')}
               >
                 <KangurButton
                   type='button'
@@ -851,7 +896,7 @@ export function KangurAssignmentManager({
                   size='sm'
                   variant={activeListTab === 'active' ? 'segmentActive' : 'segment'}
                 >
-                  {`Aktywne (${activeAssignmentsCount})`}
+                  {translations('lists.activeTab', { count: activeAssignmentsCount })}
                 </KangurButton>
                 <KangurButton
                   type='button'
@@ -863,7 +908,7 @@ export function KangurAssignmentManager({
                   size='sm'
                   variant={activeListTab === 'completed' ? 'segmentActive' : 'segment'}
                 >
-                  {`Ukończone (${completedAssignmentsCount})`}
+                  {translations('lists.completedTab', { count: completedAssignmentsCount })}
                 </KangurButton>
               </div>
             </div>
@@ -872,8 +917,8 @@ export function KangurAssignmentManager({
           {showActiveAssignmentsList ? (
             <KangurAssignmentsList
               items={activeAssignmentItems}
-              title='Aktywne zadania'
-              emptyLabel='Brak aktywnych zadań dla ucznia.'
+              title={translations('lists.activeTitle')}
+              emptyLabel={translations('lists.activeEmpty')}
               onArchive={(assignmentId) => void handleArchive(assignmentId)}
               onTimeLimitClick={handleOpenTimeLimitModal}
             />
@@ -882,8 +927,8 @@ export function KangurAssignmentManager({
           {showCompletedAssignmentsList ? (
             <KangurAssignmentsList
               items={completedAssignmentItems}
-              title='Ukończone zadania'
-              emptyLabel='Uczeń nie zakończył jeszcze żadnych przypisanych zadań.'
+              title={translations('lists.completedTitle')}
+              emptyLabel={translations('lists.completedEmpty')}
               onArchive={(assignmentId) => void handleArchive(assignmentId)}
               onTimeLimitClick={handleOpenTimeLimitModal}
               onReassign={(assignmentId) => void handleReassign(assignmentId)}

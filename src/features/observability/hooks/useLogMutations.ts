@@ -2,6 +2,7 @@
 
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import {
+  type ClearLogsTargetDto as ClearLogsTarget,
   ClearLogsResponseDto as ClearLogsResponse,
   MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
   mongoRebuildIndexesResponseSchema,
@@ -10,12 +11,20 @@ import type { UpdateMutation } from '@/shared/contracts/ui';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
-import { invalidateSystemDiagnostics, invalidateSystemLogs } from '@/shared/lib/query-invalidation';
+import {
+  invalidateAnalytics,
+  invalidateSystemActivity,
+  invalidateSystemDiagnostics,
+  invalidateSystemLogs,
+} from '@/shared/lib/query-invalidation';
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 
-export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> {
+export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, ClearLogsTarget> {
   return createDeleteMutationV2({
-    mutationFn: () => api.delete<ClearLogsResponse>('/api/system/logs'),
+    mutationFn: (target: ClearLogsTarget) =>
+      api.delete<ClearLogsResponse>('/api/system/logs', {
+        params: { target },
+      }),
     mutationKey: logsKeys.all,
     meta: {
       source: 'observability.hooks.useClearLogsMutation',
@@ -25,7 +34,28 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> 
 
       tags: ['observability', 'logs', 'delete'],
       description: 'Deletes system logs.'},
-    invalidate: (queryClient) => invalidateSystemLogs(queryClient),
+    invalidate: async (queryClient, _data, target) => {
+      if (target === 'error_logs') {
+        await invalidateSystemLogs(queryClient);
+        return;
+      }
+
+      if (target === 'activity_logs') {
+        await invalidateSystemActivity(queryClient);
+        return;
+      }
+
+      if (target === 'page_access_logs') {
+        await invalidateAnalytics(queryClient);
+        return;
+      }
+
+      await Promise.all([
+        invalidateSystemLogs(queryClient),
+        invalidateSystemActivity(queryClient),
+        invalidateAnalytics(queryClient),
+      ]);
+    },
   });
 }
 

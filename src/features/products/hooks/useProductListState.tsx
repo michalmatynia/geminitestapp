@@ -36,6 +36,22 @@ import type { Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 
+export function applyProductListAdvancedFilterState(args: {
+  value: string;
+  presetId: string | null;
+  setLocalState: (value: string, presetId: string | null) => void;
+  persistState: (state: { advancedFilter: string; presetId: string | null }) => Promise<void>;
+}): void {
+  const normalizedValue = args.value.trim();
+  const normalizedPresetId = normalizedValue.length > 0 ? args.presetId : null;
+
+  args.setLocalState(normalizedValue, normalizedPresetId);
+  void args.persistState({
+    advancedFilter: normalizedValue,
+    presetId: normalizedPresetId,
+  });
+}
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
@@ -121,6 +137,7 @@ export function useProductListState(): ProductListContextType & {
     setEndDate,
     advancedFilter,
     activeAdvancedFilterPresetId,
+    setAdvancedFilterState: setAdvancedFilterStateLocal,
     catalogFilter,
     setCatalogFilter,
     baseExported,
@@ -358,7 +375,24 @@ export function useProductListState(): ProductListContextType & {
     [allDrafts]
   );
 
-  const { handleSetPageSize, handleSetAdvancedFilter, handleSetAdvancedFilterState } = filters;
+  const { handleSetPageSize } = filters;
+  const handleSetAdvancedFilterState = useCallback(
+    (value: string, presetId: string | null): void => {
+      applyProductListAdvancedFilterState({
+        value,
+        presetId,
+        setLocalState: setAdvancedFilterStateLocal,
+        persistState: persistAppliedAdvancedFilterState,
+      });
+    },
+    [persistAppliedAdvancedFilterState, setAdvancedFilterStateLocal]
+  );
+  const handleSetAdvancedFilter = useCallback(
+    (value: string): void => {
+      handleSetAdvancedFilterState(value, null);
+    },
+    [handleSetAdvancedFilterState]
+  );
   const handleCreateFromDraftOpen = useCallback(
     (draftId: string): void => {
       void handleCreateFromDraft(draftId);

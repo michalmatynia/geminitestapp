@@ -59,6 +59,13 @@ export type AnalyticsScope = z.infer<typeof analyticsScopeSchema>;
 
 export const analyticsEventTypeSchema = z.enum(['pageview', 'event']);
 export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>;
+export const analyticsEventFilterTypeSchema = z.union([
+  analyticsEventTypeSchema,
+  z.literal('all'),
+]);
+export type AnalyticsEventFilterType = z.infer<typeof analyticsEventFilterTypeSchema>;
+export const analyticsEventFilterScopeSchema = z.union([analyticsScopeSchema, z.literal('all')]);
+export type AnalyticsEventFilterScope = z.infer<typeof analyticsEventFilterScopeSchema>;
 
 export const analyticsEventSchema = dtoBaseSchema.extend({
   type: analyticsEventTypeSchema,
@@ -152,3 +159,17 @@ export const analyticsSummarySchema = z.object({
 });
 
 export type AnalyticsSummary = z.infer<typeof analyticsSummarySchema>;
+
+export const analyticsEventsResponseSchema = z.object({
+  events: z.array(analyticsEventSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+  totalPages: z.number(),
+  range: analyticsRangeSchema,
+  scope: analyticsEventFilterScopeSchema,
+  type: analyticsEventFilterTypeSchema,
+});
+
+export type AnalyticsEventsResponse = z.infer<typeof analyticsEventsResponseSchema>;
+export type AnalyticsEventsResponseDto = AnalyticsEventsResponse;

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ProductValidationPattern } from '@/shared/contracts/products';
+import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import { buildLatestFieldMirrorSemanticState } from '@/features/products/lib/validatorSemanticPresets';
 import {
+  allowsPatternExecutionWithoutRegexMatch,
   areIssueMapsEquivalent,
   buildFieldIssues,
+  isLatestPriceStockMirrorPattern,
 } from '@/features/products/validation-engine/core';
 
 // --- helpers -----------------------------------------------------------
@@ -68,6 +72,52 @@ describe('buildFieldIssues', () => {
       validationScope: SCOPE,
     });
     expect(issues).toEqual({});
+  });
+
+  it('recognizes semantic latest-field mirror patterns without parsing dynamic recipes', () => {
+    const pattern = makePattern({
+      regex: '^.*$',
+      target: 'price',
+      semanticState: buildLatestFieldMirrorSemanticState('price'),
+      replacementEnabled: true,
+      replacementValue: null,
+    });
+
+    expect(isLatestPriceStockMirrorPattern(pattern)).toBe(true);
+  });
+
+  it('derives regex-optional execution behavior from legacy latest-field mirror recipes', () => {
+    const pattern = makePattern({
+      regex: '^.*$',
+      target: 'stock',
+      replacementEnabled: true,
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'latest_product_field',
+        sourceField: 'stock',
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      semanticState: undefined,
+    });
+
+    expect(allowsPatternExecutionWithoutRegexMatch(pattern)).toBe(true);
+    expect(isLatestPriceStockMirrorPattern(pattern)).toBe(true);
   });
 
   it('returns empty object for empty patterns', () => {
@@ -232,6 +282,63 @@ describe('buildFieldIssues', () => {
       validationScope: SCOPE,
     });
     expect(issues['price']).toHaveLength(1);
+  });
+
+  it('supports category inference driven by Name EN segment #4', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'category',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['categoryId'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: 'nameEnSegment4',
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment4',
+      launchOperator: 'is_not_empty',
+      message: 'Infer category from name segment #4',
+      skipNoopReplacementProposal: false,
+    });
+
+    const issues = buildFieldIssues({
+      values: {
+        categoryId: '',
+        nameEnSegment4: 'Keychains',
+      },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['categoryId']).toHaveLength(1);
+    expect(issues['categoryId']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      replacementValue: 'Keychains',
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive: true,
+    });
   });
 
   it('emits sequence group aggregate issue when replacement transforms value', () => {

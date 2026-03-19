@@ -1,9 +1,10 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useMemo, useState, type MouseEvent } from 'react';
 
+import { getLocalizedKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -141,11 +142,13 @@ const shouldHandleAssignmentClick = (event: MouseEvent<HTMLAnchorElement>): bool
 };
 
 function KangurAssignmentsListCompactCard(): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
   const { now, showTimeCountdown } = useKangurAssignmentsListRuntime();
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown);
+  const subjectLabel = getLocalizedKangurSubjectLabel(item.subject, locale, item.subjectLabel);
 
   return (
     <KangurInfoCard
@@ -155,7 +158,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
     >
       <div className={`mb-4 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:absolute sm:right-5 sm:top-5 sm:mb-0 sm:justify-end`}>
         <KangurStatusChip accent={item.subjectAccent} labelStyle='compact'>
-          {item.subjectLabel}
+          {subjectLabel}
         </KangurStatusChip>
         <KangurAssignmentPriorityChip labelStyle='compact' priority={item.priority} />
         <KangurStatusChip
@@ -236,6 +239,7 @@ function KangurAssignmentsListCompactCard(): React.JSX.Element {
 }
 
 function KangurAssignmentsListStandardCard(): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurAssignmentsList');
   const item = useKangurAssignmentsListItem();
   const { onItemActionClick } = useKangurAssignmentsListActions();
@@ -245,6 +249,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
   const countdownLabel = resolveCountdownLabel(item, now, showTimeCountdown);
   const canReassign = Boolean(onReassign && item.status === 'completed');
   const isReassigning = Boolean(reassigningId && reassigningId === item.id);
+  const subjectLabel = getLocalizedKangurSubjectLabel(item.subject, locale, item.subjectLabel);
 
   return (
     <KangurInfoCard
@@ -263,7 +268,7 @@ function KangurAssignmentsListStandardCard(): React.JSX.Element {
         </div>
         <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
           <KangurStatusChip accent={item.subjectAccent} labelStyle='compact' size='sm'>
-            {item.subjectLabel}
+            {subjectLabel}
           </KangurStatusChip>
           <KangurAssignmentPriorityChip labelStyle='compact' priority={item.priority} />
           <KangurStatusChip

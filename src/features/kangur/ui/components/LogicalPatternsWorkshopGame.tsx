@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -17,6 +18,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurInfoCard,
@@ -212,7 +217,11 @@ export default function LogicalPatternsWorkshopGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: LogicalPatternsWorkshopGameProps): React.JSX.Element {
-  const summaryFinishLabel = finishLabel;
+  const translations = useTranslations('KangurMiniGames');
+  const summaryFinishLabel =
+    finishLabel === 'Wróć do tematów'
+      ? getKangurMiniGameFinishLabel(translations, 'topics')
+      : finishLabel;
   const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
@@ -435,7 +444,7 @@ export default function LogicalPatternsWorkshopGame({
         />
         <KangurPracticeGameSummaryTitle
           accent='violet'
-          title={`Wynik: ${score}/${TOTAL_TARGETS}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_TARGETS)}
         />
         <KangurPracticeGameSummaryXP accent='violet' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -450,10 +459,10 @@ export default function LogicalPatternsWorkshopGame({
         />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Rozpoznajesz wzorce w mgnieniu oka.'
+            ? translations('logicalPatterns.summary.perfect')
             : percent >= 70
-              ? 'Świetnie! Wzorce i ciągi idą Ci coraz lepiej.'
-              : 'Dobra próba! Spróbuj jeszcze raz i sprawdź reguły.'}
+              ? translations('logicalPatterns.summary.good')
+              : translations('logicalPatterns.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           className={KANGUR_STACK_ROW_CLASSNAME}
@@ -461,6 +470,7 @@ export default function LogicalPatternsWorkshopGame({
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
           onRestart={restart}
+          restartLabel={translations('shared.restart')}
           restartButtonClassName='w-full sm:flex-1'
         />
       </KangurPracticeGameSummary>

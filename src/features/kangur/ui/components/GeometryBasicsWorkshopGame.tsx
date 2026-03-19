@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -32,6 +33,12 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameAccuracyText,
+  getKangurMiniGameScoreLabel,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -47,16 +54,12 @@ type TileId = 'point' | 'segment' | 'side' | 'angle';
 
 type LabelTile = {
   id: TileId;
-  label: string;
   icon: string;
   accent: KangurAccent;
 };
 
 type Round = {
   id: string;
-  title: string;
-  prompt: string;
-  hint: string;
   board: TileId;
   correct: TileId;
 };
@@ -72,48 +75,56 @@ type Feedback = {
 } | null;
 
 const LABEL_TILES: LabelTile[] = [
-  { id: 'point', label: 'Punkt', icon: '●', accent: 'sky' },
-  { id: 'segment', label: 'Odcinek', icon: '—', accent: 'teal' },
-  { id: 'side', label: 'Bok', icon: '▭', accent: 'slate' },
-  { id: 'angle', label: 'Kąt', icon: '∟', accent: 'amber' },
+  { id: 'point', icon: '●', accent: 'sky' },
+  { id: 'segment', icon: '—', accent: 'teal' },
+  { id: 'side', icon: '▭', accent: 'slate' },
+  { id: 'angle', icon: '∟', accent: 'amber' },
 ];
 
 const ROUNDS: Round[] = [
   {
     id: 'round-point',
-    title: 'Punkt',
-    prompt: 'Rozpoznaj pojedyncze miejsce na planszy.',
-    hint: 'Punkt to jedna kropka bez długości i szerokości.',
     board: 'point',
     correct: 'point',
   },
   {
     id: 'round-segment',
-    title: 'Odcinek',
-    prompt: 'Wskaż fragment łączący dwa punkty.',
-    hint: 'Odcinek ma początek i koniec — dwa punkty.',
     board: 'segment',
     correct: 'segment',
   },
   {
     id: 'round-side',
-    title: 'Bok',
-    prompt: 'Znajdź bok figury.',
-    hint: 'Bok to odcinek należący do wielokąta.',
     board: 'side',
     correct: 'side',
   },
   {
     id: 'round-angle',
-    title: 'Kąt',
-    prompt: 'Wskaż miejsce, gdzie spotykają się dwa odcinki.',
-    hint: 'Kąt to „rozwarcie” między ramionami.',
     board: 'angle',
     correct: 'angle',
   },
 ];
 
 const TOTAL_ROUNDS = ROUNDS.length;
+
+const getGeometryBasicsTileLabel = (
+  translate: KangurMiniGameTranslate,
+  tileId: TileId
+): string => translate(`geometryBasics.inRound.tiles.${tileId}`);
+
+const getGeometryBasicsRoundTitle = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`geometryBasics.inRound.rounds.${roundId}.title`);
+
+const getGeometryBasicsRoundPrompt = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`geometryBasics.inRound.rounds.${roundId}.prompt`);
+
+const getGeometryBasicsRoundHint = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`geometryBasics.inRound.rounds.${roundId}.hint`);
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
@@ -224,6 +235,8 @@ function DraggableTile({
   isCompact?: boolean;
   onClick?: () => void;
 }): React.ReactElement | React.ReactPortal {
+  const translations = useTranslations('KangurMiniGames');
+  const tileLabel = getGeometryBasicsTileLabel(translations, tile.id);
   return (
     <Draggable
       draggableId={tile.id}
@@ -252,10 +265,10 @@ function DraggableTile({
               }
             }}
             aria-pressed={isSelected}
-            aria-label={`Etykieta: ${tile.label}`}
+            aria-label={translations('geometryBasics.inRound.tileAria', { label: tileLabel })}
           >
             <span className='text-base'>{tile.icon}</span>
-            <span>{tile.label}</span>
+            <span>{tileLabel}</span>
           </button>
         );
 
@@ -270,10 +283,11 @@ function DraggableTile({
 }
 
 export default function GeometryBasicsWorkshopGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: GeometryBasicsWorkshopGameProps): React.JSX.Element {
-  const summaryFinishLabel = finishLabel;
+  const translations = useTranslations('KangurMiniGames');
+  const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState());
@@ -342,8 +356,10 @@ export default function GeometryBasicsWorkshopGame({
     setFeedback({
       kind: isCorrect ? 'success' : 'error',
       text: isCorrect
-        ? 'Świetnie! To jest poprawna odpowiedź.'
-        : `To nie to. Poprawnie: ${correctTile.label}.`,
+        ? translations('geometryBasics.inRound.feedback.correct')
+        : translations('geometryBasics.inRound.feedback.incorrect', {
+            label: getGeometryBasicsTileLabel(translations, correctTile.id),
+          }),
     });
     setChecked(true);
     setSelectedTileId(null);
@@ -427,7 +443,7 @@ export default function GeometryBasicsWorkshopGame({
         <KangurPracticeGameSummaryTitle
           accent='sky'
           dataTestId='geometry-basics-summary-title'
-          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
         />
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -437,15 +453,17 @@ export default function GeometryBasicsWorkshopGame({
         />
         <KangurPracticeGameSummaryProgress
           accent='sky'
+          ariaLabel={translations('geometryBasics.progressAriaLabel')}
+          ariaValueText={getKangurMiniGameAccuracyText(translations, percent)}
           dataTestId='geometry-basics-summary-progress-bar'
           percent={percent}
         />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Świetnie rozpoznajesz elementy geometrii.'
+            ? translations('geometryBasics.summary.perfect')
             : percent >= 75
-              ? 'Bardzo dobrze! Jeszcze chwila i będzie perfekcyjnie.'
-              : 'Dobra próba! Spróbuj jeszcze raz, aby utrwalić pojęcia.'}
+              ? translations('geometryBasics.summary.good')
+              : translations('geometryBasics.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           className={KANGUR_STACK_ROW_CLASSNAME}
@@ -453,6 +471,7 @@ export default function GeometryBasicsWorkshopGame({
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
           onRestart={restart}
+          restartLabel={translations('shared.restart')}
           restartButtonClassName='w-full sm:flex-1'
         />
       </KangurPracticeGameSummary>
@@ -475,23 +494,32 @@ export default function GeometryBasicsWorkshopGame({
         <KangurInfoCard accent='sky' className='w-full' padding='sm' tone='accent'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <div>
-              <p className='text-sm font-bold'>Geo-misja: punkt, odcinek, bok, kąt</p>
-              <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
+              <p className='text-sm font-bold'>
+                {translations('geometryBasics.inRound.missionTitle')}
+              </p>
+              <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+                {getGeometryBasicsRoundPrompt(translations, round.id)}
+              </p>
             </div>
             <KangurStatusChip accent='sky' size='sm'>
-              Runda {roundIndex + 1}/{TOTAL_ROUNDS}
+              {translations('geometryBasics.inRound.roundLabel', {
+                current: roundIndex + 1,
+                total: TOTAL_ROUNDS,
+              })}
             </KangurStatusChip>
           </div>
           <p className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
-            Przeciągnij etykietę na oznaczone miejsce albo kliknij etykietę i potem planszę.
+            {translations('geometryBasics.inRound.instruction')}
           </p>
         </KangurInfoCard>
 
         <div className='flex w-full flex-col kangur-panel-gap'>
           <div className='flex items-center justify-between'>
-            <p className='text-xs font-semibold uppercase tracking-[0.16em] text-sky-700'>Plansza</p>
+            <p className='text-xs font-semibold uppercase tracking-[0.16em] text-sky-700'>
+              {translations('geometryBasics.inRound.boardLabel')}
+            </p>
             <KangurStatusChip accent='slate' size='sm'>
-              {round.title}
+              {getGeometryBasicsRoundTitle(translations, round.id)}
             </KangurStatusChip>
           </div>
           <div className='relative w-full overflow-hidden rounded-[26px] border border-sky-100/80 bg-white/80 p-4'>
@@ -522,8 +550,10 @@ export default function GeometryBasicsWorkshopGame({
                   aria-disabled={checked}
                   aria-label={
                     roundState.slot
-                      ? `Plansza: etykieta ${roundState.slot.label}`
-                      : 'Plansza: upuść etykietę'
+                      ? translations('geometryBasics.inRound.boardFilledAria', {
+                          label: getGeometryBasicsTileLabel(translations, roundState.slot.id),
+                        })
+                      : translations('geometryBasics.inRound.boardEmptyAria')
                   }
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
@@ -546,14 +576,16 @@ export default function GeometryBasicsWorkshopGame({
                       isCompact
                     />
                   ) : (
-                    <span>Upuść etykietę</span>
+                    <span>{translations('geometryBasics.inRound.dropLabel')}</span>
                   )}
                   {provided.placeholder}
                 </div>
               )}
             </Droppable>
           </div>
-          <p className='text-xs text-sky-700 font-semibold'>{round.hint}</p>
+          <p className='text-xs text-sky-700 font-semibold'>
+            {getGeometryBasicsRoundHint(translations, round.id)}
+          </p>
           {feedback ? (
             <p
               className={cn(
@@ -571,9 +603,11 @@ export default function GeometryBasicsWorkshopGame({
 
         <div className='flex w-full flex-col kangur-panel-gap'>
           <div className='flex items-center justify-between'>
-            <p className='text-xs font-semibold uppercase tracking-[0.16em] text-sky-700'>Etykiety</p>
+            <p className='text-xs font-semibold uppercase tracking-[0.16em] text-sky-700'>
+              {translations('geometryBasics.inRound.labelsTitle')}
+            </p>
             <KangurStatusChip accent='slate' size='sm'>
-              {roundState.pool.length} w puli
+              {translations('geometryBasics.inRound.poolLabel', { count: roundState.pool.length })}
             </KangurStatusChip>
           </div>
           <Droppable droppableId='pool' direction='horizontal'>
@@ -588,7 +622,9 @@ export default function GeometryBasicsWorkshopGame({
                     : '[color:var(--kangur-page-muted-text)]'
                 )}
               >
-                {roundState.pool.length === 0 ? <span>Wszystkie etykiety użyte!</span> : null}
+                {roundState.pool.length === 0 ? (
+                  <span>{translations('geometryBasics.inRound.poolEmpty')}</span>
+                ) : null}
                 {roundState.pool.map((tile, index) => (
                   <DraggableTile
                     key={tile.id}
@@ -610,7 +646,7 @@ export default function GeometryBasicsWorkshopGame({
 
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <KangurButton size='sm' type='button' variant='surface' onClick={resetRound} disabled={checked}>
-            Wyczyść
+            {translations('geometryBasics.inRound.clear')}
           </KangurButton>
           {!checked ? (
             <KangurButton
@@ -620,11 +656,13 @@ export default function GeometryBasicsWorkshopGame({
               onClick={handleCheck}
               disabled={!roundState.slot}
             >
-              Sprawdź
+              {translations('geometryBasics.inRound.check')}
             </KangurButton>
           ) : (
             <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
-              {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
+              {roundIndex + 1 >= TOTAL_ROUNDS
+                ? translations('geometryBasics.inRound.seeResult')
+                : translations('geometryBasics.inRound.next')}
             </KangurButton>
           )}
         </div>

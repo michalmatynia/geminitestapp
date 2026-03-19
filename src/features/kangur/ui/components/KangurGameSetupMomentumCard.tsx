@@ -1,7 +1,9 @@
+import { useTranslations } from 'next-intl';
 import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import { translateRecommendationWithFallback } from '@/features/kangur/ui/services/recommendation-i18n';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import {
   getNextLockedBadge,
@@ -26,7 +28,8 @@ type KangurGameSetupFocus = {
 const getSetupFocus = (
   mode: 'training' | 'kangur',
   progress: KangurProgressState,
-  subject: KangurLessonSubject
+  subject: KangurLessonSubject,
+  translate?: (key: string, values?: Record<string, string | number>) => string
 ): KangurGameSetupFocus | null => {
   const quest = getCurrentKangurDailyQuest(progress, { subject });
   const nextBadge = getNextLockedBadge(progress);
@@ -43,10 +46,22 @@ const getSetupFocus = (
     const rewardLabel = quest.reward?.label;
     const title =
       quest.progress.status === 'completed'
-        ? 'Misja dnia czeka na odbiór'
+        ? translateRecommendationWithFallback(
+            translate,
+            'setupMomentum.quest.titleCompleted',
+            'Misja dnia czeka na odbiór'
+          )
         : mode === 'training'
-          ? 'Ta sesja przybliża misję dnia'
-          : 'Ta runda może domknąć misję dnia';
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.quest.titleTraining',
+              'Ta sesja przybliża misję dnia'
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.quest.titleKangur',
+              'Ta runda może domknąć misję dnia'
+            );
 
     return {
       accent: 'emerald',
@@ -57,7 +72,11 @@ const getSetupFocus = (
       ]
         .filter(Boolean)
         .join('. ') + '.',
-      label: 'Misja dnia',
+      label: translateRecommendationWithFallback(
+        translate,
+        'setupMomentum.quest.label',
+        'Misja dnia'
+      ),
       title,
     };
   }
@@ -67,10 +86,41 @@ const getSetupFocus = (
       accent: 'sky',
       description:
         mode === 'kangur'
-          ? `Ta runda domyka polecany kierunek. Do odznaki ${guidedMomentum.nextBadgeName} brakuje: ${guidedMomentum.summary}.`
-          : `Ta sesja pcha polecany kierunek do odznaki ${guidedMomentum.nextBadgeName}. ${guidedMomentum.summary}.`,
-      label: 'Polecony kierunek',
-      title: mode === 'kangur' ? 'Zagraj zgodnie z rytmem' : 'Dopnij polecany kierunek',
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.guided.descriptionKangur',
+              `Ta runda domyka polecany kierunek. Do odznaki ${guidedMomentum.nextBadgeName} brakuje: ${guidedMomentum.summary}.`,
+              {
+                nextBadgeName: guidedMomentum.nextBadgeName,
+                summary: guidedMomentum.summary,
+              }
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.guided.descriptionTraining',
+              `Ta sesja pcha polecany kierunek do odznaki ${guidedMomentum.nextBadgeName}. ${guidedMomentum.summary}.`,
+              {
+                nextBadgeName: guidedMomentum.nextBadgeName,
+                summary: guidedMomentum.summary,
+              }
+            ),
+      label: translateRecommendationWithFallback(
+        translate,
+        'setupMomentum.guided.label',
+        'Polecony kierunek'
+      ),
+      title:
+        mode === 'kangur'
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.guided.titleKangur',
+              'Zagraj zgodnie z rytmem'
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.guided.titleTraining',
+              'Dopnij polecany kierunek'
+            ),
     };
   }
 
@@ -79,10 +129,41 @@ const getSetupFocus = (
       accent: mode === 'kangur' ? 'amber' : 'indigo',
       description:
         mode === 'kangur'
-          ? `Mocny wynik w tej rundzie przybliża odznakę ${nextBadge.name}. ${nextBadge.summary}.`
-          : `Ta sesja pcha odznakę ${nextBadge.name}. ${nextBadge.summary}.`,
-      label: 'Następna odznaka',
-      title: mode === 'kangur' ? 'Zagraj o kolejny próg' : 'Rozpędź kolejną nagrodę',
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.nextBadge.descriptionKangur',
+              `Mocny wynik w tej rundzie przybliża odznakę ${nextBadge.name}. ${nextBadge.summary}.`,
+              {
+                badge: nextBadge.name,
+                summary: nextBadge.summary,
+              }
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.nextBadge.descriptionTraining',
+              `Ta sesja pcha odznakę ${nextBadge.name}. ${nextBadge.summary}.`,
+              {
+                badge: nextBadge.name,
+                summary: nextBadge.summary,
+              }
+            ),
+      label: translateRecommendationWithFallback(
+        translate,
+        'setupMomentum.nextBadge.label',
+        'Następna odznaka'
+      ),
+      title:
+        mode === 'kangur'
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.nextBadge.titleKangur',
+              'Zagraj o kolejny próg'
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.nextBadge.titleTraining',
+              'Rozpędź kolejną nagrodę'
+            ),
     };
   }
 
@@ -91,19 +172,59 @@ const getSetupFocus = (
       accent: 'violet',
       description:
         streak <= 0
-          ? 'Jedna dobra sesja dzisiaj uruchomi nową serię i podbije tempo nauki.'
-          : `Masz serię ${streak}. Jeszcze jedna mocna runda utrwali rytm dnia.`,
-      label: 'Seria',
-      title: streak <= 0 ? 'Zbuduj rytm od nowa' : 'Domknij kolejny krok serii',
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.streak.descriptionStart',
+              'Jedna dobra sesja dzisiaj uruchomi nową serię i podbije tempo nauki.'
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.streak.descriptionContinue',
+              `Masz serię ${streak}. Jeszcze jedna mocna runda utrwali rytm dnia.`,
+              {
+                streak,
+              }
+            ),
+      label: translateRecommendationWithFallback(translate, 'setupMomentum.streak.label', 'Seria'),
+      title:
+        streak <= 0
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.streak.titleStart',
+              'Zbuduj rytm od nowa'
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.streak.titleContinue',
+              'Domknij kolejny krok serii'
+            ),
     };
   }
 
   if (averageXpPerSession > 0) {
     return {
       accent: 'amber',
-      description: `Twoje aktualne tempo to ${averageXpPerSession} XP na grę. Ta sesja pomoże utrzymać dobrą passę.`,
-      label: 'Tempo',
-      title: mode === 'kangur' ? 'Wejdź z dobrym tempem' : 'Utrzymaj mocne tempo',
+      description: translateRecommendationWithFallback(
+        translate,
+        'setupMomentum.pace.description',
+        `Twoje aktualne tempo to ${averageXpPerSession} XP na grę. Ta sesja pomoże utrzymać dobrą passę.`,
+        {
+          averageXpPerSession,
+        }
+      ),
+      label: translateRecommendationWithFallback(translate, 'setupMomentum.pace.label', 'Tempo'),
+      title:
+        mode === 'kangur'
+          ? translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.pace.titleKangur',
+              'Wejdź z dobrym tempem'
+            )
+          : translateRecommendationWithFallback(
+              translate,
+              'setupMomentum.pace.titleTraining',
+              'Utrzymaj mocne tempo'
+            ),
     };
   }
 
@@ -114,9 +235,10 @@ export default function KangurGameSetupMomentumCard({
   mode,
   progress,
 }: KangurGameSetupMomentumCardProps): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameRecommendations');
   const { subject } = useKangurSubjectFocus();
   const modeKey = mode;
-  const focus = getSetupFocus(mode, progress, subject);
+  const focus = getSetupFocus(mode, progress, subject, translations);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const streak = progress.currentWinStreak ?? 0;
 
@@ -138,12 +260,22 @@ export default function KangurGameSetupMomentumCard({
         <>
           {streak > 0 ? (
             <KangurStatusChip accent='violet' size='sm'>
-              Seria: {streak}
+              {translateRecommendationWithFallback(
+                translations,
+                'setupMomentum.chips.streak',
+                'Seria: {streak}',
+                { streak }
+              )}
             </KangurStatusChip>
           ) : null}
           {averageXpPerSession > 0 ? (
             <KangurStatusChip accent='amber' size='sm'>
-              Tempo: {averageXpPerSession} XP / grę
+              {translateRecommendationWithFallback(
+                translations,
+                'setupMomentum.chips.pace',
+                'Tempo: {averageXpPerSession} XP / grę',
+                { averageXpPerSession }
+              )}
             </KangurStatusChip>
           ) : null}
         </>

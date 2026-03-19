@@ -7,16 +7,21 @@ import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { activityKeys } from '@/shared/lib/query-key-exports';
 
 export function useSystemActivity(
-  params: { page?: number; pageSize?: number; search?: string } = {}
+  params: { page?: number; pageSize?: number; search?: string; type?: string } = {}
 ): SingleQuery<SystemActivityResponse> {
-  const { page = 1, pageSize = 10, search } = params;
-  const queryKey = activityKeys.list({ page, pageSize, search });
+  const { page = 1, pageSize = 10, search, type } = params;
+  const queryKey = activityKeys.list({ page, pageSize, search, type });
   return createSingleQueryV2({
     id: 'system-activity',
     queryKey,
     queryFn: () =>
       api.get<SystemActivityResponse>('/api/system/activity', {
-        params: { page, pageSize, search },
+        params: {
+          page,
+          pageSize,
+          search,
+          type,
+        },
       }),
     meta: {
       source: 'observability.hooks.useSystemActivity',

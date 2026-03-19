@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   createContext,
   useContext,
@@ -136,6 +137,7 @@ export function KangurParentDashboardRuntimeProvider({
 }: {
   children: ReactNode;
 }): JSX.Element {
+  const translations = useTranslations('KangurParentDashboardRuntime');
   const { basePath } = useKangurRouting();
   const {
     isAuthenticated,
@@ -167,10 +169,13 @@ export function KangurParentDashboardRuntimeProvider({
   const canAccessDashboard = isAuthenticated && canManageLearners;
   const learners = user?.learners ?? [];
   const activeLearner = user?.activeLearner ?? null;
-  const viewerName = user?.email?.trim() || 'Konto';
+  const viewerName = user?.email?.trim() || translations('account');
   const scoreViewerName = activeLearner?.displayName?.trim() || user?.full_name?.trim() || null;
   const scoreViewerEmail = user?.email?.trim() || null;
-  const viewerRoleLabel = user?.role === 'admin' ? 'Nauczyciel' : 'Rodzic';
+  const viewerRoleLabel =
+    user?.role === 'admin'
+      ? translations('viewerRole.teacher')
+      : translations('viewerRole.parent');
 
   useEffect(() => {
     setEditForm({
@@ -258,7 +263,7 @@ export function KangurParentDashboardRuntimeProvider({
             : null;
 
         if (!displayName || !normalizedLoginName || !password) {
-          setFeedback('Wypełnij dane ucznia');
+          setFeedback(translations('validation.missingLearnerData'));
           return;
         }
 
@@ -267,37 +272,45 @@ export function KangurParentDashboardRuntimeProvider({
             learner.loginName.trim().toLowerCase() === normalizedLoginName
         );
         if (hasDuplicateLogin) {
-          setFeedback('Ten nick jest już zajęty.');
+          setFeedback(translations('validation.duplicateNick'));
           return;
         }
 
         if (password.length < KANGUR_LEARNER_PASSWORD_MIN_LENGTH) {
-          setFeedback(`Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków`);
+          setFeedback(
+            translations('validation.passwordMin', {
+              count: KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+            })
+          );
           return;
         }
 
         if (!KANGUR_LEARNER_PASSWORD_PATTERN.test(password)) {
-          setFeedback('Hasło ucznia może zawierać tylko litery i cyfry');
+          setFeedback(translations('validation.passwordPattern'));
           return;
         }
 
         if (parsedAge !== null && (parsedAge < 3 || parsedAge > 99)) {
-          setFeedback('Wiek ucznia musi być w zakresie 3–99');
+          setFeedback(translations('validation.ageRange'));
           return;
         }
 
         if (displayName.length > 120) {
-          setFeedback('Imię ucznia może mieć maks. 120 znaków');
+          setFeedback(translations('validation.displayNameMax'));
           return;
         }
 
         if (normalizedLoginName.length > 80) {
-          setFeedback('Nick może mieć maks. 80 znaków');
+          setFeedback(translations('validation.loginNameMax'));
           return;
         }
 
         if (password.length > KANGUR_LEARNER_PASSWORD_MAX_LENGTH) {
-          setFeedback(`Hasło może mieć maks. ${KANGUR_LEARNER_PASSWORD_MAX_LENGTH} znaków`);
+          setFeedback(
+            translations('validation.passwordMax', {
+              count: KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
+            })
+          );
           return;
         }
 
@@ -322,14 +335,14 @@ export function KangurParentDashboardRuntimeProvider({
                 ...(parsedAge !== null ? { age: parsedAge } : {}),
               }),
               ACTION_TIMEOUT_MS,
-              'Tworzenie profilu trwa zbyt długo. Sprawdź połączenie i spróbuj ponownie.'
+              translations('timeout.create')
             );
             let didSelect = false;
             try {
               await withTimeout(
                 selectLearner(created.id),
                 REFRESH_TIMEOUT_MS,
-                'Aktywowanie profilu trwa zbyt długo. Spróbuj wybrać go ręcznie.'
+                translations('timeout.activate')
               );
               didSelect = true;
             } catch (error) {
@@ -348,7 +361,7 @@ export function KangurParentDashboardRuntimeProvider({
               await withTimeout(
                 checkAppState(),
                 REFRESH_TIMEOUT_MS,
-                'Odświeżanie panelu trwa zbyt długo.'
+                translations('timeout.refresh')
               );
             } catch (error) {
               void ErrorSystem.captureException(error);
@@ -368,9 +381,7 @@ export function KangurParentDashboardRuntimeProvider({
               setCreateLearnerModalOpen(false);
               setFeedback(null);
             } else {
-              setFeedback(
-                'Profil dodany, ale nie udało się go od razu aktywować. Wybierz go z listy.'
-              );
+              setFeedback(translations('feedback.createdButInactive'));
             }
           },
           {
@@ -389,25 +400,27 @@ export function KangurParentDashboardRuntimeProvider({
               const fieldErrors = details?.issues?.fieldErrors ?? null;
 
               if (status === 409) {
-                setFeedback('Ten nick jest już zajęty.');
+                setFeedback(translations('validation.duplicateNick'));
               } else if (fieldErrors?.['password']?.length) {
                 setFeedback(
-                  `Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków i zawierać tylko litery oraz cyfry.`
+                  translations('validation.passwordCombined', {
+                    count: KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+                  })
                 );
               } else if (fieldErrors?.['age']?.length) {
-                setFeedback('Wiek ucznia musi być w zakresie 3–99');
+                setFeedback(translations('validation.ageRange'));
               } else if (fieldErrors?.['loginName']?.length) {
-                setFeedback('Nick może zawierać tylko litery i cyfry');
+                setFeedback(translations('validation.loginNamePattern'));
               } else if (fieldErrors?.['displayName']?.length) {
-                setFeedback('Wypełnij dane ucznia');
+                setFeedback(translations('validation.missingLearnerData'));
               } else if (
                 error instanceof Error &&
                 /validation failed|invalid kangur learner payload/i.test(error.message)
               ) {
-                setFeedback('Wypełnij dane ucznia');
+                setFeedback(translations('validation.missingLearnerData'));
               } else {
                 setFeedback(
-                  error instanceof Error ? error.message : 'Nie udało się dodać ucznia.'
+                  error instanceof Error ? error.message : translations('feedback.addLearnerError')
                 );
               }
             },
@@ -424,16 +437,22 @@ export function KangurParentDashboardRuntimeProvider({
         if (trimmedPassword.length > 0) {
           if (trimmedPassword.length < KANGUR_LEARNER_PASSWORD_MIN_LENGTH) {
             setFeedback(
-              `Hasło ucznia musi mieć co najmniej ${KANGUR_LEARNER_PASSWORD_MIN_LENGTH} znaków`
+              translations('validation.passwordMin', {
+                count: KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+              })
             );
             return false;
           }
           if (!KANGUR_LEARNER_PASSWORD_PATTERN.test(trimmedPassword)) {
-            setFeedback('Hasło ucznia może zawierać tylko litery i cyfry');
+            setFeedback(translations('validation.passwordPattern'));
             return false;
           }
           if (trimmedPassword.length > KANGUR_LEARNER_PASSWORD_MAX_LENGTH) {
-            setFeedback(`Hasło może mieć maks. ${KANGUR_LEARNER_PASSWORD_MAX_LENGTH} znaków`);
+            setFeedback(
+              translations('validation.passwordMax', {
+                count: KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
+              })
+            );
             return false;
           }
         }
@@ -459,13 +478,13 @@ export function KangurParentDashboardRuntimeProvider({
                 status: editForm.status === 'disabled' ? 'disabled' : 'active',
               }),
               ACTION_TIMEOUT_MS,
-              'Zapis profilu trwa zbyt długo. Spróbuj ponownie.'
+              translations('timeout.save')
             );
             try {
               await withTimeout(
                 checkAppState(),
                 REFRESH_TIMEOUT_MS,
-                'Odświeżanie panelu trwa zbyt długo.'
+                translations('timeout.refresh')
               );
             } catch (error) {
               void ErrorSystem.captureException(error);
@@ -476,14 +495,14 @@ export function KangurParentDashboardRuntimeProvider({
               });
             }
             setEditForm((current) => ({ ...current, password: '' }));
-            setFeedback('Zapisano dane ucznia.');
+            setFeedback(translations('feedback.saveSuccess'));
             return true;
           },
           {
             fallback: false,
             onError: (error) => {
               setFeedback(
-                error instanceof Error ? error.message : 'Nie udało się zapisać zmian.'
+                error instanceof Error ? error.message : translations('feedback.saveError')
               );
             },
           }
@@ -512,13 +531,13 @@ export function KangurParentDashboardRuntimeProvider({
             const removed = await withTimeout(
               kangurPlatform.learners.delete(learnerId),
               ACTION_TIMEOUT_MS,
-              'Usuwanie profilu trwa zbyt długo. Spróbuj ponownie.'
+              translations('timeout.delete')
             );
             try {
               await withTimeout(
                 checkAppState(),
                 REFRESH_TIMEOUT_MS,
-                'Odświeżanie panelu trwa zbyt długo.'
+                translations('timeout.refresh')
               );
             } catch (error) {
               void ErrorSystem.captureException(error);
@@ -528,14 +547,14 @@ export function KangurParentDashboardRuntimeProvider({
                 description: 'Failed to refresh parent dashboard after learner delete.',
               });
             }
-            setFeedback(`Usunięto profil ucznia: ${removed.displayName}.`);
+            setFeedback(translations('feedback.deleteSuccess', { name: removed.displayName }));
             return true;
           },
           {
             fallback: false,
             onError: (error) => {
               setFeedback(
-                error instanceof Error ? error.message : 'Nie udało się usunąć profilu ucznia.'
+                error instanceof Error ? error.message : translations('feedback.deleteError')
               );
             },
           }
@@ -555,6 +574,7 @@ export function KangurParentDashboardRuntimeProvider({
       navigateToLogin,
       setCreateLearnerModalOpen,
       selectLearner,
+      translations,
     ]
   );
 

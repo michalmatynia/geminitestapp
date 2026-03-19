@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { type ReactElement, Suspense } from 'react';
 
+import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import {
   Badge,
   Breadcrumbs,
@@ -79,7 +80,9 @@ export function AdminKangurSettingsPage(): ReactElement {
       title='Kangur Settings'
       description={
         <div className='flex flex-wrap items-center gap-3'>
-          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <AdminFavoriteBreadcrumbRow>
+            <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
             Manage storefront theme, class overrides, AI Tutor, narration, and parent verification

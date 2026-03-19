@@ -63,8 +63,18 @@ export const buildImageSelection = (filepath: string): ImageFileSelection => {
   };
 };
 
-export const resolveImagePreview = (asset: ImageFileSelection | null | undefined): string =>
-  asset?.url ?? asset?.filepath ?? '';
+const TEMP_ADDON_PREFIX = '/var/tmp/libapp-uploads/kangur/social-addons/';
+
+const toServeUrl = (absPath: string): string => {
+  const filename = absPath.slice(TEMP_ADDON_PREFIX.length);
+  return `/api/kangur/social-image-addons/serve?filename=${encodeURIComponent(filename)}`;
+};
+
+export const resolveImagePreview = (asset: ImageFileSelection | null | undefined): string => {
+  const raw = asset?.url ?? asset?.filepath ?? '';
+  if (raw.startsWith(TEMP_ADDON_PREFIX)) return toServeUrl(raw);
+  return raw;
+};
 
 export const mergeImageAssets = (
   current: ImageFileSelection[],

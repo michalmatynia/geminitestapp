@@ -12,6 +12,11 @@ const cards = [
     href: '/admin/auth/users',
   },
   {
+    title: 'Login Activity',
+    description: 'Review successful sign-ins across the auth system.',
+    href: '/admin/auth/login-activity',
+  },
+  {
     title: 'Permissions',
     description: 'Roles, policies, and access controls.',
     href: '/admin/auth/permissions',

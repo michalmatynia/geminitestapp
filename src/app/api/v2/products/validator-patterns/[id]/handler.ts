@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
+import { productValidationSemanticStateSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
@@ -15,6 +16,7 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
+import { normalizeProductValidationSemanticState } from '@/shared/lib/products/utils/validator-semantic-state';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -94,6 +96,7 @@ export const updatePatternSchema = z
     appliesToScopes: z
       .array(z.enum(['draft_template', 'product_create', 'product_edit']))
       .optional(),
+    semanticState: productValidationSemanticStateSchema.nullable().optional(),
     expectedUpdatedAt: z.string().trim().nullable().optional(),
   })
   .refine(
@@ -341,9 +344,14 @@ export async function putValidatorPatternByIdHandler(
     }),
     ...(body.launchFlags !== undefined && { launchFlags: body.launchFlags?.trim() || null }),
     ...(body.appliesToScopes !== undefined && { appliesToScopes: nextAppliesToScopes }),
+    ...(body.semanticState !== undefined && {
+      semanticState: normalizeProductValidationSemanticState(body.semanticState),
+    }),
     ...(body.expectedUpdatedAt !== undefined && {
       expectedUpdatedAt: body.expectedUpdatedAt?.trim() || null,
     }),
+  }, {
+    semanticAuditSource: 'manual_save',
   });
 
   invalidateValidationPatternRuntimeCache();

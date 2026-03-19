@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { DuelsLobbyPanel } from './duels/DuelsLobbyPanel';
 import { useDuelsLobby } from './duels/useDuelsLobby';
 import { useDuelState } from './duels/useDuelState';
@@ -19,17 +20,12 @@ import { LOBBY_FRESH_WINDOW_MS, LOBBY_POLL_INTERVAL_MS } from './duels/constants
 type LobbySort = 'recent' | 'time_fast' | 'time_slow' | 'questions_low' | 'questions_high';
 const DUELS_MAIN_ID = 'kangur-duels-main';
 
-const formatLobbyCountLabel = (count: number): string => {
-  if (count === 1) return '1 aktywny';
-  if (count > 1 && count < 5) return `${count} aktywne`;
-  return `${count} aktywnych`;
-};
-
 /**
  * Duels Page
  * Modularized version of the 3.7k LOC Duels.tsx
  */
 function DuelsContent(): React.JSX.Element {
+  const lobbyTranslations = useTranslations('KangurDuels.lobby');
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
   const { user, isAuthenticated, logout } = auth;
@@ -107,7 +103,7 @@ function DuelsContent(): React.JSX.Element {
 
   const publicLobbyCount = publicLobbyEntries.length;
   const visibleLobbyCount = filteredPublicLobbyEntries.length;
-  const lobbyCountLabel = formatLobbyCountLabel(publicLobbyCount);
+  const lobbyCountLabel = lobbyTranslations('countLabel', { count: publicLobbyCount });
   const lobbyRefreshSeconds = Math.round(LOBBY_POLL_INTERVAL_MS / 1000);
   const lobbyFresh = lobby.lobbyFresh ?? new Map();
 

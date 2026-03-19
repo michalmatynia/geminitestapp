@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { KangurGameSetupStage } from '@/features/kangur/ui/components/KangurGameSetupStage';
@@ -9,12 +9,22 @@ import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/Kangur
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';
+import { translateRecommendationWithFallback } from '@/features/kangur/ui/services/recommendation-i18n';
 
 export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
+  const locale = useLocale();
   const gamePageTranslations = useTranslations('KangurGamePage');
+  const recommendationTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
   const { activePracticeAssignment, basePath, handleHome, handleStartTraining, progress, screen } =
     useKangurGameRuntime();
-  const suggestedTraining = useMemo(() => getRecommendedTrainingSetup(progress), [progress]);
+  const suggestedTraining = useMemo(
+    () =>
+      getRecommendedTrainingSetup(progress, {
+        locale,
+        translate: recommendationTranslations,
+      }),
+    [locale, progress, recommendationTranslations]
+  );
 
   if (screen !== 'training') {
     return null;
@@ -33,12 +43,20 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
           </div>
         ) : null
       }
-      description={gamePageTranslations('screens.training.description')}
+      description={translateRecommendationWithFallback(
+        gamePageTranslations,
+        'screens.training.description',
+        'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+      )}
       momentumMode='training'
       onBack={handleHome}
       progress={progress}
       testId='kangur-game-training-top-section'
-      title={gamePageTranslations('screens.training.label')}
+      title={translateRecommendationWithFallback(
+        gamePageTranslations,
+        'screens.training.label',
+        'Trening mieszany'
+      )}
       visualTitle={
         <KangurTreningWordmark
           className='mx-auto'

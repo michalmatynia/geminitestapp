@@ -5,12 +5,36 @@ import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as PatternNodeItemProps } from '@/features/foldertree';
 import { StatusBadge, StatusToggle, TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
+import {
+  describeProductValidationSemanticAuditRecord,
+  getLatestProductValidationSemanticAuditRecord,
+  getProductValidationSemanticAuditRecordKey,
+  getProductValidationSemanticAuditHistory,
+} from '@/shared/lib/products/utils/validator-semantic-state';
 import { cn } from '@/shared/utils';
 
 import { fromPatternMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
 export type { PatternNodeItemProps };
+
+const SEMANTIC_BADGE_VARIANTS = {
+  none: 'neutral',
+  recognized: 'info',
+  cleared: 'warning',
+  preserved: 'active',
+  updated: 'info',
+  migrated: 'processing',
+} as const;
+
+const SEMANTIC_BADGE_PREFIXES = {
+  none: 'AUD',
+  recognized: 'SEM',
+  cleared: 'GEN',
+  preserved: 'OK',
+  updated: 'UPD',
+  migrated: 'MIG',
+} as const;
 
 export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element | null {
   const { node, depth, hasChildren, isExpanded, isSelected, isDragging, select, toggleExpand } =
@@ -23,6 +47,7 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
     onDuplicatePattern,
     onDeletePattern,
     onTogglePattern,
+    onOpenSemanticHistory,
   } = useValidatorPatternTreeContext();
 
   const patternId = fromPatternMasterNodeId(node.id);
@@ -31,6 +56,20 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
 
   const showLocale = pattern.target === 'name' || pattern.target === 'description';
   const localeLabel = pattern.locale ?? 'any';
+  const semanticAuditHistory = getProductValidationSemanticAuditHistory(pattern);
+  const latestSemanticAudit = getLatestProductValidationSemanticAuditRecord(pattern);
+  const latestSemanticAuditKey = latestSemanticAudit
+    ? getProductValidationSemanticAuditRecordKey(latestSemanticAudit)
+    : null;
+  const semanticBadgeConfig = latestSemanticAudit
+    ? {
+        label: `${SEMANTIC_BADGE_PREFIXES[latestSemanticAudit.transition]} ${semanticAuditHistory.length}`,
+        variant: SEMANTIC_BADGE_VARIANTS[latestSemanticAudit.transition],
+        title: `Semantic history (${semanticAuditHistory.length}): ${
+          describeProductValidationSemanticAuditRecord(latestSemanticAudit) ?? 'Semantic audit recorded.'
+        }`,
+      }
+    : null;
 
   return (
     <TreeContextMenu
@@ -99,6 +138,21 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
               size='sm'
             />
           </button>
+          {semanticBadgeConfig ? (
+            <StatusBadge
+              status='semantic'
+              label={semanticBadgeConfig.label}
+              variant={semanticBadgeConfig.variant}
+              size='sm'
+              title={semanticBadgeConfig.title}
+              className='shrink-0'
+              onClick={(): void => {
+                select();
+                if (!latestSemanticAuditKey) return;
+                onOpenSemanticHistory(pattern.id, latestSemanticAuditKey);
+              }}
+            />
+          ) : null}
           <span className='ml-1 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100'>
             <span
               onMouseDownCapture={(event: React.MouseEvent<HTMLSpanElement>): void => {

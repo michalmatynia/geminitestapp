@@ -11,20 +11,21 @@ type KangurAssignmentPriorityChipProps = Omit<
   ComponentProps<typeof KangurStatusChip>,
   'children'
 > & {
+  labelOverride?: string;
   priority: KangurAssignmentSnapshot['priority'];
 };
 
 export function KangurAssignmentPriorityChip(
   props: KangurAssignmentPriorityChipProps
 ): React.JSX.Element {
-  const { accent, priority, ...restProps } = props;
+  const { accent, labelOverride, priority, ...restProps } = props;
 
   return (
     <KangurStatusChip
       accent={accent ?? resolveKangurAssignmentPriorityAccent(priority)}
       {...restProps}
     >
-      {formatKangurAssignmentPriorityLabel(priority)}
+      {labelOverride ?? formatKangurAssignmentPriorityLabel(priority)}
     </KangurStatusChip>
   );
 }

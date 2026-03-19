@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
+import {
+  clearLogsTargetSchema,
+  type ClearLogsTargetDto as ClearLogsTarget,
+} from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { clearAnalyticsEvents } from '@/shared/lib/analytics/server';
 import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
 import {
   hydrateLogRuntimeContext,
   hydrateSystemLogRecordRuntimeContext,
 } from '@/features/observability/server';
+import { clearActivityLogs } from '@/shared/lib/observability/activity-repository';
 import {
   clearSystemLogs,
   createSystemLog,
@@ -59,6 +65,7 @@ const createSchema = z.object({
 
 const clearSchema = z.object({
   before: z.string().datetime().optional(),
+  target: clearLogsTargetSchema.default('all_logs'),
 });
 
 const parseCreateBody = async (
@@ -156,6 +163,61 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
   const url = new URL(req.url);
   const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
   const before = parsed.before ? new Date(parsed.before) : null;
-  const result = await clearSystemLogs(before);
-  return NextResponse.json({ deleted: result.deleted });
+  const target: ClearLogsTarget = parsed.target;
+
+  if (target === 'error_logs') {
+    const result = await clearSystemLogs({ before, level: 'error' });
+    return NextResponse.json({
+      target,
+      deleted: result.deleted,
+      deletedByTarget: {
+        systemLogs: result.deleted,
+        activityLogs: 0,
+        pageAccessLogs: 0,
+      },
+    });
+  }
+
+  if (target === 'activity_logs') {
+    const result = await clearActivityLogs({ before });
+    return NextResponse.json({
+      target,
+      deleted: result.deleted,
+      deletedByTarget: {
+        systemLogs: 0,
+        activityLogs: result.deleted,
+        pageAccessLogs: 0,
+      },
+    });
+  }
+
+  if (target === 'page_access_logs') {
+    const result = await clearAnalyticsEvents({ before, type: 'pageview' });
+    return NextResponse.json({
+      target,
+      deleted: result.deleted,
+      deletedByTarget: {
+        systemLogs: 0,
+        activityLogs: 0,
+        pageAccessLogs: result.deleted,
+      },
+    });
+  }
+
+  const [systemLogsResult, activityLogsResult, pageAccessLogsResult] = await Promise.all([
+    clearSystemLogs({ before }),
+    clearActivityLogs({ before }),
+    clearAnalyticsEvents({ before, type: 'pageview' }),
+  ]);
+
+  return NextResponse.json({
+    target,
+    deleted:
+      systemLogsResult.deleted + activityLogsResult.deleted + pageAccessLogsResult.deleted,
+    deletedByTarget: {
+      systemLogs: systemLogsResult.deleted,
+      activityLogs: activityLogsResult.deleted,
+      pageAccessLogs: pageAccessLogsResult.deleted,
+    },
+  });
 }

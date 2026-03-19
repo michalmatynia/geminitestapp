@@ -5,6 +5,8 @@ import type {
   AiInsightsResponse,
 } from '@/shared/contracts/ai-insights';
 import type {
+  ClearLogsResponseDto as ClearLogsResponse,
+  ClearLogsTargetDto as ClearLogsTarget,
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   MongoDiagnosticsResponseDto as MongoDiagnosticsResponse,
   MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
@@ -111,7 +113,7 @@ export type SystemLogsContextValue = {
   insightsQuery: UseQueryResult<AiInsightsResponse, Error>;
   runInsightMutation: UseMutationResult<AiInsightResponse, Error, void>;
   interpretLogMutation: UseMutationResult<AiInsightResponse, Error, string>;
-  clearLogsMutation: UseMutationResult<{ deleted: number }, Error, void>;
+  clearLogsMutation: UseMutationResult<ClearLogsResponse, Error, ClearLogsTarget>;
   rebuildIndexesMutation: UseMutationResult<MongoRebuildIndexesResponse, Error, void>;
   confirmAction: (config: {
     title: string;
@@ -121,7 +123,7 @@ export type SystemLogsContextValue = {
     isDangerous?: boolean;
   }) => void;
   ConfirmationModal: ComponentType;
-  handleClearLogs: () => Promise<void>;
+  handleClearLogs: (target: ClearLogsTarget) => Promise<void>;
   handleRebuildMongoIndexes: () => Promise<void>;
   handleRunInsight: () => Promise<void>;
   handleInterpretLog: (logId: string) => Promise<void>;

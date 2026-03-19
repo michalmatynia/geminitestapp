@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -258,6 +259,7 @@ type KangurGameHomeActionsWidgetProps = {
 export function KangurGameHomeActionsWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeActionsWidgetProps = {}): React.JSX.Element | null {
+  const translations = useTranslations('KangurGameHomeActions');
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const { basePath, canStartFromHome, handleStartGame, screen, setScreen } =
     useKangurGameRuntime();
@@ -270,7 +272,7 @@ export function KangurGameHomeActionsWidget({
   const actions: HomeAction[] = [
     {
       id: 'lessons',
-      label: 'Lekcje',
+      label: translations('actions.lessons'),
       symbol: '📚',
       tone: 'neutral',
       href: createPageUrl('Lessons', basePath),
@@ -280,7 +282,7 @@ export function KangurGameHomeActionsWidget({
     },
     {
       id: 'play',
-      label: 'Grajmy!',
+      label: translations('actions.play'),
       symbol: '🪐',
       trailingSymbol: '🚀',
       tone: 'violet',
@@ -289,7 +291,7 @@ export function KangurGameHomeActionsWidget({
     },
     {
       id: 'duels',
-      label: 'Pojedynki',
+      label: translations('actions.duels'),
       symbol: '⚔️',
       trailingSymbol: '🏆',
       tone: 'sky',
@@ -300,7 +302,7 @@ export function KangurGameHomeActionsWidget({
     },
     {
       id: 'kangur',
-      label: 'Kangur Matematyczny',
+      label: translations('actions.kangur'),
       symbol: '🦘',
       tone: 'sand',
       onClick: () => setScreen('kangur_setup'),
@@ -320,7 +322,7 @@ export function KangurGameHomeActionsWidget({
     >
       <section aria-labelledby='kangur-home-actions-heading'>
         <h3 id='kangur-home-actions-heading' className='sr-only'>
-          Wybierz aktywność
+          {translations('sectionLabel')}
         </h3>
         <div className='grid grid-cols-1 kangur-panel-gap' data-testid='kangur-home-actions-list'>
           {visibleActions.map((action, index) => (

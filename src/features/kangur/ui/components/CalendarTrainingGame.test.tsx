@@ -177,17 +177,17 @@ describe('CalendarTrainingGame', () => {
       'font-extrabold',
       '[color:var(--kangur-page-text)]'
     );
-    expect(
-      screen.getByText('Idealnie! Świetnie znasz kalendarz!')
-    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
+    expect(screen.getByText('calendarTraining.summary.perfect')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(screen.getByText('shared.scoreLabel: 6/6')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-training-summary-breakdown')).toHaveTextContent(
       'Ukończenie rundy +14'
     );
     expect(screen.getByTestId('calendar-training-summary-breakdown-accuracy')).toHaveTextContent(
       'Skuteczność +18'
     );
-    expect(screen.getByRole('button', { name: /jeszcze raz/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /shared\.restart/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

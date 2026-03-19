@@ -496,10 +496,7 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
             shellTestId: 'english-agreement-game-shell',
           },
           render: ({ onFinish }) => (
-            <EnglishSubjectVerbAgreementGame
-              finishLabel='Wróć do tematów'
-              onFinish={onFinish}
-            />
+            <EnglishSubjectVerbAgreementGame onFinish={onFinish} />
           ),
         },
       ]}

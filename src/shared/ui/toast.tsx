@@ -264,6 +264,17 @@ export function useToast(): ToastContextValue {
   return context;
 }
 
+export function useOptionalToast(): ToastContextValue {
+  const context = useContext(ToastContext);
+  return (
+    context ?? {
+      toast: (): void => {
+        // no-op
+      },
+    }
+  );
+}
+
 export function useToastSettings(): ToastSettingsContextValue {
   const context = useContext(ToastSettingsContext);
   if (!context) {

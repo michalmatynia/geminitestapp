@@ -24,6 +24,7 @@ import {
 } from '@/shared/contracts';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { api } from '@/shared/lib/api-client';
+import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import {
   Alert,
   Badge,
@@ -343,7 +344,9 @@ export function AdminKangurObservabilityPage(): JSX.Element {
       title='Kangur Observability'
       description={
         <div className='flex flex-wrap items-center gap-3'>
-          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <AdminFavoriteBreadcrumbRow>
+            <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
             Monitor Kangur-specific alerts, route health, client telemetry, and recent server activity.

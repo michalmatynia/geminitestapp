@@ -1,19 +1,18 @@
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 
-export const FILTER_OPTIONS = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'time', label: 'Czas' },
-  { value: 'arithmetic', label: 'Arytmetyka' },
-  { value: 'geometry', label: 'Geometria' },
-  { value: 'logic', label: 'Logika' },
-  { value: 'practice', label: 'Trening' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+export const FILTER_OPTION_VALUES = [
+  'all',
+  'time',
+  'arithmetic',
+  'geometry',
+  'logic',
+  'practice',
+] as const;
 
 export const TIME_LIMIT_MINUTES_MIN = 1;
 export const TIME_LIMIT_MINUTES_MAX = 240;
 
-export type FilterOption = (typeof FILTER_OPTIONS)[number]['value'];
+export type FilterOption = (typeof FILTER_OPTION_VALUES)[number];
 
 export type KangurAssignmentTrackerSummary = {
   activeCount: number;
@@ -52,7 +51,13 @@ export const buildTrackerSummary = (
   };
 };
 
-export const formatTimeLimitValue = (value: number | null | undefined): string | null => {
+export const formatTimeLimitValue = (
+  value: number | null | undefined,
+  formatLabel: (
+    key: 'hoursMinutes' | 'hoursOnly' | 'minutesOnly',
+    values: Record<string, number>
+  ) => string
+): string | null => {
   if (value === null || value === undefined) {
     return null;
   }
@@ -65,32 +70,32 @@ export const formatTimeLimitValue = (value: number | null | undefined): string |
   const hours = Math.floor(rounded / 60);
   const minutes = rounded % 60;
   if (hours > 0 && minutes > 0) {
-    return `${hours} godz. ${minutes} min`;
+    return formatLabel('hoursMinutes', { hours, minutes });
   }
   if (hours > 0) {
-    return `${hours} godz.`;
+    return formatLabel('hoursOnly', { hours });
   }
-  return `${rounded} min`;
+  return formatLabel('minutesOnly', { minutes: rounded });
 };
 
 export const parseTimeLimitInput = (
   value: string
-): { value: number | null; error: string | null } => {
+): { value: number | null; errorKey: 'validation.integerMinutes' | 'validation.range' | null } => {
   const trimmed = value.trim();
   if (!trimmed) {
-    return { value: null, error: null };
+    return { value: null, errorKey: null };
   }
 
   const parsed = Number(trimmed);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
-    return { value: null, error: 'Podaj pełne minuty.' };
+    return { value: null, errorKey: 'validation.integerMinutes' };
   }
   if (parsed < TIME_LIMIT_MINUTES_MIN || parsed > TIME_LIMIT_MINUTES_MAX) {
     return {
       value: null,
-      error: `Zakres: ${TIME_LIMIT_MINUTES_MIN}-${TIME_LIMIT_MINUTES_MAX} min.`,
+      errorKey: 'validation.range',
     };
   }
 
-  return { value: parsed, error: null };
+  return { value: parsed, errorKey: null };
 };

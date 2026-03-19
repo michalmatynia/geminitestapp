@@ -145,16 +145,20 @@ const writeTempCopy = async (filename: string, buffer: Buffer): Promise<string> 
   return diskPath;
 };
 
+const buildServeUrl = (filename: string): string =>
+  `/api/kangur/social-image-addons/serve?filename=${encodeURIComponent(filename)}`;
+
 const toImageSelection = (params: {
   id: string;
   filename: string;
   filepath: string;
+  url: string;
   width: number | null;
   height: number | null;
 }): ImageFileSelection => ({
   id: params.id,
   filepath: params.filepath,
-  url: params.filepath,
+  url: params.url,
   filename: params.filename,
   width: params.width ?? null,
   height: params.height ?? null,
@@ -329,12 +333,14 @@ export async function createKangurSocialImageAddonsBatch(
     // without files being in public/uploads/ (which triggers Turbopack rebuilds).
     // For cloud storage, use the remote URL returned by the storage service.
     const effectiveFilepath = stored.source === 'local' ? tempDiskPath : stored.filepath;
+    const effectiveUrl = stored.source === 'local' ? buildServeUrl(filename) : stored.filepath;
 
     const imageAssetId = randomUUID();
     const imageAsset = toImageSelection({
       id: imageAssetId,
       filename,
       filepath: effectiveFilepath,
+      url: effectiveUrl,
       width,
       height,
     });

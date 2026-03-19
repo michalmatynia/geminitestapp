@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import KangurLoginPage from '@/features/kangur/ui/KangurLoginPage';
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
 import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
@@ -10,6 +12,7 @@ import { memo, useCallback } from 'react';
 import type { JSX } from 'react';
 
 export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
+  const translations = useTranslations('KangurLoginModal');
   const { closeLoginModal, isOpen, isRouteDriven } =
     useKangurLoginModal();
   const handleOpenChange = useCallback(
@@ -45,11 +48,11 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
       }}
     >
       <KangurDialogHeader
-        title='Zaloguj się'
-        description='Zaloguj rodzica emailem albo ucznia nickiem bez opuszczania strony.'
+        title={translations('title')}
+        description={translations('description')}
         closeButton={
           <KangurPanelCloseButton
-            aria-label='Zamknij logowanie'
+            aria-label={translations('closeAriaLabel')}
             className='absolute right-3 top-3 z-10 sm:right-4 sm:top-4'
             data-testid='kangur-login-modal-close'
             iconClassName='h-4 w-4'

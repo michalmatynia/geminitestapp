@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
 import { useMemo, useRef, useState } from 'react';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -17,6 +18,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurInfoCard,
@@ -279,7 +284,11 @@ export default function LogicalClassificationGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: LogicalClassificationGameProps): React.JSX.Element {
-  const summaryFinishLabel = finishLabel;
+  const translations = useTranslations('KangurMiniGames');
+  const summaryFinishLabel =
+    finishLabel === 'Wróć do tematów'
+      ? getKangurMiniGameFinishLabel(translations, 'topics')
+      : finishLabel;
   const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState(FIRST_ROUND));
@@ -512,7 +521,7 @@ export default function LogicalClassificationGame({
         />
         <KangurPracticeGameSummaryTitle
           dataTestId='logical-classification-summary-title'
-          title={`Wynik: ${score}/${TOTAL_TARGETS}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_TARGETS)}
         />
         <KangurPracticeGameSummaryXP accent='teal' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -527,16 +536,17 @@ export default function LogicalClassificationGame({
         />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Świetnie klasyfikujesz.'
+            ? translations('logicalClassification.summary.perfect')
             : percent >= 70
-              ? 'Super! Masz oko do grup i intruzów.'
-              : 'Dobra próba! Jeszcze kilka rund i będzie perfekcyjnie.'}
+              ? translations('logicalClassification.summary.good')
+              : translations('logicalClassification.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
+          restartLabel={translations('shared.restart')}
           onRestart={() => {
             setRoundIndex(0);
             setRoundState(buildRoundState(FIRST_ROUND));
@@ -743,7 +753,9 @@ export default function LogicalClassificationGame({
                 aria-live='polite'
                 aria-atomic='true'
               >
-                {roundCorrect ? `Brawo! ${round.explain}` : `To nie ten intruz. ${round.explain}`}
+                {roundCorrect
+                  ? `${translations('logicalClassification.feedback.correct')} ${round.explain}`
+                  : `${translations('logicalClassification.feedback.wrong')} ${round.explain}`}
               </p>
             ) : null}
           </KangurInfoCard>

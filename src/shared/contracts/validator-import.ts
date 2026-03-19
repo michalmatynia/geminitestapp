@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-import { createProductValidationPatternSchema } from './products';
+import {
+  createProductValidationPatternSchema,
+  productValidationSemanticAuditRecordSchema,
+} from './products';
 
 export const validatorImportScopeSchema = z.enum([
   'products',
@@ -149,6 +152,12 @@ export const productValidatorImportOperationSchema = z.object({
   action: productValidatorImportActionSchema,
   patternId: z.string().nullable().optional(),
   reason: z.string().nullable().optional(),
+  semanticAudit: productValidationSemanticAuditRecordSchema
+    .extend({
+      summary: z.string().trim().min(1),
+    })
+    .nullable()
+    .optional(),
 });
 
 export type ProductValidatorImportOperation = z.infer<typeof productValidatorImportOperationSchema>;

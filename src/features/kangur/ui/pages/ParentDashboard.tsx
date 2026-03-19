@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -28,15 +29,8 @@ import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
-const PARENT_TAB_LABELS: Record<KangurParentDashboardTabId, string> = {
-  scores: 'Wyniki ucznia',
-  progress: 'Postęp ucznia',
-  assign: 'Zadania ucznia',
-  monitoring: 'Monitorowanie zadań',
-  'ai-tutor': 'Tutor-AI dla rodzica',
-};
-
 function ParentDashboardContent(): React.JSX.Element {
+  const translations = useTranslations('KangurParentDashboard');
   const {
     activeLearner,
     activeTab,
@@ -75,12 +69,22 @@ function ParentDashboardContent(): React.JSX.Element {
   const assignmentsTabIds = getParentDashboardTabIds('assign');
   const monitoringTabIds = getParentDashboardTabIds('monitoring');
   const aiTutorTabIds = getParentDashboardTabIds('ai-tutor');
+  const parentTabLabels = useMemo<Record<KangurParentDashboardTabId, string>>(
+    () => ({
+      scores: translations('page.tabs.scores'),
+      progress: translations('page.tabs.progress'),
+      assign: translations('page.tabs.assign'),
+      monitoring: translations('page.tabs.monitoring'),
+      'ai-tutor': translations('page.tabs.aiTutor'),
+    }),
+    [translations]
+  );
   const dashboardContentId = canAccessDashboard
     ? `parent-dashboard:${activeLearnerId ?? 'none'}:${activeTab}`
     : 'parent-dashboard:guest';
   const dashboardTitle = canAccessDashboard
-    ? `Panel rodzica: ${PARENT_TAB_LABELS[activeTab]}`
-    : 'Panel rodzica bez dostępu';
+    ? translations('page.dashboardTitle', { tab: parentTabLabels[activeTab] })
+    : translations('page.dashboardTitleRestricted');
 
   useKangurAiTutorSessionSync({
     learnerId: activeLearnerId,
@@ -89,8 +93,8 @@ function ParentDashboardContent(): React.JSX.Element {
       contentId: dashboardContentId,
       title: dashboardTitle,
       description: canAccessDashboard
-        ? 'Dashboard rodzica z wynikami, postępem ucznia, zadaniami, monitoringiem i wsparciem Tutor-AI.'
-        : 'Widok ograniczonego dostępu do panelu rodzica.',
+        ? translations('page.sessionDescriptionAuthenticated')
+        : translations('page.sessionDescriptionRestricted'),
     },
   });
   useKangurTutorAnchor({
@@ -102,7 +106,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 90,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Hero dashboardu rodzica bez dostępu',
+      label: translations('page.anchors.heroGuest'),
     },
   });
   useKangurTutorAnchor({
@@ -114,7 +118,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 88,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Hero dashboardu rodzica',
+      label: translations('page.anchors.hero'),
     },
   });
   useKangurTutorAnchor({
@@ -126,7 +130,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 86,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Zarządzanie uczniami',
+      label: translations('page.anchors.learnerManagement'),
     },
   });
   useKangurTutorAnchor({
@@ -138,7 +142,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 84,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Zakładki dashboardu rodzica',
+      label: translations('page.anchors.tabs'),
     },
   });
   useKangurTutorAnchor({
@@ -150,7 +154,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 80,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Wyniki ucznia',
+      label: translations('page.anchors.scores'),
     },
   });
   useKangurTutorAnchor({
@@ -162,7 +166,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 82,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Postęp ucznia',
+      label: translations('page.anchors.progress'),
     },
   });
   useKangurTutorAnchor({
@@ -174,7 +178,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 78,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Zadania ucznia',
+      label: translations('page.anchors.assignments'),
     },
   });
   useKangurTutorAnchor({
@@ -186,7 +190,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 77,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Monitorowanie zadań',
+      label: translations('page.anchors.monitoring'),
     },
   });
   useKangurTutorAnchor({
@@ -198,7 +202,7 @@ function ParentDashboardContent(): React.JSX.Element {
     priority: 76,
     metadata: {
       contentId: dashboardContentId,
-      label: 'Tutor-AI dla rodzica',
+      label: translations('page.anchors.aiTutor'),
     },
   });
 

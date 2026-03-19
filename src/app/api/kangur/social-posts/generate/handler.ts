@@ -19,6 +19,7 @@ const bodySchema = z.object({
   modelId: z.string().trim().optional(),
   visionModelId: z.string().trim().optional(),
   imageAddonIds: z.array(z.string().trim().min(1)).optional(),
+  projectUrl: z.string().trim().optional(),
 });
 
 export async function postKangurSocialPostGenerateHandler(
@@ -44,6 +45,7 @@ export async function postKangurSocialPostGenerateHandler(
       modelId: parsed.modelId,
       visionModelId: parsed.visionModelId,
       imageAddons,
+      projectUrl: parsed.projectUrl,
     });
 
     if (parsed.postId) {

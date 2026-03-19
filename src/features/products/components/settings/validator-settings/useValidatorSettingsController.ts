@@ -14,6 +14,7 @@ import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationPattern,
+  ProductValidationSemanticState,
   ProductValidationTarget,
   ProductValidationInstanceScope,
   SequenceGroupDraft,
@@ -25,6 +26,10 @@ import {
 } from '@/shared/contracts/products/validation';
 import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import {
+  getProductValidationSemanticState,
+  getProductValidationSemanticTransition,
+} from '@/shared/lib/products/utils/validator-semantic-state';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -49,6 +54,7 @@ import {
   formatReplacementFields,
   getReplacementFieldsForTarget,
 } from './helpers';
+import { buildAndSimulateValidatorPatternPreview } from './validator-pattern-simulator';
 
 /**
  * Coordinates validator settings queries, pattern-editing state, and modal actions for the validator settings UI.
@@ -66,8 +72,12 @@ export function useValidatorSettingsController() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingPattern, setEditingPattern] = useState<ProductValidationPattern | null>(null);
+  const [modalSemanticStateSeed, setModalSemanticState] =
+    useState<ProductValidationSemanticState | null>(null);
   const [formData, setFormData] = useState<PatternFormData>(EMPTY_FORM);
-  const [testResult, setTestResult] = useState<unknown>(null);
+  const [simulatorScope, setSimulatorScope] = useState<ProductValidationInstanceScope>('product_edit');
+  const [simulatorValues, setSimulatorValues] = useState<Record<string, string>>({});
+  const [simulatorCategoryFixtures, setSimulatorCategoryFixtures] = useState<string>('');
   const [groupDrafts, setGroupDrafts] = useState<Record<string, SequenceGroupDraft>>({});
   const [draggedPatternId, setDraggedPatternId] = useState<string | null>(null);
   const [dragOverPatternId, setDragOverPatternId] = useState<string | null>(null);
@@ -80,6 +90,59 @@ export function useValidatorSettingsController() {
   const updateSettings = useUpdateValidatorSettingsMutation();
 
   const sequenceGroups = useMemo(() => buildSequenceGroups(orderedPatterns), [orderedPatterns]);
+
+  const modalSemanticState = useMemo((): ProductValidationSemanticState | null => {
+    const parsedSequence =
+      formData.sequence.trim().length === 0 ? null : parseStrictInt(formData.sequence);
+    if (formData.sequence.trim().length > 0 && (parsedSequence === null || parsedSequence < 0)) {
+      return modalSemanticStateSeed;
+    }
+
+    const parsedMaxExecutions = parseStrictInt(formData.maxExecutions);
+    if (parsedMaxExecutions === null || parsedMaxExecutions < 1 || parsedMaxExecutions > 20) {
+      return modalSemanticStateSeed;
+    }
+
+    const parsedValidationDebounceMs = parseStrictInt(formData.validationDebounceMs);
+    if (
+      parsedValidationDebounceMs === null ||
+      parsedValidationDebounceMs < 0 ||
+      parsedValidationDebounceMs > 30_000
+    ) {
+      return modalSemanticStateSeed;
+    }
+
+    let replacementValue: string | null = null;
+    if (formData.replacementMode === 'dynamic') {
+      const recipe = buildDynamicRecipeFromForm(formData);
+      if (!recipe) return modalSemanticStateSeed;
+      replacementValue = encodeDynamicReplacementRecipe(recipe);
+    } else {
+      replacementValue = formData.replacementValue.length > 0 ? formData.replacementValue : null;
+    }
+
+    return (
+      buildValidationPayload({
+        formData,
+        sequenceGroups,
+        editingPattern,
+        semanticState: modalSemanticStateSeed,
+        replacementValue,
+        parsedSequence,
+        parsedMaxExecutions,
+        parsedValidationDebounceMs,
+      }).semanticState ?? null
+    );
+  }, [editingPattern, formData, modalSemanticStateSeed, sequenceGroups]);
+
+  const modalSemanticTransition = useMemo(
+    () =>
+      getProductValidationSemanticTransition({
+        previous: modalSemanticStateSeed,
+        current: modalSemanticState,
+      }),
+    [modalSemanticState, modalSemanticStateSeed]
+  );
 
   const sequenceScopedPatternIds = useMemo(() => {
     const ids = new Set<string>();
@@ -98,6 +161,46 @@ export function useValidatorSettingsController() {
     });
     return map;
   }, [sequenceGroups]);
+
+  const resetSimulator = useCallback((): void => {
+    setSimulatorScope('product_edit');
+    setSimulatorValues({});
+    setSimulatorCategoryFixtures('');
+  }, []);
+
+  const testResult = useMemo(
+    () =>
+      buildAndSimulateValidatorPatternPreview({
+        formData,
+        sequenceGroups,
+        orderedPatterns,
+        editingPattern,
+        modalSemanticState,
+        validationScope: simulatorScope,
+        simulatorValues,
+        categoryFixturesText: simulatorCategoryFixtures,
+      }),
+    [
+      editingPattern,
+      formData,
+      modalSemanticState,
+      orderedPatterns,
+      sequenceGroups,
+      simulatorCategoryFixtures,
+      simulatorScope,
+      simulatorValues,
+    ]
+  );
+
+  const setSimulatorValue = useCallback((key: string, value: string): void => {
+    setSimulatorValues((prev) => {
+      if (prev[key] === value) return prev;
+      return {
+        ...prev,
+        [key]: value,
+      };
+    });
+  }, []);
 
   const getGroupDraft = useCallback(
     (groupId: string): SequenceGroupDraft => {
@@ -149,34 +252,37 @@ export function useValidatorSettingsController() {
 
   const handleAddPattern = useCallback((target?: string): void => {
     setEditingPattern(null);
+    setModalSemanticState(null);
     setFormData({
       ...EMPTY_FORM,
       target: (target as ProductValidationTarget) || 'name',
     });
-    setTestResult(null);
+    resetSimulator();
     setShowModal(true);
-  }, []);
+  }, [resetSimulator]);
 
   const handleEditPattern = useCallback((pattern: ProductValidationPattern): void => {
     setEditingPattern(pattern);
+    setModalSemanticState(getProductValidationSemanticState(pattern));
     setFormData(buildFormDataFromPattern(pattern));
-    setTestResult(null);
+    resetSimulator();
     setShowModal(true);
-  }, []);
+  }, [resetSimulator]);
 
   const handleDuplicatePattern = useCallback(
     (pattern: ProductValidationPattern): void => {
       setEditingPattern(null);
+      setModalSemanticState(getProductValidationSemanticState(pattern));
       const duplicated = buildFormDataFromPattern(pattern);
       duplicated.label = buildDuplicateLabel(
         pattern.label,
         new Set(patterns.map((p) => p.label.toLowerCase()))
       );
       setFormData(duplicated);
-      setTestResult(null);
+      resetSimulator();
       setShowModal(true);
     },
-    [patterns]
+    [patterns, resetSimulator]
   );
 
   const handleSavePattern = async (): Promise<void> => {
@@ -230,6 +336,7 @@ export function useValidatorSettingsController() {
         formData,
         sequenceGroups,
         editingPattern,
+        semanticState: modalSemanticState,
         replacementValue,
         parsedSequence,
         parsedMaxExecutions,
@@ -241,6 +348,7 @@ export function useValidatorSettingsController() {
         if (Object.keys(changedPayload).length === 0) {
           toast('No changes to save.', { variant: 'info' });
           setShowModal(false);
+          setModalSemanticState(null);
           return;
         }
         await updatePattern.mutateAsync({ id: editingPattern.id, data: changedPayload });
@@ -250,6 +358,7 @@ export function useValidatorSettingsController() {
         toast('Pattern created.', { variant: 'success' });
       }
       setShowModal(false);
+      setModalSemanticState(null);
     } catch (error) {
       logClientError(error);
       logClientError(error, {
@@ -510,11 +619,22 @@ export function useValidatorSettingsController() {
     reorderPending: reorderPatterns.isPending,
     showModal,
     setShowModal,
-    closeModal: () => setShowModal(false),
+    closeModal: () => {
+      setShowModal(false);
+      setModalSemanticState(null);
+    },
     editingPattern,
+    modalSemanticState,
+    modalSemanticTransition,
     formData,
     setFormData,
     testResult,
+    simulatorScope,
+    setSimulatorScope,
+    simulatorValues,
+    setSimulatorValue,
+    simulatorCategoryFixtures,
+    setSimulatorCategoryFixtures,
     handleSave: handleSavePattern,
     handleSavePattern,
     handleTogglePattern,

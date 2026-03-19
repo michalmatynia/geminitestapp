@@ -9,12 +9,14 @@ import {
   Breadcrumbs,
   Button,
   Card,
+  Input,
   SelectSimple,
 } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import type { KangurSocialDocUpdatePlan, KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 
 import {
   BRAIN_MODEL_DEFAULT_VALUE,
@@ -23,6 +25,7 @@ import { useAdminKangurSocialPage } from './admin-kangur-social/AdminKangurSocia
 import { SocialPostList } from './admin-kangur-social/SocialPost.List';
 import { SocialPostEditor } from './admin-kangur-social/SocialPost.Editor';
 import { SocialPostPipeline } from './admin-kangur-social/SocialPost.Pipeline';
+import { KangurSocialPipelineQueuePanel } from './admin-kangur-social/KangurSocialPipelineQueuePanel';
 
 export function AdminKangurSocialPage(): React.JSX.Element {
   const {
@@ -47,6 +50,8 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     linkedinConnectionId,
     brainModelId,
     visionModelId,
+    projectUrl,
+    setProjectUrl,
     isSettingsDirty,
     isSavingSettings,
     handleSaveSettings,
@@ -205,13 +210,15 @@ export function AdminKangurSocialPage(): React.JSX.Element {
 
   return (
     <KangurAdminContentShell
-      title='Kangur Social'
+      title='StudiQ Social'
       description={
         <div className='flex flex-wrap items-center gap-3'>
-          <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          <AdminFavoriteBreadcrumbRow>
+            <Breadcrumbs items={breadcrumbs} className='mt-0' />
+          </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
-            Prepare LinkedIn updates for Kangur and StudiQ improvements.
+            Prepare LinkedIn updates for StudiQ improvements.
           </span>
         </div>
       }
@@ -288,6 +295,8 @@ export function AdminKangurSocialPage(): React.JSX.Element {
             handleRunFullPipeline={handleRunFullPipeline}
           />
 
+          <KangurSocialPipelineQueuePanel variant='compact' />
+
           <Card
             variant='subtle'
             padding='md'
@@ -297,7 +306,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
               <div>
                 <div className='text-sm font-semibold text-foreground'>Brain model</div>
                 <div className='text-sm text-muted-foreground'>
-                  Capability: Kangur Social Post Generation
+                  Capability: StudiQ Social Post Generation
                 </div>
               </div>
               <Badge variant='outline'>{brainModelBadgeLabel}</Badge>
@@ -325,7 +334,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
               <div>
                 <div className='text-sm font-semibold text-foreground'>Vision model</div>
                 <div className='text-sm text-muted-foreground'>
-                  Capability: Kangur Social Visual Analysis
+                  Capability: StudiQ Social Visual Analysis
                 </div>
               </div>
               <Badge variant='outline'>{visionModelBadgeLabel}</Badge>
@@ -340,6 +349,29 @@ export function AdminKangurSocialPage(): React.JSX.Element {
                 ariaLabel='Vision model override'
                 title='Vision model override'
                 disabled={visionModelOptions.isLoading}
+              />
+            </div>
+          </Card>
+
+          <Card
+            variant='subtle'
+            padding='md'
+            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+          >
+            <div>
+              <div className='text-sm font-semibold text-foreground'>Project URL</div>
+              <div className='text-xs text-muted-foreground'>
+                Current project link to reference in generated posts.
+              </div>
+            </div>
+            <div className='mt-3'>
+              <Input
+                type='url'
+                value={projectUrl}
+                onChange={(e) => setProjectUrl(e.target.value)}
+                placeholder='https://example.com/project'
+                size='sm'
+                aria-label='Project URL'
               />
             </div>
           </Card>

@@ -37,6 +37,7 @@ type SocialPipelineRunnerDeps = {
   linkedinConnectionId: string | null;
   brainModelId: string | null;
   visionModelId: string | null;
+  projectUrl: string;
   generationNotes: string;
   resolveDocReferences: () => string[];
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
@@ -246,6 +247,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         modelId: depsRef.current.brainModelId ?? undefined,
         visionModelId: depsRef.current.visionModelId ?? undefined,
         imageAddonIds: mergedAddonIds,
+        projectUrl: depsRef.current.projectUrl || undefined,
       };
       console.log('[PIPELINE] Step 3 payload:', generatePayload);
       const generatedPost = await withRetry(

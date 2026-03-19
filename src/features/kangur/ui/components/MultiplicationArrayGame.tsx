@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
@@ -33,6 +34,7 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import { getKangurMiniGameFinishLabel } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -85,7 +87,11 @@ export default function MultiplicationArrayGame({
   finishLabelVariant = 'done',
   onFinish,
 }: MultiplicationArrayGameProps): React.JSX.Element {
-  const finishLabel = finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Gotowe!';
+  const translations = useTranslations('KangurMiniGames');
+  const finishLabel = getKangurMiniGameFinishLabel(
+    translations,
+    finishLabelVariant === 'topics' ? 'topics' : 'done'
+  );
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const handleFinishGame = (): void => {
@@ -170,7 +176,7 @@ export default function MultiplicationArrayGame({
         />
         <KangurPracticeGameSummaryTitle
           dataTestId='multiplication-array-summary-title'
-          title={`Zebrałeś ${score}/${TOTAL_ROUNDS} grup!`}
+          title={translations('multiplicationArray.summary.title', { score, total: TOTAL_ROUNDS })}
         />
         <KangurPracticeGameSummaryXP accent='violet' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -181,10 +187,10 @@ export default function MultiplicationArrayGame({
         <KangurPracticeGameSummaryProgress accent='indigo' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Mistrz grupowania! Tabliczka zdobyta!'
+            ? translations('multiplicationArray.summary.perfect')
             : percent >= 67
-              ? 'Świetna robota! Prawie perfekcja!'
-              : 'Dobra próba! Graj dalej, aby ćwiczyć!'}
+              ? translations('multiplicationArray.summary.good')
+              : translations('multiplicationArray.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           className={KANGUR_STACK_ROW_CLASSNAME}
@@ -203,6 +209,7 @@ export default function MultiplicationArrayGame({
             setCollected(new Set());
             sessionStartedAtRef.current = Date.now();
           }}
+          restartLabel={translations('shared.restart')}
           restartButtonClassName='w-full sm:flex-1'
         />
       </KangurPracticeGameSummary>
@@ -233,7 +240,7 @@ export default function MultiplicationArrayGame({
             {/* Problem header */}
             <div className='text-center'>
               <p className='text-xs font-bold text-purple-400 uppercase tracking-wide mb-1'>
-                Dotknij każdą grupę, by ją zebrać!
+                {translations('multiplicationArray.inRound.header')}
               </p>
               <p className='text-3xl font-extrabold text-purple-600'>
                 {a} × {b}{' '}
@@ -250,7 +257,7 @@ export default function MultiplicationArrayGame({
                 align='center'
                 className='min-w-0 min-[420px]:min-w-[110px]'
                 data-testid='multiplication-array-counter-collected'
-                label='Zebrane'
+                label={translations('multiplicationArray.inRound.collectedLabel')}
                 padding='sm'
                 value={
                   <motion.span
@@ -271,7 +278,7 @@ export default function MultiplicationArrayGame({
                 align='center'
                 className='min-w-0 min-[420px]:min-w-[110px]'
                 data-testid='multiplication-array-counter-target'
-                label='Cel'
+                label={translations('multiplicationArray.inRound.targetLabel')}
                 padding='sm'
                 value={total}
               />
@@ -356,7 +363,7 @@ export default function MultiplicationArrayGame({
                     🎉 {a} × {b} = {total}!
                   </p>
                   <p className='mt-1 text-sm [color:var(--kangur-page-muted-text)]'>
-                    {a} grup po {b} = {total} razem
+                    {translations('multiplicationArray.inRound.celebrationDetail', { a, b, total })}
                   </p>
                 </motion.div>
               )}
@@ -365,7 +372,10 @@ export default function MultiplicationArrayGame({
             {/* Instruction when not all collected */}
             {!allCollected && (
               <p className='text-center text-xs [color:var(--kangur-page-muted-text)]'>
-                Zebrane: {collected.size}/{a} grup — dotknij kolejną!
+                {translations('multiplicationArray.inRound.progress', {
+                  collected: collected.size,
+                  total: a,
+                })}
               </p>
             )}
           </KangurGlassPanel>

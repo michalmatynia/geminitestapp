@@ -34,6 +34,8 @@ import type {
 import type {
   ProductValidationPatternFormData,
   ProductValidationPattern,
+  ProductValidationSemanticState,
+  ProductValidationSemanticAuditSource,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
   ProductValidationDenyBehavior,
@@ -41,6 +43,7 @@ import type {
   CreateProductValidationPatternInput,
   UpdateProductValidationPatternInput,
 } from './validation';
+import type { ProductValidationSemanticTransition } from '@/shared/lib/products/utils/validator-semantic-state';
 export const productDraftOpenFormTabSchema = z.enum([
   'general',
   'other',
@@ -267,6 +270,14 @@ export interface SequenceGroupView {
   patternIds: string[];
 }
 
+export type ValidatorPatternSimulatorInput = {
+  key: string;
+  fieldName: string;
+  sourceMode: 'current_field' | 'form_field' | 'latest_product_field';
+  label: string;
+  placeholder: string;
+};
+
 export interface ValidatorSettingsController {
   patterns: ProductValidationPattern[];
   settings: unknown; // Ideally more specific, but 'unknown' is what's implied from useValidatorSettings()
@@ -288,9 +299,17 @@ export interface ValidatorSettingsController {
   setShowModal: (show: boolean) => void;
   closeModal: () => void;
   editingPattern: ProductValidationPattern | null;
+  modalSemanticState: ProductValidationSemanticState | null;
+  modalSemanticTransition: ProductValidationSemanticTransition;
   formData: PatternFormData;
   setFormData: (data: PatternFormData | ((prev: PatternFormData) => PatternFormData)) => void;
   testResult: unknown;
+  simulatorScope: ProductValidationInstanceScope;
+  setSimulatorScope: (scope: ProductValidationInstanceScope) => void;
+  simulatorValues: Record<string, string>;
+  setSimulatorValue: (key: string, value: string) => void;
+  simulatorCategoryFixtures: string;
+  setSimulatorCategoryFixtures: (value: string) => void;
   handleSave: () => Promise<void>;
   handleSavePattern: () => Promise<void>;
   handleTogglePattern: (pattern: ProductValidationPattern) => Promise<void>;
@@ -353,13 +372,21 @@ export interface ValidatorSettingsController {
   openEdit: (pattern: ProductValidationPattern) => void;
 }
 
+export type ProductValidationPatternWriteOptions = {
+  semanticAuditSource?: ProductValidationSemanticAuditSource;
+};
+
 export type ProductValidationPatternRepository = {
   listPatterns(): Promise<ProductValidationPattern[]>;
   getPatternById(id: string): Promise<ProductValidationPattern | null>;
-  createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern>;
+  createPattern(
+    data: CreateProductValidationPatternInput,
+    options?: ProductValidationPatternWriteOptions
+  ): Promise<ProductValidationPattern>;
   updatePattern(
     id: string,
-    data: UpdateProductValidationPatternInput
+    data: UpdateProductValidationPatternInput,
+    options?: ProductValidationPatternWriteOptions
   ): Promise<ProductValidationPattern>;
   deletePattern(id: string): Promise<void>;
   getEnabledByDefault(): Promise<boolean>;

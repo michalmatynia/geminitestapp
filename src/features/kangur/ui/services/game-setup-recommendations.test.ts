@@ -6,6 +6,15 @@ import {
 } from '@/features/kangur/ui/services/game-setup-recommendations';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
+const createTranslator = (messages: Record<string, string>) => {
+  return (key: string, values?: Record<string, string | number>): string => {
+    const template = messages[key] ?? key;
+    return template.replace(/\{(\w+)\}/g, (_, token: string) =>
+      String(values?.[token] ?? `{${token}}`)
+    );
+  };
+};
+
 const buildProgress = (
   overrides: Partial<KangurProgressState> = {}
 ): KangurProgressState => ({
@@ -80,6 +89,30 @@ describe('game setup recommendations', () => {
     });
   });
 
+  it('returns English starter copy when a translator is provided', () => {
+    const translate = createTranslator({
+      'training.starter.description':
+        'A gentle start with two categories helps build rhythm without overload in the first session.',
+      'training.starter.label': 'Start',
+      'training.starter.title': 'Recommended starter practice',
+    });
+    const recommendation = getRecommendedTrainingSetup(
+      buildProgress({
+        gamesPlayed: 0,
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+      }),
+      {
+        locale: 'en',
+        translate,
+      }
+    );
+
+    expect(recommendation.label).toBe('Start');
+    expect(recommendation.title).toBe('Recommended starter practice');
+    expect(recommendation.description).toContain('A gentle start');
+  });
+
   it('chooses the full kangur test only for truly competition-ready learners', () => {
     const recommendation = getRecommendedKangurMode(
       buildProgress({
@@ -93,5 +126,30 @@ describe('game setup recommendations', () => {
 
     expect(recommendation.mode).toBe('full_test_2024');
     expect(recommendation.label).toBe('Gotowość konkursowa');
+  });
+
+  it('returns English Kangur mode copy when a translator is provided', () => {
+    const translate = createTranslator({
+      'mode.competitionReady.description':
+        'You have strong pace and high accuracy. The full competition test should deliver the best progress.',
+      'mode.competitionReady.label': 'Competition ready',
+      'mode.competitionReady.title': 'We recommend the full competition test',
+    });
+    const recommendation = getRecommendedKangurMode(
+      buildProgress({
+        gamesPlayed: 15,
+        perfectGames: 4,
+        totalCorrectAnswers: 92,
+        totalQuestionsAnswered: 100,
+        currentWinStreak: 4,
+      }),
+      {
+        locale: 'en',
+        translate,
+      }
+    );
+
+    expect(recommendation.label).toBe('Competition ready');
+    expect(recommendation.title).toBe('We recommend the full competition test');
   });
 });

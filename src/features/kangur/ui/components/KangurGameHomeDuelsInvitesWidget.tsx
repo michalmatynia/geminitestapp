@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   appendKangurUrlParams,
@@ -40,6 +41,8 @@ type KangurGameHomeDuelsInvitesWidgetProps = {
 export function KangurGameHomeDuelsInvitesWidget({
   hideWhenScreenMismatch = true,
 }: KangurGameHomeDuelsInvitesWidgetProps = {}): React.JSX.Element | null {
+  const inviteTranslations = useTranslations('KangurDuels.homeInvites');
+  const commonTranslations = useTranslations('KangurDuels.common');
   const runtime = useKangurGameRuntime();
   const { basePath, screen, user } = runtime;
   const canPlay = Boolean(user?.activeLearner?.id);
@@ -108,7 +111,7 @@ export function KangurGameHomeDuelsInvitesWidget({
           ) {
             return;
           }
-          setError('Nie udało się pobrać zaproszeń do pojedynków.');
+          setError(inviteTranslations('loadError'));
           setIsLoading(false);
         },
       }
@@ -145,7 +148,7 @@ export function KangurGameHomeDuelsInvitesWidget({
         <div className='min-w-0 flex-1 space-y-1'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <h3 id={headingId} className='break-words text-base font-semibold text-slate-900'>
-              Zaproszenia do pojedynku
+              {inviteTranslations('heading')}
             </h3>
             {visibleInvites.length > 0 ? (
               <KangurStatusChip accent='indigo' size='sm'>
@@ -154,7 +157,7 @@ export function KangurGameHomeDuelsInvitesWidget({
             ) : null}
           </div>
           <p className='text-xs text-slate-600'>
-            Prywatne wyzwania od innych graczy.
+            {inviteTranslations('description')}
           </p>
         </div>
         <KangurButton
@@ -170,7 +173,7 @@ export function KangurGameHomeDuelsInvitesWidget({
             transitionAcknowledgeMs={HOME_DUELS_INVITE_TRANSITION_MS}
             transitionSourceId='home-duels-invite:cta'
           >
-            Wyślij zaproszenie
+            {inviteTranslations('sendInvite')}
           </Link>
         </KangurButton>
       </div>
@@ -183,15 +186,22 @@ export function KangurGameHomeDuelsInvitesWidget({
 
       {isLoading ? (
         <KangurInfoCard accent='slate' padding='md' tone='accent' role='status'>
-          Ładujemy zaproszenia…
+          {inviteTranslations('loading')}
         </KangurInfoCard>
       ) : null}
 
       {!isLoading && visibleInvites.length > 0 ? (
-        <ul className={KANGUR_GRID_TIGHT_CLASSNAME} role='list' aria-label='Zaproszenia do pojedynku'>
+        <ul
+          className={KANGUR_GRID_TIGHT_CLASSNAME}
+          role='list'
+          aria-label={inviteTranslations('listAria')}
+        >
           {visibleInvites.map((entry) => {
-            const operationLabel = formatDuelOperationLabel(entry.operation);
-            const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);
+            const operationLabel = formatDuelOperationLabel(entry.operation, commonTranslations);
+            const difficultyLabel = formatDuelDifficultyLabel(
+              entry.difficulty,
+              commonTranslations
+            );
             return (
               <li key={entry.sessionId}>
                 <KangurInfoCard
@@ -200,16 +210,22 @@ export function KangurGameHomeDuelsInvitesWidget({
                   tone='accent'
                   className={`${KANGUR_SPACED_ROW_CLASSNAME} sm:items-center sm:justify-between`}
                   role='group'
-                  aria-label={`Zaproszenie od ${entry.host.displayName}`}
+                  aria-label={inviteTranslations('cardAria', {
+                    name: entry.host.displayName,
+                  })}
                 >
                   <div className='min-w-0 flex-1 space-y-1'>
                     <div className='break-words text-sm font-semibold text-slate-800'>
                       {entry.host.displayName}
                     </div>
                     <div className='break-words text-xs text-slate-500'>
-                      {operationLabel} • {difficultyLabel} • {entry.questionCount} pytań •{' '}
-                      {entry.timePerQuestionSec}s / pytanie •{' '}
-                      {formatRelativeAge(entry.updatedAt, nowMs)}
+                      {inviteTranslations('meta', {
+                        operation: operationLabel,
+                        difficulty: difficultyLabel,
+                        questionCount: entry.questionCount,
+                        seconds: entry.timePerQuestionSec,
+                        updated: formatRelativeAge(entry.updatedAt, nowMs, commonTranslations),
+                      })}
                     </div>
                   </div>
                   <KangurButton
@@ -224,7 +240,7 @@ export function KangurGameHomeDuelsInvitesWidget({
                       transitionAcknowledgeMs={HOME_DUELS_INVITE_TRANSITION_MS}
                       transitionSourceId={`home-duels-invite:${entry.sessionId}`}
                     >
-                      Dołącz
+                      {inviteTranslations('join')}
                     </Link>
                   </KangurButton>
                 </KangurInfoCard>
@@ -236,7 +252,7 @@ export function KangurGameHomeDuelsInvitesWidget({
 
       {!isLoading && !error && visibleInvites.length === 0 ? (
         <KangurInfoCard accent='slate' padding='md' tone='neutral' role='status'>
-          Brak zaproszeń. Wyślij własne wyzwanie, aby zaprosić znajomych.
+          {inviteTranslations('empty')}
         </KangurInfoCard>
       ) : null}
     </KangurGlassPanel>

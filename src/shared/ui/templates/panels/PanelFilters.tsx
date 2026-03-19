@@ -55,6 +55,7 @@ const getMultiSelectValues = (value: unknown): string[] => {
 interface PanelFiltersProps {
   filters: FilterField[];
   values: Record<string, unknown>;
+  activeValues?: Record<string, unknown>;
   search?: string;
   searchPlaceholder?: string;
   onFilterChange: (key: string, value: unknown) => void;
@@ -63,6 +64,7 @@ interface PanelFiltersProps {
   compact?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  toggleButtonAlignment?: 'start' | 'end';
   actions?: React.ReactNode;
   className?: string;
 }
@@ -91,6 +93,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
   const {
     filters,
     values,
+    activeValues,
     search: externalSearch = '',
     searchPlaceholder,
     onFilterChange,
@@ -99,6 +102,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
     compact = false,
     collapsible = false,
     defaultExpanded,
+    toggleButtonAlignment = 'end',
     actions,
     className,
   } = props;
@@ -139,8 +143,9 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
     setIsExpanded(false);
   }, [onReset]);
 
-  const hasActiveFilters = Object.values(values).some((value) => isActiveFilterValue(value));
-  const activeFilterCount = Object.values(values).filter((value) =>
+  const activeFilterSource = activeValues ?? values;
+  const hasActiveFilters = Object.values(activeFilterSource).some((value) => isActiveFilterValue(value));
+  const activeFilterCount = Object.values(activeFilterSource).filter((value) =>
     isActiveFilterValue(value)
   ).length;
   const runtimeValue = useMemo<PanelFiltersRuntimeValue>(
@@ -200,12 +205,13 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
                 setIsExpanded(!isExpanded);
               }}
               className={cn(
-                'h-8 w-full px-2 sm:ml-auto sm:w-auto',
+                'h-8 w-full justify-center gap-1.5 px-3 tabular-nums sm:w-[10rem] sm:shrink-0',
+                toggleButtonAlignment === 'end' && 'sm:ml-auto',
                 hasActiveFilters && 'bg-blue-600 text-white hover:bg-blue-500'
               )}
             >
               {isExpanded ? 'Hide Filters' : 'Show Filters'}
-              {hasActiveFilters && <span> ({activeFilterCount})</span>}
+              {hasActiveFilters && <span className='inline-flex min-w-[3ch] justify-center'>({activeFilterCount})</span>}
             </Button>
           ) : null}
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ActivityIcon, ExternalLinkIcon, ImageIcon, UploadCloudIcon } from 'lucide-react';
+import { ActivityIcon, ExternalLinkIcon, ImageIcon, NewspaperIcon, UploadCloudIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -12,8 +12,9 @@ import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
+import { KangurSocialPipelineQueuePanel } from '@/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel';
 
-type QueueTab = 'paths-all' | 'paths' | 'paths-external' | 'file-uploads' | 'image-studio';
+type QueueTab = 'paths-all' | 'paths' | 'paths-external' | 'file-uploads' | 'image-studio' | 'kangur-social';
 
 const QUEUE_TABS: Array<
   IdLabelOptionDto<QueueTab> & { icon: React.ComponentType<{ className?: string }> }
@@ -23,6 +24,7 @@ const QUEUE_TABS: Array<
   { id: 'paths-external', label: 'External Runs', icon: ExternalLinkIcon },
   { id: 'file-uploads', label: 'File Uploads', icon: UploadCloudIcon },
   { id: 'image-studio', label: 'Image Studio', icon: ImageIcon },
+  { id: 'kangur-social', label: 'StudiQ Social', icon: NewspaperIcon },
 ];
 
 const toQueueTab = (value: string): QueueTab => {
@@ -30,6 +32,7 @@ const toQueueTab = (value: string): QueueTab => {
   if (value === 'paths-external') return 'paths-external';
   if (value === 'file-uploads') return 'file-uploads';
   if (value === 'image-studio') return 'image-studio';
+  if (value === 'kangur-social') return 'kangur-social';
   if (value === 'paths') return 'paths';
   return 'paths-all';
 };
@@ -63,32 +66,37 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
   };
 
   return (
-    <div className='mx-auto w-full max-w-none pb-10'>
+    <div className='space-y-6'>
       <ListPanel
-        title='Job Queue'
-        eyebrow={
-          <AdminAiPathsBreadcrumbs
-            parent={{ label: 'Queue', href: '/admin/ai-paths/queue' }}
-            current={activeTabMeta.label}
-            className='mb-2'
-          />
-        }
-        headerActions={
-          <div className='flex flex-wrap items-center gap-2'>
-            <Badge variant='processing' className='gap-1.5'>
-              <ActiveTabIcon className='size-3.5' />
-              {activeTabMeta.label}
-            </Badge>
-            <Badge variant='outline' className='border-white/10 text-gray-300'>
-              {QUEUE_TABS.length} views
-            </Badge>
+        variant='flat'
+        className='[&>div:first-child]:mb-3'
+        header={
+          <div className='space-y-3'>
+            <div className='flex flex-wrap items-start justify-between gap-2'>
+              <div className='space-y-1'>
+                <h1 className='text-3xl font-bold tracking-tight text-white'>Job Queue</h1>
+                <AdminAiPathsBreadcrumbs
+                  parent={{ label: 'Queue', href: '/admin/ai-paths/queue' }}
+                  current={activeTabMeta.label}
+                />
+              </div>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant='processing' className='gap-1.5'>
+                  <ActiveTabIcon className='size-3.5' />
+                  {activeTabMeta.label}
+                </Badge>
+                <Badge variant='outline' className='border-white/10 text-gray-300'>
+                  {QUEUE_TABS.length} views
+                </Badge>
+              </div>
+            </div>
           </div>
         }
         filters={
           <div
             role='tablist'
             aria-label='Queue views'
-            className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-5'
+            className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-6'
           >
             {QUEUE_TABS.map((tab) => {
               const Icon = tab.icon;
@@ -211,6 +219,17 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             className='space-y-4'
           >
             <ImageStudioRunsQueuePanel />
+          </section>
+        ) : null}
+
+        {activeTab === 'kangur-social' ? (
+          <section
+            role='tabpanel'
+            id={getContentId('kangur-social')}
+            aria-labelledby={getTriggerId('kangur-social')}
+            className='space-y-4'
+          >
+            <KangurSocialPipelineQueuePanel />
           </section>
         ) : null}
       </ListPanel>

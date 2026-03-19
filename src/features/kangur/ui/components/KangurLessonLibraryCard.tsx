@@ -1,7 +1,11 @@
 import React, { type AriaAttributes, type ComponentProps } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import {
+  getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
@@ -152,6 +156,7 @@ type KangurLessonLibraryCardProps = {
 } & Pick<ComponentProps<typeof KangurIconSummaryOptionCard>, 'emphasis'>;
 
 export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurLessonsWidgets.libraryCard');
   const {
     ariaCurrent,
@@ -169,12 +174,18 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
     onSelect,
     statusGroupClassName,
   } = props;
+  const localizedTitle = getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title);
+  const localizedDescription = getLocalizedKangurLessonDescription(
+    lesson.componentId,
+    locale,
+    lesson.description
+  );
 
   return (
     <KangurIconSummaryOptionCard
       accent='indigo'
       buttonClassName={cn('w-full text-left', buttonClassName)}
-      aria-label={translations('ariaLabel', { title: lesson.title })}
+      aria-label={translations('ariaLabel', { title: localizedTitle })}
       aria-current={ariaCurrent}
       data-doc-id={dataDocId}
       data-testid={itemTestId}
@@ -193,7 +204,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
         asideClassName='w-full self-start sm:ml-auto sm:w-auto'
         className='w-full max-[480px]:flex-col'
         contentClassName={contentClassName}
-        description={lesson.description}
+        description={localizedDescription}
         footer={
           <KangurLessonLibraryCardFooter
             completedLessonAssignment={completedLessonAssignment}
@@ -215,7 +226,7 @@ export function KangurLessonLibraryCard(props: KangurLessonLibraryCardProps): Re
             {lesson.emoji}
           </KangurGradientIconTile>
         }
-        title={lesson.title}
+        title={localizedTitle}
         titleAs='h2'
         titleClassName='text-lg sm:text-xl'
       />

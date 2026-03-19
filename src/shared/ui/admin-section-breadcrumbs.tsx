@@ -7,6 +7,7 @@ import type {
 } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
+import { AdminFavoriteBreadcrumbRow } from './admin-favorite-breadcrumb-row';
 import { Breadcrumbs } from './Breadcrumbs';
 
 export type { AdminBreadcrumbNode };
@@ -34,7 +35,11 @@ export function AdminSectionBreadcrumbs({
   const items = buildAdminSectionBreadcrumbItems({ section, current, parent });
   const resolvedClassName = baseClassName ? cn(baseClassName, className) : className;
 
-  return <Breadcrumbs items={items} className={resolvedClassName} />;
+  return (
+    <AdminFavoriteBreadcrumbRow>
+      <Breadcrumbs items={items} className={resolvedClassName} />
+    </AdminFavoriteBreadcrumbRow>
+  );
 }
 
 export type { AdminSectionBreadcrumbsConfig, AdminSectionBreadcrumbsProps };

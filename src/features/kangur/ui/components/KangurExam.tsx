@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, ChevronLeft, XCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useId, useMemo, useRef, useState } from 'react';
 
 import {
@@ -29,6 +30,10 @@ import {
   KangurPracticeGameSummaryProgress,
   KangurPracticeGameSummaryTitle,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameAccuracyText,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import {
   KangurButton,
@@ -277,6 +282,7 @@ function ExamQuestion({
 }
 
 function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const { onBack } = useKangurGameContext();
   const [reviewing, setReviewing] = useState<number | null>(null);
   const questionCount = questions.length;
@@ -287,7 +293,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
   const pct = Math.round((score / questionCount) * 100);
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
   const reviewQuestionCount = questionCount;
-  const summaryTitle = `Wynik: ${score}/${questionCount}`;
+  const summaryTitle = getKangurMiniGameScoreLabel(translations, score, questionCount);
 
   if (reviewing !== null) {
     const question = questions[reviewing];
@@ -479,7 +485,7 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
           type='button'
           variant='surface'
         >
-          Wróć do menu
+          {translations('kangurExam.actions.backToMenu')}
         </KangurButton>
       </div>
       <KangurPracticeGameSummary dataTestId='kangur-exam-summary-shell'>
@@ -490,22 +496,22 @@ function ExamSummary({ questions, answers }: ExamSummaryProps): React.JSX.Elemen
         />
         <KangurPracticeGameSummaryProgress
           accent='amber'
-          ariaLabel='Dokładność odpowiedzi w teście Kangur'
-          ariaValueText={`${pct}% poprawnych odpowiedzi`}
+          ariaLabel={translations('kangurExam.progressAriaLabel')}
+          ariaValueText={getKangurMiniGameAccuracyText(translations, pct)}
           dataTestId='kangur-exam-summary-progress-bar'
           percent={pct}
         />
         <p className='break-words text-sm [color:var(--kangur-page-muted-text)]'>
-          {pct}% poprawnych odpowiedzi
+          {getKangurMiniGameAccuracyText(translations, pct)}
         </p>
         <KangurPracticeGameSummaryMessage className='text-sm'>
           {pct === 100
-            ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
+            ? translations('kangurExam.summary.perfect')
             : pct >= 70
-              ? 'Świetnie! Gotowy/a na konkurs!'
+              ? translations('kangurExam.summary.good')
               : pct >= 40
-                ? 'Dobra robota! Ćwicz dalej!'
-                : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
+                ? translations('kangurExam.summary.fair')
+                : translations('kangurExam.summary.retry')}
         </KangurPracticeGameSummaryMessage>
       </KangurPracticeGameSummary>
 

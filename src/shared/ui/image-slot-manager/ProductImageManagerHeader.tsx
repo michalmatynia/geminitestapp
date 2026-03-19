@@ -3,17 +3,19 @@
 import { Button, Alert } from '@/shared/ui';
 
 import {
+  PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED,
   useProductImageManagerUIActions,
   useProductImageManagerUIState,
 } from './ProductImageManagerUIContext';
 
 export function ProductImageManagerHeader() {
   const { showDebug, debugInfo, controller, minimalUi } = useProductImageManagerUIState();
-  const { setShowDebug, convertAllSlotsToBase64 } = useProductImageManagerUIActions();
+  const { convertAllSlotsToBase64 } = useProductImageManagerUIActions();
 
   const { imageSlots, uploadError } = controller;
 
   if (minimalUi) {
+    if (!PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED) return null;
     return uploadError ? (
       <Alert variant='error' className='mb-2 p-2 text-[11px]'>
         {uploadError}
@@ -47,15 +49,6 @@ export function ProductImageManagerHeader() {
               Convert All to Base64
             </Button>
           )}
-          <Button
-            type='button'
-            variant='ghost'
-            size='sm'
-            onClick={() => setShowDebug(!showDebug)}
-            className='h-7 px-2 text-xs'
-          >
-            {showDebug ? 'Hide debug' : 'Show debug'}
-          </Button>
         </div>
       </div>
 

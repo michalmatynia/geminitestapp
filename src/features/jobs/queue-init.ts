@@ -149,6 +149,11 @@ export const initializeQueues = (): void => {
         | (() => void)
         | undefined
     )?.();
+    (
+      (queueModules[15] as Record<string, unknown>)['startKangurSocialPipelineQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
 
     void logSystemEvent({
       level: 'info',

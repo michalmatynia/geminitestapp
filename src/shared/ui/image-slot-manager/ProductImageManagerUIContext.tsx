@@ -30,6 +30,9 @@ const ProductImageManagerUIStateContext =
   createContext<ProductImageManagerUIStateContextValue | null>(null);
 const ProductImageManagerUIActionsContext =
   createContext<ProductImageManagerUIActionsContextValue | null>(null);
+export const PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED = process.env[
+  'NEXT_PUBLIC_PRODUCT_IMAGE_MANAGER_DEBUG'
+] === 'true';
 
 export function ProductImageManagerUIProvider({
   children,
@@ -77,8 +80,8 @@ export function ProductImageManagerUIProvider({
   const slotImageLockedReason = controller.slotImageLockedReason || 'Image is locked.';
 
   // UI State
+  const [showDebug, setShowDebugState] = useState(PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
   const [slotViewModes, setSlotViewModes] = useState<SlotViewMode[]>(
     Array(imageSlots.length).fill('upload')
   );
@@ -128,7 +131,13 @@ export function ProductImageManagerUIProvider({
 
   // Handlers
   const pushDebug = useCallback((info: Omit<DebugInfo, 'timestamp'>) => {
+    if (!PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED) return;
     setDebugInfo({ ...info, timestamp: new Date().toISOString() });
+  }, []);
+
+  const setShowDebug = useCallback((value: boolean) => {
+    if (!PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED) return;
+    setShowDebugState(value);
   }, []);
 
   const setSlotViewMode = useCallback((index: number, mode: SlotViewMode) => {
@@ -375,8 +384,8 @@ export function ProductImageManagerUIProvider({
       draggedIndex,
       dragOverIndex,
       isReordering,
-      debugInfo,
-      showDebug,
+      debugInfo: PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED ? debugInfo : null,
+      showDebug: PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED ? showDebug : false,
       externalBaseUrl,
       minimalUi,
       showDragHandle,

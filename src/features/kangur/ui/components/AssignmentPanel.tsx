@@ -2,11 +2,13 @@
 
 import { CheckCircle2, Circle } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
+import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
@@ -46,18 +48,32 @@ const buildAssignmentHref = (
 const ASSIGNMENT_PANEL_ROUTE_ACKNOWLEDGE_MS = 110;
 
 export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): React.JSX.Element {
-  const assignments = useMemo(() => buildKangurAssignments(progress), [progress]);
+  const locale = useLocale();
+  const panelTranslations = useTranslations('KangurAssignmentPanel');
+  const suggestionTranslations = useTranslations('KangurAssignmentSuggestions');
+  const assignments = useMemo(
+    () =>
+      buildKangurAssignments(progress, 3, {
+        translate: suggestionTranslations,
+        resolveLessonTitle: (componentId, fallbackTitle) =>
+          getLocalizedKangurLessonTitle(componentId, locale, fallbackTitle),
+      }),
+    [locale, progress, suggestionTranslations]
+  );
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   const completionLabel = useMemo(() => {
     if (assignments.length === 0) {
-      return 'Brak zadań';
+      return panelTranslations('completion.none');
     }
     if (completedIds.length === assignments.length) {
-      return 'Wszystkie zadania ukończone';
+      return panelTranslations('completion.allCompleted');
     }
-    return `Ukończono ${completedIds.length}/${assignments.length}`;
-  }, [assignments.length, completedIds.length]);
+    return panelTranslations('completion.progress', {
+      completed: completedIds.length,
+      total: assignments.length,
+    });
+  }, [assignments.length, completedIds.length, panelTranslations]);
 
   const toggleAssignment = (id: string): void => {
     setCompletedIds((prev) =>
@@ -79,7 +95,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
         )}
       >
         <KangurSectionEyebrow className='text-sm tracking-[0.18em]'>
-          Zadania
+          {panelTranslations('heading')}
         </KangurSectionEyebrow>
         <KangurStatusChip accent='slate' className='self-start sm:self-auto' labelStyle='compact'>
           {completionLabel}
@@ -89,7 +105,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
         <KangurEmptyState
           accent='slate'
           className='mt-4 text-sm'
-          description='Brak proponowanych zadań. Zbierz najpierw trochę postępu ucznia.'
+          description={panelTranslations('empty')}
           padding='lg'
         />
       ) : (
@@ -116,8 +132,8 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                     onClick={() => toggleAssignment(assignment.id)}
                     aria-label={
                       completed
-                        ? `Oznacz ${assignment.title} jako nieukończone`
-                        : `Oznacz ${assignment.title} jako ukończone`
+                        ? panelTranslations('toggle.markUndone', { title: assignment.title })
+                        : panelTranslations('toggle.markDone', { title: assignment.title })
                     }
                     aria-pressed={completed}
                     className='mt-0.5 h-8 w-8 min-w-0 rounded-full px-0'
@@ -141,6 +157,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       </KangurCardTitle>
                       <KangurAssignmentPriorityChip
                         labelStyle='compact'
+                        labelOverride={panelTranslations(`priority.${assignment.priority}`)}
                         priority={assignment.priority}
                       />
                     </div>
@@ -153,7 +170,7 @@ export function AssignmentPanel({ basePath, progress }: AssignmentPanelProps): R
                       labelStyle='compact'
                       size='sm'
                     >
-                      Cel: {assignment.target}
+                      {panelTranslations('target', { target: assignment.target })}
                     </KangurStatusChip>
                     <KangurButton
                       asChild

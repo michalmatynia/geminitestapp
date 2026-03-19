@@ -135,7 +135,7 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     render(<KangurParentDashboardAssignmentsWidget />);
 
     expect(screen.queryByTestId('assignment-manager-stub')).toBeNull();
-    expect(screen.queryByText('Zadania ucznia')).toBeNull();
+    expect(screen.queryByText('widgets.assignments.title')).toBeNull();
   });
 
   it('renders Mongo-backed section intro copy when available', () => {

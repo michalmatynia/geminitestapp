@@ -446,6 +446,11 @@ export const buildAdminNav = (handlers: {
         href: '/admin/agentcreator',
         children: [
           {
+            id: 'ai/agent-creator/runs',
+            label: 'Runs',
+            href: '/admin/agentcreator/runs',
+          },
+          {
             id: 'ai/agent-creator/learners',
             label: 'Learner Agents',
             href: '/admin/agentcreator/teaching',
@@ -626,6 +631,12 @@ export const buildAdminNav = (handlers: {
         children: [
           { id: 'system/auth/dashboard', label: 'Dashboard', href: '/admin/auth/dashboard' },
           { id: 'system/auth/users', label: 'Users', href: '/admin/auth/users' },
+          {
+            id: 'system/auth/login-activity',
+            label: 'Login Activity',
+            href: '/admin/auth/login-activity',
+            keywords: ['logins', 'sign in', 'signed in', 'activity'],
+          },
           { id: 'system/auth/permissions', label: 'Permissions', href: '/admin/auth/permissions' },
           { id: 'system/auth/settings', label: 'Settings', href: '/admin/auth/settings' },
           { id: 'system/auth/user-pages', label: 'User Pages', href: '/admin/auth/user-pages' },

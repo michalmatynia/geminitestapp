@@ -203,6 +203,49 @@ describe('ProductColumns queued badge', () => {
     ).toBeInTheDocument();
   });
 
+  it('truncates long product titles inside the fixed-width name column', () => {
+    const product = createProduct({
+      name_en:
+        'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight | Collector Edition',
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    const productButton = screen.getByRole('button', {
+      name: 'Open The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight | Collector Edition',
+    });
+
+    expect(productButton.className).toContain('overflow-hidden');
+    expect(productButton.className).toContain('text-ellipsis');
+    expect(productButton.className).toContain('whitespace-nowrap');
+    expect(productButton.classList.contains('w-full')).toBe(false);
+    expect(productButton).toHaveAttribute(
+      'title',
+      'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight | Collector Edition'
+    );
+    expect(productButton.parentElement?.className).toContain('cursor-text');
+    expect(productButton.parentElement?.className).toContain('select-text');
+  });
+
   it('falls back to English parameter values when the preferred locale is empty', () => {
     const product = createProduct({
       name_pl: 'Brelok',
@@ -497,6 +540,37 @@ describe('ProductColumns queued badge', () => {
 
     expect(setShowTriggerRunFeedback).toHaveBeenCalledWith(false);
     expect(screen.getByText('Hide Statuses')).toBeInTheDocument();
+  });
+
+  it('pins fixed widths for the columns that must stay uniform across pages', () => {
+    const columns = getProductColumns();
+
+    expect(columns.find((column) => column.id === 'select')?.size).toBe(48);
+    expect(columns.find((column) => column.id === 'select')?.meta).toMatchObject({ widthPx: 48 });
+    expect(columns.find((column) => column.accessorKey === 'images')?.size).toBe(84);
+    expect(columns.find((column) => column.accessorKey === 'images')?.meta).toMatchObject({
+      widthPx: 84,
+    });
+    expect(columns.find((column) => column.accessorKey === 'price')?.size).toBe(140);
+    expect(columns.find((column) => column.accessorKey === 'price')?.meta).toMatchObject({
+      widthPx: 140,
+    });
+    expect(columns.find((column) => column.accessorKey === 'stock')?.size).toBe(88);
+    expect(columns.find((column) => column.accessorKey === 'stock')?.meta).toMatchObject({
+      widthPx: 88,
+    });
+    expect(columns.find((column) => column.accessorKey === 'createdAt')?.size).toBe(200);
+    expect(columns.find((column) => column.accessorKey === 'createdAt')?.meta).toMatchObject({
+      widthPx: 200,
+    });
+    expect(columns.find((column) => column.id === 'integrations')?.size).toBe(220);
+    expect(columns.find((column) => column.id === 'integrations')?.meta).toMatchObject({
+      widthPx: 220,
+    });
+    expect(columns.find((column) => column.id === 'actions')?.size).toBe(64);
+    expect(columns.find((column) => column.id === 'actions')?.meta).toMatchObject({
+      widthPx: 64,
+    });
   });
 
   it('keeps the BL quick-export button visible when AI Path row triggers render nothing', async () => {

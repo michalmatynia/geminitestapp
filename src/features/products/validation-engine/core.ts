@@ -18,7 +18,16 @@ import {
   evaluateStringCondition,
   parseDynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import {
+  PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,
+  allowsProductValidationSemanticOperationExecutionWithoutRegexMatch,
+} from '@/shared/lib/products/utils/validator-semantic-operations';
+import {
+  matchesProductValidationSemanticOperation,
+  getProductValidationSemanticState,
+} from '@/shared/lib/products/utils/validator-semantic-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS } from '@/features/products/lib/validatorSemanticPresets';
 
 
 export type { FieldValidatorIssue };
@@ -215,15 +224,28 @@ export const isReplacementAllowedForField = (
 };
 
 /**
+ * Validator docs: see docs/validator/function-reference.md#core.allowspatternexecutionwithoutregexmatch
+ */
+export const allowsPatternExecutionWithoutRegexMatch = (
+  pattern: ProductValidationPattern
+): boolean =>
+  allowsProductValidationSemanticOperationExecutionWithoutRegexMatch(
+    getProductValidationSemanticState(pattern)?.operation
+  );
+
+/**
  * Validator docs: see docs/validator/function-reference.md#core.islatestpricestockmirrorpattern
  */
 export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPattern): boolean => {
   if (pattern.target !== 'price' && pattern.target !== 'stock') return false;
-  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
-  if (!recipe) return false;
   return (
-    recipe.sourceMode === 'latest_product_field' && recipe.targetApply === 'replace_whole_field'
+    allowsPatternExecutionWithoutRegexMatch(pattern) &&
+    matchesProductValidationSemanticOperation(pattern, {
+      presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.mirrorLatestField,
+      operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.mirrorLatestField,
+      sourceField: pattern.target,
+      targetField: pattern.target,
+    })
   );
 };
 
@@ -441,7 +463,7 @@ const buildStaticPatternPlans = ({
       chainMode: normalizePatternChainMode(pattern),
       inSequenceGroup,
       sequenceGroupId: inSequenceGroup ? pattern.sequenceGroupId?.trim() || null : null,
-      allowWithoutRegexMatch: isLatestPriceStockMirrorPattern(pattern),
+      allowWithoutRegexMatch: allowsPatternExecutionWithoutRegexMatch(pattern),
     };
     const targetList = byTarget.get(pattern.target);
     if (targetList) {

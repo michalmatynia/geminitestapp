@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -20,6 +21,10 @@ import {
   KangurGlassPanel,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScorePointsLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KANGUR_CENTER_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
@@ -148,6 +153,7 @@ function NumberTile({
   isSelected: boolean;
   onClick: () => void;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   return (
     <Draggable
       draggableId={tile.id}
@@ -168,7 +174,9 @@ function NumberTile({
               snapshot.isDragging ? 'scale-105 shadow-[0_18px_36px_-18px_rgba(15,23,42,0.55)]' : '',
               isSelected ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white' : ''
             )}
-            aria-label={`Liczba ${tile.value}`}
+            aria-label={translations('numberBalance.inRound.tileAria', {
+              value: tile.value,
+            })}
             aria-disabled={isDragDisabled}
             aria-pressed={isSelected}
             onClick={(event) => {
@@ -193,6 +201,7 @@ function NumberTile({
 export default function NumberBalanceRushGame(
   props: NumberBalanceRushGameProps
 ): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const {
     durationMs = 15_000,
     tier = 'tier1',
@@ -277,12 +286,12 @@ export default function NumberBalanceRushGame(
         void ErrorSystem.captureException(_err);
         setMatch(null);
         setPlayer(null);
-        setError('Nie udało się uruchomić meczu. Spróbuj ponownie.');
+        setError(translations('numberBalance.inRound.errors.start'));
       } finally {
         setIsLoading(false);
       }
     },
-    [durationMs, tier, balancedProbability]
+    [balancedProbability, durationMs, tier, translations]
   );
 
   const handleRetryMatch = useCallback(() => {
@@ -435,10 +444,12 @@ export default function NumberBalanceRushGame(
           rank,
           isSelf,
           isLeader: leaderScore !== null && entry.score === leaderScore,
-          label: isSelf ? 'Ty' : `Gracz ${index + 1}`,
+          label: isSelf
+            ? translations('numberBalance.inRound.player.self')
+            : translations('numberBalance.inRound.player.other', { index: index + 1 }),
         };
       }),
-    [activePlayerId, leaderScore, sortedScores]
+    [activePlayerId, leaderScore, sortedScores, translations]
   );
 
   useEffect(() => {
@@ -510,10 +521,10 @@ export default function NumberBalanceRushGame(
   const opponentScore = opponentEntry?.score ?? null;
   const hasOpponent = playerCount > 1 || opponentEntry !== undefined;
   const opponentLabel = opponentEntry
-    ? `Rywal: ${opponentScore ?? 0}`
+    ? translations('numberBalance.inRound.opponent.ready', { score: opponentScore ?? 0 })
     : hasOpponent
-      ? 'Rywal: …'
-      : 'Rywal: —';
+      ? translations('numberBalance.inRound.opponent.searching')
+      : translations('numberBalance.inRound.opponent.empty');
 
   const handleSolved = async (nextLeft: NumberBalanceTile[], nextRight: NumberBalanceTile[]): Promise<void> => {
     if (!match || !player || !puzzle) return;
@@ -570,7 +581,7 @@ export default function NumberBalanceRushGame(
       }
     } catch (_err) {
       void ErrorSystem.captureException(_err);
-      setError('Nie udało się zapisać ruchu. Spróbuj ponownie.');
+      setError(translations('numberBalance.inRound.errors.save'));
     } finally {
       setIsSubmitting(false);
     }
@@ -684,10 +695,10 @@ export default function NumberBalanceRushGame(
       <KangurPracticeGameStage className='w-full max-w-xl'>
         <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
           <div className='text-sm font-semibold text-amber-900'>
-            Czekamy na drugiego gracza…
+            {translations('numberBalance.inRound.waiting.title')}
           </div>
           <div className='mt-2 text-xs font-semibold text-amber-900/80'>
-            Kod meczu: {match.matchId}
+            {translations('numberBalance.inRound.waiting.matchCode', { matchId: match.matchId })}
           </div>
           <div className='mt-3 flex flex-wrap justify-center gap-2'>
             <KangurButton
@@ -698,15 +709,15 @@ export default function NumberBalanceRushGame(
               }}
             >
               {copyStatus === 'success'
-                ? 'Skopiowano!'
+                ? translations('numberBalance.inRound.waiting.copy.success')
                 : copyStatus === 'error'
-                  ? 'Nie udało się skopiować'
-                  : 'Kopiuj kod'}
+                  ? translations('numberBalance.inRound.waiting.copy.error')
+                  : translations('numberBalance.inRound.waiting.copy.idle')}
             </KangurButton>
           </div>
           <div className='mt-4 flex flex-wrap justify-center gap-2'>
             <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='amber'>
-              Ty: {score}
+              {translations('numberBalance.inRound.selfLabel', { score })}
             </KangurStatusChip>
             <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='sky'>
               {opponentLabel}
@@ -721,7 +732,9 @@ export default function NumberBalanceRushGame(
     return (
       <KangurPracticeGameStage className='w-full max-w-xl'>
         <KangurGlassPanel className='w-full rounded-[28px] p-6 text-center' surface='playField'>
-          <div className='text-sm font-semibold text-amber-900'>Ładowanie meczu…</div>
+          <div className='text-sm font-semibold text-amber-900'>
+            {translations('numberBalance.inRound.loading')}
+          </div>
           {error ? (
             <div className='mt-3 text-xs font-semibold text-rose-600'>
               {error}
@@ -731,7 +744,7 @@ export default function NumberBalanceRushGame(
                   variant='primary'
                   onClick={handleRetryMatch}
                 >
-                  Spróbuj ponownie
+                  {translations('shared.restart')}
                 </KangurButton>
               </div>
             </div>
@@ -754,10 +767,10 @@ export default function NumberBalanceRushGame(
     const safeOpponentScore = opponentScore ?? 0;
     const outcomeLabel = hasOpponent
       ? score > safeOpponentScore
-        ? 'Wygrana!'
+        ? translations('numberBalance.summary.outcome.win')
         : score === safeOpponentScore
-          ? 'Remis!'
-          : 'Przegrana!'
+          ? translations('numberBalance.summary.outcome.draw')
+          : translations('numberBalance.summary.outcome.loss')
       : null;
 
     return (
@@ -768,22 +781,26 @@ export default function NumberBalanceRushGame(
         />
         <KangurPracticeGameSummaryTitle
           dataTestId='number-balance-summary-title'
-          title={`Wynik: ${score} pkt`}
+          title={getKangurMiniGameScorePointsLabel(translations, score)}
         />
         <KangurPracticeGameSummaryMessage>
-          Rozwiązane: {solves} • Średni czas: {avgSolveLabel}
-          {hasOpponent ? ` • Rywal: ${safeOpponentScore} pkt` : ''}
+          {translations('numberBalance.summary.solvedLabel')}: {solves} •{' '}
+          {translations('numberBalance.summary.averageTimeLabel')}: {avgSolveLabel}
+          {hasOpponent
+            ? ` • ${translations('numberBalance.summary.opponentLabel')}: ${safeOpponentScore} ${translations('shared.pointsShort')}`
+            : ''}
           {playerRank
-            ? ` • Miejsce: ${playerRank}/${Math.max(playerCount, leaderboardEntries.length)}`
+            ? ` • ${translations('numberBalance.summary.placeLabel')}: ${playerRank}/${Math.max(playerCount, leaderboardEntries.length)}`
             : ''}
           {outcomeLabel ? ` • ${outcomeLabel}` : ''}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel='Zakończ'
+          finishLabel={getKangurMiniGameFinishLabel(translations, 'end')}
           onFinish={() => {
             onFinish?.();
           }}
           onRestart={handleRetryMatch}
+          restartLabel={translations('shared.restart')}
         />
       </KangurPracticeGameSummary>
     );
@@ -803,7 +820,7 @@ export default function NumberBalanceRushGame(
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
             <KangurStatusChip className='px-4 py-2 text-sm font-bold' accent='amber'>
-              Ty: {score}
+              {translations('numberBalance.inRound.selfLabel', { score })}
             </KangurStatusChip>
             <KangurStatusChip className='px-4 py-2 text-sm font-bold' accent='sky'>
               {opponentLabel}
@@ -830,12 +847,17 @@ export default function NumberBalanceRushGame(
           <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-xs font-semibold text-amber-900/80`}>
             {playerRank ? (
               <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='slate'>
-                Miejsce: {playerRank}/{Math.max(playerCount, leaderboardEntries.length)}
+                {translations('numberBalance.inRound.rank', {
+                  rank: playerRank,
+                  total: Math.max(playerCount, leaderboardEntries.length),
+                })}
               </KangurStatusChip>
             ) : null}
             {scoreGap !== null ? (
               <KangurStatusChip className='px-3 py-1 text-xs font-bold' accent='slate'>
-                {scoreGap === 0 ? 'Liderujesz' : `Strata do lidera: ${scoreGap}`}
+                {scoreGap === 0
+                  ? translations('numberBalance.inRound.leader')
+                  : translations('numberBalance.inRound.gap', { scoreGap })}
               </KangurStatusChip>
             ) : null}
           </div>
@@ -856,11 +878,13 @@ export default function NumberBalanceRushGame(
                   <span>{entry.label}</span>
                   {entry.isLeader ? (
                     <span className='rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800'>
-                      Lider
+                      {translations('numberBalance.inRound.leaderBadge')}
                     </span>
                   ) : null}
                 </div>
-                <span>{entry.score} pkt</span>
+                <span>
+                  {entry.score} {translations('shared.pointsShort')}
+                </span>
               </div>
             ))}
           </div>
@@ -881,7 +905,9 @@ export default function NumberBalanceRushGame(
             <div className='flex flex-col items-center justify-center gap-6 md:flex-row md:items-end'>
               <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
                 <div className='text-sm font-semibold text-amber-900'>
-                  Cel: {puzzle.targets.left}
+                  {translations('numberBalance.inRound.targetLabel', {
+                    target: puzzle.targets.left,
+                  })}
                 </div>
                 <Droppable droppableId='left'>
                   {(provided, snapshot) => (
@@ -896,7 +922,7 @@ export default function NumberBalanceRushGame(
                       role='button'
                       tabIndex={canInteract ? 0 : -1}
                       aria-disabled={!canInteract}
-                      aria-label='Lewa strona wagi'
+                      aria-label={translations('numberBalance.inRound.aria.leftSide')}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
@@ -931,7 +957,9 @@ export default function NumberBalanceRushGame(
                   )}
                 </Droppable>
                 <div className='text-xs font-semibold text-amber-900/80'>
-                  Suma: {evaluation.leftSum}
+                  {translations('numberBalance.inRound.sumLabel', {
+                    sum: evaluation.leftSum,
+                  })}
                 </div>
               </div>
 
@@ -939,7 +967,9 @@ export default function NumberBalanceRushGame(
 
               <div className='flex w-full max-w-xs flex-col items-center kangur-panel-gap'>
                 <div className='text-sm font-semibold text-amber-900'>
-                  Cel: {puzzle.targets.right}
+                  {translations('numberBalance.inRound.targetLabel', {
+                    target: puzzle.targets.right,
+                  })}
                 </div>
                 <Droppable droppableId='right'>
                   {(provided, snapshot) => (
@@ -954,7 +984,7 @@ export default function NumberBalanceRushGame(
                       role='button'
                       tabIndex={canInteract ? 0 : -1}
                       aria-disabled={!canInteract}
-                      aria-label='Prawa strona wagi'
+                      aria-label={translations('numberBalance.inRound.aria.rightSide')}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
@@ -989,14 +1019,16 @@ export default function NumberBalanceRushGame(
                   )}
                 </Droppable>
                 <div className='text-xs font-semibold text-amber-900/80'>
-                  Suma: {evaluation.rightSum}
+                  {translations('numberBalance.inRound.sumLabel', {
+                    sum: evaluation.rightSum,
+                  })}
                 </div>
               </div>
             </div>
 
             <div className='flex flex-col kangur-panel-gap'>
               <div className='text-xs font-semibold text-amber-900/80'>
-                Przeciągnij liczby do obu stron, aby zgadzały się z celami.
+                {translations('numberBalance.inRound.instruction')}
               </div>
               <Droppable droppableId='tray' direction='horizontal'>
                 {(provided, snapshot) => (
@@ -1011,7 +1043,7 @@ export default function NumberBalanceRushGame(
                     role='button'
                     tabIndex={canInteract ? 0 : -1}
                     aria-disabled={!canInteract}
-                    aria-label='Taca z liczbami'
+                    aria-label={translations('numberBalance.inRound.aria.tray')}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
@@ -1042,7 +1074,9 @@ export default function NumberBalanceRushGame(
 
         {phase === 'countdown' ? (
           <div className='text-xs font-semibold text-amber-900/80'>
-            Start za {Math.max(1, Math.ceil(countdownLeftMs / 1000))}…
+            {translations('numberBalance.inRound.countdown', {
+              seconds: Math.max(1, Math.ceil(countdownLeftMs / 1000)),
+            })}
           </div>
         ) : null}
       </KangurPracticeGameStage>

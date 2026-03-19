@@ -1,5 +1,7 @@
 'use client';
 
+import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -39,36 +41,49 @@ import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts
 
 const kangurPlatform = getKangurPlatform();
 const INTERACTIONS_PAGE_LIMIT = 20;
-const INTERACTION_FILTER_OPTIONS = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'opened_task', label: 'Zadania' },
-  { value: 'lesson_panel', label: 'Panele lekcji' },
-  { value: 'session', label: 'Sesje' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type InteractionFilter = (typeof INTERACTION_FILTER_OPTIONS)[number]['value'];
+type InteractionFilter = 'all' | 'opened_task' | 'lesson_panel' | 'session';
 
-const formatDuration = (seconds: number): string => {
+const formatDuration = ({
+  seconds,
+  translate,
+}: {
+  seconds: number;
+  translate: (key: string, values?: Record<string, string | number>) => string;
+}): string => {
   const normalized = Math.max(0, Math.round(seconds));
   const minutes = Math.floor(normalized / 60);
   const remainingSeconds = normalized % 60;
   if (minutes === 0) {
-    return `${remainingSeconds}s`;
+    return translate('widgets.monitoring.duration.seconds', {
+      seconds: remainingSeconds,
+    });
   }
-  return `${minutes}m ${`${remainingSeconds}`.padStart(2, '0')}s`;
+  return translate('widgets.monitoring.duration.minutesSeconds', {
+    minutes,
+    seconds: `${remainingSeconds}`.padStart(2, '0'),
+  });
 };
 
-const formatProgressTimestamp = (value: string | null | undefined): string => {
+const formatProgressTimestamp = ({
+  value,
+  locale,
+  fallback,
+}: {
+  value: string | null | undefined;
+  locale: string;
+  fallback: string;
+}): string => {
   if (!value) {
-    return 'Brak danych';
+    return fallback;
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'Brak danych';
+    return fallback;
   }
-  return new Intl.DateTimeFormat('pl-PL', {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
@@ -140,12 +155,6 @@ const readNumber = (value: unknown): number | null => {
   return value;
 };
 
-const TASK_KIND_LABELS: Record<string, string> = {
-  game: 'Gra',
-  lesson: 'Lekcja',
-  test: 'Test',
-};
-
 const isLessonComponentId = (
   value: string,
   lessonsMap: Map<KangurLessonComponentId, unknown>
@@ -156,6 +165,8 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
+  const locale = useLocale();
+  const translations = useTranslations('KangurParentDashboard');
   const {
     activeLearner,
     activeTab,
@@ -168,6 +179,32 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
   const activeLearnerId = activeLearner?.id ?? null;
   const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+  const interactionFilterOptions = useMemo(
+    () =>
+      [
+        { value: 'all', label: translations('widgets.monitoring.filters.all') },
+        { value: 'opened_task', label: translations('widgets.monitoring.filters.openedTask') },
+        { value: 'lesson_panel', label: translations('widgets.monitoring.filters.lessonPanel') },
+        { value: 'session', label: translations('widgets.monitoring.filters.session') },
+      ] satisfies ReadonlyArray<LabeledOptionDto<InteractionFilter>>,
+    [translations]
+  );
+  const taskKindLabels: Record<string, string> = {
+    game: translations('widgets.monitoring.interaction.kind.game'),
+    lesson: translations('widgets.monitoring.interaction.kind.lesson'),
+    test: translations('widgets.monitoring.interaction.kind.test'),
+  };
+  const formatTimestamp = (value: string | null | undefined): string =>
+    formatProgressTimestamp({
+      value,
+      locale,
+      fallback: translations('widgets.monitoring.timestampUnavailable'),
+    });
+  const formatLocalizedDuration = (seconds: number): string =>
+    formatDuration({
+      seconds,
+      translate: (key, values) => translations(key, values),
+    });
   const [interactionHistory, setInteractionHistory] =
     useState<KangurLearnerInteractionHistory | null>(null);
   const [isLoadingInteractions, setIsLoadingInteractions] = useState(false);
@@ -191,8 +228,10 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                   const title =
                     panel.title?.trim() ||
                     (panelIndex !== Number.MAX_SAFE_INTEGER
-                      ? `Panel ${panelIndex}`
-                      : 'Panel');
+                      ? translations('widgets.monitoring.lessonPanelTime.panelNumber', {
+                          number: panelIndex,
+                        })
+                      : translations('widgets.monitoring.lessonPanelTime.panelDefault'));
                   return {
                     id: panelId,
                     index: panelIndex,
@@ -270,13 +309,17 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
           const title =
             readString(metadata?.['title']) ??
             readString(entry.description) ??
-            'Otwarte zadanie';
+            translations('widgets.monitoring.interaction.openedTaskTitle');
           const kindRaw = readString(metadata?.['kind']);
-          const kindLabel = kindRaw ? TASK_KIND_LABELS[kindRaw] ?? 'Zadanie' : 'Zadanie';
+          const kindLabel = kindRaw
+            ? taskKindLabels[kindRaw] ?? translations('widgets.monitoring.interaction.kind.default')
+            : translations('widgets.monitoring.interaction.kind.default');
           return {
             id: entry.id,
             kind: 'opened_task' as const,
-            label: `Otwarte ${kindLabel.toLowerCase()}`,
+            label: translations('widgets.monitoring.interaction.openedTaskLabel', {
+              kind: kindLabel.toLowerCase(),
+            }),
             description: title,
             timestamp,
             timestampMs,
@@ -289,14 +332,16 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             readString(metadata?.['label']) ?? readString(metadata?.['sectionId']);
           const lessonId =
             lessonKey && isLessonComponentId(lessonKey, lessonsById) ? lessonKey : null;
-          const lessonTitle = lessonId ? lessonsById.get(lessonId)?.title ?? 'Lekcja' : 'Lekcja';
+          const lessonTitle = lessonId
+            ? lessonsById.get(lessonId)?.title ?? translations('widgets.monitoring.interaction.lessonFallback')
+            : translations('widgets.monitoring.interaction.lessonFallback');
           const detail = sectionLabel ? `${lessonTitle} · ${sectionLabel}` : lessonTitle;
           const totalSeconds = readNumber(metadata?.['totalSeconds']);
-          const timeLabel = totalSeconds ? ` · ${formatDuration(totalSeconds)}` : '';
+          const timeLabel = totalSeconds ? ` · ${formatLocalizedDuration(totalSeconds)}` : '';
           return {
             id: entry.id,
             kind: 'lesson_panel' as const,
-            label: 'Aktywność w panelach',
+            label: translations('widgets.monitoring.interaction.lessonPanelLabel'),
             description: `${detail}${timeLabel}`,
             timestamp,
             timestampMs,
@@ -305,20 +350,24 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
 
         if (entry.type === ActivityTypes.KANGUR.LEARNER_SESSION) {
           const durationSeconds = readNumber(metadata?.['durationSeconds']);
-          const durationLabel = durationSeconds ? formatDuration(durationSeconds) : null;
+          const durationLabel = durationSeconds ? formatLocalizedDuration(durationSeconds) : null;
           const endedAt = readString(metadata?.['endedAt']);
           const description = endedAt
             ? durationLabel
-              ? `Czas trwania: ${durationLabel}`
-              : 'Sesja zakończona.'
+              ? translations('widgets.monitoring.interaction.sessionDuration', {
+                  duration: durationLabel,
+                })
+              : translations('widgets.monitoring.interaction.sessionEnded')
             : durationLabel
-              ? `Sesja w toku · ${durationLabel}`
-              : 'Sesja w toku.';
+              ? translations('widgets.monitoring.interaction.sessionInProgressWithDuration', {
+                  duration: durationLabel,
+                })
+              : translations('widgets.monitoring.interaction.sessionInProgress');
 
           return {
             id: entry.id,
             kind: 'session' as const,
-            label: 'Sesja logowania',
+            label: translations('widgets.monitoring.interaction.sessionLabel'),
             description,
             timestamp,
             timestampMs,
@@ -328,13 +377,15 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         return {
           id: entry.id,
           kind: 'other' as const,
-          label: 'Aktywność ucznia',
-          description: entry.description ?? 'Aktywność ucznia.',
+          label: translations('widgets.monitoring.interaction.learnerActivityLabel'),
+          description:
+            entry.description ??
+            translations('widgets.monitoring.interaction.learnerActivityDescription'),
           timestamp,
           timestampMs,
         };
       }),
-    [interactions, lessonsById]
+    [formatLocalizedDuration, interactions, lessonsById, taskKindLabels, translations]
   );
   const { rangeStartMs, rangeEndMs } = useMemo(() => {
     const startMs = parseDateFilterValue(interactionDateFrom);
@@ -416,7 +467,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       {
         fallback: undefined,
         onError: () => {
-          setInteractionsLoadMoreError('Nie udało się wczytać starszych interakcji.');
+          setInteractionsLoadMoreError(translations('widgets.monitoring.history.loadMoreError'));
         },
       }
     );
@@ -449,7 +500,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
         if (!isActive) {
           return;
         }
-        setInteractionsError('Nie udało się wczytać historii interakcji.');
+        setInteractionsError(translations('widgets.monitoring.history.loadError'));
       })
       .finally(() => {
         if (isActive) {
@@ -479,19 +530,26 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       <KangurWidgetIntro
         description={
           monitoringContent?.summary ??
-          'Monitoruj postęp przypisanych zadań, w tym sugestii StudiQ, aby utrzymać stały rytm nauki.'
+          translations('widgets.monitoring.description')
         }
-        title={monitoringContent?.title ?? 'Monitorowanie zadań'}
+        title={monitoringContent?.title ?? translations('widgets.monitoring.title')}
       />
       <KangurSummaryPanel
         accent='sky'
         className='mt-1'
-        description='Czas spędzony w panelach lekcji podczas ostatniej sesji (liczony tylko przy aktywnej karcie).'
-        label='Czas w panelach lekcji'
+        description={translations('widgets.monitoring.lessonPanelTime.description')}
+        label={translations('widgets.monitoring.lessonPanelTime.label')}
       >
         {lessonPanelTimeCards.length > 0 ? (
           <div className='mt-3 flex flex-col kangur-panel-gap'>
-            {lessonPanelTimeCards.map((entry) => (
+            {lessonPanelTimeCards.map((entry) => {
+              const lessonTitle = getLocalizedKangurLessonTitle(
+                entry.lesson.componentId,
+                locale,
+                entry.lesson.title
+              );
+
+              return (
               <KangurInfoCard
                 key={entry.lesson.componentId}
                 className='rounded-[26px]'
@@ -501,14 +559,16 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                   <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
                     <div>
                       <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                        {entry.lesson.title}
+                        {lessonTitle}
                       </div>
                       <KangurMetaText className='break-words' tone='slate'>
-                        Ostatnia sesja: {formatProgressTimestamp(entry.sessionUpdatedAt)}
+                        {translations('widgets.monitoring.lessonPanelTime.lastSession', {
+                          timestamp: formatTimestamp(entry.sessionUpdatedAt),
+                        })}
                       </KangurMetaText>
                     </div>
                     <div className='text-sm font-semibold text-sky-700'>
-                      {formatDuration(entry.totalSeconds)}
+                      {formatLocalizedDuration(entry.totalSeconds)}
                     </div>
                   </div>
                   <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
@@ -521,7 +581,9 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                           {section.label}
                         </div>
                         <KangurMetaText tone='slate'>
-                          {formatDuration(section.totalSeconds)} łącznie
+                          {translations('widgets.monitoring.lessonPanelTime.total', {
+                            duration: formatLocalizedDuration(section.totalSeconds),
+                          })}
                         </KangurMetaText>
                         <div className={`mt-2 ${KANGUR_STACK_COMPACT_CLASSNAME} text-xs`}>
                           {section.panels.map((panel) => (
@@ -533,7 +595,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                                 {panel.title}
                               </span>
                               <span className='shrink-0 text-slate-500'>
-                                {formatDuration(panel.seconds)}
+                                {formatLocalizedDuration(panel.seconds)}
                               </span>
                             </div>
                           ))}
@@ -543,11 +605,12 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                   </div>
                 </div>
               </KangurInfoCard>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
-            Brak danych o czasie paneli. Dane pojawią się po przejściu ucznia przez lekcje.
+            {translations('widgets.monitoring.lessonPanelTime.empty')}
           </div>
         )}
       </KangurSummaryPanel>
@@ -555,19 +618,21 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
       <KangurSummaryPanel
         accent='indigo'
         className='mt-1'
-        description='Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz sesje logowania.'
-        label='Historia interakcji'
+        description={translations('widgets.monitoring.history.description')}
+        label={translations('widgets.monitoring.history.label')}
       >
         <div className='mt-3 rounded-[18px] border border-indigo-100/80 bg-white/70 p-4'>
           <div className='flex flex-col kangur-panel-gap'>
             <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-              <KangurMetaText tone='slate'>Filtry</KangurMetaText>
+              <KangurMetaText tone='slate'>
+                {translations('widgets.monitoring.filters.label')}
+              </KangurMetaText>
               <div
                 className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
                 role='tablist'
-                aria-label='Filtrowanie interakcji'
+                aria-label={translations('widgets.monitoring.filters.ariaLabel')}
               >
-                {INTERACTION_FILTER_OPTIONS.map((option) => (
+                {interactionFilterOptions.map((option) => (
                   <KangurButton
                     key={option.value}
                     type='button'
@@ -586,22 +651,26 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             </div>
             <div className='grid kangur-panel-gap sm:grid-cols-3'>
               <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                <KangurMetaText tone='slate'>Data od</KangurMetaText>
+                <KangurMetaText tone='slate'>
+                  {translations('widgets.monitoring.filters.dateFromLabel')}
+                </KangurMetaText>
                 <KangurTextField
                   type='date'
                   value={interactionDateFrom}
                   onChange={(event) => setInteractionDateFrom(event.target.value)}
-                  aria-label='Data od'
+                  aria-label={translations('widgets.monitoring.filters.dateFromLabel')}
                   size='sm'
                 />
               </div>
               <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                <KangurMetaText tone='slate'>Data do</KangurMetaText>
+                <KangurMetaText tone='slate'>
+                  {translations('widgets.monitoring.filters.dateToLabel')}
+                </KangurMetaText>
                 <KangurTextField
                   type='date'
                   value={interactionDateTo}
                   onChange={(event) => setInteractionDateTo(event.target.value)}
-                  aria-label='Data do'
+                  aria-label={translations('widgets.monitoring.filters.dateToLabel')}
                   size='sm'
                 />
               </div>
@@ -618,7 +687,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                     }}
                     className='w-full sm:w-auto'
                   >
-                    Wyczyść filtry
+                    {translations('widgets.monitoring.filters.clear')}
                   </KangurButton>
                 ) : null}
               </div>
@@ -630,15 +699,15 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             accent='slate'
             align='center'
             data-testid='parent-monitoring-interactions-loading'
-            description='Ładujemy ostatnie interakcje ucznia.'
-            title='Ładowanie...'
+            description={translations('widgets.monitoring.history.loadingDescription')}
+            title={translations('widgets.monitoring.history.loadingTitle')}
           />
         ) : interactionsError ? (
           <KangurEmptyState
             accent='rose'
             align='center'
             data-testid='parent-monitoring-interactions-error'
-            description='Spróbuj ponownie za chwilę.'
+            description={translations('widgets.monitoring.history.errorDescription')}
             title={interactionsError}
           />
         ) : filteredInteractions.length === 0 ? (
@@ -648,10 +717,14 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
             data-testid='parent-monitoring-interactions-empty'
             description={
               filtersActive
-                ? 'Zmień filtry, aby zobaczyć więcej aktywności.'
-                : 'Brak interakcji do pokazania.'
+                ? translations('widgets.monitoring.history.filteredEmptyDescription')
+                : translations('widgets.monitoring.history.emptyDescription')
             }
-            title={filtersActive ? 'Brak wyników.' : 'Brak aktywności.'}
+            title={
+              filtersActive
+                ? translations('widgets.monitoring.history.filteredEmptyTitle')
+                : translations('widgets.monitoring.history.emptyTitle')
+            }
           />
         ) : (
           <div className='mt-3 flex flex-col kangur-panel-gap'>
@@ -666,7 +739,7 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                     {entry.label}
                   </div>
                   <KangurMetaText className='break-words' tone='slate'>
-                    {formatProgressTimestamp(entry.timestamp)}
+                    {formatTimestamp(entry.timestamp)}
                   </KangurMetaText>
                 </div>
                 <div className='mt-1 break-words text-sm [color:var(--kangur-page-text)]'>
@@ -684,7 +757,9 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
                   variant='surface'
                   data-doc-id='parent_monitoring_interactions_load_more'
                 >
-                  {isLoadingMoreInteractions ? 'Ładowanie...' : 'Pokaż starsze'}
+                  {isLoadingMoreInteractions
+                    ? translations('widgets.monitoring.history.loadingMore')
+                    : translations('widgets.monitoring.history.loadMore')}
                 </KangurButton>
               </div>
             ) : null}

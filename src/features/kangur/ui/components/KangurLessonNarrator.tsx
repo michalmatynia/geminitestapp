@@ -1,8 +1,13 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import {
+  getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
   KANGUR_NARRATOR_SETTINGS_KEY,
   parseKangurNarratorSettings,
@@ -31,7 +36,9 @@ const KANGUR_LESSON_NARRATOR_CONTEXT_ROOT_IDS = [
 ] as const;
 
 type KangurLessonNarratorProps = {
-  lesson: Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'>;
+  lesson: Pick<KangurLesson, 'id' | 'title' | 'description' | 'contentMode'> & {
+    componentId?: KangurLesson['componentId'];
+  };
   lessonDocument: KangurLessonDocument | null;
   lessonContentRef?: React.RefObject<HTMLElement | null> | null;
   className?: string | undefined;
@@ -56,6 +63,7 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     loadingLabel,
     showFeedback,
   } = props;
+  const locale = useLocale();
   const { data: session } = useSession();
   const settingsStore = useSettingsStore();
   const rawNarratorSettings = settingsStore.get(KANGUR_NARRATOR_SETTINGS_KEY);
@@ -95,6 +103,14 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
   );
 
   const shouldObserveText = lesson.contentMode !== 'document' || !lessonDocument;
+  const localizedLessonTitle =
+    typeof lesson.componentId === 'string'
+      ? getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title)
+      : lesson.title;
+  const localizedLessonDescription =
+    typeof lesson.componentId === 'string'
+      ? getLocalizedKangurLessonDescription(lesson.componentId, locale, lesson.description)
+      : lesson.description;
 
   useEffect(() => {
     if (!shouldObserveText) {
@@ -150,15 +166,15 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
       lesson.contentMode === 'document' && lessonDocument
         ? buildKangurLessonDocumentNarrationScript({
         lessonId: lesson.id,
-        title: lesson.title,
-        description: lesson.description,
+        title: localizedLessonTitle,
+        description: localizedLessonDescription,
         document: lessonDocument,
       })
         : null;
     const textScript = buildKangurLessonNarrationScriptFromText({
       lessonId: lesson.id,
-      title: lesson.title,
-      description: lesson.description,
+      title: localizedLessonTitle,
+      description: localizedLessonDescription,
       text: observedText,
     });
     if (documentScript && hasKangurLessonNarrationContent(documentScript)) {
@@ -167,10 +183,10 @@ export function KangurLessonNarrator(props: KangurLessonNarratorProps): React.JS
     return textScript;
   }, [
     lesson.contentMode,
-    lesson.description,
     lesson.id,
-    lesson.title,
     lessonDocument,
+    localizedLessonDescription,
+    localizedLessonTitle,
     observedText,
   ]);
 

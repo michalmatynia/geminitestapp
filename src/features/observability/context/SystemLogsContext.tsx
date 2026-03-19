@@ -17,6 +17,7 @@ import {
 } from '@/features/observability/hooks/useLogQueries';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
+  ClearLogsTargetDto as ClearLogsTarget,
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   SystemLogLevelDto as SystemLogLevel,
 } from '@/shared/contracts/observability';
@@ -40,6 +41,13 @@ import type {
 
 const SystemLogsStateContext = createContext<SystemLogsStateContextValue | null>(null);
 const SystemLogsActionsContext = createContext<SystemLogsActionsContextValue | null>(null);
+
+const CLEAR_LOG_TARGET_LABELS: Record<ClearLogsTarget, string> = {
+  error_logs: 'Error logs',
+  activity_logs: 'Activity logs',
+  page_access_logs: 'Page Access logs',
+  all_logs: 'All logs',
+};
 
 export const useSystemLogsState = (): SystemLogsStateContextValue => {
   const context = useContext(SystemLogsStateContext);
@@ -342,17 +350,19 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     setPage(1);
   };
 
-  const handleClearLogs = async (): Promise<void> => {
+  const handleClearLogs = async (target: ClearLogsTarget): Promise<void> => {
     try {
-      const result = await clearLogsMutation.mutateAsync();
+      const result = await clearLogsMutation.mutateAsync(target);
       const deleted = typeof result?.deleted === 'number' ? result.deleted : 0;
-      toast(`System logs cleared (${deleted}).`, { variant: 'success' });
+      toast(`${CLEAR_LOG_TARGET_LABELS[target]} cleared (${deleted}).`, { variant: 'success' });
       void logsQuery.refetch();
       void metricsQuery.refetch();
       void insightsQuery.refetch();
     } catch (error: unknown) {
       logClientError(error);
-      logClientError(error, { context: { source: 'SystemLogsContext', action: 'clearLogs' } });
+      logClientError(error, {
+        context: { source: 'SystemLogsContext', action: 'clearLogs', target },
+      });
       toast(error instanceof Error ? error.message : 'Failed to clear logs.', {
         variant: 'error',
       });

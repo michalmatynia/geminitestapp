@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
@@ -32,6 +33,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameAccuracyText,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { useKangurGameContext } from '@/features/kangur/ui/context/KangurGameContext';
 import { useOptionalKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import {
@@ -290,11 +295,12 @@ function ResultView({
   total,
   onRestart,
 }: ResultViewProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const { onBack } = useKangurGameContext();
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
   const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 40 ? '👍' : '💪';
   const summaryBreakdown = rewardBreakdown;
-  const summaryTitle = `Wynik: ${score}/${total}`;
+  const summaryTitle = getKangurMiniGameScoreLabel(translations, score, total);
   const summaryXpEarned = xpEarned;
   const handleRestart = (): void => {
     onRestart();
@@ -316,22 +322,22 @@ function ResultView({
         percent={pct}
       />
       <p className='break-words text-sm [color:var(--kangur-page-muted-text)]'>
-        {pct}% poprawnych odpowiedzi
+        {getKangurMiniGameAccuracyText(translations, pct)}
       </p>
       <KangurPracticeGameSummaryMessage>
         {pct === 100
-          ? 'Idealny wynik! Jesteś mistrzem Kangura! 🦘'
+          ? translations('kangurGame.summary.perfect')
           : pct >= 70
-            ? 'Świetnie! Gotowy/a na konkurs!'
+            ? translations('kangurGame.summary.good')
             : pct >= 40
-              ? 'Dobra robota! Ćwicz dalej!'
-              : 'Nie poddawaj się! Spróbuj jeszcze raz!'}
+              ? translations('kangurGame.summary.fair')
+              : translations('kangurGame.summary.retry')}
       </KangurPracticeGameSummaryMessage>
       <KangurPracticeGameSummaryActions
-        finishLabel='Spróbuj ponownie 🔁'
+        finishLabel={translations('kangurGame.actions.retry')}
         onFinish={handleRestart}
         onRestart={onBack}
-        restartLabel='Menu'
+        restartLabel={translations('kangurGame.actions.menu')}
       />
     </KangurPracticeGameSummary>
   );

@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import {
   KangurButton,
   KangurCardDescription,
@@ -46,6 +48,8 @@ export function KangurAssignmentManagerTimeLimitModal({
   minMinutes,
   maxMinutes,
 }: KangurAssignmentManagerTimeLimitModalProps): React.JSX.Element {
+  const translations = useTranslations('KangurAssignmentManager');
+
   return (
     <KangurDialog
       open={isOpen}
@@ -64,9 +68,9 @@ export function KangurAssignmentManagerTimeLimitModal({
       }}
     >
       <KangurDialogHeader
-        title='Czas na wykonanie'
-        description='Ustaw limit czasu dla zadania. Pozostaw puste, aby przypisać bez limitu.'
-        closeAriaLabel='Zamknij ustawienia czasu'
+        title={translations('timeLimitModal.title')}
+        description={translations('timeLimitModal.description')}
+        closeAriaLabel={translations('timeLimitModal.closeAriaLabel')}
       />
 
       <KangurGlassPanel
@@ -77,10 +81,10 @@ export function KangurAssignmentManagerTimeLimitModal({
       >
         <div>
           <KangurStatusChip accent='indigo' labelStyle='eyebrow'>
-            Czas na wykonanie
+            {translations('timeLimitModal.eyebrow')}
           </KangurStatusChip>
           <KangurCardDescription className='mt-2 text-slate-600' relaxed size='sm'>
-            Ustaw limit czasu dla wybranego zadania. Pozostaw puste, aby przypisać bez limitu.
+            {translations('timeLimitModal.description')}
           </KangurCardDescription>
         </div>
 
@@ -96,7 +100,7 @@ export function KangurAssignmentManagerTimeLimitModal({
             ) : null}
             {timeLimitPreview ? (
               <div className='mt-2 text-xs text-slate-500'>
-                Aktualnie: {timeLimitPreview}
+                {translations('timeLimitModal.current', { value: timeLimitPreview })}
               </div>
             ) : null}
           </div>
@@ -105,18 +109,18 @@ export function KangurAssignmentManagerTimeLimitModal({
         <div className='space-y-2'>
           <KangurTextField
             accent='indigo'
-            aria-label='Czas na wykonanie w minutach'
-            title='Czas na wykonanie (minuty)'
+            aria-label={translations('timeLimitModal.inputAriaLabel')}
+            title={translations('timeLimitModal.inputTitle')}
             inputMode='numeric'
             min={minMinutes}
             max={maxMinutes}
-            placeholder='np. 30'
+            placeholder={translations('timeLimitModal.placeholder')}
             type='number'
             value={timeLimitDraft}
             onChange={(event) => onTimeLimitDraftChange(event.target.value)}
           />
           <div className='text-xs text-slate-500'>
-            Wpisz liczbę minut ({minMinutes}-{maxMinutes}).
+            {translations('timeLimitModal.helper', { minMinutes, maxMinutes })}
           </div>
           {timeLimitParsedError ? (
             <div className='text-xs text-rose-600'>{timeLimitParsedError}</div>
@@ -131,7 +135,7 @@ export function KangurAssignmentManagerTimeLimitModal({
             variant='ghost'
             onClick={onClose}
           >
-            Anuluj
+            {translations('actions.cancel')}
           </KangurButton>
           <KangurButton
             className='w-full sm:w-auto'

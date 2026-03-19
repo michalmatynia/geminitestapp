@@ -107,9 +107,9 @@ describe('AssignmentPanel', () => {
       'border-slate-200/70',
       'bg-white/88'
     );
-    expect(screen.getByText('Zadania')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 0/3')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 0/3')).toHaveClass(
+    expect(screen.getByText('heading')).toBeInTheDocument();
+    expect(screen.getByText('completion.progress')).toBeInTheDocument();
+    expect(screen.getByText('completion.progress')).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
@@ -117,14 +117,14 @@ describe('AssignmentPanel', () => {
     expect(screen.getByText('➗ Powtórka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet średni')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet niski')).toBeInTheDocument();
+    expect(screen.getByText('priority.high')).toBeInTheDocument();
+    expect(screen.getByText('priority.medium')).toBeInTheDocument();
+    expect(screen.getByText('priority.low')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
       'soft-card',
       'border'
     );
-    expect(screen.getAllByText('Cel: 1 powtórka')[0]).toHaveClass(
+    expect(screen.getAllByText('target')[0]).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
@@ -141,9 +141,9 @@ describe('AssignmentPanel', () => {
       expect.arrayContaining(['/kangur/lessons?focus=division', '/kangur/lessons?focus=adding'])
     );
 
-    const completionToggle = screen.getByRole('button', {
-      name: 'Oznacz ➗ Powtórka: Dzielenie jako ukończone',
-    });
+    const completionToggle = screen.getAllByRole('button', {
+      name: 'toggle.markDone',
+    })[0];
 
     expect(completionToggle).toHaveClass('kangur-cta-pill', 'soft-cta');
     expect(completionToggle).toHaveAttribute('aria-pressed', 'false');
@@ -163,7 +163,7 @@ describe('AssignmentPanel', () => {
       'border',
       'transition'
     );
-    expect(screen.getByText('Ukończono 1/3')).toBeInTheDocument();
+    expect(screen.getByText('completion.progress')).toBeInTheDocument();
   });
 
   it('builds embedded cms links when rendered inside a host page route', () => {
@@ -195,9 +195,7 @@ describe('AssignmentPanel', () => {
 
     render(<AssignmentPanel basePath='/kangur' progress={progress} />);
 
-    const emptyState = screen.getByText(
-      'Brak proponowanych zadań. Zbierz najpierw trochę postępu ucznia.'
-    );
+    const emptyState = screen.getByText('empty');
 
     expect(emptyState).toBeInTheDocument();
     expect(emptyState.parentElement).toHaveClass(

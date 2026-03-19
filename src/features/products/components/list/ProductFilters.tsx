@@ -376,6 +376,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         }
         collapsible
         defaultExpanded={!filtersCollapsedByDefault}
+        toggleButtonAlignment='start'
         showHeader={false}
       />
 

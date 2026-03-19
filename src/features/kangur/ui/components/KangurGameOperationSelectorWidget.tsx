@@ -1,7 +1,9 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
   KANGUR_GEOMETRY_LESSON_COMPONENT_IDS,
   KANGUR_LESSON_COMPONENT_ORDER,
@@ -18,7 +20,7 @@ import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/Kangur
 import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
-import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
+import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
@@ -42,6 +44,11 @@ import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-
 import {
   getRecommendedTrainingSetup,
 } from '@/features/kangur/ui/services/game-setup-recommendations';
+import {
+  resolveLocalizedRecommendationActivityLabel,
+  translateRecommendationWithFallback,
+  type RecommendationTranslate,
+} from '@/features/kangur/ui/services/recommendation-i18n';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -218,6 +225,11 @@ type KangurOperationSelectorRecommendation = {
   title: string;
 };
 
+type KangurSelectorRecommendationLocalizer = {
+  locale?: string | null;
+  translate?: RecommendationTranslate;
+};
+
 const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
   if (accuracy >= 85) {
     return 'hard';
@@ -340,58 +352,99 @@ const resolveActionRecommendationTarget = (
 };
 
 const getRecommendationActionLabel = (
-  target: KangurOperationSelectorRecommendationTarget
+  target: KangurOperationSelectorRecommendationTarget,
+  translate?: RecommendationTranslate
 ): string => {
-  const operationLabels: Partial<Record<KangurOperation, string>> = {
-    addition: 'Zagraj w dodawanie',
-    subtraction: 'Zagraj w odejmowanie',
-    multiplication: 'Zagraj w mnożenie',
-    division: 'Zagraj w dzielenie',
-    clock: 'Zagraj na zegarze',
-    mixed: 'Uruchom trening mieszany',
-    decimals: 'Zagraj we ułamki',
-    powers: 'Zagraj w potęgi',
-    roots: 'Zagraj w pierwiastki',
+  const operationLabels: Partial<Record<KangurOperation, { fallback: string; key: string }>> = {
+    addition: { fallback: 'Zagraj w dodawanie', key: 'operationSelector.actions.playAddition' },
+    subtraction: { fallback: 'Zagraj w odejmowanie', key: 'operationSelector.actions.playSubtraction' },
+    multiplication: { fallback: 'Zagraj w mnożenie', key: 'operationSelector.actions.playMultiplication' },
+    division: { fallback: 'Zagraj w dzielenie', key: 'operationSelector.actions.playDivision' },
+    clock: { fallback: 'Zagraj na zegarze', key: 'operationSelector.actions.playClock' },
+    mixed: { fallback: 'Uruchom trening mieszany', key: 'operationSelector.actions.startMixedTraining' },
+    decimals: { fallback: 'Zagraj we ułamki', key: 'operationSelector.actions.playFractions' },
+    powers: { fallback: 'Zagraj w potęgi', key: 'operationSelector.actions.playPowers' },
+    roots: { fallback: 'Zagraj w pierwiastki', key: 'operationSelector.actions.playRoots' },
   };
 
   if (target.kind === 'training') {
-    return 'Uruchom trening mieszany';
+    return translateRecommendationWithFallback(
+      translate,
+      'operationSelector.actions.startMixedTraining',
+      'Uruchom trening mieszany'
+    );
   }
 
   if (target.kind === 'screen') {
     if (target.screen === 'calendar_quiz') {
-      return 'Ćwicz kalendarz';
+      return translateRecommendationWithFallback(
+        translate,
+        'operationSelector.actions.practiceCalendar',
+        'Ćwicz kalendarz'
+      );
     }
     if (target.screen === 'geometry_quiz') {
-      return 'Ćwicz figury';
+      return translateRecommendationWithFallback(
+        translate,
+        'operationSelector.actions.practiceGeometry',
+        'Ćwicz figury'
+      );
     }
     if (target.screen === 'subtraction_quiz') {
-      return 'Ćwicz odejmowanie';
+      return translateRecommendationWithFallback(
+        translate,
+        'operationSelector.actions.practiceSubtraction',
+        'Ćwicz odejmowanie'
+      );
     }
     if (target.screen === 'division_quiz') {
-      return 'Ćwicz dzielenie';
+      return translateRecommendationWithFallback(
+        translate,
+        'operationSelector.actions.practiceDivision',
+        'Ćwicz dzielenie'
+      );
     }
     if (target.screen === 'multiplication_quiz') {
-      return 'Ćwicz mnożenie';
+      return translateRecommendationWithFallback(
+        translate,
+        'operationSelector.actions.practiceMultiplication',
+        'Ćwicz mnożenie'
+      );
     }
-    return 'Uruchom trening';
+    return translateRecommendationWithFallback(
+      translate,
+      'operationSelector.actions.startTraining',
+      'Uruchom trening'
+    );
   }
 
-  return operationLabels[target.operation] ?? 'Zagraj teraz';
+  const operationLabel = operationLabels[target.operation];
+  return operationLabel
+    ? translateRecommendationWithFallback(translate, operationLabel.key, operationLabel.fallback)
+    : translateRecommendationWithFallback(
+        translate,
+        'operationSelector.actions.playNow',
+        'Zagraj teraz'
+      );
 };
 
 const finalizeRecommendation = (
-  draft: Omit<KangurOperationSelectorRecommendation, 'actionLabel' | 'recommendedOperation' | 'recommendedScreen'>
+  draft: Omit<
+    KangurOperationSelectorRecommendation,
+    'actionLabel' | 'recommendedOperation' | 'recommendedScreen'
+  >,
+  translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation => ({
   ...draft,
-  actionLabel: getRecommendationActionLabel(draft.target),
+  actionLabel: getRecommendationActionLabel(draft.target, translate),
   recommendedOperation: draft.target.kind === 'operation' ? draft.target.operation : null,
   recommendedScreen: draft.target.kind === 'screen' ? draft.target.screen : null,
 });
 
 const getQuestRecommendation = (
   quest: KangurDailyQuestState | null,
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation | null => {
   if (!quest?.assignment) {
     return null;
@@ -408,15 +461,23 @@ const getQuestRecommendation = (
       quest.assignment.progressLabel ??
       quest.progress.summary ??
       quest.assignment.description,
-    label: quest.assignment.questLabel ?? 'Misja dnia',
+    label:
+      quest.assignment.questLabel ??
+      translateRecommendationWithFallback(
+        translate,
+        'operationSelector.quest.label',
+        'Misja dnia'
+      ),
     target,
     title: quest.assignment.title,
-  });
+  }, translate);
 };
 
 const getWeakestLessonRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  localizer?: KangurSelectorRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null => {
+  const translate = localizer?.translate;
   const weakestLesson = Object.entries(progress.lessonMastery ?? {})
     .filter(([, entry]) => entry.attempts > 0 && entry.masteryPercent < 80)
     .sort((left, right) => left[1].masteryPercent - right[1].masteryPercent)[0];
@@ -434,18 +495,36 @@ const getWeakestLessonRecommendation = (
   if (!lesson || !target) {
     return null;
   }
+  const lessonTitle = getLocalizedKangurLessonTitle(componentId, localizer?.locale, lesson.title);
 
   return finalizeRecommendation({
     accent: entry.masteryPercent < 60 ? 'rose' : 'amber',
-    description: `Opanowanie ${entry.masteryPercent}%. Jedna dobra runda pomoże szybciej domknąć ten temat przed kolejną lekcją.`,
-    label: 'Nadrabiamy lekcje',
+    description: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.weakestLesson.description',
+      `Opanowanie ${entry.masteryPercent}%. Jedna dobra runda pomoże szybciej domknąć ten temat przed kolejną lekcją.`,
+      {
+        masteryPercent: entry.masteryPercent,
+      }
+    ),
+    label: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.weakestLesson.label',
+      'Nadrabiamy lekcje'
+    ),
     target,
-    title: `Najpierw popraw: ${lesson.title}`,
-  });
+    title: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.weakestLesson.title',
+      `Najpierw popraw: ${lessonTitle}`,
+      { title: lessonTitle }
+    ),
+  }, translate);
 };
 
 const getTrackRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation | null => {
   const track =
     getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }).find(
@@ -453,6 +532,13 @@ const getTrackRecommendation = (
         Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40)
     ) ?? null;
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const activityLabel = topActivity
+    ? resolveLocalizedRecommendationActivityLabel({
+        activityKey: topActivity.key,
+        fallbackLabel: topActivity.label,
+        translate,
+      })
+    : null;
 
   if (!track?.nextBadge) {
     return null;
@@ -467,16 +553,39 @@ const getTrackRecommendation = (
   return finalizeRecommendation({
     accent: 'violet',
     description: topActivity
-      ? `Tor ${track.label} jest najbliżej nagrody. Najmocniej pcha go teraz ${topActivity.label.toLowerCase()}.`
-      : `Tor ${track.label} jest najbliżej kolejnej odznaki.`,
-    label: 'Tor odznak',
+      ? translateRecommendationWithFallback(
+          translate,
+          'operationSelector.track.descriptionWithActivity',
+          `Tor ${track.label} jest najbliżej nagrody. Najmocniej pcha go teraz ${activityLabel?.toLowerCase()}.`,
+          {
+            activity: activityLabel?.toLowerCase() ?? '',
+            track: track.label,
+          }
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'operationSelector.track.descriptionDefault',
+          `Tor ${track.label} jest najbliżej kolejnej odznaki.`,
+          { track: track.label }
+        ),
+    label: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.track.label',
+      'Tor odznak'
+    ),
     target,
-    title: `Rozpędź tor: ${track.label}`,
-  });
+    title: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.track.title',
+      `Rozpędź tor: ${track.label}`,
+      { track: track.label }
+    ),
+  }, translate);
 };
 
 const getGuidedRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation | null => {
   const guidedMomentum = getRecommendedSessionMomentum(progress);
   if (guidedMomentum.completedSessions <= 0 || !guidedMomentum.nextBadgeName) {
@@ -484,6 +593,13 @@ const getGuidedRecommendation = (
   }
 
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const activityLabel = topActivity
+    ? resolveLocalizedRecommendationActivityLabel({
+        activityKey: topActivity.key,
+        fallbackLabel: topActivity.label,
+        translate,
+      })
+    : null;
   const target =
     resolveActivityRecommendationTarget(
       topActivity?.key,
@@ -493,21 +609,53 @@ const getGuidedRecommendation = (
   return finalizeRecommendation({
     accent: 'sky',
     description: topActivity
-      ? `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda ${topActivity.label.toLowerCase()} pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`
-      : `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`,
-    label: 'Polecony kierunek',
+      ? translateRecommendationWithFallback(
+          translate,
+          'operationSelector.guided.descriptionWithActivity',
+          `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda ${activityLabel?.toLowerCase()} pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`,
+          {
+            activity: activityLabel?.toLowerCase() ?? '',
+            nextBadgeName: guidedMomentum.nextBadgeName,
+            summary: guidedMomentum.summary,
+          }
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'operationSelector.guided.descriptionDefault',
+          `Masz już ${guidedMomentum.summary} w polecanym rytmie. Jeszcze jedna mocna runda pomoże domknąć odznakę ${guidedMomentum.nextBadgeName}.`,
+          {
+            nextBadgeName: guidedMomentum.nextBadgeName,
+            summary: guidedMomentum.summary,
+          }
+        ),
+    label: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.guided.label',
+      'Polecony kierunek'
+    ),
     target,
-    title: `Dopnij: ${guidedMomentum.nextBadgeName}`,
-  });
+    title: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.guided.title',
+      `Dopnij: ${guidedMomentum.nextBadgeName}`,
+      { nextBadgeName: guidedMomentum.nextBadgeName }
+    ),
+  }, translate);
 };
 
 const getFallbackRecommendation = (
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: RecommendationTranslate
 ): KangurOperationSelectorRecommendation | null => {
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
   if (!topActivity) {
     return null;
   }
+  const activityLabel = resolveLocalizedRecommendationActivityLabel({
+    activityKey: topActivity.key,
+    fallbackLabel: topActivity.label,
+    translate,
+  });
 
   const target =
     resolveActivityRecommendationTarget(topActivity.key, topActivity.averageAccuracy) ??
@@ -515,24 +663,46 @@ const getFallbackRecommendation = (
 
   return finalizeRecommendation({
     accent: 'indigo',
-    description: `${topActivity.label} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy ruch na kolejną rundę.`,
-    label: 'Mocna passa',
+    description: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.fallback.description',
+      `${activityLabel} daje teraz średnio ${topActivity.averageXpPerSession} XP na grę. To najlepszy ruch na kolejną rundę.`,
+      {
+        activity: activityLabel,
+        averageXpPerSession: topActivity.averageXpPerSession,
+      }
+    ),
+    label: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.fallback.label',
+      'Mocna passa'
+    ),
     target,
-    title: `Zagraj dalej w: ${topActivity.label}`,
-  });
+    title: translateRecommendationWithFallback(
+      translate,
+      'operationSelector.fallback.title',
+      `Zagraj dalej w: ${activityLabel}`,
+      { activity: activityLabel }
+    ),
+  }, translate);
 };
 
 const getOperationSelectorRecommendation = (
   progress: KangurProgressState,
-  quest: KangurDailyQuestState | null
+  quest: KangurDailyQuestState | null,
+  localizer?: KangurSelectorRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null =>
-  getQuestRecommendation(quest, progress) ??
-  getWeakestLessonRecommendation(progress) ??
-  getGuidedRecommendation(progress) ??
-  getTrackRecommendation(progress) ??
-  getFallbackRecommendation(progress);
+  getQuestRecommendation(quest, progress, localizer?.translate) ??
+  getWeakestLessonRecommendation(progress, localizer) ??
+  getGuidedRecommendation(progress, localizer?.translate) ??
+  getTrackRecommendation(progress, localizer?.translate) ??
+  getFallbackRecommendation(progress, localizer?.translate);
 
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
+  const locale = useLocale();
+  const gamePageTranslations = useTranslations('KangurGamePage');
+  const recommendationTranslations = useTranslations('KangurGameRecommendations');
+  const trainingSetupTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
   const {
     activePracticeAssignment,
     basePath,
@@ -546,6 +716,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   } = useKangurGameRuntime();
   const { subject } = useKangurSubjectFocus();
   const { ageGroup } = useKangurAgeGroupFocus();
+  const subjectGroups = useMemo(() => getKangurSubjectGroups(locale), [locale]);
   const trainingSectionRef = useRef<HTMLElement | null>(null);
   const normalizedProgress = useMemo(() => {
     const defaults = createDefaultKangurProgressState();
@@ -565,12 +736,20 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     [normalizedProgress, subject]
   );
   const recommendation = useMemo(
-    () => getOperationSelectorRecommendation(normalizedProgress, dailyQuest),
-    [dailyQuest, normalizedProgress]
+    () =>
+      getOperationSelectorRecommendation(normalizedProgress, dailyQuest, {
+        locale,
+        translate: recommendationTranslations,
+      }),
+    [dailyQuest, locale, normalizedProgress, recommendationTranslations]
   );
   const suggestedTraining = useMemo(
-    () => getRecommendedTrainingSetup(normalizedProgress),
-    [normalizedProgress]
+    () =>
+      getRecommendedTrainingSetup(normalizedProgress, {
+        locale,
+        translate: trainingSetupTranslations,
+      }),
+    [locale, normalizedProgress, trainingSetupTranslations]
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
@@ -629,11 +808,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   }, [lessonsQuery.data, subject]);
   const lessonQuizGroups = useMemo(
     () =>
-      KANGUR_SUBJECT_GROUPS.map((group) => ({
+      subjectGroups.map((group) => ({
         ...group,
         options: lessonQuizOptions.filter((option) => option.subject === group.value),
       })).filter((group) => group.options.length > 0),
-    [lessonQuizOptions]
+    [lessonQuizOptions, subjectGroups]
   );
   const filteredLessonQuizGroups = useMemo(
     () => lessonQuizGroups.filter((group) => group.value === subject),
@@ -665,12 +844,28 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const showMathSections = subject === 'maths';
   const gameIntroDescription =
     subject === 'maths'
-      ? 'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+      ? translateRecommendationWithFallback(
+          gamePageTranslations,
+          'operationSelector.intro.maths',
+          'Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.'
+        )
       : subject === 'alphabet'
-        ? 'Wybierz literową zabawę i ćwicz alfabet.'
+        ? translateRecommendationWithFallback(
+            gamePageTranslations,
+            'operationSelector.intro.alphabet',
+            'Wybierz literową zabawę i ćwicz alfabet.'
+          )
         : subject === 'geometry'
-          ? 'Wybierz zabawę z kształtami i ćwicz geometrię.'
-        : 'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.';
+          ? translateRecommendationWithFallback(
+              gamePageTranslations,
+              'operationSelector.intro.geometry',
+              'Wybierz zabawę z kształtami i ćwicz geometrię.'
+            )
+        : translateRecommendationWithFallback(
+            gamePageTranslations,
+            'operationSelector.intro.language',
+            'Wybierz typ gry językowej i przejdź od razu do ćwiczeń.'
+          );
 
   useEffect(() => {
     if (!lessonsQuery.data) {
@@ -752,7 +947,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-operation-top-section'
-        title='Grajmy!'
+        title={translateRecommendationWithFallback(
+          gamePageTranslations,
+          'operationSelector.title',
+          'Grajmy!'
+        )}
         visualTitle={
           <KangurGrajmyWordmark
             className='mx-auto'
@@ -829,23 +1028,46 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         <KangurSectionHeading
           accent='violet'
           align='left'
-          description='Szybkie quizy oparte na tematach z Lekcji.'
+          description={translateRecommendationWithFallback(
+            gamePageTranslations,
+            'operationSelector.quickPractice.description',
+            'Szybkie quizy oparte na tematach z Lekcji.'
+          )}
           headingAs='h3'
           headingSize='sm'
-          title='Szybkie ćwiczenia'
+          title={translateRecommendationWithFallback(
+            gamePageTranslations,
+            'operationSelector.quickPractice.title',
+            'Szybkie ćwiczenia'
+          )}
           titleId='kangur-game-quick-practice-heading'
         />
         <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
           {filteredLessonQuizGroups.map((group) => (
             <KangurSubjectGroupSection
               key={group.value}
-              ariaLabel={`${group.label} quick practice`}
+              ariaLabel={translateRecommendationWithFallback(
+                gamePageTranslations,
+                'operationSelector.quickPractice.groupAria',
+                `${group.label} quick practice`,
+                { group: group.label }
+              )}
               label={group.label}
               className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
             >
               <div className='flex w-full flex-col kangur-panel-gap'>
                 {group.options.map((option) => {
                   const isRecommended = recommendedLessonQuizScreen === option.onSelectScreen;
+                  const optionLabel = translateRecommendationWithFallback(
+                    gamePageTranslations,
+                    `screens.${option.onSelectScreen}.label`,
+                    option.label
+                  );
+                  const optionDescription = translateRecommendationWithFallback(
+                    gamePageTranslations,
+                    `screens.${option.onSelectScreen}.description`,
+                    option.description
+                  );
 
                   return (
                     <KangurIconSummaryOptionCard
@@ -855,7 +1077,12 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                       data-doc-id='home_quick_practice_action'
                       data-testid={`kangur-quick-practice-card-${option.onSelectScreen}`}
                       emphasis='accent'
-                      aria-label={`Szybkie ćwiczenie: ${option.label}`}
+                      aria-label={translateRecommendationWithFallback(
+                        gamePageTranslations,
+                        'operationSelector.quickPractice.cardAria',
+                        `Szybkie ćwiczenie: ${option.label}`,
+                        { label: optionLabel }
+                      )}
                       onClick={() => setScreen(option.onSelectScreen)}
                     >
                       <KangurIconSummaryCardContent
@@ -866,7 +1093,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                               className='uppercase tracking-[0.14em]'
                               size='sm'
                             >
-                              Gra
+                              {translateRecommendationWithFallback(
+                                gamePageTranslations,
+                                'operationSelector.quickPractice.gameChip',
+                                'Gra'
+                              )}
                             </KangurStatusChip>
                             {isRecommended && recommendation ? (
                               <KangurStatusChip
@@ -883,7 +1114,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                         asideClassName={`${KANGUR_WRAP_START_ROW_CLASSNAME} w-full sm:w-auto sm:flex-col sm:items-end sm:gap-2`}
                         className={`w-full ${KANGUR_RELAXED_ROW_CLASSNAME} items-start sm:items-center`}
                         contentClassName='w-full sm:flex-1'
-                        description={option.description}
+                        description={optionDescription}
                         descriptionClassName='text-slate-500'
                         headerClassName={`${KANGUR_TIGHT_ROW_CLASSNAME} items-start sm:items-start sm:justify-between`}
                         icon={
@@ -895,7 +1126,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
                             {option.emoji}
                           </KangurIconBadge>
                         }
-                        title={option.label}
+                        title={optionLabel}
                         titleClassName='text-slate-800'
                         titleWrapperClassName='w-full'
                       />
@@ -915,13 +1146,21 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         >
           <KangurPageIntroCard
             className='w-full'
-            description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+            description={translateRecommendationWithFallback(
+              gamePageTranslations,
+              'screens.training.description',
+              'Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+            )}
             headingAs='h3'
             headingSize='md'
             onBack={handleHome}
             showBackButton={false}
             testId='kangur-game-training-top-section'
-            title='Trening mieszany'
+            title={translateRecommendationWithFallback(
+              gamePageTranslations,
+              'screens.training.label',
+              'Trening mieszany'
+            )}
             titleId='kangur-game-training-heading'
             visualTitle={
               <KangurTreningWordmark

@@ -33,6 +33,59 @@ export const productValidationInstanceScopeSchema = z.enum([
 ]);
 export type ProductValidationInstanceScope = z.infer<typeof productValidationInstanceScopeSchema>;
 
+export const LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION = 2 as const;
+
+export const productValidationSemanticStateSchema = z.object({
+  version: z.literal(LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION),
+  presetId: z.string().trim().min(1).nullable().optional(),
+  operation: z.string().trim().min(1),
+  sourceField: z.string().trim().min(1).nullable().optional(),
+  targetField: z.string().trim().min(1).nullable().optional(),
+  tags: z.array(z.string().trim().min(1)).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type ProductValidationSemanticState = z.infer<
+  typeof productValidationSemanticStateSchema
+>;
+
+export const productValidationSemanticTransitionKindSchema = z.enum([
+  'none',
+  'recognized',
+  'cleared',
+  'preserved',
+  'updated',
+  'migrated',
+]);
+export type ProductValidationSemanticTransitionKind = z.infer<
+  typeof productValidationSemanticTransitionKindSchema
+>;
+
+export const productValidationSemanticAuditSourceSchema = z.enum([
+  'manual_save',
+  'import',
+  'template',
+]);
+export type ProductValidationSemanticAuditSource = z.infer<
+  typeof productValidationSemanticAuditSourceSchema
+>;
+
+export const productValidationSemanticAuditTriggerSchema = z.enum(['create', 'update']);
+export type ProductValidationSemanticAuditTrigger = z.infer<
+  typeof productValidationSemanticAuditTriggerSchema
+>;
+
+export const productValidationSemanticAuditRecordSchema = z.object({
+  recordedAt: z.string().datetime(),
+  source: productValidationSemanticAuditSourceSchema,
+  trigger: productValidationSemanticAuditTriggerSchema,
+  transition: productValidationSemanticTransitionKindSchema,
+  previous: productValidationSemanticStateSchema.nullable(),
+  current: productValidationSemanticStateSchema.nullable(),
+});
+export type ProductValidationSemanticAuditRecord = z.infer<
+  typeof productValidationSemanticAuditRecordSchema
+>;
+
 export type ProductValidationDenyIssueInput = {
   fieldName: string;
   patternId: string;
@@ -98,6 +151,9 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
   launchValue: z.string().nullable(),
   launchFlags: z.string().nullable(),
   appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
+  semanticState: productValidationSemanticStateSchema.nullable().optional(),
+  semanticAudit: productValidationSemanticAuditRecordSchema.nullable().optional(),
+  semanticAuditHistory: z.array(productValidationSemanticAuditRecordSchema).optional(),
 });
 
 export type ProductValidationTarget = z.infer<typeof productValidationTargetSchema>;
@@ -193,6 +249,7 @@ export const createProductValidationPatternSchema = z.object({
   launchValue: z.string().nullable().optional(),
   launchFlags: z.string().trim().nullable().optional(),
   appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
+  semanticState: productValidationSemanticStateSchema.nullable().optional(),
 });
 
 export type CreateProductValidationPatternInput = z.infer<

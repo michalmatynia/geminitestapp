@@ -3,14 +3,18 @@ import {
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
+import {
+  buildProductValidationSemanticOperationPresetLabel,
+  PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,
+} from '@/shared/lib/products/utils/validator-semantic-operations';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  buildLatestFieldRecipe,
   buildUniqueLabel,
   getPatternSequence,
   isLatestFieldMirrorPattern,
 } from '../helpers';
+import { buildLatestFieldMirrorPatternPayload } from '@/features/products/lib/validatorSemanticPresets';
 
 import type { CreatePatternMutation, UpdatePatternMutation } from './types';
 
@@ -38,82 +42,34 @@ export const handleCreateLatestPriceStockSequence = async (args: {
   const firstSequence = maxSequence + 10;
   const secondSequence = maxSequence + 20;
 
-  const priceLabel = buildUniqueLabel('Price from latest product', existingLabels);
+  const priceLabel = buildUniqueLabel(
+    buildProductValidationSemanticOperationPresetLabel(
+      PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.mirrorLatestField,
+      { field: 'price' }
+    ) ?? 'Price from latest product',
+    existingLabels
+  );
   existingLabels.add(priceLabel.toLowerCase());
-  const stockLabel = buildUniqueLabel('Stock from latest product', existingLabels);
+  const stockLabel = buildUniqueLabel(
+    buildProductValidationSemanticOperationPresetLabel(
+      PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.mirrorLatestField,
+      { field: 'stock' }
+    ) ?? 'Stock from latest product',
+    existingLabels
+  );
 
   try {
-    const pricePatternData: CreateValidationPatternPayload = {
+    const pricePatternData: CreateValidationPatternPayload = buildLatestFieldMirrorPatternPayload({
+      field: 'price',
       label: priceLabel,
-      target: 'price',
-      locale: null,
-      regex: '^.*$',
-      flags: null,
-      message:
-        'Auto-propose price from the latest created product when current price is empty or 0.',
-      severity: 'warning',
-      enabled: true,
-      replacementEnabled: true,
-      replacementAutoApply: false,
-      skipNoopReplacementProposal: true,
-      replacementValue: buildLatestFieldRecipe('price'),
-      replacementFields: ['price'],
-      replacementAppliesToScopes: ['draft_template', 'product_create'],
-      postAcceptBehavior: 'revalidate',
-      validationDebounceMs: 300,
-      sequenceGroupId: null,
-      sequenceGroupLabel: null,
-      sequenceGroupDebounceMs: 0,
       sequence: firstSequence,
-      chainMode: 'continue',
-      maxExecutions: 1,
-      passOutputToNext: false,
-      launchEnabled: true,
-      launchAppliesToScopes: ['product_create'],
-      launchScopeBehavior: 'condition_only',
-      launchSourceMode: 'current_field',
-      launchSourceField: null,
-      launchOperator: 'regex',
-      launchValue: '^\\s*(?:0+)?\\s*$',
-      launchFlags: null,
-      appliesToScopes: ['draft_template', 'product_create'],
-    };
+    });
 
-    const stockPatternData: CreateValidationPatternPayload = {
+    const stockPatternData: CreateValidationPatternPayload = buildLatestFieldMirrorPatternPayload({
+      field: 'stock',
       label: stockLabel,
-      target: 'stock',
-      locale: null,
-      regex: '^.*$',
-      flags: null,
-      message:
-        'Auto-propose stock from the latest created product when current stock is empty or 0.',
-      severity: 'warning',
-      enabled: true,
-      replacementEnabled: true,
-      replacementAutoApply: false,
-      skipNoopReplacementProposal: true,
-      replacementValue: buildLatestFieldRecipe('stock'),
-      replacementFields: ['stock'],
-      replacementAppliesToScopes: ['draft_template', 'product_create'],
-      postAcceptBehavior: 'revalidate',
-      validationDebounceMs: 300,
-      sequenceGroupId: null,
-      sequenceGroupLabel: null,
-      sequenceGroupDebounceMs: 0,
       sequence: secondSequence,
-      chainMode: 'continue',
-      maxExecutions: 1,
-      passOutputToNext: false,
-      launchEnabled: true,
-      launchAppliesToScopes: ['product_create'],
-      launchScopeBehavior: 'condition_only',
-      launchSourceMode: 'current_field',
-      launchSourceField: null,
-      launchOperator: 'regex',
-      launchValue: '^\\s*(?:0+)?\\s*$',
-      launchFlags: null,
-      appliesToScopes: ['draft_template', 'product_create'],
-    };
+    });
 
     const existingPricePattern = patterns.find((pattern: ProductValidationPattern) =>
       isLatestFieldMirrorPattern(pattern, 'price')

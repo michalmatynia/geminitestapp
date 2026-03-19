@@ -1,8 +1,12 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
 
+import {
+  getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonTitle,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import {
@@ -243,18 +247,25 @@ export function KangurActiveLessonHeader({
   backButtonLabel,
   titleOverride,
 }: KangurActiveLessonHeaderProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurLessonsWidgets.activeHeader');
   const subsectionSummary: KangurLessonSubsectionSummary | null = useKangurLessonSubsectionSummary();
+  const localizedLessonTitle = getLocalizedKangurLessonTitle(lesson.componentId, locale, lesson.title);
+  const localizedLessonDescription = getLocalizedKangurLessonDescription(
+    lesson.componentId,
+    locale,
+    lesson.description
+  );
   const lessonHeaderTestId = headerTestId;
   const resolvedBackButtonLabel = backButtonLabel ?? translations('backToLessons');
   const displayTitle =
     resolveHeaderCopy(subsectionSummary?.title) ??
-    resolveHeaderCopy(lesson.title) ??
+    resolveHeaderCopy(localizedLessonTitle) ??
     resolveHeaderCopy(titleOverride) ??
     translations('fallbackTitle');
   const displayDescription =
     resolveHeaderCopy(subsectionSummary?.description) ??
-    resolveHeaderCopy(lesson.description) ??
+    resolveHeaderCopy(localizedLessonDescription) ??
     resolveHeaderCopy(descriptionOverride) ??
     '';
   const subsectionTypeLabel = subsectionSummary?.isGame

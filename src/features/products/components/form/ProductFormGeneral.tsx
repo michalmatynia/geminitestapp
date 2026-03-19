@@ -5,10 +5,11 @@ import { useFormContext } from 'react-hook-form';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
+import { coerceProductValidationTargetValue } from '@/features/products/lib/validatorTargetAdapters';
 import {
+  allowsPatternExecutionWithoutRegexMatch,
   applyResolvedReplacement,
   buildSequenceGroupCounts,
-  isLatestPriceStockMirrorPattern,
   isPatternInSequenceGroup,
   isPatternLocaleMatch,
   isReplacementAllowedForField,
@@ -264,10 +265,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
         (pattern: ProductValidationPattern): boolean =>
           pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
       );
-      const hasLatestPriceStockMirror = replacementPatterns.some(
-        (pattern: ProductValidationPattern): boolean => isLatestPriceStockMirrorPattern(pattern)
+      const hasRegexOptionalExecutionBehavior = replacementPatterns.some(
+        (pattern: ProductValidationPattern): boolean =>
+          allowsPatternExecutionWithoutRegexMatch(pattern)
       );
-      if (!rawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
+      if (!rawValue && !hasExternalLaunchSource && !hasRegexOptionalExecutionBehavior) continue;
       let nextValue: string = rawValue;
       const fieldProcessedGroups = new Set<string>();
       for (const pattern of replacementPatterns) {
@@ -318,7 +320,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
               hasMatch = false;
             }
           }
-          const allowWithoutRegexMatch = isLatestPriceStockMirrorPattern(pattern);
+          const allowWithoutRegexMatch = allowsPatternExecutionWithoutRegexMatch(pattern);
           if (!hasMatch && !allowWithoutRegexMatch) break;
           matched = true;
           let replacedValue: string;
@@ -365,28 +367,17 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }
 
       if (nextValue !== rawValue) {
-        if (
-          target === 'price' ||
-          target === 'stock' ||
-          target === 'weight' ||
-          target === 'size_length' ||
-          target === 'size_width' ||
-          target === 'length'
-        ) {
-          const numericValue = Number(nextValue.replace(',', '.'));
-          if (!Number.isFinite(numericValue)) continue;
-          const normalizedNumeric = Math.max(0, Math.floor(numericValue));
+        const coercedValue = coerceProductValidationTargetValue({ target, value: nextValue });
+        if (typeof coercedValue === 'number') {
           const currentNumeric =
             typeof rawUnknown === 'number' && Number.isFinite(rawUnknown) ? rawUnknown : Number.NaN;
-          if (Number.isFinite(currentNumeric) && currentNumeric === normalizedNumeric) {
+          if (Number.isFinite(currentNumeric) && currentNumeric === coercedValue) {
             continue;
           }
-          pendingFieldUpdates.set(
-            fieldName,
-            normalizedNumeric as ProductFormData[typeof fieldName]
-          );
+          pendingFieldUpdates.set(fieldName, coercedValue as ProductFormData[typeof fieldName]);
           continue;
         }
+        if (coercedValue === null) continue;
         pendingFieldUpdates.set(fieldName, nextValue as ProductFormData[typeof fieldName]);
       }
     }

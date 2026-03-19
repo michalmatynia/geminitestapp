@@ -27,7 +27,7 @@ describe('TrainingSetup', () => {
     expect(screen.queryByRole('heading', { name: 'Wybierz poziom trudności' })).not.toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Poziom trudności' })).toBeInTheDocument();
 
-    const additionButton = screen.getByRole('button', { name: 'Dodawanie' });
+    const additionButton = screen.getByRole('button', { name: 'categories.addition' });
     const tenQuestionsButton = screen.getByRole('button', { name: '10 pytań' });
     const twentyQuestionsButton = screen.getByRole('button', { name: '20 pytań' });
     expect(additionButton).toHaveAttribute('aria-pressed', 'true');
@@ -79,8 +79,8 @@ describe('TrainingSetup', () => {
     expect(screen.getByTestId('training-setup-suggestion-description')).toHaveTextContent(
       'To najmocniej podbije dzisiejszy postęp.'
     );
-    expect(screen.getByRole('button', { name: 'Dzielenie' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Dodawanie' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'categories.division' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'categories.addition' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('button', { name: '15 pytań' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('group', { name: 'Poziom trudności' })).toBeInTheDocument();
     expect(screen.getByTestId('difficulty-option-hard')).toHaveAttribute('aria-pressed', 'true');

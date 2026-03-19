@@ -1,8 +1,10 @@
 'use client';
 
 import { Clock } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { useEffect, useMemo, useState, type MouseEvent } from 'react';
 
+import { getLocalizedKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
@@ -23,7 +25,6 @@ import {
   resolveKangurAssignmentSubject,
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
-import { getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
 import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 
 type KangurAssignmentSpotlightProps = {
@@ -44,6 +45,7 @@ export function KangurAssignmentSpotlight({
   basePath,
   enabled = false,
 }: KangurAssignmentSpotlightProps): React.JSX.Element | null {
+  const locale = useLocale();
   const { subject, setSubject } = useKangurSubjectFocus();
   const { assignments, isLoading, error } = useKangurAssignments({
     enabled,
@@ -77,7 +79,7 @@ export function KangurAssignmentSpotlight({
   }
 
   const assignmentSubject = resolveKangurAssignmentSubject(assignment);
-  const assignmentSubjectLabel = getKangurSubjectLabel(assignmentSubject);
+  const assignmentSubjectLabel = getLocalizedKangurSubjectLabel(assignmentSubject, locale);
   const assignmentSubjectAccent = SUBJECT_ACCENTS[assignmentSubject];
   const assignmentHref = buildKangurAssignmentHref(basePath, assignment);
   const transitionSourceId = `assignment-spotlight:${assignment.id}`;

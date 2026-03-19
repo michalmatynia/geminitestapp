@@ -9,6 +9,7 @@ export type KangurSocialSettings = {
   linkedinConnectionId: string | null;
   batchCaptureBaseUrl: string | null;
   batchCapturePresetIds: string[];
+  projectUrl: string | null;
 };
 
 const DEFAULT_PRESET_IDS = KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id);
@@ -20,6 +21,7 @@ export const DEFAULT_KANGUR_SOCIAL_SETTINGS: Readonly<KangurSocialSettings> = Ob
   linkedinConnectionId: null,
   batchCaptureBaseUrl: null,
   batchCapturePresetIds: DEFAULT_PRESET_IDS,
+  projectUrl: null,
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -69,5 +71,6 @@ export const parseKangurSocialSettings = (
     linkedinConnectionId: normalizeOptionalId(parsed['linkedinConnectionId']),
     batchCaptureBaseUrl: normalizeBaseUrl(parsed['batchCaptureBaseUrl']),
     batchCapturePresetIds: normalizePresetIds(parsed['batchCapturePresetIds']),
+    projectUrl: normalizeBaseUrl(parsed['projectUrl']),
   };
 };

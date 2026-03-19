@@ -16,3 +16,4 @@ export * from '@/features/kangur/server/kangur-learner-interactions';
 export * from '@/features/kangur/server/ai-tutor-mood';
 export * from '@/features/kangur/server/storefront-appearance';
 export * from '@/features/kangur/workers/kangurSocialSchedulerQueue';
+export * from '@/features/kangur/workers/kangurSocialPipelineQueue';

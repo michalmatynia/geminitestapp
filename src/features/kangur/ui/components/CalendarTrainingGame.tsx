@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
@@ -13,6 +14,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurGlassPanel,
   KangurInfoCard,
@@ -140,6 +145,7 @@ const TOTAL = 6;
 export default function CalendarTrainingGame({
   onFinish,
 }: CalendarTrainingGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const [questions] = useState(() => Array.from({ length: TOTAL }, generateQuestion));
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -225,7 +231,7 @@ export default function CalendarTrainingGame({
         <KangurPracticeGameSummaryTitle
           accent='emerald'
           dataTestId='calendar-training-summary-title'
-          title={`Wynik: ${score}/${TOTAL}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL)}
         />
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -235,20 +241,21 @@ export default function CalendarTrainingGame({
         />
         <KangurPracticeGameSummaryProgress
           accent='emerald'
-          ariaLabel='Postęp w ćwiczeniach z kalendarzem'
-          ariaValueText={`${percent}% poprawnych odpowiedzi`}
+          ariaLabel={translations('calendarTraining.progressAriaLabel')}
+          ariaValueText={`${percent}% ${translations('shared.correctAnswersSuffix')}`}
           className='w-full'
           dataTestId='calendar-training-summary-progress-bar'
           percent={percent}
         />
         <KangurPracticeGameSummaryMessage className='max-w-xs text-center'>
           {score === TOTAL
-            ? 'Idealnie! Świetnie znasz kalendarz!'
-            : 'Ćwicz dalej, a zostaniesz mistrzem kalendarza!'}
+            ? translations('calendarTraining.summary.perfect')
+            : translations('calendarTraining.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel='Zakończ lekcję ✅'
+          finishLabel={getKangurMiniGameFinishLabel(translations, 'done')}
           onFinish={handleFinishLesson}
+          restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
         />
       </KangurPracticeGameSummary>

@@ -15,7 +15,9 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import { PatternNodeItem } from './pattern-tree/PatternNodeItem';
 import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderNodeItem';
+import { ValidatorPatternSemanticHistoryPanel } from './ValidatorPatternSemanticHistoryPanel';
 import {
+  fromPatternMasterNodeId,
   buildValidatorPatternMasterNodes,
   fromSeqGroupMasterNodeId,
   resolveValidatorPatternReorderUpdates,
@@ -114,6 +116,11 @@ export function ValidatorPatternTree(): React.JSX.Element {
   } = useValidatorSettingsContext();
 
   const reorderPatternsMutation = useReorderValidationPatternsMutation();
+  const [focusedSemanticHistoryRequest, setFocusedSemanticHistoryRequest] = React.useState<{
+    patternId: string;
+    auditKey: string;
+    requestId: number;
+  } | null>(null);
 
   // Build master nodes from ordered patterns + sequence groups
   const masterNodes = useMemo(
@@ -185,6 +192,16 @@ export function ValidatorPatternTree(): React.JSX.Element {
       onDuplicatePattern: handleDuplicatePattern,
       onDeletePattern: setPatternToDelete,
       onTogglePattern: handleTogglePattern,
+      onOpenSemanticHistory: (patternId: string, auditKey: string) => {
+        setFocusedSemanticHistoryRequest((prev) => ({
+          patternId,
+          auditKey,
+          requestId:
+            prev?.patternId === patternId && prev.auditKey === auditKey
+              ? prev.requestId + 1
+              : 1,
+        }));
+      },
       onSaveSequenceGroup: handleSaveSequenceGroup,
       onUngroup: handleUngroup,
       isPending,
@@ -200,6 +217,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
       handleDuplicatePattern,
       setPatternToDelete,
       handleTogglePattern,
+      setFocusedSemanticHistoryRequest,
       handleSaveSequenceGroup,
       handleUngroup,
       isPending,
@@ -217,7 +235,11 @@ export function ValidatorPatternTree(): React.JSX.Element {
   const selectedGroupId = controller.selectedNodeId
     ? fromSeqGroupMasterNodeId(controller.selectedNodeId)
     : null;
+  const selectedPatternId = controller.selectedNodeId
+    ? fromPatternMasterNodeId(controller.selectedNodeId)
+    : null;
   const selectedGroupDraft = selectedGroupId ? getGroupDraft(selectedGroupId) : null;
+  const selectedPattern = selectedPatternId ? patternById.get(selectedPatternId) ?? null : null;
 
   return (
     <ValidatorPatternTreeContext.Provider value={contextValue}>
@@ -245,6 +267,21 @@ export function ValidatorPatternTree(): React.JSX.Element {
           isPending={isPending}
         />
       )}
+      {selectedPattern ? (
+        <ValidatorPatternSemanticHistoryPanel
+          pattern={selectedPattern}
+          focusedAuditKey={
+            focusedSemanticHistoryRequest?.patternId === selectedPattern.id
+              ? focusedSemanticHistoryRequest.auditKey
+              : null
+          }
+          focusRequestId={
+            focusedSemanticHistoryRequest?.patternId === selectedPattern.id
+              ? focusedSemanticHistoryRequest.requestId
+              : 0
+          }
+        />
+      ) : null}
     </ValidatorPatternTreeContext.Provider>
   );
 }

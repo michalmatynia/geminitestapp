@@ -25,6 +25,7 @@ type SocialGenerationDeps = {
   brainModelId: string | null;
   visionModelId: string | null;
   imageAddonIds: string[];
+  projectUrl: string;
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
 };
 
@@ -50,6 +51,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         modelId: deps.brainModelId ?? undefined,
         visionModelId: deps.visionModelId ?? undefined,
         imageAddonIds: deps.imageAddonIds,
+        projectUrl: deps.projectUrl || undefined,
       });
       setDocUpdatesResult(null);
       trackKangurClientEvent(

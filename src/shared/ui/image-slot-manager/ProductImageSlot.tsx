@@ -247,19 +247,23 @@ export function ProductImageSlot(props: ProductImageSlotProps) {
               )}
             </>
           ) : (
-            <div className='flex flex-col items-center justify-center text-gray-500'>
-              <PlusIcon className='h-6 w-6' />
-              <span className='text-xs'>Upload</span>
+            <div className='flex flex-col items-center justify-center'>
+              <div className='flex flex-col items-center transition-colors duration-200 hover:cursor-pointer group/upload-hover'>
+                <PlusIcon className='h-6 w-6 text-gray-500 transition-colors duration-200 group-hover/upload-hover:text-emerald-300' />
+                <span className='text-xs text-gray-500 transition-colors duration-200 group-hover/upload-hover:text-emerald-300'>
+                  Upload
+                </span>
+              </div>
               <Button
                 type='button'
                 variant='ghost'
-                className='text-xs h-7 mt-1'
+                className='text-xs h-7 mt-1 text-gray-500 transition-colors duration-200 hover:text-emerald-300 hover:bg-transparent hover:cursor-pointer'
                 onClick={(e) => {
                   e.stopPropagation();
                   triggerFileManager(index);
                 }}
               >
-                Choose Existing
+                File Manager
               </Button>
             </div>
           )}

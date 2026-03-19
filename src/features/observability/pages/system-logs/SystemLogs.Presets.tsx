@@ -110,24 +110,26 @@ export function LogTriagePresets(): React.JSX.Element {
               variant='outline'
               onClick={(): void => onApplyPreset(preset)}
               className={cn(
-                'h-auto w-full justify-start px-3 py-2 text-left',
+                'min-h-[5.75rem] h-auto w-full items-start justify-start whitespace-normal px-3 py-3 text-left',
                 isActive && 'border-emerald-400/60 bg-emerald-500/10 hover:bg-emerald-500/20'
               )}
               aria-label={'Icon'}
               title={'Icon'}
             >
-              <span className='flex items-start gap-2'>
+              <span className='flex min-w-0 items-start gap-2'>
                 <Icon
                   className={cn(
                     'mt-0.5 h-4 w-4 shrink-0 text-gray-400',
                     isActive && 'text-emerald-200'
                   )}
                 />
-                <span className='block'>
-                  <span className='block text-xs font-semibold text-gray-100'>
+                <span className='block min-w-0 flex-1 whitespace-normal'>
+                  <span className='block whitespace-normal break-words text-xs font-semibold leading-snug text-gray-100'>
                     {preset.label}
                   </span>
-                  <span className='block text-[11px] text-gray-400'>{preset.description}</span>
+                  <span className='mt-0.5 block whitespace-normal break-words text-[11px] leading-snug text-gray-400'>
+                    {preset.description}
+                  </span>
                   {isActive ? (
                     <div className='mt-1'>
                       <StatusBadge

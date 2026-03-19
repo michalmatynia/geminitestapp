@@ -35,6 +35,7 @@ type GenerationInput = {
   modelId?: string;
   visionModelId?: string;
   imageAddons?: KangurSocialImageAddon[];
+  projectUrl?: string;
 };
 
 const buildImageAddonSummary = (addons: KangurSocialImageAddon[]): string => {
@@ -55,7 +56,7 @@ const buildImageAddonSummary = (addons: KangurSocialImageAddon[]): string => {
 const buildSystemPrompt = (basePrompt: string): string => {
   const lines = [
     basePrompt.trim(),
-    'You are writing a LinkedIn post about recent Kangur and StudiQ improvements.',
+    'You are writing a LinkedIn post about recent StudiQ improvements.',
     'Generate bilingual content in Polish and English.',
     'Return a JSON object with keys: titlePl, titleEn, bodyPl, bodyEn.',
     'Keep each body concise and professional for LinkedIn.',
@@ -72,6 +73,7 @@ export async function generateKangurSocialPostDraft(
   const docs = resolveKangurDocReferences(docReferences);
   const { summary, context } = await buildKangurDocContext(docs);
   const notes = input.notes?.trim() ?? '';
+  const projectUrl = input.projectUrl?.trim() ?? '';
   const imageAddons = input.imageAddons ?? [];
   const imageAddonSummary = buildImageAddonSummary(imageAddons);
   const notesLength = notes.length;
@@ -118,7 +120,7 @@ export async function generateKangurSocialPostDraft(
     modelId = overrideModelId || brainConfig.modelId.trim();
     if (!modelId) {
       throw configurationError(
-        'Kangur Social Post Generation model is missing. Configure it in AI Brain.'
+        'StudiQ Social Post Generation model is missing. Configure it in AI Brain.'
       );
     }
 
@@ -154,6 +156,9 @@ export async function generateKangurSocialPostDraft(
     }
     if (imageAddonSummary) {
       userPromptLines.push('', 'Visual add-ons available for the post:', imageAddonSummary);
+    }
+    if (projectUrl) {
+      userPromptLines.push('', 'Project URL to reference in the post:', projectUrl);
     }
     if (notes) {
       userPromptLines.push('', 'Additional notes:', notes);

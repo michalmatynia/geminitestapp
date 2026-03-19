@@ -1,6 +1,7 @@
 'use client';
 
 import { Eraser } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -13,6 +14,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -85,6 +90,7 @@ const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
 export default function GeometrySymmetryGame({
   onFinish,
 }: GeometrySymmetryGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const handleFinish = onFinish;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
@@ -452,7 +458,7 @@ export default function GeometrySymmetryGame({
         />
         <KangurPracticeGameSummaryTitle unwrapped>
           <KangurHeadline accent='emerald' as='h3' data-testid='geometry-symmetry-summary-title'>
-            Wynik: {score}/{totalRounds}
+            {getKangurMiniGameScoreLabel(translations, score, totalRounds)}
           </KangurHeadline>
         </KangurPracticeGameSummaryTitle>
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
@@ -463,21 +469,22 @@ export default function GeometrySymmetryGame({
         />
         <KangurPracticeGameSummaryProgress
           accent='emerald'
-          ariaLabel='Dokładność w grze o symetrii'
-          ariaValueText={`${percent}% poprawnych odpowiedzi`}
+          ariaLabel={translations('geometrySymmetry.progressAriaLabel')}
+          ariaValueText={`${percent}% ${translations('shared.correctAnswersSuffix')}`}
           dataTestId='geometry-symmetry-summary-progress-bar'
           percent={percent}
         />
         <KangurPracticeGameSummaryMessage className='max-w-xs text-center'>
           {score === totalRounds
-            ? 'Idealnie! Twoje odbicia są perfekcyjne.'
+            ? translations('geometrySymmetry.summary.perfect')
             : score >= Math.ceil(totalRounds / 2)
-              ? 'Świetna robota! Symetria idzie Ci coraz lepiej.'
-              : 'Próbuj dalej — każda kolejna próba będzie dokładniejsza.'}
+              ? translations('geometrySymmetry.summary.good')
+              : translations('geometrySymmetry.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel='Wróć'
+          finishLabel={getKangurMiniGameFinishLabel(translations, 'back')}
           onFinish={handleFinish}
+          restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
         />
       </KangurPracticeGameSummary>

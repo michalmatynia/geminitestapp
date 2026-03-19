@@ -56,6 +56,9 @@ export function useSocialSettings() {
   const [visionModelId, setVisionModelId] = useState<string | null>(
     persistedSocialSettings.visionModelId
   );
+  const [projectUrl, setProjectUrl] = useState<string>(
+    persistedSocialSettings.projectUrl ?? ''
+  );
   const [batchCaptureBaseUrl, setBatchCaptureBaseUrl] = useState<string>(
     persistedSocialSettings.batchCaptureBaseUrl ?? ''
   );
@@ -97,11 +100,14 @@ export function useSocialSettings() {
     return right.every((value) => leftSet.has(value));
   }, []);
 
+  const normalizedProjectUrl = projectUrl.trim() || null;
+
   const isSettingsDirty =
     persistedSocialSettings.brainModelId !== brainModelId ||
     persistedSocialSettings.visionModelId !== visionModelId ||
     persistedSocialSettings.linkedinConnectionId !== linkedinConnectionId ||
     persistedSocialSettings.batchCaptureBaseUrl !== normalizedBatchCaptureBaseUrl ||
+    persistedSocialSettings.projectUrl !== normalizedProjectUrl ||
     !arePresetSetsEqual(
       persistedSocialSettings.batchCapturePresetIds,
       normalizedBatchCapturePresetIds
@@ -115,6 +121,7 @@ export function useSocialSettings() {
       linkedinConnectionId: linkedinConnectionId ?? null,
       batchCaptureBaseUrl: normalizedBatchCaptureBaseUrl,
       batchCapturePresetIds: normalizedBatchCapturePresetIds,
+      projectUrl: normalizedProjectUrl,
     };
     try {
       await updateSetting.mutateAsync({
@@ -130,7 +137,7 @@ export function useSocialSettings() {
         }
       );
       settingsStore.refetch();
-      toast('Kangur Social settings saved.', { variant: 'success' });
+      toast('Social settings saved.', { variant: 'success' });
     } catch (error) {
       void ErrorSystem.captureException(error);
       logKangurClientError(error, {
@@ -138,13 +145,14 @@ export function useSocialSettings() {
         action: 'saveSettings',
         nextSettings: payload,
       });
-      toast('Failed to save Kangur Social settings.', { variant: 'error' });
+      toast('Failed to save social settings.', { variant: 'error' });
     }
   }, [
     brainModelId,
     linkedinConnectionId,
     normalizedBatchCaptureBaseUrl,
     normalizedBatchCapturePresetIds,
+    normalizedProjectUrl,
     queryClient,
     settingsStore,
     toast,
@@ -222,10 +230,18 @@ export function useSocialSettings() {
           : current
       );
     }
+    if (prev.projectUrl !== persistedSocialSettings.projectUrl) {
+      setProjectUrl((current) =>
+        current === (prev.projectUrl ?? '')
+          ? (persistedSocialSettings.projectUrl ?? '')
+          : current
+      );
+    }
     persistedRef.current = persistedSocialSettings;
   }, [
     persistedSocialSettings.brainModelId,
     persistedSocialSettings.linkedinConnectionId,
+    persistedSocialSettings.projectUrl,
     persistedSocialSettings.visionModelId,
   ]);
 
@@ -236,6 +252,8 @@ export function useSocialSettings() {
     setBrainModelId,
     visionModelId,
     setVisionModelId,
+    projectUrl,
+    setProjectUrl,
     batchCaptureBaseUrl,
     setBatchCaptureBaseUrl: handleBatchCaptureBaseUrlChange,
     batchCapturePresetIds,

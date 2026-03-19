@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
@@ -42,6 +43,7 @@ type PlayerProgressCardProps = {
 export default function PlayerProgressCard({
   progress,
 }: PlayerProgressCardProps): React.JSX.Element {
+  const translations = useTranslations('KangurPlayerProgress');
   const { entry: progressContent } = useKangurPageContentEntry('game-home-progress');
   const badgeTrackProgress = progress;
   const { totalXp, gamesPlayed, lessonsCompleted } = progress;
@@ -56,10 +58,10 @@ export default function PlayerProgressCard({
   const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
   const nextBadge = getNextLockedBadge(progress);
   const guidedMomentum = getRecommendedSessionMomentum(progress);
-  const progressTitle = progressContent?.title ?? 'Postępy ucznia';
+  const progressTitle = progressContent?.title ?? translations('fallbackTitle');
   const progressSummary =
     progressContent?.summary ??
-    'Zobacz poziom, serię, skuteczność i najbliższe odznaki w jednym miejscu.';
+    translations('fallbackSummary');
 
   return (
     <motion.div
@@ -90,7 +92,7 @@ export default function PlayerProgressCard({
               {currentLevel.title}
             </KangurCardTitle>
             <KangurMetaText as='p' size='xs'>
-              Poziom {currentLevel.level} · {totalXp} XP łącznie
+              {translations('totalXpLine', { level: currentLevel.level, xp: totalXp })}
             </KangurMetaText>
           </div>
         </div>
@@ -104,10 +106,13 @@ export default function PlayerProgressCard({
             <span>{xpIntoLevel} XP</span>
             {nextLevel ? (
               <span>
-                do poz. {nextLevel.level}: {xpNeeded - xpIntoLevel} XP
+                {translations('nextLevel', {
+                  level: nextLevel.level,
+                  xp: xpNeeded - xpIntoLevel,
+                })}
               </span>
             ) : (
-              <span>Maksymalny poziom!</span>
+              <span>{translations('maxLevel')}</span>
             )}
           </KangurMetaText>
           <KangurProgressBar
@@ -120,29 +125,34 @@ export default function PlayerProgressCard({
         </div>
 
         <div className='grid grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-          <KangurMetricCard accent='indigo' align='center' label='Gier' value={gamesPlayed} />
+          <KangurMetricCard
+            accent='indigo'
+            align='center'
+            label={translations('metrics.games')}
+            value={gamesPlayed}
+          />
           <KangurMetricCard
             accent='violet'
             align='center'
-            label='Lekcji'
+            label={translations('metrics.lessons')}
             value={lessonsCompleted}
           />
           <KangurMetricCard
             accent='emerald'
             align='center'
-            label='Skuteczność'
+            label={translations('metrics.accuracy')}
             value={`${averageAccuracy}%`}
           />
           <KangurMetricCard
             accent='amber'
             align='center'
-            label='Seria'
+            label={translations('metrics.streak')}
             value={bestWinStreak}
           />
           <KangurMetricCard
             accent='sky'
             align='center'
-            label='XP / grę'
+            label={translations('metrics.xpPerGame')}
             value={averageXpPerSession}
           />
         </div>
@@ -151,8 +161,11 @@ export default function PlayerProgressCard({
           <KangurActivitySummaryCard
             activity={topActivity}
             dataTestId='player-progress-top-activity'
-            description={`${topActivity.sessionsPlayed} sesji · ${topActivity.averageXpPerSession} XP / grę`}
-            eyebrow='Najczęściej ćwiczysz'
+            description={translations('topActivityDescription', {
+              sessions: topActivity.sessionsPlayed,
+              xp: topActivity.averageXpPerSession,
+            })}
+            eyebrow={translations('topActivityEyebrow')}
           />
         )}
 
@@ -169,7 +182,7 @@ export default function PlayerProgressCard({
               <KangurPanelRow className='items-start sm:justify-between'>
                 <KangurProgressHighlightHeader
                   description={nextBadge.desc}
-                  eyebrow='Następna odznaka'
+                  eyebrow={translations('nextBadgeEyebrow')}
                   eyebrowClassName='text-amber-700/80'
                   title={
                     <>
@@ -202,12 +215,17 @@ export default function PlayerProgressCard({
                 <KangurProgressHighlightHeader
                   description={
                     guidedMomentum.nextBadgeName
-                      ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                      : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+                      ? translations('guidedMomentumDescriptionWithBadge', {
+                          badge: guidedMomentum.nextBadgeName,
+                          summary: guidedMomentum.summary,
+                        })
+                      : translations('guidedMomentumDescriptionUnlocked')
                   }
-                  eyebrow='Polecony kierunek'
+                  eyebrow={translations('guidedMomentumEyebrow')}
                   eyebrowClassName='text-sky-700/80'
-                  title={`${guidedMomentum.completedSessions} polecone rundy`}
+                  title={translations('guidedMomentumTitle', {
+                    count: guidedMomentum.completedSessions,
+                  })}
                 />
                 <KangurProgressHighlightChip accent='sky' label={guidedMomentum.summary} />
               </KangurPanelRow>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { useId, useMemo } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -7,7 +8,7 @@ import DifficultySelector from '@/features/kangur/ui/components/DifficultySelect
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
-import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
+import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';
 import {
   KangurIconBadge,
   KangurPanelRow,
@@ -38,23 +39,25 @@ export default function OperationSelector({
   recommendedLabel,
   recommendedOperation,
 }: OperationSelectorProps): React.JSX.Element {
+  const locale = useLocale();
   const { difficulty, operations, setDifficulty } = useKangurOperationSelectorState({
     onSelect,
     priorityAssignmentsByOperation,
     recommendedLabel,
     recommendedOperation,
   });
+  const subjectGroups = useMemo(() => getKangurSubjectGroups(locale), [locale]);
   const headingId = useId();
   const descriptionId = useId();
   const operationsBySubject = useMemo(
     () =>
       new Map(
-        KANGUR_SUBJECT_GROUPS.map((group) => [
+        subjectGroups.map((group) => [
           group.value,
           operations.filter((operation) => operation.subject === group.value),
         ])
       ),
-    [operations]
+    [operations, subjectGroups]
   );
   let animationIndex = 0;
 
@@ -76,7 +79,7 @@ export default function OperationSelector({
         titleId={headingId}
       />
       <div className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
-        {KANGUR_SUBJECT_GROUPS.map((group) => {
+        {subjectGroups.map((group) => {
           const groupOperations = operationsBySubject.get(group.value) ?? [];
           if (groupOperations.length === 0) {
             return null;

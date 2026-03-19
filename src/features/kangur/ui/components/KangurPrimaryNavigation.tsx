@@ -13,6 +13,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -51,11 +52,13 @@ import {
 import {
   DEFAULT_KANGUR_AGE_GROUP,
   KANGUR_AGE_GROUPS,
-  getKangurAgeGroupLabel,
   getKangurDefaultSubjectForAgeGroup,
   getKangurSubjectsForAgeGroup,
-  getKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog';
+import {
+  getLocalizedKangurAgeGroupLabel,
+  getLocalizedKangurSubjectLabel,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
@@ -206,6 +209,7 @@ export function KangurPrimaryNavigation({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
+  const locale = useLocale();
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const enableTutorLabel =
@@ -231,14 +235,17 @@ export function KangurPrimaryNavigation({
   const duelsTransitionSourceId = 'kangur-primary-nav:duels';
   const profileTransitionSourceId = 'kangur-primary-nav:profile';
   const parentDashboardTransitionSourceId = 'kangur-primary-nav:parent-dashboard';
-  const subjectChoiceLabel = getKangurSubjectLabel(subject);
-  const ageGroupChoiceLabel = getKangurAgeGroupLabel(ageGroup);
-  const defaultSubjectLabel = getKangurSubjectLabel(
-    getKangurDefaultSubjectForAgeGroup(ageGroup)
+  const subjectChoiceLabel = getLocalizedKangurSubjectLabel(subject, locale);
+  const ageGroupChoiceLabel = getLocalizedKangurAgeGroupLabel(ageGroup, locale);
+  const defaultSubjectLabel = getLocalizedKangurSubjectLabel(
+    getKangurDefaultSubjectForAgeGroup(ageGroup),
+    locale
   );
   const defaultAgeGroupLabel =
-    KANGUR_AGE_GROUPS.find((group) => group.default)?.label ??
-    getKangurAgeGroupLabel(DEFAULT_KANGUR_AGE_GROUP);
+    getLocalizedKangurAgeGroupLabel(
+      KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP,
+      locale
+    );
   const availableSubjects = getKangurSubjectsForAgeGroup(ageGroup);
   const yellowPillActionClassName =
     `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
@@ -940,7 +947,7 @@ export function KangurPrimaryNavigation({
       groupAriaLabel='Wybór przedmiotu'
       options={availableSubjects.map((item) => ({
         id: item.id,
-        label: item.label,
+        label: getLocalizedKangurSubjectLabel(item.id, locale, item.label),
         isActive: subject === item.id,
         onSelect: () => setSubject(item.id),
       }))}
@@ -963,7 +970,7 @@ export function KangurPrimaryNavigation({
       groupAriaLabel='Wybór grupy wiekowej'
       options={KANGUR_AGE_GROUPS.map((group) => ({
         id: group.id,
-        label: group.label,
+        label: getLocalizedKangurAgeGroupLabel(group.id, locale, group.label),
         isActive: ageGroup === group.id,
         onSelect: () => setAgeGroup(group.id),
       }))}

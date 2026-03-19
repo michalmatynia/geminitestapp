@@ -6,6 +6,7 @@ export * from './admin-agent-teaching-breadcrumbs';
 export * from './admin-agent-teaching-page-layout';
 export * from './admin-ai-eyebrow';
 export * from './admin-ai-paths-breadcrumbs';
+export * from './admin-favorite-breadcrumb-row';
 export * from './admin-chatbot-breadcrumbs';
 export * from './admin-chatbot-page-layout';
 export * from './admin-case-resolver-breadcrumbs';

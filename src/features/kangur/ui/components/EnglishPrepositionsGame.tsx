@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -14,6 +15,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -177,6 +182,7 @@ export default function EnglishPrepositionsGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: EnglishPrepositionsGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -204,7 +210,7 @@ export default function EnglishPrepositionsGame({
     const isCorrect = selection === round.answer;
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
-      ? 'Świetnie! Trafione.'
+      ? translations('englishPrepositions.feedback.correct')
       : `Prawidłowa odpowiedź: ${round.answer}.`;
 
     setScore(nextScore);
@@ -263,7 +269,7 @@ export default function EnglishPrepositionsGame({
           accent='rose'
           title={
             <KangurHeadline data-testid='english-prepositions-summary-title'>
-              Wynik: {score}/{TOTAL_ROUNDS}
+              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
             </KangurHeadline>
           }
         />
@@ -276,14 +282,19 @@ export default function EnglishPrepositionsGame({
         <KangurPracticeGameSummaryProgress accent='rose' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Prepositions opanowane.'
+            ? translations('englishPrepositions.summary.perfect')
             : percent >= 70
-              ? 'Dobra robota!'
-              : 'Jeszcze jedna runda i będzie super.'}
+              ? translations('englishPrepositions.summary.good')
+              : translations('englishPrepositions.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={
+            finishLabel === 'Wróć do tematów'
+              ? getKangurMiniGameFinishLabel(translations, 'topics')
+              : finishLabel
+          }
           onFinish={onFinish}
+          restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
         />
       </KangurPracticeGameSummary>

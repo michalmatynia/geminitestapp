@@ -269,8 +269,24 @@ export const mongoRebuildIndexesResponseSchema = mongoDiagnosticsResponseSchema.
 export type MongoRebuildIndexesResponse = z.infer<typeof mongoRebuildIndexesResponseSchema>;
 export type MongoRebuildIndexesResponseDto = MongoRebuildIndexesResponse;
 
+export const clearLogsTargetSchema = z.enum([
+  'error_logs',
+  'activity_logs',
+  'page_access_logs',
+  'all_logs',
+]);
+
+export type ClearLogsTarget = z.infer<typeof clearLogsTargetSchema>;
+export type ClearLogsTargetDto = ClearLogsTarget;
+
 export const clearLogsResponseSchema = z.object({
+  target: clearLogsTargetSchema,
   deleted: z.number(),
+  deletedByTarget: z.object({
+    systemLogs: z.number(),
+    activityLogs: z.number(),
+    pageAccessLogs: z.number(),
+  }),
 });
 
 export type ClearLogsResponse = z.infer<typeof clearLogsResponseSchema>;

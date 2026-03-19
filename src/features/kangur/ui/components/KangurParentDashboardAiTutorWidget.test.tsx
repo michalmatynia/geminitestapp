@@ -243,7 +243,7 @@ describe('KangurParentDashboardAiTutorWidget', () => {
 
     render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(screen.getByText('Tutor-AI dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('widgets.aiTutor.title')).toBeInTheDocument();
     expect(screen.getByText('AI Tutor dla Ada')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
       screen.getByText('Ustaw dostępność i guardrails pomocy AI dla tego ucznia')

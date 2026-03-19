@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import {
@@ -16,7 +16,7 @@ import {
   KANGUR_PANEL_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurSubjectGroupSection } from '@/features/kangur/ui/components/KangurSubjectGroupSection';
-import { KANGUR_SUBJECT_GROUPS } from '@/features/kangur/ui/constants/subject-groups';
+import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
@@ -72,9 +72,11 @@ function buildLessonGroups(
 }
 
 export function KangurLessonsCatalogWidget(): JSX.Element {
+  const locale = useLocale();
   const pageTranslations = useTranslations('KangurLessonsPage');
   const widgetTranslations = useTranslations('KangurLessonsWidgets');
   const masteryTranslations = useTranslations('KangurLessonsWidgets.mastery');
+  const subjectGroups = getKangurSubjectGroups(locale);
   const { entry: emptyStateContent } = useKangurPageContentEntry('lessons-list-empty-state');
   const {
     orderedLessons,
@@ -132,7 +134,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
   }
 
   const lessonsBySubject = new Map(
-    KANGUR_SUBJECT_GROUPS.map((group) => [
+    subjectGroups.map((group) => [
       group.value,
       orderedLessons.filter((lesson) => lesson.subject === group.value),
     ])
@@ -140,7 +142,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
 
   return (
     <div className={`flex flex-col ${KANGUR_LESSON_PANEL_GAP_CLASSNAME}`} aria-label='Lista lekcji'>
-      {KANGUR_SUBJECT_GROUPS.map((group) => {
+      {subjectGroups.map((group) => {
         const groupLessons = lessonsBySubject.get(group.value) ?? [];
         if (groupLessons.length === 0) {
           return null;

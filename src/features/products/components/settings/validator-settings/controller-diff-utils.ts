@@ -2,6 +2,7 @@ import type {
   PatternFormData,
   ProductValidationLaunchOperator,
   ProductValidationPattern,
+  ProductValidationSemanticState,
   SequenceGroupView,
 } from '@/shared/contracts/products';
 import type { UpdateProductValidationPatternInput as UpdateValidationPatternPayload } from '@/shared/contracts/products/validation';
@@ -10,6 +11,8 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
+import { reconcileProductValidationSemanticState } from '@/shared/lib/products/utils/validator-semantic-operations';
+import { serializeProductValidationSemanticState } from '@/shared/lib/products/utils/validator-semantic-state';
 
 export function parseStrictInt(value: string): number | null {
   const trimmed = value.trim();
@@ -23,6 +26,7 @@ export type BuildValidationPayloadArgs = {
   formData: PatternFormData;
   sequenceGroups: Map<string, SequenceGroupView>;
   editingPattern: ProductValidationPattern | null;
+  semanticState: ProductValidationSemanticState | null;
   replacementValue: string | null;
   parsedSequence: number | null;
   parsedMaxExecutions: number;
@@ -33,6 +37,7 @@ export function buildValidationPayload({
   formData,
   sequenceGroups,
   editingPattern,
+  semanticState,
   replacementValue,
   parsedSequence,
   parsedMaxExecutions,
@@ -51,7 +56,7 @@ export function buildValidationPayload({
     ? (selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0)
     : 0;
 
-  return {
+  const payload: UpdateValidationPatternPayload = {
     label: formData.label.trim(),
     target: formData.target,
     locale: formData.locale.trim() || null,
@@ -94,6 +99,13 @@ export function buildValidationPayload({
     appliesToScopes: normalizeProductValidationPatternScopes(formData.appliesToScopes),
     validationDebounceMs: parsedValidationDebounceMs,
   };
+
+  payload.semanticState = reconcileProductValidationSemanticState({
+    currentSemanticState: semanticState,
+    pattern: payload,
+  });
+
+  return payload;
 }
 
 function areStringArraysEqual(
@@ -210,6 +222,12 @@ export function buildPatternPayloadDiff(
   }
   if ((next.validationDebounceMs ?? 0) !== (existing.validationDebounceMs ?? 0)) {
     diff.validationDebounceMs = next.validationDebounceMs;
+  }
+  if (
+    serializeProductValidationSemanticState(next.semanticState) !==
+    serializeProductValidationSemanticState(existing.semanticState)
+  ) {
+    diff.semanticState = next.semanticState;
   }
   return diff;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -39,6 +40,11 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
@@ -50,9 +56,6 @@ import type { DropResult } from '@hello-pangea/dnd';
 type BaseRound = {
   id: string;
   accent: KangurAccent;
-  prompt: string;
-  question: string;
-  hint: string;
 };
 
 type ChoiceRound = BaseRound & {
@@ -87,8 +90,6 @@ const ROUNDS: Round[] = [
     id: 'svo-order',
     kind: 'choice',
     accent: 'violet',
-    prompt: 'Wybierz zdanie w poprawnym szyku S + V + O.',
-    question: 'Które zdanie jest poprawne?',
     answer: 'The drummer plays the rhythm.',
     options: [
       'Plays the drummer the rhythm.',
@@ -96,63 +97,62 @@ const ROUNDS: Round[] = [
       'The rhythm plays the drummer.',
       'Plays the rhythm the drummer.',
     ],
-    hint: 'Najpierw podmiot (The drummer), potem czasownik, na końcu dopełnienie.',
   },
   {
     id: 'order-words',
     kind: 'order',
     accent: 'sky',
-    prompt: 'Przeciągnij słowa, żeby ułożyć poprawne zdanie.',
-    question: 'Ułóż: My friend always finishes homework on time.',
     tokens: ['My', 'friend', 'always', 'finishes', 'homework', 'on', 'time'],
     answer: ['My', 'friend', 'always', 'finishes', 'homework', 'on', 'time'],
-    hint: 'Zacznij od podmiotu, potem czasownik, potem reszta.',
   },
   {
     id: 'do-question',
     kind: 'fill',
     accent: 'indigo',
-    prompt: 'Uzupełnij pytanie właściwym słowem.',
-    question: '___ you play football on Saturdays?',
     answers: ['do'],
     placeholder: 'do / does',
-    hint: 'Dla you używamy do.',
   },
   {
     id: 'connector-so',
     kind: 'timed',
     accent: 'amber',
-    prompt: 'Szybka runda — masz kilka sekund!',
-    question: 'I was late, ___ I texted my coach.',
     answer: 'so',
     options: ['so', 'because', 'but', 'when'],
     timeLimitSec: 8,
-    hint: 'Skutek → so.',
   },
   {
     id: 'frequency-adverb',
     kind: 'choice',
     accent: 'teal',
-    prompt: 'Wybierz poprawne miejsce dla przysłówka.',
-    question: 'She ___ checks her notes after class.',
     answer: 'often',
     options: ['often', 'after', 'quickly', 'yesterday'],
-    hint: 'Przysłówki częstotliwości stoją przed czasownikiem głównym.',
   },
   {
     id: 'does-negative',
     kind: 'fill',
     accent: 'rose',
-    prompt: 'Uzupełnij przeczenie.',
-    question: 'She ___ like exams.',
     answers: ['doesn\'t', 'does not'],
     placeholder: 'doesn\'t',
-    hint: 'She → does not → doesn\'t.',
   },
 ];
 
 const TOTAL_ROUNDS = ROUNDS.length;
 const dragPortal = typeof document === 'undefined' ? null : document.body;
+
+const getSentenceStructurePrompt = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`englishSentenceStructure.inRound.rounds.${roundId}.prompt`);
+
+const getSentenceStructureHint = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`englishSentenceStructure.inRound.rounds.${roundId}.hint`);
+
+const getSentenceStructureQuestion = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`englishSentenceStructure.inRound.rounds.${roundId}.question`);
 
 const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
 
@@ -221,9 +221,11 @@ const evaluateRound = (
 };
 
 export default function EnglishSentenceStructureGame({
-  finishLabel = 'Wróć do Grajmy',
+  finishLabel,
   onFinish,
 }: EnglishSentenceStructureGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'play');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -316,8 +318,10 @@ export default function EnglishSentenceStructureGame({
     });
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
-      ? 'Świetnie! Tak właśnie budujemy to zdanie.'
-      : `Prawidłowa odpowiedź: ${correctAnswerLabel}.`;
+      ? translations('englishSentenceStructure.inRound.feedback.correct')
+      : translations('englishSentenceStructure.inRound.feedback.incorrect', {
+          answer: correctAnswerLabel,
+        });
 
     setScore(nextScore);
     setFeedback({ kind: isCorrect ? 'success' : 'error', text: feedbackText });
@@ -411,7 +415,7 @@ export default function EnglishSentenceStructureGame({
           accent='violet'
           title={
             <KangurHeadline data-testid='english-structure-summary-title'>
-              Wynik: {score}/{TOTAL_ROUNDS}
+              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
             </KangurHeadline>
           }
         />
@@ -424,15 +428,16 @@ export default function EnglishSentenceStructureGame({
         <KangurPracticeGameSummaryProgress accent='violet' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent >= 80
-            ? 'Świetny szyk zdania!'
+            ? translations('englishSentenceStructure.summary.excellent')
             : percent >= 60
-              ? 'Dobra robota, zostało parę szczegółów.'
-              : 'Zrób jeszcze jedną rundę i popraw szyk.'}
+              ? translations('englishSentenceStructure.summary.good')
+              : translations('englishSentenceStructure.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           onRestart={handleRestart}
+          restartLabel={translations('shared.restart')}
         />
       </KangurPracticeGameSummary>
     );
@@ -453,21 +458,28 @@ export default function EnglishSentenceStructureGame({
       >
         <div className='flex flex-wrap items-center gap-3'>
           <KangurStatusChip accent={round.accent} size='sm'>
-            {round.prompt}
+            {getSentenceStructurePrompt(translations, round.id)}
           </KangurStatusChip>
           <p className='text-sm text-slate-500'>
-            Runda {roundIndex + 1} z {TOTAL_ROUNDS}
+            {translations('englishSentenceStructure.inRound.roundLabel', {
+              current: roundIndex + 1,
+              total: TOTAL_ROUNDS,
+            })}
           </p>
           {round.kind === 'timed' ? (
             <KangurStatusChip
               accent={timeLeft !== null && timeLeft <= 3 ? 'rose' : 'amber'}
               size='sm'
             >
-              Czas: {timeLeft ?? round.timeLimitSec}s
+              {translations('englishSentenceStructure.inRound.timeLabel', {
+                seconds: timeLeft ?? round.timeLimitSec,
+              })}
             </KangurStatusChip>
           ) : null}
         </div>
-        <KangurHeadline className='text-xl sm:text-2xl'>{round.question}</KangurHeadline>
+        <KangurHeadline className='text-xl sm:text-2xl'>
+          {getSentenceStructureQuestion(translations, round.id)}
+        </KangurHeadline>
 
         {round.kind === 'choice' || round.kind === 'timed' ? (
           <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-2`}>
@@ -494,13 +506,16 @@ export default function EnglishSentenceStructureGame({
           <div className={KANGUR_GRID_SPACED_CLASSNAME}>
             <KangurTextField
               accent={round.accent}
-              placeholder={round.placeholder ?? 'Wpisz odpowiedź'}
+              placeholder={
+                round.placeholder ??
+                translations('englishSentenceStructure.inRound.fillPlaceholder')
+              }
               value={fillValue}
               onChange={(event) => setFillValue(event.target.value)}
-              aria-label='Uzupełnij brakujące słowo'
+              aria-label={translations('englishSentenceStructure.inRound.fillAria')}
             />
             <p className='text-xs text-slate-500'>
-              Wpisz brakujące słowo, a potem kliknij „Sprawdź”.
+              {translations('englishSentenceStructure.inRound.fillHelp')}
             </p>
           </div>
         ) : null}
@@ -544,7 +559,10 @@ export default function EnglishSentenceStructureGame({
                                   ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white'
                                   : ''
                               )}
-                              aria-label={`Słowo: ${token}`}
+                              aria-label={translations(
+                                'englishSentenceStructure.inRound.orderTokenAria',
+                                { token }
+                              )}
                               aria-disabled={isChecking}
                               aria-pressed={isSelected}
                               title={token}
@@ -599,7 +617,7 @@ export default function EnglishSentenceStructureGame({
           </KangurInfoCard>
         ) : (
           <KangurInfoCard accent='slate' padding='md' tone='muted'>
-            {round.hint}
+            {getSentenceStructureHint(translations, round.id)}
           </KangurInfoCard>
         )}
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
@@ -608,10 +626,12 @@ export default function EnglishSentenceStructureGame({
             disabled={!isReady || isChecking}
             aria-busy={isChecking}
           >
-            {isChecking ? 'Sprawdzam…' : 'Sprawdź'}
+            {isChecking
+              ? translations('englishSentenceStructure.inRound.checking')
+              : translations('englishSentenceStructure.inRound.check')}
           </KangurButton>
           <KangurButton onClick={handleRestart} variant='ghost'>
-            Zacznij od nowa
+            {translations('shared.restart')}
           </KangurButton>
         </div>
       </KangurGlassPanel>

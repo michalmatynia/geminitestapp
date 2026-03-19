@@ -102,10 +102,10 @@ describe('KangurGameHomeActionsWidget', () => {
 
     render(<KangurGameHomeActionsWidget />);
 
-    expect(screen.getByRole('link', { name: /lekcje/i })).toHaveClass(
+    expect(screen.getByRole('link', { name: 'actions.lessons' })).toHaveClass(
       'focus-visible:ring-amber-300/70'
     );
-    expect(screen.getByRole('button', { name: /grajmy!/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'actions.play' })).toHaveClass(
       'focus-visible:ring-amber-300/70'
     );
   });
@@ -121,12 +121,12 @@ describe('KangurGameHomeActionsWidget', () => {
 
     render(<KangurGameHomeActionsWidget />);
 
-    expect(screen.getByRole('button', { name: /grajmy!/i })).toBeEnabled();
-    expect(screen.getByRole('link', { name: /pojedynki/i })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'actions.play' })).toBeEnabled();
+    expect(screen.getByRole('link', { name: 'actions.duels' })).toHaveAttribute(
       'href',
       '/kangur/duels'
     );
-    expect(screen.getByRole('button', { name: /kangur matematyczny/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'actions.kangur' })).toBeEnabled();
   });
 
   it('hides the kangur math contest action when English is selected', () => {
@@ -145,7 +145,7 @@ describe('KangurGameHomeActionsWidget', () => {
 
     render(<KangurGameHomeActionsWidget />);
 
-    expect(screen.queryByRole('button', { name: /kangur matematyczny/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'actions.kangur' })).toBeNull();
   });
 
   it('stacks the front-page actions into a single mobile column', () => {
@@ -178,7 +178,7 @@ describe('KangurGameHomeActionsWidget', () => {
     render(<KangurGameHomeActionsWidget hideWhenScreenMismatch={false} />);
 
     expect(screen.getByTestId('kangur-home-actions-shell')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /grajmy!/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'actions.play' })).toBeInTheDocument();
   });
 
   it('marks the lessons action as pressed during the acknowledgement phase', () => {

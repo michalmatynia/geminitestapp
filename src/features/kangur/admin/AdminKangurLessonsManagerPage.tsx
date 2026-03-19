@@ -18,6 +18,7 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
+import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import { Badge, Breadcrumbs, FormModal, useToast } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
@@ -914,7 +915,9 @@ export function AdminKangurLessonsManagerPage({
           title='Kangur Lessons'
           description={
             <div className='flex flex-wrap items-center gap-3'>
-              <Breadcrumbs items={breadcrumbs} className='mt-0' />
+              <AdminFavoriteBreadcrumbRow>
+                <Breadcrumbs items={breadcrumbs} className='mt-0' />
+              </AdminFavoriteBreadcrumbRow>
               <span className='hidden h-4 w-px bg-white/12 md:block' />
               <span className='text-xs text-slate-300/80'>
                 Manage lesson library, order, and interactive content.

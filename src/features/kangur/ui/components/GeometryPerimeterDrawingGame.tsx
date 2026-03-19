@@ -1,6 +1,7 @@
 'use client';
 
 import { Eraser, PencilRuler } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
@@ -47,6 +48,11 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameAccuracyText,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
@@ -64,9 +70,7 @@ type PerimeterRound = {
   shape: 'square' | 'rectangle';
   a: number;
   b?: number;
-  label: string;
   emoji: string;
-  hint: string;
 };
 
 type FeedbackState = {
@@ -79,44 +83,34 @@ const ROUNDS: PerimeterRound[] = [
     id: 'square-3',
     shape: 'square',
     a: 3,
-    label: 'Kwadrat',
     emoji: '🟥',
-    hint: 'Narysuj kwadrat o boku 3 kratki.',
   },
   {
     id: 'rect-6-4',
     shape: 'rectangle',
     a: 6,
     b: 4,
-    label: 'Prostokąt',
     emoji: '▭',
-    hint: 'Narysuj prostokąt 6 × 4 kratki.',
   },
   {
     id: 'rect-5-2',
     shape: 'rectangle',
     a: 5,
     b: 2,
-    label: 'Prostokąt',
     emoji: '▭',
-    hint: 'Narysuj prostokąt 5 × 2 kratki.',
   },
   {
     id: 'square-4',
     shape: 'square',
     a: 4,
-    label: 'Kwadrat',
     emoji: '🟥',
-    hint: 'Narysuj kwadrat o boku 4 kratki.',
   },
   {
     id: 'rect-7-3',
     shape: 'rectangle',
     a: 7,
     b: 3,
-    label: 'Prostokąt',
     emoji: '▭',
-    hint: 'Narysuj prostokąt 7 × 3 kratki.',
   },
 ];
 
@@ -201,10 +195,11 @@ const gridAlignmentRatio = (points: Point2d[], tolerance: number): number => {
 };
 
 export default function GeometryPerimeterDrawingGame({
-  finishLabel = 'Wróć do lekcji',
+  finishLabel,
   onFinish,
 }: GeometryPerimeterDrawingGameProps): React.JSX.Element {
-  const summaryFinishLabel = finishLabel;
+  const translations = useTranslations('KangurMiniGames');
+  const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'lesson');
   const handleFinish = onFinish;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
@@ -223,8 +218,8 @@ export default function GeometryPerimeterDrawingGame({
   const [drawingValidated, setDrawingValidated] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);
   const [keyboardDrawing, setKeyboardDrawing] = useState(false);
-  const [keyboardStatus, setKeyboardStatus] = useState(
-    'Plansza gotowa do rysowania klawiaturą.'
+  const [keyboardStatus, setKeyboardStatus] = useState(() =>
+    translations('geometryPerimeter.inRound.keyboard.ready')
   );
   const isCoarsePointer = useKangurCoarsePointer();
   const sessionStartedAtRef = useRef(Date.now());
@@ -341,8 +336,8 @@ export default function GeometryPerimeterDrawingGame({
     setSelected(null);
     setDrawingValidated(false);
     setKeyboardDrawing(false);
-    setKeyboardStatus('Wyczyszczono planszę.');
-  }, [redrawCanvas]);
+    setKeyboardStatus(translations('geometryPerimeter.inRound.keyboard.boardCleared'));
+  }, [redrawCanvas, translations]);
 
   const resolvePoint = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
@@ -412,16 +407,16 @@ export default function GeometryPerimeterDrawingGame({
     const point = { ...keyboardCursor };
     updateStrokes((current) => [...current, [point]]);
     setKeyboardDrawing(true);
-    setKeyboardStatus('Rozpoczęto rysowanie klawiaturą.');
-  }, [keyboardCursor, updateStrokes]);
+    setKeyboardStatus(translations('geometryPerimeter.inRound.keyboard.started'));
+  }, [keyboardCursor, translations, updateStrokes]);
 
   const finishKeyboardStroke = useCallback((): void => {
     if (keyboardDrawing) {
       appendKeyboardPoint({ ...keyboardCursor });
     }
     setKeyboardDrawing(false);
-    setKeyboardStatus('Zakończono rysowanie klawiaturą.');
-  }, [appendKeyboardPoint, keyboardCursor, keyboardDrawing]);
+    setKeyboardStatus(translations('geometryPerimeter.inRound.keyboard.finished'));
+  }, [appendKeyboardPoint, keyboardCursor, keyboardDrawing, translations]);
 
   const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
     if (done || feedback) return;
@@ -453,7 +448,7 @@ export default function GeometryPerimeterDrawingGame({
     if (key === 'Escape') {
       clearDrawing();
       setKeyboardCursor(KEYBOARD_CURSOR_START);
-      setKeyboardStatus('Wyczyszczono planszę i ustawiono kursor na środku.');
+      setKeyboardStatus(translations('geometryPerimeter.inRound.keyboard.cleared'));
       return;
     }
 
@@ -539,12 +534,12 @@ export default function GeometryPerimeterDrawingGame({
 
   const evaluateDrawing = (): { accepted: boolean; message: string } => {
     if (!currentRound) {
-      return { accepted: false, message: 'Brak zadania do oceny.' };
+      return { accepted: false, message: translations('geometryPerimeter.inRound.errors.noTask') };
     }
     if (points.length < minDrawingPoints) {
       return {
         accepted: false,
-        message: 'Narysuj figurę trochę dłużej, żeby można było ją ocenić.',
+        message: translations('geometryPerimeter.inRound.errors.tooShort'),
       };
     }
     const shapeId: GeometryShapeId =
@@ -559,14 +554,14 @@ export default function GeometryPerimeterDrawingGame({
     const heightUnits = toGridUnits(height);
     const minUnits = Math.min(widthUnits, heightUnits);
     if (minUnits < BASE_MIN_GRID_UNITS) {
-      return { accepted: false, message: 'Narysuj większą figurę na kratkach.' };
+      return { accepted: false, message: translations('geometryPerimeter.inRound.errors.tooSmall') };
     }
 
     const alignmentRatio = gridAlignmentRatio(points, gridSnapTolerance);
     if (alignmentRatio < minGridAlignmentRatio) {
       return {
         accepted: false,
-        message: 'Rysuj dokładnie po liniach kratki.',
+        message: translations('geometryPerimeter.inRound.errors.alignToGrid'),
       };
     }
 
@@ -580,13 +575,15 @@ export default function GeometryPerimeterDrawingGame({
       if (!matches) {
         return {
           accepted: false,
-          message: `Spróbuj narysować kwadrat o boku ${currentRound.a} kratek.`,
+          message: translations('geometryPerimeter.inRound.errors.squareSize', {
+            size: currentRound.a,
+          }),
         };
       }
       if (!pixelMatch) {
         return {
           accepted: false,
-          message: 'Dopasuj boki dokładniej do linii kratki.',
+          message: translations('geometryPerimeter.inRound.errors.adjustEdges'),
         };
       }
     } else {
@@ -603,18 +600,24 @@ export default function GeometryPerimeterDrawingGame({
       if (!matches) {
         return {
           accepted: false,
-          message: `Spróbuj narysować prostokąt ${a} × ${b} kratek.`,
+          message: translations('geometryPerimeter.inRound.errors.rectangleSize', {
+            a,
+            b,
+          }),
         };
       }
       if (!pixelMatch) {
         return {
           accepted: false,
-          message: 'Dopasuj boki dokładniej do linii kratki.',
+          message: translations('geometryPerimeter.inRound.errors.adjustEdges'),
         };
       }
     }
 
-    return { accepted: true, message: 'Świetnie! Figura pasuje do zadania.' };
+    return {
+      accepted: true,
+      message: translations('geometryPerimeter.inRound.feedback.shapeAccepted'),
+    };
   };
 
   const handleCheck = (): void => {
@@ -627,11 +630,14 @@ export default function GeometryPerimeterDrawingGame({
         return;
       }
       setDrawingValidated(true);
-      setFeedback({ kind: 'info', text: 'Rysunek jest poprawny! Wybierz wynik obwodu.' });
+      setFeedback({
+        kind: 'info',
+        text: translations('geometryPerimeter.inRound.feedback.selectPerimeter'),
+      });
       return;
     }
     if (selected === null) {
-      setFeedback({ kind: 'info', text: 'Wybierz wynik obwodu.' });
+      setFeedback({ kind: 'info', text: translations('geometryPerimeter.inRound.feedback.pickAnswer') });
       return;
     }
 
@@ -639,12 +645,16 @@ export default function GeometryPerimeterDrawingGame({
     if (correct) {
       setFeedback({
         kind: 'success',
-        text: `Brawo! Obwód to ${perimeter} cm.`,
+        text: translations('geometryPerimeter.inRound.feedback.correctPerimeter', {
+          perimeter,
+        }),
       });
     } else {
       setFeedback({
         kind: 'error',
-        text: `Sprawdź obwód jeszcze raz. Poprawny wynik to ${perimeter} cm.`,
+        text: translations('geometryPerimeter.inRound.feedback.incorrectPerimeter', {
+          perimeter,
+        }),
       });
     }
     moveToNextRound(correct);
@@ -661,7 +671,7 @@ export default function GeometryPerimeterDrawingGame({
     setDrawingValidated(false);
     setKeyboardCursor(KEYBOARD_CURSOR_START);
     setKeyboardDrawing(false);
-    setKeyboardStatus('Rozpoczęto nową rundę obwodów.');
+    setKeyboardStatus(translations('geometryPerimeter.inRound.keyboard.restarted'));
     sessionStartedAtRef.current = Date.now();
     clearDrawing();
   };
@@ -687,7 +697,7 @@ export default function GeometryPerimeterDrawingGame({
         <KangurPracticeGameSummaryTitle
           accent='amber'
           dataTestId='geometry-perimeter-summary-title'
-          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
         />
         <KangurPracticeGameSummaryXP accent='amber' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -697,17 +707,17 @@ export default function GeometryPerimeterDrawingGame({
         />
         <KangurPracticeGameSummaryProgress
           accent='amber'
-          ariaLabel='Skuteczność w grze o obwodach'
-          ariaValueText={`${percent}% poprawnych odpowiedzi`}
+          ariaLabel={translations('geometryPerimeter.progressAriaLabel')}
+          ariaValueText={getKangurMiniGameAccuracyText(translations, percent)}
           dataTestId='geometry-perimeter-summary-progress-bar'
           percent={percent}
         />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Obwody opanowane.'
+            ? translations('geometryPerimeter.summary.perfect')
             : percent >= 70
-              ? 'Świetna robota! Jeszcze trochę i będzie perfekcja.'
-              : 'Dobra próba! Spróbuj ponownie.'}
+              ? translations('geometryPerimeter.summary.good')
+              : translations('geometryPerimeter.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           className={KANGUR_STACK_ROW_CLASSNAME}
@@ -715,6 +725,7 @@ export default function GeometryPerimeterDrawingGame({
           finishLabel={summaryFinishLabel}
           onFinish={handleFinish}
           onRestart={handleRestart}
+          restartLabel={translations('shared.restart')}
           restartButtonClassName='w-full sm:flex-1'
         />
       </KangurPracticeGameSummary>
@@ -724,7 +735,13 @@ export default function GeometryPerimeterDrawingGame({
   return (
     <KangurPracticeGameStage>
       <div aria-live='polite' aria-atomic='true' className='sr-only'>
-        Runda {roundIndex + 1} z {TOTAL_ROUNDS}. Narysuj figurę {currentRound?.label}.
+        {translations('geometryPerimeter.inRound.liveRegion', {
+          current: roundIndex + 1,
+          total: TOTAL_ROUNDS,
+          shape: currentRound
+            ? translations(`geometryPerimeter.inRound.rounds.${currentRound.id}.shapeName`)
+            : '',
+        })}
       </div>
       <div
         aria-live='polite'
@@ -757,15 +774,17 @@ export default function GeometryPerimeterDrawingGame({
           tone='accent'
         >
           <KangurStatusChip accent='amber' size='sm'>
-            Rysowanie obwodu
+            {translations('geometryPerimeter.inRound.modeLabel')}
           </KangurStatusChip>
           <KangurDisplayEmoji size='md'>{currentRound?.emoji}</KangurDisplayEmoji>
           <KangurHeadline accent='amber' as='h3' size='sm'>
-            Narysuj: {currentRound?.label}
+            {translations(`geometryPerimeter.inRound.rounds.${currentRound?.id}.title`)}
           </KangurHeadline>
-          <p className='text-sm [color:var(--kangur-page-muted-text)]'>{currentRound?.hint}</p>
+          <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+            {currentRound ? translations(`geometryPerimeter.inRound.rounds.${currentRound.id}.hint`) : null}
+          </p>
           <p className='text-xs font-semibold text-amber-700'>
-            1 kratka = 1 cm
+            {translations('geometryPerimeter.inRound.gridScale')}
           </p>
         </KangurInfoCard>
 
@@ -781,7 +800,13 @@ export default function GeometryPerimeterDrawingGame({
         >
           <canvas
             aria-describedby='geometry-perimeter-input-help'
-            aria-label={`Plansza do rysowania figury ${currentRound?.label}. Użyj myszy lub dotyku, aby narysować figurę.`}
+            aria-label={
+              currentRound
+                ? translations('geometryPerimeter.inRound.canvasAria', {
+                    shape: translations(`geometryPerimeter.inRound.rounds.${currentRound.id}.shapeName`),
+                  })
+                : translations('geometryPerimeter.inRound.canvasAriaFallback')
+            }
             aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
             data-testid='geometry-perimeter-canvas'
             data-drawing-active={isPointerDrawing ? 'true' : 'false'}
@@ -813,7 +838,7 @@ export default function GeometryPerimeterDrawingGame({
           {points.length === 0 && (
             <div className='pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-semibold [color:var(--kangur-page-muted-text)]'>
               <PencilRuler aria-hidden='true' className='w-4 h-4 mr-2' />
-              Rysuj po kratkach
+              {translations('geometryPerimeter.inRound.drawOnGrid')}
             </div>
           )}
         </KangurInfoCard>
@@ -821,8 +846,7 @@ export default function GeometryPerimeterDrawingGame({
           id='geometry-perimeter-input-help'
           className='hidden text-xs text-center [color:var(--kangur-page-muted-text)] sm:block'
         >
-          Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy
-          kreskę, strzałki przesuwają kursor, Escape czyści planszę.
+          {translations('geometryPerimeter.inRound.inputHelp')}
         </p>
 
         {drawingValidated ? (
@@ -886,7 +910,7 @@ export default function GeometryPerimeterDrawingGame({
             variant='surface'
           >
             <Eraser aria-hidden='true' className='w-4 h-4' />
-            Wyczyść
+            {translations('geometryPerimeter.inRound.clear')}
           </KangurButton>
           <KangurButton
             className={cn(
@@ -909,7 +933,9 @@ export default function GeometryPerimeterDrawingGame({
             size='lg'
             variant='primary'
           >
-            {drawingValidated ? 'Sprawdź obwód' : 'Sprawdź rysunek'}
+            {drawingValidated
+              ? translations('geometryPerimeter.inRound.checkPerimeter')
+              : translations('geometryPerimeter.inRound.checkDrawing')}
           </KangurButton>
         </KangurPanelRow>
 

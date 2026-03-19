@@ -4,6 +4,7 @@ import React from 'react';
 
 
 import type { PatternFormData } from '@/shared/contracts/products';
+import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
 import {
   Input,
   MultiSelect,
@@ -19,9 +20,57 @@ import { ValidatorPatternModalDynamicSection } from './modal/ValidatorPatternMod
 import { ValidatorPatternModalLaunchSection } from './modal/ValidatorPatternModalLaunchSection';
 import { ValidatorPatternModalPolicySection } from './modal/ValidatorPatternModalPolicySection';
 import { ValidatorPatternModalRuntimeSection } from './modal/ValidatorPatternModalRuntimeSection';
+import { ValidatorPatternModalSimulatorSection } from './modal/ValidatorPatternModalSimulatorSection';
 import { CHAIN_MODE_OPTIONS } from './validator-pattern-modal-options';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
+
+const buildSemanticTransitionNotice = ({
+  kind,
+  previousTitle,
+  currentTitle,
+}: {
+  kind: 'none' | 'recognized' | 'cleared' | 'preserved' | 'updated' | 'migrated';
+  previousTitle: string | null;
+  currentTitle: string | null;
+}): { tone: 'info' | 'warning'; title: string; body: string } | null => {
+  switch (kind) {
+    case 'recognized':
+      return currentTitle
+        ? {
+            tone: 'info',
+            title: 'Semantic Metadata Detected',
+            body: `This rule now matches "${currentTitle}" and will be saved with semantic metadata.`,
+          }
+        : null;
+    case 'cleared':
+      return previousTitle
+        ? {
+            tone: 'warning',
+            title: 'Converted To Generic Rule',
+            body: `This rule no longer matches "${previousTitle}" and will be saved as a generic custom validator.`,
+          }
+        : null;
+    case 'migrated':
+      return previousTitle && currentTitle
+        ? {
+            tone: 'info',
+            title: 'Semantic Operation Migrated',
+            body: `This rule no longer matches "${previousTitle}" and now matches "${currentTitle}". Saving will migrate its semantic metadata.`,
+          }
+        : null;
+    case 'updated':
+      return currentTitle
+        ? {
+            tone: 'info',
+            title: 'Semantic Metadata Updated',
+            body: `This rule still matches "${currentTitle}", but its semantic metadata has been updated to reflect the edited shape.`,
+          }
+        : null;
+    default:
+      return null;
+  }
+};
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatternmodal
@@ -30,6 +79,8 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
   const {
     showModal,
     editingPattern,
+    modalSemanticState,
+    modalSemanticTransition,
     formData,
     setFormData,
     replacementFieldOptions,
@@ -41,6 +92,24 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
     sequenceGroups,
   } = useValidatorSettingsContext();
   if (!showModal) return null;
+
+  const semanticUi = React.useMemo(
+    () => getProductValidationSemanticOperationUiMetadata(modalSemanticState?.operation),
+    [modalSemanticState?.operation]
+  );
+  const previousSemanticUi = React.useMemo(
+    () => getProductValidationSemanticOperationUiMetadata(modalSemanticTransition.previous?.operation),
+    [modalSemanticTransition.previous?.operation]
+  );
+  const transitionNotice = React.useMemo(
+    () =>
+      buildSemanticTransitionNotice({
+        kind: modalSemanticTransition.kind,
+        previousTitle: previousSemanticUi?.title ?? null,
+        currentTitle: semanticUi?.title ?? null,
+      }),
+    [modalSemanticTransition.kind, previousSemanticUi?.title, semanticUi?.title]
+  );
 
   const sequenceGroupOptions = [
     {
@@ -73,6 +142,42 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
       size='lg'
     >
       <div className='space-y-4'>
+        {semanticUi ? (
+          <div className='rounded-md border border-emerald-500/30 bg-emerald-950/40 px-4 py-3'>
+            <p className='text-sm font-semibold text-emerald-100'>{semanticUi.title}</p>
+            <p className='mt-1 text-sm text-emerald-200/85'>{semanticUi.description}</p>
+          </div>
+        ) : null}
+
+        {transitionNotice ? (
+          <div
+            className={
+              transitionNotice.tone === 'warning'
+                ? 'rounded-md border border-amber-500/30 bg-amber-950/40 px-4 py-3'
+                : 'rounded-md border border-sky-500/30 bg-sky-950/40 px-4 py-3'
+            }
+          >
+            <p
+              className={
+                transitionNotice.tone === 'warning'
+                  ? 'text-sm font-semibold text-amber-100'
+                  : 'text-sm font-semibold text-sky-100'
+              }
+            >
+              {transitionNotice.title}
+            </p>
+            <p
+              className={
+                transitionNotice.tone === 'warning'
+                  ? 'mt-1 text-sm text-amber-200/85'
+                  : 'mt-1 text-sm text-sky-200/85'
+              }
+            >
+              {transitionNotice.body}
+            </p>
+          </div>
+        ) : null}
+
         <ValidatorPatternModalBasicSection />
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -156,6 +261,8 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <ValidatorPatternModalDynamicSection />
 
+        <ValidatorPatternModalSimulatorSection />
+
         <FormField
           label='Replacer Fields'
           description='Leave empty to apply replacement globally on all matching fields.'
@@ -227,8 +334,8 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               setFormData((prev: PatternFormData) => ({ ...prev, message: event.target.value }))
             }
-            placeholder='Remove duplicate spaces from product name.'
-           aria-label='Remove duplicate spaces from product name.' title='Remove duplicate spaces from product name.'/>
+            placeholder={semanticUi?.messagePlaceholder ?? 'Remove duplicate spaces from product name.'}
+           aria-label={semanticUi?.messagePlaceholder ?? 'Remove duplicate spaces from product name.'} title={semanticUi?.messagePlaceholder ?? 'Remove duplicate spaces from product name.'}/>
         </FormField>
       </div>
     </FormModal>

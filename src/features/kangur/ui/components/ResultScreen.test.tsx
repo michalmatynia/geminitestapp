@@ -21,13 +21,15 @@ describe('ResultScreen', () => {
       />
     );
 
-    expect(screen.getByRole('heading', { name: 'Świetna robota, Maja!' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'resultScreen.heading, Maja!' })
+    ).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-title')).toHaveClass(
       'text-2xl',
       'sm:text-3xl',
       '[color:var(--kangur-page-text)]'
     );
-    expect(screen.getByText('Dodawanie')).toBeInTheDocument();
+    expect(screen.getByText('resultScreen.operations.addition')).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('result-screen-shell')).toHaveClass(
       'glass-panel',
@@ -37,13 +39,13 @@ describe('ResultScreen', () => {
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute('aria-valuenow', '75');
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute(
       'aria-valuetext',
-      '75% poprawnych odpowiedzi'
+      '75% shared.correctAnswersSuffix'
     );
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveClass(
       'rounded-full',
       '[background:var(--kangur-progress-track)]'
     );
-    expect(screen.getByRole('button', { name: /Strona główna/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: /resultScreen\.actions\.home/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

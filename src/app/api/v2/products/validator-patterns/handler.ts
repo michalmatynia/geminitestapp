@@ -19,6 +19,7 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
+import { normalizeProductValidationSemanticState } from '@/shared/lib/products/utils/validator-semantic-state';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -157,6 +158,7 @@ export async function postValidatorPatternsHandler(
   const launchValue = typeof body.launchValue === 'string' ? body.launchValue : null;
   const launchFlags = body.launchFlags?.trim() || null;
   const appliesToScopes = normalizeProductValidationPatternScopes(body.appliesToScopes);
+  const semanticState = normalizeProductValidationSemanticState(body.semanticState);
   if (
     replacementEnabled &&
     !replacementValue &&
@@ -223,6 +225,9 @@ export async function postValidatorPatternsHandler(
     launchValue,
     launchFlags,
     appliesToScopes,
+    semanticState,
+  }, {
+    semanticAuditSource: 'manual_save',
   });
 
   invalidateValidationPatternRuntimeCache();

@@ -156,7 +156,7 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
           'sign up',
           'register',
           'parent account',
-          "don't have an account",
+          'don\'t have an account',
           'dont have an account',
           'make an account',
           'open registration',
@@ -536,8 +536,8 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
       updatedLabel: 'Updated',
       updatedFallback: 'Not calculated yet',
       usageTitle: 'Usage today',
-      usageLoading: "Checking today's messages...",
-      usageError: "Couldn't read the current usage.",
+      usageLoading: 'Checking today\'s messages...',
+      usageError: 'Couldn\'t read the current usage.',
       usageUnlimitedTemplate: 'Sent {messageCount} messages.',
       usageLimitedTemplate: 'Used {messageCount} of {dailyMessageLimit} messages.',
       usageUnlimitedBadge: 'Unlimited',
@@ -553,7 +553,7 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
       saveIdleLabel: 'Save AI Tutor settings',
       savePendingLabel: 'Saving...',
       saveSuccess: 'AI Tutor settings saved.',
-      saveError: "Couldn't save the settings.",
+      saveError: 'Couldn\'t save the settings.',
       toggles: {
         allowLessonsLabel: 'Show tutor in lessons',
         allowLessonsDescription:

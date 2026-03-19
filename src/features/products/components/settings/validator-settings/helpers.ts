@@ -4,13 +4,25 @@ import type {
   SequenceGroupView,
 } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import {
+  PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS,
+  PRODUCT_VALIDATION_REPLACEMENT_FIELD_OPTIONS,
+  PRODUCT_VALIDATION_SOURCE_FIELD_OPTIONS,
+} from '@/features/products/lib/validatorSourceFields';
+import { getReplacementFieldsForProductValidationTarget } from '@/features/products/lib/validatorTargetAdapters';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   encodeDynamicReplacementRecipe,
-  parseDynamicReplacementRecipe,
   type DynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
+import {
+  PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,
+} from '@/shared/lib/products/utils/validator-semantic-operations';
+import {
+  matchesProductValidationSemanticOperation,
+} from '@/shared/lib/products/utils/validator-semantic-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS } from '@/features/products/lib/validatorSemanticPresets';
 
 
 export const DEFAULT_SEQUENCE_STEP = 10;
@@ -72,42 +84,9 @@ export const EMPTY_FORM: PatternFormData = {
   appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
 };
 
-export const REPLACEMENT_FIELD_LABELS: Record<string, string> = {
-  sku: 'SKU',
-  ean: 'EAN',
-  gtin: 'GTIN',
-  asin: 'ASIN',
-  price: 'Price',
-  stock: 'Stock',
-  categoryId: 'Category',
-  weight: 'Weight',
-  sizeLength: 'Size Length',
-  sizeWidth: 'Size Width',
-  length: 'Height',
-  name_en: 'Name (EN)',
-  name_pl: 'Name (PL)',
-  name_de: 'Name (DE)',
-  description_en: 'Description (EN)',
-  description_pl: 'Description (PL)',
-  description_de: 'Description (DE)',
-};
+export const REPLACEMENT_FIELD_LABELS = PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS;
 
-export const REPLACEMENT_FIELD_OPTIONS: Array<LabeledOptionDto<string>> =
-  PRODUCT_VALIDATION_REPLACEMENT_FIELDS.map((field) => ({
-    value: field,
-    label: REPLACEMENT_FIELD_LABELS[field] ?? field,
-  }));
-
-const SOURCE_FIELD_OPTIONS = [
-  ...REPLACEMENT_FIELD_OPTIONS,
-  { value: 'primaryCatalogId', label: 'Primary Catalog ID' },
-  { value: 'categoryName', label: 'Category Name' },
-  { value: 'nameEnSegment4', label: 'Name EN Segment #4' },
-  {
-    value: 'nameEnSegment4RegexEscaped',
-    label: 'Name EN Segment #4 (Regex Escaped)',
-  },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
+export const REPLACEMENT_FIELD_OPTIONS = PRODUCT_VALIDATION_REPLACEMENT_FIELD_OPTIONS;
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
@@ -140,30 +119,7 @@ export const formatReplacementFields = (fields: unknown): string => {
 export const getReplacementFieldsForTarget = (
   target: string
 ): Array<LabeledOptionDto<string>> => {
-  let fields: string[];
-  if (target === 'name') {
-    fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) => field.startsWith('name_'));
-  } else if (target === 'description') {
-    fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) =>
-      field.startsWith('description_')
-    );
-  } else if (target === 'price') {
-    fields = ['price'];
-  } else if (target === 'stock') {
-    fields = ['stock'];
-  } else if (target === 'category') {
-    fields = ['categoryId'];
-  } else if (target === 'weight') {
-    fields = ['weight'];
-  } else if (target === 'size_length') {
-    fields = ['sizeLength'];
-  } else if (target === 'size_width') {
-    fields = ['sizeWidth'];
-  } else if (target === 'length') {
-    fields = ['length'];
-  } else {
-    fields = ['sku'];
-  }
+  const fields = [...getReplacementFieldsForProductValidationTarget(target)];
 
   return fields.map((field) => ({
     value: field,
@@ -185,14 +141,12 @@ export const isLatestFieldMirrorPattern = (
   field: 'price' | 'stock'
 ): boolean => {
   if (pattern.target !== field) return false;
-  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
-  if (!recipe) return false;
-  return (
-    recipe.sourceMode === 'latest_product_field' &&
-    recipe.sourceField === field &&
-    recipe.targetApply === 'replace_whole_field'
-  );
+  return matchesProductValidationSemanticOperation(pattern, {
+    presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.mirrorLatestField,
+    operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.mirrorLatestField,
+    sourceField: field,
+    targetField: field,
+  });
 };
 
 /**
@@ -203,14 +157,12 @@ export const isNameSecondSegmentDimensionPattern = (
   target: 'size_length' | 'length'
 ): boolean => {
   if (pattern.target !== target) return false;
-  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
-  if (!recipe) return false;
-  return (
-    recipe.sourceMode === 'form_field' &&
-    recipe.sourceField === 'name_en' &&
-    recipe.targetApply === 'replace_whole_field'
-  );
+  return matchesProductValidationSemanticOperation(pattern, {
+    presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateNameContainsDimensionsToken,
+    operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateNameContainsDimensionsToken,
+    sourceField: 'name_en',
+    targetField: 'name',
+  });
 };
 
 /**
@@ -219,7 +171,7 @@ export const isNameSecondSegmentDimensionPattern = (
 export const getSourceFieldOptionsForTarget = (
   _target: string
 ): ReadonlyArray<LabeledOptionDto<string>> => {
-  return SOURCE_FIELD_OPTIONS;
+  return PRODUCT_VALIDATION_SOURCE_FIELD_OPTIONS;
 };
 
 /**

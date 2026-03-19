@@ -44,6 +44,10 @@ import {
 } from '../../social-image-addons/handler';
 import { postKangurSocialImageAddonsBatchHandler } from '../../social-image-addons/batch/handler';
 import {
+  GET_handler as getKangurSocialImageAddonsServeHandler,
+  querySchema as socialImageAddonsServeQuerySchema,
+} from '../../social-image-addons/serve/handler';
+import {
   getKangurSocialPostHandler,
   deleteKangurSocialPostHandler,
   patchKangurSocialPostHandler,
@@ -62,6 +66,11 @@ import { postNumberBalanceJoinHandler } from '../../number-balance/join/handler'
 import { postNumberBalanceSolveHandler } from '../../number-balance/solve/handler';
 import { postNumberBalanceStateHandler } from '../../number-balance/state/handler';
 import { GET_handler as getKangurObservabilitySummaryHandler, querySchema as observabilityQuerySchema } from '../../observability/summary/handler';
+import { GET_handler as getKangurSocialPipelineStatusHandler } from '../../social-pipeline/status/handler';
+import * as kangurSocialPipelineTriggerRoute from '../../social-pipeline/trigger/handler';
+import * as kangurSocialPipelineJobsRoute from '../../social-pipeline/jobs/handler';
+import { POST_handler as postKangurSocialPipelinePauseHandler } from '../../social-pipeline/pause/handler';
+import { POST_handler as postKangurSocialPipelineResumeHandler } from '../../social-pipeline/resume/handler';
 import { postKangurTtsHandler } from '../../tts/handler';
 import { postKangurTtsProbeHandler } from '../../tts/probe/handler';
 import { postKangurTtsStatusHandler } from '../../tts/status/handler';
@@ -224,6 +233,15 @@ export const socialImageAddonsBatchHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const socialImageAddonsServeHandler: SimpleRouteHandler = apiHandler(
+  getKangurSocialImageAddonsServeHandler,
+  {
+    source: 'kangur.social-image-addons.serve.GET',
+    service: 'kangur.api',
+    querySchema: socialImageAddonsServeQuerySchema,
+  }
+);
+
 export const socialPostGetHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
   getKangurSocialPostHandler,
   {
@@ -263,6 +281,7 @@ export const socialPostUnpublishHandler: ParamRouteHandler = apiHandlerWithParam
   {
     source: 'kangur.social-posts.[id].unpublish.POST',
     service: 'kangur.api',
+    parseJsonBody: true,
   }
 );
 
@@ -361,6 +380,46 @@ export const ttsStatusHandler: SimpleRouteHandler = apiHandler(postKangurTtsStat
   parseJsonBody: true,
 });
 
+export const socialPipelineStatusHandler: SimpleRouteHandler = apiHandler(
+  getKangurSocialPipelineStatusHandler,
+  {
+    source: 'kangur.social-pipeline.status.GET',
+    service: 'kangur.api',
+  }
+);
+
+export const socialPipelineTriggerHandler: SimpleRouteHandler = apiHandler(
+  kangurSocialPipelineTriggerRoute.POST_handler,
+  {
+    source: 'kangur.social-pipeline.trigger.POST',
+    service: 'kangur.api',
+  }
+);
+
+export const socialPipelineJobsHandler: SimpleRouteHandler = apiHandler(
+  kangurSocialPipelineJobsRoute.GET_handler,
+  {
+    source: 'kangur.social-pipeline.jobs.GET',
+    service: 'kangur.api',
+  }
+);
+
+export const socialPipelinePauseHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPipelinePauseHandler,
+  {
+    source: 'kangur.social-pipeline.pause.POST',
+    service: 'kangur.api',
+  }
+);
+
+export const socialPipelineResumeHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPipelineResumeHandler,
+  {
+    source: 'kangur.social-pipeline.resume.POST',
+    service: 'kangur.api',
+  }
+);
+
 export const handleMiscRouting = (request: NextRequest, segments: string[]): Promise<Response> | null => {
   if (segments[0] === 'assignments') {
     if (segments.length === 1) {
@@ -440,6 +499,32 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
     if (segments[1] === 'batch' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialImageAddonsBatchHandler(request);
+    }
+    if (segments[1] === 'serve' && segments.length === 2) {
+      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+      return socialImageAddonsServeHandler(request);
+    }
+  }
+  if (segments[0] === 'social-pipeline') {
+    if (segments[1] === 'status' && segments.length === 2) {
+      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+      return socialPipelineStatusHandler(request);
+    }
+    if (segments[1] === 'trigger' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPipelineTriggerHandler(request);
+    }
+    if (segments[1] === 'jobs' && segments.length === 2) {
+      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+      return socialPipelineJobsHandler(request);
+    }
+    if (segments[1] === 'pause' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPipelinePauseHandler(request);
+    }
+    if (segments[1] === 'resume' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPipelineResumeHandler(request);
     }
   }
   if (segments[0] === 'number-balance') {

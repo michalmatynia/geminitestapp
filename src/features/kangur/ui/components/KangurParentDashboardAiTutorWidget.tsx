@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { BrainCircuit } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import {
@@ -90,7 +91,11 @@ const KANGUR_PARENT_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, 'slate' | 'ind
 
 const PARENT_DASHBOARD_AI_TUTOR_TEMPORARILY_DISABLED = false;
 
-const formatTutorMoodTimestamp = (value: string | null, fallback: string): string => {
+const formatTutorMoodTimestamp = (
+  value: string | null,
+  fallback: string,
+  locale: string
+): string => {
   if (!value) {
     return fallback;
   }
@@ -100,7 +105,7 @@ const formatTutorMoodTimestamp = (value: string | null, fallback: string): strin
     return fallback;
   }
 
-  return parsed.toLocaleString('pl-PL', {
+  return parsed.toLocaleString(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
@@ -165,6 +170,8 @@ function TutorToggleField({
 }
 
 function AiTutorConfigPanel(): React.JSX.Element | null {
+  const locale = useLocale();
+  const translations = useTranslations('KangurParentDashboard');
   const tutorContent = useKangurAiTutorContent();
   const tutor = useOptionalKangurAiTutor();
   const { activeLearner, canAccessDashboard } = useKangurParentDashboardRuntime();
@@ -310,14 +317,15 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
   const moodConfidence = `${Math.round(learnerMood.confidence * 100)}%`;
   const moodUpdatedAt = formatTutorMoodTimestamp(
     learnerMood.lastComputedAt,
-    tutorContent.parentDashboard.updatedFallback
+    tutorContent.parentDashboard.updatedFallback,
+    locale
   );
   const learnerHeaderTitle = activeLearner
     ? formatKangurAiTutorTemplate(tutorContent.parentDashboard.titleTemplate, {
       learnerName: activeLearner.displayName,
     })
     : undefined;
-  const sectionTitle = aiTutorSectionContent?.title ?? 'Tutor-AI dla rodzica';
+  const sectionTitle = aiTutorSectionContent?.title ?? translations('widgets.aiTutor.title');
   const sectionSummary = aiTutorSectionContent?.summary ?? tutorContent.parentDashboard.subtitle;
   const controlsDisabled = isTemporarilyDisabled || !enabled;
   const enableTutorLabel =

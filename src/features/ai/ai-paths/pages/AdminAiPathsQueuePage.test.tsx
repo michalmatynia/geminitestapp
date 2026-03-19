@@ -28,6 +28,7 @@ vi.mock('@/shared/ui', () => ({
   ),
   ListPanel: ({
     eyebrow,
+    header,
     title,
     headerActions,
     filters,
@@ -35,14 +36,16 @@ vi.mock('@/shared/ui', () => ({
     children,
   }: {
     eyebrow?: React.ReactNode;
+    header?: React.ReactNode;
     title?: React.ReactNode;
     headerActions?: React.ReactNode;
     filters?: React.ReactNode;
     actions?: React.ReactNode;
     children?: React.ReactNode;
   }) => (
-    <div>
+    <div data-testid='list-panel'>
       {eyebrow}
+      {header}
       <div>{title}</div>
       {headerActions}
       {filters}
@@ -115,5 +118,22 @@ describe('AdminAiPathsQueuePage', () => {
       'ai_paths_ui'
     );
     expect(screen.getByTestId('job-queue-panel')).toHaveAttribute('data-source-mode', 'exclude');
+  });
+
+  it('moves breadcrumbs under the page heading in the list header', () => {
+    mocks.useSearchParamsMock.mockReturnValue(new URLSearchParams('tab=paths-all'));
+    const { container } = render(<AdminAiPathsQueuePage />);
+
+    const listPanel = screen.getByTestId('list-panel');
+    const heading = screen.getByRole('heading', { level: 1, name: 'Job Queue' });
+    const breadcrumbs = screen.getByText('ai-paths-breadcrumbs');
+
+    expect(listPanel).toContainElement(heading);
+    expect(listPanel).toContainElement(breadcrumbs);
+
+    const nodes = Array.from(container.querySelectorAll('*'));
+    const headingIndex = nodes.indexOf(heading);
+    const breadcrumbsIndex = nodes.indexOf(breadcrumbs);
+    expect(headingIndex).toBeLessThan(breadcrumbsIndex);
   });
 });

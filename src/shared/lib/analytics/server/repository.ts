@@ -80,6 +80,7 @@ async function ensureAnalyticsIndexes(): Promise<void> {
     await Promise.all([
       col.createIndex({ ts: -1 }),
       col.createIndex({ scope: 1, ts: -1 }),
+      col.createIndex({ type: 1, ts: -1 }),
       col.createIndex({ path: 1, ts: -1 }),
       col.createIndex({ visitorId: 1, ts: -1 }),
       col.createIndex({ sessionId: 1, ts: -1 }),
@@ -300,17 +301,18 @@ export async function listAnalyticsEvents(input: {
   from: Date;
   to: Date;
   scope?: AnalyticsScope | undefined;
+  type?: AnalyticsEventType | undefined;
   limit: number;
   skip: number;
-}): Promise<{ events: AnalyticsEvent[] }> {
+}): Promise<{ events: AnalyticsEvent[]; total: number }> {
   const redis = getRedisConnection();
   const version = await getAnalyticsCacheVersion();
-  const cacheKey = `${ANALYTICS_CACHE_PREFIX}:events:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}:${input.limit}:${input.skip}`;
+  const cacheKey = `${ANALYTICS_CACHE_PREFIX}:events:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}:${input.type ?? 'all'}:${input.limit}:${input.skip}`;
   if (redis) {
     const cached = await redis.get(cacheKey);
     if (cached) {
       try {
-        return JSON.parse(cached) as { events: AnalyticsEvent[] };
+        return JSON.parse(cached) as { events: AnalyticsEvent[]; total: number };
       } catch (error) {
         void ErrorSystem.captureException(error);
       
@@ -329,15 +331,19 @@ export async function listAnalyticsEvents(input: {
   if (input.scope) {
     match['scope'] = input.scope;
   }
+  if (input.type) {
+    match['type'] = input.type;
+  }
 
-  const docs = (await col
-    .find(match)
-    .sort({ ts: -1 })
-    .skip(input.skip)
-    .limit(input.limit)
-    .toArray()) as AnalyticsEventMongoDocWithId[];
+  const [docs, total] = await Promise.all([
+    col.find(match).sort({ ts: -1 }).skip(input.skip).limit(input.limit).toArray(),
+    col.countDocuments(match),
+  ]);
 
-  const payload = { events: docs.map(toEventDto) };
+  const payload = {
+    events: (docs as AnalyticsEventMongoDocWithId[]).map(toEventDto),
+    total,
+  };
   if (redis) {
     await redis.set(cacheKey, JSON.stringify(payload), 'EX', ANALYTICS_EVENTS_TTL_SECONDS);
   }
@@ -494,4 +500,25 @@ export async function getAnalyticsSummary(input: {
     await redis.set(cacheKey, JSON.stringify(payload), 'EX', ANALYTICS_SUMMARY_TTL_SECONDS);
   }
   return payload;
+}
+
+export async function clearAnalyticsEvents(input?: {
+  before?: Date | null;
+  type?: AnalyticsEventType | null;
+}): Promise<{ deleted: number }> {
+  await ensureAnalyticsIndexes();
+  const db = await getMongoDb();
+  const col = db.collection<AnalyticsEventMongoDoc>(COLLECTION_NAME);
+
+  const filter: Record<string, unknown> = {};
+  if (input?.before) {
+    filter['ts'] = { $lte: input.before };
+  }
+  if (input?.type) {
+    filter['type'] = input.type;
+  }
+
+  const result = await col.deleteMany(filter);
+  await bumpAnalyticsCacheVersion();
+  return { deleted: result.deletedCount ?? 0 };
 }

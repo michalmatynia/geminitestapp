@@ -1,6 +1,7 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -37,6 +38,11 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
@@ -59,9 +65,6 @@ type PrepositionToken = {
 
 type Round = {
   id: string;
-  title: string;
-  prompt: string;
-  hint: string;
   accent: KangurAccent;
   tokens: PrepositionToken[];
   visual: 'time' | 'place' | 'relation';
@@ -85,41 +88,35 @@ type EnglishPrepositionsSortGameProps = {
 
 const BINS: Record<
   PrepositionBinId,
-  { label: string; description: string; accent: KangurAccent; emoji: string }
+  { label: string; accent: KangurAccent; emoji: string }
 > = {
   at: {
     label: 'AT',
-    description: 'punkt w czasie / miejscu',
     accent: 'rose',
     emoji: '📍',
   },
   on: {
     label: 'ON',
-    description: 'dzień / powierzchnia',
     accent: 'amber',
     emoji: '🧩',
   },
   in: {
     label: 'IN',
-    description: 'miesiąc / wnętrze',
     accent: 'violet',
     emoji: '📦',
   },
   between: {
     label: 'BETWEEN',
-    description: 'pomiędzy',
     accent: 'indigo',
     emoji: '↔️',
   },
   above: {
     label: 'ABOVE',
-    description: 'nad',
     accent: 'sky',
     emoji: '⬆️',
   },
   below: {
     label: 'BELOW',
-    description: 'pod',
     accent: 'teal',
     emoji: '⬇️',
   },
@@ -128,9 +125,6 @@ const BINS: Record<
 const ROUNDS: Round[] = [
   {
     id: 'time-sort',
-    title: 'Time sorting',
-    prompt: 'Przeciągnij zwroty do właściwego przyimka czasu.',
-    hint: 'Godziny = at, dni = on, miesiące = in.',
     accent: 'rose',
     visual: 'time',
     bins: ['at', 'on', 'in'],
@@ -145,9 +139,6 @@ const ROUNDS: Round[] = [
   },
   {
     id: 'place-sort',
-    title: 'Place sorting',
-    prompt: 'Przeciągnij zwroty do właściwego przyimka miejsca.',
-    hint: 'Punkt = at, powierzchnia = on, wnętrze = in.',
     accent: 'amber',
     visual: 'place',
     bins: ['at', 'on', 'in'],
@@ -162,9 +153,6 @@ const ROUNDS: Round[] = [
   },
   {
     id: 'relations-sort',
-    title: 'Relations sorting',
-    prompt: 'Przeciągnij zwroty do właściwej relacji przestrzennej.',
-    hint: 'between = pomiędzy, above = nad, below = pod.',
     accent: 'violet',
     visual: 'relation',
     bins: ['between', 'above', 'below'],
@@ -181,6 +169,26 @@ const ROUNDS: Round[] = [
 
 const TOTAL_ROUNDS = ROUNDS.length;
 const TOTAL_TOKENS = ROUNDS.reduce((sum, round) => sum + round.tokens.length, 0);
+
+const getPrepositionsSortPrompt = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`englishPrepositions.inRound.sort.rounds.${roundId}.prompt`);
+
+const getPrepositionsSortHint = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`englishPrepositions.inRound.sort.rounds.${roundId}.hint`);
+
+const getPrepositionsSortTitle = (
+  translate: KangurMiniGameTranslate,
+  roundId: Round['id']
+): string => translate(`englishPrepositions.inRound.sort.rounds.${roundId}.title`);
+
+const getPrepositionsBinDescription = (
+  translate: KangurMiniGameTranslate,
+  binId: PrepositionBinId
+): string => translate(`englishPrepositions.inRound.sort.bins.${binId}.description`);
 
 const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
 
@@ -254,9 +262,11 @@ const buildExpectedCounts = (round: Round): Partial<Record<PrepositionBinId, num
   }, {} as Partial<Record<PrepositionBinId, number>>);
 
 export default function EnglishPrepositionsSortGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: EnglishPrepositionsSortGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() => buildRoundState(ROUNDS[0]!));
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
@@ -406,7 +416,9 @@ export default function EnglishPrepositionsSortGame({
     const isPerfect = correct === round.tokens.length;
     setFeedback({
       kind: isPerfect ? 'success' : 'error',
-      text: isPerfect ? 'Perfekcyjnie! Wszystko na miejscu.' : 'Sprawdź oznaczone przyimki.',
+      text: isPerfect
+        ? translations('englishPrepositions.inRound.sort.feedback.perfect')
+        : translations('englishPrepositions.inRound.sort.feedback.retry'),
     });
     setSelectedTokenId(null);
     setChecked(true);
@@ -468,7 +480,7 @@ export default function EnglishPrepositionsSortGame({
           accent='rose'
           title={
             <KangurHeadline data-testid='english-prepositions-sort-summary-title'>
-              Wynik: {totalCorrect}/{TOTAL_TOKENS}
+              {getKangurMiniGameScoreLabel(translations, totalCorrect, TOTAL_TOKENS)}
             </KangurHeadline>
           }
         />
@@ -481,15 +493,16 @@ export default function EnglishPrepositionsSortGame({
         <KangurPracticeGameSummaryProgress accent='rose' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjnie! Prepositions opanowane.'
+            ? translations('englishPrepositions.summary.perfect')
             : percent >= 70
-              ? 'Dobra robota!'
-              : 'Jeszcze jedna runda i będzie super.'}
+              ? translations('englishPrepositions.summary.good')
+              : translations('englishPrepositions.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           onRestart={handleRestart}
+          restartLabel={translations('shared.restart')}
         />
       </KangurPracticeGameSummary>
     );
@@ -516,17 +529,26 @@ export default function EnglishPrepositionsSortGame({
             <div className={cn('relative z-10 flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
               <div className='flex items-center justify-between gap-2'>
                 <KangurStatusChip accent={round.accent} className='text-[10px] uppercase tracking-[0.16em]'>
-                  Round {roundIndex + 1}/{TOTAL_ROUNDS}
+                  {translations('englishPrepositions.inRound.roundLabel', {
+                    current: roundIndex + 1,
+                    total: TOTAL_ROUNDS,
+                  })}
                 </KangurStatusChip>
                 <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-                  Drag & Drop
+                  {translations('englishPrepositions.inRound.sort.modeLabel')}
                 </KangurStatusChip>
               </div>
               <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-[1.1fr_0.9fr] sm:items-center`}>
                 <div>
-                  <p className='text-lg font-bold text-slate-800'>{round.title}</p>
-                  <p className='text-sm text-slate-600'>{round.prompt}</p>
-                  <p className='mt-1 text-xs font-semibold text-slate-500'>{round.hint}</p>
+                  <p className='text-lg font-bold text-slate-800'>
+                    {getPrepositionsSortTitle(translations, round.id)}
+                  </p>
+                  <p className='text-sm text-slate-600'>
+                    {getPrepositionsSortPrompt(translations, round.id)}
+                  </p>
+                  <p className='mt-1 text-xs font-semibold text-slate-500'>
+                    {getPrepositionsSortHint(translations, round.id)}
+                  </p>
                 </div>
                 <div className='rounded-[18px] border border-white/70 bg-white/80 p-2'>
                   {resolveRoundVisual(round)}
@@ -537,7 +559,7 @@ export default function EnglishPrepositionsSortGame({
 
           <KangurInfoCard accent='slate' className='w-full' padding='md' tone='neutral'>
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 text-center'>
-              Pool of phrases
+              {translations('englishPrepositions.inRound.sort.poolLabel')}
             </p>
             <Droppable droppableId='pool' direction='horizontal'>
               {(provided, snapshot) => (
@@ -552,7 +574,7 @@ export default function EnglishPrepositionsSortGame({
                   role='button'
                   tabIndex={checked ? -1 : 0}
                   aria-disabled={checked}
-                  aria-label='Pula zwrotów do sortowania'
+                  aria-label={translations('englishPrepositions.inRound.sort.poolAria')}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
@@ -574,7 +596,9 @@ export default function EnglishPrepositionsSortGame({
                   ))}
                   {provided.placeholder}
                   {roundState.pool.length === 0 ? (
-                    <p className='text-xs font-semibold text-slate-400'>Pula pusta</p>
+                    <p className='text-xs font-semibold text-slate-400'>
+                      {translations('englishPrepositions.inRound.sort.poolEmpty')}
+                    </p>
                   ) : null}
                 </div>
               )}
@@ -607,10 +631,12 @@ export default function EnglishPrepositionsSortGame({
                           : undefined
                       )}
                       onClick={() => handleAssignToken(binId)}
-                      role='button'
-                      tabIndex={checked ? -1 : 0}
-                      aria-disabled={checked}
-                      aria-label={`${bin.label} bin`}
+                        role='button'
+                        tabIndex={checked ? -1 : 0}
+                        aria-disabled={checked}
+                        aria-label={translations('englishPrepositions.inRound.sort.binAria', {
+                          label: bin.label,
+                        })}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
@@ -631,7 +657,9 @@ export default function EnglishPrepositionsSortGame({
                           </KangurStatusChip>
                         ) : null}
                       </div>
-                      <p className='mt-1 text-xs text-slate-500'>{bin.description}</p>
+                      <p className='mt-1 text-xs text-slate-500'>
+                        {getPrepositionsBinDescription(translations, binId)}
+                      </p>
                       <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME}`}>
                         {items.map((item, index) => (
                           <DraggableToken
@@ -650,7 +678,9 @@ export default function EnglishPrepositionsSortGame({
                         ))}
                         {provided.placeholder}
                         {checked && items.length === 0 ? (
-                          <p className='text-xs font-semibold text-rose-600'>Brakuje zwrotów</p>
+                          <p className='text-xs font-semibold text-rose-600'>
+                            {translations('englishPrepositions.inRound.sort.missingPhrases')}
+                          </p>
                         ) : null}
                       </div>
                     </div>
@@ -669,21 +699,26 @@ export default function EnglishPrepositionsSortGame({
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton size='sm' type='button' variant='surface' onClick={handleReset} disabled={checked}>
-                Wyczyść rundę
+                {translations('englishPrepositions.inRound.sort.clearRound')}
               </KangurButton>
               {checked ? (
                 <KangurStatusChip accent={feedbackAccent}>
-                  {roundCorrect}/{round.tokens.length} trafień
+                  {translations('englishPrepositions.inRound.hitsLabel', {
+                    hits: roundCorrect,
+                    total: round.tokens.length,
+                  })}
                 </KangurStatusChip>
               ) : null}
             </div>
             {!checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck} disabled={!isRoundComplete}>
-                Sprawdź
+                {translations('englishPrepositions.inRound.check')}
               </KangurButton>
             ) : (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
-                {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
+                {roundIndex + 1 >= TOTAL_ROUNDS
+                  ? translations('englishPrepositions.inRound.seeResult')
+                  : translations('englishPrepositions.inRound.next')}
               </KangurButton>
             )}
           </div>

@@ -20,6 +20,7 @@ export interface FilterPanelProps {
   // Filter configuration
   filters: FilterField[];
   values: Record<string, unknown>;
+  activeValues?: Record<string, unknown>;
 
   // Search
   search?: string;
@@ -41,6 +42,7 @@ export interface FilterPanelProps {
   compact?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  toggleButtonAlignment?: 'start' | 'end';
   showHeader?: boolean;
   headerTitle?: string;
   headerAction?: ReactNode;
@@ -56,6 +58,7 @@ export interface FilterPanelProps {
 type FilterPanelRuntimeValue = {
   filters: FilterField[];
   values: Record<string, unknown>;
+  activeValues?: Record<string, unknown>;
   search: string;
   filterSearchPlaceholder: string;
   onFilterChange: (key: string, value: unknown) => void;
@@ -69,6 +72,7 @@ type FilterPanelRuntimeValue = {
   compact: boolean;
   collapsible: boolean;
   defaultExpanded?: boolean;
+  toggleButtonAlignment: 'start' | 'end';
   showHeader: boolean;
   headerTitle: string;
   headerAction?: ReactNode;
@@ -112,6 +116,7 @@ function FilterPanelHeader(): JSX.Element | null {
 function FilterPanelMainFilters(): JSX.Element {
   const {
     actions,
+    activeValues,
     collapsible,
     compact,
     defaultExpanded,
@@ -121,6 +126,7 @@ function FilterPanelMainFilters(): JSX.Element {
     onReset,
     onSearchChange,
     search,
+    toggleButtonAlignment,
     values,
   } = useFilterPanelRuntime();
   return (
@@ -128,6 +134,7 @@ function FilterPanelMainFilters(): JSX.Element {
       <PanelFilters
         filters={filters}
         values={values}
+        {...(activeValues !== undefined ? { activeValues } : {})}
         search={search}
         onFilterChange={onFilterChange}
         {...(onSearchChange !== undefined ? { onSearchChange } : {})}
@@ -135,6 +142,7 @@ function FilterPanelMainFilters(): JSX.Element {
         compact={compact}
         collapsible={collapsible}
         {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
+        toggleButtonAlignment={toggleButtonAlignment}
         {...(actions !== undefined ? { actions } : {})}
       />
     </PanelFiltersSearchPlaceholderRuntimeContext.Provider>
@@ -168,11 +176,12 @@ function FilterPanelPresets(): JSX.Element | null {
 }
 
 function FilterPanelActiveCount(): JSX.Element | null {
-  const { search, values } = useFilterPanelRuntime();
+  const { activeValues, search, values } = useFilterPanelRuntime();
+  const activeFilterSource = activeValues ?? values;
   const hasActiveFilters =
-    Object.values(values).some((value) => isActiveFilterValue(value)) || search;
+    Object.values(activeFilterSource).some((value) => isActiveFilterValue(value)) || search;
   if (!hasActiveFilters) return null;
-  const activeFilterCount = Object.entries(values).filter(([, value]) =>
+  const activeFilterCount = Object.entries(activeFilterSource).filter(([, value]) =>
     isActiveFilterValue(value)
   ).length;
   return (
@@ -198,6 +207,7 @@ function FilterPanelRuntime(): JSX.Element {
 export const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   values,
+  activeValues,
   search = '',
   searchPlaceholder: filterSearchPlaceholder = 'Search...',
   onFilterChange,
@@ -208,6 +218,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   compact = false,
   collapsible = false,
   defaultExpanded,
+  toggleButtonAlignment = 'end',
   showHeader = true,
   headerTitle = 'Filters',
   headerAction,
@@ -219,6 +230,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     () => ({
       filters,
       values,
+      ...(activeValues !== undefined ? { activeValues } : {}),
       search,
       filterSearchPlaceholder,
       onFilterChange,
@@ -229,15 +241,18 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       compact,
       collapsible,
       defaultExpanded,
+      toggleButtonAlignment,
       showHeader,
       headerTitle,
       headerAction,
       actions,
+      activeValues,
       children,
       className,
     }),
     [
       actions,
+      activeValues,
       children,
       className,
       collapsible,
@@ -254,6 +269,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       presets,
       search,
       showHeader,
+      toggleButtonAlignment,
       values,
     ]
   );

@@ -40,7 +40,7 @@ const createRuntimePattern = (): ProductValidationPattern =>
     runtimeEnabled: true,
     runtimeType: 'ai_prompt',
     runtimeConfig: JSON.stringify({
-      version: 1,
+      version: 2,
       responseFormat: 'json',
       promptTemplate: 'Validate [fieldName]',
     }),

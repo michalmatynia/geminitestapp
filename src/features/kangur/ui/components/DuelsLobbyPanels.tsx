@@ -1,6 +1,7 @@
 'use client';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import type {
@@ -27,12 +28,12 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import {
   LOBBY_MODE_ACCENTS,
-  LOBBY_MODE_LABELS,
-  SESSION_STATUS_LABELS,
   formatDurationLabel,
   formatDuelDifficultyLabel,
+  formatLobbyModeLabel,
   formatDuelOperationLabel,
   formatRelativeAge,
+  formatSessionStatusLabel,
   resolveLobbyHostInitial,
   resolveSessionAccent,
 } from '@/features/kangur/ui/pages/duels/duels-helpers';
@@ -94,6 +95,8 @@ type DuelsLobbyPanelsProps = {
 };
 
 export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Element {
+  const lobbyTranslations = useTranslations('KangurDuels.lobby');
+  const commonTranslations = useTranslations('KangurDuels.common');
   const {
     inviteLobbyEntries,
     inviteHeadingId,
@@ -160,14 +163,14 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
             <div className='space-y-1'>
               <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
                 <h3 id={inviteHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
-                  Zaproszenia
+                  {lobbyTranslations('invite.heading')}
                 </h3>
                 <KangurStatusChip accent='indigo' size='sm'>
                   {inviteLobbyEntries.length}
                 </KangurStatusChip>
               </div>
               <p className='text-sm leading-relaxed text-slate-600'>
-                Prywatne pojedynki, do których zostałeś zaproszony.
+                {lobbyTranslations('invite.description')}
               </p>
             </div>
           </KangurPanelRow>
@@ -175,7 +178,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           <ul
             className='grid kangur-panel-gap sm:grid-cols-2'
             role='list'
-            aria-label='Zaproszenia prywatne'
+            aria-label={lobbyTranslations('invite.listAria')}
             id={inviteListId}
           >
             {inviteLobbyEntries.map((entry, index) => {
@@ -185,9 +188,16 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 typeof freshAt === 'number' && relativeNow - freshAt < lobbyFreshWindowMs;
               const estimatedDurationSec = entry.questionCount * entry.timePerQuestionSec;
               const isJoining = joiningSessionId === entry.sessionId && canJoinLobby;
-              const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
-              const operationLabel = formatDuelOperationLabel(entry.operation);
-              const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);
+              const updatedLabel = formatRelativeAge(
+                entry.updatedAt,
+                relativeNow,
+                commonTranslations
+              );
+              const operationLabel = formatDuelOperationLabel(entry.operation, commonTranslations);
+              const difficultyLabel = formatDuelDifficultyLabel(
+                entry.difficulty,
+                commonTranslations
+              );
               return (
                 <li key={entry.sessionId}>
                   <KangurInfoCard
@@ -202,7 +212,13 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     )}
                     style={{ animationDelay: `${index * 70}ms` }}
                     role='group'
-                    aria-label={`Prywatne zaproszenie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
+                    aria-label={lobbyTranslations('invite.cardAria', {
+                      name: entry.host.displayName,
+                      operation: operationLabel,
+                      difficulty: difficultyLabel,
+                      questionCount: entry.questionCount,
+                      seconds: entry.timePerQuestionSec,
+                    })}
                   >
                     <KangurPanelRow className='sm:items-start sm:justify-between'>
                       <div className='flex items-center kangur-panel-gap min-w-0'>
@@ -217,7 +233,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                             {entry.host.displayName}
                           </div>
                           <div className='text-xs text-slate-500 leading-tight'>
-                            Zaproszenie prywatne • {updatedLabel}
+                            {lobbyTranslations('invite.meta', { updated: updatedLabel })}
                           </div>
                         </div>
                       </div>
@@ -249,25 +265,33 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                         aria-busy={isJoining ? 'true' : undefined}
                         aria-label={
                           canJoinLobby
-                            ? `Dołącz do prywatnego pojedynku z ${entry.host.displayName}`
-                            : `Zaloguj się, aby dołączyć do prywatnego pojedynku z ${entry.host.displayName}`
+                            ? lobbyTranslations('invite.joinAria', {
+                                name: entry.host.displayName,
+                              })
+                            : lobbyTranslations('invite.loginToJoinAria', {
+                                name: entry.host.displayName,
+                              })
                         }
                         className='w-full sm:w-auto'
                       >
-                        {canJoinLobby ? (isJoining ? 'Łączymy…' : 'Dołącz') : 'Zaloguj się, aby dołączyć'}
+                        {canJoinLobby
+                          ? isJoining
+                            ? lobbyTranslations('buttons.connecting')
+                            : lobbyTranslations('buttons.join')
+                          : lobbyTranslations('buttons.loginToJoin')}
                       </KangurButton>
                     </KangurPanelRow>
                     <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                       <KangurStatusChip accent={resolveSessionAccent(entry.status)} size='sm'>
-                        {SESSION_STATUS_LABELS[entry.status]}
+                        {formatSessionStatusLabel(entry.status, commonTranslations)}
                       </KangurStatusChip>
                       {isFresh ? (
                         <KangurStatusChip accent='emerald' size='sm'>
-                          Nowe
+                          {lobbyTranslations('chips.fresh')}
                         </KangurStatusChip>
                       ) : null}
                       <KangurStatusChip accent={LOBBY_MODE_ACCENTS[entry.mode]} size='sm'>
-                        {LOBBY_MODE_LABELS[entry.mode]}
+                        {formatLobbyModeLabel(entry.mode, commonTranslations)}
                       </KangurStatusChip>
                       <KangurStatusChip accent='slate' size='sm'>
                         {operationLabel}
@@ -281,13 +305,23 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                         </KangurStatusChip>
                       ) : null}
                       <KangurStatusChip accent='indigo' size='sm'>
-                        Prywatny
+                        {lobbyTranslations('chips.private')}
                       </KangurStatusChip>
                     </div>
                     <div className={`${KANGUR_WRAP_ROW_TIGHT_CLASSNAME} text-xs text-slate-500`}>
-                      <span>{entry.questionCount} pytań</span>
-                      <span>{entry.timePerQuestionSec}s / pytanie</span>
-                      <span>≈ {formatDurationLabel(estimatedDurationSec)}</span>
+                      <span>
+                        {lobbyTranslations('meta.questionCount', { count: entry.questionCount })}
+                      </span>
+                      <span>
+                        {lobbyTranslations('meta.secondsPerQuestion', {
+                          seconds: entry.timePerQuestionSec,
+                        })}
+                      </span>
+                      <span>
+                        {lobbyTranslations('meta.estimatedDuration', {
+                          duration: formatDurationLabel(estimatedDurationSec),
+                        })}
+                      </span>
                     </div>
                   </KangurInfoCard>
                 </li>
@@ -310,7 +344,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           <div className='space-y-1 min-w-0'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME} aria-live='polite' aria-atomic='true'>
               <h3 id={lobbyHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
-                Lobby pojedynków
+                {lobbyTranslations('heading')}
               </h3>
               <KangurStatusChip accent={lobbyEntries.length > 0 ? 'emerald' : 'slate'} size='sm'>
                 {lobbyCountLabel}
@@ -320,50 +354,52 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               id={lobbyDescriptionId}
               className='text-sm leading-relaxed text-slate-600 max-w-2xl'
             >
-              Wybierz ucznia, który czeka na pojedynek albo dodaj własne wyzwanie.
+              {lobbyTranslations('description')}
             </p>
           </div>
           <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:items-center sm:justify-end`}>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               {showPausedChip ? (
                 <KangurStatusChip accent='amber' size='sm'>
-                  Odświeżanie wstrzymane
+                  {lobbyTranslations('chips.refreshPaused')}
                 </KangurStatusChip>
               ) : null}
               {showOfflineChip ? (
                 <KangurStatusChip accent='rose' size='sm'>
-                  Brak połączenia
+                  {lobbyTranslations('chips.offline')}
                 </KangurStatusChip>
               ) : null}
               {showErrorChip ? (
                 <KangurStatusChip accent='rose' size='sm'>
-                  Problem z połączeniem
+                  {lobbyTranslations('chips.connectionProblem')}
                 </KangurStatusChip>
               ) : null}
               {showConnectingChip ? (
                 <KangurStatusChip accent='slate' size='sm'>
-                  Łączymy na żywo
+                  {lobbyTranslations('chips.connectingLive')}
                 </KangurStatusChip>
               ) : null}
               {showLiveChip ? (
                 <KangurStatusChip accent='emerald' size='sm'>
-                  Na żywo
+                  {lobbyTranslations('chips.live')}
                 </KangurStatusChip>
               ) : null}
               {showStaleChip ? (
                 <KangurStatusChip accent='rose' size='sm'>
-                  Dane mogą być nieaktualne
+                  {lobbyTranslations('chips.stale')}
                 </KangurStatusChip>
               ) : null}
               {lobbyLastUpdatedAt ? (
                 <KangurStatusChip accent='slate' size='sm'>
-                  Aktualizacja {formatRelativeAge(lobbyLastUpdatedAt, relativeNow)}
+                  {lobbyTranslations('meta.updated', {
+                    value: formatRelativeAge(lobbyLastUpdatedAt, relativeNow, commonTranslations),
+                  })}
                 </KangurStatusChip>
               ) : null}
               <KangurStatusChip accent='slate' size='sm'>
                 {showLiveChip
-                  ? `Awaryjnie co ${lobbyRefreshSeconds}s`
-                  : `Auto co ${lobbyRefreshSeconds}s`}
+                  ? lobbyTranslations('meta.fallbackEvery', { seconds: lobbyRefreshSeconds })
+                  : lobbyTranslations('meta.autoEvery', { seconds: lobbyRefreshSeconds })}
               </KangurStatusChip>
             </div>
             <KangurButton
@@ -375,12 +411,14 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
               }}
               variant='ghost'
               disabled={isLobbyLoading || !isOnline}
-              aria-label='Odśwież lobby pojedynków'
+              aria-label={lobbyTranslations('buttons.refreshAria')}
               aria-busy={isLobbyLoading}
               aria-live='polite'
               className='w-full sm:w-auto'
             >
-              {isLobbyLoading ? 'Odświeżamy…' : 'Odśwież'}
+              {isLobbyLoading
+                ? lobbyTranslations('buttons.refreshing')
+                : lobbyTranslations('buttons.refresh')}
             </KangurButton>
           </div>
         </KangurPanelRow>
@@ -395,8 +433,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           >
             <KangurPanelRow className='sm:items-center sm:justify-between'>
               <div className='text-sm text-slate-700'>
-                Lobby jest widoczne dla gości. Zaloguj się, aby dołączać do pojedynków i tworzyć
-                własne wyzwania.
+                {lobbyTranslations('guestBanner.description')}
               </div>
               <KangurButton
                 onClick={() => {
@@ -409,7 +446,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 variant='secondary'
                 className='w-full sm:w-auto'
               >
-                Zaloguj się, aby zagrać
+                {lobbyTranslations('buttons.loginToPlay')}
               </KangurButton>
             </KangurPanelRow>
           </KangurInfoCard>
@@ -418,7 +455,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
         <div className='grid w-full kangur-panel-gap rounded-2xl border border-slate-200/70 bg-white/70 p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-4'>
           <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
-              Tryb
+              {lobbyTranslations('filters.mode.label')}
             </div>
             <KangurSelectField
               value={lobbyModeFilter}
@@ -432,18 +469,22 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 });
                 setLobbyModeFilter(nextValue);
               }}
-              aria-label='Filtruj lobby po trybie pojedynku'
+              aria-label={lobbyTranslations('filters.mode.aria')}
               size='sm'
               accent='slate'
             >
-              <option value='all'>Wszystkie tryby</option>
-              <option value='challenge'>Wyzwania</option>
-              <option value='quick_match'>Szybkie pojedynki</option>
+              <option value='all'>{lobbyTranslations('filters.mode.all')}</option>
+              <option value='challenge'>
+                {lobbyTranslations('filters.mode.challenge')}
+              </option>
+              <option value='quick_match'>
+                {lobbyTranslations('filters.mode.quickMatch')}
+              </option>
             </KangurSelectField>
           </div>
           <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
-              Działanie
+              {lobbyTranslations('filters.operation.label')}
             </div>
             <KangurSelectField
               value={lobbyOperationFilter}
@@ -457,21 +498,21 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 });
                 setLobbyOperationFilter(nextValue);
               }}
-              aria-label='Filtruj lobby po działaniu'
+              aria-label={lobbyTranslations('filters.operation.aria')}
               size='sm'
               accent='slate'
             >
-              <option value='all'>Wszystkie działania</option>
+              <option value='all'>{lobbyTranslations('filters.operation.all')}</option>
               {DUEL_OPERATION_FILTER_OPTIONS.map((value) => (
                 <option key={value} value={value}>
-                  {formatDuelOperationLabel(value)}
+                  {formatDuelOperationLabel(value, commonTranslations)}
                 </option>
               ))}
             </KangurSelectField>
           </div>
           <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
-              Poziom
+              {lobbyTranslations('filters.difficulty.label')}
             </div>
             <KangurSelectField
               value={lobbyDifficultyFilter}
@@ -485,21 +526,21 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 });
                 setLobbyDifficultyFilter(nextValue);
               }}
-              aria-label='Filtruj lobby po poziomie'
+              aria-label={lobbyTranslations('filters.difficulty.aria')}
               size='sm'
               accent='slate'
             >
-              <option value='all'>Wszystkie poziomy</option>
+              <option value='all'>{lobbyTranslations('filters.difficulty.all')}</option>
               {DUEL_DIFFICULTY_FILTER_OPTIONS.map((value) => (
                 <option key={value} value={value}>
-                  {formatDuelDifficultyLabel(value)}
+                  {formatDuelDifficultyLabel(value, commonTranslations)}
                 </option>
               ))}
             </KangurSelectField>
           </div>
           <div className='min-w-0 space-y-1'>
             <div className='text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'>
-              Sortowanie
+              {lobbyTranslations('filters.sort.label')}
             </div>
             <KangurSelectField
               value={lobbySort}
@@ -516,20 +557,30 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 });
                 setLobbySort(nextValue);
               }}
-              aria-label='Sortuj publiczne pojedynki'
+              aria-label={lobbyTranslations('filters.sort.aria')}
               size='sm'
               accent='slate'
             >
-              <option value='recent'>Najświeższe</option>
-              <option value='time_fast'>Najkrótszy czas</option>
-              <option value='time_slow'>Najdłuższy czas</option>
-              <option value='questions_low'>Najmniej pytań</option>
-              <option value='questions_high'>Najwięcej pytań</option>
+              <option value='recent'>{lobbyTranslations('filters.sort.recent')}</option>
+              <option value='time_fast'>
+                {lobbyTranslations('filters.sort.timeFast')}
+              </option>
+              <option value='time_slow'>
+                {lobbyTranslations('filters.sort.timeSlow')}
+              </option>
+              <option value='questions_low'>
+                {lobbyTranslations('filters.sort.questionsLow')}
+              </option>
+              <option value='questions_high'>
+                {lobbyTranslations('filters.sort.questionsHigh')}
+              </option>
             </KangurSelectField>
           </div>
           {publicLobbyEntries.length > 0 ? (
             <div className='text-xs text-slate-500 sm:col-span-2 sm:text-right lg:col-span-4'>
-              Widocznych: {filteredPublicLobbyEntries.length}
+              {lobbyTranslations('meta.visibleCount', {
+                count: filteredPublicLobbyEntries.length,
+              })}
             </div>
           ) : null}
         </div>
@@ -557,7 +608,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 aria-busy={isLobbyLoading}
                 className='w-full sm:w-auto'
               >
-                Spróbuj ponownie
+                {lobbyTranslations('buttons.retry')}
               </KangurButton>
             </KangurPanelRow>
           </KangurInfoCard>
@@ -565,7 +616,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
 
         {isLobbyLoading && !hasAnyPublicLobbyEntries ? (
           <div className='grid kangur-panel-gap sm:grid-cols-2' role='status' aria-live='polite'>
-            <span className='sr-only'>Ładowanie lobby pojedynków…</span>
+            <span className='sr-only'>{lobbyTranslations('loading')}</span>
             {Array.from({ length: 4 }, (_, index) => (
               <div
                 key={`lobby-skeleton-${index}`}
@@ -597,7 +648,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           >
             <div className='flex flex-col kangur-panel-gap'>
               <div className='text-sm text-slate-700'>
-                Brak uczniów oczekujących na pojedynek.
+                {lobbyTranslations('empty.noEntries')}
               </div>
               <KangurButton
                 onClick={() => {
@@ -619,7 +670,9 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 disabled={isBusy}
                 className='w-full sm:w-auto'
               >
-                {canJoinLobby ? 'Stwórz własne wyzwanie' : 'Zaloguj się, aby dodać wyzwanie'}
+                {canJoinLobby
+                  ? lobbyTranslations('buttons.createChallenge')
+                  : lobbyTranslations('buttons.loginToCreate')}
               </KangurButton>
             </div>
           </KangurInfoCard>
@@ -632,7 +685,9 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
             aria-live='polite'
           >
             <div className='flex flex-col kangur-panel-gap'>
-              <div className='text-sm text-slate-700'>Brak wyzwań dla wybranego filtra.</div>
+              <div className='text-sm text-slate-700'>
+                {lobbyTranslations('empty.noMatches')}
+              </div>
               <KangurButton
                 onClick={() => {
                   setLobbyModeFilter('all');
@@ -644,7 +699,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 disabled={isBusy}
                 className='w-full sm:w-auto'
               >
-                Pokaż wszystkie
+                {lobbyTranslations('buttons.showAll')}
               </KangurButton>
             </div>
           </KangurInfoCard>
@@ -652,7 +707,7 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
           <ul
             className='grid kangur-panel-gap sm:grid-cols-2'
             role='list'
-            aria-label='Publiczne pojedynki'
+            aria-label={lobbyTranslations('publicListAria')}
             id={lobbyListId}
           >
             {filteredPublicLobbyEntries.map((entry, index) => {
@@ -662,9 +717,16 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                 typeof freshAt === 'number' && relativeNow - freshAt < lobbyFreshWindowMs;
               const estimatedDurationSec = entry.questionCount * entry.timePerQuestionSec;
               const isJoining = joiningSessionId === entry.sessionId && canJoinLobby;
-              const updatedLabel = formatRelativeAge(entry.updatedAt, relativeNow);
-              const operationLabel = formatDuelOperationLabel(entry.operation);
-              const difficultyLabel = formatDuelDifficultyLabel(entry.difficulty);
+              const updatedLabel = formatRelativeAge(
+                entry.updatedAt,
+                relativeNow,
+                commonTranslations
+              );
+              const operationLabel = formatDuelOperationLabel(entry.operation, commonTranslations);
+              const difficultyLabel = formatDuelDifficultyLabel(
+                entry.difficulty,
+                commonTranslations
+              );
               return (
                 <li key={entry.sessionId}>
                   <KangurInfoCard
@@ -679,7 +741,13 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                     )}
                     style={{ animationDelay: `${index * 70}ms` }}
                     role='group'
-                    aria-label={`Publiczne wyzwanie od ${entry.host.displayName}. ${operationLabel}, ${difficultyLabel}. ${entry.questionCount} pytań, ${entry.timePerQuestionSec} sekund na pytanie.`}
+                    aria-label={lobbyTranslations('publicCardAria', {
+                      name: entry.host.displayName,
+                      operation: operationLabel,
+                      difficulty: difficultyLabel,
+                      questionCount: entry.questionCount,
+                      seconds: entry.timePerQuestionSec,
+                    })}
                   >
                     <KangurPanelRow className='sm:items-start sm:justify-between'>
                       <div className='flex items-center kangur-panel-gap'>
@@ -694,7 +762,9 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                             {entry.host.displayName}
                           </div>
                           <div className='text-xs text-slate-500'>
-                            Czeka na przeciwnika • {updatedLabel}
+                            {lobbyTranslations('meta.waitingForOpponent', {
+                              updated: updatedLabel,
+                            })}
                           </div>
                         </div>
                       </div>
@@ -726,25 +796,33 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                         aria-busy={isJoining ? 'true' : undefined}
                         aria-label={
                           canJoinLobby
-                            ? `Dołącz do pojedynku z ${entry.host.displayName}`
-                            : `Zaloguj się, aby dołączyć do pojedynku z ${entry.host.displayName}`
+                            ? lobbyTranslations('publicJoinAria', {
+                                name: entry.host.displayName,
+                              })
+                            : lobbyTranslations('publicLoginToJoinAria', {
+                                name: entry.host.displayName,
+                              })
                         }
                         className='w-full sm:w-auto'
                       >
-                        {canJoinLobby ? (isJoining ? 'Łączymy…' : 'Dołącz') : 'Zaloguj się, aby dołączyć'}
+                        {canJoinLobby
+                          ? isJoining
+                            ? lobbyTranslations('buttons.connecting')
+                            : lobbyTranslations('buttons.join')
+                          : lobbyTranslations('buttons.loginToJoin')}
                       </KangurButton>
                     </KangurPanelRow>
                     <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                       <KangurStatusChip accent={resolveSessionAccent(entry.status)} size='sm'>
-                        {SESSION_STATUS_LABELS[entry.status]}
+                        {formatSessionStatusLabel(entry.status, commonTranslations)}
                       </KangurStatusChip>
                       {isFresh ? (
                         <KangurStatusChip accent='emerald' size='sm'>
-                          Nowe
+                          {lobbyTranslations('chips.fresh')}
                         </KangurStatusChip>
                       ) : null}
                       <KangurStatusChip accent={LOBBY_MODE_ACCENTS[entry.mode]} size='sm'>
-                        {LOBBY_MODE_LABELS[entry.mode]}
+                        {formatLobbyModeLabel(entry.mode, commonTranslations)}
                       </KangurStatusChip>
                       <KangurStatusChip accent='slate' size='sm'>
                         {operationLabel}
@@ -758,13 +836,23 @@ export function DuelsLobbyPanels(props: DuelsLobbyPanelsProps): React.JSX.Elemen
                         </KangurStatusChip>
                       ) : null}
                       <KangurStatusChip accent='slate' size='sm'>
-                        Publiczny
+                        {lobbyTranslations('chips.public')}
                       </KangurStatusChip>
                     </div>
                     <div className={`${KANGUR_WRAP_ROW_TIGHT_CLASSNAME} text-xs text-slate-500`}>
-                      <span>{entry.questionCount} pytań</span>
-                      <span>{entry.timePerQuestionSec}s / pytanie</span>
-                      <span>≈ {formatDurationLabel(estimatedDurationSec)}</span>
+                      <span>
+                        {lobbyTranslations('meta.questionCount', { count: entry.questionCount })}
+                      </span>
+                      <span>
+                        {lobbyTranslations('meta.secondsPerQuestion', {
+                          seconds: entry.timePerQuestionSec,
+                        })}
+                      </span>
+                      <span>
+                        {lobbyTranslations('meta.estimatedDuration', {
+                          duration: formatDurationLabel(estimatedDurationSec),
+                        })}
+                      </span>
                     </div>
                   </KangurInfoCard>
                 </li>

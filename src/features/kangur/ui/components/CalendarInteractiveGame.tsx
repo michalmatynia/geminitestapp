@@ -3,6 +3,7 @@
 import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -23,6 +24,12 @@ import {
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
 import {
+  getKangurMiniGameAccuracyText,
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
+import {
   KANGUR_ACCENT_STYLES,
   KANGUR_STACK_ROW_CLASSNAME,
   type KangurAccent,
@@ -35,64 +42,82 @@ type CalendarInteractiveGameProps = {
 };
 
 type Feedback = 'correct' | 'wrong' | null;
+type CalendarInteractiveTranslate = KangurMiniGameTranslate;
 
 const MONTHS_DATA = [
-  { name: 'Styczeń', days: 31, season: '❄️ Zima' },
-  { name: 'Luty', days: 28, season: '❄️ Zima' },
-  { name: 'Marzec', days: 31, season: '🌸 Wiosna' },
-  { name: 'Kwiecień', days: 30, season: '🌸 Wiosna' },
-  { name: 'Maj', days: 31, season: '🌸 Wiosna' },
-  { name: 'Czerwiec', days: 30, season: '☀️ Lato' },
-  { name: 'Lipiec', days: 31, season: '☀️ Lato' },
-  { name: 'Sierpień', days: 31, season: '☀️ Lato' },
-  { name: 'Wrzesień', days: 30, season: '🍂 Jesień' },
-  { name: 'Październik', days: 31, season: '🍂 Jesień' },
-  { name: 'Listopad', days: 30, season: '🍂 Jesień' },
-  { name: 'Grudzień', days: 31, season: '❄️ Zima' },
+  { id: 'january', days: 31, season: 'winter' },
+  { id: 'february', days: 28, season: 'winter' },
+  { id: 'march', days: 31, season: 'spring' },
+  { id: 'april', days: 30, season: 'spring' },
+  { id: 'may', days: 31, season: 'spring' },
+  { id: 'june', days: 30, season: 'summer' },
+  { id: 'july', days: 31, season: 'summer' },
+  { id: 'august', days: 31, season: 'summer' },
+  { id: 'september', days: 30, season: 'autumn' },
+  { id: 'october', days: 31, season: 'autumn' },
+  { id: 'november', days: 30, season: 'autumn' },
+  { id: 'december', days: 31, season: 'winter' },
 ] as const;
 
-const DAY_LABELS_SHORT = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'] as const;
-const DAY_LABELS_ABBR = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] as const;
-const DAY_LABELS_FULL = [
-  'Poniedziałek',
-  'Wtorek',
-  'Środa',
-  'Czwartek',
-  'Piątek',
-  'Sobota',
-  'Niedziela',
+const WEEKDAYS = [
+  { id: 'monday', short: 'mondayShort', abbr: 'mondayAbbr', full: 'monday', lookup: 'monday' },
+  { id: 'tuesday', short: 'tuesdayShort', abbr: 'tuesdayAbbr', full: 'tuesday', lookup: 'tuesday' },
+  {
+    id: 'wednesday',
+    short: 'wednesdayShort',
+    abbr: 'wednesdayAbbr',
+    full: 'wednesday',
+    lookup: 'wednesday',
+  },
+  {
+    id: 'thursday',
+    short: 'thursdayShort',
+    abbr: 'thursdayAbbr',
+    full: 'thursday',
+    lookup: 'thursday',
+  },
+  { id: 'friday', short: 'fridayShort', abbr: 'fridayAbbr', full: 'friday', lookup: 'friday' },
+  {
+    id: 'saturday',
+    short: 'saturdayShort',
+    abbr: 'saturdayAbbr',
+    full: 'saturday',
+    lookup: 'saturday',
+  },
+  {
+    id: 'sunday',
+    short: 'sundayShort',
+    abbr: 'sundayAbbr',
+    full: 'sunday',
+    lookup: 'sunday',
+  },
 ] as const;
-const WEEKDAY_NAMES = [
-  'poniedziałek',
-  'wtorek',
-  'środę',
-  'czwartek',
-  'piątek',
-  'sobotę',
-  'niedzielę',
+const SEASONS = [
+  { id: 'spring', emoji: '🌸', accent: 'emerald' },
+  { id: 'summer', emoji: '☀️', accent: 'amber' },
+  { id: 'autumn', emoji: '🍂', accent: 'rose' },
+  { id: 'winter', emoji: '❄️', accent: 'sky' },
 ] as const;
-const SEASONS = ['🌸 Wiosna', '☀️ Lato', '🍂 Jesień', '❄️ Zima'] as const;
 const SEASON_ACCENTS: Record<Season, KangurAccent> = {
-  '🌸 Wiosna': 'emerald',
-  '☀️ Lato': 'amber',
-  '🍂 Jesień': 'rose',
-  '❄️ Zima': 'sky',
+  spring: 'emerald',
+  summer: 'amber',
+  autumn: 'rose',
+  winter: 'sky',
 };
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const seasonDroppableId = (season: Season): string => {
-  const index = SEASONS.indexOf(season);
+  const index = SEASONS.findIndex((candidate) => candidate.id === season);
   return index >= 0 ? `season-${index}` : 'season-unknown';
 };
 
 const resolveSeasonFromDroppableId = (droppableId: string): Season | null => {
   if (!droppableId.startsWith('season-')) return null;
   const index = Number.parseInt(droppableId.replace('season-', ''), 10);
-  return Number.isNaN(index) ? null : (SEASONS[index] ?? null);
+  return Number.isNaN(index) ? null : (SEASONS[index]?.id ?? null);
 };
 
-type DayLabel = (typeof DAY_LABELS_FULL)[number];
-type Season = (typeof SEASONS)[number];
+type Season = (typeof SEASONS)[number]['id'];
 export type CalendarInteractiveSectionId = 'dni' | 'miesiace' | 'data';
 export type CalendarInteractiveTaskPoolId = CalendarInteractiveSectionId | 'mixed';
 
@@ -105,7 +130,6 @@ type ClickWeekdayNameTask = {
 type ClickDateTask = {
   type: 'click_date';
   targetDay: number;
-  weekdayName: DayLabel;
   month: number;
   year: number;
   label: string;
@@ -142,11 +166,6 @@ type TaskType = Task['type'];
 
 type CalendarInteractiveSectionContent = {
   accent: KangurAccent;
-  guidance: string;
-  guidanceTitle: string;
-  promptLabel: string;
-  summaryPerfect: string;
-  summaryRetry: string;
 };
 
 export const CALENDAR_INTERACTIVE_TASK_TYPE_POOLS: Record<
@@ -165,21 +184,6 @@ export const CALENDAR_INTERACTIVE_TASK_TYPE_POOLS: Record<
   data: ['click_date'],
 };
 
-export function getCalendarInteractiveSectionLabel(
-  section: CalendarInteractiveTaskPoolId
-): string {
-  switch (section) {
-    case 'dni':
-      return 'Dni tygodnia';
-    case 'miesiace':
-      return 'Miesiące i pory roku';
-    case 'data':
-      return 'Odczytywanie dat';
-    default:
-      return 'Mieszany kalendarz';
-  }
-}
-
 export function getCalendarInteractiveSectionContent(
   section: CalendarInteractiveTaskPoolId
 ): CalendarInteractiveSectionContent {
@@ -187,56 +191,20 @@ export function getCalendarInteractiveSectionContent(
     case 'dni':
       return {
         accent: 'emerald',
-        guidance: 'Ćwiczysz nazwy dni tygodnia i rozpoznawanie weekendu w układzie kalendarza.',
-        guidanceTitle: 'Trening dni tygodnia',
-        promptLabel: 'Znajdź właściwy dzień tygodnia',
-        summaryPerfect: 'Świetnie! Dni tygodnia i weekend rozpoznajesz bez wahania.',
-        summaryRetry: 'Poćwicz jeszcze dni tygodnia i weekendowe kolumny.',
       };
     case 'miesiace':
       return {
         accent: 'amber',
-        guidance: 'Ćwiczysz miesiące, ich kolejność oraz dopasowanie do odpowiedniej pory roku.',
-        guidanceTitle: 'Trening miesięcy',
-        promptLabel: 'Pracuj na miesiącach i porach roku',
-        summaryPerfect: 'Świetnie! Miesiące i pory roku masz już dobrze uporządkowane.',
-        summaryRetry: 'Poćwicz jeszcze kolejność miesięcy i ich pory roku.',
       };
     case 'data':
       return {
         accent: 'indigo',
-        guidance: 'Ćwiczysz odczytywanie dat i wskazywanie konkretnego dnia w siatce kalendarza.',
-        guidanceTitle: 'Trening dat',
-        promptLabel: 'Odszukaj właściwą datę w kalendarzu',
-        summaryPerfect: 'Świetnie! Sprawnie odczytujesz daty z kalendarza.',
-        summaryRetry: 'Poćwicz jeszcze wyszukiwanie konkretnych dat w siatce kalendarza.',
       };
     default:
       return {
         accent: 'emerald',
-        guidance: 'Raz ćwiczysz dni tygodnia, raz miesiące i pory roku, a raz konkretne daty.',
-        guidanceTitle: 'Mieszany trening kalendarza',
-        promptLabel: 'Rozwiązuj różne zadania kalendarzowe',
-        summaryPerfect: 'Idealnie! Znasz kalendarz na wylot!',
-        summaryRetry: 'Świetnie! Ćwicz dalej!',
       };
   }
-}
-
-export function getCalendarInteractiveSummaryMessage(
-  section: CalendarInteractiveTaskPoolId,
-  percent: number
-): string {
-  const content = getCalendarInteractiveSectionContent(section);
-  if (percent === 100) {
-    return content.summaryPerfect;
-  }
-  if (percent >= 60) {
-    return content.summaryRetry;
-  }
-  return section === 'mixed'
-    ? 'Nie poddawaj się!'
-    : 'Nie poddawaj się. Jeszcze kilka prób i ta sekcja będzie prostsza.';
 }
 
 function getCalendarCells(month: number, year: number): Array<number | null> {
@@ -260,9 +228,53 @@ function getDayOfWeek(year: number, month: number, day: number): number {
   return (jsDay + 6) % 7;
 }
 
+const getCalendarInteractiveMonthName = (
+  translate: CalendarInteractiveTranslate,
+  month: number
+): string =>
+  translate(`calendarInteractive.months.${MONTHS_DATA[month]?.id ?? MONTHS_DATA[0].id}`);
+
+const getCalendarInteractiveWeekdayShort = (
+  translate: CalendarInteractiveTranslate,
+  dayIdx: number
+): string =>
+  translate(
+    `calendarInteractive.weekdays.short.${WEEKDAYS[dayIdx]?.short ?? WEEKDAYS[0].short}`
+  );
+
+const getCalendarInteractiveWeekdayAbbr = (
+  translate: CalendarInteractiveTranslate,
+  dayIdx: number
+): string =>
+  translate(
+    `calendarInteractive.weekdays.abbr.${WEEKDAYS[dayIdx]?.abbr ?? WEEKDAYS[0].abbr}`
+  );
+
+const getCalendarInteractiveWeekdayFull = (
+  translate: CalendarInteractiveTranslate,
+  dayIdx: number
+): string =>
+  translate(
+    `calendarInteractive.weekdays.full.${WEEKDAYS[dayIdx]?.full ?? WEEKDAYS[0].full}`
+  );
+
+const getCalendarInteractiveWeekdayLookup = (
+  translate: CalendarInteractiveTranslate,
+  dayIdx: number
+): string =>
+  translate(
+    `calendarInteractive.weekdays.lookup.${WEEKDAYS[dayIdx]?.lookup ?? WEEKDAYS[0].lookup}`
+  );
+
+const getCalendarInteractiveSeasonLabel = (
+  translate: CalendarInteractiveTranslate,
+  season: Season
+): string => translate(`calendarInteractive.seasons.${season}`);
+
 function generateTask(
   month: number,
   year: number,
+  translate: CalendarInteractiveTranslate,
   section: CalendarInteractiveTaskPoolId = 'mixed'
 ): Task {
   const taskTypes = CALENDAR_INTERACTIVE_TASK_TYPE_POOLS[section];
@@ -274,11 +286,12 @@ function generateTask(
 
   if (type === 'click_weekday_name') {
     const targetIdx = Math.floor(Math.random() * 7);
-    const dayLabel = DAY_LABELS_ABBR[targetIdx] ?? DAY_LABELS_ABBR[0];
     return {
       type: 'click_weekday_name',
       targetIdx,
-      label: `Kliknij dzień tygodnia: "${dayLabel}"`,
+      label: translate('calendarInteractive.tasks.clickWeekday', {
+        dayLabel: getCalendarInteractiveWeekdayAbbr(translate, targetIdx),
+      }),
     };
   }
 
@@ -286,17 +299,18 @@ function generateTask(
     const dayIdx = Math.floor(Math.random() * 7);
     const matches = validDays.filter((day) => getDayOfWeek(year, month, day) === dayIdx);
     if (matches.length === 0) {
-      return generateTask(month, year, section);
+      return generateTask(month, year, translate, section);
     }
     const target = matches[Math.floor(Math.random() * matches.length)] ?? matches[0] ?? 1;
 
     return {
       type: 'click_date',
       targetDay: target,
-      weekdayName: DAY_LABELS_FULL[dayIdx] ?? DAY_LABELS_FULL[0],
       month,
       year,
-      label: `Kliknij datę w kalendarzu, która wypada w ${WEEKDAY_NAMES[dayIdx] ?? WEEKDAY_NAMES[0]}`,
+      label: translate('calendarInteractive.tasks.clickDate', {
+        weekdayName: getCalendarInteractiveWeekdayLookup(translate, dayIdx),
+      }),
     };
   }
 
@@ -305,31 +319,40 @@ function generateTask(
     const monthData = MONTHS_DATA[monthIndex] ?? MONTHS_DATA[0];
     return {
       type: 'drag_season',
-      monthName: monthData.name,
+      monthName: getCalendarInteractiveMonthName(translate, monthIndex),
       correctSeason: monthData.season,
-      label: `Przeciągnij miesiąc "${monthData.name}" do właściwej pory roku`,
+      label: translate('calendarInteractive.tasks.dragSeason', {
+        monthName: getCalendarInteractiveMonthName(translate, monthIndex),
+      }),
     };
   }
 
   if (type === 'flip_month') {
     const targetMonth = Math.floor(Math.random() * 12);
-    const monthData = MONTHS_DATA[targetMonth] ?? MONTHS_DATA[0];
     return {
       type: 'flip_month',
       targetMonth,
-      label: `Przejdź do miesiąca o numerze ${targetMonth + 1} (${monthData.name})`,
+      label: translate('calendarInteractive.tasks.flipMonth', {
+        monthNumber: targetMonth + 1,
+        monthName: getCalendarInteractiveMonthName(translate, targetMonth),
+      }),
     };
   }
 
   const isSaturday = Math.random() > 0.5;
   const dayIdx: 5 | 6 = isSaturday ? 5 : 6;
-  const dayName = isSaturday ? 'soboty' : 'niedziele';
   const targets = validDays.filter((day) => getDayOfWeek(year, month, day) === dayIdx);
   return {
     type: 'click_all_weekends',
     targets,
     dayIdx,
-    label: `Kliknij wszystkie ${dayName} w tym miesiącu`,
+    label: translate('calendarInteractive.tasks.clickAllWeekends', {
+      dayName: translate(
+        isSaturday
+          ? 'calendarInteractive.weekends.saturdays'
+          : 'calendarInteractive.weekends.sundays'
+      ),
+    }),
   };
 }
 
@@ -337,11 +360,12 @@ export default function CalendarInteractiveGame({
   onFinish,
   section = 'mixed',
 }: CalendarInteractiveGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const YEAR = 2025;
   const TOTAL = 6;
 
   const [month, setMonth] = useState(0);
-  const [task, setTask] = useState<Task>(() => generateTask(0, YEAR, section));
+  const [task, setTask] = useState<Task>(() => generateTask(0, YEAR, translations, section));
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
@@ -374,7 +398,7 @@ export default function CalendarInteractiveGame({
 
       const nextMonth = Math.floor(Math.random() * 12);
       setMonth(nextMonth);
-      setTask(generateTask(nextMonth, YEAR, section));
+      setTask(generateTask(nextMonth, YEAR, translations, section));
       setRound((currentRound) => currentRound + 1);
     }, 1300);
   };
@@ -446,11 +470,11 @@ export default function CalendarInteractiveGame({
     setSelectedSeason(null);
     setSelectedWeekdayIdx(null);
     setMonth(startMonth);
-    setTask(generateTask(startMonth, YEAR, section));
+    setTask(generateTask(startMonth, YEAR, translations, section));
   };
 
   const cells = getCalendarCells(month, YEAR);
-  const monthData = MONTHS_DATA[month] ?? MONTHS_DATA[0];
+  const monthName = getCalendarInteractiveMonthName(translations, month);
 
   if (done) {
     const percent = Math.round((score / TOTAL) * 100);
@@ -464,22 +488,33 @@ export default function CalendarInteractiveGame({
         <KangurPracticeGameSummaryTitle
           accent='emerald'
           dataTestId='calendar-interactive-summary-title'
-          title={`Wynik: ${score}/${TOTAL}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL)}
         />
         <KangurPracticeGameSummaryProgress
           accent='emerald'
+          ariaLabel={translations('calendarInteractive.progressAriaLabel')}
+          ariaValueText={getKangurMiniGameAccuracyText(translations, percent)}
           dataTestId='calendar-interactive-summary-progress-bar'
           percent={percent}
         />
         <KangurPracticeGameSummaryMessage>
-          {getCalendarInteractiveSummaryMessage(section, percent)}
+          {percent === 100
+            ? translations(`calendarInteractive.summary.${section}.perfect`)
+            : percent >= 60
+              ? translations(`calendarInteractive.summary.${section}.retry`)
+              : translations(
+                  section === 'mixed'
+                    ? 'calendarInteractive.summary.mixed.encouragement'
+                    : 'calendarInteractive.summary.sectionEncouragement'
+                )}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           className={KANGUR_STACK_ROW_CLASSNAME}
           finishButtonClassName='w-full sm:flex-1'
-          finishLabel='Wróć'
+          finishLabel={getKangurMiniGameFinishLabel(translations, 'back')}
           onFinish={handleFinishSession}
           onRestart={restart}
+          restartLabel={translations('shared.restart')}
           restartButtonClassName='w-full sm:flex-1'
         />
       </KangurPracticeGameSummary>
@@ -500,10 +535,10 @@ export default function CalendarInteractiveGame({
             className='text-sm font-semibold [color:var(--kangur-page-text)]'
             data-testid='calendar-interactive-guidance-title'
           >
-            {trainingSectionContent.guidanceTitle}
+            {translations(`calendarInteractive.section.${section}.guidanceTitle`)}
           </p>
           <p className='mt-2 text-sm font-normal leading-relaxed [color:var(--kangur-page-text)]'>
-            {trainingSectionContent.guidance}
+            {translations(`calendarInteractive.section.${section}.guidance`)}
           </p>
         </KangurInfoCard>
       ) : null}
@@ -529,7 +564,7 @@ export default function CalendarInteractiveGame({
         >
           {section !== 'mixed' ? (
             <p className='text-xs font-extrabold uppercase tracking-[0.12em] text-green-800/75'>
-              {trainingSectionContent.promptLabel}
+              {translations(`calendarInteractive.section.${section}.promptLabel`)}
             </p>
           ) : null}
           <p className='text-sm font-bold text-green-800'>📅 {task.label}</p>
@@ -548,7 +583,7 @@ export default function CalendarInteractiveGame({
           >
             <div className='flex items-center justify-between mb-2'>
               <KangurButton
-                aria-label='Poprzedni miesiąc'
+                aria-label={translations('calendarInteractive.inRound.previousMonth')}
                 onClick={() => handleFlipMonth(-1)}
                 className='h-9 w-9 min-w-0 px-0'
                 size='sm'
@@ -561,10 +596,10 @@ export default function CalendarInteractiveGame({
                 />
               </KangurButton>
               <p className='font-extrabold text-green-700 text-sm'>
-                {monthData.name} {YEAR}
+                {monthName} {YEAR}
               </p>
               <KangurButton
-                aria-label='Następny miesiąc'
+                aria-label={translations('calendarInteractive.inRound.nextMonth')}
                 onClick={() => handleFlipMonth(1)}
                 className='h-9 w-9 min-w-0 px-0'
                 size='sm'
@@ -579,16 +614,16 @@ export default function CalendarInteractiveGame({
             </div>
 
             <div className='grid grid-cols-7 gap-0.5 text-center mb-1'>
-              {DAY_LABELS_SHORT.map((dayLabel, idx) => (
+              {WEEKDAYS.map((dayMeta, idx) => (
                 <div
-                  key={dayLabel}
+                  key={dayMeta.id}
                   className={`text-xs font-bold py-0.5 ${
                     idx >= 5
                       ? 'text-red-400'
                       : '[color:var(--kangur-page-muted-text)]'
                   }`}
                 >
-                  {dayLabel}
+                  {getCalendarInteractiveWeekdayShort(translations, idx)}
                 </div>
               ))}
             </div>
@@ -691,7 +726,7 @@ export default function CalendarInteractiveGame({
               data-testid='calendar-interactive-feedback'
               role='status'
             >
-              Ups, to nie to. Spróbuj jeszcze raz!
+              {translations('calendarInteractive.inRound.tryAgain')}
             </div>
           ) : null}
         </>
@@ -709,10 +744,10 @@ export default function CalendarInteractiveGame({
             type='button'
             variant='primary'
           >
-            Zrobione
+            {translations('calendarInteractive.inRound.done')}
           </KangurButton>
           <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-            Kliknij, gdy uważasz, że jesteś na właściwym miesiącu.
+            {translations('calendarInteractive.inRound.confirmMonth')}
           </p>
           {showFlipMonthError ? (
             <div
@@ -720,7 +755,7 @@ export default function CalendarInteractiveGame({
               data-testid='calendar-interactive-feedback'
               role='status'
             >
-              Ups, to nie to. Spróbuj jeszcze raz!
+              {translations('calendarInteractive.inRound.tryAgain')}
             </div>
           ) : null}
         </div>
@@ -728,7 +763,7 @@ export default function CalendarInteractiveGame({
 
       {task.type === 'click_weekday_name' && (
         <div className='mx-auto grid w-full max-w-lg grid-cols-1 gap-2 min-[420px]:grid-cols-2 md:grid-cols-3'>
-          {DAY_LABELS_FULL.map((dayLabel, idx) => {
+          {WEEKDAYS.map((dayMeta, idx) => {
             const isCorrectTarget = feedback !== null && idx === task.targetIdx;
             const isWrongSelection =
               feedback === 'wrong' &&
@@ -763,12 +798,12 @@ export default function CalendarInteractiveGame({
                 emphasis={buttonEmphasis}
                 hoverScale={1.05}
                 interactive={feedback === null}
-                key={dayLabel}
+                key={dayMeta.id}
                 onClick={() => handleWeekdayNameClick(idx)}
                 tapScale={0.95}
                 type='button'
               >
-                {dayLabel}
+                {getCalendarInteractiveWeekdayFull(translations, idx)}
               </KangurAnswerChoiceCard>
             );
           })}
@@ -800,7 +835,9 @@ export default function CalendarInteractiveGame({
                             'bg-green-400 text-white font-extrabold px-6 py-3 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing select-none text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
                             snapshot.isDragging ? 'scale-[1.02] shadow-xl' : undefined
                           )}
-                          aria-label={`Miesiąc ${task.monthName}`}
+                          aria-label={translations('calendarInteractive.inRound.monthAria', {
+                            monthName: task.monthName,
+                          })}
                           aria-disabled={feedback !== null}
                         >
                           📅 {task.monthName}
@@ -819,25 +856,28 @@ export default function CalendarInteractiveGame({
             </Droppable>
 
             <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-              Przeciągnij lub wybierz właściwą porę roku ⬇️
+              {translations('calendarInteractive.inRound.chooseSeason')}
             </p>
 
             <div className='grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
-              {SEASONS.map((season, index) => {
-                const accent = SEASON_ACCENTS[season];
-                const isCorrectSeason = feedback !== null && season === task.correctSeason;
+              {SEASONS.map((seasonMeta, index) => {
+                const accent = SEASON_ACCENTS[seasonMeta.id];
+                const isCorrectSeason =
+                  feedback !== null && seasonMeta.id === task.correctSeason;
                 const isWrongSelectedSeason =
-                  feedback === 'wrong' && selectedSeason === season && season !== task.correctSeason;
+                  feedback === 'wrong' &&
+                  selectedSeason === seasonMeta.id &&
+                  seasonMeta.id !== task.correctSeason;
                 const isMutedSeason =
                   feedback === 'wrong' &&
                   selectedSeason !== null &&
-                  season !== task.correctSeason &&
-                  season !== selectedSeason;
+                  seasonMeta.id !== task.correctSeason &&
+                  seasonMeta.id !== selectedSeason;
 
                 return (
                   <Droppable
-                    key={season}
-                    droppableId={seasonDroppableId(season)}
+                    key={seasonMeta.id}
+                    droppableId={seasonDroppableId(seasonMeta.id)}
                     isDropDisabled={feedback !== null}
                   >
                     {(provided, snapshot) => {
@@ -873,12 +913,12 @@ export default function CalendarInteractiveGame({
                             }
                             interactive={feedback === null}
                             disabled={feedback !== null}
-                            onClick={() => handleDrop(season)}
+                            onClick={() => handleDrop(seasonMeta.id)}
                             type='button'
                           >
-                            <span className='text-2xl'>{season.split(' ')[0]}</span>
+                            <span className='text-2xl'>{seasonMeta.emoji}</span>
                             <span className='text-xs font-bold'>
-                              {season.split(' ').slice(1).join(' ')}
+                              {getCalendarInteractiveSeasonLabel(translations, seasonMeta.id)}
                             </span>
                           </KangurAnswerChoiceCard>
                           {provided.placeholder}

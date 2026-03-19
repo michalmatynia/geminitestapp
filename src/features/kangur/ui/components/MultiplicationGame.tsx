@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
@@ -15,6 +16,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurEquationDisplay,
@@ -126,7 +131,11 @@ export default function MultiplicationGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: MultiplicationGameProps): React.JSX.Element {
-  const finishLabel = finishLabelVariant === 'play' ? 'Wróć do Grajmy' : 'Wróć do lekcji';
+  const translations = useTranslations('KangurMiniGames');
+  const finishLabel = getKangurMiniGameFinishLabel(
+    translations,
+    finishLabelVariant === 'play' ? 'play' : 'lesson'
+  );
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -193,7 +202,11 @@ export default function MultiplicationGame({
         />
         <KangurPracticeGameSummaryTitle
           accent='indigo'
-          title={<KangurHeadline data-testid='multiplication-game-summary-title'>Wynik: {score}/{TOTAL}</KangurHeadline>}
+          title={
+            <KangurHeadline data-testid='multiplication-game-summary-title'>
+              {getKangurMiniGameScoreLabel(translations, score, TOTAL)}
+            </KangurHeadline>
+          }
         />
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -204,14 +217,15 @@ export default function MultiplicationGame({
         <KangurPracticeGameSummaryProgress accent='indigo' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Idealnie! Mistrz tabliczki!'
+            ? translations('multiplication.summary.perfect')
             : percent >= 60
-              ? 'Świetna robota!'
-              : 'Ćwicz dalej!'}
+              ? translations('multiplication.summary.good')
+              : translations('multiplication.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           finishLabel={finishLabel}
           onFinish={handleFinishGame}
+          restartLabel={translations('shared.restart')}
           onRestart={() => {
             setRoundIndex(0);
             setScore(0);

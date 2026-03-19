@@ -6,6 +6,7 @@ import { KangurAdminContentShell } from '@/features/kangur/admin/components/Kang
 import { KangurAiTutorContentSettingsPanel } from '@/features/kangur/admin/components/KangurAiTutorContentSettingsPanel';
 import { Badge, Breadcrumbs, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 
 const AI_TUTOR_CONTENT_ID = 'kangur-ai-tutor-content';
 const AI_TUTOR_CONTENT_TITLE_ID = 'kangur-ai-tutor-content-title';
@@ -28,7 +29,9 @@ export function AdminKangurAiTutorContentPage(): React.JSX.Element {
         title='Kangur AI Tutor Content'
         description={
           <div className='flex flex-wrap items-center gap-3'>
-            <Breadcrumbs items={breadcrumbs} className='mt-0' />
+            <AdminFavoriteBreadcrumbRow>
+              <Breadcrumbs items={breadcrumbs} className='mt-0' />
+            </AdminFavoriteBreadcrumbRow>
             <span className='hidden h-4 w-px bg-white/12 md:block' />
             <span className='text-xs text-slate-300/80'>
               Edit the Mongo-backed tutor copy pack used by onboarding, helper prompts, labels,

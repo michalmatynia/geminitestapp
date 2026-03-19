@@ -1,7 +1,8 @@
 'use client';
 
 import { BarChart2, BookOpen, BrainCircuit, ClipboardList, ListChecks } from 'lucide-react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import {
@@ -19,43 +20,37 @@ import { cn } from '@/features/kangur/shared/utils';
 
 const TABS: Array<
   IdLabelOptionDto<KangurParentDashboardTabId> & {
-    mobileLabel: string;
     icon: typeof BarChart2;
     docId: string;
   }
 > = [
   {
     id: 'scores',
-    label: 'Wyniki',
-    mobileLabel: 'Wyniki',
+    label: '',
     icon: ClipboardList,
     docId: 'parent_scores_tab',
   },
   {
     id: 'progress',
-    label: 'Postęp',
-    mobileLabel: 'Postęp',
+    label: '',
     icon: BarChart2,
     docId: 'parent_progress_tab',
   },
   {
     id: 'assign',
-    label: 'Zadania',
-    mobileLabel: 'Zadania',
+    label: '',
     icon: BookOpen,
     docId: 'parent_assignments_tab',
   },
   {
     id: 'monitoring',
-    label: 'Monitorowanie',
-    mobileLabel: 'Monitoring',
+    label: '',
     icon: ListChecks,
     docId: 'parent_monitoring_tab',
   },
   {
     id: 'ai-tutor',
-    label: 'AI Tutor',
-    mobileLabel: 'Tutor AI',
+    label: '',
     icon: BrainCircuit,
     docId: 'parent_ai_tutor_tab',
   },
@@ -73,9 +68,19 @@ export function KangurParentDashboardTabsWidget({
 }: {
   onBeforeTabChange?: (tabId: KangurParentDashboardTabId) => void;
 } = {}): React.JSX.Element | null {
+  const translations = useTranslations('KangurParentDashboard');
   const { activeTab, canAccessDashboard, setActiveTab } = useKangurParentDashboardRuntime();
   const { entry: tabsContent } = useKangurPageContentEntry('parent-dashboard-tabs');
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const tabs = useMemo(
+    () =>
+      TABS.map((tab) => ({
+        ...tab,
+        label: translations(`tabs.${tab.id}`),
+        mobileLabel: translations(`tabs.mobile.${tab.id}`),
+      })),
+    [translations]
+  );
 
   const handleTabChange = useCallback(
     (tabId: KangurParentDashboardTabId): void => {
@@ -89,7 +94,7 @@ export function KangurParentDashboardTabsWidget({
   }, []);
   const handleTabKeyDown = useCallback(
     (index: number, event: React.KeyboardEvent<HTMLButtonElement>): void => {
-      if (TABS.length === 0) {
+      if (tabs.length === 0) {
         return;
       }
 
@@ -97,31 +102,31 @@ export function KangurParentDashboardTabsWidget({
       switch (event.key) {
         case 'ArrowRight':
         case 'ArrowDown':
-          nextIndex = (index + 1) % TABS.length;
+          nextIndex = (index + 1) % tabs.length;
           break;
         case 'ArrowLeft':
         case 'ArrowUp':
-          nextIndex = (index - 1 + TABS.length) % TABS.length;
+          nextIndex = (index - 1 + tabs.length) % tabs.length;
           break;
         case 'Home':
           nextIndex = 0;
           break;
         case 'End':
-          nextIndex = TABS.length - 1;
+          nextIndex = tabs.length - 1;
           break;
         default:
           return;
       }
 
       event.preventDefault();
-      const nextTab = TABS[nextIndex];
+      const nextTab = tabs[nextIndex];
       if (!nextTab) {
         return;
       }
       handleTabChange(nextTab.id);
       requestAnimationFrame(() => focusTabAt(nextIndex));
     },
-    [focusTabAt, handleTabChange]
+    [focusTabAt, handleTabChange, tabs]
   );
 
   const handlePointerTabMouseDown = useCallback(
@@ -142,9 +147,9 @@ export function KangurParentDashboardTabsWidget({
       <KangurWidgetIntro
         description={
           tabsContent?.summary ??
-          'Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.'
+          translations('tabs.description')
         }
-        title={tabsContent?.title ?? 'Zakładki panelu'}
+        title={tabsContent?.title ?? translations('tabs.title')}
       />
       <div
         className={cn(
@@ -154,10 +159,10 @@ export function KangurParentDashboardTabsWidget({
         role='tablist'
         aria-orientation='horizontal'
       >
-        {TABS.map((tab, index) => {
+        {tabs.map((tab, index) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          const isLastOdd = index === TABS.length - 1 && TABS.length % 2 === 1;
+          const isLastOdd = index === tabs.length - 1 && tabs.length % 2 === 1;
           const { tabId, panelId } = getParentDashboardTabIds(tab.id);
           return (
             <KangurButton

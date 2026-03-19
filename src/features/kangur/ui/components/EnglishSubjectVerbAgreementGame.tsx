@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -33,6 +34,11 @@ import {
   createLessonPracticeReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
@@ -41,85 +47,81 @@ import { cn } from '@/features/kangur/shared/utils';
 type AgreementRound = {
   id: string;
   accent: KangurAccent;
-  prompt: string;
   subject: string;
   sentenceStart: string;
   sentenceEnd: string;
   answer: string;
   options: string[];
-  hint: string;
 };
 
 const ROUNDS: AgreementRound[] = [
   {
     id: 'streamer-goes',
     accent: 'teal',
-    prompt: 'Kliknij czasownik, który pasuje do liczby pojedynczej.',
     subject: 'The streamer',
     sentenceStart: 'The streamer',
     sentenceEnd: 'live every Friday.',
     answer: 'goes',
     options: ['go', 'goes'],
-    hint: 'Singular subject + -s.',
   },
   {
     id: 'friends-try',
     accent: 'sky',
-    prompt: 'Kliknij czasownik dla liczby mnogiej.',
     subject: 'My friends',
     sentenceStart: 'My friends',
     sentenceEnd: 'new maps after school.',
     answer: 'try',
     options: ['try', 'tries'],
-    hint: 'Plural subject = base verb.',
   },
   {
     id: 'everyone-arrives',
     accent: 'rose',
-    prompt: 'Wszyscy? Gramatycznie to dalej liczba pojedyncza.',
     subject: 'Everyone in the band',
     sentenceStart: 'Everyone in the band',
     sentenceEnd: 'early.',
     answer: 'arrives',
     options: ['arrive', 'arrives'],
-    hint: 'Everyone = singular.',
   },
   {
     id: 'there-are',
     accent: 'amber',
-    prompt: 'There is/are zależy od rzeczownika po nim.',
     subject: 'There',
     sentenceStart: 'There',
     sentenceEnd: 'two finals this week.',
     answer: 'are',
     options: ['is', 'are'],
-    hint: 'Two finals = plural.',
   },
   {
     id: 'either-players',
     accent: 'violet',
-    prompt: 'Either/or: czasownik zgadza się z najbliższym podmiotem.',
     subject: 'Either the captain or the players',
     sentenceStart: 'Either the captain or the players',
     sentenceEnd: 'the playlist.',
     answer: 'choose',
     options: ['choose', 'chooses'],
-    hint: 'Closest subject = players (plural).',
   },
   {
     id: 'pair-is',
     accent: 'indigo',
-    prompt: 'Fraza "pair of" liczy się jako liczba pojedyncza.',
     subject: 'The pair of sneakers',
     sentenceStart: 'The pair of sneakers',
     sentenceEnd: 'expensive.',
     answer: 'is',
     options: ['is', 'are'],
-    hint: 'Pair = one set.',
   },
 ];
 
 const TOTAL_ROUNDS = ROUNDS.length;
+
+const getAgreementRoundPrompt = (
+  translate: KangurMiniGameTranslate,
+  roundId: AgreementRound['id']
+): string => translate(`englishSubjectVerbAgreement.inRound.rounds.${roundId}.prompt`);
+
+const getAgreementRoundHint = (
+  translate: KangurMiniGameTranslate,
+  roundId: AgreementRound['id']
+): string => translate(`englishSubjectVerbAgreement.inRound.rounds.${roundId}.hint`);
 
 type FeedbackState = {
   kind: 'success' | 'error';
@@ -132,9 +134,11 @@ type EnglishSubjectVerbAgreementGameProps = {
 };
 
 export default function EnglishSubjectVerbAgreementGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: EnglishSubjectVerbAgreementGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -162,8 +166,10 @@ export default function EnglishSubjectVerbAgreementGame({
     const isCorrect = selection === round.answer;
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
-      ? 'Tak! Wszystko się zgadza.'
-      : `Poprawna odpowiedź: ${round.answer}.`;
+      ? translations('englishSubjectVerbAgreement.inRound.feedback.correct')
+      : translations('englishSubjectVerbAgreement.inRound.feedback.incorrect', {
+          answer: round.answer,
+        });
 
     setScore(nextScore);
     setFeedback({ kind: isCorrect ? 'success' : 'error', text: feedbackText });
@@ -221,7 +227,7 @@ export default function EnglishSubjectVerbAgreementGame({
           accent='teal'
           title={
             <KangurHeadline data-testid='english-agreement-summary-title'>
-              Wynik: {score}/{TOTAL_ROUNDS}
+              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
             </KangurHeadline>
           }
         />
@@ -234,15 +240,16 @@ export default function EnglishSubjectVerbAgreementGame({
         <KangurPracticeGameSummaryProgress accent='teal' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Perfekcyjna zgodność.'
+            ? translations('englishSubjectVerbAgreement.summary.perfect')
             : percent >= 70
-              ? 'Dobra robota!'
-              : 'Jeszcze jedna runda i będzie super.'}
+              ? translations('englishSubjectVerbAgreement.summary.good')
+              : translations('englishSubjectVerbAgreement.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           onRestart={handleRestart}
+          restartLabel={translations('shared.restart')}
         />
       </KangurPracticeGameSummary>
     );
@@ -265,10 +272,13 @@ export default function EnglishSubjectVerbAgreementGame({
       >
         <div className='flex items-center justify-between gap-2'>
           <KangurStatusChip accent={round.accent} className='text-[10px] uppercase tracking-[0.16em]'>
-            Round {roundIndex + 1}/{TOTAL_ROUNDS}
+            {translations('englishSubjectVerbAgreement.inRound.roundLabel', {
+              current: roundIndex + 1,
+              total: TOTAL_ROUNDS,
+            })}
           </KangurStatusChip>
           <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-            Click
+            {translations('englishSubjectVerbAgreement.inRound.modeLabel')}
           </KangurStatusChip>
         </div>
 
@@ -277,14 +287,16 @@ export default function EnglishSubjectVerbAgreementGame({
         </div>
 
         <KangurInfoCard accent={round.accent} tone='accent' padding='sm' className='text-sm'>
-          <p className='font-semibold'>{round.prompt}</p>
-          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>{round.hint}</p>
+          <p className='font-semibold'>{getAgreementRoundPrompt(translations, round.id)}</p>
+          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+            {getAgreementRoundHint(translations, round.id)}
+          </p>
         </KangurInfoCard>
 
         <div className='space-y-3'>
           <div className='rounded-[20px] border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-700'>
             <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400`}>
-              <span>Subject</span>
+              <span>{translations('englishSubjectVerbAgreement.inRound.subjectLabel')}</span>
               <KangurStatusChip accent={round.accent} size='sm'>
                 {round.subject}
               </KangurStatusChip>
@@ -302,7 +314,7 @@ export default function EnglishSubjectVerbAgreementGame({
                     : 'border-slate-300 text-slate-400'
                 )}
               >
-                {selection ?? '____'}
+                {selection ?? translations('englishSubjectVerbAgreement.inRound.blank')}
               </span>{' '}
               {round.sentenceEnd}
             </p>
@@ -348,7 +360,7 @@ export default function EnglishSubjectVerbAgreementGame({
           onClick={handleCheck}
           data-testid='english-agreement-check'
         >
-          Sprawdź ✓
+          {translations('englishSubjectVerbAgreement.inRound.check')}
         </KangurButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>

@@ -100,7 +100,6 @@ export const ValidatedField = memo(function ValidatedField(
             fieldName={fieldNameKey}
             issue={issue}
             fieldValue={fieldValue}
-            numericField={type === 'number' ? name : undefined}
           />
         ))}
     </FormField>

@@ -10,6 +10,9 @@ import {
   useProductValidatorConfig,
   useUpdateValidatorSettingsMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
+import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
+import { buildProductValidationSourceValues } from '@/features/products/lib/validatorSourceFields';
+import { getProductValidationFieldChangedAtDependencies } from '@/features/products/lib/validatorTargetAdapters';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
 import type {
   ProductValidationDenyBehavior,
@@ -39,35 +42,6 @@ const VALIDATION_DENY_BEHAVIOR_SESSION_KEY = 'product_validation_deny_behavior_b
 const VALIDATION_DENIED_ISSUES_SESSION_KEY = 'product_validation_denied_issues';
 const VALIDATION_ACCEPTED_ISSUES_SESSION_KEY = 'product_validation_accepted_issues';
 const VALIDATION_DENY_SESSION_ID_KEY = 'product_validation_decision_session_id';
-
-const NUMERIC_AUTO_APPLY_FIELDS = new Set([
-  'price',
-  'stock',
-  'weight',
-  'sizeLength',
-  'sizeWidth',
-  'length',
-] as const);
-
-type NumericAutoApplyField = 'price' | 'stock' | 'weight' | 'sizeLength' | 'sizeWidth' | 'length';
-
-const isNumericAutoApplyField = (fieldName: string): fieldName is NumericAutoApplyField =>
-  NUMERIC_AUTO_APPLY_FIELDS.has(fieldName as NumericAutoApplyField);
-
-const toComparableFieldString = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return '';
-};
-
-const extractNameEnSegment = (value: string, segmentIndex: number): string => {
-  if (!value.trim()) return '';
-  const parts = value.split('|').map((part: string) => part.trim());
-  if (parts.length < segmentIndex + 1) return '';
-  return parts[segmentIndex] ?? '';
-};
-
-const escapeRegexSegment = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const resolveBooleanStateAction = (next: SetStateAction<boolean>, current: boolean): boolean =>
   typeof next === 'function' ? (next as (prev: boolean) => boolean)(current) : next;
@@ -345,51 +319,35 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     [validatorPatterns]
   );
 
-  const primaryCatalogId = useMemo((): string => {
-    const selected = selectedCatalogIds[0]?.trim() ?? '';
-    if (selected) return selected;
-    const fallback = typeof product?.catalogId === 'string' ? product.catalogId.trim() : '';
-    return fallback;
-  }, [product?.catalogId, selectedCatalogIds]);
-
-  const selectedCategoryName = useMemo((): string => {
-    if (!selectedCategoryId) return '';
-    const category = categories.find((item) => item.id === selectedCategoryId) ?? null;
-    return category?.name?.trim() ?? '';
-  }, [categories, selectedCategoryId]);
-
-  const nameEnSegment4 = useMemo(() => extractNameEnSegment(String(nameEn ?? ''), 3), [nameEn]);
-
-  const nameEnSegment4RegexEscaped = useMemo(
-    () => escapeRegexSegment(nameEnSegment4),
-    [nameEnSegment4]
-  );
-
   const validatorValues = useMemo(
-    (): Record<string, unknown> => ({
-      name_en: nameEn,
-      name_pl: namePl,
-      name_de: nameDe,
-      description_en: descEn,
-      description_pl: descPl,
-      description_de: descDe,
-      sku,
-      price,
-      stock,
-      weight,
-      sizeLength,
-      sizeWidth,
-      length: formLength,
-      supplierName,
-      supplierLink,
-      priceComment,
-      categoryId: selectedCategoryId ?? formCategoryId ?? '',
-      categoryName: selectedCategoryName,
-      primaryCatalogId,
-      nameEnSegment4,
-      nameEnSegment4RegexEscaped,
-    }),
+    (): Record<string, unknown> =>
+      buildProductValidationSourceValues({
+        baseValues: {
+          name_en: nameEn,
+          name_pl: namePl,
+          name_de: nameDe,
+          description_en: descEn,
+          description_pl: descPl,
+          description_de: descDe,
+          sku,
+          price,
+          stock,
+          weight,
+          sizeLength,
+          sizeWidth,
+          length: formLength,
+          supplierName,
+          supplierLink,
+          priceComment,
+          categoryId: formCategoryId ?? '',
+        },
+        categories,
+        selectedCategoryId,
+        selectedCatalogIds,
+        fallbackCatalogId: product?.catalogId ?? '',
+      }),
     [
+      categories,
       nameEn,
       namePl,
       nameDe,
@@ -407,11 +365,9 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       supplierLink,
       priceComment,
       formCategoryId,
-      nameEnSegment4,
-      nameEnSegment4RegexEscaped,
-      primaryCatalogId,
+      product?.catalogId,
+      selectedCatalogIds,
       selectedCategoryId,
-      selectedCategoryName,
     ]
   );
 
@@ -659,10 +615,11 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     isIssueDenied,
     isIssueAccepted,
     resolveChangedAt: (fieldName: string, timestamps: Record<string, number>): number => {
-      if (fieldName === 'categoryId') {
-        return Math.max(timestamps['categoryId'] ?? 0, timestamps['name_en'] ?? 0);
-      }
-      return timestamps[fieldName] ?? 0;
+      return getProductValidationFieldChangedAtDependencies(fieldName).reduce(
+        (maxChangedAt: number, dependencyFieldName: string) =>
+          Math.max(maxChangedAt, timestamps[dependencyFieldName] ?? 0),
+        0
+      );
     },
     source: 'ProductForm',
   });
@@ -771,46 +728,24 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
   const applyAutoReplacementToField = useCallback(
     (fieldName: string, replacementValue: string): boolean => {
-      const normalizedReplacement = replacementValue.trim();
-      if (!normalizedReplacement) return false;
-
-      if (fieldName === 'categoryId') {
-        const currentCategoryValue = toComparableFieldString(getValues('categoryId'));
-        if (currentCategoryValue !== normalizedReplacement) {
-          setCategoryId(normalizedReplacement);
-        }
-        return true;
-      }
-
-      if (isNumericAutoApplyField(fieldName)) {
-        const numericValue = Number(normalizedReplacement.replace(',', '.'));
-        if (!Number.isFinite(numericValue)) return false;
-        const normalizedNumeric = Math.max(0, Math.floor(numericValue));
-        const currentNumeric = getValues(fieldName);
-        if (
-          typeof currentNumeric !== 'number' ||
-          !Number.isFinite(currentNumeric) ||
-          currentNumeric !== normalizedNumeric
-        ) {
-          setValue(fieldName as keyof ProductFormData, normalizedNumeric, {
+      return applyValidatorFieldReplacement({
+        fieldName,
+        replacementValue,
+        categories,
+        getCurrentFieldValue: (nextFieldName: keyof ProductFormData) => getValues(nextFieldName),
+        setFormFieldValue: (
+          nextFieldName: keyof ProductFormData,
+          nextValue: ProductFormData[keyof ProductFormData]
+        ) => {
+          setValue(nextFieldName, nextValue, {
             shouldDirty: true,
             shouldTouch: true,
           });
-        }
-        return true;
-      }
-
-      const formFieldName = fieldName as keyof ProductFormData;
-      const currentValue = toComparableFieldString(getValues(formFieldName));
-      if (currentValue !== normalizedReplacement) {
-        setValue(formFieldName, normalizedReplacement, {
-          shouldDirty: true,
-          shouldTouch: true,
-        });
-      }
-      return true;
+        },
+        setCategoryId,
+      });
     },
-    [getValues, setCategoryId, setValue]
+    [categories, getValues, setCategoryId, setValue]
   );
 
   useEffect(() => {

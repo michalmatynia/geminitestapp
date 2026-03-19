@@ -2,6 +2,7 @@
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -18,6 +19,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurEquationDisplay,
@@ -232,7 +237,11 @@ export default function DivisionGroupsGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: DivisionGroupsGameProps): React.JSX.Element {
-  const finishLabel = finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Wróć do lekcji';
+  const translations = useTranslations('KangurMiniGames');
+  const finishLabel = getKangurMiniGameFinishLabel(
+    translations,
+    finishLabelVariant === 'topics' ? 'topics' : 'lesson'
+  );
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -560,7 +569,7 @@ export default function DivisionGroupsGame({
           accent='teal'
           title={
             <KangurHeadline data-testid='division-groups-summary-title'>
-              Wynik: {score}/{TOTAL_ROUNDS}
+              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
             </KangurHeadline>
           }
         />
@@ -573,14 +582,15 @@ export default function DivisionGroupsGame({
         <KangurPracticeGameSummaryProgress accent='teal' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Idealnie! Dzielenie masz opanowane.'
+            ? translations('divisionGroups.summary.perfect')
             : percent >= 60
-              ? 'Świetna robota!'
-              : 'Ćwicz dalej!'}
+              ? translations('divisionGroups.summary.good')
+              : translations('divisionGroups.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           finishLabel={finishLabel}
           onFinish={handleFinishGame}
+          restartLabel={translations('shared.restart')}
           onRestart={() => {
             setRoundIndex(0);
             setScore(0);
@@ -596,17 +606,17 @@ export default function DivisionGroupsGame({
   }
 
   const wrongHint = pool.length > 0
-    ? 'Rozdziel wszystkie elementy.'
+    ? translations('divisionGroups.feedback.assignAll')
     : remainder.length !== round.remainder
-      ? 'Sprawdź, ile zostaje w reszcie.'
-      : 'Upewnij się, że każda grupa ma tyle samo.';
+      ? translations('divisionGroups.feedback.checkRemainder')
+      : translations('divisionGroups.feedback.equalGroups');
 
   const feedbackMessage =
     status === 'correct'
-      ? 'Brawo! Podział jest równy.'
+      ? translations('divisionGroups.feedback.correct')
       : status === 'wrong'
         ? wrongHint
-        : 'Przeciągnij lub kliknij elementy, aby podzielić je na grupy.';
+        : translations('divisionGroups.feedback.idle');
 
   return (
     <KangurPracticeGameStage className='w-full max-w-none'>

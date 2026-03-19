@@ -2,6 +2,7 @@
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
@@ -18,6 +19,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurEquationDisplay,
@@ -201,8 +206,11 @@ export default function SubtractingGardenGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: SubtractingGardenGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const finishLabel =
-    finishLabelVariant === 'topics' ? 'Wróć do tematów' : 'Wróć do lekcji';
+    finishLabelVariant === 'topics'
+      ? getKangurMiniGameFinishLabel(translations, 'topics')
+      : getKangurMiniGameFinishLabel(translations, 'lesson');
   const prefersReducedMotion = useReducedMotion();
   const roundMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const [roundIndex, setRoundIndex] = useState(0);
@@ -373,7 +381,7 @@ export default function SubtractingGardenGame({
         />
         <KangurPracticeGameSummaryTitle
           dataTestId='subtracting-garden-summary-title'
-          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
         />
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -384,14 +392,15 @@ export default function SubtractingGardenGame({
         <KangurPracticeGameSummaryProgress accent='rose' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Idealnie! Odejmowanie masz w jednym palcu.'
+            ? translations('subtractingGarden.summary.perfect')
             : percent >= 60
-              ? 'Swietna robota!'
-              : 'Cwicz dalej!'}
+              ? translations('subtractingGarden.summary.good')
+              : translations('subtractingGarden.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           finishLabel={finishLabel}
           onFinish={handleFinishGame}
+          restartLabel={translations('shared.restart')}
           onRestart={() => {
             setRoundIndex(0);
             setScore(0);
@@ -408,7 +417,7 @@ export default function SubtractingGardenGame({
 
   const feedbackMessage =
     status === 'correct'
-      ? `Brawo! Zostało ${round.a - round.b}.`
+      ? `${translations('subtractingGarden.feedback.correct')} ${round.a - round.b}.`
       : status === 'wrong'
         ? missing > 0
           ? `Za mało. Zabierz jeszcze ${missing}.`

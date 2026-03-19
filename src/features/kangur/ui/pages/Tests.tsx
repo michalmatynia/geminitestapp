@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -81,6 +82,7 @@ const resolveFocusedSuiteId = (
 };
 
 export default function Tests(): React.JSX.Element {
+  const translations = useTranslations('KangurTests');
   const routeNavigator = useKangurRouteNavigator();
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
@@ -290,10 +292,10 @@ export default function Tests(): React.JSX.Element {
 
   const learnerActivityTitle = useMemo(() => {
     if (activeSuite?.title) {
-      return `Test: ${activeSuite.title}`;
+      return translations('activityTitleWithSuite', { title: activeSuite.title });
     }
-    return 'Testy';
-  }, [activeSuite?.title]);
+    return translations('activityTitleDefault');
+  }, [activeSuite?.title, translations]);
   const learnerActivityHref = useMemo(() => {
     const baseHref = createPageUrl('Tests', basePath);
     if (!activeSuite) {
@@ -334,12 +336,12 @@ export default function Tests(): React.JSX.Element {
   );
   const emptyStateCopy = isAdultFocus
     ? {
-        title: 'Testy dla dorosłych w przygotowaniu',
-        description: 'Aktualnie dostępne są testy dla 10-latków.',
+        title: translations('emptyAdultTitle'),
+        description: translations('emptyAdultDescription'),
       }
     : {
-        title: 'Brak aktywnych testów',
-        description: 'Włącz testy w panelu admina, aby pojawiły się tutaj.',
+        title: translations('emptyTitle'),
+        description: translations('emptyDescription'),
       };
 
   return (
@@ -367,12 +369,12 @@ export default function Tests(): React.JSX.Element {
           >
             <div ref={testsListIntroRef} id='kangur-tests-intro' className='w-full'>
               <KangurPageIntroCard
-                description='Wybierz zestaw testowy i przejdź przez pytania krok po kroku.'
+                description={translations('introDescription')}
                 headingAs='h1'
                 headingTestId='kangur-tests-list-heading'
                 onBack={handleGoBack}
                 testId='tests-list-intro-card'
-                title='Testy'
+                title={translations('title')}
               />
             </div>
             {suites.length === 0 ? (
@@ -389,14 +391,18 @@ export default function Tests(): React.JSX.Element {
                 id='kangur-tests-list'
                 ref={testsListRef}
                 role='list'
-                aria-label='Lista testów'
+                aria-label={translations('listAria')}
               >
                 {suites.map((suite) => {
                   const publishedCount = questionCountBySuite.get(suite.id) ?? 0;
                   const summaryParts = [
-                    suite.year ? `Rok ${suite.year}` : null,
-                    suite.gradeLevel ? `Poziom: ${suite.gradeLevel}` : null,
-                    suite.category ? `Kategoria: ${suite.category}` : null,
+                    suite.year ? translations('summary.year', { year: suite.year }) : null,
+                    suite.gradeLevel
+                      ? translations('summary.gradeLevel', { value: suite.gradeLevel })
+                      : null,
+                    suite.category
+                      ? translations('summary.category', { value: suite.category })
+                      : null,
                   ].filter(Boolean);
 
                   return (
@@ -419,8 +425,8 @@ export default function Tests(): React.JSX.Element {
                             size='sm'
                           >
                             {publishedCount > 0
-                              ? `${publishedCount} pytań`
-                              : 'Brak pytań'}
+                              ? translations('questionsCount', { count: publishedCount })
+                              : translations('noQuestions')}
                           </KangurStatusChip>
                         </div>
                         {summaryParts.length > 0 ? (
@@ -438,7 +444,7 @@ export default function Tests(): React.JSX.Element {
                             type='button'
                             variant='primary'
                           >
-                            Rozpocznij test
+                            {translations('startTest')}
                           </KangurButton>
                         </div>
                       </KangurInfoCard>
@@ -463,14 +469,14 @@ export default function Tests(): React.JSX.Element {
               <KangurPageIntroCard
                 description={
                   activeSuite.description ||
-                  'Przejdź przez pytania testowe i sprawdź wynik końcowy.'
+                  translations('activeDescriptionFallback')
                 }
                 headingAs='h1'
                 headingTestId='kangur-tests-active-heading'
                 onBack={handleBackToList}
                 testId='tests-active-intro-card'
                 title={activeSuite.title}
-                backButtonLabel='Wróć do listy testów'
+                backButtonLabel={translations('backToList')}
               />
             </div>
             <div

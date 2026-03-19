@@ -1,6 +1,7 @@
 'use client';
 
 import { Eraser, PencilRuler } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
@@ -13,6 +14,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
   KangurDisplayEmoji,
@@ -228,6 +233,7 @@ export default function GeometryDrawingGame({
   shapeIds,
   showDifficultySelector,
 }: GeometryDrawingGameProps): React.JSX.Element {
+  const translations = useTranslations('KangurMiniGames');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
 
@@ -606,7 +612,7 @@ export default function GeometryDrawingGame({
               data-testid='geometry-drawing-summary-title'
               id='geometry-drawing-heading'
             >
-              Wynik: {score}/{totalRounds}
+              {getKangurMiniGameScoreLabel(translations, score, totalRounds)}
             </KangurHeadline>
           </KangurPracticeGameSummaryTitle>
           <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
@@ -617,23 +623,28 @@ export default function GeometryDrawingGame({
           />
           <KangurPracticeGameSummaryProgress
             accent='emerald'
-            ariaLabel='Dokładność w treningu figur'
-            ariaValueText={`${Math.round((score / totalRounds) * 100)}% poprawnych figur`}
+            ariaLabel={translations('geometryDrawing.progressAriaLabel')}
+            ariaValueText={`${Math.round((score / totalRounds) * 100)}% ${translations('shared.correctAnswersSuffix')}`}
             dataTestId='geometry-drawing-summary-progress-bar'
             percent={Math.round((score / totalRounds) * 100)}
           />
           <KangurPracticeGameSummaryMessage>
             {score === totalRounds
-              ? 'Perfekcyjnie! Twoje figury są wzorowe.'
+              ? translations('geometryDrawing.summary.perfect')
               : score >= Math.ceil(totalRounds / 2)
-                ? 'Świetna robota! Rysujesz coraz dokładniej.'
-                : 'Ćwicz dalej. Każda kolejna figura będzie lepsza.'}
+                ? translations('geometryDrawing.summary.good')
+                : translations('geometryDrawing.summary.retry')}
           </KangurPracticeGameSummaryMessage>
           <KangurPracticeGameSummaryActions
             className={KANGUR_STACK_ROW_CLASSNAME}
             finishButtonClassName='w-full sm:flex-1'
-            finishLabel={finishLabel}
+            finishLabel={
+              finishLabel === 'Wróć'
+                ? getKangurMiniGameFinishLabel(translations, 'back')
+                : finishLabel
+            }
             onFinish={handleFinishSession}
+            restartLabel={translations('shared.restart')}
             onRestart={handleRestart}
             restartButtonClassName='w-full sm:flex-1'
           />

@@ -7,7 +7,11 @@ import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-ac
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 
-type ListQuery = z.infer<typeof commonListQuerySchema>;
+export const activityQuerySchema = commonListQuerySchema.extend({
+  type: z.string().trim().optional(),
+});
+
+type ActivityListQuery = z.infer<typeof activityQuerySchema>;
 
 /**
  * GET /api/system/activity
@@ -15,7 +19,7 @@ type ListQuery = z.infer<typeof commonListQuerySchema>;
  */
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
-  const query = ctx.query as ListQuery;
+  const query = ctx.query as ActivityListQuery;
   const repository = await getActivityRepository();
 
   const filters: ActivityFilters = {
@@ -24,6 +28,9 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   };
   if (query.search !== undefined && query.search !== null) {
     filters.search = query.search;
+  }
+  if (query.type !== undefined && query.type !== null) {
+    filters.type = query.type;
   }
 
   const [logs, total] = await Promise.all([

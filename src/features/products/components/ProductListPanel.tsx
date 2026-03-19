@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { Profiler, memo, useMemo } from 'react';
+import { Profiler, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useProductListAlertsContext,
@@ -57,6 +57,8 @@ const PromptModal = dynamic(
   { ssr: false }
 );
 
+const PRODUCT_LIST_BOTTOM_GAP = 24;
+
 const ProductCreatePromptModal = memo(function ProductCreatePromptModal() {
   const { isPromptOpen, setIsPromptOpen, handleConfirmSku } = useProductListModalsContext();
   if (!isPromptOpen) return null;
@@ -106,18 +108,70 @@ const ProductListAlerts = memo(function ProductListAlerts() {
 const ProductListTableSurface = memo(function ProductListTableSurface() {
   const { handleProductsTableRender } = useProductListTableContext();
   const tableProps = useProductsTableProps();
-  const headerContent = useMemo(
-    () => <ProductListHeader filtersContent={<ProductFilters />} />,
-    []
-  );
+  const desktopTableRef = useRef<HTMLDivElement>(null);
+  const [resolvedTableMaxHeight, setResolvedTableMaxHeight] = useState<
+    number | string | undefined
+  >(tableProps.maxHeight);
   const actionsContent = useMemo(() => <ProductSelectionActions />, []);
   const alertsContent = useMemo(() => <ProductListAlerts />, []);
+
+  const updateTableMaxHeight = useCallback(() => {
+    const mainElement = document.getElementById('app-content');
+    const tableElement = desktopTableRef.current;
+    if (!mainElement || !tableElement) return;
+
+    const availableHeight = Math.floor(
+      mainElement.getBoundingClientRect().bottom -
+        tableElement.getBoundingClientRect().top -
+        PRODUCT_LIST_BOTTOM_GAP
+    );
+    const nextMaxHeight = Math.max(0, availableHeight);
+    setResolvedTableMaxHeight((currentValue) =>
+      currentValue === nextMaxHeight ? currentValue : nextMaxHeight
+    );
+  }, []);
+
+  useEffect(() => {
+    const mainElement = document.getElementById('app-content');
+    if (!mainElement || typeof ResizeObserver === 'undefined') return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateTableMaxHeight();
+    });
+    resizeObserver.observe(mainElement);
+    if (desktopTableRef.current) {
+      resizeObserver.observe(desktopTableRef.current);
+    }
+
+    window.addEventListener('resize', updateTableMaxHeight);
+    updateTableMaxHeight();
+
+    return (): void => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateTableMaxHeight);
+    };
+  }, [updateTableMaxHeight]);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateTableMaxHeight();
+    });
+
+    return (): void => {
+      window.cancelAnimationFrame(frameId);
+    };
+  });
+
+  const headerContent = useMemo(() => {
+    return <ProductListHeader filtersContent={<ProductFilters />} />;
+  }, []);
   const isEmpty = !tableProps.isLoading && tableProps.data.length === 0;
 
   return (
     <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
       <StandardDataTablePanel
         variant='flat'
+        className='[&>div:first-child]:mb-3'
         header={headerContent}
         alerts={alertsContent}
         actions={actionsContent}
@@ -131,9 +185,8 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
         rowSelection={tableProps.rowSelection}
         onRowSelectionChange={tableProps.onRowSelectionChange}
         skeletonRows={tableProps.skeletonRows}
-        maxHeight={tableProps.maxHeight}
         stickyHeader={tableProps.stickyHeader}
-        enableVirtualization={true}
+        enableVirtualization={false}
       >
         <div className='space-y-4'>
           <div className='lg:hidden'>
@@ -147,7 +200,7 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
               <ProductListMobileCards />
             )}
           </div>
-          <div className='hidden lg:block'>
+          <div ref={desktopTableRef} className='hidden lg:block'>
             <DataTable
               columns={tableProps.columns}
               data={tableProps.data}
@@ -159,9 +212,10 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
               rowSelection={tableProps.rowSelection}
               onRowSelectionChange={tableProps.onRowSelectionChange}
               skeletonRows={tableProps.skeletonRows}
-              maxHeight={tableProps.maxHeight}
+              maxHeight={resolvedTableMaxHeight}
               stickyHeader={tableProps.stickyHeader}
-              enableVirtualization={true}
+              enableVirtualization={false}
+              tableLayout='fixed'
             />
           </div>
         </div>

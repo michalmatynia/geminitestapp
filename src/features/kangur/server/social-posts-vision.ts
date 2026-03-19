@@ -75,7 +75,9 @@ const truncateText = (value: string, maxChars: number): string =>
 
 const resolveAddonSource = (addon: KangurSocialImageAddon): string | null => {
   const asset = addon.imageAsset;
-  return asset.url?.trim() || asset.filepath?.trim() || asset.thumbnailUrl?.trim() || null;
+  // Prefer filepath for server-side reads — url may be a relative API serve path
+  // that cannot be read from disk.
+  return asset.filepath?.trim() || asset.url?.trim() || asset.thumbnailUrl?.trim() || null;
 };
 
 const readImageDataUrl = async (
@@ -202,7 +204,7 @@ const parseDocUpdates = (value: unknown): KangurSocialDocUpdate[] => {
 const buildSystemPrompt = (basePrompt: string, hasBeforeAfter: boolean): string => {
   const lines = [
     basePrompt.trim(),
-    'You analyze Kangur UI screenshots against the documentation context.',
+    'You analyze StudiQ UI screenshots against the documentation context.',
     'Return a JSON object with keys: summary, highlights, docUpdates.',
     'summary: short paragraph describing visible changes or notable UI details.',
     'highlights: array of short bullet sentences.',
@@ -251,7 +253,7 @@ export async function analyzeKangurSocialVisuals(
     modelId = overrideModelId || brainConfig.modelId.trim();
     if (!modelId) {
       throw configurationError(
-        'Kangur Social Visual Analysis model is missing. Configure it in AI Brain.'
+        'StudiQ Social Visual Analysis model is missing. Configure it in AI Brain.'
       );
     }
 

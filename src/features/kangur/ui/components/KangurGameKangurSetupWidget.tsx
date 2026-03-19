@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKangurWordmark';
@@ -8,6 +8,7 @@ import { KangurGameSetupStage } from '@/features/kangur/ui/components/KangurGame
 import KangurSetup from '@/features/kangur/ui/components/KangurSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { getRecommendedKangurMode } from '@/features/kangur/ui/services/game-setup-recommendations';
+import { translateRecommendationWithFallback } from '@/features/kangur/ui/services/recommendation-i18n';
 
 type KangurGameKangurSetupWidgetProps = {
   onBack?: () => void;
@@ -16,9 +17,18 @@ type KangurGameKangurSetupWidgetProps = {
 export function KangurGameKangurSetupWidget({
   onBack,
 }: KangurGameKangurSetupWidgetProps = {}): React.JSX.Element | null {
+  const locale = useLocale();
   const gamePageTranslations = useTranslations('KangurGamePage');
+  const recommendationTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
   const { handleHome, handleStartKangur, progress, screen } = useKangurGameRuntime();
-  const recommendedMode = useMemo(() => getRecommendedKangurMode(progress), [progress]);
+  const recommendedMode = useMemo(
+    () =>
+      getRecommendedKangurMode(progress, {
+        locale,
+        translate: recommendationTranslations,
+      }),
+    [locale, progress, recommendationTranslations]
+  );
   const resolvedOnBack = onBack ?? handleHome;
 
   if (screen !== 'kangur_setup') {
@@ -27,12 +37,20 @@ export function KangurGameKangurSetupWidget({
 
   return (
     <KangurGameSetupStage
-      description={gamePageTranslations('screens.kangur_setup.description')}
+      description={translateRecommendationWithFallback(
+        gamePageTranslations,
+        'screens.kangur_setup.description',
+        'Wybierz edycję konkursu i zestaw zadań do rozwiązania.'
+      )}
       momentumMode='kangur'
       onBack={resolvedOnBack}
       progress={progress}
       testId='kangur-game-kangur-setup-top-section'
-      title={gamePageTranslations('screens.kangur_setup.label')}
+      title={translateRecommendationWithFallback(
+        gamePageTranslations,
+        'screens.kangur_setup.label',
+        'Kangur'
+      )}
       visualTitle={
         <KangurKangurWordmark
           className='mx-auto'

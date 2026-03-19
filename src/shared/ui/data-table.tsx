@@ -51,9 +51,47 @@ interface DataTableProps<TData> {
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
   enableVirtualization?: boolean;
+  tableLayout?: 'auto' | 'fixed';
   ariaLabel?: string | undefined;
   ariaDescription?: string | undefined;
 }
+
+type ColumnWidthMeta = {
+  widthPx?: number;
+  minWidthPx?: number;
+  maxWidthPx?: number;
+};
+
+const isFinitePositiveNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
+
+const getColumnWidthStyle = <TData, TValue>(
+  column: Column<TData, TValue>
+): React.CSSProperties | undefined => {
+  const widthMeta = (column.columnDef.meta ?? {}) as ColumnWidthMeta;
+  const size = widthMeta.widthPx;
+  const minSize = widthMeta.minWidthPx;
+  const maxSize = widthMeta.maxWidthPx;
+
+  if (isFinitePositiveNumber(size)) {
+    const fixedWidth = `${size}px`;
+    return {
+      width: fixedWidth,
+      minWidth: fixedWidth,
+      maxWidth: fixedWidth,
+    };
+  }
+
+  const style: React.CSSProperties = {};
+  if (isFinitePositiveNumber(minSize)) {
+    style.minWidth = `${minSize}px`;
+  }
+  if (isFinitePositiveNumber(maxSize)) {
+    style.maxWidth = `${maxSize}px`;
+  }
+
+  return Object.keys(style).length > 0 ? style : undefined;
+};
 
 export function DataTableSortableHeader<TData, TValue>({
   label,
@@ -117,6 +155,7 @@ export const DataTable = memo(function DataTable<TData>({
   maxHeight,
   stickyHeader = false,
   enableVirtualization = false,
+  tableLayout = 'auto',
   ariaLabel,
   ariaDescription,
 }: DataTableProps<TData>) {
@@ -191,6 +230,8 @@ export const DataTable = memo(function DataTable<TData>({
 
   const { rows } = table.getRowModel();
   const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const visibleLeafColumns = table.getVisibleLeafColumns();
+  const isFixedTableLayout = tableLayout === 'fixed';
 const resolvedAriaLabel =
   ariaLabel ??
   (typeof meta?.['ariaLabel'] === 'string' ? meta['ariaLabel'] : undefined);
@@ -225,13 +266,20 @@ const resolvedAriaDescription =
     >
       <div ref={parentRef} className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
         <Table
-          className='border-collapse'
+          className={cn('border-collapse', isFixedTableLayout && 'table-fixed')}
           wrapperClassName={cn(maxHeight && 'overflow-visible')}
           aria-label={resolvedAriaLabel}
           aria-describedby={resolvedAriaDescription}
           aria-rowcount={rows.length || undefined}
           aria-colcount={visibleColumnCount || undefined}
         >
+          {isFixedTableLayout ? (
+            <colgroup>
+              {visibleLeafColumns.map((column) => (
+                <col key={column.id} style={getColumnWidthStyle(column)} />
+              ))}
+            </colgroup>
+          ) : null}
           <TableHeader className={cn(stickyHeader && 'z-10 bg-background')}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='border-border'>
@@ -253,6 +301,7 @@ const resolvedAriaDescription =
                         'text-foreground',
                         stickyHeader && 'sticky top-0 z-20 bg-background'
                       )}
+                      style={getColumnWidthStyle(header.column)}
                       scope='col'
                       aria-sort={ariaSort}
                     >
@@ -309,7 +358,11 @@ const resolvedAriaDescription =
                           ref={rowVirtualizer.measureElement}
                         >
                           {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} className='text-muted-foreground'>
+                            <TableCell
+                              key={cell.id}
+                              className='text-muted-foreground'
+                              style={getColumnWidthStyle(cell.column)}
+                            >
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
                           ))}
@@ -345,7 +398,11 @@ const resolvedAriaDescription =
                       data-row-id={getRowId ? getRowId(row.original) : undefined}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className='text-muted-foreground'>
+                        <TableCell
+                          key={cell.id}
+                          className='text-muted-foreground'
+                          style={getColumnWidthStyle(cell.column)}
+                        >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}

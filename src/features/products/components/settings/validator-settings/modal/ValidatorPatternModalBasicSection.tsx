@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
 import { normalizeProductValidationPatternScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
+import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
 import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { Input, MultiSelect, SelectSimple, FormField } from '@/shared/ui';
 
@@ -21,11 +22,17 @@ import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 export function ValidatorPatternModalBasicSection(): React.JSX.Element {
   const {
     formData,
+    modalSemanticState,
     setFormData,
     getReplacementFieldsForTarget,
     getSourceFieldOptionsForTarget,
     isLocaleTarget,
   } = useValidatorSettingsContext();
+
+  const semanticUi = React.useMemo(
+    () => getProductValidationSemanticOperationUiMetadata(modalSemanticState?.operation),
+    [modalSemanticState?.operation]
+  );
 
   return (
     <div className='space-y-4'>
@@ -36,9 +43,9 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             setFormData((prev: PatternFormData) => ({ ...prev, label: event.target.value }))
           }
-          placeholder='Double spaces'
-         aria-label='Double spaces' title='Double spaces'/>
-      </FormField>
+          placeholder={semanticUi?.labelPlaceholder ?? 'Double spaces'}
+         aria-label={semanticUi?.labelPlaceholder ?? 'Double spaces'} title={semanticUi?.labelPlaceholder ?? 'Double spaces'}/>
+        </FormField>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <FormField label='Target'>
@@ -154,8 +161,8 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
                 }
                 placeholder='e.g. Przypinka'
                aria-label='e.g. Przypinka' title='e.g. Przypinka'/>
-            </FormField>
-          ) : (
+              </FormField>
+            ) : (
             <FormField label='Source Mode'>
               <SelectSimple
                 size='sm'

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, extractClientIp } from '@/features/auth/server';
-import type { AnalyticsEventCreateInput } from '@/shared/contracts';
+import type { AnalyticsEventCreateInput, AnalyticsEventType } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
 import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
@@ -80,6 +80,10 @@ export const querySchema = z.object({
   scope: z.preprocess(
     (value) => normalizeOptionalQueryString(value) ?? 'all',
     z.enum(['all', 'public', 'admin'])
+  ),
+  type: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    z.enum(['all', 'pageview', 'event'])
   ),
 });
 
@@ -202,22 +206,28 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const range = query.range;
   const scopeRaw = query.scope;
   const scope = scopeRaw === 'all' ? undefined : (scopeRaw);
+  const typeRaw = query.type;
+  const type: AnalyticsEventType | undefined = typeRaw === 'all' ? undefined : typeRaw;
 
   const { from, to } = getRangeWindow(range);
   const result = await listAnalyticsEvents({
     from,
     to,
     ...(scope ? { scope } : {}),
+    ...(type ? { type } : {}),
     limit: pageSize,
     skip,
   });
+  const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
 
   return NextResponse.json(
     {
       page,
       pageSize,
+      totalPages,
       range,
       scope: scopeRaw,
+      type: typeRaw,
       ...result,
     },
     {

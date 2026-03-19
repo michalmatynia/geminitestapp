@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
-import { shouldAdoptIncomingEditProductDetail } from './useProductListState';
+import {
+  applyProductListAdvancedFilterState,
+  shouldAdoptIncomingEditProductDetail,
+} from './useProductListState';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -102,5 +105,53 @@ describe('shouldAdoptIncomingEditProductDetail', () => {
     });
 
     expect(result).toBe(true);
+  });
+});
+
+describe('applyProductListAdvancedFilterState', () => {
+  it('updates local state immediately and persists the normalized preset state', () => {
+    const localCalls: Array<{ value: string; presetId: string | null }> = [];
+    const persistedCalls: Array<{ advancedFilter: string; presetId: string | null }> = [];
+
+    applyProductListAdvancedFilterState({
+      value: '  {"type":"group"}  ',
+      presetId: 'preset-1',
+      setLocalState: (value: string, presetId: string | null) => {
+        localCalls.push({ value, presetId });
+      },
+      persistState: async (state: {
+        advancedFilter: string;
+        presetId: string | null;
+      }): Promise<void> => {
+        persistedCalls.push(state);
+      },
+    });
+
+    expect(localCalls).toEqual([{ value: '{"type":"group"}', presetId: 'preset-1' }]);
+    expect(persistedCalls).toEqual([
+      { advancedFilter: '{"type":"group"}', presetId: 'preset-1' },
+    ]);
+  });
+
+  it('clears the preset id when the next filter value is empty', () => {
+    const localCalls: Array<{ value: string; presetId: string | null }> = [];
+    const persistedCalls: Array<{ advancedFilter: string; presetId: string | null }> = [];
+
+    applyProductListAdvancedFilterState({
+      value: '   ',
+      presetId: 'preset-1',
+      setLocalState: (value: string, presetId: string | null) => {
+        localCalls.push({ value, presetId });
+      },
+      persistState: async (state: {
+        advancedFilter: string;
+        presetId: string | null;
+      }): Promise<void> => {
+        persistedCalls.push(state);
+      },
+    });
+
+    expect(localCalls).toEqual([{ value: '', presetId: null }]);
+    expect(persistedCalls).toEqual([{ advancedFilter: '', presetId: null }]);
   });
 });

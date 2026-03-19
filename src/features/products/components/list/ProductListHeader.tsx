@@ -269,18 +269,16 @@ export const ProductListHeader = memo(function ProductListHeader({
             </div>
           </div>
 
-          <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
-            <div className='min-w-0'>{renderCreateActionsDesktop()}</div>
+          <div className='hidden space-y-3 lg:block'>
+            <div className='flex items-start justify-between gap-3'>
+              <div className='min-w-0'>{renderCreateActionsDesktop()}</div>
 
-            <div className='relative z-10 flex justify-center' aria-hidden='true'></div>
-
-            <div className='relative z-0 flex w-full min-w-0 flex-col gap-3 pt-1'>
-              <div className='flex w-full flex-wrap items-center justify-end gap-2'>
+              <div className='relative z-0 flex w-full min-w-0 flex-wrap items-center justify-end gap-2 pt-1'>
                 {renderPaginationControl()}
                 {renderSelectorsAndTriggers()}
               </div>
-              {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
             </div>
+            {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
           </div>
         </div>
       )}

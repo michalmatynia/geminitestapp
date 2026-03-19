@@ -84,7 +84,7 @@ export function SocialPostPipeline({
           })}
         </div>
         <p className='text-xs text-muted-foreground italic text-center'>
-          Automates the standard Kangur social update workflow in one click.
+          Automates the standard StudiQ social update workflow in one click.
         </p>
       </div>
     </FormSection>

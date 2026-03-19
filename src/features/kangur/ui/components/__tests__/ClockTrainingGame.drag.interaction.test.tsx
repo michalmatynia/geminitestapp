@@ -697,10 +697,10 @@ describe('ClockTrainingGame drag interactions', () => {
     });
 
     expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
-    expect(screen.getByText('Wynik: 0/1')).toBeInTheDocument();
-    expect(
-      screen.getByText('Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę.')
-    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
+    expect(screen.getByText('shared.scoreLabel: 0/1')).toBeInTheDocument();
+    expect(screen.getByText('clockTraining.summary.hours.retry')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
     expect(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Zakończ ćwiczenie ✅' }));

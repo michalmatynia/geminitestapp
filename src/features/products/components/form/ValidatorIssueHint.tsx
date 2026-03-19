@@ -5,6 +5,7 @@ import { memo, useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductValidationActions } from '@/features/products/context/ProductValidationSettingsContext';
+import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
@@ -138,62 +139,43 @@ type IssueHintRowProps = {
   fieldName: string;
   issue: FieldValidatorIssue;
   fieldValue: string;
-  numericField?: keyof ProductFormData;
 };
 
 export const IssueHintRow = memo(function IssueHintRow(
   props: IssueHintRowProps
 ): React.JSX.Element {
-  const { fieldName, issue, fieldValue, numericField } = props;
+  const { fieldName, issue, fieldValue } = props;
 
   const { getValues, setValue } = useFormContext<ProductFormData>();
   const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
 
   const onReplace = useCallback((): void => {
-    if (numericField) {
-      const raw = getValues(numericField);
-      const currentValue =
-        typeof raw === 'string'
-          ? raw
-          : typeof raw === 'number' && Number.isFinite(raw)
-            ? String(raw)
-            : '';
-      const nextValue = getIssueReplacementPreview(currentValue, issue);
-      void acceptIssue({
-        fieldName,
-        patternId: issue.patternId,
-        postAcceptBehavior: issue.postAcceptBehavior,
-        message: issue.message,
-        replacementValue: issue.replacementValue,
-      });
-      if (nextValue === currentValue) return;
-      const numericValue = Number(nextValue.replace(',', '.'));
-      if (!Number.isFinite(numericValue)) return;
-      setValue(
-        numericField,
-        Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
-        { shouldDirty: true, shouldTouch: true }
-      );
-    } else {
-      const currentValue =
-        (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
-      const nextValue = getIssueReplacementPreview(currentValue, issue);
-      void acceptIssue({
-        fieldName,
-        patternId: issue.patternId,
-        postAcceptBehavior: issue.postAcceptBehavior,
-        message: issue.message,
-        replacementValue: issue.replacementValue,
-      });
-      if (nextValue !== currentValue) {
-        setValue(
-          fieldName as keyof ProductFormData,
-          nextValue as ProductFormData[keyof ProductFormData],
-          { shouldDirty: true, shouldTouch: true }
-        );
-      }
-    }
-  }, [acceptIssue, fieldName, getValues, issue, numericField, setValue]);
+    const currentValue = (getValues(fieldName as keyof ProductFormData) as string | number | undefined) ?? '';
+    const nextValue = getIssueReplacementPreview(String(currentValue), issue);
+    const applied = applyValidatorFieldReplacement({
+      fieldName,
+      replacementValue: nextValue,
+      getCurrentFieldValue: (nextFieldName: keyof ProductFormData) => getValues(nextFieldName),
+      setFormFieldValue: (
+        nextFieldName: keyof ProductFormData,
+        nextFieldValue: ProductFormData[keyof ProductFormData]
+      ) => {
+        setValue(nextFieldName, nextFieldValue, {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      },
+      setCategoryId: () => {},
+    });
+    if (!applied) return;
+    void acceptIssue({
+      fieldName,
+      patternId: issue.patternId,
+      postAcceptBehavior: issue.postAcceptBehavior,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+  }, [acceptIssue, fieldName, getValues, issue, setValue]);
 
   const onDeny = useCallback((): void => {
     void denyIssue({

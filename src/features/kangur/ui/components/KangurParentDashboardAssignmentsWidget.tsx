@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 import {
   type KangurParentDashboardPanelDisplayMode,
@@ -11,6 +15,7 @@ export function KangurParentDashboardAssignmentsWidget({
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
+  const translations = useTranslations('KangurParentDashboard');
   const { activeLearner, activeTab, basePath, canAccessDashboard } =
     useKangurParentDashboardRuntime();
   const { entry: assignmentsContent } = useKangurPageContentEntry('parent-dashboard-assignments');
@@ -33,9 +38,9 @@ export function KangurParentDashboardAssignmentsWidget({
       <KangurWidgetIntro
         description={
           assignmentsContent?.summary ??
-          'Nadaj priorytet pracy i sprawdź, co jest aktywne albo wymaga przypomnienia.'
+          translations('widgets.assignments.description')
         }
-        title={assignmentsContent?.title ?? 'Zadania ucznia'}
+        title={assignmentsContent?.title ?? translations('widgets.assignments.title')}
       />
       <KangurAssignmentManager
         basePath={basePath}

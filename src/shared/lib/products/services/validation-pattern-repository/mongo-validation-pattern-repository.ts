@@ -3,6 +3,7 @@ import { ObjectId, type Db, type Document, type Filter, type UpdateFilter } from
 import type {
   CreateProductValidationPatternInput,
   ProductValidationPatternRepository,
+  ProductValidationPatternWriteOptions,
   UpdateProductValidationPatternInput,
 } from '@/shared/contracts/products';
 import type {
@@ -16,6 +17,9 @@ import type {
   ProductValidationPostAcceptBehavior,
   ProductValidationRuntimeType,
   ProductValidationPattern,
+  ProductValidationSemanticAuditRecord,
+  ProductValidationSemanticAuditSource,
+  ProductValidationSemanticState,
   ProductValidationSeverity,
   ProductValidationTarget,
 } from '@/shared/contracts/products';
@@ -37,6 +41,12 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
+import {
+  buildProductValidationSemanticAuditRecord,
+  getProductValidationSemanticState,
+  normalizeProductValidationSemanticAuditRecord,
+  normalizeProductValidationSemanticState,
+} from '@/shared/lib/products/utils/validator-semantic-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -85,6 +95,9 @@ interface ProductValidationPatternDoc extends Document {
   launchValue?: string | null;
   launchFlags?: string | null;
   appliesToScopes?: ProductValidationInstanceScope[] | null;
+  semanticState?: ProductValidationSemanticState | null;
+  semanticAudit?: ProductValidationSemanticAuditRecord | null;
+  semanticAuditHistory?: ProductValidationSemanticAuditRecord[] | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -126,6 +139,9 @@ type ProductValidationPatternInsert = {
   launchValue: string | null;
   launchFlags: string | null;
   appliesToScopes: ProductValidationInstanceScope[];
+  semanticState: ProductValidationSemanticState | null;
+  semanticAudit: ProductValidationSemanticAuditRecord | null;
+  semanticAuditHistory: ProductValidationSemanticAuditRecord[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -292,57 +308,163 @@ const normalizeLaunchOperator = (value: unknown): ProductValidationLaunchOperato
   }
 };
 
-const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern => ({
-  id: doc._id.toString(),
-  label: doc.label,
-  target: doc.target,
-  locale: doc.locale ?? null,
-  regex: doc.regex,
-  flags: doc.flags ?? null,
-  message: doc.message,
-  severity: doc.severity ?? 'error',
-  enabled: doc.enabled,
-  replacementEnabled: doc.replacementEnabled ?? false,
-  replacementAutoApply: doc.replacementAutoApply ?? false,
-  skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
-    doc.skipNoopReplacementProposal
-  ),
-  replacementValue: doc.replacementValue ?? null,
-  replacementFields: normalizeReplacementFields(doc.replacementFields),
-  replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-    doc.replacementAppliesToScopes
-  ),
-  runtimeEnabled: doc.runtimeEnabled ?? false,
-  runtimeType: normalizeRuntimeType(doc.runtimeType),
-  runtimeConfig: normalizeRuntimeConfig(doc.runtimeConfig),
-  postAcceptBehavior: normalizePostAcceptBehavior(doc.postAcceptBehavior),
-  denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
-    doc.denyBehaviorOverride
-  ),
-  validationDebounceMs: normalizeValidationDebounceMs(doc.validationDebounceMs),
-  sequenceGroupId: normalizeSequenceGroupId(doc.sequenceGroupId),
-  sequenceGroupLabel: normalizeSequenceGroupLabel(doc.sequenceGroupLabel),
-  sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(doc.sequenceGroupDebounceMs),
-  sequence: normalizeSequence(doc.sequence),
-  chainMode: normalizeChainMode(doc.chainMode),
-  maxExecutions: normalizeMaxExecutions(doc.maxExecutions),
-  passOutputToNext: doc.passOutputToNext ?? true,
-  launchEnabled: doc.launchEnabled ?? false,
-  launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(doc.launchAppliesToScopes),
-  launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(doc.launchScopeBehavior),
-  launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
-  launchSourceField:
-    typeof doc.launchSourceField === 'string' && doc.launchSourceField.trim()
-      ? doc.launchSourceField.trim()
-      : null,
-  launchOperator: normalizeLaunchOperator(doc.launchOperator),
-  launchValue: typeof doc.launchValue === 'string' ? doc.launchValue : null,
-  launchFlags:
-    typeof doc.launchFlags === 'string' && doc.launchFlags.trim() ? doc.launchFlags.trim() : null,
-  appliesToScopes: normalizeProductValidationPatternScopes(doc.appliesToScopes),
-  createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
-  updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
-});
+const sortSerializableValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => sortSerializableValue(item));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nestedValue]) => [key, sortSerializableValue(nestedValue)])
+    );
+  }
+  return value;
+};
+
+const serializeForSemanticMigration = (value: unknown): string =>
+  JSON.stringify(sortSerializableValue(value ?? null));
+
+const getNormalizedSemanticFields = (
+  doc: Pick<
+    ProductValidationPatternDoc,
+    | 'semanticState'
+    | 'semanticAudit'
+    | 'semanticAuditHistory'
+    | 'label'
+    | 'target'
+    | 'locale'
+    | 'regex'
+    | 'replacementEnabled'
+    | 'replacementValue'
+    | 'launchEnabled'
+    | 'launchSourceMode'
+    | 'launchSourceField'
+    | 'launchOperator'
+    | 'launchValue'
+  >
+): {
+  semanticState: ProductValidationSemanticState | null;
+  semanticAudit: ProductValidationSemanticAuditRecord | null;
+  semanticAuditHistory: ProductValidationSemanticAuditRecord[];
+  needsPersistence: boolean;
+} => {
+  const semanticState = getProductValidationSemanticState(doc);
+  const semanticAudit = normalizeProductValidationSemanticAuditRecord(doc.semanticAudit);
+  const semanticAuditHistory = Array.isArray(doc.semanticAuditHistory)
+    ? doc.semanticAuditHistory
+        .map((entry) => normalizeProductValidationSemanticAuditRecord(entry))
+        .filter((entry): entry is ProductValidationSemanticAuditRecord => entry !== null)
+    : [];
+
+  const needsPersistence =
+    serializeForSemanticMigration(doc.semanticState) !==
+      serializeForSemanticMigration(semanticState) ||
+    serializeForSemanticMigration(doc.semanticAudit) !==
+      serializeForSemanticMigration(semanticAudit) ||
+    serializeForSemanticMigration(doc.semanticAuditHistory ?? []) !==
+      serializeForSemanticMigration(semanticAuditHistory);
+
+  return {
+    semanticState,
+    semanticAudit,
+    semanticAuditHistory,
+    needsPersistence,
+  };
+};
+
+const migratePatternDocumentSemantics = async (
+  db: Db,
+  doc: ProductValidationPatternDoc
+): Promise<ProductValidationPatternDoc> => {
+  const normalizedSemanticFields = getNormalizedSemanticFields(doc);
+  if (!normalizedSemanticFields.needsPersistence) {
+    return {
+      ...doc,
+      ...normalizedSemanticFields,
+    };
+  }
+
+  await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(
+    { _id: doc._id },
+    {
+      $set: {
+        semanticState: normalizedSemanticFields.semanticState,
+        semanticAudit: normalizedSemanticFields.semanticAudit,
+        semanticAuditHistory: normalizedSemanticFields.semanticAuditHistory,
+      },
+    } as UpdateFilter<ProductValidationPatternDoc>
+  );
+
+  return {
+    ...doc,
+    ...normalizedSemanticFields,
+  };
+};
+
+const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern => {
+  const normalizedSemanticFields = getNormalizedSemanticFields(doc);
+  return {
+    id: doc._id.toString(),
+    label: doc.label,
+    target: doc.target,
+    locale: doc.locale ?? null,
+    regex: doc.regex,
+    flags: doc.flags ?? null,
+    message: doc.message,
+    severity: doc.severity ?? 'error',
+    enabled: doc.enabled,
+    replacementEnabled: doc.replacementEnabled ?? false,
+    replacementAutoApply: doc.replacementAutoApply ?? false,
+    skipNoopReplacementProposal: normalizeProductValidationSkipNoopReplacementProposal(
+      doc.skipNoopReplacementProposal
+    ),
+    replacementValue: doc.replacementValue ?? null,
+    replacementFields: normalizeReplacementFields(doc.replacementFields),
+    replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
+      doc.replacementAppliesToScopes
+    ),
+    runtimeEnabled: doc.runtimeEnabled ?? false,
+    runtimeType: normalizeRuntimeType(doc.runtimeType),
+    runtimeConfig: normalizeRuntimeConfig(doc.runtimeConfig),
+    postAcceptBehavior: normalizePostAcceptBehavior(doc.postAcceptBehavior),
+    denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
+      doc.denyBehaviorOverride
+    ),
+    validationDebounceMs: normalizeValidationDebounceMs(doc.validationDebounceMs),
+    sequenceGroupId: normalizeSequenceGroupId(doc.sequenceGroupId),
+    sequenceGroupLabel: normalizeSequenceGroupLabel(doc.sequenceGroupLabel),
+    sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(doc.sequenceGroupDebounceMs),
+    sequence: normalizeSequence(doc.sequence),
+    chainMode: normalizeChainMode(doc.chainMode),
+    maxExecutions: normalizeMaxExecutions(doc.maxExecutions),
+    passOutputToNext: doc.passOutputToNext ?? true,
+    launchEnabled: doc.launchEnabled ?? false,
+    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(doc.launchAppliesToScopes),
+    launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(doc.launchScopeBehavior),
+    launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
+    launchSourceField:
+      typeof doc.launchSourceField === 'string' && doc.launchSourceField.trim()
+        ? doc.launchSourceField.trim()
+        : null,
+    launchOperator: normalizeLaunchOperator(doc.launchOperator),
+    launchValue: typeof doc.launchValue === 'string' ? doc.launchValue : null,
+    launchFlags:
+      typeof doc.launchFlags === 'string' && doc.launchFlags.trim()
+        ? doc.launchFlags.trim()
+        : null,
+    appliesToScopes: normalizeProductValidationPatternScopes(doc.appliesToScopes),
+    semanticState: normalizedSemanticFields.semanticState,
+    semanticAudit: normalizedSemanticFields.semanticAudit,
+    semanticAuditHistory: normalizedSemanticFields.semanticAuditHistory,
+    createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
+  };
+};
+
+const resolveSemanticAuditSource = (
+  input: ProductValidationPatternWriteOptions | undefined
+): ProductValidationSemanticAuditSource => input?.semanticAuditSource ?? 'manual_save';
 
 const toObjectId = (id: string): ObjectId => new ObjectId(id);
 
@@ -355,7 +477,10 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       .find({})
       .sort({ sequence: 1, target: 1, label: 1 })
       .toArray();
-    return rows.map(toDomain);
+    const migratedRows = await Promise.all(
+      rows.map((row) => migratePatternDocumentSemantics(db, row))
+    );
+    return migratedRows.map(toDomain);
   },
 
   async getPatternById(id: string): Promise<ProductValidationPattern | null> {
@@ -365,11 +490,13 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     const row = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
       .findOne({ _id: toObjectId(id) });
-    return row ? toDomain(row) : null;
+    if (!row) return null;
+    return toDomain(await migratePatternDocumentSemantics(db, row));
   },
 
   async createPattern(
-    data: CreateProductValidationPatternInput
+    data: CreateProductValidationPatternInput,
+    options?: ProductValidationPatternWriteOptions
   ): Promise<ProductValidationPattern> {
     const db = await getMongoDb();
     await ensureIndexes(db);
@@ -385,6 +512,13 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       typeof maxSequenceRow?.sequence === 'number' && Number.isFinite(maxSequenceRow.sequence)
         ? Math.floor(maxSequenceRow.sequence) + 10
         : 10;
+    const semanticState = normalizeProductValidationSemanticState(data.semanticState);
+    const semanticAudit = buildProductValidationSemanticAuditRecord({
+      previous: null,
+      current: semanticState,
+      source: resolveSemanticAuditSource(options),
+      trigger: 'create',
+    });
     const payload: ProductValidationPatternInsert = {
       label: data.label,
       target: data.target,
@@ -430,6 +564,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       launchValue: typeof data.launchValue === 'string' ? data.launchValue : null,
       launchFlags: data.launchFlags?.trim() || null,
       appliesToScopes: normalizeProductValidationPatternScopes(data.appliesToScopes),
+      semanticState,
+      semanticAudit,
+      semanticAuditHistory: [semanticAudit],
       createdAt: now,
       updatedAt: now,
     };
@@ -442,7 +579,8 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
 
   async updatePattern(
     id: string,
-    data: UpdateProductValidationPatternInput
+    data: UpdateProductValidationPatternInput,
+    options?: ProductValidationPatternWriteOptions
   ): Promise<ProductValidationPattern> {
     if (!ObjectId.isValid(id)) {
       throw badRequestError('Invalid pattern ID', { patternId: id });
@@ -460,6 +598,14 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
         expectedUpdatedAt: expectedUpdatedAtRaw,
       });
     }
+    const currentRowRaw = await db
+      .collection<ProductValidationPatternDoc>(COLLECTION)
+      .findOne({ _id: toObjectId(id) });
+    if (!currentRowRaw) {
+      throw notFoundError('Validation pattern not found', { patternId: id });
+    }
+    const currentRow = await migratePatternDocumentSemantics(db, currentRowRaw);
+
     const set: Partial<ProductValidationPatternDoc> = {
       updatedAt: new Date(),
     };
@@ -563,6 +709,22 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.appliesToScopes !== undefined) {
       set.appliesToScopes = normalizeProductValidationPatternScopes(data.appliesToScopes);
     }
+    if (data.semanticState !== undefined) {
+      set.semanticState = normalizeProductValidationSemanticState(data.semanticState);
+    }
+
+    const semanticAudit =
+      data.semanticState !== undefined
+        ? buildProductValidationSemanticAuditRecord({
+            previous: getProductValidationSemanticState(currentRow),
+            current: set.semanticState,
+            source: resolveSemanticAuditSource(options),
+            trigger: 'update',
+          })
+        : null;
+    if (semanticAudit) {
+      set.semanticAudit = semanticAudit;
+    }
 
     const filter: Filter<ProductValidationPatternDoc> = {
       _id: toObjectId(id),
@@ -570,7 +732,21 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     };
     const updateResult = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
-      .updateOne(filter, { $set: set } as UpdateFilter<ProductValidationPatternDoc>);
+      .updateOne(
+        filter,
+        {
+          $set: set,
+          ...(semanticAudit
+            ? {
+                $push: {
+                  semanticAuditHistory: {
+                    $each: [semanticAudit],
+                  },
+                },
+              }
+            : {}),
+        } as UpdateFilter<ProductValidationPatternDoc>
+      );
     if (updateResult.matchedCount === 0) {
       const existing = await db
         .collection<ProductValidationPatternDoc>(COLLECTION)

@@ -153,7 +153,7 @@ export const resolveLocalizedText = (
     return null;
   }
 
-  const record = value as LocalizedText;
+  const record = value;
   const candidates = getLocaleFallbackChain(locale, config);
 
   for (const candidate of candidates) {

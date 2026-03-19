@@ -27,6 +27,12 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationSkipNoopReplacementProposal,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
+import {
+  buildProductValidationSemanticAuditRecord,
+  describeProductValidationSemanticAuditRecord,
+  normalizeProductValidationSemanticState,
+  serializeProductValidationSemanticState,
+} from '@/shared/lib/products/utils/validator-semantic-state';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -40,6 +46,7 @@ type PlannedOperation = {
   label: string;
   patternId: string | null;
   reason?: string | null;
+  semanticAudit?: ProductValidatorImportOperation['semanticAudit'];
   createData?: CreateProductValidationPatternInput;
   updateData?: UpdateProductValidationPatternInput;
 };
@@ -196,6 +203,12 @@ const hasPatternChanges = (
       normalizeProductValidationPatternScopes(current.appliesToScopes),
       normalizeProductValidationPatternScopes(next.appliesToScopes)
     )
+  ) {
+    return true;
+  }
+  if (
+    serializeProductValidationSemanticState(current.semanticState) !==
+    serializeProductValidationSemanticState(next.semanticState)
   ) {
     return true;
   }
@@ -386,6 +399,7 @@ const toCreateInput = (
     launchValue,
     launchFlags,
     appliesToScopes: normalizeProductValidationPatternScopes(pattern.appliesToScopes),
+    semanticState: normalizeProductValidationSemanticState(pattern.semanticState),
   };
 };
 
@@ -556,6 +570,11 @@ const buildImportPlan = (
           code: importPattern.code,
           label: createInput.label,
           patternId: matched.id,
+          semanticAudit: buildOperationSemanticAudit({
+            previous: matched.semanticState,
+            current: createInput.semanticState ?? null,
+            trigger: 'update',
+          }),
           updateData: createInput,
         });
       } else {
@@ -564,6 +583,11 @@ const buildImportPlan = (
           code: importPattern.code,
           label: createInput.label,
           patternId: null,
+          semanticAudit: buildOperationSemanticAudit({
+            previous: null,
+            current: createInput.semanticState ?? null,
+            trigger: 'create',
+          }),
           createData: createInput,
         });
       }
@@ -608,6 +632,27 @@ const summarizeOperations = (
   skipCount: operations.filter((entry) => entry.action === 'skip').length,
 });
 
+const buildOperationSemanticAudit = ({
+  previous,
+  current,
+  trigger,
+}: {
+  previous: ProductValidationPattern['semanticState'];
+  current: CreateProductValidationPatternInput['semanticState'];
+  trigger: 'create' | 'update';
+}): NonNullable<ProductValidatorImportOperation['semanticAudit']> => {
+  const record = buildProductValidationSemanticAuditRecord({
+    previous,
+    current,
+    source: 'import',
+    trigger,
+  });
+  return {
+    ...record,
+    summary: describeProductValidationSemanticAuditRecord(record) ?? 'Semantic audit recorded.',
+  };
+};
+
 const toPublicOperations = (operations: PlannedOperation[]): ProductValidatorImportOperation[] =>
   operations.map((operation) => ({
     code: operation.code,
@@ -615,6 +660,7 @@ const toPublicOperations = (operations: PlannedOperation[]): ProductValidatorImp
     action: operation.action,
     patternId: operation.patternId,
     reason: operation.reason ?? null,
+    semanticAudit: operation.semanticAudit ?? null,
   }));
 
 export const postValidatorPatternsImportSchema = productValidatorImportRequestSchema;
@@ -655,14 +701,36 @@ export async function postValidatorPatternsImportHandler(
         if (!operation.createData) {
           throw badRequestError('Import operation is missing create data.');
         }
-        const created = await repository.createPattern(operation.createData);
+        const created = await repository.createPattern(operation.createData, {
+          semanticAuditSource: 'import',
+        });
         operation.patternId = created.id;
+        operation.semanticAudit = created.semanticAudit
+          ? {
+              ...created.semanticAudit,
+              summary:
+                describeProductValidationSemanticAuditRecord(created.semanticAudit) ??
+                operation.semanticAudit?.summary ??
+                'Semantic audit recorded.',
+            }
+          : operation.semanticAudit;
       } else if (operation.action === 'update') {
         if (!operation.patternId || !operation.updateData) {
           throw badRequestError('Import operation is missing update target or payload.');
         }
-        const updated = await repository.updatePattern(operation.patternId, operation.updateData);
+        const updated = await repository.updatePattern(operation.patternId, operation.updateData, {
+          semanticAuditSource: 'import',
+        });
         operation.patternId = updated.id;
+        operation.semanticAudit = updated.semanticAudit
+          ? {
+              ...updated.semanticAudit,
+              summary:
+                describeProductValidationSemanticAuditRecord(updated.semanticAudit) ??
+                operation.semanticAudit?.summary ??
+                'Semantic audit recorded.',
+            }
+          : operation.semanticAudit;
       } else if (operation.action === 'delete') {
         if (!operation.patternId) {
           throw badRequestError('Import operation is missing delete target.');

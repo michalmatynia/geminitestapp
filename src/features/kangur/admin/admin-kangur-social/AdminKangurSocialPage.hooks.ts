@@ -99,6 +99,7 @@ export function useAdminKangurSocialPage() {
     brainModelId: settings.brainModelId,
     visionModelId: settings.visionModelId,
     imageAddonIds: editor.imageAddonIds,
+    projectUrl: settings.projectUrl,
     buildSocialContext,
   });
 
@@ -113,6 +114,7 @@ export function useAdminKangurSocialPage() {
     linkedinConnectionId: settings.linkedinConnectionId,
     brainModelId: settings.brainModelId,
     visionModelId: settings.visionModelId,
+    projectUrl: settings.projectUrl,
     generationNotes: editor.generationNotes,
     resolveDocReferences: editor.resolveDocReferences,
     buildSocialContext,
@@ -190,6 +192,8 @@ export function useAdminKangurSocialPage() {
     linkedinConnectionId: settings.linkedinConnectionId,
     brainModelId: settings.brainModelId,
     visionModelId: settings.visionModelId,
+    projectUrl: settings.projectUrl,
+    setProjectUrl: settings.setProjectUrl,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     setBatchCaptureBaseUrl: settings.setBatchCaptureBaseUrl,
     batchCapturePresetIds: settings.batchCapturePresetIds,

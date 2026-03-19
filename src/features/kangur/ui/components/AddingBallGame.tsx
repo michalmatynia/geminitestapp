@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
 import {
@@ -15,6 +16,10 @@ import {
   KangurPracticeGameSummaryTitle,
   KangurPracticeGameSummaryXP,
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
+import {
+  getKangurMiniGameFinishLabel,
+  getKangurMiniGameScoreLabel,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurGlassPanel,
 } from '@/features/kangur/ui/design/primitives';
@@ -42,12 +47,11 @@ export default function AddingBallGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
-  const finishLabel =
-    finishLabelVariant === 'topics'
-      ? 'Wróć do tematów'
-      : finishLabelVariant === 'play'
-        ? 'Wróć do Grajmy'
-        : 'Wróć do lekcji';
+  const translations = useTranslations('KangurMiniGames');
+  const finishLabel = getKangurMiniGameFinishLabel(
+    translations,
+    finishLabelVariant === 'topics' ? 'topics' : finishLabelVariant === 'play' ? 'play' : 'lesson'
+  );
   const prefersReducedMotion = useReducedMotion();
   const resolveMotionOpacity = (value: unknown, fallback: number): number => {
     if (!value || typeof value !== 'object') return fallback;
@@ -110,7 +114,7 @@ export default function AddingBallGame({
         />
         <KangurPracticeGameSummaryTitle
           dataTestId='adding-ball-summary-title'
-          title={`Wynik: ${score}/${TOTAL_ROUNDS}`}
+          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
         />
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
@@ -121,14 +125,15 @@ export default function AddingBallGame({
         <KangurPracticeGameSummaryProgress accent='amber' percent={percent} />
         <KangurPracticeGameSummaryMessage>
           {percent === 100
-            ? 'Idealnie! Jesteś mistrzem dodawania!'
+            ? translations('adding.summary.perfect')
             : percent >= 60
-              ? 'Świetna robota!'
-              : 'Nie poddawaj się!'}
+              ? translations('adding.summary.good')
+              : translations('adding.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
           finishLabel={finishLabel}
           onFinish={handleFinishGame}
+          restartLabel={translations('shared.restart')}
           onRestart={() => {
             setRoundIdx(0);
             setScore(0);

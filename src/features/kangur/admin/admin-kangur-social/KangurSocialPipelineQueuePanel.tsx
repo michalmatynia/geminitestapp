@@ -8,6 +8,7 @@ import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 
 const REFRESH_INTERVAL_MS = 10_000;
+const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
 
 type PipelineStatus = QueueHealthStatus & {
   isPaused?: boolean;
@@ -70,13 +71,18 @@ export function KangurSocialPipelineQueuePanel({
     try {
       if (variant === 'compact') {
         const statusData = await api.get<PipelineStatus>(
-          '/api/kangur/social-pipeline/status'
+          '/api/kangur/social-pipeline/status',
+          { timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS }
         );
         setStatus(statusData);
       } else {
         const [statusData, jobsData] = await Promise.all([
-          api.get<PipelineStatus>('/api/kangur/social-pipeline/status'),
-          api.get<PipelineJobRecord[]>('/api/kangur/social-pipeline/jobs'),
+          api.get<PipelineStatus>('/api/kangur/social-pipeline/status', {
+            timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+          }),
+          api.get<PipelineJobRecord[]>('/api/kangur/social-pipeline/jobs', {
+            timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+          }),
         ]);
         setStatus(statusData);
         setJobs(jobsData);
@@ -97,7 +103,9 @@ export function KangurSocialPipelineQueuePanel({
   const handleTrigger = useCallback(async () => {
     setTriggering(true);
     try {
-      await api.post('/api/kangur/social-pipeline/trigger');
+      await api.post('/api/kangur/social-pipeline/trigger', undefined, {
+        timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+      });
       setTimeout(() => void fetchData(), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger pipeline.');
@@ -112,7 +120,9 @@ export function KangurSocialPipelineQueuePanel({
       const endpoint = status?.isPaused
         ? '/api/kangur/social-pipeline/resume'
         : '/api/kangur/social-pipeline/pause';
-      await api.post(endpoint);
+      await api.post(endpoint, undefined, {
+        timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+      });
       await fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle pause.');
@@ -136,6 +146,7 @@ export function KangurSocialPipelineQueuePanel({
       try {
         await api.delete('/api/kangur/social-pipeline/jobs', {
           params: { id: jobId },
+          timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
         });
         await fetchData();
       } catch (err) {

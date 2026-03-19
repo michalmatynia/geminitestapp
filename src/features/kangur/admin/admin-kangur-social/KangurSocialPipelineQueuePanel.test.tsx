@@ -79,8 +79,12 @@ describe('KangurSocialPipelineQueuePanel', () => {
     render(<KangurSocialPipelineQueuePanel />);
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status');
-      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs');
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status', {
+        timeout: 60_000,
+      });
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs', {
+        timeout: 60_000,
+      });
     });
 
     expect(screen.queryByRole('button', { name: 'Run pipeline now' })).toBeNull();
@@ -103,7 +107,9 @@ describe('KangurSocialPipelineQueuePanel', () => {
     render(<KangurSocialPipelineQueuePanel variant='compact' />);
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status');
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status', {
+        timeout: 60_000,
+      });
     });
 
     expect(screen.getByRole('button', { name: 'Run pipeline now' })).toBeInTheDocument();
@@ -128,8 +134,12 @@ describe('KangurSocialPipelineQueuePanel', () => {
     render(<KangurSocialPipelineQueuePanel />);
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status');
-      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs');
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status', {
+        timeout: 60_000,
+      });
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs', {
+        timeout: 60_000,
+      });
     });
 
     expect(screen.getByRole('button', { name: 'Run pipeline now' })).toBeInTheDocument();
@@ -217,6 +227,7 @@ describe('KangurSocialPipelineQueuePanel', () => {
     await waitFor(() => {
       expect(apiDeleteMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs', {
         params: { id: 'job-completed' },
+        timeout: 60_000,
       });
     });
 

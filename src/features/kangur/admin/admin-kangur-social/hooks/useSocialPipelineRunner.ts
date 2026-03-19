@@ -89,6 +89,9 @@ type PipelineJobRecord = {
 
 const PIPELINE_POLL_INTERVAL_MS = 2_000;
 const PIPELINE_TIMEOUT_MS = 10 * 60 * 1000;
+const PIPELINE_REQUEST_TIMEOUT_MS = 60_000;
+const KANGUR_SOCIAL_POSTS_QUERY_KEY = ['kangur', 'social-posts'] as const;
+const KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY = ['kangur', 'social-image-addons'] as const;
 
 const isManualPipelineResult = (value: unknown): value is ManualPipelineJobResult =>
   Boolean(
@@ -99,6 +102,13 @@ const isManualPipelineResult = (value: unknown): value is ManualPipelineJobResul
 
 const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+const invalidateSocialQueries = (queryClient: {
+  invalidateQueries: (args: { queryKey: readonly unknown[] }) => Promise<unknown> | unknown;
+}): void => {
+  void queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_POSTS_QUERY_KEY });
+  void queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY });
+};
 
 export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const { toast } = useToast();
@@ -208,7 +218,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
           jobType: 'manual-post-pipeline',
           input: pipelineInput,
         },
-        { timeout: 30_000 }
+        { timeout: PIPELINE_REQUEST_TIMEOUT_MS }
       );
 
       if (response.jobType !== 'manual-post-pipeline') {
@@ -231,7 +241,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
           '/api/kangur/social-pipeline/jobs',
           {
             params: { id: response.jobId },
-            timeout: 30_000,
+            timeout: PIPELINE_REQUEST_TIMEOUT_MS,
           }
         );
 
@@ -293,7 +303,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
           post.id === result.generatedPost!.id ? result.generatedPost! : post
         )
       );
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
+      invalidateSocialQueries(queryClient);
 
       setPipelineStep('done');
       toast(
@@ -312,7 +322,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         error instanceof Error ? error.message : 'Unknown pipeline error';
       setPipelineErrorMessage(errorMessage);
       toast(`Pipeline failed: ${errorMessage}`, { variant: 'error' });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
+      invalidateSocialQueries(queryClient);
       logKangurClientError(error, {
         source: 'AdminKangurSocialPage',
         action: 'runFullPipeline',

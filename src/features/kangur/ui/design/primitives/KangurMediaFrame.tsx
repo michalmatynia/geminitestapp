@@ -11,9 +11,11 @@ import {
 
 const buildMediaFrameAccentClassName = (
   accent: keyof typeof KANGUR_ACCENT_THEME_VARS,
+  legacyBorderClassName: string,
   gradientClassName: string
 ): string =>
   cn(
+    legacyBorderClassName,
     `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,${KANGUR_ACCENT_THEME_VARS[accent].end})]`,
     'bg-gradient-to-br',
     gradientClassName
@@ -22,14 +24,43 @@ const buildMediaFrameAccentClassName = (
 export const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
   variants: {
     accent: {
-      indigo: buildMediaFrameAccentClassName('indigo', 'kangur-gradient-accent-soft-indigo'),
-      violet: buildMediaFrameAccentClassName('violet', 'kangur-gradient-accent-soft-violet'),
-      emerald: buildMediaFrameAccentClassName('emerald', 'kangur-gradient-accent-soft-emerald'),
-      sky: buildMediaFrameAccentClassName('sky', 'kangur-gradient-accent-soft-sky'),
-      amber: buildMediaFrameAccentClassName('amber', 'kangur-gradient-accent-soft-amber'),
-      rose: buildMediaFrameAccentClassName('rose', 'kangur-gradient-accent-soft-rose'),
-      teal: buildMediaFrameAccentClassName('teal', 'kangur-gradient-accent-soft-teal'),
-      slate: 'bg-gradient-to-br kangur-gradient-accent-soft-slate [border-color:var(--kangur-soft-card-border)]',
+      indigo: buildMediaFrameAccentClassName(
+        'indigo',
+        'border-indigo-100',
+        'kangur-gradient-accent-soft-indigo'
+      ),
+      violet: buildMediaFrameAccentClassName(
+        'violet',
+        'border-violet-100',
+        'kangur-gradient-accent-soft-violet'
+      ),
+      emerald: buildMediaFrameAccentClassName(
+        'emerald',
+        'border-emerald-100',
+        'kangur-gradient-accent-soft-emerald'
+      ),
+      sky: buildMediaFrameAccentClassName(
+        'sky',
+        'border-sky-100',
+        'kangur-gradient-accent-soft-sky'
+      ),
+      amber: buildMediaFrameAccentClassName(
+        'amber',
+        'border-amber-100',
+        'kangur-gradient-accent-soft-amber'
+      ),
+      rose: buildMediaFrameAccentClassName(
+        'rose',
+        'border-rose-100',
+        'kangur-gradient-accent-soft-rose'
+      ),
+      teal: buildMediaFrameAccentClassName(
+        'teal',
+        'border-teal-100',
+        'kangur-gradient-accent-soft-teal'
+      ),
+      slate:
+        'border-slate-200/85 bg-gradient-to-br kangur-gradient-accent-soft-slate [border-color:var(--kangur-soft-card-border)]',
     },
     padding: {
       sm: 'kangur-media-padding-sm',

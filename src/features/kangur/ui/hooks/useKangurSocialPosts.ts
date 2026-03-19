@@ -19,12 +19,16 @@ type SocialPostsQueryOptions = {
   enabled?: boolean;
 };
 
+const SOCIAL_POSTS_QUERY_TIMEOUT_MS = 60_000;
+const KANGUR_SOCIAL_POSTS_QUERY_KEY = ['kangur', 'social-posts'] as const;
+
 const fetchSocialPosts = async (options?: SocialPostsQueryOptions): Promise<KangurSocialPost[]> => {
   const payload = await api.get<KangurSocialPost[]>('/api/kangur/social-posts', {
     params: {
       scope: options?.scope,
       limit: options?.limit,
     },
+    timeout: SOCIAL_POSTS_QUERY_TIMEOUT_MS,
   });
   return kangurSocialPostsSchema.parse(payload);
 };
@@ -57,7 +61,7 @@ export const useKangurSocialPosts = (
 const invalidateSocialPosts = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;
 }): void => {
-  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
+  queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_POSTS_QUERY_KEY });
 };
 
 export const useSaveKangurSocialPost = (): MutationResult<

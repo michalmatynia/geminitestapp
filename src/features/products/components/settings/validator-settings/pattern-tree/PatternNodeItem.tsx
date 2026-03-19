@@ -123,13 +123,16 @@ export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element 
             onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
               event.stopPropagation();
               select(event);
+              onEditPattern(pattern);
             }}
             aria-label={pattern.label || pattern.id}
             aria-pressed={isSelected}
             title={pattern.label || pattern.id}
-            className='flex min-w-0 flex-1 items-center gap-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+            className='flex min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
           >
-            <span className='min-w-0 flex-1 truncate font-medium text-white'>{pattern.label}</span>
+            <span className='min-w-0 flex-1 truncate font-medium text-white transition-transform duration-150 ease-out hover:scale-[1.02] hover:text-sky-100'>
+              {pattern.label}
+            </span>
             <StatusBadge status={pattern.target} variant='info' size='sm' />
             {showLocale && <StatusBadge status={localeLabel} variant='processing' size='sm' />}
             <StatusBadge

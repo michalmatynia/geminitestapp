@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import { AdminAiPathsBreadcrumbs, Badge, Button, ListPanel, Hint } from '@/shared/ui';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 import { FileUploadEventsPanel } from '@/features/files';
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
@@ -71,16 +72,16 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
         variant='flat'
         className='[&>div:first-child]:mb-3'
         header={
-          <div className='space-y-3'>
-            <div className='flex flex-wrap items-start justify-between gap-2'>
-              <div className='space-y-1'>
-                <h1 className='text-3xl font-bold tracking-tight text-white'>Job Queue</h1>
-                <AdminAiPathsBreadcrumbs
-                  parent={{ label: 'Queue', href: '/admin/ai-paths/queue' }}
-                  current={activeTabMeta.label}
-                />
-              </div>
-              <div className='flex flex-wrap items-center gap-2'>
+          <AdminTitleBreadcrumbHeader
+            title={<h1 className='text-3xl font-bold tracking-tight text-white'>Job Queue</h1>}
+            breadcrumb={
+              <AdminAiPathsBreadcrumbs
+                parent={{ label: 'Queue', href: '/admin/ai-paths/queue' }}
+                current={activeTabMeta.label}
+              />
+            }
+            actions={
+              <>
                 <Badge variant='processing' className='gap-1.5'>
                   <ActiveTabIcon className='size-3.5' />
                   {activeTabMeta.label}
@@ -88,9 +89,9 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                 <Badge variant='outline' className='border-white/10 text-gray-300'>
                   {QUEUE_TABS.length} views
                 </Badge>
-              </div>
-            </div>
-          </div>
+              </>
+            }
+          />
         }
         filters={
           <div

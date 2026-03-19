@@ -21,30 +21,8 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     summary,
     loading,
     patterns,
-    patternActionsPending,
     openCreate,
-    onCreateSkuAutoIncrementSequence,
-    onCreateLatestPriceStockSequence,
-    handleCreateNameLengthMirrorPattern,
-    handleCreateNameCategoryMirrorPattern,
-    handleCreateNameMirrorPolishSequence,
   } = useValidatorSettingsContext();
-
-  const handleCreateSkuAutoIncrement = (): void => {
-    void onCreateSkuAutoIncrementSequence();
-  };
-  const handleCreateLatestPriceStock = (): void => {
-    void onCreateLatestPriceStockSequence();
-  };
-  const handleCreateNameLengthMirror = (): void => {
-    void handleCreateNameLengthMirrorPattern();
-  };
-  const handleCreateNameCategoryMirror = (): void => {
-    void handleCreateNameCategoryMirrorPattern();
-  };
-  const handleCreateNameMirrorPolish = (): void => {
-    void handleCreateNameMirrorPolishSequence();
-  };
   const handleCopyFullDocumentation = async (): Promise<void> => {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
       toast('Clipboard API is not available in this browser.', { variant: 'error' });
@@ -69,48 +47,12 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
       description={`Active patterns: ${summary.enabled}/${summary.total}`}
       variant='subtle'
       className='p-4'
-      actions={
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            onClick={handleCreateSkuAutoIncrement}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10'
-          >
-            + SKU Auto Sequence
-          </Button>
-          <Button
-            onClick={handleCreateLatestPriceStock}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-          >
-            + Latest Price & Stock
-          </Button>
-          <Button
-            onClick={handleCreateNameLengthMirror}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-teal-500/40 text-teal-200 hover:bg-teal-500/10'
-          >
-            + Name Segment to Length + Height
-          </Button>
-          <Button
-            onClick={handleCreateNameCategoryMirror}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-lime-500/40 text-lime-200 hover:bg-lime-500/10'
-          >
-            + Name Segment to Category
-          </Button>
-          <Button
-            onClick={handleCreateNameMirrorPolish}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
-          >
-            + Name EN to PL
-          </Button>
+    >
+      <div className='space-y-4'>
+        <div
+          data-testid='validator-pattern-actions'
+          className='flex w-full flex-wrap items-center gap-2'
+        >
           <Button
             type='button'
             onClick={() => setShowImportModal(true)}
@@ -130,14 +72,14 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           >
             Copy Full Validation Docs
           </Button>
-          <Button onClick={() => openCreate()} variant='default'>
+          <Button
+            onClick={() => openCreate()}
+            variant='default'
+          >
             <Plus className='mr-2 size-4' />
             Add Pattern
           </Button>
         </div>
-      }
-    >
-      <div className='mt-4'>
         {loading ? (
           <LoadingState
             message='Loading validator patterns...'

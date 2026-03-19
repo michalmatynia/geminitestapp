@@ -2,7 +2,11 @@ import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, useEffect } from 'react';
-import { getLocalizedKangurAgeGroupLabel } from '@/features/kangur/lessons/lesson-catalog-i18n';
+import {
+  getLocalizedKangurAgeGroupLabel,
+  getLocalizedKangurLessonSectionLabel,
+  getLocalizedKangurLessonSectionTypeLabel,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import {
   hasKangurLessonDocumentContent,
 } from '@/features/kangur/lesson-documents';
@@ -87,8 +91,10 @@ export function LessonsCatalog() {
           .filter((sub) => sub.enabled)
           .map((sub) => ({
             id: sub.id,
-            label: sub.label,
-            typeLabel: sub.typeLabel,
+            label: getLocalizedKangurLessonSectionLabel(sub.id, locale, sub.label),
+            typeLabel: sub.typeLabel
+              ? getLocalizedKangurLessonSectionTypeLabel(locale, sub.typeLabel)
+              : undefined,
             lessons: sub.componentIds
               .map((componentId) => lessonByComponent.get(componentId))
               .filter((lesson): lesson is KangurLesson => Boolean(lesson)),
@@ -97,8 +103,10 @@ export function LessonsCatalog() {
 
         return {
           id: section.id,
-          label: section.label,
-          typeLabel: section.typeLabel,
+          label: getLocalizedKangurLessonSectionLabel(section.id, locale, section.label),
+          typeLabel: section.typeLabel
+            ? getLocalizedKangurLessonSectionTypeLabel(locale, section.typeLabel)
+            : undefined,
           lessons: groupLessons,
           subsections: subsections.length > 0 ? subsections : undefined,
         };
@@ -106,7 +114,7 @@ export function LessonsCatalog() {
       .filter((group) =>
         group.subsections ? group.subsections.length > 0 : group.lessons.length > 0
       );
-  }, [sections, orderedLessons]);
+  }, [locale, sections, orderedLessons]);
 
   type LessonEntry =
     | { kind: 'group'; group: (typeof displayLessonGroups)[number] }

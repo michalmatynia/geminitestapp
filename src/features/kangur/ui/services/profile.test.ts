@@ -35,6 +35,56 @@ const progress: KangurProgressState = {
   lessonMastery: {},
 };
 
+const ENGLISH_PROFILE_MESSAGES = {
+  activityLabels: {
+    calendar: 'Calendar',
+    geometry: 'Geometry',
+  },
+  guidedMomentum: {
+    badges: {
+      guidedKeeper: 'Staying on track',
+    },
+    summary: {
+      guidedKeeper: '{completed}/3 rounds',
+    },
+  },
+  recommendations: {
+    actions: {
+      playNow: 'Play now',
+      startTraining: 'Start training',
+    },
+    dailyGoal: {
+      title: 'Finish the daily goal',
+      descriptionSingle:
+        'Only 1 game is left to reach the daily goal. Today you already earned +{todayXpEarned} XP.',
+      descriptionMultiple:
+        '{remainingGames} games are left to reach the daily goal. Today you already earned +{todayXpEarned} XP.',
+    },
+  },
+} as const;
+
+const interpolateTemplate = (
+  template: string,
+  values?: Record<string, string | number>
+): string =>
+  template.replace(/\{(\w+)\}/g, (_match, key: string) => `${values?.[key] ?? `{${key}}`}`);
+
+const createProfileTranslator =
+  (messages: Record<string, unknown>) =>
+  (key: string, values?: Record<string, string | number>): string => {
+    const resolved = key
+      .split('.')
+      .reduce<unknown>(
+        (current, segment) =>
+          current && typeof current === 'object' && segment in current
+            ? (current as Record<string, unknown>)[segment]
+            : undefined,
+        messages
+      );
+
+    return typeof resolved === 'string' ? interpolateTemplate(resolved, values) : key;
+  };
+
 describe('buildKangurLearnerProfileSnapshot', () => {
   it('summarizes strongest and weakest tracked lessons from mastery data', () => {
     const insights = buildLessonMasteryInsights({
@@ -78,6 +128,35 @@ describe('buildKangurLearnerProfileSnapshot', () => {
       componentId: 'clock',
       masteryPercent: 92,
     });
+
+    const englishInsights = buildLessonMasteryInsights(
+      {
+        ...progress,
+        lessonMastery: {
+          division: {
+            attempts: 2,
+            completions: 2,
+            masteryPercent: 45,
+            bestScorePercent: 60,
+            lastScorePercent: 40,
+            lastCompletedAt: '2026-03-06T10:00:00.000Z',
+          },
+          clock: {
+            attempts: 4,
+            completions: 4,
+            masteryPercent: 92,
+            bestScorePercent: 100,
+            lastScorePercent: 90,
+            lastCompletedAt: '2026-03-06T12:00:00.000Z',
+          },
+        },
+      },
+      3,
+      'en'
+    );
+
+    expect(englishInsights.weakest[0]?.title).toBe('Division');
+    expect(englishInsights.strongest[0]?.title).toBe('Clock');
   });
 
   it('builds aggregate learner metrics from score history and progress', () => {
@@ -318,6 +397,38 @@ describe('buildKangurLearnerProfileSnapshot', () => {
       operationEmoji: '🔷',
       xpEarned: 24,
     });
+  });
+
+  it('localizes learner profile runtime strings for english locale', () => {
+    const translate = createProfileTranslator(ENGLISH_PROFILE_MESSAGES as Record<string, unknown>);
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      progress: {
+        ...progress,
+        recommendedSessionsCompleted: 2,
+      },
+      scores: [
+        createScore({
+          id: 'calendar-session',
+          operation: 'calendar',
+          created_date: '2026-03-06T12:00:00.000Z',
+        }),
+      ],
+      dailyGoalGames: 2,
+      now: new Date('2026-03-06T15:00:00.000Z'),
+      locale: 'en',
+      translate,
+    });
+
+    expect(snapshot.recentSessions[0]?.operationLabel).toBe('Calendar');
+    expect(snapshot.recommendations.find((entry) => entry.id === 'daily_goal')).toMatchObject({
+      title: 'Finish the daily goal',
+      description: 'Only 1 game is left to reach the daily goal. Today you already earned +24 XP.',
+      action: {
+        label: 'Play now',
+      },
+    });
+    expect(snapshot.recommendedSessionSummary).toBe('2/3 rounds');
+    expect(snapshot.recommendedSessionNextBadgeName).toBe('Staying on track');
   });
 
   it('adds an xp momentum recommendation when the daily game goal is complete but xp is low', () => {

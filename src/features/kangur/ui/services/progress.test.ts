@@ -330,6 +330,85 @@ describe('kangur progress mastery helpers', () => {
     });
   });
 
+  it('localizes runtime badge and momentum summaries when a translator is provided', () => {
+    const translate = (key: string, values?: Record<string, string | number>) => {
+      switch (key) {
+        case 'badges.guided_keeper.name':
+          return 'Staying on course';
+        case 'badgeSummaries.round':
+          return `${values?.['current']}/${values?.['target']} rounds`;
+        case 'momentum.allGoalsCompleted':
+          return 'All goals completed!';
+        case 'activityLabels.clock':
+          return 'Clock';
+        case 'clockSections.hours':
+          return 'Hours';
+        case 'activityKinds.clockTraining':
+          return `Clock training: ${values?.['label']}`;
+        case 'badgeTracks.xp':
+          return 'XP';
+        default:
+          return key;
+      }
+    };
+
+    const momentum = getRecommendedSessionMomentum(
+      {
+        ...createDefaultKangurProgressState(),
+        recommendedSessionsCompleted: 2,
+      },
+      { translate }
+    );
+    const projected = getRecommendedSessionProjection(
+      {
+        ...createDefaultKangurProgressState(),
+        recommendedSessionsCompleted: 2,
+      },
+      true,
+      { translate }
+    );
+    const topActivity = getProgressTopActivities(
+      {
+        ...createDefaultKangurProgressState(),
+        activityStats: {
+          'training:clock:hours': {
+            sessionsPlayed: 2,
+            perfectSessions: 0,
+            totalCorrectAnswers: 7,
+            totalQuestionsAnswered: 10,
+            totalXpEarned: 42,
+            bestScorePercent: 80,
+            lastScorePercent: 70,
+            currentStreak: 1,
+            bestStreak: 1,
+            lastPlayedAt: '2026-03-08T10:00:00.000Z',
+          },
+        },
+      },
+      1,
+      { translate }
+    )[0];
+    const tracks = getProgressBadgeTrackSummaries(
+      {
+        ...createDefaultKangurProgressState(),
+        totalXp: 480,
+        gamesPlayed: 4,
+      },
+      { maxTracks: 1 },
+      { translate }
+    );
+
+    expect(momentum).toEqual({
+      completedSessions: 2,
+      progressPercent: 67,
+      summary: '2/3 rounds',
+      nextBadgeName: 'Staying on course',
+    });
+    expect(projected.projected.summary).toBe('All goals completed!');
+    expect(topActivity?.label).toBe('Clock training: Hours');
+    expect(tracks[0]?.label).toBe('XP');
+  });
+
   it('projects guided-session momentum for the active recommended round', () => {
     const projection = getRecommendedSessionProjection(
       {

@@ -5,12 +5,10 @@ import React from 'react';
 
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import {
-  Badge,
   Breadcrumbs,
   Button,
   Card,
-  Input,
-  SelectSimple,
+  LoadingState,
 } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { cn } from '@/features/kangur/shared/utils';
@@ -18,16 +16,17 @@ import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens'
 import type { KangurSocialDocUpdatePlan, KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 
-import {
-  BRAIN_MODEL_DEFAULT_VALUE,
-} from './admin-kangur-social/AdminKangurSocialPage.Constants';
+import { BRAIN_MODEL_DEFAULT_VALUE } from './admin-kangur-social/AdminKangurSocialPage.Constants';
 import { useAdminKangurSocialPage } from './admin-kangur-social/AdminKangurSocialPage.hooks';
+import { AdminKangurSocialSettingsModal } from './admin-kangur-social/AdminKangurSocialSettingsModal';
 import { SocialPostList } from './admin-kangur-social/SocialPost.List';
-import { SocialPostEditor } from './admin-kangur-social/SocialPost.Editor';
+import { SocialPostEditorModal } from './admin-kangur-social/SocialPost.EditorModal';
 import { SocialPostPipeline } from './admin-kangur-social/SocialPost.Pipeline';
 import { KangurSocialPipelineQueuePanel } from './admin-kangur-social/KangurSocialPipelineQueuePanel';
 
 export function AdminKangurSocialPage(): React.JSX.Element {
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = React.useState(false);
+  const [isPostEditorModalOpen, setIsPostEditorModalOpen] = React.useState(false);
   const {
     posts,
     activePostId,
@@ -68,6 +67,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     brainModelOptions,
     visionModelOptions,
     addonsQuery,
+    postsQuery,
     saveMutation,
     patchMutation,
     deleteMutation,
@@ -110,6 +110,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
 
   const [postToDelete, setPostToDelete] = React.useState<KangurSocialPost | null>(null);
   const [postToUnpublish, setPostToUnpublish] = React.useState<KangurSocialPost | null>(null);
+  const isInitialPageLoading = postsQuery.isLoading && posts.length === 0;
 
   const brainModelSelectOptions = React.useMemo(() => {
     const defaultDescription = brainModelOptions.effectiveModelId
@@ -208,6 +209,27 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     { label: 'Social' },
   ];
 
+  React.useEffect(() => {
+    if (!activePost) {
+      setIsPostEditorModalOpen(false);
+    }
+  }, [activePost]);
+
+  const handleOpenPostEditor = React.useCallback(
+    (postId: string): void => {
+      setActivePostId(postId);
+      setIsPostEditorModalOpen(true);
+    },
+    [setActivePostId]
+  );
+
+  const handleCreateDraftAndOpen = React.useCallback(async (): Promise<void> => {
+    const created = await handleCreateDraft();
+    if (created) {
+      setIsPostEditorModalOpen(true);
+    }
+  }, [handleCreateDraft]);
+
   return (
     <KangurAdminContentShell
       title='StudiQ Social'
@@ -216,10 +238,6 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           <AdminFavoriteBreadcrumbRow>
             <Breadcrumbs items={breadcrumbs} className='mt-0' />
           </AdminFavoriteBreadcrumbRow>
-          <span className='hidden h-4 w-px bg-white/12 md:block' />
-          <span className='text-xs text-slate-300/80'>
-            Prepare LinkedIn updates for StudiQ improvements.
-          </span>
         </div>
       }
       breadcrumbs={breadcrumbs}
@@ -232,21 +250,10 @@ export function AdminKangurSocialPage(): React.JSX.Element {
       headerActions={
         <>
           <Button
-            size='sm'
-            onClick={() => {
-              void handleSaveSettings();
-            }}
-            disabled={!isSettingsDirty || isSavingSettings}
-            variant={isSettingsDirty ? 'success' : 'outline'}
-            className={isSettingsDirty ? 'shadow-[0_0_18px_rgba(16,185,129,0.28)]' : undefined}
-          >
-            {isSavingSettings ? 'Saving settings...' : 'Save Social settings'}
-          </Button>
-          <Button
             variant='outline'
             size='sm'
             onClick={() => {
-              void handleCreateDraft();
+              void handleCreateDraftAndOpen();
             }}
           >
             New draft
@@ -257,254 +264,224 @@ export function AdminKangurSocialPage(): React.JSX.Element {
           <Button asChild variant='outline' size='sm'>
             <Link href='/admin/integrations'>Integrations</Link>
           </Button>
+          <div className='ml-auto'>
+            <Button
+              variant={isSettingsModalOpen ? 'default' : 'outline'}
+              size='sm'
+              aria-haspopup='dialog'
+              aria-expanded={isSettingsModalOpen}
+              onClick={() => setIsSettingsModalOpen(true)}
+            >
+              Settings
+            </Button>
+          </div>
         </>
       }
     >
-      <div
-        className={cn(
-          KANGUR_GRID_ROOMY_CLASSNAME,
-          'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'
-        )}
-      >
-        <SocialPostList
-          posts={posts}
-          activePostId={activePostId}
-          onSelectPost={setActivePostId}
-          onPublishPost={(post, options): void => {
-            void handleQuickPublishPost(post.id, 'published', options);
-          }}
-          onUnpublishPost={(post, options): void => {
-            if (options?.keepLocal) {
-              void handleUnpublishPost(post.id, { keepLocal: true });
-            } else {
-              setPostToUnpublish(post);
-            }
-          }}
-          publishPendingId={publishingPostId}
-          unpublishPendingId={unpublishingPostId}
-          onDeletePost={(post): void => {
-            clearDeleteError();
-            setPostToDelete(post);
-          }}
+      {isInitialPageLoading ? (
+        <LoadingState
+          message='Loading StudiQ Social...'
+          size='lg'
+          className='min-h-[360px] rounded-2xl border border-border/60 bg-card/40 shadow-sm'
         />
-
-        <div className='space-y-6'>
-          <SocialPostPipeline
+      ) : (
+        <div
+          className={cn(
+            KANGUR_GRID_ROOMY_CLASSNAME,
+            'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'
+          )}
+        >
+          <SocialPostList
+            posts={posts}
             activePostId={activePostId}
-            pipelineStep={pipelineStep}
-            handleRunFullPipeline={handleRunFullPipeline}
-          />
-
-          <KangurSocialPipelineQueuePanel variant='compact' />
-
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
-            <div className='flex items-center justify-between'>
-              <div>
-                <div className='text-sm font-semibold text-foreground'>Brain model</div>
-                <div className='text-sm text-muted-foreground'>
-                  Capability: StudiQ Social Post Generation
-                </div>
-              </div>
-              <Badge variant='outline'>{brainModelBadgeLabel}</Badge>
-            </div>
-            <div className='mt-3 space-y-2'>
-              <SelectSimple
-                value={brainModelId || BRAIN_MODEL_DEFAULT_VALUE}
-                onValueChange={handleBrainModelChange}
-                options={brainModelSelectOptions}
-                placeholder='Select model override'
-                size='sm'
-                ariaLabel='Brain model override'
-                title='Brain model override'
-                disabled={brainModelOptions.isLoading}
-              />
-            </div>
-          </Card>
-
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
-            <div className='flex items-center justify-between'>
-              <div>
-                <div className='text-sm font-semibold text-foreground'>Vision model</div>
-                <div className='text-sm text-muted-foreground'>
-                  Capability: StudiQ Social Visual Analysis
-                </div>
-              </div>
-              <Badge variant='outline'>{visionModelBadgeLabel}</Badge>
-            </div>
-            <div className='mt-3 space-y-2'>
-              <SelectSimple
-                value={visionModelId || BRAIN_MODEL_DEFAULT_VALUE}
-                onValueChange={handleVisionModelChange}
-                options={visionModelSelectOptions}
-                placeholder='Select model override'
-                size='sm'
-                ariaLabel='Vision model override'
-                title='Vision model override'
-                disabled={visionModelOptions.isLoading}
-              />
-            </div>
-          </Card>
-
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
-            <div>
-              <div className='text-sm font-semibold text-foreground'>Project URL</div>
-              <div className='text-xs text-muted-foreground'>
-                Current project link to reference in generated posts.
-              </div>
-            </div>
-            <div className='mt-3'>
-              <Input
-                type='url'
-                value={projectUrl}
-                onChange={(e) => setProjectUrl(e.target.value)}
-                placeholder='https://example.com/project'
-                size='sm'
-                aria-label='Project URL'
-              />
-            </div>
-          </Card>
-
-          {activePost?.status === 'failed' && activePost.publishError ? (
-            <Card
-              variant='subtle'
-              padding='md'
-              className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-            >
-              <div className='space-y-2'>
-                <div className='text-sm font-semibold text-foreground'>Publish error</div>
-                <div className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                  {activePost.publishError}
-                </div>
-              </div>
-            </Card>
-          ) : null}
-
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
-            <SocialPostEditor
-              activePost={activePost}
-              editorState={editorState}
-              setEditorState={setEditorState}
-              scheduledAt={scheduledAt}
-              setScheduledAt={setScheduledAt}
-              docReferenceInput={docReferenceInput}
-              setDocReferenceInput={setDocReferenceInput}
-              generationNotes={generationNotes}
-              setGenerationNotes={setGenerationNotes}
-              handleGenerate={handleGenerate}
-              imageAssets={imageAssets}
-              handleRemoveImage={handleRemoveImage}
-              setShowMediaLibrary={setShowMediaLibrary}
-              showMediaLibrary={showMediaLibrary}
-              handleAddImages={handleAddImages}
-              addonForm={addonForm}
-              setAddonForm={setAddonForm}
-              handleCreateAddon={handleCreateAddon}
-              createAddonPending={createAddonMutation.isPending}
-              batchCaptureBaseUrl={batchCaptureBaseUrl}
-              setBatchCaptureBaseUrl={setBatchCaptureBaseUrl}
-              batchCapturePresetIds={batchCapturePresetIds}
-              handleToggleCapturePreset={handleToggleCapturePreset}
-              selectAllCapturePresets={selectAllCapturePresets}
-              clearCapturePresets={clearCapturePresets}
-              handleBatchCapture={handleBatchCapture}
-              batchCapturePending={batchCaptureMutation.isPending}
-              batchCaptureResult={batchCaptureResult}
-              recentAddons={recentAddons}
-              recentAddonsLoading={addonsQuery.isLoading}
-              selectedAddonSet={selectedAddonSet}
-              handleSelectAddon={handleSelectAddon}
-              handleRemoveAddon={handleRemoveAddon}
-              hasVisualDocUpdates={hasVisualDocUpdates}
-              handlePreviewDocUpdates={handlePreviewDocUpdates}
-              previewDocUpdatesPending={previewDocUpdatesMutation.isPending}
-              handleApplyDocUpdates={handleApplyDocUpdates}
-              applyDocUpdatesPending={applyDocUpdatesMutation.isPending}
-              docUpdatesResult={docUpdatesResult}
-              docUpdatesAppliedAt={docUpdatesAppliedAt}
-              docUpdatesAppliedBy={docUpdatesAppliedBy}
-              docUpdatesAppliedCount={docUpdatesAppliedCount}
-              docUpdatesSkippedCount={docUpdatesSkippedCount}
-              docUpdatesPlan={docUpdatesPlan}
-              linkedinConnectionId={linkedinConnectionId}
-              handleLinkedInConnectionChange={handleLinkedInConnectionChange}
-              linkedInOptions={linkedInOptions}
-              linkedinIntegration={linkedinIntegration}
-              selectedLinkedInConnection={selectedLinkedInConnection}
-              linkedInExpiryStatus={linkedInExpiryStatus}
-              linkedInExpiryLabel={linkedInExpiryLabel}
-              linkedInDaysRemaining={linkedInDaysRemaining}
-              handleSave={handleSave}
-              handlePublish={handlePublish}
-              saveMutationPending={saveMutation.isPending}
-              patchMutationPending={patchMutation.isPending}
-              publishMutationPending={publishMutation.isPending}
-              docsUsed={docsUsed}
-              contextSummary={contextSummary}
-              contextLoading={contextLoading}
-              handleLoadContext={handleLoadContext}
-            />
-          </Card>
-
-          <ConfirmModal
-            isOpen={Boolean(postToDelete)}
-            onClose={(): void => {
-              setPostToDelete(null);
+            isLoading={postsQuery.isLoading}
+            onSelectPost={setActivePostId}
+            onOpenPost={handleOpenPostEditor}
+            onPublishPost={(post, options): void => {
+              void handleQuickPublishPost(post.id, 'published', options);
+            }}
+            onUnpublishPost={(post, options): void => {
+              if (options?.keepLocal) {
+                void handleUnpublishPost(post.id, { keepLocal: true });
+              } else {
+                setPostToUnpublish(post);
+              }
+            }}
+            publishPendingId={publishingPostId}
+            unpublishPendingId={unpublishingPostId}
+            onDeletePost={(post): void => {
               clearDeleteError();
+              setPostToDelete(post);
             }}
-            onConfirm={async (): Promise<void> => {
-              if (!postToDelete) return;
-              await handleDeletePost(postToDelete.id);
-            }}
-            title='Delete draft'
-            message={
-              <div className='space-y-2'>
-                <div>
-                  {`Delete draft "${postToDelete?.titlePl || postToDelete?.titleEn || 'Untitled update'}"? This action cannot be undone.`}
-                </div>
-                {deleteError ? (
-                  <div className='rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
-                    {deleteError}
-                  </div>
-                ) : null}
-              </div>
-            }
-            confirmText='Delete'
-            isDangerous={true}
-            loading={deleteMutation.isPending}
           />
 
-          <ConfirmModal
-            isOpen={Boolean(postToUnpublish)}
-            onClose={(): void => setPostToUnpublish(null)}
-            onConfirm={async (): Promise<void> => {
-              if (!postToUnpublish) return;
-              await handleUnpublishPost(postToUnpublish.id);
-              setPostToUnpublish(null);
-            }}
-            title='Unpublish from LinkedIn'
-            message='This will delete the LinkedIn post and remove it from Kangur Social. Continue?'
-            confirmText='Unpublish'
-            isDangerous={true}
-            loading={unpublishMutation.isPending}
-          />
+          <div className='space-y-6'>
+            <SocialPostPipeline
+              activePostId={activePostId}
+              pipelineStep={pipelineStep}
+              handleRunFullPipeline={handleRunFullPipeline}
+            />
+
+            <KangurSocialPipelineQueuePanel variant='compact' />
+
+            {activePost?.status === 'failed' && activePost.publishError ? (
+              <Card
+                variant='subtle'
+                padding='md'
+                className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+              >
+                <div className='space-y-2'>
+                  <div className='text-sm font-semibold text-foreground'>Publish error</div>
+                  <div className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                    {activePost.publishError}
+                  </div>
+                </div>
+              </Card>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
+
+      <ConfirmModal
+        isOpen={Boolean(postToDelete)}
+        onClose={(): void => {
+          setPostToDelete(null);
+          clearDeleteError();
+        }}
+        onConfirm={async (): Promise<void> => {
+          if (!postToDelete) return;
+          await handleDeletePost(postToDelete.id);
+        }}
+        title='Delete draft'
+        message={
+          <div className='space-y-2'>
+            <div>
+              {`Delete draft "${postToDelete?.titlePl || postToDelete?.titleEn || 'Untitled update'}"? This action cannot be undone.`}
+            </div>
+            {deleteError ? (
+              <div className='rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive'>
+                {deleteError}
+              </div>
+            ) : null}
+          </div>
+        }
+        confirmText='Delete'
+        isDangerous={true}
+        loading={deleteMutation.isPending}
+      />
+
+      <SocialPostEditorModal
+        isOpen={isPostEditorModalOpen}
+        onClose={() => setIsPostEditorModalOpen(false)}
+        activePost={activePost}
+        editorProps={{
+          activePost,
+          editorState,
+          setEditorState,
+          scheduledAt,
+          setScheduledAt,
+          imageAssets,
+          handleRemoveImage,
+          setShowMediaLibrary,
+          showMediaLibrary,
+          handleAddImages,
+          recentAddons,
+          recentAddonsLoading: addonsQuery.isLoading,
+          selectedAddonSet,
+          handleSelectAddon,
+          handleRemoveAddon,
+          handleSave,
+          handlePublish,
+          saveMutationPending: saveMutation.isPending,
+          patchMutationPending: patchMutation.isPending,
+          publishMutationPending: publishMutation.isPending,
+        }}
+        imagesProps={{
+          imageAssets,
+          handleRemoveImage,
+          setShowMediaLibrary,
+          showMediaLibrary,
+          handleAddImages,
+        }}
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(postToUnpublish)}
+        onClose={(): void => setPostToUnpublish(null)}
+        onConfirm={async (): Promise<void> => {
+          if (!postToUnpublish) return;
+          await handleUnpublishPost(postToUnpublish.id);
+          setPostToUnpublish(null);
+        }}
+        title='Unpublish from LinkedIn'
+        message='This will delete the LinkedIn post and remove it from Kangur Social. Continue?'
+        confirmText='Unpublish'
+        isDangerous={true}
+        loading={unpublishMutation.isPending}
+      />
+      <AdminKangurSocialSettingsModal
+        open={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        onSave={() => {
+          void handleSaveSettings();
+        }}
+        isSaving={isSavingSettings}
+        hasUnsavedChanges={isSettingsDirty}
+        brainModelId={brainModelId}
+        visionModelId={visionModelId}
+        projectUrl={projectUrl}
+        brainModelBadgeLabel={brainModelBadgeLabel}
+        visionModelBadgeLabel={visionModelBadgeLabel}
+        brainModelSelectOptions={brainModelSelectOptions}
+        visionModelSelectOptions={visionModelSelectOptions}
+        brainModelLoading={brainModelOptions.isLoading}
+        visionModelLoading={visionModelOptions.isLoading}
+        linkedinConnectionId={linkedinConnectionId}
+        linkedInOptions={linkedInOptions}
+        linkedinIntegration={linkedinIntegration}
+        selectedLinkedInConnection={selectedLinkedInConnection}
+        linkedInExpiryStatus={linkedInExpiryStatus}
+        linkedInExpiryLabel={linkedInExpiryLabel}
+        linkedInDaysRemaining={linkedInDaysRemaining}
+        addonForm={addonForm}
+        setAddonForm={setAddonForm}
+        createAddonPending={createAddonMutation.isPending}
+        batchCaptureBaseUrl={batchCaptureBaseUrl}
+        batchCapturePresetIds={batchCapturePresetIds}
+        batchCapturePending={batchCaptureMutation.isPending}
+        batchCaptureResult={batchCaptureResult}
+        activePost={activePost}
+        contextSummary={contextSummary}
+        contextLoading={contextLoading}
+        docReferenceInput={docReferenceInput}
+        generationNotes={generationNotes}
+        docsUsed={docsUsed}
+        hasVisualDocUpdates={hasVisualDocUpdates}
+        previewDocUpdatesPending={previewDocUpdatesMutation.isPending}
+        applyDocUpdatesPending={applyDocUpdatesMutation.isPending}
+        docUpdatesResult={docUpdatesResult}
+        docUpdatesAppliedAt={docUpdatesAppliedAt}
+        docUpdatesAppliedBy={docUpdatesAppliedBy}
+        docUpdatesAppliedCount={docUpdatesAppliedCount}
+        docUpdatesSkippedCount={docUpdatesSkippedCount}
+        docUpdatesPlan={docUpdatesPlan}
+        onBrainModelChange={handleBrainModelChange}
+        onVisionModelChange={handleVisionModelChange}
+        onLinkedInConnectionChange={handleLinkedInConnectionChange}
+        onProjectUrlChange={setProjectUrl}
+        onDocReferenceInputChange={setDocReferenceInput}
+        onGenerationNotesChange={setGenerationNotes}
+        onLoadContext={handleLoadContext}
+        onGenerate={handleGenerate}
+        onPreviewDocUpdates={handlePreviewDocUpdates}
+        onApplyDocUpdates={handleApplyDocUpdates}
+        onHandleCreateAddon={handleCreateAddon}
+        onBatchCaptureBaseUrlChange={setBatchCaptureBaseUrl}
+        onToggleCapturePreset={handleToggleCapturePreset}
+        onSelectAllCapturePresets={selectAllCapturePresets}
+        onClearCapturePresets={clearCapturePresets}
+        onHandleBatchCapture={handleBatchCapture}
+      />
     </KangurAdminContentShell>
   );
 }

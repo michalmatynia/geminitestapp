@@ -44,6 +44,7 @@ const SystemLogsActionsContext = createContext<SystemLogsActionsContextValue | n
 
 const CLEAR_LOG_TARGET_LABELS: Record<ClearLogsTarget, string> = {
   error_logs: 'Error logs',
+  info_logs: 'Info events',
   activity_logs: 'Activity logs',
   page_access_logs: 'Page Access logs',
   all_logs: 'All logs',

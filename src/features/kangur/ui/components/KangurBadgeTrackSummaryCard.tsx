@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   KangurCardDescription,
   KangurCardTitle,
@@ -12,6 +13,7 @@ import type {
   KangurBadgeTrackKey,
   KangurBadgeTrackSummary,
 } from '@/features/kangur/ui/services/progress';
+import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
 
 export const KANGUR_BADGE_TRACK_ACCENTS: Record<KangurBadgeTrackKey, KangurAccent> = {
@@ -73,15 +75,29 @@ export function KangurBadgeTrackCardBody({
   track: KangurBadgeTrackSummary;
   className?: string;
 }): React.JSX.Element {
+  const translations = useTranslations('KangurProgressRuntime');
+
   return (
     <div className={cn('space-y-1', className)}>
       <KangurCardTitle as='p' className='w-full'>
-        {track.unlockedCount}/{track.totalCount} odznak
+        {translateKangurProgressWithFallback(
+          translations,
+          'badgeTrackCard.count',
+          `${track.unlockedCount}/${track.totalCount} odznak`,
+          {
+            unlocked: track.unlockedCount,
+            total: track.totalCount,
+          }
+        )}
       </KangurCardTitle>
       <KangurCardDescription as='p' className='w-full leading-5' size='xs'>
         {track.nextBadge
           ? `${track.nextBadge.name} · ${track.nextBadge.summary}`
-          : 'Wszystkie odznaki odblokowane'}
+          : translateKangurProgressWithFallback(
+              translations,
+              'badgeTrackCard.allUnlocked',
+              'Wszystkie odznaki odblokowane'
+            )}
       </KangurCardDescription>
     </div>
   );

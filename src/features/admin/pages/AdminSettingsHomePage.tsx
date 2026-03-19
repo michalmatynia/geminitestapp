@@ -2,7 +2,6 @@ import {
   BellIcon,
   ArrowRightIcon,
   Brain,
-  Radar,
   Activity,
   MonitorPlay,
   RefreshCcw,
@@ -68,15 +67,6 @@ const settings: SettingsOption[] = [
       'Unified AI center: provider keys, model routing, prompts, schedules, and metrics.',
     color: 'emerald',
     bgColor: 'bg-emerald-500/10',
-  },
-  {
-    id: 'logging',
-    href: '/admin/settings/logging',
-    icon: Radar,
-    title: 'Logging',
-    description: 'Configure client logging context and tags.',
-    color: 'violet',
-    bgColor: 'bg-violet-500/10',
   },
   {
     id: 'folder-trees',

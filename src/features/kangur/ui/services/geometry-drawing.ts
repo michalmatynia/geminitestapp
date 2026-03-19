@@ -1,4 +1,8 @@
 import type { Point2d } from '@/shared/contracts/geometry';
+import {
+  translateKangurMiniGameWithFallback,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 
 import { loosenMax, loosenMin, loosenMinInt } from './drawing-leniency';
 
@@ -44,7 +48,9 @@ type GeometryShapeRule = {
   maxAspect?: number;
   idealAspect?: number;
   aspectTolerance?: number;
+  successMessageKey: string;
   successMessage: string;
+  failureMessageKey: string;
   failureMessage: string;
 };
 
@@ -68,7 +74,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxAspect: 1.35,
     idealAspect: 1,
     aspectTolerance: 0.62,
+    successMessageKey: 'geometryDrawing.feedback.success.circle',
     successMessage: 'Super! To wygląda jak koło.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.circle',
     failureMessage: 'Spróbuj narysować bardziej okrągłą linię.',
   },
   oval: {
@@ -81,7 +89,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxAspect: 3.0,
     idealAspect: 1.7,
     aspectTolerance: 1.1,
+    successMessageKey: 'geometryDrawing.feedback.success.oval',
     successMessage: 'Świetnie! To wygląda jak owal.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.oval',
     failureMessage: 'Spróbuj narysować bardziej wydłużony owal.',
   },
   triangle: {
@@ -92,7 +102,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxClosureRatio: 0.24,
     minAspect: 0.65,
     maxAspect: 2.2,
+    successMessageKey: 'geometryDrawing.feedback.success.triangle',
     successMessage: 'Brawo! To poprawny trójkąt.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.triangle',
     failureMessage: 'Spróbuj narysować 3 wyraźne rogi.',
   },
   square: {
@@ -105,7 +117,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxAspect: 1.42,
     idealAspect: 1,
     aspectTolerance: 0.5,
+    successMessageKey: 'geometryDrawing.feedback.success.square',
     successMessage: 'Świetnie! To wygląda jak kwadrat.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.square',
     failureMessage: 'Spróbuj narysować 4 boki o podobnej długości.',
   },
   diamond: {
@@ -118,7 +132,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxAspect: 2.4,
     idealAspect: 1.2,
     aspectTolerance: 1.1,
+    successMessageKey: 'geometryDrawing.feedback.success.diamond',
     successMessage: 'Brawo! To wygląda jak romb.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.diamond',
     failureMessage: 'Spróbuj narysować ukośne boki i 4 wyraźne rogi.',
   },
   rectangle: {
@@ -131,7 +147,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxAspect: 3.4,
     idealAspect: 1.9,
     aspectTolerance: 1.4,
+    successMessageKey: 'geometryDrawing.feedback.success.rectangle',
     successMessage: 'Dobrze! To wygląda jak prostokąt.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.rectangle',
     failureMessage: 'Spróbuj narysować 4 rogi i dłuższy bok niż drugi.',
   },
   pentagon: {
@@ -142,7 +160,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxClosureRatio: 0.26,
     minAspect: 0.62,
     maxAspect: 1.95,
+    successMessageKey: 'geometryDrawing.feedback.success.pentagon',
     successMessage: 'Mega! Narysowano pięciokąt.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.pentagon',
     failureMessage: 'Spróbuj narysować 5 wyraźnych rogów.',
   },
   hexagon: {
@@ -153,7 +173,9 @@ const SHAPE_RULES: Record<GeometryShapeId, GeometryShapeRule> = {
     maxClosureRatio: 0.27,
     minAspect: 0.62,
     maxAspect: 2.1,
+    successMessageKey: 'geometryDrawing.feedback.success.hexagon',
     successMessage: 'Świetnie! To wygląda jak sześciokąt.',
+    failureMessageKey: 'geometryDrawing.feedback.failure.default.hexagon',
     failureMessage: 'Spróbuj narysować 6 wyraźnych rogów.',
   },
 };
@@ -393,14 +415,27 @@ const isAspectInRange = (aspectRatio: number, rule: GeometryShapeRule): boolean 
   return true;
 };
 
-const toRejected = (message: string): GeometryDrawingEvaluation => ({
+const translateGeometryDrawing = (
+  translate: KangurMiniGameTranslate | undefined,
+  key: string,
+  fallback: string,
+  values?: Record<string, number | string>
+): string =>
+  translateKangurMiniGameWithFallback(translate, key, fallback, values);
+
+const toRejected = (
+  translate: KangurMiniGameTranslate | undefined,
+  key: string,
+  fallback: string,
+  values?: Record<string, number | string>
+): GeometryDrawingEvaluation => ({
   accepted: false,
   score: 0,
   corners: 0,
   closureRatio: 1,
   aspectRatio: 99,
   lengthRatio: 0,
-  message,
+  message: translateGeometryDrawing(translate, key, fallback, values),
 });
 
 const resolveFailureMessage = (
@@ -412,61 +447,127 @@ const resolveFailureMessage = (
   closureLimit: number,
   lengthRatio: number,
   minLengthRatio: number,
-  maxLengthRatio: number
+  maxLengthRatio: number,
+  translate?: KangurMiniGameTranslate
 ): string => {
   if (closureRatio > closureLimit) {
-    return 'Domknij figurę. Początek i koniec linii są zbyt daleko.';
+    return translateGeometryDrawing(
+      translate,
+      'geometryDrawing.feedback.failure.closeShape',
+      'Domknij figurę. Początek i koniec linii są zbyt daleko.'
+    );
   }
 
   if (lengthRatio < minLengthRatio) {
-    return 'Linia jest zbyt krótka. Obrysuj kształt bardziej dookoła.';
+    return translateGeometryDrawing(
+      translate,
+      'geometryDrawing.feedback.failure.tooShortPath',
+      'Linia jest zbyt krótka. Obrysuj kształt bardziej dookoła.'
+    );
   }
 
   if (lengthRatio > maxLengthRatio) {
-    return 'Linia jest zbyt poszarpana. Spróbuj rysować bardziej płynnie.';
+    return translateGeometryDrawing(
+      translate,
+      'geometryDrawing.feedback.failure.tooJaggedPath',
+      'Linia jest zbyt poszarpana. Spróbuj rysować bardziej płynnie.'
+    );
   }
 
   if (corners < rule.minCorners) {
-    return `Dodaj więcej rogów. Ta figura powinna mieć około ${rule.idealCorners}.`;
+    return translateGeometryDrawing(
+      translate,
+      'geometryDrawing.feedback.failure.addMoreCorners',
+      `Dodaj więcej rogów. Ta figura powinna mieć około ${rule.idealCorners}.`,
+      { idealCorners: rule.idealCorners }
+    );
   }
 
   if (corners > rule.maxCorners) {
-    return `Masz za dużo rogów. Spróbuj narysować około ${rule.idealCorners}.`;
+    return translateGeometryDrawing(
+      translate,
+      'geometryDrawing.feedback.failure.tooManyCorners',
+      `Masz za dużo rogów. Spróbuj narysować około ${rule.idealCorners}.`,
+      { idealCorners: rule.idealCorners }
+    );
   }
 
   if (!isAspectInRange(aspectRatio, rule)) {
-    if (target === 'square') return 'Kwadrat powinien mieć boki bardziej podobnej długości.';
-    if (target === 'rectangle') return 'Prostokąt powinien mieć dwa boki wyraźnie dłuższe.';
-    if (target === 'circle') return 'Koło powinno być bardziej równe i okrągłe.';
-    if (target === 'oval') return 'Owal powinien być bardziej wydłużony.';
-    if (target === 'diamond') return 'Romb powinien być mniej spłaszczony lub mniej wydłużony.';
+    if (target === 'square') {
+      return translateGeometryDrawing(
+        translate,
+        'geometryDrawing.feedback.failure.aspect.square',
+        'Kwadrat powinien mieć boki bardziej podobnej długości.'
+      );
+    }
+    if (target === 'rectangle') {
+      return translateGeometryDrawing(
+        translate,
+        'geometryDrawing.feedback.failure.aspect.rectangle',
+        'Prostokąt powinien mieć dwa boki wyraźnie dłuższe.'
+      );
+    }
+    if (target === 'circle') {
+      return translateGeometryDrawing(
+        translate,
+        'geometryDrawing.feedback.failure.aspect.circle',
+        'Koło powinno być bardziej równe i okrągłe.'
+      );
+    }
+    if (target === 'oval') {
+      return translateGeometryDrawing(
+        translate,
+        'geometryDrawing.feedback.failure.aspect.oval',
+        'Owal powinien być bardziej wydłużony.'
+      );
+    }
+    if (target === 'diamond') {
+      return translateGeometryDrawing(
+        translate,
+        'geometryDrawing.feedback.failure.aspect.diamond',
+        'Romb powinien być mniej spłaszczony lub mniej wydłużony.'
+      );
+    }
   }
 
-  return rule.failureMessage;
+  return translateGeometryDrawing(translate, rule.failureMessageKey, rule.failureMessage);
 };
 
 export const evaluateGeometryDrawing = (
   target: GeometryShapeId,
-  rawPoints: Point2d[]
+  rawPoints: Point2d[],
+  translate?: KangurMiniGameTranslate
 ): GeometryDrawingEvaluation => {
   const rule = SHAPE_RULES[target];
   const lenientRule = applyDrawingLeniency(rule);
   const sanitized = sanitizePoints(rawPoints);
 
   if (sanitized.length < MIN_DRAWING_POINTS) {
-    return toRejected('Narysuj większy kształt jednym ciągiem.');
+    return toRejected(
+      translate,
+      'geometryDrawing.feedback.failure.drawLonger',
+      'Narysuj większy kształt jednym ciągiem.'
+    );
   }
 
   const sampled = samplePath(sanitized);
   const box = computeBoundingBox(sampled);
   if (box.width < MIN_DRAWING_SIZE || box.height < MIN_DRAWING_SIZE) {
-    return toRejected('Kształt jest zbyt mały. Narysuj go większego.');
+    return toRejected(
+      translate,
+      'geometryDrawing.feedback.failure.tooSmall',
+      'Kształt jest zbyt mały. Narysuj go większego.'
+    );
   }
 
   const first = sampled[0];
   const last = sampled[sampled.length - 1];
   if (!first || !last) {
-    return toRejected('Nie udało się odczytać rysunku.');
+    return toRejected(
+      translate,
+      'geometryDrawing.feedback.failure.unreadable',
+      'Nie udało się odczytać rysunku.'
+    );
   }
 
   const closureRatio = distance(first, last) / box.diagonal;
@@ -504,17 +605,18 @@ export const evaluateGeometryDrawing = (
     aspectRatio: Number(aspectRatio.toFixed(3)),
     lengthRatio: Number(lengthRatio.toFixed(3)),
     message: accepted
-      ? rule.successMessage
+      ? translateGeometryDrawing(translate, rule.successMessageKey, rule.successMessage)
       : resolveFailureMessage(
-        target,
-        lenientRule,
-        corners,
-        closureRatio,
-        aspectRatio,
-        closureLimit,
-        lengthRatio,
-        minLengthRatio,
-        maxLengthRatio
-      ),
+          target,
+          lenientRule,
+          corners,
+          closureRatio,
+          aspectRatio,
+          closureLimit,
+          lengthRatio,
+          minLengthRatio,
+          maxLengthRatio,
+          translate
+        ),
   };
 };

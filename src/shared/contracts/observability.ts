@@ -271,6 +271,7 @@ export type MongoRebuildIndexesResponseDto = MongoRebuildIndexesResponse;
 
 export const clearLogsTargetSchema = z.enum([
   'error_logs',
+  'info_logs',
   'activity_logs',
   'page_access_logs',
   'all_logs',

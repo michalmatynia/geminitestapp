@@ -5,7 +5,6 @@ import { useState, type ChangeEvent } from 'react';
 import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  AdminSettingsPageLayout,
   Button,
   FormField,
   FormSection,
@@ -13,10 +12,10 @@ import {
   UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
-function LoggingSettingsForm({
+function ObservationPostSettingsForm({
   initialTags,
   initialFlags,
 }: {
@@ -38,6 +37,7 @@ function LoggingSettingsForm({
       const parsedFlags = clientFlags.trim()
         ? (JSON.parse(clientFlags) as Record<string, unknown>)
         : {};
+
       await saveSettingsMutation.mutateAsync([
         {
           key: CLIENT_LOGGING_KEYS.tags,
@@ -48,6 +48,7 @@ function LoggingSettingsForm({
           value: serializeSetting(parsedFlags),
         },
       ]);
+
       setDirty(false);
       toast('Logging settings saved.', { variant: 'success' });
     } catch (error) {
@@ -59,59 +60,53 @@ function LoggingSettingsForm({
   };
 
   return (
-    <AdminSettingsPageLayout
-      title='Logging Settings'
-      current='Logging'
-      description='Configure client logging context shared with error reports.'
+    <FormSection
+      title='Client logging context'
+      description='Provide feature flags and tags attached to client errors.'
+      className='p-6'
     >
-      <FormSection
-        title='Client logging context'
-        description='Provide feature flags and tags attached to client errors.'
-        className='p-6'
-      >
-        <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
-          <FormField
-            label='Feature flags (JSON)'
-            description='Key-value pairs representing active experiment flags.'
-          >
-            <Textarea
-              className='min-h-[240px] font-mono text-[11px]'
-              value={clientFlags}
-              onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
-                setClientFlags(event.target.value);
-                setDirty(true);
-              }}
-            />
-          </FormField>
-          <FormField
-            label='Tags (JSON)'
-            description='Context tags attached to error reports and logs.'
-          >
-            <Textarea
-              className='min-h-[240px] font-mono text-[11px]'
-              value={clientTags}
-              onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
-                setClientTags(event.target.value);
-                setDirty(true);
-              }}
-            />
-          </FormField>
-        </div>
-        <div className='mt-6 flex justify-end'>
-          <Button
-            type='button'
-            onClick={() => void saveSettings()}
-            disabled={!dirty || saveSettingsMutation.isPending}
-          >
-            Save settings
-          </Button>
-        </div>
-      </FormSection>
-    </AdminSettingsPageLayout>
+      <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+        <FormField
+          label='Feature flags (JSON)'
+          description='Key-value pairs representing active experiment flags.'
+        >
+          <Textarea
+            className='min-h-[240px] font-mono text-[11px]'
+            value={clientFlags}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+              setClientFlags(event.target.value);
+              setDirty(true);
+            }}
+          />
+        </FormField>
+        <FormField
+          label='Tags (JSON)'
+          description='Context tags attached to error reports and logs.'
+        >
+          <Textarea
+            className='min-h-[240px] font-mono text-[11px]'
+            value={clientTags}
+            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+              setClientTags(event.target.value);
+              setDirty(true);
+            }}
+          />
+        </FormField>
+      </div>
+      <div className='mt-6 flex justify-end'>
+        <Button
+          type='button'
+          onClick={() => void saveSettings()}
+          disabled={!dirty || saveSettingsMutation.isPending}
+        >
+          Save settings
+        </Button>
+      </div>
+    </FormSection>
   );
 }
 
-export default function AdminLoggingSettingsPage(): React.JSX.Element {
+export function ObservationPostSettingsPanel(): React.JSX.Element {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -128,9 +123,11 @@ export default function AdminLoggingSettingsPage(): React.JSX.Element {
   );
 
   return (
-    <LoggingSettingsForm
+    <ObservationPostSettingsForm
       initialTags={JSON.stringify(tags ?? {}, null, 2)}
       initialFlags={JSON.stringify(flags ?? {}, null, 2)}
     />
   );
 }
+
+export default ObservationPostSettingsPanel;

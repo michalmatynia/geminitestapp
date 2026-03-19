@@ -19,15 +19,13 @@ import {
   parseDynamicReplacementRecipe,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
-  PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,
   allowsProductValidationSemanticOperationExecutionWithoutRegexMatch,
+  isProductValidationSemanticOperationNoopReplacement,
 } from '@/shared/lib/products/utils/validator-semantic-operations';
 import {
-  matchesProductValidationSemanticOperation,
   getProductValidationSemanticState,
 } from '@/shared/lib/products/utils/validator-semantic-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS } from '@/features/products/lib/validatorSemanticPresets';
 
 
 export type { FieldValidatorIssue };
@@ -238,14 +236,12 @@ export const allowsPatternExecutionWithoutRegexMatch = (
  */
 export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPattern): boolean => {
   if (pattern.target !== 'price' && pattern.target !== 'stock') return false;
+  const semanticState = getProductValidationSemanticState(pattern);
   return (
     allowsPatternExecutionWithoutRegexMatch(pattern) &&
-    matchesProductValidationSemanticOperation(pattern, {
-      presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.mirrorLatestField,
-      operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.mirrorLatestField,
-      sourceField: pattern.target,
-      targetField: pattern.target,
-    })
+    semanticState?.operation === 'mirror_latest_field' &&
+    semanticState.sourceField === pattern.target &&
+    semanticState.targetField === pattern.target
   );
 };
 
@@ -566,15 +562,29 @@ function applyPatternPlansToField({
         : null;
       const effectiveReplacement = resolvedReplacement;
       const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
+      const isSemanticNoopReplacement =
+        hasEffectiveReplacement &&
+        isProductValidationSemanticOperationNoopReplacement({
+          value: getProductValidationSemanticState(pattern)?.operation,
+          context: {
+            fieldName,
+            values,
+            replacementValue: effectiveReplacement?.value ?? null,
+          },
+        });
       const nextValue = hasEffectiveReplacement
-        ? applyResolvedReplacement({
-          value: candidateValue,
-          pattern,
-          replacement: effectiveReplacement,
-        })
+        ? isSemanticNoopReplacement
+          ? candidateValue
+          : applyResolvedReplacement({
+            value: candidateValue,
+            pattern,
+            replacement: effectiveReplacement,
+          })
         : candidateValue;
-      const isNoopReplacement = hasEffectiveReplacement && nextValue === candidateValue;
+      const isNoopReplacement =
+        hasEffectiveReplacement && (isSemanticNoopReplacement || nextValue === candidateValue);
       const shouldSuppressNoopReplacementProposal =
+        isSemanticNoopReplacement ||
         normalizeProductValidationSkipNoopReplacementProposal(
           pattern.skipNoopReplacementProposal
         ) && isNoopReplacement;

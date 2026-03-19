@@ -3,6 +3,10 @@
 import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
+import {
+  getLocalizedKangurLessonSectionLabel,
+  getLocalizedKangurLessonSectionTypeLabel,
+} from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KangurLessonLibraryCard } from '@/features/kangur/ui/components/KangurLessonLibraryCard';
 import {
   useKangurLessonsRuntimeActions,
@@ -41,6 +45,7 @@ type LessonGroup = {
 function buildLessonGroups(
   sections: KangurLessonSection[],
   lessons: KangurLesson[],
+  locale: string,
 ): LessonGroup[] {
   if (sections.length === 0) return [];
   const lessonByComponent = new Map(lessons.map((l) => [l.componentId, l]));
@@ -53,8 +58,10 @@ function buildLessonGroups(
         .filter((sub) => sub.enabled)
         .map((sub) => ({
           id: sub.id,
-          label: sub.label,
-          typeLabel: sub.typeLabel,
+          label: getLocalizedKangurLessonSectionLabel(sub.id, locale, sub.label),
+          typeLabel: sub.typeLabel
+            ? getLocalizedKangurLessonSectionTypeLabel(locale, sub.typeLabel)
+            : undefined,
           lessons: sub.componentIds
             .map((id) => lessonByComponent.get(id))
             .filter((l): l is KangurLesson => Boolean(l)),
@@ -62,8 +69,10 @@ function buildLessonGroups(
         .filter((sub) => sub.lessons.length > 0);
       return {
         id: section.id,
-        label: section.label,
-        typeLabel: section.typeLabel,
+        label: getLocalizedKangurLessonSectionLabel(section.id, locale, section.label),
+        typeLabel: section.typeLabel
+          ? getLocalizedKangurLessonSectionTypeLabel(locale, section.typeLabel)
+          : undefined,
         lessons: groupLessons,
         subsections: subsections.length > 0 ? subsections : undefined,
       };
@@ -149,7 +158,7 @@ export function KangurLessonsCatalogWidget(): JSX.Element {
         }
 
         const subjectSections = allSections.filter((s) => s.subject === group.value);
-        const displayLessonGroups = buildLessonGroups(subjectSections, groupLessons);
+        const displayLessonGroups = buildLessonGroups(subjectSections, groupLessons, locale);
 
         type LessonEntry =
           | { kind: 'group'; group: (typeof displayLessonGroups)[number] }

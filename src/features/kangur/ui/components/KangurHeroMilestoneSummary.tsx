@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import {
   KangurProgressHighlightCardContent,
@@ -8,6 +9,7 @@ import {
 } from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
 import {
   getNextLockedBadge,
+  translateKangurProgressWithFallback,
   type KangurBadgeTrackKey,
 } from '@/features/kangur/ui/services/progress';
 import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
@@ -41,11 +43,13 @@ export default function KangurHeroMilestoneSummary({
   trackMinimumItems,
   progress,
 }: KangurHeroMilestoneSummaryProps): React.JSX.Element | null {
+  const translations = useTranslations('KangurProgressRuntime');
+
   if (!hasMeaningfulProgress(progress)) {
     return null;
   }
 
-  const nextBadge = getNextLockedBadge(progress);
+  const nextBadge = getNextLockedBadge(progress, { translate: translations });
   const summaryTestIdPrefix = dataTestIdPrefix;
   const badgeTrackTestIdPrefix = trackDataTestIdPrefix;
   const badgeTrackProgress = progress;
@@ -77,7 +81,11 @@ export default function KangurHeroMilestoneSummary({
                   color:
                     'color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%)',
                 }}
-                eyebrow='Następny kamień milowy'
+                eyebrow={translateKangurProgressWithFallback(
+                  translations,
+                  'heroMilestone.nextBadgeEyebrow',
+                  'Następny kamień milowy'
+                )}
                 eyebrowStyle={{
                   color: 'color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%)',
                 }}

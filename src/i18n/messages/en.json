@@ -604,6 +604,14 @@
       },
       "aiTutor": {
         "title": "AI Tutor for parent"
+      },
+      "scores": {
+        "title": "Learner scores",
+        "description": "Review recent games, accuracy, and the areas worth revisiting now.",
+        "trackSummary": {
+          "label": "Learner progress tracks",
+          "description": "The badge tracks the learner is building right now."
+        }
       }
     }
   },
@@ -1157,6 +1165,92 @@
       "badgeTracksHeading": "Badge tracks"
     }
   },
+  "KangurLearnerProfileRuntime": {
+    "localMode": "Local mode",
+    "dateMissing": "No date",
+    "errors": {
+      "loadScores": "Could not load the score history."
+    },
+    "activityLabels": {
+      "addition": "Addition",
+      "subtraction": "Subtraction",
+      "multiplication": "Multiplication",
+      "division": "Division",
+      "decimals": "Fractions",
+      "powers": "Powers",
+      "roots": "Roots",
+      "clock": "Clock",
+      "calendar": "Calendar",
+      "geometry": "Geometry",
+      "logical": "Logic",
+      "mixed": "Mixed",
+      "english_basics": "Basics",
+      "english_parts_of_speech": "Parts of speech",
+      "english_sentence_structure": "Sentence structure",
+      "english_subject_verb_agreement": "Subject-verb agreement",
+      "english_articles": "Articles",
+      "english_prepositions_time_place": "Time and place prepositions"
+    },
+    "weeklyActivity": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "guidedMomentum": {
+      "badges": {
+        "guidedStep": "Steady step",
+        "guidedKeeper": "Staying on track"
+      },
+      "summary": {
+        "guidedStep": "{completed}/1 round",
+        "guidedKeeper": "{completed}/3 rounds",
+        "complete": "All goals achieved!"
+      }
+    },
+    "recommendations": {
+      "actions": {
+        "openLesson": "Open lesson",
+        "startTraining": "Start training",
+        "playNow": "Play now",
+        "playToday": "Play today"
+      },
+      "focusWeakestOperation": {
+        "title": "Focus on: {operation}",
+        "description": "Do 2 short {operation} sessions and aim for at least 80% accuracy."
+      },
+      "improveAccuracy": {
+        "title": "Stabilize accuracy",
+        "description": "For the next 3 games, pick medium difficulty and focus on accuracy over speed."
+      },
+      "strengthenLessonMastery": {
+        "title": "Review lesson: {lessonTitle}",
+        "description": "Current mastery is {masteryPercent}%. One more pass through this lesson will improve stability."
+      },
+      "dailyGoal": {
+        "title": "Finish the daily goal",
+        "descriptionSingle": "Only 1 game is left to reach the daily goal. Today you already earned +{todayXpEarned} XP.",
+        "descriptionMultiple": "{remainingGames} games are left to reach the daily goal. Today you already earned +{todayXpEarned} XP."
+      },
+      "boostXpMomentum": {
+        "title": "Boost today's XP",
+        "descriptionWithOperation": "The game goal is already done, but today only +{todayXpEarned} XP came in. One stronger {operation} session usually brings about {averageXpPerSession} XP per try.",
+        "descriptionFallback": "The game goal is already done, but today only +{todayXpEarned} XP came in. One stronger training session should bring in over {xpMomentumTarget} XP."
+      },
+      "streakBootstrap": {
+        "title": "Build a streak",
+        "description": "Play again tomorrow to start a streak of consecutive days."
+      },
+      "maintainMomentum": {
+        "title": "Keep the momentum",
+        "descriptionWithOperation": "You're in great shape. In 7 days you earned +{weeklyXpEarned} XP. Add 1 more {operation} session to lock it in.",
+        "descriptionFallback": "You're in great shape. In 7 days you earned +{weeklyXpEarned} XP. Keep today's learning rhythm going."
+      }
+    }
+  },
   "KangurLessonsWidgets": {
     "emptyDescription": "Enable lessons in the admin panel to show them here.",
     "mastery": {
@@ -1671,6 +1765,107 @@
         "perfect": "Perfect! Your shapes look excellent.",
         "good": "Great job! Your drawing keeps getting more precise.",
         "retry": "Keep practising. Every next shape will be better."
+      },
+      "feedback": {
+        "success": {
+          "circle": "Great! That looks like a circle.",
+          "oval": "Great! That looks like an oval.",
+          "triangle": "Nice! That is a proper triangle.",
+          "square": "Great! That looks like a square.",
+          "diamond": "Nice! That looks like a diamond.",
+          "rectangle": "Good! That looks like a rectangle.",
+          "pentagon": "Awesome! You drew a pentagon.",
+          "hexagon": "Great! That looks like a hexagon."
+        },
+        "failure": {
+          "default": {
+            "circle": "Try drawing a more rounded line.",
+            "oval": "Try drawing a more elongated oval.",
+            "triangle": "Try drawing 3 clear corners.",
+            "square": "Try drawing 4 sides of similar length.",
+            "diamond": "Try drawing diagonal sides and 4 clear corners.",
+            "rectangle": "Try drawing 4 corners and one side clearly longer than the other.",
+            "pentagon": "Try drawing 5 clear corners.",
+            "hexagon": "Try drawing 6 clear corners."
+          },
+          "closeShape": "Close the shape. The start and end of the line are too far apart.",
+          "tooShortPath": "The line is too short. Trace the shape further around.",
+          "tooJaggedPath": "The line is too jagged. Try drawing more smoothly.",
+          "addMoreCorners": "Add more corners. This shape should have about {idealCorners}.",
+          "tooManyCorners": "There are too many corners. Try drawing about {idealCorners}.",
+          "aspect": {
+            "square": "A square should have sides of more similar lengths.",
+            "rectangle": "A rectangle should have two sides clearly longer.",
+            "circle": "A circle should look more even and round.",
+            "oval": "An oval should be more stretched.",
+            "diamond": "A diamond should be less flattened or less stretched."
+          },
+          "drawLonger": "Draw a bigger shape in one continuous line.",
+          "tooSmall": "The shape is too small. Draw it larger.",
+          "unreadable": "The drawing could not be read."
+        }
+      },
+      "inRound": {
+        "difficulty": {
+          "starter": "Starter",
+          "pro": "Pro",
+          "default": "Basic"
+        },
+        "difficultyChip": "Shape level",
+        "difficultyGroupAria": "Shape difficulty level",
+        "liveRegion": "Round {current} of {total}. Draw the {shape} shape. Level {difficulty}.",
+        "progressValueText": "Round {current} of {total}",
+        "modeLabel": "Shapes • {difficulty}",
+        "prompt": "Draw: {shape}",
+        "canvasAria": "Drawing board for the {shape} shape. Use the mouse, touch, or keyboard to draw it.",
+        "drawHere": "Draw here",
+        "inputHelp": "The drawing area supports mouse, touch, or keyboard. Enter or space starts and ends a stroke, arrow keys move the cursor, and Escape clears the board.",
+        "clear": "Clear",
+        "check": "Check",
+        "tooShort": "Draw the shape a little longer so it can be checked.",
+        "keyboard": {
+          "ready": "Board ready for keyboard drawing.",
+          "boardCleared": "The board was cleared.",
+          "restarted": "A new shape round has started.",
+          "difficultyChanged": "Difficulty changed to {difficulty}.",
+          "started": "Keyboard drawing started.",
+          "finished": "Keyboard drawing finished.",
+          "cleared": "The board was cleared and the cursor returned to the centre."
+        },
+        "shapes": {
+          "circle": {
+            "label": "Circle",
+            "hint": "Draw one smooth closed line."
+          },
+          "oval": {
+            "label": "Oval",
+            "hint": "Draw a shape without corners, but a bit stretched."
+          },
+          "triangle": {
+            "label": "Triangle",
+            "hint": "Try to make 3 clear corners."
+          },
+          "diamond": {
+            "label": "Diamond",
+            "hint": "4 corners, and the sides should look diagonal."
+          },
+          "square": {
+            "label": "Square",
+            "hint": "4 sides, each side about the same length."
+          },
+          "rectangle": {
+            "label": "Rectangle",
+            "hint": "4 corners, with two sides clearly longer."
+          },
+          "pentagon": {
+            "label": "Pentagon",
+            "hint": "5 corners and a closed shape."
+          },
+          "hexagon": {
+            "label": "Hexagon",
+            "hint": "6 corners and a closed line."
+          }
+        }
       }
     },
     "geometryBasics": {
@@ -1807,6 +2002,83 @@
         "perfect": "Perfect! Your reflections are spot on.",
         "good": "Great job! Symmetry is getting easier for you.",
         "retry": "Keep trying - each next attempt will be more precise."
+      },
+      "feedback": {
+        "axis": {
+          "drawLonger": "Draw a longer symmetry line from one end of the shape to the other.",
+          "extendLine": "The axis should be longer - draw it almost through the whole shape.",
+          "keepStraightVertical": "The axis of symmetry should be straight and vertical.",
+          "keepStraightHorizontal": "The axis of symmetry should be straight and horizontal.",
+          "moveToCenter": "Move the axis closer to the centre of the shape.",
+          "success": "Great! That is a correct axis of symmetry."
+        },
+        "mirror": {
+          "drawMissingHalf": "Draw the missing half so the symmetry can be checked.",
+          "drawMore": "Draw more of the shape - a large part of the reflection is still missing.",
+          "expectedSide": "Draw on the green side of the symmetry axis.",
+          "alignToGhost": "Try drawing the shape closer to the dashed reflection.",
+          "success": "Nice! The reflection matches the axis."
+        }
+      },
+      "inRound": {
+        "keyboard": {
+          "ready": "Board ready for drawing.",
+          "boardCleared": "The board was cleared.",
+          "started": "Keyboard drawing started.",
+          "finished": "Keyboard drawing finished.",
+          "cleared": "The board was cleared and the cursor returned to the centre.",
+          "restarted": "A new symmetry round has started."
+        },
+        "tooShort": "Make a few strokes so there is a line to check.",
+        "liveRegion": "Round {current} of {total}. {prompt}",
+        "progressValueText": "Round {current} of {total}",
+        "modeLabel": "Symmetry • {mode}",
+        "mode": {
+          "axis": "Axis",
+          "mirror": "Reflection"
+        },
+        "mirror": {
+          "zoneHint": "Draw only in the green zone. The grey zone is not for drawing.",
+          "showHint": "Show hint",
+          "hideHint": "Hide hint",
+          "ghostHint": "The dashed line shows the missing reflection."
+        },
+        "canvasAria": "Drawing board for symmetry axes and reflections.",
+        "inputHelp": "The drawing area supports mouse, touch, or keyboard. Enter or space starts and ends a stroke, arrow keys move the cursor, and Escape clears the board.",
+        "clear": "Clear",
+        "check": "Check",
+        "rounds": {
+          "axis-butterfly": {
+            "title": "Butterfly axis",
+            "prompt": "Draw the axis of symmetry of the butterfly.",
+            "hint": "It is a vertical line through the centre - follow the green strip."
+          },
+          "mirror-heart": {
+            "title": "Heart in the mirror",
+            "prompt": "Draw the missing half of the heart.",
+            "hint": "Reflect the shape across the axis by drawing on the green side."
+          },
+          "axis-square": {
+            "title": "Square axis",
+            "prompt": "Draw the axis of symmetry of the square.",
+            "hint": "It is a vertical line in the middle of the square - the green strip shows the axis."
+          },
+          "mirror-leaf": {
+            "title": "Leaf",
+            "prompt": "Draw the lower half of the leaf.",
+            "hint": "Reflect across the horizontal axis - draw in the green zone."
+          },
+          "mirror-zigzag": {
+            "title": "Zigzag in the mirror",
+            "prompt": "Draw the reflection of the zigzag.",
+            "hint": "Draw only in the green zone on the right side of the axis."
+          },
+          "axis-eye": {
+            "title": "Eye axis",
+            "prompt": "Draw the axis of symmetry of the eye.",
+            "hint": "It is a horizontal line through the middle - the green strip shows the axis."
+          }
+        }
       }
     },
     "subtractingGarden": {
@@ -2425,6 +2697,264 @@
       "english_sentence_structure": "Sentence structure",
       "english_subject_verb_agreement": "Subject-verb agreement",
       "english_prepositions_time_place": "Time and place prepositions"
+    }
+  },
+  "KangurProgressRuntime": {
+    "levels": {
+      "1": "Beginner 🐣",
+      "2": "Learner ✏️",
+      "3": "Thinker 🤔",
+      "4": "Number master 🔢",
+      "5": "Mathematician 📐",
+      "6": "Genius 🧠",
+      "7": "Legend 🏆"
+    },
+    "activityLabels": {
+      "alphabet": "Alphabet",
+      "alphabetCopy": "Copy letters",
+      "alphabetSyllables": "Syllables and words",
+      "alphabetWords": "First words",
+      "alphabetMatching": "Match the letters",
+      "alphabetSequence": "Letter order",
+      "geometryShapeRecognition": "Geometry",
+      "addition": "Addition",
+      "subtraction": "Subtraction",
+      "multiplication": "Multiplication",
+      "division": "Division",
+      "decimals": "Fractions",
+      "powers": "Powers",
+      "roots": "Roots",
+      "mixed": "Mixed",
+      "clock": "Clock",
+      "calendar": "Calendar",
+      "geometryBasics": "Geometry basics",
+      "geometryShapes": "Geometric shapes",
+      "geometrySymmetry": "Symmetry",
+      "geometryPerimeter": "Perimeter",
+      "logicalThinking": "Logical thinking",
+      "logicalPatterns": "Patterns",
+      "logicalClassification": "Classification",
+      "logicalReasoning": "Reasoning",
+      "logicalAnalogies": "Analogies",
+      "logical": "Logic"
+    },
+    "clockSections": {
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "combined": "Full time",
+      "mixed": "Mixed practice"
+    },
+    "activityKinds": {
+      "game": "Game: {label}",
+      "lessonPractice": "Practice: {label}",
+      "training": "Training: {label}",
+      "clockTraining": "Clock training: {label}",
+      "lessonCompletion": "Lesson: {label}"
+    },
+    "badgeTracks": {
+      "onboarding": "Start",
+      "consistency": "Streak",
+      "mastery": "Mastery",
+      "variety": "Variety",
+      "challenge": "Challenges",
+      "xp": "XP",
+      "quest": "Missions",
+      "english": "English"
+    },
+    "badges": {
+      "first_game": {
+        "name": "First game",
+        "desc": "Finish the first game"
+      },
+      "perfect_10": {
+        "name": "Perfect score",
+        "desc": "Get a perfect score in a game"
+      },
+      "lesson_hero": {
+        "name": "Lesson hero",
+        "desc": "Finish the first lesson"
+      },
+      "clock_master": {
+        "name": "Clock master",
+        "desc": "Finish the clock training with a 5/5 score"
+      },
+      "calendar_keeper": {
+        "name": "Calendar master",
+        "desc": "Finish the calendar training with a perfect score"
+      },
+      "geometry_artist": {
+        "name": "Shape artist",
+        "desc": "Finish the geometry shapes training with a perfect score"
+      },
+      "streak_3": {
+        "name": "Power streak",
+        "desc": "Keep 3 strong rounds in a row"
+      },
+      "accuracy_ace": {
+        "name": "Sharp mind",
+        "desc": "Keep an average of at least 85% correct answers after 25 questions"
+      },
+      "ten_games": {
+        "name": "Ten games",
+        "desc": "Play 10 games"
+      },
+      "xp_500": {
+        "name": "Half a thousand XP",
+        "desc": "Earn 500 XP in total"
+      },
+      "xp_1000": {
+        "name": "Thousand club",
+        "desc": "Earn 1000 XP in total"
+      },
+      "quest_starter": {
+        "name": "Mission explorer",
+        "desc": "Complete the first daily mission"
+      },
+      "quest_keeper": {
+        "name": "Mission hunter",
+        "desc": "Complete 3 daily missions"
+      },
+      "guided_step": {
+        "name": "Steady step",
+        "desc": "Complete the first round that follows the recommendation"
+      },
+      "guided_keeper": {
+        "name": "Staying on course",
+        "desc": "Complete 3 rounds that follow the recommendation"
+      },
+      "mastery_builder": {
+        "name": "Mastery builder",
+        "desc": "Bring 3 lessons to at least 75% mastery"
+      },
+      "variety": {
+        "name": "All-rounder",
+        "desc": "Play 5 different operations"
+      },
+      "english_first_game": {
+        "name": "English start",
+        "desc": "Play the first English game"
+      },
+      "english_perfect": {
+        "name": "Perfect English",
+        "desc": "Get 100% in an English game"
+      },
+      "english_pronoun_pro": {
+        "name": "Pronoun Pro",
+        "desc": "Get 2 perfect scores in Pronoun Remix"
+      },
+      "english_sorter_star": {
+        "name": "Parts of speech master",
+        "desc": "Get 2 perfect scores in Parts of Speech"
+      },
+      "english_sentence_builder": {
+        "name": "Sentence architect",
+        "desc": "Reach 80%+ and play 3 Sentence Structure sessions"
+      },
+      "english_agreement_guardian": {
+        "name": "Agreement guardian",
+        "desc": "Get a perfect score in Subject-Verb Agreement"
+      },
+      "english_grammar_collection": {
+        "name": "Grammar collection",
+        "desc": "Play all English games"
+      },
+      "english_articles_reader": {
+        "name": "Article master",
+        "desc": "Finish the lesson English: Articles"
+      },
+      "english_mastery_builder": {
+        "name": "English builder",
+        "desc": "Bring 3 English lessons to 75% mastery"
+      }
+    },
+    "badgeSummaries": {
+      "game": "{current}/{target} {target, plural, one {game} other {games}}",
+      "perfectGame": "{current}/{target} {target, plural, one {perfect game} other {perfect games}}",
+      "lesson": "{current}/{target} {target, plural, one {lesson} other {lessons}}",
+      "perfect": "{current}/{target} perfect",
+      "streak": "{current}/{target} in a row",
+      "questions": "{current}/{target} {target, plural, one {question} other {questions}}",
+      "percentGoal": "{current}% / {target}%",
+      "games": "{current}/{target} {target, plural, one {game} other {games}}",
+      "xp": "{current}/{target} XP",
+      "quest": "{current}/{target} {target, plural, one {mission} other {missions}}",
+      "round": "{current}/{target} {target, plural, one {round} other {rounds}}",
+      "types": "{current}/{target} types",
+      "sessions": "{current}/{target} {target, plural, one {session} other {sessions}}"
+    },
+    "momentum": {
+      "allGoalsCompleted": "All goals completed!"
+    },
+    "dailyQuest": {
+      "progress": {
+        "gamesPlayed": "{current}/{target} {target, plural, one {round today} other {rounds today}}",
+        "lessonsCompleted": "{current}/{target} {target, plural, one {lesson today} other {lessons today}}",
+        "lessonMastery": "{current}% / {target}% mastery"
+      },
+      "expiresToday": "Expires today",
+      "reward": {
+        "claimed": "Reward claimed +{xp} XP",
+        "ready": "Reward ready +{xp} XP",
+        "locked": "Reward +{xp} XP"
+      }
+    },
+    "questMomentum": {
+      "paceValue": "{xp} XP / game"
+    },
+    "badgeGrid": {
+      "empty": "More badges appear as progress grows."
+    },
+    "badgeTrackCard": {
+      "count": "{unlocked}/{total} badges",
+      "allUnlocked": "All badges unlocked"
+    },
+    "badgeTrackHighlights": {
+      "placeholders": {
+        "quest": {
+          "title": "Unlock the first mission",
+          "description": "This panel will appear here when the first mission of the day starts."
+        },
+        "mastery": {
+          "title": "Start building mastery",
+          "description": "The panel will fill in once the first lesson starts moving toward mastery."
+        },
+        "genericPinned": {
+          "title": "This track is waiting to start",
+          "description": "The first progress in this direction will reveal the full badge panel."
+        },
+        "generic": {
+          "label": "Next track",
+          "title": "Space for the next panel",
+          "description": "Unlock more badges and the next progress direction will appear here."
+        }
+      }
+    },
+    "heroMilestone": {
+      "nextBadgeEyebrow": "Next milestone"
+    },
+    "overview": {
+      "stats": {
+        "totalXp": "Total XP",
+        "xpPerGame": "XP / game",
+        "gamesPlayed": "Games played",
+        "lessonsCompleted": "Lessons completed",
+        "averageAccuracy": "Average accuracy",
+        "bestStreak": "Best streak"
+      },
+      "levelEyebrow": "Level and experience",
+      "levelDescription": "Level {level} · {xp} XP total",
+      "nextLevel": "To level {level}: {xp} XP",
+      "maxLevel": "Maximum level reached!",
+      "dailyQuestEyebrow": "Mission of the day",
+      "guidedMomentum": {
+        "descriptionWithBadge": "To badge {badge}: {summary}",
+        "descriptionUnlocked": "All badges in the recommended track are unlocked.",
+        "eyebrow": "Recommended track",
+        "title": "{count} recommended rounds"
+      },
+      "operationsHeading": "Practised operations",
+      "topActivitiesHeading": "Most practised activities",
+      "topActivityDescription": "{sessions} sessions · {xp} XP / game · average {accuracy}% · best score {best}%"
     }
   }
 }

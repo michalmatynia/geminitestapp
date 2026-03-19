@@ -178,6 +178,19 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
     });
   }
 
+  if (target === 'info_logs') {
+    const result = await clearSystemLogs({ before, level: 'info' });
+    return NextResponse.json({
+      target,
+      deleted: result.deleted,
+      deletedByTarget: {
+        systemLogs: result.deleted,
+        activityLogs: 0,
+        pageAccessLogs: 0,
+      },
+    });
+  }
+
   if (target === 'activity_logs') {
     const result = await clearActivityLogs({ before });
     return NextResponse.json({

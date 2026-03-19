@@ -1,4 +1,8 @@
 import type { Point2d } from '@/shared/contracts/geometry';
+import {
+  translateKangurMiniGameWithFallback,
+  type KangurMiniGameTranslate,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
 
 import { loosenMax, loosenMin } from './drawing-leniency';
 
@@ -168,9 +172,16 @@ const isOnExpectedSide = (
   return true;
 };
 
+const translateGeometrySymmetry = (
+  translate: KangurMiniGameTranslate | undefined,
+  key: string,
+  fallback: string
+): string => translateKangurMiniGameWithFallback(translate, key, fallback);
+
 export const evaluateAxisDrawing = (
   points: Point2d[],
-  axis: SymmetryAxis
+  axis: SymmetryAxis,
+  translate?: KangurMiniGameTranslate
 ): SymmetryAxisEvaluation => {
   const sanitized = sanitizePoints(points);
   if (sanitized.length < MIN_POINTS) {
@@ -180,7 +191,11 @@ export const evaluateAxisDrawing = (
       offset: 0,
       deviation: 0,
       length: 0,
-      message: 'Narysuj dłuższą linię osi, od jednego końca figury do drugiego.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.axis.drawLonger',
+        'Narysuj dłuższą linię osi, od jednego końca figury do drugiego.'
+      ),
     };
   }
 
@@ -193,7 +208,11 @@ export const evaluateAxisDrawing = (
       offset,
       deviation,
       length,
-      message: 'Oś powinna być dłuższa — narysuj ją prawie przez całą figurę.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.axis.extendLine',
+        'Oś powinna być dłuższa — narysuj ją prawie przez całą figurę.'
+      ),
     };
   }
 
@@ -204,10 +223,15 @@ export const evaluateAxisDrawing = (
       offset,
       deviation,
       length,
-      message:
+      message: translateGeometrySymmetry(
+        translate,
+        axis.orientation === 'vertical'
+          ? 'geometrySymmetry.feedback.axis.keepStraightVertical'
+          : 'geometrySymmetry.feedback.axis.keepStraightHorizontal',
         axis.orientation === 'vertical'
           ? 'Oś symetrii powinna być prosta i pionowa.'
-          : 'Oś symetrii powinna być prosta i pozioma.',
+          : 'Oś symetrii powinna być prosta i pozioma.'
+      ),
     };
   }
 
@@ -218,7 +242,11 @@ export const evaluateAxisDrawing = (
       offset,
       deviation,
       length,
-      message: 'Przesuń oś bliżej środka figury.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.axis.moveToCenter',
+        'Przesuń oś bliżej środka figury.'
+      ),
     };
   }
 
@@ -228,7 +256,11 @@ export const evaluateAxisDrawing = (
     offset,
     deviation,
     length,
-    message: 'Świetnie! To poprawna oś symetrii.',
+    message: translateGeometrySymmetry(
+      translate,
+      'geometrySymmetry.feedback.axis.success',
+      'Świetnie! To poprawna oś symetrii.'
+    ),
   };
 };
 
@@ -237,11 +269,13 @@ export const evaluateMirrorDrawing = ({
   template,
   axis,
   expectedSide,
+  translate,
 }: {
   points: Point2d[];
   template: Point2d[];
   axis: SymmetryAxis;
   expectedSide: SymmetryExpectedSide;
+  translate?: KangurMiniGameTranslate;
 }): SymmetryMirrorEvaluation => {
   const sanitized = sanitizePoints(points);
   if (sanitized.length < MIN_POINTS) {
@@ -251,7 +285,11 @@ export const evaluateMirrorDrawing = ({
       coverage: 0,
       avgDistance: 0,
       offsideRatio: 1,
-      message: 'Dorysuj brakującą połowę, żeby sprawdzić symetrię.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.mirror.drawMissingHalf',
+        'Dorysuj brakującą połowę, żeby sprawdzić symetrię.'
+      ),
     };
   }
 
@@ -267,7 +305,11 @@ export const evaluateMirrorDrawing = ({
       coverage: 0,
       avgDistance: 0,
       offsideRatio: 0,
-      message: 'Dorysuj więcej kształtu — jeszcze brakuje sporej części odbicia.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.mirror.drawMore',
+        'Dorysuj więcej kształtu — jeszcze brakuje sporej części odbicia.'
+      ),
     };
   }
 
@@ -283,7 +325,11 @@ export const evaluateMirrorDrawing = ({
       coverage: 0,
       avgDistance: 0,
       offsideRatio,
-      message: 'Rysuj po zielonej stronie osi symetrii.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.mirror.expectedSide',
+        'Rysuj po zielonej stronie osi symetrii.'
+      ),
     };
   }
 
@@ -313,7 +359,11 @@ export const evaluateMirrorDrawing = ({
       coverage,
       avgDistance,
       offsideRatio,
-      message: 'Spróbuj dorysować kształt bliżej przerywanego odbicia.',
+      message: translateGeometrySymmetry(
+        translate,
+        'geometrySymmetry.feedback.mirror.alignToGhost',
+        'Spróbuj dorysować kształt bliżej przerywanego odbicia.'
+      ),
     };
   }
 
@@ -323,6 +373,10 @@ export const evaluateMirrorDrawing = ({
     coverage,
     avgDistance,
     offsideRatio,
-    message: 'Brawo! Odbicie pasuje do osi.',
+    message: translateGeometrySymmetry(
+      translate,
+      'geometrySymmetry.feedback.mirror.success',
+      'Brawo! Odbicie pasuje do osi.'
+    ),
   };
 };

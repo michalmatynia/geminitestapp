@@ -604,6 +604,14 @@
       },
       "aiTutor": {
         "title": "Tutor-AI dla rodzica"
+      },
+      "scores": {
+        "title": "Wyniki ucznia",
+        "description": "Przejrzyj ostatnie gry, skuteczność i obszary, które warto teraz powtórzyć.",
+        "trackSummary": {
+          "label": "Ścieżki postępu ucznia",
+          "description": "Najważniejsze ścieżki odznak, które aktualnie buduje uczeń."
+        }
       }
     }
   },
@@ -1023,9 +1031,9 @@
       "lessons": "Lekcji",
       "accuracy": "Skutecznosc",
       "streak": "Seria",
-      "xpPerGame": "XP / gre"
+      "xpPerGame": "XP / grę"
     },
-    "topActivityDescription": "{sessions} sesji · {xp} XP / gre",
+    "topActivityDescription": "{sessions} sesji · {xp} XP / grę",
     "topActivityEyebrow": "Najczesciej cwiczysz",
     "nextBadgeEyebrow": "Nastepna odznaka",
     "guidedMomentumDescriptionWithBadge": "Do odznaki {badge}: {summary}",
@@ -1155,6 +1163,92 @@
       "emptyTitle": "Brak rozegranych sesji.",
       "emptyDescription": "Pierwsze sesje pojawia sie tutaj automatycznie.",
       "badgeTracksHeading": "Sciezki odznak"
+    }
+  },
+  "KangurLearnerProfileRuntime": {
+    "localMode": "Tryb lokalny",
+    "dateMissing": "Brak daty",
+    "errors": {
+      "loadScores": "Nie udalo sie pobrac historii wynikow."
+    },
+    "activityLabels": {
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnozenie",
+      "division": "Dzielenie",
+      "decimals": "Ulamki",
+      "powers": "Potegi",
+      "roots": "Pierwiastki",
+      "clock": "Zegar",
+      "calendar": "Kalendarz",
+      "geometry": "Geometria",
+      "logical": "Logika",
+      "mixed": "Mieszane",
+      "english_basics": "Podstawy",
+      "english_parts_of_speech": "Czesci mowy",
+      "english_sentence_structure": "Szyk zdania",
+      "english_subject_verb_agreement": "Zgoda podmiotu",
+      "english_articles": "Przedimki",
+      "english_prepositions_time_place": "Przyimki czasu i miejsca"
+    },
+    "weeklyActivity": {
+      "sun": "niedz.",
+      "mon": "pon.",
+      "tue": "wt.",
+      "wed": "sr.",
+      "thu": "czw.",
+      "fri": "pt.",
+      "sat": "sob."
+    },
+    "guidedMomentum": {
+      "badges": {
+        "guidedStep": "Pewny krok",
+        "guidedKeeper": "Trzymam kierunek"
+      },
+      "summary": {
+        "guidedStep": "{completed}/1 runda",
+        "guidedKeeper": "{completed}/3 rundy",
+        "complete": "Wszystkie cele osiagniete!"
+      }
+    },
+    "recommendations": {
+      "actions": {
+        "openLesson": "Otworz lekcje",
+        "startTraining": "Uruchom trening",
+        "playNow": "Zagraj teraz",
+        "playToday": "Zagraj dzis"
+      },
+      "focusWeakestOperation": {
+        "title": "Skup sie na: {operation}",
+        "description": "Wykonaj 2 krotkie sesje {operation} i celuj w min. 80% poprawnosci."
+      },
+      "improveAccuracy": {
+        "title": "Stabilizuj skutecznosc",
+        "description": "Przez 3 gry wybieraj tryb sredni i skup sie na dokladnosci zamiast na czasie."
+      },
+      "strengthenLessonMastery": {
+        "title": "Powtorz lekcje: {lessonTitle}",
+        "description": "Aktualne opanowanie to {masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc."
+      },
+      "dailyGoal": {
+        "title": "Domknij dzienny cel",
+        "descriptionSingle": "Brakuje tylko 1 gry do dziennego celu. Dzis masz juz +{todayXpEarned} XP.",
+        "descriptionMultiple": "Brakuje {remainingGames} gier do dziennego celu. Dzis masz juz +{todayXpEarned} XP."
+      },
+      "boostXpMomentum": {
+        "title": "Podkrec dzisiejsze XP",
+        "descriptionWithOperation": "Cel gier jest juz zamkniety, ale dzis wpadlo tylko +{todayXpEarned} XP. Jedna mocniejsza sesja {operation} zwykle daje okolo {averageXpPerSession} XP na probe.",
+        "descriptionFallback": "Cel gier jest juz zamkniety, ale dzis wpadlo tylko +{todayXpEarned} XP. Jedna mocniejsza sesja treningowa powinna dowiezc ponad {xpMomentumTarget} XP."
+      },
+      "streakBootstrap": {
+        "title": "Zbuduj serie",
+        "description": "Zagraj takze jutro, aby uruchomic serie kolejnych dni."
+      },
+      "maintainMomentum": {
+        "title": "Utrzymaj tempo",
+        "descriptionWithOperation": "Swietna forma. W 7 dni zebrano +{weeklyXpEarned} XP. Dorzuc 1 sesje {operation} dla utrwalenia.",
+        "descriptionFallback": "Swietna forma. W 7 dni zebrano +{weeklyXpEarned} XP. Kontynuuj dzisiejszy rytm nauki."
+      }
     }
   },
   "KangurLessonsWidgets": {
@@ -1671,6 +1765,107 @@
         "perfect": "Perfekcyjnie! Twoje figury są wzorowe.",
         "good": "Świetna robota! Rysujesz coraz dokładniej.",
         "retry": "Ćwicz dalej. Każda kolejna figura będzie lepsza."
+      },
+      "feedback": {
+        "success": {
+          "circle": "Super! To wygląda jak koło.",
+          "oval": "Świetnie! To wygląda jak owal.",
+          "triangle": "Brawo! To poprawny trójkąt.",
+          "square": "Świetnie! To wygląda jak kwadrat.",
+          "diamond": "Brawo! To wygląda jak romb.",
+          "rectangle": "Dobrze! To wygląda jak prostokąt.",
+          "pentagon": "Mega! Narysowano pięciokąt.",
+          "hexagon": "Świetnie! To wygląda jak sześciokąt."
+        },
+        "failure": {
+          "default": {
+            "circle": "Spróbuj narysować bardziej okrągłą linię.",
+            "oval": "Spróbuj narysować bardziej wydłużony owal.",
+            "triangle": "Spróbuj narysować 3 wyraźne rogi.",
+            "square": "Spróbuj narysować 4 boki o podobnej długości.",
+            "diamond": "Spróbuj narysować ukośne boki i 4 wyraźne rogi.",
+            "rectangle": "Spróbuj narysować 4 rogi i dłuższy bok niż drugi.",
+            "pentagon": "Spróbuj narysować 5 wyraźnych rogów.",
+            "hexagon": "Spróbuj narysować 6 wyraźnych rogów."
+          },
+          "closeShape": "Domknij figurę. Początek i koniec linii są zbyt daleko.",
+          "tooShortPath": "Linia jest zbyt krótka. Obrysuj kształt bardziej dookoła.",
+          "tooJaggedPath": "Linia jest zbyt poszarpana. Spróbuj rysować bardziej płynnie.",
+          "addMoreCorners": "Dodaj więcej rogów. Ta figura powinna mieć około {idealCorners}.",
+          "tooManyCorners": "Masz za dużo rogów. Spróbuj narysować około {idealCorners}.",
+          "aspect": {
+            "square": "Kwadrat powinien mieć boki bardziej podobnej długości.",
+            "rectangle": "Prostokąt powinien mieć dwa boki wyraźnie dłuższe.",
+            "circle": "Koło powinno być bardziej równe i okrągłe.",
+            "oval": "Owal powinien być bardziej wydłużony.",
+            "diamond": "Romb powinien być mniej spłaszczony lub mniej wydłużony."
+          },
+          "drawLonger": "Narysuj większy kształt jednym ciągiem.",
+          "tooSmall": "Kształt jest zbyt mały. Narysuj go większego.",
+          "unreadable": "Nie udało się odczytać rysunku."
+        }
+      },
+      "inRound": {
+        "difficulty": {
+          "starter": "Starter",
+          "pro": "Pro",
+          "default": "Podstawowy"
+        },
+        "difficultyChip": "Poziom figur",
+        "difficultyGroupAria": "Poziom trudności figur",
+        "liveRegion": "Runda {current} z {total}. Narysuj figurę {shape}. Poziom {difficulty}.",
+        "progressValueText": "Runda {current} z {total}",
+        "modeLabel": "Figury • {difficulty}",
+        "prompt": "Narysuj: {shape}",
+        "canvasAria": "Plansza do rysowania figury {shape}. Użyj myszy, dotyku lub klawiatury, aby narysować figurę.",
+        "drawHere": "Rysuj tutaj",
+        "inputHelp": "Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.",
+        "clear": "Wyczyść",
+        "check": "Sprawdź",
+        "tooShort": "Narysuj figurę trochę dłużej, żeby można było ją ocenić.",
+        "keyboard": {
+          "ready": "Plansza gotowa do rysowania klawiaturą.",
+          "boardCleared": "Wyczyszczono planszę.",
+          "restarted": "Rozpoczęto nową rundę figur.",
+          "difficultyChanged": "Zmieniono poziom na {difficulty}.",
+          "started": "Rozpoczęto rysowanie klawiaturą.",
+          "finished": "Zakończono rysowanie klawiaturą.",
+          "cleared": "Wyczyszczono planszę i ustawiono kursor na środku."
+        },
+        "shapes": {
+          "circle": {
+            "label": "Koło",
+            "hint": "Narysuj jedną płynną, zamkniętą linię."
+          },
+          "oval": {
+            "label": "Owal",
+            "hint": "Narysuj kształt bez rogów, ale trochę wydłużony."
+          },
+          "triangle": {
+            "label": "Trójkąt",
+            "hint": "Postaraj się zrobić 3 wyraźne rogi."
+          },
+          "diamond": {
+            "label": "Romb",
+            "hint": "4 rogi, boki wyglądają na ukośne."
+          },
+          "square": {
+            "label": "Kwadrat",
+            "hint": "4 boki, podobna długość każdego boku."
+          },
+          "rectangle": {
+            "label": "Prostokąt",
+            "hint": "4 rogi, dwa boki wyraźnie dłuższe."
+          },
+          "pentagon": {
+            "label": "Pięciokąt",
+            "hint": "5 rogów, zamknięta figura."
+          },
+          "hexagon": {
+            "label": "Sześciokąt",
+            "hint": "6 rogów i zamknięta linia."
+          }
+        }
       }
     },
     "geometryBasics": {
@@ -1807,6 +2002,83 @@
         "perfect": "Idealnie! Twoje odbicia są perfekcyjne.",
         "good": "Świetna robota! Symetria idzie Ci coraz lepiej.",
         "retry": "Próbuj dalej — każda kolejna próba będzie dokładniejsza."
+      },
+      "feedback": {
+        "axis": {
+          "drawLonger": "Narysuj dłuższą linię osi, od jednego końca figury do drugiego.",
+          "extendLine": "Oś powinna być dłuższa — narysuj ją prawie przez całą figurę.",
+          "keepStraightVertical": "Oś symetrii powinna być prosta i pionowa.",
+          "keepStraightHorizontal": "Oś symetrii powinna być prosta i pozioma.",
+          "moveToCenter": "Przesuń oś bliżej środka figury.",
+          "success": "Świetnie! To poprawna oś symetrii."
+        },
+        "mirror": {
+          "drawMissingHalf": "Dorysuj brakującą połowę, żeby sprawdzić symetrię.",
+          "drawMore": "Dorysuj więcej kształtu — jeszcze brakuje sporej części odbicia.",
+          "expectedSide": "Rysuj po zielonej stronie osi symetrii.",
+          "alignToGhost": "Spróbuj dorysować kształt bliżej przerywanego odbicia.",
+          "success": "Brawo! Odbicie pasuje do osi."
+        }
+      },
+      "inRound": {
+        "keyboard": {
+          "ready": "Plansza gotowa do rysowania.",
+          "boardCleared": "Wyczyszczono planszę.",
+          "started": "Rozpoczęto rysowanie klawiaturą.",
+          "finished": "Zakończono rysowanie klawiaturą.",
+          "cleared": "Wyczyszczono planszę i ustawiono kursor na środku.",
+          "restarted": "Rozpoczęto nową rundę symetrii."
+        },
+        "tooShort": "Zrób kilka ruchów, żeby powstała linia do sprawdzenia.",
+        "liveRegion": "Runda {current} z {total}. {prompt}",
+        "progressValueText": "Runda {current} z {total}",
+        "modeLabel": "Symetria • {mode}",
+        "mode": {
+          "axis": "Oś",
+          "mirror": "Odbicie"
+        },
+        "mirror": {
+          "zoneHint": "Rysuj tylko w zielonej strefie. Szara strefa jest bez rysowania.",
+          "showHint": "Pokaż podpowiedź",
+          "hideHint": "Ukryj podpowiedź",
+          "ghostHint": "Przerywana linia pokazuje brakujące odbicie."
+        },
+        "canvasAria": "Plansza do rysowania osi i odbić symetrii.",
+        "inputHelp": "Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.",
+        "clear": "Wyczyść",
+        "check": "Sprawdź",
+        "rounds": {
+          "axis-butterfly": {
+            "title": "Oś motyla",
+            "prompt": "Narysuj oś symetrii motyla.",
+            "hint": "To pionowa linia przechodząca przez środek — kieruj się zielonym pasem."
+          },
+          "mirror-heart": {
+            "title": "Serce w lustrze",
+            "prompt": "Dorysuj brakującą połowę serca.",
+            "hint": "Odbij kształt po osi, rysując po zielonej stronie."
+          },
+          "axis-square": {
+            "title": "Oś kwadratu",
+            "prompt": "Narysuj oś symetrii kwadratu.",
+            "hint": "To pionowa linia pośrodku kwadratu — zielony pas pokazuje oś."
+          },
+          "mirror-leaf": {
+            "title": "Listek",
+            "prompt": "Dorysuj dolną połowę listka.",
+            "hint": "Symetria względem osi poziomej — rysuj w zielonej strefie."
+          },
+          "mirror-zigzag": {
+            "title": "Zygzak w lustrze",
+            "prompt": "Dorysuj odbicie zygzaka.",
+            "hint": "Rysuj tylko w zielonej strefie po prawej stronie osi."
+          },
+          "axis-eye": {
+            "title": "Oś oka",
+            "prompt": "Narysuj oś symetrii oka.",
+            "hint": "To pozioma linia pośrodku — zielony pas wskazuje oś."
+          }
+        }
       }
     },
     "subtractingGarden": {
@@ -2227,7 +2499,7 @@
           "title": "Polecany trening: {title}"
         },
         "topActivity": {
-          "description": "{activity} daje teraz srednio {averageXpPerSession} XP na gre. To najmocniejszy kandydat na kolejna sesje.",
+          "description": "{activity} daje teraz srednio {averageXpPerSession} XP na grę. To najmocniejszy kandydat na kolejna sesje.",
           "label": "Mocna passa",
           "title": "Polecany trening: {activity}"
         },
@@ -2315,14 +2587,14 @@
         "titleContinue": "Domknij kolejny krok serii"
       },
       "pace": {
-        "description": "Twoje aktualne tempo to {averageXpPerSession} XP na gre. Ta sesja pomoze utrzymac dobra passe.",
+        "description": "Twoje aktualne tempo to {averageXpPerSession} XP na grę. Ta sesja pomoze utrzymac dobra passe.",
         "label": "Tempo",
         "titleKangur": "Wejdz z dobrym tempem",
         "titleTraining": "Utrzymaj mocne tempo"
       },
       "chips": {
         "streak": "Seria: {streak}",
-        "pace": "Tempo: {averageXpPerSession} XP / gre"
+        "pace": "Tempo: {averageXpPerSession} XP / grę"
       }
     },
     "homeMomentum": {
@@ -2357,7 +2629,7 @@
         "title": "Domknij tor: {track}"
       },
       "fallback": {
-        "description": "{activity} daje teraz srednio {averageXpPerSession} XP na gre. To najlepszy kandydat na kolejny mocny ruch.",
+        "description": "{activity} daje teraz srednio {averageXpPerSession} XP na grę. To najlepszy kandydat na kolejny mocny ruch.",
         "priority": "Dobra passa",
         "title": "Utrzymaj tempo w: {activity}"
       }
@@ -2402,7 +2674,7 @@
         "title": "Dopnij: {nextBadgeName}"
       },
       "fallback": {
-        "description": "{activity} daje teraz srednio {averageXpPerSession} XP na gre. To najlepszy ruch na kolejna runde.",
+        "description": "{activity} daje teraz srednio {averageXpPerSession} XP na grę. To najlepszy ruch na kolejna runde.",
         "label": "Mocna passa",
         "title": "Zagraj dalej w: {activity}"
       }
@@ -2425,6 +2697,264 @@
       "english_sentence_structure": "Skladnia zdania",
       "english_subject_verb_agreement": "Zgodnosc podmiotu z czasownikiem",
       "english_prepositions_time_place": "Przyimki czasu i miejsca"
+    }
+  },
+  "KangurProgressRuntime": {
+    "levels": {
+      "1": "Raczkujący 🐣",
+      "2": "Uczeń ✏️",
+      "3": "Myśliciel 🤔",
+      "4": "Liczmistrz 🔢",
+      "5": "Matematyk 📐",
+      "6": "Geniusz 🧠",
+      "7": "Legenda 🏆"
+    },
+    "activityLabels": {
+      "alphabet": "Alfabet",
+      "alphabetCopy": "Przepisz litery",
+      "alphabetSyllables": "Sylaby i słowa",
+      "alphabetWords": "Pierwsze słowa",
+      "alphabetMatching": "Dopasuj litery",
+      "alphabetSequence": "Kolejność liter",
+      "geometryShapeRecognition": "Geometria",
+      "addition": "Dodawanie",
+      "subtraction": "Odejmowanie",
+      "multiplication": "Mnożenie",
+      "division": "Dzielenie",
+      "decimals": "Ułamki",
+      "powers": "Potęgi",
+      "roots": "Pierwiastki",
+      "mixed": "Mieszane",
+      "clock": "Nauka zegara",
+      "calendar": "Nauka kalendarza",
+      "geometryBasics": "Podstawy geometrii",
+      "geometryShapes": "Figury geometryczne",
+      "geometrySymmetry": "Symetria",
+      "geometryPerimeter": "Obwód",
+      "logicalThinking": "Logiczne myślenie",
+      "logicalPatterns": "Wzorce",
+      "logicalClassification": "Klasyfikacja",
+      "logicalReasoning": "Wnioskowanie",
+      "logicalAnalogies": "Analogie",
+      "logical": "Logika"
+    },
+    "clockSections": {
+      "hours": "Godziny",
+      "minutes": "Minuty",
+      "combined": "Pełny czas",
+      "mixed": "Mieszany trening"
+    },
+    "activityKinds": {
+      "game": "Gra: {label}",
+      "lessonPractice": "Ćwiczenie: {label}",
+      "training": "Trening: {label}",
+      "clockTraining": "Trening zegara: {label}",
+      "lessonCompletion": "Lekcja: {label}"
+    },
+    "badgeTracks": {
+      "onboarding": "Start",
+      "consistency": "Seria",
+      "mastery": "Mistrzostwo",
+      "variety": "Różnorodność",
+      "challenge": "Wyzwania",
+      "xp": "XP",
+      "quest": "Misje",
+      "english": "Angielski"
+    },
+    "badges": {
+      "first_game": {
+        "name": "Pierwsza gra",
+        "desc": "Ukończ pierwszą grę"
+      },
+      "perfect_10": {
+        "name": "Idealny wynik",
+        "desc": "Zdobądź pełny wynik w grze"
+      },
+      "lesson_hero": {
+        "name": "Bohater lekcji",
+        "desc": "Ukończ pierwszą lekcję"
+      },
+      "clock_master": {
+        "name": "Mistrz zegara",
+        "desc": "Ukończ trening zegara z wynikiem 5/5"
+      },
+      "calendar_keeper": {
+        "name": "Mistrz kalendarza",
+        "desc": "Ukończ trening kalendarza z pełnym wynikiem"
+      },
+      "geometry_artist": {
+        "name": "Artysta figur",
+        "desc": "Ukończ trening figur geometrycznych z pełnym wynikiem"
+      },
+      "streak_3": {
+        "name": "Seria mocy",
+        "desc": "Utrzymaj 3 mocne rundy z rzędu"
+      },
+      "accuracy_ace": {
+        "name": "Celny umysł",
+        "desc": "Utrzymaj średnio co najmniej 85% poprawnych odpowiedzi po 25 pytaniach"
+      },
+      "ten_games": {
+        "name": "Dziesiątka",
+        "desc": "Zagraj 10 gier"
+      },
+      "xp_500": {
+        "name": "Pół tysiąca XP",
+        "desc": "Zdobądź 500 XP łącznie"
+      },
+      "xp_1000": {
+        "name": "Tysiącznik",
+        "desc": "Zdobądź 1000 XP łącznie"
+      },
+      "quest_starter": {
+        "name": "Odkrywca misji",
+        "desc": "Ukończ pierwszą misję dnia"
+      },
+      "quest_keeper": {
+        "name": "Łowca misji",
+        "desc": "Ukończ 3 misje dnia"
+      },
+      "guided_step": {
+        "name": "Pewny krok",
+        "desc": "Ukończ pierwszą rundę zgodnie z rekomendacją"
+      },
+      "guided_keeper": {
+        "name": "Trzymam kierunek",
+        "desc": "Ukończ 3 rundy zgodnie z rekomendacją"
+      },
+      "mastery_builder": {
+        "name": "Budowniczy mistrzostwa",
+        "desc": "Doprowadź 3 lekcje do co najmniej 75% opanowania"
+      },
+      "variety": {
+        "name": "Wszechstronny",
+        "desc": "Zagraj 5 różnych operacji"
+      },
+      "english_first_game": {
+        "name": "Start z angielskim",
+        "desc": "Zagraj pierwszą grę z angielskiego"
+      },
+      "english_perfect": {
+        "name": "Perfekcyjny angielski",
+        "desc": "Zdobądź 100% w grze z angielskiego"
+      },
+      "english_pronoun_pro": {
+        "name": "Pronoun Pro",
+        "desc": "Zdobądź 2 perfekcyjne wyniki w Pronoun Remix"
+      },
+      "english_sorter_star": {
+        "name": "Mistrz części mowy",
+        "desc": "Zdobądź 2 perfekcyjne wyniki w Parts of Speech"
+      },
+      "english_sentence_builder": {
+        "name": "Architekt zdań",
+        "desc": "Osiągnij 80%+ i rozegraj 3 sesje Sentence Structure"
+      },
+      "english_agreement_guardian": {
+        "name": "Strażnik zgodności",
+        "desc": "Zdobądź perfekcyjny wynik w Subject-Verb Agreement"
+      },
+      "english_grammar_collection": {
+        "name": "Kolekcja gramatyki",
+        "desc": "Zagraj we wszystkie gry z angielskiego"
+      },
+      "english_articles_reader": {
+        "name": "Mistrz przedimków",
+        "desc": "Ukończ lekcję English: Articles"
+      },
+      "english_mastery_builder": {
+        "name": "Budowniczy English",
+        "desc": "Doprowadź 3 lekcje z angielskiego do 75% opanowania"
+      }
+    },
+    "badgeSummaries": {
+      "game": "{current}/{target} {target, plural, one {gra} few {gry} many {gier} other {gry}}",
+      "perfectGame": "{current}/{target} {target, plural, one {idealna gra} few {idealne gry} many {idealnych gier} other {idealnej gry}}",
+      "lesson": "{current}/{target} {target, plural, one {lekcja} few {lekcje} many {lekcji} other {lekcji}}",
+      "perfect": "{current}/{target} perfect",
+      "streak": "{current}/{target} w serii",
+      "questions": "{current}/{target} {target, plural, one {pytanie} few {pytania} many {pytań} other {pytania}}",
+      "percentGoal": "{current}% / {target}%",
+      "games": "{current}/{target} {target, plural, one {gra} few {gry} many {gier} other {gry}}",
+      "xp": "{current}/{target} XP",
+      "quest": "{current}/{target} {target, plural, one {misja} few {misje} many {misji} other {misji}}",
+      "round": "{current}/{target} {target, plural, one {runda} few {rundy} many {rund} other {rundy}}",
+      "types": "{current}/{target} typów",
+      "sessions": "{current}/{target} {target, plural, one {sesja} few {sesje} many {sesji} other {sesji}}"
+    },
+    "momentum": {
+      "allGoalsCompleted": "Wszystkie cele osiągnięte!"
+    },
+    "dailyQuest": {
+      "progress": {
+        "gamesPlayed": "{current}/{target} {target, plural, one {runda dzisiaj} few {rundy dzisiaj} many {rund dzisiaj} other {rundy dzisiaj}}",
+        "lessonsCompleted": "{current}/{target} {target, plural, one {lekcja dzisiaj} few {lekcje dzisiaj} many {lekcji dzisiaj} other {lekcji dzisiaj}}",
+        "lessonMastery": "{current}% / {target}% opanowania"
+      },
+      "expiresToday": "Wygasa dzisiaj",
+      "reward": {
+        "claimed": "Nagroda odebrana +{xp} XP",
+        "ready": "Nagroda gotowa +{xp} XP",
+        "locked": "Nagroda +{xp} XP"
+      }
+    },
+    "questMomentum": {
+      "paceValue": "{xp} XP / grę"
+    },
+    "badgeGrid": {
+      "empty": "Kolejne odznaki pojawiają się wraz z postępem."
+    },
+    "badgeTrackCard": {
+      "count": "{unlocked}/{total} odznak",
+      "allUnlocked": "Wszystkie odznaki odblokowane"
+    },
+    "badgeTrackHighlights": {
+      "placeholders": {
+        "quest": {
+          "title": "Odblokuj pierwszą misję",
+          "description": "Ten panel pokaże się tutaj, gdy ruszysz z pierwszą misją dnia."
+        },
+        "mastery": {
+          "title": "Zacznij budować opanowanie",
+          "description": "Panel wypełni się, gdy pierwsza lekcja zacznie zbliżać się do mistrzostwa."
+        },
+        "genericPinned": {
+          "title": "Ta ścieżka czeka na start",
+          "description": "Pierwszy postęp w tym kierunku odsłoni pełny panel z odznakami."
+        },
+        "generic": {
+          "label": "Kolejna ścieżka",
+          "title": "Miejsce na następny panel",
+          "description": "Odblokuj więcej odznak, a pojawi się tu kolejny kierunek postępu."
+        }
+      }
+    },
+    "heroMilestone": {
+      "nextBadgeEyebrow": "Następny kamień milowy"
+    },
+    "overview": {
+      "stats": {
+        "totalXp": "Łączne XP",
+        "xpPerGame": "XP / grę",
+        "gamesPlayed": "Rozegrane gry",
+        "lessonsCompleted": "Ukończone lekcje",
+        "averageAccuracy": "Średnia skuteczność",
+        "bestStreak": "Najlepsza seria"
+      },
+      "levelEyebrow": "Poziom i doświadczenie",
+      "levelDescription": "Poziom {level} · {xp} XP łącznie",
+      "nextLevel": "Do poziomu {level}: {xp} XP",
+      "maxLevel": "Osiągnięto maksymalny poziom!",
+      "dailyQuestEyebrow": "Misja dnia",
+      "guidedMomentum": {
+        "descriptionWithBadge": "Do odznaki {badge}: {summary}",
+        "descriptionUnlocked": "Wszystkie odznaki polecanego kierunku odblokowane.",
+        "eyebrow": "Polecony kierunek",
+        "title": "{count} polecone rundy"
+      },
+      "operationsHeading": "Ćwiczone operacje",
+      "topActivitiesHeading": "Najczęściej ćwiczone aktywności",
+      "topActivityDescription": "{sessions} sesji · {xp} XP / grę · średnio {accuracy}% · najlepszy wynik {best}%"
     }
   }
 }

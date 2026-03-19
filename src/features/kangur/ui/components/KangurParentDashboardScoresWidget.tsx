@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import ScoreHistory from '@/features/kangur/ui/components/ScoreHistory';
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import ProgressOverview from '@/features/kangur/ui/components/ProgressOverview';
@@ -29,6 +31,8 @@ export function KangurParentDashboardScoresWidget({
     scoreViewerEmail,
     scoreViewerName,
   } = useKangurParentDashboardRuntime();
+  const translations = useTranslations('KangurParentDashboard');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { subject } = useKangurSubjectFocus();
   const { entry: scoresContent } = useKangurPageContentEntry('parent-dashboard-scores');
 
@@ -44,22 +48,25 @@ export function KangurParentDashboardScoresWidget({
     return null;
   }
 
-  const dailyQuest = getCurrentKangurDailyQuest(progress, { subject });
+  const dailyQuest = getCurrentKangurDailyQuest(progress, {
+    subject,
+    translate: runtimeTranslations,
+  });
 
   return (
     <KangurPanelStack>
       <KangurWidgetIntro
         description={
           scoresContent?.summary ??
-          'Przejrzyj ostatnie gry, skuteczność i obszary, które warto teraz powtórzyć.'
+          translations('widgets.scores.description')
         }
-        title={scoresContent?.title ?? 'Wyniki ucznia'}
+        title={scoresContent?.title ?? translations('widgets.scores.title')}
       />
       <KangurSummaryPanel
         accent='indigo'
         data-testid='parent-dashboard-track-summary'
-        description='Najważniejsze ścieżki odznak, które aktualnie buduje uczeń.'
-        label='Ścieżki postępu ucznia'
+        description={translations('widgets.scores.trackSummary.description')}
+        label={translations('widgets.scores.trackSummary.label')}
       >
         <div className='mt-3'>
           <KangurBadgeTrackHighlights

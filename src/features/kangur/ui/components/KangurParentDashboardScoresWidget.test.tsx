@@ -135,9 +135,13 @@ describe('KangurParentDashboardScoresWidget', () => {
 
     expect(screen.getByTestId('score-history-stub')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-stub')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress, {
-      subject: 'maths',
-    });
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
+      runtimeState.value.progress,
+      expect.objectContaining({
+        subject: 'maths',
+        translate: expect.any(Function),
+      })
+    );
     expect(scoreHistoryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',

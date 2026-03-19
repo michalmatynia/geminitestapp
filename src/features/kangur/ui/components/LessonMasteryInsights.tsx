@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   KangurCardTitle,
   KangurEmptyState,
@@ -11,7 +11,10 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_COMPACT_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { buildLessonMasteryInsights } from '@/features/kangur/ui/services/profile';
+import {
+  buildLessonMasteryInsights,
+  translateKangurLearnerProfileWithFallback,
+} from '@/features/kangur/ui/services/profile';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 type LessonMasteryInsightsProps = {
@@ -22,18 +25,19 @@ type LessonMasteryInsightsProps = {
 
 const formatCompletedAt = (
   value: string | null,
-  translate: (key: string) => string
+  translate: (key: string, values?: Record<string, string | number>) => string,
+  locale: string
 ): string => {
   if (!value) {
-    return translate('dateMissing');
+    return translateLessonMasteryWithFallback(translate, 'dateMissing', 'brak daty');
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return translate('dateMissing');
+    return translateLessonMasteryWithFallback(translate, 'dateMissing', 'brak daty');
   }
 
-  return parsed.toLocaleDateString('pl-PL', {
+  return parsed.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'short',
   });
@@ -49,6 +53,19 @@ const getMasteryTone = (masteryPercent: number): KangurAccent => {
   return 'rose';
 };
 
+const translateLessonMasteryWithFallback = (
+  translate: (key: string, values?: Record<string, string | number>) => string,
+  key: string,
+  fallback: string,
+  values?: Record<string, string | number>
+): string =>
+  translateKangurLearnerProfileWithFallback(
+    translate,
+    key,
+    fallback,
+    values
+  );
+
 type InsightListProps = {
   emptyState: string;
   items: ReturnType<typeof buildLessonMasteryInsights>['strongest'];
@@ -56,8 +73,13 @@ type InsightListProps = {
 };
 
 const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.Element => {
+  const locale = useLocale();
   const translations = useTranslations('KangurLearnerProfileWidgets.lessonMastery');
-  const emptyStateDescription = emptyState;
+  const translateWithFallback = (
+    key: string,
+    fallback: string,
+    values?: Record<string, string | number>
+  ): string => translateLessonMasteryWithFallback(translations, key, fallback, values);
 
   return (
     <KangurInfoCard accent='slate' padding='md' tone='muted'>
@@ -68,7 +90,7 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
         <KangurEmptyState
           accent='slate'
           className='mt-3'
-          description={emptyStateDescription}
+          description={emptyState}
           padding='md'
         />
       ) : (
@@ -86,10 +108,14 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                     {item.emoji} {item.title}
                   </KangurCardTitle>
                   <KangurMetaText as='div' className='mt-1' size='xs'>
-                    {translations('attemptsLine', {
-                      attempts: item.attempts,
-                      lastScore: item.lastScorePercent,
-                    })}
+                    {translateWithFallback(
+                      'attemptsLine',
+                      `Próby: ${item.attempts} · ostatni wynik ${item.lastScorePercent}%`,
+                      {
+                        attempts: item.attempts,
+                        lastScore: item.lastScorePercent,
+                      }
+                    )}
                   </KangurMetaText>
                 </div>
                 <KangurStatusChip
@@ -101,10 +127,18 @@ const InsightList = ({ emptyState, items, title }: InsightListProps): React.JSX.
                 </KangurStatusChip>
               </KangurPanelRow>
               <KangurMetaText as='div' className='mt-2' size='xs'>
-                {translations('bestScoreLine', {
-                  bestScore: item.bestScorePercent,
-                  date: formatCompletedAt(item.lastCompletedAt, translations),
-                })}
+                {translateWithFallback(
+                  'bestScoreLine',
+                  `Najlepszy wynik: ${item.bestScorePercent}% · Ostatnia próba: ${formatCompletedAt(
+                    item.lastCompletedAt,
+                    translations,
+                    locale
+                  )}`,
+                  {
+                    bestScore: item.bestScorePercent,
+                    date: formatCompletedAt(item.lastCompletedAt, translations, locale),
+                  }
+                )}
               </KangurMetaText>
             </KangurInfoCard>
           ))}
@@ -119,46 +153,70 @@ export default function LessonMasteryInsights({
   sectionSummary,
   sectionTitle,
 }: LessonMasteryInsightsProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurLearnerProfileWidgets.lessonMastery');
-  const insights = buildLessonMasteryInsights(progress);
-  const resolvedSectionTitle = sectionTitle ?? translations('title');
+  const translateWithFallback = (
+    key: string,
+    fallback: string,
+    values?: Record<string, string | number>
+  ): string => translateLessonMasteryWithFallback(translations, key, fallback, values);
+  const insights = buildLessonMasteryInsights(progress, 3, locale);
+  const resolvedSectionTitle =
+    sectionTitle ?? translateWithFallback('title', 'Opanowanie lekcji');
   const resolvedSectionSummary =
     sectionSummary ??
-    translations('trackedSummary', {
-      tracked: insights.trackedLessons,
-      mastered: insights.masteredLessons,
-      review: insights.lessonsNeedingPractice,
-    });
+    translateWithFallback(
+      'trackedSummary',
+      `Śledzone: ${insights.trackedLessons} · opanowane: ${insights.masteredLessons} · do powtórki: ${insights.lessonsNeedingPractice}`,
+      {
+        tracked: insights.trackedLessons,
+        mastered: insights.masteredLessons,
+        review: insights.lessonsNeedingPractice,
+      }
+    );
 
   return (
     <KangurGlassPanel padding='lg' surface='mistSoft' variant='soft'>
       <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-end sm:justify-between`}>
         <KangurPanelIntro description={resolvedSectionSummary} eyebrow={resolvedSectionTitle} />
         {insights.trackedLessons > 0 && (
-        <KangurStatusChip accent='indigo' size='md'>
-            {translations('trackedBadge', { count: insights.trackedLessons })}
-        </KangurStatusChip>
-      )}
+          <KangurStatusChip accent='indigo' size='md'>
+            {translateWithFallback(
+              'trackedBadge',
+              `${insights.trackedLessons} lekcji z zapisem`,
+              { count: insights.trackedLessons }
+            )}
+          </KangurStatusChip>
+        )}
       </div>
 
       {insights.trackedLessons === 0 ? (
         <KangurEmptyState
           accent='slate'
           className='mt-4'
-          description={translations('emptyDescription')}
+          description={translateWithFallback(
+            'emptyDescription',
+            'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.'
+          )}
           padding='lg'
         />
       ) : (
         <div className='mt-4 grid grid-cols-1 xl:grid-cols-2 kangur-panel-gap'>
           <InsightList
-            title={translations('reviewTitle')}
+            title={translateWithFallback('reviewTitle', 'Do powtórki')}
             items={insights.weakest}
-            emptyState={translations('reviewEmpty')}
+            emptyState={translateWithFallback(
+              'reviewEmpty',
+              'Wszystkie śledzone lekcje są na bezpiecznym poziomie.'
+            )}
           />
           <InsightList
-            title={translations('strongestTitle')}
+            title={translateWithFallback('strongestTitle', 'Najmocniejsze lekcje')}
             items={insights.strongest}
-            emptyState={translations('strongestEmpty')}
+            emptyState={translateWithFallback(
+              'strongestEmpty',
+              'Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.'
+            )}
           />
         </div>
       )}

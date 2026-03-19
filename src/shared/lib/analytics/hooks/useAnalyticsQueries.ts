@@ -1,6 +1,7 @@
 'use client';
 
 import type {
+  AnalyticsEventFilterBot,
   AnalyticsEventFilterType,
   AnalyticsEventsResponse,
   AnalyticsScope,
@@ -53,6 +54,12 @@ export function useAnalyticsEvents(input?: {
   range?: AnalyticsRange;
   scope?: AnalyticsScope | 'all';
   type?: AnalyticsEventFilterType;
+  search?: string;
+  country?: string;
+  referrerHost?: string;
+  browser?: string;
+  device?: string;
+  bot?: AnalyticsEventFilterBot;
   enabled?: boolean;
 }): SingleQuery<AnalyticsEventsResponse> {
   const page = input?.page ?? 1;
@@ -60,6 +67,12 @@ export function useAnalyticsEvents(input?: {
   const range = input?.range ?? '24h';
   const scope = input?.scope ?? 'all';
   const type = input?.type ?? 'all';
+  const search = input?.search ?? '';
+  const country = input?.country ?? '';
+  const referrerHost = input?.referrerHost ?? '';
+  const browser = input?.browser ?? '';
+  const device = input?.device ?? '';
+  const bot = input?.bot ?? 'all';
   const enabled = input?.enabled ?? true;
 
   const queryKey = analyticsKeys.events({
@@ -68,10 +81,16 @@ export function useAnalyticsEvents(input?: {
     range,
     scope,
     type,
+    search,
+    country,
+    referrerHost,
+    browser,
+    device,
+    bot,
   });
 
   return createSingleQueryV2({
-    id: `${range}-${scope}-${type}-${page}-${pageSize}`,
+    id: `${range}-${scope}-${type}-${search}-${country}-${referrerHost}-${browser}-${device}-${bot}-${page}-${pageSize}`,
     queryKey,
     queryFn: () =>
       fetchAnalyticsEvents({
@@ -80,6 +99,12 @@ export function useAnalyticsEvents(input?: {
         range,
         scope,
         type,
+        search,
+        country,
+        referrerHost,
+        browser,
+        device,
+        bot,
       }),
     enabled,
     meta: {

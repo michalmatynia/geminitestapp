@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
@@ -18,6 +18,7 @@ import {
   KANGUR_STACK_TIGHT_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
 
 const SESSION_ACCENTS: Record<string, KangurAccent> = {
   addition: 'amber',
@@ -44,13 +45,20 @@ const resolveSessionScoreAccent = (accuracyPercent: number): KangurAccent => {
 };
 
 export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurLearnerProfileWidgets.sessions');
+  const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const { isLoadingScores, progress, scoresError, snapshot } = useKangurLearnerProfileRuntime();
   const { entry: sessionsContent } = useKangurPageContentEntry('learner-profile-sessions');
   const sectionTitle = sessionsContent?.title ?? translations('title');
   const sectionSummary =
     sessionsContent?.summary ??
     translations('summary');
+  const dateMissingLabel = translateKangurLearnerProfileWithFallback(
+    (key, values) => runtimeTranslations(key as never, values as never),
+    'dateMissing',
+    'Brak daty'
+  );
 
   return (
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -106,7 +114,10 @@ export function KangurLearnerProfileSessionsWidget(): React.JSX.Element {
                     scoreAccent={resolveSessionScoreAccent(session.accuracyPercent)}
                     scoreTestId={`learner-profile-session-score-${session.id}`}
                     scoreText={`${session.score}/${session.totalQuestions}`}
-                    subtitle={formatKangurProfileDateTime(session.createdAt)}
+                    subtitle={formatKangurProfileDateTime(session.createdAt, {
+                      locale,
+                      dateMissingLabel,
+                    })}
                     title={session.operationLabel}
                     titleClassName='text-sm font-semibold'
                     xpTestId={`learner-profile-session-xp-${session.id}`}

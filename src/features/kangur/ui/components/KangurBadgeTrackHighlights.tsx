@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import KangurBadgeTrackPlaceholderCard from '@/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard';
 import {
   KangurBadgeTrackSummaryCard,
@@ -9,6 +10,7 @@ import {
 import {
   getBadgeTrackMeta,
   getProgressBadgeTrackSummaries,
+  translateKangurProgressWithFallback,
   type KangurBadgeTrackKey,
   type KangurBadgeTrackSummary,
 } from '@/features/kangur/ui/services/progress';
@@ -50,16 +52,27 @@ const TRACK_PRIORITY: Record<KangurBadgeTrackKey, number> = {
   english: 8,
 };
 
-const getPinnedTrackPlaceholder = (trackKey: KangurBadgeTrackKey): KangurBadgeTrackHighlightItem => {
-  const meta = getBadgeTrackMeta(trackKey);
+const getPinnedTrackPlaceholder = (
+  trackKey: KangurBadgeTrackKey,
+  translate?: (key: string, values?: Record<string, string | number>) => string
+): KangurBadgeTrackHighlightItem => {
+  const meta = getBadgeTrackMeta(trackKey, { translate });
 
   if (trackKey === 'quest') {
     return {
       kind: 'placeholder',
       id: trackKey,
       label: meta.label,
-      title: 'Odblokuj pierwszą misję',
-      description: 'Ten panel pokaże się tutaj, gdy ruszysz z pierwszą misją dnia.',
+      title: translateKangurProgressWithFallback(
+        translate,
+        'badgeTrackHighlights.placeholders.quest.title',
+        'Odblokuj pierwszą misję'
+      ),
+      description: translateKangurProgressWithFallback(
+        translate,
+        'badgeTrackHighlights.placeholders.quest.description',
+        'Ten panel pokaże się tutaj, gdy ruszysz z pierwszą misją dnia.'
+      ),
       trackEmoji: meta.emoji,
     };
   }
@@ -69,8 +82,16 @@ const getPinnedTrackPlaceholder = (trackKey: KangurBadgeTrackKey): KangurBadgeTr
       kind: 'placeholder',
       id: trackKey,
       label: meta.label,
-      title: 'Zacznij budować opanowanie',
-      description: 'Panel wypełni się, gdy pierwsza lekcja zacznie zbliżać się do mistrzostwa.',
+      title: translateKangurProgressWithFallback(
+        translate,
+        'badgeTrackHighlights.placeholders.mastery.title',
+        'Zacznij budować opanowanie'
+      ),
+      description: translateKangurProgressWithFallback(
+        translate,
+        'badgeTrackHighlights.placeholders.mastery.description',
+        'Panel wypełni się, gdy pierwsza lekcja zacznie zbliżać się do mistrzostwa.'
+      ),
       trackEmoji: meta.emoji,
     };
   }
@@ -79,18 +100,41 @@ const getPinnedTrackPlaceholder = (trackKey: KangurBadgeTrackKey): KangurBadgeTr
     kind: 'placeholder',
     id: trackKey,
     label: meta.label,
-    title: 'Ta ścieżka czeka na start',
-    description: 'Pierwszy postęp in tym kierunku odsłoni pełny panel z odznakami.',
+    title: translateKangurProgressWithFallback(
+      translate,
+      'badgeTrackHighlights.placeholders.genericPinned.title',
+      'Ta ścieżka czeka na start'
+    ),
+    description: translateKangurProgressWithFallback(
+      translate,
+      'badgeTrackHighlights.placeholders.genericPinned.description',
+      'Pierwszy postęp w tym kierunku odsłoni pełny panel z odznakami.'
+    ),
     trackEmoji: meta.emoji,
   };
 };
 
-const getGenericPlaceholder = (index: number): KangurBadgeTrackHighlightItem => ({
+const getGenericPlaceholder = (
+  index: number,
+  translate?: (key: string, values?: Record<string, string | number>) => string
+): KangurBadgeTrackHighlightItem => ({
   kind: 'placeholder',
   id: String(index),
-  label: 'Kolejna ścieżka',
-  title: 'Miejsce na następny panel',
-  description: 'Odblokuj więcej odznak, a pojawi się tu kolejny kierunek postępu.',
+  label: translateKangurProgressWithFallback(
+    translate,
+    'badgeTrackHighlights.placeholders.generic.label',
+    'Kolejna ścieżka'
+  ),
+  title: translateKangurProgressWithFallback(
+    translate,
+    'badgeTrackHighlights.placeholders.generic.title',
+    'Miejsce na następny panel'
+  ),
+  description: translateKangurProgressWithFallback(
+    translate,
+    'badgeTrackHighlights.placeholders.generic.description',
+    'Odblokuj więcej odznak, a pojawi się tu kolejny kierunek postępu.'
+  ),
   trackEmoji: '✨',
 });
 
@@ -103,13 +147,14 @@ export default function KangurBadgeTrackHighlights({
   progress,
   showPlaceholderForMissingPinnedTracks = false,
 }: KangurBadgeTrackHighlightsProps): React.JSX.Element | null {
+  const translations = useTranslations('KangurProgressRuntime');
   const trackTestIdPrefix = dataTestIdPrefix;
   const maxItems = Math.max(0, Math.floor(limit));
   const targetItemCount = Math.min(
     maxItems,
     Math.max(0, Math.floor(minimumItems ?? 0))
   );
-  const tracks = getProgressBadgeTrackSummaries(progress, { maxTracks: 7 })
+  const tracks = getProgressBadgeTrackSummaries(progress, { maxTracks: 7 }, { translate: translations })
     .sort((left, right) => {
       const leftPriority = TRACK_PRIORITY[left.key] ?? 99;
       const rightPriority = TRACK_PRIORITY[right.key] ?? 99;
@@ -135,7 +180,7 @@ export default function KangurBadgeTrackHighlights({
     }
 
     if (showPlaceholderForMissingPinnedTracks) {
-      items.push(getPinnedTrackPlaceholder(trackKey));
+      items.push(getPinnedTrackPlaceholder(trackKey, translations));
     }
   });
 
@@ -150,7 +195,7 @@ export default function KangurBadgeTrackHighlights({
 
   let genericPlaceholderIndex = 1;
   while (items.length < targetItemCount) {
-    items.push(getGenericPlaceholder(genericPlaceholderIndex));
+    items.push(getGenericPlaceholder(genericPlaceholderIndex, translations));
     genericPlaceholderIndex += 1;
   }
 

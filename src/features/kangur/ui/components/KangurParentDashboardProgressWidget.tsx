@@ -91,6 +91,7 @@ export function KangurParentDashboardProgressWidget({
 }): React.JSX.Element | null {
   const locale = useLocale();
   const translations = useTranslations('KangurParentDashboard');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { activeLearner, activeTab, basePath, canAccessDashboard, progress } =
     useKangurParentDashboardRuntime();
   const { subject } = useKangurSubjectFocus();
@@ -209,7 +210,10 @@ export function KangurParentDashboardProgressWidget({
     return null;
   }
 
-  const dailyQuest = getCurrentKangurDailyQuest(progress, { subject });
+  const dailyQuest = getCurrentKangurDailyQuest(progress, {
+    subject,
+    translate: runtimeTranslations,
+  });
   const dailyQuestAction = dailyQuest?.assignment.action ?? null;
   const dailyQuestHref = dailyQuestAction ? buildAssignmentHref(basePath, dailyQuestAction) : null;
   const dailyQuestTargetPage = dailyQuestAction?.page ?? null;

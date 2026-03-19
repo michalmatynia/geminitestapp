@@ -121,6 +121,8 @@ export function ValidatorPatternTree(): React.JSX.Element {
     auditKey: string;
     requestId: number;
   } | null>(null);
+  const [dismissedSemanticHistoryPatternId, setDismissedSemanticHistoryPatternId] =
+    React.useState<string | null>(null);
 
   // Build master nodes from ordered patterns + sequence groups
   const masterNodes = useMemo(
@@ -193,6 +195,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
       onDeletePattern: setPatternToDelete,
       onTogglePattern: handleTogglePattern,
       onOpenSemanticHistory: (patternId: string, auditKey: string) => {
+        setDismissedSemanticHistoryPatternId(null);
         setFocusedSemanticHistoryRequest((prev) => ({
           patternId,
           auditKey,
@@ -240,10 +243,16 @@ export function ValidatorPatternTree(): React.JSX.Element {
     : null;
   const selectedGroupDraft = selectedGroupId ? getGroupDraft(selectedGroupId) : null;
   const selectedPattern = selectedPatternId ? patternById.get(selectedPatternId) ?? null : null;
+  const semanticHistoryVisible =
+    selectedPattern !== null && dismissedSemanticHistoryPatternId !== selectedPattern.id;
+
+  React.useEffect(() => {
+    setDismissedSemanticHistoryPatternId(null);
+  }, [selectedPattern?.id]);
 
   return (
     <ValidatorPatternTreeContext.Provider value={contextValue}>
-      <FolderTreePanel masterInstance='validator_pattern_tree'>
+      <FolderTreePanel masterInstance='validator_pattern_tree' className='h-auto min-h-0'>
         <FolderTreeViewportV2
           controller={controller}
           scrollToNodeRef={scrollToNodeRef}
@@ -267,7 +276,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
           isPending={isPending}
         />
       )}
-      {selectedPattern ? (
+      {selectedPattern && semanticHistoryVisible ? (
         <ValidatorPatternSemanticHistoryPanel
           pattern={selectedPattern}
           focusedAuditKey={
@@ -280,6 +289,10 @@ export function ValidatorPatternTree(): React.JSX.Element {
               ? focusedSemanticHistoryRequest.requestId
               : 0
           }
+          onClose={() => {
+            setDismissedSemanticHistoryPatternId(selectedPattern.id);
+            setFocusedSemanticHistoryRequest(null);
+          }}
         />
       ) : null}
     </ValidatorPatternTreeContext.Provider>

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   getLocalizedKangurAgeGroupLabel,
   getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonSectionLabel,
+  getLocalizedKangurLessonSectionTypeLabel,
   getLocalizedKangurLessonTitle,
   getLocalizedKangurSubjectLabel,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
@@ -47,5 +49,23 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurAgeGroupLabel('ten_year_old', 'en')).toBe('Age 10');
     expect(getLocalizedKangurAgeGroupLabel('grown_ups', 'de')).toBe('Adults');
     expect(getLocalizedKangurAgeGroupLabel('six_year_old', 'pl')).toBe('6 lat');
+  });
+
+  it('returns English lesson section labels for non-Polish locales while keeping Polish in pl', () => {
+    expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'en', 'Geometria')).toBe(
+      'Geometry'
+    );
+    expect(
+      getLocalizedKangurLessonSectionLabel('alphabet_matching', 'de', 'Dopasuj litery')
+    ).toBe('Match the letters');
+    expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'pl', 'Geometria')).toBe(
+      'Geometria'
+    );
+  });
+
+  it('returns localized section type labels for English routes and keeps Polish defaults in pl', () => {
+    expect(getLocalizedKangurLessonSectionTypeLabel('en', 'Gra')).toBe('Game');
+    expect(getLocalizedKangurLessonSectionTypeLabel('de', 'Lekcja')).toBe('Lesson');
+    expect(getLocalizedKangurLessonSectionTypeLabel('pl', 'Gra')).toBe('Gra');
   });
 });

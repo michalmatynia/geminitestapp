@@ -34,7 +34,15 @@ vi.mock('@/shared/providers/AdminLayoutProvider', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
-  AdminProductsBreadcrumbs: () => <nav>Breadcrumbs</nav>,
+  AdminProductsBreadcrumbs: ({
+    className,
+  }: {
+    className?: string;
+  }) => (
+    <nav data-testid='product-list-breadcrumbs' className={className}>
+      Breadcrumbs
+    </nav>
+  ),
   Button: ({
     children,
     onClick,
@@ -120,16 +128,32 @@ describe('ProductListHeader', () => {
     expect(screen.queryByRole('button', { name: 'Show trigger run pills' })).toBeNull();
   });
 
-  it('keeps the create button inline with the Products heading', () => {
+  it('keeps the breadcrumb under a plain heading and moves create actions into the header rail', () => {
     const { container } = render(<ProductListHeader />);
 
-    const titleRow = findDivByExactClassName(container, 'flex items-center gap-2');
+    const desktopSection = findDivByExactClassName(container, 'hidden space-y-3 lg:block');
+    const desktopHeaderRow = findDivByExactClassName(
+      desktopSection,
+      'flex flex-wrap items-start justify-between gap-3'
+    );
+    const desktopTitleStack = findDivByExactClassName(
+      desktopHeaderRow,
+      'space-y-1 shrink-0 min-w-max'
+    );
+    const desktopControlsRow = findDivByExactClassName(
+      desktopHeaderRow,
+      'flex flex-wrap items-center gap-2 pt-1 relative z-0 min-w-0 flex-1 justify-end'
+    );
+    const breadcrumb = within(desktopTitleStack).getByTestId('product-list-breadcrumbs');
 
-    expect(within(titleRow).getByRole('heading', { name: 'Products' })).toBeInTheDocument();
+    expect(within(desktopTitleStack).getByRole('heading', { name: 'Products' })).toBeInTheDocument();
+    expect(breadcrumb).toBeInTheDocument();
+    expect(breadcrumb).not.toHaveClass('mt-1');
+    expect(within(desktopTitleStack).queryByRole('button', { name: 'Create new product' })).toBeNull();
     expect(
-      within(titleRow).getByRole('button', { name: 'Create new product' })
+      within(desktopControlsRow).getByRole('button', { name: 'Create new product' })
     ).toBeInTheDocument();
-    expect(within(titleRow).queryByText('Pagination')).toBeNull();
+    expect(within(desktopControlsRow).getByText('Pagination')).toBeInTheDocument();
   });
 
   it('renders desktop filters on a dedicated row below the pagination and selectors', () => {
@@ -142,14 +166,21 @@ describe('ProductListHeader', () => {
     const desktopSection = findDivByExactClassName(container, 'hidden space-y-3 lg:block');
     const desktopHeaderRow = findDivByExactClassName(
       desktopSection,
-      'flex items-start justify-between gap-3'
+      'flex flex-wrap items-start justify-between gap-3'
+    );
+    const desktopTitleStack = findDivByExactClassName(
+      desktopHeaderRow,
+      'space-y-1 shrink-0 min-w-max'
     );
     const desktopControlsRow = findDivByExactClassName(
-      desktopSection,
-      'relative z-0 flex w-full min-w-0 flex-wrap items-center justify-end gap-2 pt-1'
+      desktopHeaderRow,
+      'flex flex-wrap items-center gap-2 pt-1 relative z-0 min-w-0 flex-1 justify-end'
     );
 
-    expect(desktopControlsRow.parentElement).toBe(desktopHeaderRow);
+    expect(within(desktopTitleStack).getByTestId('product-list-breadcrumbs')).not.toHaveClass(
+      'mt-1'
+    );
+    expect(within(desktopControlsRow).getByRole('button', { name: 'Create new product' })).toBeInTheDocument();
     expect(within(desktopControlsRow).getByText('Pagination')).toBeInTheDocument();
     expect(
       within(desktopControlsRow).getByLabelText('Select product name language')

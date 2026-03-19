@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   useSystemLogsStateMock: vi.fn(),
@@ -17,6 +17,13 @@ vi.mock('@/features/observability/context/SystemLogsContext', () => ({
 import { LogTriagePresets } from './SystemLogs.Presets';
 
 describe('LogTriagePresets', () => {
+  const handleFilterChangeMock = vi.fn();
+  const handleResetFiltersMock = vi.fn();
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     mocks.useSystemLogsStateMock.mockReset().mockReturnValue({
       level: 'all',
@@ -35,9 +42,11 @@ describe('LogTriagePresets', () => {
       fromDate: '',
       toDate: '',
     });
+    handleFilterChangeMock.mockReset();
+    handleResetFiltersMock.mockReset();
     mocks.useSystemLogsActionsMock.mockReset().mockReturnValue({
-      handleFilterChange: vi.fn(),
-      handleResetFilters: vi.fn(),
+      handleFilterChange: handleFilterChangeMock,
+      handleResetFilters: handleResetFiltersMock,
     });
   });
 
@@ -59,5 +68,55 @@ describe('LogTriagePresets', () => {
     );
     expect(description).toHaveClass('whitespace-normal');
     expect(description).toHaveClass('break-words');
+  });
+
+  it('applies the selected preset filters with resolved date values', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-19T12:00:00.000Z'));
+
+    render(<LogTriagePresets />);
+
+    fireEvent.click(screen.getByText('Recent Errors').closest('button') as HTMLButtonElement);
+
+    expect(handleFilterChangeMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        ['level', 'error'],
+        ['query', ''],
+        ['source', ''],
+        ['fromDate', '2026-03-18'],
+        ['toDate', '2026-03-19'],
+      ])
+    );
+  });
+
+  it('shows an active preset state and clears it through the shared reset action', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-19T12:00:00.000Z'));
+    mocks.useSystemLogsStateMock.mockReturnValue({
+      level: 'error',
+      query: '',
+      source: '',
+      service: '',
+      method: '',
+      statusCode: '',
+      minDurationMs: '',
+      requestId: '',
+      traceId: '',
+      correlationId: '',
+      userId: '',
+      fingerprint: '',
+      category: '',
+      fromDate: '2026-03-18',
+      toDate: '2026-03-19',
+    });
+
+    render(<LogTriagePresets />);
+
+    expect(screen.getByRole('button', { name: 'Clear preset' })).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear preset' }));
+
+    expect(handleResetFiltersMock).toHaveBeenCalledTimes(1);
   });
 });

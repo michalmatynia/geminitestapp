@@ -1,5 +1,4 @@
 import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
-import { Analytics } from '@vercel/analytics/next';
 
 import type { ReactNode } from 'react';
 
@@ -12,7 +11,6 @@ export default function Layout({
   return (
     <>
       <KangurFeatureRouteShell />
-      <Analytics />
     </>
   );
 }

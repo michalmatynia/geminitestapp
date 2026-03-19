@@ -44,20 +44,22 @@ export default function PlayerProgressCard({
   progress,
 }: PlayerProgressCardProps): React.JSX.Element {
   const translations = useTranslations('KangurPlayerProgress');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { entry: progressContent } = useKangurPageContentEntry('game-home-progress');
   const badgeTrackProgress = progress;
   const { totalXp, gamesPlayed, lessonsCompleted } = progress;
-  const currentLevel = getCurrentLevel(totalXp);
-  const nextLevel = getNextLevel(totalXp);
+  const progressLocalizer = { translate: runtimeTranslations };
+  const currentLevel = getCurrentLevel(totalXp, progressLocalizer);
+  const nextLevel = getNextLevel(totalXp, progressLocalizer);
   const xpIntoLevel = totalXp - currentLevel.minXp;
   const xpNeeded = nextLevel ? nextLevel.minXp - currentLevel.minXp : 1;
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
   const averageAccuracy = getProgressAverageAccuracy(progress);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const bestWinStreak = progress.bestWinStreak ?? 0;
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
-  const nextBadge = getNextLockedBadge(progress);
-  const guidedMomentum = getRecommendedSessionMomentum(progress);
+  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
+  const nextBadge = getNextLockedBadge(progress, progressLocalizer);
+  const guidedMomentum = getRecommendedSessionMomentum(progress, progressLocalizer);
   const progressTitle = progressContent?.title ?? translations('fallbackTitle');
   const progressSummary =
     progressContent?.summary ??

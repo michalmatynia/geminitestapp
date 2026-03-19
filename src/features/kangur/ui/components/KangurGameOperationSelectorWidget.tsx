@@ -54,6 +54,7 @@ import {
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
   getRecommendedSessionMomentum,
+  type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import type {
@@ -228,6 +229,7 @@ type KangurOperationSelectorRecommendation = {
 type KangurSelectorRecommendationLocalizer = {
   locale?: string | null;
   translate?: RecommendationTranslate;
+  progressTranslate?: KangurProgressTranslate;
 };
 
 const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
@@ -524,14 +526,16 @@ const getWeakestLessonRecommendation = (
 
 const getTrackRecommendation = (
   progress: KangurProgressState,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurOperationSelectorRecommendation | null => {
+  const progressLocalizer = { translate: progressTranslate };
   const track =
-    getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }).find(
+    getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }, progressLocalizer).find(
       (entry) =>
         Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40)
     ) ?? null;
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
   const activityLabel = topActivity
     ? resolveLocalizedRecommendationActivityLabel({
         activityKey: topActivity.key,
@@ -585,14 +589,16 @@ const getTrackRecommendation = (
 
 const getGuidedRecommendation = (
   progress: KangurProgressState,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurOperationSelectorRecommendation | null => {
-  const guidedMomentum = getRecommendedSessionMomentum(progress);
+  const progressLocalizer = { translate: progressTranslate };
+  const guidedMomentum = getRecommendedSessionMomentum(progress, progressLocalizer);
   if (guidedMomentum.completedSessions <= 0 || !guidedMomentum.nextBadgeName) {
     return null;
   }
 
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
   const activityLabel = topActivity
     ? resolveLocalizedRecommendationActivityLabel({
         activityKey: topActivity.key,
@@ -645,9 +651,10 @@ const getGuidedRecommendation = (
 
 const getFallbackRecommendation = (
   progress: KangurProgressState,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurOperationSelectorRecommendation | null => {
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const topActivity = getProgressTopActivities(progress, 1, { translate: progressTranslate })[0] ?? null;
   if (!topActivity) {
     return null;
   }
@@ -694,15 +701,16 @@ const getOperationSelectorRecommendation = (
 ): KangurOperationSelectorRecommendation | null =>
   getQuestRecommendation(quest, progress, localizer?.translate) ??
   getWeakestLessonRecommendation(progress, localizer) ??
-  getGuidedRecommendation(progress, localizer?.translate) ??
-  getTrackRecommendation(progress, localizer?.translate) ??
-  getFallbackRecommendation(progress, localizer?.translate);
+  getGuidedRecommendation(progress, localizer?.translate, localizer?.progressTranslate) ??
+  getTrackRecommendation(progress, localizer?.translate, localizer?.progressTranslate) ??
+  getFallbackRecommendation(progress, localizer?.translate, localizer?.progressTranslate);
 
 export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
   const locale = useLocale();
   const gamePageTranslations = useTranslations('KangurGamePage');
   const recommendationTranslations = useTranslations('KangurGameRecommendations');
   const trainingSetupTranslations = useTranslations('KangurGameRecommendations.trainingSetup');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const {
     activePracticeAssignment,
     basePath,
@@ -732,24 +740,30 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
     };
   }, [progress]);
   const dailyQuest = useMemo(
-    () => getCurrentKangurDailyQuest(normalizedProgress, { subject }),
-    [normalizedProgress, subject]
+    () =>
+      getCurrentKangurDailyQuest(normalizedProgress, {
+        subject,
+        translate: runtimeTranslations,
+      }),
+    [normalizedProgress, runtimeTranslations, subject]
   );
   const recommendation = useMemo(
     () =>
       getOperationSelectorRecommendation(normalizedProgress, dailyQuest, {
         locale,
         translate: recommendationTranslations,
+        progressTranslate: runtimeTranslations,
       }),
-    [dailyQuest, locale, normalizedProgress, recommendationTranslations]
+    [dailyQuest, locale, normalizedProgress, recommendationTranslations, runtimeTranslations]
   );
   const suggestedTraining = useMemo(
     () =>
       getRecommendedTrainingSetup(normalizedProgress, {
         locale,
         translate: trainingSetupTranslations,
+        progressTranslate: runtimeTranslations,
       }),
-    [locale, normalizedProgress, trainingSetupTranslations]
+    [locale, normalizedProgress, runtimeTranslations, trainingSetupTranslations]
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);

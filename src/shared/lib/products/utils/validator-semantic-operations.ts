@@ -3,6 +3,7 @@ import type {
   ProductValidationSemanticState,
 } from '@/shared/contracts/products';
 import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products';
+import { areValidatorCategoryLabelsEquivalent } from '@/shared/lib/products/utils/validator-category-labels';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 export const PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS = {
@@ -12,6 +13,7 @@ export const PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS = {
   guardPlaceholderSku: 'guard_placeholder_sku',
   mirrorNameLocale: 'mirror_name_locale',
   translateNameToken: 'translate_name_token',
+  validateRepeatedWhitespace: 'validate_repeated_whitespace',
   validateNameContainsDimensionsToken: 'validate_name_contains_dimensions_token',
 } as const;
 
@@ -39,6 +41,12 @@ export type ProductValidationSemanticOperationUiMetadata = {
   categoryFixturesPlaceholder?: string;
 };
 
+export type ProductValidationSemanticRuntimeBehaviorContext = {
+  fieldName: string;
+  values: Record<string, unknown>;
+  replacementValue: string | null | undefined;
+};
+
 type ProductValidationSemanticPatternShape = Partial<
   Pick<
     ProductValidationPattern,
@@ -63,6 +71,7 @@ export const PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS = {
   guardPlaceholderSku: 'products.sku-auto-increment.guard.v2',
   mirrorNameLocale: 'products.name-mirror-polish.base.v2',
   translateNameToken: 'products.name-mirror-polish.translation.v2',
+  validateRepeatedWhitespace: 'products.repeated-whitespace.v2',
   validateNameContainsDimensionsToken: 'products.name-segment-dimensions.v2',
 } as const;
 
@@ -86,6 +95,8 @@ const LEGACY_PRODUCT_VALIDATION_SEMANTIC_PRESET_ID_MIGRATIONS: Record<string, st
     PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.mirrorNameLocale,
   'products.name-mirror-polish.translation.v1':
     PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.translateNameToken,
+  'products.repeated-whitespace.v1':
+    PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateRepeatedWhitespace,
   'products.name-segment-dimensions.legacy.v1':
     PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateNameContainsDimensionsToken,
 };
@@ -94,6 +105,7 @@ type ProductValidationSemanticOperationDefinition = {
   id: ProductValidationSemanticOperationId;
   allowExecutionWithoutRegexMatch: boolean;
   ui: ProductValidationSemanticOperationUiMetadata;
+  isNoopReplacement?: (context: ProductValidationSemanticRuntimeBehaviorContext) => boolean;
   buildPresetLabel?: (context?: ProductValidationSemanticOperationCopyContext) => string | null;
   buildPresetMessage?: (context?: ProductValidationSemanticOperationCopyContext) => string | null;
   reconcileSemanticState?: (args: {
@@ -114,6 +126,12 @@ const parseLocaleCodeFromFieldName = (fieldName: string | null | undefined): str
   if (typeof fieldName !== 'string') return null;
   const match = /_(en|pl|de)$/i.exec(fieldName.trim());
   return match?.[1]?.toLowerCase() ?? null;
+};
+
+const toStringValue = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
 };
 
 const buildSemanticState = ({
@@ -149,12 +167,14 @@ const PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS: Record<
 > = {
   [PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.inferCategoryFromNameSegment]: {
     id: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.inferCategoryFromNameSegment,
-    allowExecutionWithoutRegexMatch: false,
+    allowExecutionWithoutRegexMatch: true,
     ui: {
       title: 'Name Segment #4 -> Category',
-      description: 'Infers product category from Name EN segment #4 and resolves it to categoryId.',
+      description:
+        'Infers product category from Name EN segment #4 and proposes a category change when the current category differs.',
       labelPlaceholder: 'Name Segment #4 -> Category',
-      messagePlaceholder: 'Infer category from Name EN segment #4 when category is empty.',
+      messagePlaceholder:
+        'Infer category from Name EN segment #4 when the current category differs.',
       simulatorDescription:
         'Preview category inference from Name EN segment #4 without touching live product data.',
       categoryFixturesLabel: 'Category Fixtures',
@@ -162,9 +182,15 @@ const PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS: Record<
         'Optional. One category per line: `id|name|name_en|name_pl|name_de`.',
       categoryFixturesPlaceholder: 'category-1|Keychains|Keychains|Breloki|Schlusselanhanger',
     },
+    isNoopReplacement: ({ fieldName, values, replacementValue }) => {
+      if (fieldName !== 'categoryId') return false;
+      const currentCategoryLabel = toStringValue(values['categoryName']) ?? '';
+      if (!currentCategoryLabel.trim()) return false;
+      return areValidatorCategoryLabelsEquivalent(currentCategoryLabel, replacementValue ?? '');
+    },
     buildPresetLabel: (context) => `Name Segment #${context?.segmentIndex ?? 4} -> Category`,
     buildPresetMessage: (context) =>
-      `Infer category from Name EN segment #${context?.segmentIndex ?? 4} when category is empty.`,
+      `Infer category from Name EN segment #${context?.segmentIndex ?? 4} when the current category differs.`,
     reconcileSemanticState: ({ pattern, currentSemanticState }) => {
       if (pattern.target !== 'category' || !pattern.replacementEnabled) return null;
       const recipe = parseReplacementRecipe(pattern);
@@ -435,6 +461,57 @@ const PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS: Record<
         },
       });
     },
+    inferSemanticStateFromPattern: (pattern) =>
+      PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS[
+        PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.translateNameToken
+      ].reconcileSemanticState?.({ pattern, currentSemanticState: null }) ?? null,
+  },
+  [PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace]: {
+    id: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace,
+    allowExecutionWithoutRegexMatch: false,
+    ui: {
+      title: 'Repeated Whitespace',
+      description:
+        'Detects repeated whitespace runs in text fields such as product descriptions.',
+      labelPlaceholder: 'Double spaces in Description',
+      messagePlaceholder: 'Description contains repeated whitespace.',
+      simulatorDescription:
+        'Preview repeated-whitespace validation against the current field value.',
+    },
+    buildPresetLabel: (context) =>
+      `Repeated whitespace in ${context?.targetLocale ?? 'field'}`,
+    buildPresetMessage: () => 'Field contains repeated whitespace.',
+    reconcileSemanticState: ({ pattern, currentSemanticState }) => {
+      if (
+        (pattern.target !== 'name' && pattern.target !== 'description') ||
+        typeof pattern.regex !== 'string' ||
+        pattern.regex.trim() !== '\\s{2,}' ||
+        pattern.replacementEnabled
+      ) {
+        return null;
+      }
+      const targetField =
+        pattern.target === 'description'
+          ? `description${pattern.locale ? `_${pattern.locale.trim().toLowerCase()}` : ''}`
+          : `name${pattern.locale ? `_${pattern.locale.trim().toLowerCase()}` : ''}`;
+      return buildSemanticState({
+        currentSemanticState,
+        presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateRepeatedWhitespace,
+        operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace,
+        sourceField: targetField,
+        targetField: targetField,
+        tags: ['validation', 'whitespace'],
+        metadata: {
+          regex: '\\s{2,}',
+          target: pattern.target,
+          locale: pattern.locale?.trim().toLowerCase() || null,
+        },
+      });
+    },
+    inferSemanticStateFromPattern: (pattern) =>
+      PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS[
+        PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace
+      ].reconcileSemanticState?.({ pattern, currentSemanticState: null }) ?? null,
   },
   [PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateNameContainsDimensionsToken]: {
     id: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateNameContainsDimensionsToken,
@@ -472,6 +549,10 @@ const PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS: Record<
         },
       });
     },
+    inferSemanticStateFromPattern: (pattern) =>
+      PRODUCT_VALIDATION_SEMANTIC_OPERATION_DEFINITIONS[
+        PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateNameContainsDimensionsToken
+      ].reconcileSemanticState?.({ pattern, currentSemanticState: null }) ?? null,
   },
 };
 
@@ -547,6 +628,14 @@ export const reconcileProductValidationSemanticState = ({
 export const allowsProductValidationSemanticOperationExecutionWithoutRegexMatch = (
   value: string | null | undefined
 ): boolean => Boolean(getProductValidationSemanticOperationDefinition(value)?.allowExecutionWithoutRegexMatch);
+
+export const isProductValidationSemanticOperationNoopReplacement = ({
+  value,
+  context,
+}: {
+  value: string | null | undefined;
+  context: ProductValidationSemanticRuntimeBehaviorContext;
+}): boolean => Boolean(getProductValidationSemanticOperationDefinition(value)?.isNoopReplacement?.(context));
 
 export const getProductValidationSemanticOperationUiMetadata = (
   value: string | null | undefined

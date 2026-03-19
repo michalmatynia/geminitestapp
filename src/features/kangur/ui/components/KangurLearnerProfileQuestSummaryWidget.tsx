@@ -33,12 +33,13 @@ const buildAssignmentHref = (
 
 export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.questSummary');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { basePath, progress, user } = useKangurLearnerProfileRuntime();
   const { subject } = useKangurSubjectFocus();
   const activeLearner = user?.activeLearner ?? null;
   const dailyQuest = useMemo(
-    () => getCurrentKangurDailyQuest(progress, { subject }),
-    [progress, subject]
+    () => getCurrentKangurDailyQuest(progress, { subject, translate: runtimeTranslations }),
+    [progress, runtimeTranslations, subject]
   );
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'

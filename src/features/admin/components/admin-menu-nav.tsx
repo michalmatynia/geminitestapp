@@ -581,7 +581,6 @@ export const buildAdminNav = (handlers: {
             label: 'Playwright Personas',
             href: '/admin/settings/playwright',
           },
-          { id: 'system/settings/logging', label: 'Logging', href: '/admin/settings/logging' },
           {
             id: 'system/settings/folder-trees',
             label: 'Folder Trees',
@@ -606,7 +605,7 @@ export const buildAdminNav = (handlers: {
       {
         id: 'system/analytics',
         label: 'Analytics',
-        href: '/admin/analytics',
+        href: '/admin/system/analytics',
         icon: <BarChart3Icon className='size-4' />,
         keywords: ['page analytics', 'traffic', 'visitors', 'referrers'],
       },

@@ -29,6 +29,18 @@ const categories: ProductCategory[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
+  {
+    id: 'anime-pin',
+    name: 'Anime Pins',
+    name_en: 'Anime Pins',
+    name_pl: 'Przypinki Anime',
+    name_de: 'Anime Pins',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
 ];
 
 const createApplyApi = (currentValues: Partial<Record<keyof ProductFormData, unknown>>) => {
@@ -102,6 +114,22 @@ describe('applyValidatorFieldReplacement', () => {
     ).toBe(false);
 
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+    expect(applyApi.setFormFieldValue).not.toHaveBeenCalled();
+  });
+
+  it('applies category replacements when the inferred title segment uses a singularized label', () => {
+    const applyApi = createApplyApi({ categoryId: null });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'categoryId',
+        replacementValue: 'Anime Pin',
+        categories,
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setCategoryId).toHaveBeenCalledWith('anime-pin');
     expect(applyApi.setFormFieldValue).not.toHaveBeenCalled();
   });
 });

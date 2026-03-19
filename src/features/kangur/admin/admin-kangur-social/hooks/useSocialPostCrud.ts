@@ -59,7 +59,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     setDeleteError(null);
   };
 
-  const handleCreateDraft = async (): Promise<void> => {
+  const handleCreateDraft = async (): Promise<KangurSocialPost | null> => {
     trackKangurClientEvent('kangur_social_post_create_attempt', deps.buildSocialContext());
     try {
       const created = await saveMutation.mutateAsync({});
@@ -68,6 +68,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         'kangur_social_post_create_success',
         deps.buildSocialContext({ postId: created.id })
       );
+      return created;
     } catch (error) {
       void ErrorSystem.captureException(error);
       logKangurClientError(error, {
@@ -79,6 +80,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         'kangur_social_post_create_failed',
         deps.buildSocialContext({ error: true })
       );
+      return null;
     }
   };
 

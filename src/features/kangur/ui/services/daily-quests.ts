@@ -15,6 +15,10 @@ import type {
 import { buildKangurAssignments } from './assignments';
 import { getProgressSubject, loadProgressOwnerKey } from './progress';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import {
+  translateKangurProgressWithFallback,
+  type KangurProgressTranslate,
+} from './progress-i18n';
 
 const KANGUR_DAILY_QUEST_STORAGE_KEY = 'kangur_daily_quest_v1';
 
@@ -36,6 +40,7 @@ type KangurDailyQuestOptions = {
   ownerKey?: string | null;
   persist?: boolean;
   subject?: KangurLessonSubject;
+  translate?: KangurProgressTranslate;
 };
 
 const canUseStorage = (): boolean => typeof window !== 'undefined' && Boolean(window.localStorage);
@@ -234,7 +239,8 @@ const createStoredQuest = (
 const resolveQuestProgress = (
   metric: KangurAssignmentQuestMetric,
   stored: KangurDailyQuestStoredState,
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: KangurProgressTranslate
 ): KangurDailyQuestProgress => {
   if (metric.kind === 'games_played') {
     const current = Math.max(0, progress.gamesPlayed - stored.baselineGamesPlayed);
@@ -244,7 +250,15 @@ const resolveQuestProgress = (
       current,
       target,
       percent,
-      summary: `${Math.min(current, target)}/${target} runda dzisiaj`,
+      summary: translateKangurProgressWithFallback(
+        translate,
+        'dailyQuest.progress.gamesPlayed',
+        `${Math.min(current, target)}/${target} runda dzisiaj`,
+        {
+          current: Math.min(current, target),
+          target,
+        }
+      ),
       status: current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started',
     };
   }
@@ -257,7 +271,15 @@ const resolveQuestProgress = (
       current,
       target,
       percent,
-      summary: `${Math.min(current, target)}/${target} lekcja dzisiaj`,
+      summary: translateKangurProgressWithFallback(
+        translate,
+        'dailyQuest.progress.lessonsCompleted',
+        `${Math.min(current, target)}/${target} lekcja dzisiaj`,
+        {
+          current: Math.min(current, target),
+          target,
+        }
+      ),
       status: current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started',
     };
   }
@@ -272,16 +294,30 @@ const resolveQuestProgress = (
     current,
     target,
     percent,
-    summary: `${current}% / ${target}% opanowania`,
+    summary: translateKangurProgressWithFallback(
+      translate,
+      'dailyQuest.progress.lessonMastery',
+      `${current}% / ${target}% opanowania`,
+      {
+        current,
+        target,
+      }
+    ),
     status: current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started',
   };
 };
 
 const toDailyQuestState = (
   stored: KangurDailyQuestStoredState,
-  progress: KangurProgressState
+  progress: KangurProgressState,
+  translate?: KangurProgressTranslate
 ): KangurDailyQuestState => {
-  const progressState = resolveQuestProgress(stored.assignment.questMetric!, stored, progress);
+  const progressState = resolveQuestProgress(
+    stored.assignment.questMetric!,
+    stored,
+    progress,
+    translate
+  );
   const rewardXp = Math.max(0, stored.assignment.rewardXp ?? 0);
   const rewardStatus =
     stored.claimedAt
@@ -295,17 +331,36 @@ const toDailyQuestState = (
     createdAt: stored.createdAt,
     dateKey: stored.dateKey,
     expiresAt: stored.expiresAt,
-    expiresLabel: 'Wygasa dzisiaj',
+    expiresLabel: translateKangurProgressWithFallback(
+      translate,
+      'dailyQuest.expiresToday',
+      'Wygasa dzisiaj'
+    ),
     progress: progressState,
     reward: {
       xp: rewardXp,
       status: rewardStatus,
       label:
         rewardStatus === 'claimed'
-          ? `Nagroda odebrana +${rewardXp} XP`
+          ? translateKangurProgressWithFallback(
+              translate,
+              'dailyQuest.reward.claimed',
+              `Nagroda odebrana +${rewardXp} XP`,
+              { xp: rewardXp }
+            )
           : rewardStatus === 'ready'
-            ? `Nagroda gotowa +${rewardXp} XP`
-            : `Nagroda +${rewardXp} XP`,
+            ? translateKangurProgressWithFallback(
+                translate,
+                'dailyQuest.reward.ready',
+                `Nagroda gotowa +${rewardXp} XP`,
+                { xp: rewardXp }
+              )
+            : translateKangurProgressWithFallback(
+                translate,
+                'dailyQuest.reward.locked',
+                `Nagroda +${rewardXp} XP`,
+                { xp: rewardXp }
+              ),
     },
   };
 };
@@ -321,7 +376,7 @@ export const getCurrentKangurDailyQuest = (
   const stored = loadStoredDailyQuest(subject, { persist });
 
   if (stored?.dateKey === dateKey && stored.ownerKey === ownerKey) {
-    return toDailyQuestState(stored, progress);
+    return toDailyQuestState(stored, progress, options.translate);
   }
 
   const candidate = selectDailyQuestCandidate(buildKangurAssignments(progress, 3), dateKey, ownerKey);
@@ -333,7 +388,7 @@ export const getCurrentKangurDailyQuest = (
   if (persist) {
     saveStoredDailyQuest(nextStored);
   }
-  return toDailyQuestState(nextStored, progress);
+  return toDailyQuestState(nextStored, progress, options.translate);
 };
 
 export const getKangurDailyQuestStorageKey = (
@@ -357,7 +412,7 @@ export const claimCurrentKangurDailyQuestReward = (
     };
   }
 
-  const quest = toDailyQuestState(stored, progress);
+  const quest = toDailyQuestState(stored, progress, options.translate);
   const rewardXp = Math.max(0, stored.assignment.rewardXp ?? 0);
   if (quest.progress.status !== 'completed' || stored.claimedAt || rewardXp <= 0) {
     return { quest, xpAwarded: 0 };
@@ -373,7 +428,7 @@ export const claimCurrentKangurDailyQuestReward = (
   }
 
   return {
-    quest: toDailyQuestState(claimedStored, progress),
+    quest: toDailyQuestState(claimedStored, progress, options.translate),
     xpAwarded: rewardXp,
   };
 };

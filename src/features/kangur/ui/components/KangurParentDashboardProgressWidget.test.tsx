@@ -155,9 +155,13 @@ describe('KangurParentDashboardProgressWidget', () => {
     render(<KangurParentDashboardProgressWidget />);
 
     expect(screen.getByTestId('parent-dashboard-daily-quest')).toBeInTheDocument();
-    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(runtimeState.value.progress, {
-      subject: 'maths',
-    });
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
+      runtimeState.value.progress,
+      expect.objectContaining({
+        subject: 'maths',
+        translate: expect.any(Function),
+      })
+    );
     expect(screen.getAllByTestId('assignments-list-stub')).toHaveLength(2);
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({

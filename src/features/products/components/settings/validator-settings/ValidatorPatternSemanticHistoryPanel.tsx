@@ -12,6 +12,7 @@ import {
   getProductValidationSemanticAuditRecordKey,
   getProductValidationSemanticAuditHistory,
 } from '@/shared/lib/products/utils/validator-semantic-state';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const SEMANTIC_AUDIT_SOURCE_LABELS = {
@@ -54,10 +55,12 @@ export function ValidatorPatternSemanticHistoryPanel({
   pattern,
   focusedAuditKey = null,
   focusRequestId = 0,
+  onClose,
 }: {
   pattern: ProductValidationPattern;
   focusedAuditKey?: string | null;
   focusRequestId?: number;
+  onClose?: (() => void) | undefined;
 }): React.JSX.Element {
   const historyEntries = React.useMemo(() => getProductValidationSemanticAuditHistory(pattern), [pattern]);
   const currentSemanticTitle = React.useMemo(
@@ -73,17 +76,31 @@ export function ValidatorPatternSemanticHistoryPanel({
   }, [focusRequestId, focusedAuditKey]);
 
   return (
-    <section className='mt-3 rounded-md border border-border/60 bg-background/20 p-3'>
+    <section className='mt-3 w-full min-w-0 overflow-hidden rounded-md border border-border/60 bg-background/20 p-3'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div className='space-y-1'>
+        <div className='min-w-0 flex-1 space-y-1'>
           <h3 className='text-sm font-semibold text-foreground'>Semantic History</h3>
-          <p className='text-xs text-muted-foreground'>
-            Selected pattern: <span className='font-medium text-foreground'>{pattern.label}</span>
+          <p className='break-words text-xs text-muted-foreground'>
+            Selected pattern:{' '}
+            <span className='font-medium text-foreground break-words'>{pattern.label}</span>
           </p>
         </div>
-        <span className='rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-200'>
-          Current: {currentSemanticTitle}
-        </span>
+        <div className='flex max-w-full flex-wrap items-center justify-end gap-2'>
+          <span className='max-w-full break-words rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-200'>
+            Current: {currentSemanticTitle}
+          </span>
+          {onClose ? (
+            <Button
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={onClose}
+              className='h-7 shrink-0'
+            >
+              Close History
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {historyEntries.length === 0 ? (
@@ -91,7 +108,7 @@ export function ValidatorPatternSemanticHistoryPanel({
           No semantic audit history recorded for this rule yet.
         </p>
       ) : (
-        <div className='mt-3 space-y-2'>
+        <div className='mt-3 min-w-0 space-y-2'>
           {historyEntries.map((entry, index) => (
             <div
               key={`${entry.recordedAt}-${entry.source}-${entry.trigger}-${index}`}
@@ -99,12 +116,12 @@ export function ValidatorPatternSemanticHistoryPanel({
                 entryRefs.current.set(getProductValidationSemanticAuditRecordKey(entry), element);
               }}
               className={cn(
-                'rounded-md border border-border/50 bg-black/20 p-3 transition',
+                'min-w-0 overflow-hidden rounded-md border border-border/50 bg-black/20 p-3 transition',
                 focusedAuditKey === getProductValidationSemanticAuditRecordKey(entry) &&
                   'border-sky-500/50 bg-sky-500/10 ring-1 ring-sky-500/40'
               )}
             >
-              <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+              <div className='flex min-w-0 flex-wrap items-center gap-2 text-[11px]'>
                 <span className='text-slate-300'>{formatSemanticAuditTimestamp(entry.recordedAt)}</span>
                 <span className='rounded border border-border/60 px-2 py-0.5 text-slate-200'>
                   {SEMANTIC_AUDIT_SOURCE_LABELS[entry.source]}
@@ -121,16 +138,16 @@ export function ValidatorPatternSemanticHistoryPanel({
                 </span>
               </div>
 
-              <p className='mt-2 text-sm text-slate-100'>
+              <p className='mt-2 break-words text-sm text-slate-100'>
                 {describeProductValidationSemanticAuditRecord(entry) ?? 'Semantic audit recorded.'}
               </p>
 
-              <div className='mt-2 grid gap-2 text-[11px] text-slate-300 md:grid-cols-2'>
-                <p>
+              <div className='mt-2 grid min-w-0 gap-2 text-[11px] text-slate-300 md:grid-cols-2'>
+                <p className='break-words'>
                   <span className='font-medium text-slate-100'>Previous:</span>{' '}
                   {resolveSemanticOperationTitle(entry.previous)}
                 </p>
-                <p>
+                <p className='break-words'>
                   <span className='font-medium text-slate-100'>Current:</span>{' '}
                   {resolveSemanticOperationTitle(entry.current)}
                 </p>

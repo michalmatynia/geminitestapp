@@ -187,7 +187,7 @@ describe('useSocialPipelineRunner', () => {
     );
     expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs', {
       params: { id: 'job-1' },
-      timeout: 30_000,
+      timeout: 60_000,
     });
     expect(setActivePostId).toHaveBeenCalledWith('post-1');
     expect(setEditorState).toHaveBeenCalledWith({

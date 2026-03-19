@@ -24,12 +24,13 @@ import type { CSSProperties } from 'react';
 
 const PROFILE_ROUTE_ACKNOWLEDGE_MS = 110;
 
-const DAILY_QUEST_SURFACE_STYLE: CSSProperties = {
+const DAILY_QUEST_SURFACE_STYLE = {
   '--kangur-soft-surface-background':
     'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, var(--kangur-accent-indigo-start, #a855f7)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 88%, var(--kangur-page-background, #f8fafc)) 100%)',
   '--kangur-soft-surface-border':
     'color-mix(in srgb, var(--kangur-soft-card-border) 58%, var(--kangur-accent-indigo-end, #6366f1))',
-};
+} as CSSProperties &
+  Record<'--kangur-soft-surface-background' | '--kangur-soft-surface-border', string>;
 
 const buildAssignmentHref = (
   basePath: string,

@@ -14,6 +14,9 @@ type SocialImageAddonsQueryOptions = {
   enabled?: boolean;
 };
 
+const SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS = 60_000;
+const KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY = ['kangur', 'social-image-addons'] as const;
+
 const fetchSocialImageAddons = async (
   options?: SocialImageAddonsQueryOptions
 ): Promise<KangurSocialImageAddon[]> => {
@@ -22,6 +25,7 @@ const fetchSocialImageAddons = async (
       limit: options?.limit,
       scope: 'admin',
     },
+    timeout: SOCIAL_IMAGE_ADDONS_QUERY_TIMEOUT_MS,
   });
   return kangurSocialImageAddonsSchema.parse(payload);
 };
@@ -53,7 +57,7 @@ export const useKangurSocialImageAddons = (
 const invalidateSocialImageAddons = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;
 }): void => {
-  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
+  queryClient.invalidateQueries({ queryKey: KANGUR_SOCIAL_IMAGE_ADDONS_QUERY_KEY });
 };
 
 export type CreateKangurSocialImageAddonPayload = {

@@ -1743,7 +1743,7 @@
           },
           "does-negative": {
             "prompt": "Ergänze die Verneinung.",
-            "hint": "She -> does not -> doesn't.",
+            "hint": "Bei she gilt: does not -> doesn't.",
             "question": "She ___ like exams."
           }
         },
@@ -1769,27 +1769,27 @@
         "rounds": {
           "streamer-goes": {
             "prompt": "Klicke das Verb, das zum Singular passt.",
-            "hint": "Singular subject + -s."
+            "hint": "Singular-Subjekt + Verb mit -s."
           },
           "friends-try": {
             "prompt": "Klicke das Verb für den Plural.",
-            "hint": "Plural subject = base verb."
+            "hint": "Plural-Subjekt = Grundform des Verbs."
           },
           "everyone-arrives": {
             "prompt": "„Everyone“ nimmt grammatisch weiter ein Verb im Singular.",
-            "hint": "Everyone = singular."
+            "hint": "Everyone = Singular."
           },
           "there-are": {
             "prompt": "There is/are hängt vom folgenden Nomen ab.",
-            "hint": "Two finals = plural."
+            "hint": "Zwei finals = Plural."
           },
           "either-players": {
             "prompt": "Bei either/or richtet sich das Verb nach dem näheren Subjekt.",
-            "hint": "Closest subject = players (plural)."
+            "hint": "Das nähere Subjekt ist players (Plural)."
           },
           "pair-is": {
             "prompt": "Die Wendung „pair of“ zählt als Singular.",
-            "hint": "Pair = one set."
+            "hint": "Pair = eine Einheit."
           }
         }
       }

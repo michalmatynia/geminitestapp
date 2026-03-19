@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo } from 'react';
+import type { TranslationValues } from 'use-intl';
 
 import { CmsRuntimeProvider } from '@/features/cms/public';
 import { getKangurPageHref } from '@/features/kangur/config/routing';
@@ -48,8 +49,6 @@ import {
   getNextLevel,
   translateKangurProgressWithFallback,
 } from '@/features/kangur/ui/services/progress';
-import type { KangurGameScreen } from '@/features/kangur/ui/types';
-import type { KangurPracticeAssignmentOperation } from '@/features/kangur/shared/contracts/kangur';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const resolveResultStars = (percent: number): number =>
@@ -105,7 +104,7 @@ export function KangurCmsRuntimeDataProvider({
     [routeTransition, router]
   );
   const cmsRuntimeTranslate = useCallback(
-    (key: string, values?: Record<string, string | number>): string =>
+    (key: string, values?: TranslationValues): string =>
       cmsRuntimeTranslations(key, values),
     [cmsRuntimeTranslations]
   );
@@ -114,13 +113,13 @@ export function KangurCmsRuntimeDataProvider({
       locale,
       translate: (
         key: string,
-        values?: Record<string, string | number>
+        values?: TranslationValues
       ): string => assignmentsRuntimeTranslations(key, values),
     }),
     [assignmentsRuntimeTranslations, locale]
   );
   const progressRuntimeTranslate = useCallback(
-    (key: string, values?: Record<string, string | number>): string =>
+    (key: string, values?: TranslationValues): string =>
       progressRuntimeTranslations(key, values),
     [progressRuntimeTranslations]
   );

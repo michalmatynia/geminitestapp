@@ -5,8 +5,12 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import { KANGUR_ACCENT_THEME_VARS } from '../tokens';
 
-const buildSurfaceAccentClassName = (accent: keyof typeof KANGUR_ACCENT_THEME_VARS): string =>
+const buildSurfaceAccentClassName = (
+  accent: keyof typeof KANGUR_ACCENT_THEME_VARS,
+  legacyBorderClassName: string
+): string =>
   cn(
+    legacyBorderClassName,
     `[--kangur-panel-surface-border:color-mix(in_srgb,var(--kangur-glass-panel-border)_56%,${KANGUR_ACCENT_THEME_VARS[accent].end})]`,
     '[color:var(--kangur-page-text)]'
   );
@@ -14,14 +18,14 @@ const buildSurfaceAccentClassName = (accent: keyof typeof KANGUR_ACCENT_THEME_VA
 export const kangurSurfacePanelVariants = cva('glass-panel kangur-panel-soft rounded-[34px]', {
   variants: {
     accent: {
-      indigo: buildSurfaceAccentClassName('indigo'),
-      violet: buildSurfaceAccentClassName('violet'),
-      emerald: buildSurfaceAccentClassName('emerald'),
-      sky: buildSurfaceAccentClassName('sky'),
-      amber: buildSurfaceAccentClassName('amber'),
-      rose: buildSurfaceAccentClassName('rose'),
-      teal: buildSurfaceAccentClassName('teal'),
-      slate: '[--kangur-panel-surface-border:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]',
+      indigo: buildSurfaceAccentClassName('indigo', 'border-indigo-200/70'),
+      violet: buildSurfaceAccentClassName('violet', 'border-violet-200/80'),
+      emerald: buildSurfaceAccentClassName('emerald', 'border-emerald-200/80'),
+      sky: buildSurfaceAccentClassName('sky', 'border-sky-200/80'),
+      amber: buildSurfaceAccentClassName('amber', 'border-amber-200/80'),
+      rose: buildSurfaceAccentClassName('rose', 'border-rose-200/80'),
+      teal: buildSurfaceAccentClassName('teal', 'border-teal-200/80'),
+      slate: 'border-slate-200/85 [--kangur-panel-surface-border:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]',
     },
     padding: {
       md: 'kangur-panel-padding-md',

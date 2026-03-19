@@ -65,7 +65,7 @@ describe('KangurPracticeAssignmentBanner', () => {
       'rounded-full',
       'border'
     );
-    expect(screen.getByText('Postęp').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Postep').parentElement).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('kangur-practice-assignment-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '0'

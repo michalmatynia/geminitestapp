@@ -246,8 +246,8 @@ describe('Kangur shared primitives', () => {
     );
 
     expect(screen.getByText('Warm badge')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-amber-start,#fb923c))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-amber-start,#fb923c))]'
     );
     expect(screen.getByTestId('kangur-status-chip-caps')).toHaveClass(
       'text-[11px]',
@@ -258,8 +258,8 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-icon-badge')).toHaveClass(
       'h-9',
       'w-9',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(209_250_229))]',
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(4_120_87))]'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,var(--kangur-accent-emerald-start,#10b981))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-emerald-end,#06b6d4))]'
     );
     expect(screen.getByTestId('kangur-option-neutral')).toHaveClass(
       '[border-color:var(--kangur-soft-card-border)]',
@@ -279,8 +279,8 @@ describe('Kangur shared primitives', () => {
       'h-24',
       'w-24',
       'text-5xl',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(254_243_199))]',
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(180_83_9))]'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,var(--kangur-accent-amber-start,#fb923c))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-amber-end,#facc15))]'
     );
     expect(screen.getByTestId('kangur-gradient-icon-tile')).toHaveClass(
       'h-16',
@@ -350,8 +350,8 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByText('🎮')).toHaveClass(
       'h-16',
       'w-16',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(254_243_199))]',
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(180_83_9))]'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,var(--kangur-accent-amber-start,#fb923c))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-amber-end,#facc15))]'
     );
     expect(screen.getByTestId('kangur-section-heading')).toHaveClass(
       'flex',
@@ -367,8 +367,8 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByText('🧭')).toHaveClass(
       'h-16',
       'w-16',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(224_231_255))]',
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(79_70_229))]'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,var(--kangur-accent-indigo-start,#a855f7))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-indigo-end,#6366f1))]'
     );
     expect(screen.getByTestId('kangur-equation-display')).toHaveClass(
       'text-3xl',
@@ -385,12 +385,12 @@ describe('Kangur shared primitives', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-lg',
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(224_231_255))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(224_231_255))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,var(--kangur-accent-indigo-end,#6366f1))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-accent-indigo-start,#a855f7))]'
     );
     expect(screen.getByText('Sekcja')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-indigo-start,#a855f7))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-indigo-start,#a855f7))]'
     );
     expect(screen.getByTestId('kangur-section-eyebrow')).toHaveClass(
       'text-[11px]',
@@ -409,11 +409,11 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-metric')).toHaveClass(
       'soft-card',
       'kangur-card-surface',
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(209_250_229))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(209_250_229))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,var(--kangur-accent-emerald-end,#06b6d4))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-accent-emerald-start,#10b981))]'
     );
     expect(screen.getByText('92%')).toHaveClass(
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(4_120_87))]'
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-emerald-end,#06b6d4))]'
     );
     expect(screen.getByTestId('kangur-empty')).toHaveClass(
       'soft-card',
@@ -433,8 +433,8 @@ describe('Kangur shared primitives', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-md',
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(254_243_199))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(254_243_199))]',
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,var(--kangur-accent-amber-end,#facc15))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-accent-amber-start,#fb923c))]',
       'cursor-pointer'
     );
     expect(screen.getByTestId('kangur-option-muted')).toHaveClass(
@@ -471,45 +471,59 @@ describe('Kangur shared primitives', () => {
       'glass-panel',
       'kangur-panel-soft',
       'kangur-panel-padding-lg',
-      'border-sky-200/80',
       'rounded-[34px]',
       'flex'
     );
+    expect(screen.getByTestId('kangur-surface-panel')).toHaveClass(
+      '[--kangur-panel-surface-border:color-mix(in_srgb,var(--kangur-glass-panel-border)_56%,var(--kangur-accent-sky-end,#818cf8))]'
+    );
     expect(screen.getByTestId('kangur-glass-panel')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
+      'var(--kangur-soft-card-border'
     );
     expect(screen.getByTestId('kangur-glass-panel-frost')).toHaveClass(
-      'glass-panel',
-      'border-white/75',
-      'bg-white/88'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-frost').style.getPropertyValue('--kangur-panel-surface-background')).toContain(
+      'var(--kangur-soft-card-background'
     );
     expect(screen.getByTestId('kangur-glass-panel-mist-soft')).toHaveClass(
-      'glass-panel',
-      'border-white/70',
-      'bg-white/45'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-mist-soft').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
+      'var(--kangur-glass-panel-border'
     );
     expect(screen.getByTestId('kangur-glass-panel-warm-glow')).toHaveClass(
-      'glass-panel',
-      'border-amber-200/70'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-warm-glow').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
+      'var(--kangur-accent-amber-end'
     );
     expect(screen.getByTestId('kangur-glass-panel-success-glow')).toHaveClass(
-      'glass-panel',
-      'border-emerald-200/70'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-success-glow').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
+      'var(--kangur-accent-emerald-end'
     );
     expect(screen.getByTestId('kangur-glass-panel-play-glow')).toHaveClass(
-      'glass-panel',
-      'border-indigo-200/70'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-play-glow').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
+      'var(--kangur-accent-indigo-end'
     );
     expect(screen.getByTestId('kangur-glass-panel-play-field')).toHaveClass(
-      'glass-panel',
-      'border-white/80'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-play-field').style.getPropertyValue('--kangur-panel-surface-shadow')).toContain(
+      'var(--kangur-glass-panel-shadow'
     );
     expect(screen.getByTestId('kangur-glass-panel-teal-field')).toHaveClass(
-      'glass-panel',
-      'border-white/75',
-      'bg-white/86'
+      'glass-panel'
+    );
+    expect(screen.getByTestId('kangur-glass-panel-teal-field').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
+      'var(--kangur-accent-teal-end'
     );
     expect(screen.getByTestId('kangur-menu-item')).toHaveClass(
       'kangur-menu-item',
@@ -520,7 +534,7 @@ describe('Kangur shared primitives', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-media-padding-md',
-      'border-amber-100',
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,var(--kangur-accent-amber-end,#facc15))]',
       'kangur-gradient-accent-soft-amber'
     );
     expect(screen.getByTestId('kangur-result-badge')).toHaveClass(
@@ -535,12 +549,12 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-input')).toHaveClass(
       'soft-card',
       'border',
-      'focus:border-indigo-300'
+      '[--kangur-text-field-focus-border:color-mix(in_srgb,var(--kangur-text-field-border)_48%,var(--kangur-accent-indigo-end,#6366f1))]'
     );
     expect(screen.getByTestId('kangur-select')).toHaveClass(
       'soft-card',
       'border',
-      'focus:border-indigo-300'
+      '[--kangur-text-field-focus-border:color-mix(in_srgb,var(--kangur-text-field-border)_48%,var(--kangur-accent-indigo-end,#6366f1))]'
     );
     expect(screen.getByTestId('kangur-progress')).toHaveClass(
       'h-2',

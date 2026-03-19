@@ -22,12 +22,19 @@ vi.mock('@/features/kangur/ui/components/GeometryPerimeterDrawingGame', () => ({
 }));
 
 import enMessages from '@/i18n/messages/en.json';
+import deMessages from '@/i18n/messages/de.json';
 import GeometryPerimeterLesson from '@/features/kangur/ui/components/GeometryPerimeterLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-const renderLesson = (ui: ReactNode = <GeometryPerimeterLesson />) =>
+const renderLesson = (
+  ui: ReactNode = <GeometryPerimeterLesson />,
+  options: { locale?: string; messages?: typeof enMessages } = {}
+) =>
   render(
-    <NextIntlClientProvider locale='en' messages={enMessages}>
+    <NextIntlClientProvider
+      locale={options.locale ?? 'en'}
+      messages={options.messages ?? enMessages}
+    >
       <KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>
     </NextIntlClientProvider>
   );
@@ -80,5 +87,45 @@ describe('GeometryPerimeterLesson i18n', () => {
 
     expect(screen.getByText('Mock Geometry Perimeter Drawing Game')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /back to topics/i })).toBeInTheDocument();
+  });
+
+  it('renders German hub labels and representative slide copy', () => {
+    const { unmount } = renderLesson(<GeometryPerimeterLesson />, {
+      locale: 'de',
+      messages: deMessages,
+    });
+
+    expect(screen.getByRole('button', { name: /Was ist Umfang\?/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Umfang eines Quadrats/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Umfang eines Rechtecks/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Zusammenfassung/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Spiel: Zeichne den Umfang/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /What is perimeter\?/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Was ist Umfang\?/i }));
+
+    expect(screen.getByText('Was ist Umfang?')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Der Umfang ist die gesamte Länge des Randes einer Figur. Wir addieren alle Seiten.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('What is perimeter?')).not.toBeInTheDocument();
+
+    unmount();
+
+    renderLesson(<GeometryPerimeterLesson />, {
+      locale: 'de',
+      messages: deMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Umfang eines Rechtecks/i }));
+
+    expect(screen.getByText('Seiten: 6 cm, 4 cm, 6 cm, 4 cm')).toBeInTheDocument();
+    expect(
+      screen.getByText('Gegenüberliegende Seiten sind gleich - addiere die Paare.')
+    ).toBeInTheDocument();
   });
 });

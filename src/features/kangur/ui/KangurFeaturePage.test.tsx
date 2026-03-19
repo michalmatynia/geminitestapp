@@ -161,8 +161,9 @@ describe('KangurFeaturePage', () => {
       'kangur-premium-bg',
       'min-h-full'
     );
+    expect(screen.getByTestId('kangur-feature-page-shell')).not.toHaveClass('text-slate-800');
     expect(screen.getByTestId('kangur-feature-page-shell')).toHaveAttribute('lang', 'pl');
-    expect(screen.getByRole('link', { name: 'skipToMainContent' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Przejdź do głównej treści' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-feature-app')).toBeInTheDocument();
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Lessons',
@@ -184,6 +185,7 @@ describe('KangurFeaturePage', () => {
       'kangur-premium-bg',
       'min-h-[100dvh]'
     );
+    expect(screen.getByTestId('kangur-feature-page-shell')).not.toHaveClass('text-slate-800');
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
       pageKey: 'Tests',
       requestedPath: '/kangur/tests',

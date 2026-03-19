@@ -3768,5 +3768,270 @@
     "previousPanel": "Previous panel",
     "nextPanel": "Next panel",
     "panelLabel": "Panel {index}"
+  },
+  "KangurAssignmentsRuntime": {
+    "catalog": {
+      "groups": {
+        "time": "Time",
+        "geometry": "Geometry",
+        "logic": "Logic",
+        "lesson": "Lesson",
+        "hint": "Hint"
+      },
+      "lesson": {
+        "descriptionTemplate": "{description}. Assign the learner one fresh review of this lesson.",
+        "createDescriptionTemplate": "Review the lesson \"{title}\" and finish one extra session."
+      },
+      "practice": {
+        "practiceMixed": {
+          "title": "Mixed practice",
+          "description": "Assign a cross-topic practice session with different question types.",
+          "badge": "Practice",
+          "createTitle": "Mixed practice",
+          "createDescription": "Finish a mixed practice session and keep a steady routine."
+        },
+        "practiceAddition": {
+          "title": "Practice: Addition",
+          "description": "One addition session with a goal of 80% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Addition",
+          "createDescription": "Finish an addition session and reach at least 80% accuracy."
+        },
+        "practiceSubtraction": {
+          "title": "Practice: Subtraction",
+          "description": "One subtraction session with a goal of 80% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Subtraction",
+          "createDescription": "Finish a subtraction session and reach at least 80% accuracy."
+        },
+        "practiceMultiplication": {
+          "title": "Practice: Multiplication",
+          "description": "One multiplication session with a goal of 80% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Multiplication",
+          "createDescription": "Finish a multiplication session and reach at least 80% accuracy."
+        },
+        "practiceDivision": {
+          "title": "Practice: Division",
+          "description": "One division session with a goal of 80% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Division",
+          "createDescription": "Finish a division session and reach at least 80% accuracy."
+        },
+        "practiceDecimals": {
+          "title": "Practice: Fractions",
+          "description": "One fractions session with a goal of 75% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Fractions",
+          "createDescription": "Finish a fractions session and reach at least 75% accuracy."
+        },
+        "practicePowers": {
+          "title": "Practice: Powers",
+          "description": "One powers session with a goal of 75% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Powers",
+          "createDescription": "Finish a powers session and reach at least 75% accuracy."
+        },
+        "practiceRoots": {
+          "title": "Practice: Roots",
+          "description": "One roots session with a goal of 75% correct answers.",
+          "badge": "Practice",
+          "createTitle": "Practice: Roots",
+          "createDescription": "Finish a roots session and reach at least 75% accuracy."
+        },
+        "practiceClock": {
+          "title": "Practice: Clock",
+          "description": "A practice session with hours, minutes, and full time on the clock.",
+          "badge": "Practice",
+          "createTitle": "Practice: Clock",
+          "createDescription": "Finish the clock practice and check reading hours, minutes, and full time."
+        }
+      }
+    },
+    "priority": {
+      "high": "High priority",
+      "medium": "Medium priority",
+      "low": "Low priority"
+    },
+    "status": {
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "new": "New"
+    },
+    "time": {
+      "hoursMinutes": "{hours} hr {minutes} min",
+      "hoursOnly": "{hours} hr",
+      "minutesOnly": "{minutes} min",
+      "timeLimitLabel": "Time limit: {label}",
+      "expired": "Time is up",
+      "remainingHoursMinutes": "Remaining: {hours} hr {minutes} min",
+      "remainingMinutesSeconds": "Remaining: {minutes} min {seconds} s",
+      "remainingSeconds": "Remaining: {seconds} s"
+    },
+    "actions": {
+      "openLesson": "Open lesson",
+      "startTraining": "Start training",
+      "trainNow": "Train now"
+    },
+    "operations": {
+      "addition": "Addition",
+      "subtraction": "Subtraction",
+      "multiplication": "Multiplication",
+      "division": "Division",
+      "decimals": "Fractions",
+      "powers": "Powers",
+      "roots": "Roots",
+      "clock": "Clock",
+      "mixed": "Mixed practice"
+    },
+    "banner": {
+      "activeHelper": "You are completing the assigned task in this session.",
+      "completedHelper": "The parent's assignment was completed in this session.",
+      "queueHelper": "Nearest priority in practice: {label}.",
+      "parentPriority": "Parent priority"
+    },
+    "spotlight": {
+      "title": "Suggestions from the parent"
+    }
+  },
+  "KangurScoreHistory": {
+    "loading": {
+      "title": "Loading scores...",
+      "description": "We are fetching the latest results and preparing the progress summary."
+    },
+    "empty": {
+      "description": "No saved scores."
+    },
+    "summary": {
+      "totalGames": "Games total",
+      "averageAccuracy": "Avg. accuracy",
+      "perfectGames": "Perfect scores"
+    },
+    "window": {
+      "title": "Overview of the last {days} days",
+      "weeklySessions": "Sessions this week",
+      "weeklySummary": "Average {accuracy}% · perfect {perfect}",
+      "weeklyXp": "XP: +{xp} · average {average} per session",
+      "lastActivityPrefix": "Last activity:"
+    },
+    "relative": {
+      "noActivity": "No activity",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{days} days ago"
+    },
+    "trend": {
+      "label": "Weekly trend",
+      "newRange": "New range",
+      "context": {
+        "insufficient": "We need older results to compare.",
+        "up": "Up from {previous}% to {recent}%.",
+        "down": "Down from {previous}% to {recent}%.",
+        "flat": "Stable: {recent}% week over week."
+      }
+    },
+    "strongest": {
+      "label": "Strong area",
+      "empty": "Not enough data to identify a strength."
+    },
+    "weakest": {
+      "label": "Needs support",
+      "empty": "We need more than one task type to identify a support area.",
+      "reviewLesson": "Review lesson"
+    },
+    "shared": {
+      "noData": "No data",
+      "operationSummary": "Average {accuracy}% · attempts {attempts} · +{xp} XP / session"
+    },
+    "byOperation": {
+      "heading": "Results by operation"
+    },
+    "recent": {
+      "heading": "Recent games"
+    },
+    "operations": {
+      "alphabet": "Alphabet",
+      "alphabet_basics": "Alphabet",
+      "alphabet_copy": "Copy letters",
+      "alphabet_syllables": "Syllables",
+      "alphabet_words": "First words",
+      "alphabet_matching": "Match the letters",
+      "alphabet_sequence": "Letter order",
+      "geometry_shape_recognition": "Geometry",
+      "addition": "Addition",
+      "subtraction": "Subtraction",
+      "multiplication": "Multiplication",
+      "division": "Division",
+      "decimals": "Fractions",
+      "powers": "Powers",
+      "roots": "Roots",
+      "clock": "Clock",
+      "calendar": "Calendar",
+      "geometry": "Geometry",
+      "logical": "Logical thinking",
+      "mixed": "Mixed practice",
+      "english_basics": "Basics",
+      "english_parts_of_speech": "Parts of speech",
+      "english_sentence_structure": "Sentence structure",
+      "english_subject_verb_agreement": "Subject-verb agreement",
+      "english_articles": "Articles",
+      "english_prepositions_time_place": "Time and place prepositions"
+    }
+  },
+  "KangurCmsRuntime": {
+    "common": {
+      "playerFallback": "Player"
+    },
+    "progress": {
+      "totalXpLabel": "{xp} XP total",
+      "xpIntoLevelLabel": "{xp} XP"
+    },
+    "assignments": {
+      "actions": {
+        "returnToPractice": "Return to practice"
+      },
+      "description": {
+        "returnToPractice": "Return to practice and continue the challenge."
+      },
+      "title": {
+        "continuePractice": "Continue practice"
+      },
+      "countLabel": "{count} assignments",
+      "priority": {
+        "high": "High priority",
+        "medium": "Medium priority",
+        "low": "Low priority",
+        "self": "Self priority",
+        "session": "Practice session"
+      },
+      "progress": {
+        "completedPercent": "{percent}% completed",
+        "none": "No active assignment."
+      },
+      "helper": {
+        "activeSession": "This session is focused on the assigned task.",
+        "nextPractice": "Closest priority in practice: {operation}.",
+        "nextStep": "Next step in practice."
+      },
+      "eyebrow": {
+        "completedParent": "Completed parent assignment",
+        "parent": "Parent assignment",
+        "followUp": "Next practice"
+      }
+    },
+    "operationSelector": {
+      "greetingLabel": "Hi, {playerName}! 👋"
+    },
+    "result": {
+      "title": "Great job, {playerName}!",
+      "starsLabel": "{stars} / 3 stars",
+      "timeTakenLabel": "{seconds}s",
+      "message": {
+        "perfect": "Perfect result! You are a maths star.",
+        "great": "Amazing work! Keep it up.",
+        "good": "Good work! Practice makes progress.",
+        "tryAgain": "Keep trying. You can do it."
+      }
+    }
   }
 }

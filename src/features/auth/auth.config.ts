@@ -43,6 +43,7 @@ const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: '/admin/integrations', permissions: ['settings.manage'] },
   { prefix: '/admin/system', permissions: ['settings.manage'] },
   { prefix: '/admin/settings', permissions: ['settings.manage'] },
+  { prefix: '/admin/kangur', permissions: ['settings.manage'] },
   { prefix: '/admin/files', permissions: ['settings.manage'] },
   { prefix: '/admin/databases', permissions: ['settings.manage'] },
   { prefix: '/admin/front-manage', permissions: ['settings.manage'] },

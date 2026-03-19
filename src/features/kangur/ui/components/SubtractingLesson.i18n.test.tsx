@@ -22,12 +22,19 @@ vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
 }));
 
 import enMessages from '@/i18n/messages/en.json';
+import deMessages from '@/i18n/messages/de.json';
 import SubtractingLesson from '@/features/kangur/ui/components/SubtractingLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
-const renderLesson = (ui: ReactNode = <SubtractingLesson />) =>
+const renderLesson = (
+  ui: ReactNode = <SubtractingLesson />,
+  options: { locale?: string; messages?: typeof enMessages } = {}
+) =>
   render(
-    <NextIntlClientProvider locale='en' messages={enMessages}>
+    <NextIntlClientProvider
+      locale={options.locale ?? 'en'}
+      messages={options.messages ?? enMessages}
+    >
       <KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>
     </NextIntlClientProvider>
   );
@@ -98,5 +105,40 @@ describe('SubtractingLesson i18n', () => {
     fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
 
     expect(screen.getByRole('button', { name: /Check the answer with addition/i })).toBeInTheDocument();
+  });
+
+  it('renders German hub labels and representative slide copy', () => {
+    const { unmount } = renderLesson(<SubtractingLesson />, {
+      locale: 'de',
+      messages: deMessages,
+    });
+
+    expect(screen.getByRole('button', { name: /Grundlagen der Subtraktion/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Über die 10 subtrahieren/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Zweistellige Subtraktion/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Merke!/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Subtraction basics/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Grundlagen der Subtraktion/i }));
+
+    expect(screen.getByText('Was bedeutet Subtrahieren?')).toBeInTheDocument();
+    expect(
+      screen.getByText('Subtraktion bedeutet, einen Teil von einer Gruppe wegzunehmen. Wir fragen: Wie viel bleibt übrig?')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('What does it mean to subtract?')).not.toBeInTheDocument();
+
+    unmount();
+
+    renderLesson(<SubtractingLesson />, {
+      locale: 'de',
+      messages: deMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Über die 10 subtrahieren/i }));
+
+    expect(
+      screen.getByText('Teile die Zahl, die du abziehst, in zwei Teile: zuerst gehst du bis zur 10 herunter, dann ziehst du den Rest ab.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Subtrahiere 2: 10 − 2 = 8')).toBeInTheDocument();
   });
 });

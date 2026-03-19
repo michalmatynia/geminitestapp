@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -66,17 +67,24 @@ const useKangurPracticeAssignmentBannerModel = (): KangurPracticeAssignmentBanne
 const buildKangurPracticeAssignmentBannerModel = (
   assignment: KangurAssignmentSnapshot & { target: { type: 'practice' } },
   basePath: string,
-  mode: KangurPracticeAssignmentBannerProps['mode']
+  mode: KangurPracticeAssignmentBannerProps['mode'],
+  localizer: Parameters<typeof buildKangurAssignmentListItem>[2],
+  translate: (key: string, values?: Record<string, string | number>) => string
 ): KangurPracticeAssignmentBannerModel => {
-  const item = buildKangurAssignmentListItem(basePath, assignment);
+  const item = buildKangurAssignmentListItem(basePath, assignment, localizer);
+  const queueOperationLabel = formatKangurAssignmentOperationLabel(
+    assignment.target.operation,
+    localizer
+  );
   const helperLabel =
     mode === 'active'
-      ? 'W tej sesji realizujesz przydzielone zadanie.'
+      ? translate('banner.activeHelper')
       : mode === 'completed'
-        ? 'Zadanie od rodzica zostało ukończone w tej sesji.'
-        : `Najbliższy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(
-          assignment.target.operation
-        )}.`;
+        ? translate('banner.completedHelper')
+        : translate('banner.queueHelper', { label: queueOperationLabel }).replace(
+            '{label}',
+            queueOperationLabel
+          );
 
   return {
     actionTransitionSourceId: `practice-assignment-banner:${assignment.id}`,
@@ -96,6 +104,9 @@ const buildKangurPracticeAssignmentBannerModel = (
 };
 
 function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
+  const locale = useLocale();
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const listTranslations = useTranslations('KangurAssignmentsList');
   const banner = useKangurPracticeAssignmentBannerModel();
   const shouldTick = Boolean(banner.timeLimitMinutes) && banner.status !== 'completed';
   const [now, setNow] = useState(() => Date.now());
@@ -118,12 +129,15 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
     createdAt: banner.createdAt,
     status: banner.status,
     now,
+  }, {
+    locale,
+    translate: runtimeTranslations,
   });
 
   return (
     <>
       <KangurStatusChip accent='amber' labelStyle='eyebrow'>
-        Priorytet rodzica
+        {runtimeTranslations('banner.parentPriority')}
       </KangurStatusChip>
       <div className='mt-3 text-sm font-semibold leading-6 text-amber-900'>{banner.helperLabel}</div>
 
@@ -160,7 +174,7 @@ function KangurPracticeAssignmentBannerBody(): React.JSX.Element {
           accent='amber'
           className='mt-4 rounded-[24px]'
           description={banner.progressSummary}
-          label='Postęp'
+          label={listTranslations('progressLabel')}
           padding='md'
           tone='accent'
         >
@@ -198,9 +212,21 @@ export function KangurPracticeAssignmentBanner({
   basePath,
   mode,
 }: KangurPracticeAssignmentBannerProps): React.JSX.Element {
+  const locale = useLocale();
+  const runtimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const banner = useMemo(
-    () => buildKangurPracticeAssignmentBannerModel(assignment, basePath, mode),
-    [assignment, basePath, mode]
+    () =>
+      buildKangurPracticeAssignmentBannerModel(
+        assignment,
+        basePath,
+        mode,
+        {
+          locale,
+          translate: runtimeTranslations,
+        },
+        runtimeTranslations
+      ),
+    [assignment, basePath, locale, mode, runtimeTranslations]
   );
 
   return (

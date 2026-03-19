@@ -1,7 +1,7 @@
 'use client';
 
 import { Clock } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
@@ -62,15 +62,27 @@ export function KangurAssignmentManager({
   basePath,
   view = 'full',
 }: KangurAssignmentManagerProps): React.JSX.Element {
+  const locale = useLocale();
   const translations = useTranslations('KangurAssignmentManager');
+  const assignmentRuntimeTranslations = useTranslations('KangurAssignmentsRuntime');
   const progress = useKangurProgressState();
   const { ageGroup } = useKangurAgeGroupFocus();
   const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
   const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
-  const catalog = useMemo(() => buildKangurAssignmentCatalog(lessons), [lessons]);
+  const assignmentRuntimeLocalizer = useMemo(
+    () => ({
+      locale,
+      translate: assignmentRuntimeTranslations,
+    }),
+    [assignmentRuntimeTranslations, locale]
+  );
+  const catalog = useMemo(
+    () => buildKangurAssignmentCatalog(lessons, assignmentRuntimeLocalizer),
+    [assignmentRuntimeLocalizer, lessons]
+  );
   const suggestedCatalog = useMemo(
-    () => buildRecommendedKangurAssignmentCatalog(progress),
-    [progress]
+    () => buildRecommendedKangurAssignmentCatalog(progress, assignmentRuntimeLocalizer),
+    [assignmentRuntimeLocalizer, progress]
   );
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
@@ -169,12 +181,12 @@ export function KangurAssignmentManager({
     [assignments]
   );
   const activeAssignmentItems = useMemo(
-    () => buildKangurAssignmentListItems(basePath, activeAssignments),
-    [activeAssignments, basePath]
+    () => buildKangurAssignmentListItems(basePath, activeAssignments, assignmentRuntimeLocalizer),
+    [activeAssignments, assignmentRuntimeLocalizer, basePath]
   );
   const completedAssignmentItems = useMemo(
-    () => buildKangurAssignmentListItems(basePath, completedAssignments),
-    [basePath, completedAssignments]
+    () => buildKangurAssignmentListItems(basePath, completedAssignments, assignmentRuntimeLocalizer),
+    [assignmentRuntimeLocalizer, basePath, completedAssignments]
   );
   const activeAssignmentsCount = activeAssignmentItems.length;
   const completedAssignmentsCount = completedAssignmentItems.length;

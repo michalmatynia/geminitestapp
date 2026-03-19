@@ -20,8 +20,16 @@ import {
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
 import type { KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
+import type { CSSProperties } from 'react';
 
 const PROFILE_ROUTE_ACKNOWLEDGE_MS = 110;
+
+const DAILY_QUEST_SURFACE_STYLE: CSSProperties = {
+  '--kangur-soft-surface-background':
+    'linear-gradient(180deg, color-mix(in srgb, var(--kangur-soft-card-background) 92%, var(--kangur-accent-indigo-start, #a855f7)) 0%, color-mix(in srgb, var(--kangur-soft-card-background) 88%, var(--kangur-page-background, #f8fafc)) 100%)',
+  '--kangur-soft-surface-border':
+    'color-mix(in srgb, var(--kangur-soft-card-border) 58%, var(--kangur-accent-indigo-end, #6366f1))',
+};
 
 const buildAssignmentHref = (
   basePath: string,
@@ -54,12 +62,9 @@ export function KangurLearnerProfileQuestSummaryWidget(): React.JSX.Element {
     <section className={`flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       {dailyQuest ? (
         <div
-          className='soft-card rounded-[28px] border border-indigo-200/80 px-4 py-4 text-left shadow-[0_18px_40px_-32px_rgba(79,99,216,0.35)]'
+          className='soft-card rounded-[28px] border px-4 py-4 text-left shadow-[0_18px_40px_-32px_color-mix(in_srgb,var(--kangur-accent-indigo-end,#6366f1)_35%,transparent)]'
           data-testid='kangur-learner-profile-daily-quest'
-          style={{
-            background:
-              'color-mix(in srgb, var(--kangur-soft-card-background) 88%, rgba(224,231,255,0.92))',
-          }}
+          style={DAILY_QUEST_SURFACE_STYLE}
         >
           <KangurDailyQuestHighlightCardContent
             action={

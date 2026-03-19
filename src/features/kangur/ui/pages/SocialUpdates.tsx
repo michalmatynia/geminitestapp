@@ -152,7 +152,7 @@ export default function SocialUpdates(): React.JSX.Element {
         <div className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
           <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
             {latestPost.imageAssets?.[0]?.url ? (
-              <div className='overflow-hidden rounded-2xl border border-white/10 bg-black/10'>
+              <div className='overflow-hidden rounded-2xl border [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))]'>
                 <img
                   src={latestPost.imageAssets[0].url}
                   alt={
@@ -165,24 +165,26 @@ export default function SocialUpdates(): React.JSX.Element {
                 />
               </div>
             ) : null}
-            <div className='text-xs uppercase tracking-[0.2em] text-white/60'>
+            <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
               Latest update · {formatDate(latestPost.publishedAt ?? latestPost.updatedAt)}
             </div>
-            <div className='text-xl font-semibold text-white'>{getPostTitle(latestPost)}</div>
-            <div className='space-y-4 text-sm text-white/80'>
+            <div className='text-xl font-semibold [color:var(--kangur-page-text)]'>
+              {getPostTitle(latestPost)}
+            </div>
+            <div className='space-y-4 text-sm [color:var(--kangur-page-text)]'>
               {latestPostSections.length === 0 ? (
                 <p>Latest product updates from Kangur and StudiQ.</p>
               ) : (
                 latestPostSections.map((section, index, all) => (
                   <div key={`${section.label ?? 'section'}-${index}`} className='space-y-2'>
                     {section.label ? (
-                      <div className='text-xs font-semibold uppercase tracking-[0.3em] text-white/50'>
+                      <div className='text-xs font-semibold uppercase tracking-[0.3em] [color:var(--kangur-page-muted-text)]'>
                         {section.label}
                       </div>
                     ) : null}
                     <p className='whitespace-pre-line'>{section.body}</p>
                     {index < all.length - 1 ? (
-                      <div className='border-t border-dashed border-white/20' />
+                      <div className='border-t border-dashed [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)]' />
                     ) : null}
                   </div>
                 ))
@@ -193,7 +195,7 @@ export default function SocialUpdates(): React.JSX.Element {
                 href={latestPost.linkedinUrl}
                 target='_blank'
                 rel='noopener noreferrer'
-                className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
+                className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold [color:var(--kangur-page-text)] hover:underline`}
                 onClick={() =>
                   trackKangurClientEvent('kangur_social_updates_link_click', {
                     postId: latestPost.id,
@@ -211,12 +213,14 @@ export default function SocialUpdates(): React.JSX.Element {
             <div className='space-y-4'>
               <div className='flex items-center justify-between gap-3'>
                 <div>
-                  <div className='text-sm font-semibold text-white'>Recent updates archive</div>
-                  <div className='text-xs text-white/60'>
+                  <div className='text-sm font-semibold [color:var(--kangur-page-text)]'>
+                    Recent updates archive
+                  </div>
+                  <div className='text-xs [color:var(--kangur-page-muted-text)]'>
                     Earlier published StudiQ and Kangur posts.
                   </div>
                 </div>
-                <div className='text-xs uppercase tracking-[0.2em] text-white/50'>
+                <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
                   {archivePosts.length} more
                 </div>
               </div>
@@ -228,7 +232,7 @@ export default function SocialUpdates(): React.JSX.Element {
                     className='flex h-full flex-col gap-4'
                   >
                     {post.imageAssets?.[0]?.url ? (
-                      <div className='overflow-hidden rounded-xl border border-white/10 bg-black/10'>
+                      <div className='overflow-hidden rounded-xl border [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_72%,transparent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))]'>
                         <img
                           src={post.imageAssets[0].url}
                           alt={
@@ -242,20 +246,22 @@ export default function SocialUpdates(): React.JSX.Element {
                       </div>
                     ) : null}
                     <div className='space-y-2'>
-                      <div className='text-xs uppercase tracking-[0.2em] text-white/50'>
+                      <div className='text-xs uppercase tracking-[0.2em] [color:var(--kangur-page-muted-text)]'>
                         {formatDate(post.publishedAt ?? post.updatedAt)}
                       </div>
-                      <div className='text-lg font-semibold text-white'>
+                      <div className='text-lg font-semibold [color:var(--kangur-page-text)]'>
                         {getPostTitle(post)}
                       </div>
-                      <p className='text-sm text-white/75'>{getPostExcerpt(post)}</p>
+                      <p className='text-sm [color:var(--kangur-page-muted-text)]'>
+                        {getPostExcerpt(post)}
+                      </p>
                     </div>
                     {post.linkedinUrl ? (
                       <a
                         href={post.linkedinUrl}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
+                        className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold [color:var(--kangur-page-text)] hover:underline`}
                         onClick={() =>
                           trackKangurClientEvent('kangur_social_updates_link_click', {
                             postId: post.id,

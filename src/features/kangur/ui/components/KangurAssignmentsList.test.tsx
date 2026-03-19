@@ -126,7 +126,7 @@ describe('KangurAssignmentsList', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByRole('button', { name: 'archive' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Archiwizuj' })).toHaveClass(
       'border-transparent',
       'bg-transparent'
     );
@@ -202,6 +202,6 @@ describe('KangurAssignmentsList', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'reassign' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Przypisz ponownie' })).toBeInTheDocument();
   });
 });

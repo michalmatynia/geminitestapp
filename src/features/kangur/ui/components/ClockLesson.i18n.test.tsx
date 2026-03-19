@@ -44,11 +44,15 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 });
 
 import enMessages from '@/i18n/messages/en.json';
+import deMessages from '@/i18n/messages/de.json';
 import ClockLesson from '@/features/kangur/ui/components/ClockLesson';
 
-const renderLesson = () =>
+const renderLesson = (options: { locale?: string; messages?: typeof enMessages } = {}) =>
   render(
-    <NextIntlClientProvider locale='en' messages={enMessages}>
+    <NextIntlClientProvider
+      locale={options.locale ?? 'en'}
+      messages={options.messages ?? enMessages}
+    >
       <ClockLesson />
     </NextIntlClientProvider>
   );
@@ -115,6 +119,63 @@ describe('ClockLesson i18n', () => {
     });
 
     expect(screen.getByRole('button', { name: /Back to topics/i })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-clock-training-game')).toHaveTextContent('hours');
+  });
+
+  it('renders German hub labels and lesson copy', async () => {
+    renderLesson({ locale: 'de', messages: deMessages });
+
+    expect(screen.getByTestId('lesson-hub-section-hours')).toHaveTextContent('Stunden');
+    expect(screen.getByTestId('lesson-hub-section-minutes')).toHaveTextContent('Minuten');
+    expect(screen.getByTestId('lesson-hub-section-combined')).toHaveTextContent(
+      'Beide Zeiger zusammen'
+    );
+    expect(screen.getByTestId('lesson-hub-section-game_hours')).toHaveTextContent(
+      'Übung: Stunden'
+    );
+    expect(screen.queryByText('Hours')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-hours'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Was zeigt der kurze Zeiger?')).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText('Der kurze Zeiger springt von Stunde zu Stunde.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Zurück zu den Themen/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lesson-hub-section-minutes')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-minutes'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Was zeigt der lange Zeiger?')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('lesson-slide-indicator-1'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Minutenkarte in Fünferschritten')).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(/Wir springen in 5-Minuten-Schritten/i)
+    ).toBeInTheDocument();
+  });
+
+  it('renders German practice stage copy', async () => {
+    renderLesson({ locale: 'de', messages: deMessages });
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: /Übung: Stunden/i })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: /Zurück zu den Themen/i })).toBeInTheDocument();
     expect(screen.getByTestId('mock-clock-training-game')).toHaveTextContent('hours');
   });
 });

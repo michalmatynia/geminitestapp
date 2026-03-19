@@ -1,10 +1,22 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo } from 'react';
 
 import { CmsRuntimeProvider } from '@/features/cms/public';
 import { getKangurPageHref } from '@/features/kangur/config/routing';
+import {
+  formatKangurCmsAssignmentCountLabel,
+  formatKangurCmsResultStarsLabel,
+  formatKangurCmsTimeTakenLabel,
+  resolveKangurCmsAssignmentPriorityLabel,
+  resolveKangurCmsGreetingLabel,
+  resolveKangurCmsPracticeAssignmentHelperLabel,
+  resolveKangurCmsResultMessage,
+  resolveKangurCmsResultTitle,
+  translateKangurCmsRuntimeWithFallback,
+} from '@/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.i18n';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
   useOptionalKangurGameRuntime,
@@ -29,62 +41,29 @@ import {
   getKangurAssignmentActionLabel,
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
-import { BADGES, getCurrentLevel, getNextLevel } from '@/features/kangur/ui/services/progress';
+import {
+  BADGES,
+  getCurrentLevel,
+  getLocalizedKangurProgressLevelTitle,
+  getNextLevel,
+  translateKangurProgressWithFallback,
+} from '@/features/kangur/ui/services/progress';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurPracticeAssignmentOperation } from '@/features/kangur/shared/contracts/kangur';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const resolveResultStars = (percent: number): number =>
   percent >= 90 ? 3 : percent >= 60 ? 2 : 1;
-
-const resolveResultMessage = (percent: number): string => {
-  if (percent === 100) {
-    return 'Idealny wynik! Jestes gwiazda matematyki.';
-  }
-
-  if (percent >= 80) {
-    return 'Niesamowita robota! Tak trzymaj.';
-  }
-
-  if (percent >= 60) {
-    return 'Dobra robota! Ćwiczenie czyni mistrza.';
-  }
-
-  return 'Probuj dalej. Dasz rade.';
-};
-
-const resolveResultTitle = (playerName: string): string => {
-  const normalizedName = playerName.trim();
-  return `Świetna robota, ${normalizedName || 'Graczu'}!`;
-};
-
-const resolveAssignmentPriorityLabel = (priority: 'high' | 'medium' | 'low'): string => {
-  if (priority === 'high') {
-    return 'Priorytet wysoki';
-  }
-
-  if (priority === 'medium') {
-    return 'Priorytet średni';
-  }
-
-  return 'Priorytet niski';
-};
-
-const resolvePracticeAssignmentHelperLabel = (
-  screen: KangurGameScreen,
-  operation: KangurPracticeAssignmentOperation
-): string => {
-  if (screen === 'training' || screen === 'playing') {
-    return 'W tej sesji realizujesz przydzielone zadanie.';
-  }
-
-  return `Najbliższy priorytet w praktyce: ${formatKangurAssignmentOperationLabel(operation)}.`;
-};
 
 export function KangurCmsRuntimeDataProvider({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactNode {
+  const locale = normalizeSiteLocale(useLocale());
+  const cmsRuntimeTranslations = useTranslations('KangurCmsRuntime');
+  const assignmentsRuntimeTranslations = useTranslations('KangurAssignmentsRuntime');
+  const progressRuntimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const router = useRouter();
   const routeTransition = useOptionalKangurRouteTransition();
   const auth = useKangurAuth();
@@ -125,6 +104,26 @@ export function KangurCmsRuntimeDataProvider({
     },
     [routeTransition, router]
   );
+  const cmsRuntimeTranslate = useCallback(
+    (key: string, values?: Record<string, string | number>): string =>
+      cmsRuntimeTranslations(key, values),
+    [cmsRuntimeTranslations]
+  );
+  const assignmentsRuntimeLocalizer = useMemo(
+    () => ({
+      locale,
+      translate: (
+        key: string,
+        values?: Record<string, string | number>
+      ): string => assignmentsRuntimeTranslations(key, values),
+    }),
+    [assignmentsRuntimeTranslations, locale]
+  );
+  const progressRuntimeTranslate = useCallback(
+    (key: string, values?: Record<string, string | number>): string =>
+      progressRuntimeTranslations(key, values),
+    [progressRuntimeTranslations]
+  );
   const progressRuntime = useMemo(() => {
     const currentLevel = getCurrentLevel(progress.totalXp);
     const nextLevel = getNextLevel(progress.totalXp);
@@ -141,21 +140,59 @@ export function KangurCmsRuntimeDataProvider({
       badgesUnlockedCount,
       badgesUnlockedCountLabel: String(badgesUnlockedCount),
       currentLevelNumber: currentLevel.level,
-      currentLevelTitle: currentLevel.title,
+      currentLevelTitle: getLocalizedKangurProgressLevelTitle({
+        level: currentLevel.level,
+        fallback: currentLevel.title,
+        translate: progressRuntimeTranslate,
+      }),
       gamesPlayedLabel: String(progress.gamesPlayed),
       lessonsCompletedLabel: String(progress.lessonsCompleted),
       levelProgressPercent,
-      levelSummary: `Poziom ${currentLevel.level} · ${progress.totalXp} XP łącznie`,
+      levelSummary: translateKangurProgressWithFallback(
+        progressRuntimeTranslate,
+        'overview.levelDescription',
+        `Poziom ${currentLevel.level} · ${progress.totalXp} XP lacznie`,
+        {
+          level: currentLevel.level,
+          xp: progress.totalXp,
+        }
+      ),
       nextLevelNumber: nextLevel?.level ?? null,
-      totalXpLabel: `${progress.totalXp} XP łącznie`,
+      totalXpLabel: translateKangurCmsRuntimeWithFallback(
+        cmsRuntimeTranslate,
+        'progress.totalXpLabel',
+        '{xp} XP lacznie',
+        {
+          xp: progress.totalXp,
+        }
+      ),
       xpIntoLevel,
-      xpIntoLevelLabel: `${xpIntoLevel} XP`,
+      xpIntoLevelLabel: translateKangurCmsRuntimeWithFallback(
+        cmsRuntimeTranslate,
+        'progress.xpIntoLevelLabel',
+        '{xp} XP',
+        {
+          xp: xpIntoLevel,
+        }
+      ),
       xpToNextLevel,
       xpToNextLevelLabel: nextLevel
-        ? `Do poziomu ${nextLevel.level}: ${xpToNextLevel} XP`
-        : 'Maksymalny poziom!',
+        ? translateKangurProgressWithFallback(
+          progressRuntimeTranslate,
+          'overview.nextLevel',
+          `Do poziomu ${nextLevel.level}: ${xpToNextLevel} XP`,
+          {
+            level: nextLevel.level,
+            xp: xpToNextLevel,
+          }
+        )
+        : translateKangurProgressWithFallback(
+          progressRuntimeTranslate,
+          'overview.maxLevel',
+          'Maksymalny poziom!'
+        ),
     };
-  }, [progress]);
+  }, [cmsRuntimeTranslate, progress, progressRuntimeTranslate]);
   const priorityAssignments = useMemo(() => {
     if (isLoadingAssignments || assignmentsError) {
       return [];
@@ -167,18 +204,21 @@ export function KangurCmsRuntimeDataProvider({
   const priorityAssignmentItems = useMemo(
     () =>
       priorityAssignments.map((assignment) => ({
-        actionLabel: getKangurAssignmentActionLabel(assignment),
+        actionLabel: getKangurAssignmentActionLabel(assignment, assignmentsRuntimeLocalizer),
         description: assignment.description,
         id: assignment.id,
         openAssignment: (): void => {
           pushKangurRoute(buildKangurAssignmentHref(routing?.basePath ?? '', assignment));
         },
-        priorityLabel: resolveAssignmentPriorityLabel(assignment.priority),
+        priorityLabel: resolveKangurCmsAssignmentPriorityLabel(
+          assignment.priority,
+          cmsRuntimeTranslate
+        ),
         progressLabel: assignment.progress.summary,
         progressPercent: assignment.progress.percent,
         title: assignment.title,
       })),
-    [priorityAssignments, pushKangurRoute, routing?.basePath]
+    [assignmentsRuntimeLocalizer, cmsRuntimeTranslate, priorityAssignments, pushKangurRoute, routing?.basePath]
   );
   const openHomeSpotlightAssignment = useCallback((): void => {
     if (!homeSpotlightAssignment) {
@@ -215,46 +255,113 @@ export function KangurCmsRuntimeDataProvider({
       ...game,
       homeSpotlight: {
         actionLabel: homeSpotlightAssignment
-          ? getKangurAssignmentActionLabel(homeSpotlightAssignment)
-          : 'Wróć do praktyki',
+          ? getKangurAssignmentActionLabel(homeSpotlightAssignment, assignmentsRuntimeLocalizer)
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.actions.returnToPractice',
+            'Wroc do praktyki'
+          ),
         description:
-          homeSpotlightAssignment?.description?.trim() || 'Wróć do praktyki i kontynuuj wyzwanie.',
+          homeSpotlightAssignment?.description?.trim() ||
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.description.returnToPractice',
+            'Wroc do praktyki i kontynuuj wyzwanie.'
+          ),
         hasAssignment: Boolean(homeSpotlightAssignment),
         openAssignment: openHomeSpotlightAssignment,
         priorityLabel: homeSpotlightAssignment
-          ? resolveAssignmentPriorityLabel(homeSpotlightAssignment.priority)
-          : 'Sesja praktyki',
-        progressLabel: homeSpotlightAssignment?.progress.summary ?? '0% ukończono',
+          ? resolveKangurCmsAssignmentPriorityLabel(
+            homeSpotlightAssignment.priority,
+            cmsRuntimeTranslate
+          )
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.priority.session',
+            'Sesja praktyki'
+          ),
+        progressLabel: homeSpotlightAssignment?.progress.summary ??
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.progress.completedPercent',
+            '{percent}% ukonczono',
+            { percent: 0 }
+          ),
         progressPercent: homeSpotlightAssignment?.progress.percent ?? 0,
-        title: homeSpotlightAssignment?.title ?? 'Kontynuuj praktykę',
+        title: homeSpotlightAssignment?.title ??
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.title.continuePractice',
+            'Kontynuuj praktyke'
+          ),
       },
       priorityAssignments: {
         count: priorityAssignmentItems.length,
-        countLabel: `${priorityAssignmentItems.length} zadań`,
+        countLabel: formatKangurCmsAssignmentCountLabel(
+          priorityAssignmentItems.length,
+          cmsRuntimeTranslate
+        ),
         hasItems: priorityAssignmentItems.length > 0,
         items: priorityAssignmentItems,
       },
       activePracticeAssignmentBanner: {
         actionLabel: game.activePracticeAssignment
-          ? getKangurAssignmentActionLabel(game.activePracticeAssignment)
-          : 'Wróć do praktyki',
+          ? getKangurAssignmentActionLabel(
+            game.activePracticeAssignment,
+            assignmentsRuntimeLocalizer
+          )
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.actions.returnToPractice',
+            'Wroc do praktyki'
+          ),
         description:
           game.activePracticeAssignment?.description?.trim() ||
-          'Wróć do praktyki i kontynuuj wyzwanie.',
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.description.returnToPractice',
+            'Wroc do praktyki i kontynuuj wyzwanie.'
+          ),
         hasAssignment: Boolean(game.activePracticeAssignment),
         helperLabel: game.activePracticeAssignment
-          ? resolvePracticeAssignmentHelperLabel(
+          ? resolveKangurCmsPracticeAssignmentHelperLabel(
             game.screen,
-            game.activePracticeAssignment.target.operation
+            formatKangurAssignmentOperationLabel(
+              game.activePracticeAssignment.target.operation,
+              assignmentsRuntimeLocalizer
+            ),
+            cmsRuntimeTranslate
           )
-          : 'Następny krok w praktyce.',
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.helper.nextStep',
+            'Nastepny krok w praktyce.'
+          ),
         openAssignment: openActivePracticeAssignment,
         priorityLabel: game.activePracticeAssignment
-          ? resolveAssignmentPriorityLabel(game.activePracticeAssignment.priority)
-          : 'Sesja praktyki',
-        progressLabel: game.activePracticeAssignment?.progress.summary ?? '0% ukończono',
+          ? resolveKangurCmsAssignmentPriorityLabel(
+            game.activePracticeAssignment.priority,
+            cmsRuntimeTranslate
+          )
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.priority.session',
+            'Sesja praktyki'
+          ),
+        progressLabel: game.activePracticeAssignment?.progress.summary ??
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.progress.completedPercent',
+            '{percent}% ukonczono',
+            { percent: 0 }
+          ),
         progressPercent: game.activePracticeAssignment?.progress.percent ?? 0,
-        title: game.activePracticeAssignment?.title ?? 'Kontynuuj praktykę',
+        title: game.activePracticeAssignment?.title ??
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.title.continuePractice',
+            'Kontynuuj praktyke'
+          ),
       },
       leaderboard: {
         emptyStateLabel: leaderboard.emptyStateLabel,
@@ -328,7 +435,7 @@ export function KangurCmsRuntimeDataProvider({
             selected: option.selected,
           })),
         },
-        greetingLabel: `Cześć, ${game.playerName || 'Graczu'}! 👋`,
+        greetingLabel: resolveKangurCmsGreetingLabel(game.playerName, cmsRuntimeTranslate),
         operations: {
           items: operationSelector.operations.map((item) => ({
             actionLabel: item.actionLabel,
@@ -339,8 +446,12 @@ export function KangurCmsRuntimeDataProvider({
             id: item.id,
             label: item.label,
             priorityLabel: item.priority
-              ? resolveAssignmentPriorityLabel(item.priority)
-              : 'Priorytet własny',
+              ? resolveKangurCmsAssignmentPriorityLabel(item.priority, cmsRuntimeTranslate)
+              : translateKangurCmsRuntimeWithFallback(
+                cmsRuntimeTranslate,
+                'assignments.priority.self',
+                'Priorytet wlasny'
+              ),
             select: item.select,
             statusLabel: item.statusLabel,
           })),
@@ -349,32 +460,68 @@ export function KangurCmsRuntimeDataProvider({
       result: {
         accuracyLabel: `${resultPercent}%`,
         assignmentActionLabel: resultAssignment
-          ? getKangurAssignmentActionLabel(resultAssignment)
-          : 'Wróć do praktyki',
+          ? getKangurAssignmentActionLabel(resultAssignment, assignmentsRuntimeLocalizer)
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.actions.returnToPractice',
+            'Wroc do praktyki'
+          ),
         assignmentDescription:
-          resultAssignment?.description?.trim() || 'Wróć do praktyki i kontynuuj wyzwanie.',
+          resultAssignment?.description?.trim() ||
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.description.returnToPractice',
+            'Wroc do praktyki i kontynuuj wyzwanie.'
+          ),
         assignmentEyebrow: resultAssignment
           ? resultAssignment.progress.status === 'completed'
-            ? 'Ukończone zadanie od rodzica'
-            : 'Zadanie od rodzica'
-          : 'Dalsza praktyka',
-        assignmentProgressLabel: resultAssignment?.progress.summary ?? 'Brak aktywnego zadania.',
+            ? translateKangurCmsRuntimeWithFallback(
+              cmsRuntimeTranslate,
+              'assignments.eyebrow.completedParent',
+              'Ukonczone zadanie od rodzica'
+            )
+            : translateKangurCmsRuntimeWithFallback(
+              cmsRuntimeTranslate,
+              'assignments.eyebrow.parent',
+              'Zadanie od rodzica'
+            )
+          : translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.eyebrow.followUp',
+            'Dalsza praktyka'
+          ),
+        assignmentProgressLabel: resultAssignment?.progress.summary ??
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.progress.none',
+            'Brak aktywnego zadania.'
+          ),
         assignmentProgressPercent: resultAssignment?.progress.percent ?? 0,
-        assignmentTitle: resultAssignment?.title ?? 'Kontynuuj praktykę',
+        assignmentTitle: resultAssignment?.title ??
+          translateKangurCmsRuntimeWithFallback(
+            cmsRuntimeTranslate,
+            'assignments.title.continuePractice',
+            'Kontynuuj praktyke'
+          ),
         hasAssignment: Boolean(resultAssignment),
-        message: resolveResultMessage(resultPercent),
-        operationLabel: formatKangurAssignmentOperationLabel(game.operation ?? 'mixed'),
+        message: resolveKangurCmsResultMessage(resultPercent, cmsRuntimeTranslate),
+        operationLabel: formatKangurAssignmentOperationLabel(
+          game.operation ?? 'mixed',
+          assignmentsRuntimeLocalizer
+        ),
         openAssignment: openResultAssignment,
         percent: resultPercent,
         percentLabel: `${resultPercent}%`,
         scoreLabel: `${game.score} / ${game.totalQuestions}`,
         stars: resultStars,
-        starsLabel: `${resultStars} / 3 gwiazdki`,
-        timeTakenLabel: `${game.timeTaken}s`,
-        title: resolveResultTitle(game.playerName),
+        starsLabel: formatKangurCmsResultStarsLabel(resultStars, cmsRuntimeTranslate),
+        timeTakenLabel: formatKangurCmsTimeTakenLabel(game.timeTaken, cmsRuntimeTranslate),
+        title: resolveKangurCmsResultTitle(game.playerName, cmsRuntimeTranslate),
       },
     };
   }, [
+    assignmentsRuntimeLocalizer,
+    cmsRuntimeTranslate,
     game,
     homeSpotlightAssignment,
     leaderboard.emptyStateLabel,

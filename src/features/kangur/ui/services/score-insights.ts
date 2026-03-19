@@ -31,6 +31,10 @@ const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
+export type KangurScoreInsightsLocalizer = {
+  translateOperationLabel?: (operation: string, fallback: string) => string;
+};
+
 export type KangurScoreInsightOperation = {
   operation: string;
   label: string;
@@ -88,8 +92,20 @@ const sortScoresByCreatedDateDesc = (left: KangurScoreRecord, right: KangurScore
   (parseDateOrNull(right.created_date)?.getTime() ?? 0) -
   (parseDateOrNull(left.created_date)?.getTime() ?? 0);
 
+export const resolveKangurScoreOperationInfo = (
+  operation: string,
+  localizer?: KangurScoreInsightsLocalizer
+): { label: string; emoji: string } => {
+  const fallback = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
+  return {
+    emoji: fallback.emoji,
+    label: localizer?.translateOperationLabel?.(operation, fallback.label) ?? fallback.label,
+  };
+};
+
 const buildOperationInsights = (
-  scores: KangurScoreRecord[]
+  scores: KangurScoreRecord[],
+  localizer?: KangurScoreInsightsLocalizer
 ): {
   strongestOperation: KangurScoreInsightOperation | null;
   weakestOperation: KangurScoreInsightOperation | null;
@@ -124,7 +140,7 @@ const buildOperationInsights = (
 
   const entries = Array.from(buckets.entries()).map(
     ([operation, bucket]): KangurScoreInsightOperation => {
-      const operationInfo = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
+      const operationInfo = resolveKangurScoreOperationInfo(operation, localizer);
       return {
         operation,
         label: operationInfo.label,
@@ -169,7 +185,8 @@ const buildOperationInsights = (
 
 export const buildKangurScoreInsights = (
   scores: KangurScoreRecord[],
-  now: Date = new Date()
+  now: Date = new Date(),
+  localizer?: KangurScoreInsightsLocalizer
 ): KangurScoreInsights => {
   const normalizedScores = [...scores].sort(sortScoresByCreatedDateDesc);
   if (normalizedScores.length === 0) {
@@ -230,7 +247,7 @@ export const buildKangurScoreInsights = (
           ? 'down'
           : 'flat';
   const insightScores = recentScores.length > 0 ? recentScores : normalizedScores;
-  const operationInsights = buildOperationInsights(insightScores);
+  const operationInsights = buildOperationInsights(insightScores, localizer);
   const recentXpEarned = recentScores.reduce((sum, score) => sum + normalizeXpEarned(score.xp_earned), 0);
 
   return {

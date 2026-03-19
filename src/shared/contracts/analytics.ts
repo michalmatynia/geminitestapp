@@ -66,6 +66,8 @@ export const analyticsEventFilterTypeSchema = z.union([
 export type AnalyticsEventFilterType = z.infer<typeof analyticsEventFilterTypeSchema>;
 export const analyticsEventFilterScopeSchema = z.union([analyticsScopeSchema, z.literal('all')]);
 export type AnalyticsEventFilterScope = z.infer<typeof analyticsEventFilterScopeSchema>;
+export const analyticsEventFilterBotSchema = z.enum(['all', 'bots', 'humans']);
+export type AnalyticsEventFilterBot = z.infer<typeof analyticsEventFilterBotSchema>;
 
 export const analyticsEventSchema = dtoBaseSchema.extend({
   type: analyticsEventTypeSchema,
@@ -169,6 +171,12 @@ export const analyticsEventsResponseSchema = z.object({
   range: analyticsRangeSchema,
   scope: analyticsEventFilterScopeSchema,
   type: analyticsEventFilterTypeSchema,
+  search: z.string(),
+  country: z.string(),
+  referrerHost: z.string(),
+  browser: z.string(),
+  device: z.string(),
+  bot: analyticsEventFilterBotSchema,
 });
 
 export type AnalyticsEventsResponse = z.infer<typeof analyticsEventsResponseSchema>;

@@ -9,6 +9,7 @@ import {
   getNextLockedBadge,
   getProgressAverageXpPerSession,
   getRecommendedSessionMomentum,
+  type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
@@ -29,11 +30,12 @@ const getSetupFocus = (
   mode: 'training' | 'kangur',
   progress: KangurProgressState,
   subject: KangurLessonSubject,
-  translate?: (key: string, values?: Record<string, string | number>) => string
+  translate?: (key: string, values?: Record<string, string | number>) => string,
+  progressTranslate?: KangurProgressTranslate
 ): KangurGameSetupFocus | null => {
-  const quest = getCurrentKangurDailyQuest(progress, { subject });
-  const nextBadge = getNextLockedBadge(progress);
-  const guidedMomentum = getRecommendedSessionMomentum(progress);
+  const quest = getCurrentKangurDailyQuest(progress, { subject, translate: progressTranslate });
+  const nextBadge = getNextLockedBadge(progress, { translate: progressTranslate });
+  const guidedMomentum = getRecommendedSessionMomentum(progress, { translate: progressTranslate });
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const streak = progress.currentWinStreak ?? 0;
   const gamesPlayed = progress.gamesPlayed ?? 0;
@@ -236,9 +238,10 @@ export default function KangurGameSetupMomentumCard({
   progress,
 }: KangurGameSetupMomentumCardProps): React.JSX.Element | null {
   const translations = useTranslations('KangurGameRecommendations');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { subject } = useKangurSubjectFocus();
   const modeKey = mode;
-  const focus = getSetupFocus(mode, progress, subject, translations);
+  const focus = getSetupFocus(mode, progress, subject, translations, runtimeTranslations);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
   const streak = progress.currentWinStreak ?? 0;
 

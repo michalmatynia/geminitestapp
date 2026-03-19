@@ -20,6 +20,7 @@ import {
   FormSection,
   Hint,
   MetadataItem,
+  Pagination,
   SectionHeader,
   SelectSimple,
   StatusBadge,
@@ -35,6 +36,7 @@ import {
   useAnalyticsInsightsData,
   useAnalyticsSummaryData,
 } from '../context/AnalyticsContext';
+import { useAnalyticsEvents } from '../hooks/useAnalyticsQueries';
 
 const formatCount = (value: number): string => {
   try {
@@ -315,15 +317,46 @@ function AnalyticsAiInsights(): React.JSX.Element {
   );
 }
 
-function RecentEventsTable(): React.JSX.Element {
-  const { summaryQuery } = useAnalyticsSummaryData();
+const ANALYTICS_EVENTS_PAGE_SIZE = 25;
+
+function WebsiteConnectionsTable(): React.JSX.Element {
+  const { range, scope } = useAnalyticsFilters();
+  const [page, setPage] = React.useState(1);
+  const eventsQuery = useAnalyticsEvents({
+    page,
+    pageSize: ANALYTICS_EVENTS_PAGE_SIZE,
+    range,
+    scope,
+    type: 'pageview',
+  });
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [range, scope]);
 
   return (
-    <AnalyticsEventsTable
-      events={summaryQuery.data?.recent ?? []}
-      isLoading={summaryQuery.isLoading}
-      title='Recent Events'
-    />
+    <div className='space-y-3'>
+      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end'>
+        <Pagination
+          page={page}
+          totalPages={eventsQuery.data?.totalPages ?? 1}
+          totalCount={eventsQuery.data?.total ?? 0}
+          pageSize={ANALYTICS_EVENTS_PAGE_SIZE}
+          onPageChange={setPage}
+          variant='compact'
+          isLoading={eventsQuery.isFetching}
+          className='sm:w-auto sm:flex-none'
+        />
+      </div>
+      <AnalyticsEventsTable
+        events={eventsQuery.data?.events ?? []}
+        isLoading={eventsQuery.isLoading}
+        title=''
+        emptyTitle='No page access events yet'
+        emptyDescription='Tracked pageviews will appear here once visitors reach the site.'
+        showTypeColumn={false}
+      />
+    </div>
   );
 }
 
@@ -366,8 +399,8 @@ function AnalyticsPageContent(): React.JSX.Element {
       <AnalyticsMetricsGrid />
       <AnalyticsTopStats />
 
-      <FormSection title='Recent Events' className='mt-6'>
-        <RecentEventsTable />
+      <FormSection className='mt-6'>
+        <WebsiteConnectionsTable />
       </FormSection>
     </div>
   );

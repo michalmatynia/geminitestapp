@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useLocale } from 'next-intl';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import {
@@ -13,6 +14,7 @@ import {
   type KangurPageContentStore,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { api } from '@/shared/lib/api-client';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 60_000;
 
@@ -20,19 +22,24 @@ const createKangurPageContentQueryKey = (locale: string) =>
   ['kangur', 'page-content', { locale }] as const;
 
 export const useKangurPageContentStore = (
-  locale = 'pl'
+  locale?: string | null
 ): UseQueryResult<KangurPageContentStore, Error> => {
+  const routeLocale = useLocale();
+  const resolvedLocale = normalizeSiteLocale(locale ?? routeLocale);
   const initialData = useMemo(
-    () => (locale === 'pl' ? DEFAULT_KANGUR_PAGE_CONTENT_STORE : buildDefaultKangurPageContentStore(locale)),
-    [locale]
+    () =>
+      resolvedLocale === 'pl'
+        ? DEFAULT_KANGUR_PAGE_CONTENT_STORE
+        : buildDefaultKangurPageContentStore(resolvedLocale),
+    [resolvedLocale]
   );
 
   return useQuery<KangurPageContentStore, Error>({
-    queryKey: createKangurPageContentQueryKey(locale),
+    queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: async () =>
       parseKangurPageContentStore(
         await api.get<KangurPageContentStore>(
-          `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(locale)}`,
+          `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(resolvedLocale)}`,
           {
             cache: 'no-store',
           }
@@ -46,7 +53,7 @@ export const useKangurPageContentStore = (
 
 export const useKangurPageContentEntry = (
   entryId: string | null | undefined,
-  locale = 'pl'
+  locale?: string | null
 ): UseQueryResult<KangurPageContentStore, Error> & {
   entry: KangurPageContentEntry | null;
 } => {

@@ -13,6 +13,7 @@ export * from './components/form/ProductMetadataFieldContext';
 export * from './components/form/TagMultiSelectField';
 export * from './components/settings/ValidatorSettings';
 export * from './components/settings/validator-settings/ValidatorDocsTooltips';
+export * from './components/settings/validator-settings/ValidatorDocsTooltipsPanel';
 export * from './pages/AdminProductsPage';
 export * from './pages/AdminProductProducersPage';
 export * from './pages/ProductConstructorPage';

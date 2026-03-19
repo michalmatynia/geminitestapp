@@ -60,6 +60,8 @@ vi.mock('next/navigation', () => ({
     push: routerPushMock,
   }),
   usePathname: () => '/kangur/lessons',
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
 }));
 
 vi.mock('next/dynamic', async () => {

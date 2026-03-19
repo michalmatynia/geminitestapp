@@ -5,6 +5,7 @@ import {
   translateRecommendationWithFallback,
   type RecommendationTranslate,
 } from '@/features/kangur/ui/services/recommendation-i18n';
+import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
@@ -36,6 +37,7 @@ type KangurModeSetupRecommendation = {
 type KangurRecommendationLocalizer = {
   locale?: string | null;
   translate?: RecommendationTranslate;
+  progressTranslate?: KangurProgressTranslate;
 };
 
 export const hasMatchingTrainingSelection = (
@@ -168,7 +170,8 @@ export const getRecommendedTrainingSetup = (
     }
   }
 
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const progressLocalizer = { translate: localizer?.progressTranslate };
+  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
   const topActivityCategory = resolveTrainingCategoryFromActivity(topActivity?.key);
   if (topActivity && topActivityCategory) {
     const activityLabel = resolveLocalizedRecommendationActivityLabel({
@@ -207,7 +210,11 @@ export const getRecommendedTrainingSetup = (
     };
   }
 
-  const topTrack = getProgressBadgeTrackSummaries(progress, { maxTracks: 1 })[0] ?? null;
+  const topTrack = getProgressBadgeTrackSummaries(
+    progress,
+    { maxTracks: 1 },
+    progressLocalizer
+  )[0] ?? null;
   return {
     description: topTrack?.nextBadge
       ? translateRecommendationWithFallback(

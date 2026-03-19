@@ -1,4 +1,8 @@
 import type { ProductCategory } from '@/shared/contracts/products';
+import {
+  normalizeValidatorCategoryLooseComparableText,
+  normalizeValidatorCategorySingularComparableText,
+} from '@/shared/lib/products/utils/validator-category-labels';
 
 const normalizeComparableText = (value: unknown): string => {
   if (typeof value !== 'string') return '';
@@ -32,6 +36,28 @@ export const resolveValidatorCategoryReplacementId = (
       (label) => normalizeComparableText(label) === normalizedReplacement
     );
     if (matchesLabel) {
+      return categoryId;
+    }
+  }
+
+  const normalizedLooseReplacement = normalizeValidatorCategoryLooseComparableText(replacementValue);
+  const normalizedSingularReplacement = normalizeValidatorCategorySingularComparableText(
+    replacementValue
+  );
+  if (!normalizedLooseReplacement) return null;
+
+  for (const category of categories) {
+    const categoryId = typeof category.id === 'string' ? category.id.trim() : '';
+    if (!categoryId) continue;
+    const matchesLooseLabel = getCategoryCandidateLabels(category).some((label) => {
+      const normalizedLooseLabel = normalizeValidatorCategoryLooseComparableText(label);
+      if (!normalizedLooseLabel) return false;
+      if (normalizedLooseLabel === normalizedLooseReplacement) return true;
+      return (
+        normalizeValidatorCategorySingularComparableText(label) === normalizedSingularReplacement
+      );
+    });
+    if (matchesLooseLabel) {
       return categoryId;
     }
   }

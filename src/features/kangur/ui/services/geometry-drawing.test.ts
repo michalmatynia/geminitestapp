@@ -64,6 +64,15 @@ const buildEllipse = (
     };
   });
 
+const createTranslate = (dictionary: Record<string, string>) =>
+  (key: string, values?: Record<string, string | number>): string => {
+    const template = dictionary[key];
+    if (!template) return key;
+    return template.replace(/\{(\w+)\}/g, (_, token: string) =>
+      String(values?.[token] ?? `{${token}}`)
+    );
+  };
+
 const EXPECT_ACCEPTED: Record<GeometryShapeId, Point2d[]> = {
   oval: buildEllipse({ x: 145, y: 120 }, 110, 60),
   triangle: buildPolygon([
@@ -153,5 +162,24 @@ describe('geometry drawing evaluator', () => {
     const result = evaluateGeometryDrawing('square', openSquare);
     expect(result.accepted).toBe(false);
     expect(result.closureRatio).toBeGreaterThan(0.2);
+  });
+
+  it('returns translated feedback when a translator is provided', () => {
+    const translate = createTranslate({
+      'geometryDrawing.feedback.success.circle': 'Great! That looks like a circle.',
+      'geometryDrawing.feedback.failure.addMoreCorners':
+        'Add more corners. This shape should have about {idealCorners}.',
+    });
+
+    expect(evaluateGeometryDrawing('circle', EXPECT_ACCEPTED.circle, translate).message).toBe(
+      'Great! That looks like a circle.'
+    );
+    expect(
+      evaluateGeometryDrawing(
+        'triangle',
+        EXPECT_ACCEPTED.circle,
+        translate
+      ).message
+    ).toBe('Add more corners. This shape should have about 3.');
   });
 });

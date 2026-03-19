@@ -46,6 +46,19 @@ export const formatDatetimeLocal = (value?: string | null): string => {
   return parsed.toISOString().slice(0, 16);
 };
 
+export const formatDatetimeDisplay = (value?: string | null): string => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleString('pl-PL', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 export const parseDatetimeLocal = (value: string): string | null => {
   if (!value.trim()) return null;
   const parsed = new Date(value);

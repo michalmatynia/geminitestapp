@@ -12,22 +12,24 @@ import {
   type KangurAiTutorPageCoverageEntry,
 } from './ai-tutor-page-coverage-manifest';
 import { getKangurHomeHref, getKangurPageSlug } from './config/routing';
+import {
+  getLocalizedKangurLessonDescription,
+  getLocalizedKangurLessonTitle,
+} from './lessons/lesson-catalog-i18n';
 import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import { KANGUR_LESSON_COMPONENT_OPTIONS, KANGUR_LESSON_LIBRARY } from './settings';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const KANGUR_HOME_ROUTE = getKangurHomeHref('/');
 const KANGUR_PAGE_CONTENT_VERSION = 1;
 
-const PAGE_CONTENT_COPY_OVERRIDES: Partial<
-  Record<
-    string,
-    {
-      title?: string;
-      summary?: string;
-    }
-  >
-> = {
+type KangurPageContentCopyOverride = {
+  title?: string;
+  summary?: string;
+};
+
+const PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageContentCopyOverride>> = {
   'game-home-actions': {
     title: 'Wybierz aktywność',
     summary:
@@ -187,6 +189,165 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<
   'learner-profile-mastery': {
     title: 'Opanowanie lekcji',
     summary: 'Sprawdź tematy do powtórki i najmocniejsze obszary na podstawie zapisanych lekcji.',
+  },
+};
+
+const ENGLISH_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageContentCopyOverride>> = {
+  'game-home-actions': {
+    title: 'Choose an activity',
+    summary: 'Jump to a lesson, a quick game, mixed training, or the Kangur Mathematics challenge.',
+  },
+  'game-home-leaderboard': {
+    title: 'Top scores',
+    summary: 'See who earns the most points and how far the next leaderboard spot is.',
+  },
+  'game-home-progress': {
+    title: 'Learner progress',
+    summary: 'See level, streaks, accuracy, and the nearest badges in one place.',
+  },
+  'parent-dashboard-guest-hero': {
+    title: 'Parent / Teacher dashboard',
+    summary: 'See how to unlock the caregiver view and move to an account with parent permissions.',
+  },
+  'parent-dashboard-hero': {
+    title: 'Parent dashboard',
+    summary: 'This is the caregiver decision center: choose a learner and open the tab with the context you need.',
+  },
+  'parent-dashboard-learner-management': {
+    title: 'Manage profiles without leaving the dashboard',
+    summary: 'Parents sign in with email, while learners get separate usernames and passwords.',
+  },
+  'parent-dashboard-tabs': {
+    title: 'Dashboard tabs',
+    summary: 'Switch between results, progress, assignments, monitoring, and Tutor-AI settings.',
+  },
+  'parent-dashboard-progress': {
+    title: 'Learner progress',
+    summary: 'Check learning rhythm, level, the daily quest, and the main direction for the next step.',
+  },
+  'parent-dashboard-scores': {
+    title: 'Learner results',
+    summary: 'Review recent games, accuracy, and the areas worth revisiting now.',
+  },
+  'parent-dashboard-assignments': {
+    title: 'Learner assignments',
+    summary: 'Set priorities, review assigned work, and check StudiQ suggestions.',
+  },
+  'parent-dashboard-monitoring': {
+    title: 'Assignment monitoring',
+    summary: 'Track the progress of assigned work and StudiQ suggestions.',
+  },
+  'parent-dashboard-ai-tutor': {
+    title: 'Tutor-AI for the parent',
+    summary: 'Interpret learner data and control AI support availability from one place.',
+  },
+  'login-page-form': {
+    title: 'Sign in',
+    summary: 'Sign in with the parent email or the learner username. We detect the account type after you press Sign in.',
+  },
+  'login-page-identifier-field': {
+    title: 'Parent email or learner username',
+    summary: 'Enter the parent email or learner username. We detect the account type after you press Sign in.',
+  },
+  'shared-nav-create-account-action': {
+    title: 'Create account',
+    summary: 'Open the parent account flow without leaving the current page.',
+  },
+  'shared-nav-login-action': {
+    title: 'Sign in',
+    summary: 'Open the parent or learner sign-in flow from any Kangur page.',
+  },
+  'lessons-list-intro': {
+    title: 'Lessons',
+    summary: 'Choose a topic and jump straight into practice or review.',
+  },
+  'lessons-library': {
+    title: 'Lesson library',
+    summary: 'Pick a topic and start learning or reviewing at your own pace.',
+  },
+  'lessons-list-empty-state': {
+    title: 'No active lessons',
+    summary: 'Enable lessons in the admin panel to make them appear here.',
+  },
+  'lessons-active-header': {
+    title: 'Current lesson',
+    summary: 'Move through the topic step by step, listen to the material, and check whether a parent assignment is waiting here.',
+  },
+  'lessons-active-assignment': {
+    title: 'Parent assignment',
+    summary: 'This area shows whether the lesson has an active parent priority or has already been completed.',
+  },
+  'lessons-active-document': {
+    title: 'Lesson material',
+    summary: 'Read the saved lesson document step by step and return to it during practice.',
+  },
+  'lessons-active-secret-panel': {
+    title: 'Hidden finale',
+    summary: 'The golden capsule unlocked a finale at the end of the queue. You landed directly on the hidden ending.',
+  },
+  'lessons-active-empty-document': {
+    title: 'No saved lesson content',
+    summary: 'This lesson uses document mode, but no content blocks have been saved yet.',
+  },
+  'lessons-active-navigation': {
+    title: 'Lesson navigation',
+    summary: 'Move to the previous or next lesson without going back to the full list.',
+  },
+  'tests-empty-state': {
+    title: 'No published questions',
+    summary: 'This set does not have active test questions yet. Come back later or choose another set.',
+  },
+  'tests-question': {
+    title: 'Test question',
+    summary: 'Choose one answer and then review the explanation and the correct reasoning.',
+  },
+  'tests-selection': {
+    title: 'Your selected answer',
+    summary: 'This is the answer chosen before checking the result. The Tutor can explain what the choice means and what is worth reviewing again.',
+  },
+  'tests-review': {
+    title: 'Answer review',
+    summary: 'Compare your choice with the correct answer and read the short explanation.',
+  },
+  'tests-summary': {
+    title: 'Test summary',
+    summary: 'Check the final result and return to the questions to review your answers.',
+  },
+  'learner-profile-hero': {
+    title: 'Learner profile',
+    summary: 'Review milestones, activity, and next steps for the current learner.',
+  },
+  'learner-profile-level-progress': {
+    title: 'Level progress',
+    summary: 'See the current level, total XP, and the remaining distance to the next threshold.',
+  },
+  'learner-profile-overview': {
+    title: 'Results overview',
+    summary: 'The key signals of the day: accuracy, quest, goal, and badges in one view.',
+  },
+  'learner-profile-recommendations': {
+    title: 'Today’s plan',
+    summary: 'A short list of next steps based on recent results and activity.',
+  },
+  'learner-profile-assignments': {
+    title: 'Suggestions from the parent',
+    summary: 'Assignments and hints from the parent that are worth doing first.',
+  },
+  'learner-profile-performance': {
+    title: 'Learner performance',
+    summary: 'See the rhythm of the last seven days and the accuracy of each operation.',
+  },
+  'learner-profile-sessions': {
+    title: 'Session history',
+    summary: 'Review recent attempts and the badge tracks built through regular play.',
+  },
+  'learner-profile-ai-tutor-mood': {
+    title: 'Tutor-AI mood',
+    summary: 'See the current support tone, confidence level, and the time of the latest update.',
+  },
+  'learner-profile-mastery': {
+    title: 'Lesson mastery',
+    summary: 'Review the topics to revisit and the strongest areas based on saved lessons.',
   },
 };
 
@@ -690,42 +851,110 @@ const dedupeOrdered = (values: readonly string[]): string[] => {
   return normalized;
 };
 
+const shouldUseEnglishPageContent = (locale: string | null | undefined): boolean =>
+  normalizeSiteLocale(locale) !== 'pl';
+
+const resolvePageContentCopyOverride = (
+  entryId: string,
+  locale: string | null | undefined
+): KangurPageContentCopyOverride | undefined =>
+  shouldUseEnglishPageContent(locale)
+    ? ENGLISH_PAGE_CONTENT_COPY_OVERRIDES[entryId]
+    : PAGE_CONTENT_COPY_OVERRIDES[entryId];
+
+const resolveLessonLibraryAliases = (
+  locale: string | null | undefined,
+  lessonTitle: string,
+  lessonDescription: string,
+  lessonLabel: string,
+  detailAliases: readonly string[] | undefined,
+  normalizedComponentId: string
+): string[] =>
+  shouldUseEnglishPageContent(locale)
+    ? dedupeOrdered([
+        lessonTitle,
+        lessonDescription,
+        normalizedComponentId,
+        ...(detailAliases ?? []),
+      ])
+    : dedupeOrdered([lessonDescription, lessonLabel, ...(detailAliases ?? [])]);
+
+const resolveLessonLibraryTriggerPhrases = (
+  locale: string | null | undefined,
+  lessonTitle: string,
+  lessonDescription: string,
+  detailTriggerPhrases: readonly string[] | undefined,
+  normalizedComponentId: string
+): string[] =>
+  shouldUseEnglishPageContent(locale)
+    ? dedupeOrdered([
+        lessonTitle,
+        lessonDescription,
+        normalizedComponentId,
+        ...(detailTriggerPhrases ?? []),
+      ])
+    : dedupeOrdered([
+        lessonTitle,
+        lessonDescription,
+        normalizedComponentId,
+        ...(detailTriggerPhrases ?? []),
+      ]);
+
 const LESSON_LIBRARY_COMPONENT_ORDER = KANGUR_LESSON_COMPONENT_OPTIONS.map(
   (option) => option.value
 );
 
-const buildLessonLibraryFragments = (): KangurPageContentFragment[] =>
+const buildLessonLibraryFragments = (locale = 'pl'): KangurPageContentFragment[] =>
   LESSON_LIBRARY_COMPONENT_ORDER.map((componentId, index) => {
     const lesson = KANGUR_LESSON_LIBRARY[componentId];
-    const detail =
-      LESSON_LIBRARY_FRAGMENT_DETAILS[componentId] ??
-      ({
-        explanation: lesson.description,
-        triggerPhrases: [],
-        aliases: [],
-      } satisfies {
-        explanation: string;
-        triggerPhrases: string[];
-        aliases?: string[];
-      });
+    const lessonTitle = getLocalizedKangurLessonTitle(componentId, locale, lesson.title);
+    const lessonDescription = getLocalizedKangurLessonDescription(
+      componentId,
+      locale,
+      lesson.description
+    );
+    const detail = shouldUseEnglishPageContent(locale)
+      ? ({
+          explanation: lessonDescription,
+          triggerPhrases: [],
+          aliases: [],
+        } satisfies {
+          explanation: string;
+          triggerPhrases: string[];
+          aliases?: string[];
+        })
+      : (LESSON_LIBRARY_FRAGMENT_DETAILS[componentId] ??
+        ({
+          explanation: lesson.description,
+          triggerPhrases: [],
+          aliases: [],
+        } satisfies {
+          explanation: string;
+          triggerPhrases: string[];
+          aliases?: string[];
+        }));
     const normalizedComponentId = componentId.replace(/_/g, ' ');
 
     return {
       id: `lesson:${componentId}`,
-      text: lesson.title,
-      aliases: dedupeOrdered([
-        lesson.description,
+      text: lessonTitle,
+      aliases: resolveLessonLibraryAliases(
+        locale,
+        lessonTitle,
+        lessonDescription,
         lesson.label,
-        ...(detail.aliases ?? []),
-      ]),
+        detail.aliases,
+        normalizedComponentId
+      ),
       explanation: detail.explanation,
       nativeGuideIds: [],
-      triggerPhrases: dedupeOrdered([
-        lesson.title,
-        lesson.description,
-        normalizedComponentId,
-        ...detail.triggerPhrases,
-      ]),
+      triggerPhrases: resolveLessonLibraryTriggerPhrases(
+        locale,
+        lessonTitle,
+        lessonDescription,
+        detail.triggerPhrases,
+        normalizedComponentId
+      ),
       enabled: true,
       sortOrder: (index + 1) * 10,
     };
@@ -740,11 +969,11 @@ const buildKangurTestQuestionFragments = (): KangurPageContentFragment[] =>
   }));
 
 const PAGE_CONTENT_FRAGMENT_BUILDERS: Partial<
-  Record<string, () => KangurPageContentFragment[]>
+  Record<string, (locale: string) => KangurPageContentFragment[]>
 > = {
   'lessons-library': buildLessonLibraryFragments,
-  'tests-question': buildKangurTestQuestionFragments,
-  'game-kangur-session': buildKangurTestQuestionFragments,
+  'tests-question': () => buildKangurTestQuestionFragments(),
+  'game-kangur-session': () => buildKangurTestQuestionFragments(),
 };
 
 const toRouteFromPageKey = (pageKey: KangurPageContentPageKey): string => {
@@ -828,10 +1057,11 @@ const buildTags = (
 
 const buildSectionEntry = (
   entry: KangurAiTutorPageCoverageEntry,
-  index: number
+  index: number,
+  locale: string
 ): KangurPageContentEntry => {
   const linkedGuideIds = entry.currentKnowledgeEntryIds;
-  const copyOverride = PAGE_CONTENT_COPY_OVERRIDES[entry.id];
+  const copyOverride = resolvePageContentCopyOverride(entry.id, locale);
 
   return {
     id: entry.id,
@@ -851,7 +1081,7 @@ const buildSectionEntry = (
     nativeGuideIds: [...linkedGuideIds],
     triggerPhrases: buildTriggerPhrases(entry, linkedGuideIds),
     tags: buildTags(entry, linkedGuideIds),
-    fragments: PAGE_CONTENT_FRAGMENT_BUILDERS[entry.id]?.() ?? [],
+    fragments: PAGE_CONTENT_FRAGMENT_BUILDERS[entry.id]?.(locale) ?? [],
     notes: entry.notes,
     enabled: true,
     sortOrder: index * 10,
@@ -863,7 +1093,9 @@ export const buildDefaultKangurPageContentStore = (locale = 'pl'): KangurPageCon
     repairKangurPolishCopy({
       locale,
       version: KANGUR_PAGE_CONTENT_VERSION,
-      entries: KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map(buildSectionEntry),
+      entries: KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry, index) =>
+        buildSectionEntry(entry, index, locale)
+      ),
     })
   );
 

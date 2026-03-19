@@ -35,7 +35,7 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, ClearL
       tags: ['observability', 'logs', 'delete'],
       description: 'Deletes system logs.'},
     invalidate: async (queryClient, _data, target) => {
-      if (target === 'error_logs') {
+      if (target === 'error_logs' || target === 'info_logs') {
         await invalidateSystemLogs(queryClient);
         return;
       }

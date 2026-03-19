@@ -14,14 +14,21 @@ import {
   KANGUR_PANEL_GRID_TO_ROW_CLASSNAME,
   KANGUR_SPACED_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
 
 export function KangurLearnerProfileHeroWidget(): React.JSX.Element | null {
   const translations = useTranslations('KangurLearnerProfileWidgets.hero');
+  const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const { user, progress } = useKangurLearnerProfileRuntime();
   const { openLoginModal } = useKangurLoginModal();
   const activeLearner = user?.activeLearner ?? null;
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
-  const displayName = user ? getKangurLearnerProfileDisplayName(user) : null;
+  const localModeLabel = translateKangurLearnerProfileWithFallback(
+    (key, values) => runtimeTranslations(key as never, values as never),
+    'localMode',
+    'Tryb lokalny'
+  );
+  const displayName = user ? getKangurLearnerProfileDisplayName(user, localModeLabel) : null;
   const hasMeaningfulProgress =
     progress.totalXp > 0 ||
     progress.gamesPlayed > 0 ||

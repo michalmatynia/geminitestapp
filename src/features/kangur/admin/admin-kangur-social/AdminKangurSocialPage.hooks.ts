@@ -19,10 +19,6 @@ export function useAdminKangurSocialPage() {
   const settings = useSocialSettings();
 
   const editor = useSocialEditorSync({
-    persistedSocialSettings: settings.persistedSocialSettings,
-    setLinkedinConnectionId: settings.setLinkedinConnectionId,
-    setBrainModelId: settings.setBrainModelId,
-    setVisionModelId: settings.setVisionModelId,
     linkedinConnections: settings.linkedinConnections,
     linkedinConnectionId: settings.linkedinConnectionId,
     brainModelId: settings.brainModelId,
@@ -80,8 +76,6 @@ export function useAdminKangurSocialPage() {
     setAddonForm: editor.setAddonForm,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     batchCapturePresetIds: settings.batchCapturePresetIds,
-    handleSelectAddon: editor.handleSelectAddon,
-    handleSelectAddons: editor.handleSelectAddons,
     buildSocialContext,
   });
 

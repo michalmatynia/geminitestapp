@@ -11,6 +11,7 @@ import {
   getProductValidationSemanticOperationDefinition,
   getProductValidationSemanticOperationUiMetadata,
   inferProductValidationSemanticStateFromPattern,
+  isProductValidationSemanticOperationNoopReplacement,
   migrateProductValidationSemanticOperationIdToLatest,
   migrateProductValidationSemanticPresetIdToLatest,
   reconcileProductValidationSemanticState,
@@ -26,9 +27,17 @@ describe('validator semantic operations', () => {
     expect(
       migrateProductValidationSemanticPresetIdToLatest('products.latest-field-mirror.v1')
     ).toBe(PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.mirrorLatestField);
+    expect(
+      migrateProductValidationSemanticPresetIdToLatest('products.repeated-whitespace.v1')
+    ).toBe(PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.validateRepeatedWhitespace);
   });
 
   it('exposes regex-optional execution behavior through the operation registry', () => {
+    expect(
+      allowsProductValidationSemanticOperationExecutionWithoutRegexMatch(
+        PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.inferCategoryFromNameSegment
+      )
+    ).toBe(true);
     expect(
       allowsProductValidationSemanticOperationExecutionWithoutRegexMatch(
         PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.mirrorLatestField
@@ -120,6 +129,18 @@ describe('validator semantic operations', () => {
       sourceField: 'nameEnSegment4',
       targetField: 'categoryId',
     });
+    expect(
+      inferProductValidationSemanticStateFromPattern({
+        target: 'description',
+        regex: '\\s{2,}',
+        replacementEnabled: false,
+        replacementValue: null,
+      })
+    ).toMatchObject({
+      operation: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace,
+      sourceField: 'description',
+      targetField: 'description',
+    });
   });
 
   it('reconciles preset semantics when a user edits the pattern into another semantic shape', () => {
@@ -178,7 +199,7 @@ describe('validator semantic operations', () => {
           targetField: 'price',
         },
         pattern: {
-          target: 'name',
+          target: 'description',
           locale: 'en',
           regex: 'sale',
           replacementEnabled: true,
@@ -196,6 +217,17 @@ describe('validator semantic operations', () => {
     ).toMatchObject({
       title: 'Name Segment #4 -> Category',
       categoryFixturesLabel: 'Category Fixtures',
+      messagePlaceholder:
+        'Infer category from Name EN segment #4 when the current category differs.',
+    });
+    expect(
+      getProductValidationSemanticOperationUiMetadata(
+        PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.validateRepeatedWhitespace
+      )
+    ).toMatchObject({
+      title: 'Repeated Whitespace',
+      labelPlaceholder: 'Double spaces in Description',
+      messagePlaceholder: 'Description contains repeated whitespace.',
     });
     expect(
       buildProductValidationSemanticOperationPresetLabel(
@@ -213,5 +245,33 @@ describe('validator semantic operations', () => {
         }
       )
     ).toBe('Replace "Keychain" with "Brelok" in Polish name.');
+  });
+
+  it('delegates semantic noop replacement behavior through the operation registry', () => {
+    expect(
+      isProductValidationSemanticOperationNoopReplacement({
+        value: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.inferCategoryFromNameSegment,
+        context: {
+          fieldName: 'categoryId',
+          values: {
+            categoryName: 'Anime Pins',
+          },
+          replacementValue: 'Anime Pin',
+        },
+      })
+    ).toBe(true);
+
+    expect(
+      isProductValidationSemanticOperationNoopReplacement({
+        value: PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.inferCategoryFromNameSegment,
+        context: {
+          fieldName: 'categoryId',
+          values: {
+            categoryName: 'Pins',
+          },
+          replacementValue: 'Anime Pin',
+        },
+      })
+    ).toBe(false);
   });
 });

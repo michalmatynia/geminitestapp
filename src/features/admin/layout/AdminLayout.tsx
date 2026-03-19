@@ -190,6 +190,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       !pathname.startsWith('/admin/kangur/lessons-manager'));
   const isProductsListRoute =
     pathname === '/admin/products' ||
+    pathname === '/admin/validator' ||
+    pathname === '/admin/validator/lists' ||
     pathname === '/admin/ai-paths/queue' ||
     pathname === '/admin/system/logs';
   const mainPaddingClassName = isProductsListRoute

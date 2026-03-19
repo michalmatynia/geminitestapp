@@ -46,6 +46,13 @@ const formatDate = (value: string | null | undefined): string => {
 const getPostTitle = (post: KangurSocialPost): string =>
   post.titlePl.trim() || post.titleEn.trim() || 'New Kangur update';
 
+const getPostExcerpt = (post: KangurSocialPost): string => {
+  const sections = resolvePostSections(post);
+  const combined = sections.map((section) => section.body.trim()).filter(Boolean).join(' ');
+  if (!combined) return 'Latest product updates from Kangur and StudiQ.';
+  return combined.length > 180 ? `${combined.slice(0, 177).trimEnd()}...` : combined;
+};
+
 const resolvePostSections = (post: KangurSocialPost): Array<{ label?: string; body: string }> => {
   const pl = post.bodyPl.trim();
   const en = post.bodyEn.trim();
@@ -76,9 +83,10 @@ export default function SocialUpdates(): React.JSX.Element {
   const { guestPlayerName, setGuestPlayerName } = useKangurGuestPlayer();
   const { openLoginModal } = useKangurLoginModal();
   const routeNavigator = useKangurRouteNavigator();
-  const postsQuery = useKangurSocialPosts({ scope: 'public', limit: 1 });
+  const postsQuery = useKangurSocialPosts({ scope: 'public', limit: 8 });
   const posts = postsQuery.data ?? [];
   const latestPost = posts[0] ?? null;
+  const archivePosts = posts.slice(1);
   const latestPostSections = latestPost ? resolvePostSections(latestPost) : [];
 
   const navigation = useMemo(
@@ -141,62 +149,130 @@ export default function SocialUpdates(): React.JSX.Element {
           icon={<CalendarClock aria-hidden='true' className='h-5 w-5' />}
         />
       ) : (
-        <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
-          {latestPost.imageAssets?.[0]?.url ? (
-            <div className='overflow-hidden rounded-2xl border border-white/10 bg-black/10'>
-              <img
-                src={latestPost.imageAssets[0].url}
-                alt={
-                  latestPost.imageAssets[0].filename ??
-                  latestPost.imageAssets[0].id ??
-                  'Kangur update image'
+        <div className={cn('flex w-full flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
+          <KangurInfoCard padding='lg' className={KANGUR_STACK_RELAXED_CLASSNAME}>
+            {latestPost.imageAssets?.[0]?.url ? (
+              <div className='overflow-hidden rounded-2xl border border-white/10 bg-black/10'>
+                <img
+                  src={latestPost.imageAssets[0].url}
+                  alt={
+                    latestPost.imageAssets[0].filename ??
+                    latestPost.imageAssets[0].id ??
+                    'Kangur update image'
+                  }
+                  className='h-52 w-full object-cover'
+                  loading='lazy'
+                />
+              </div>
+            ) : null}
+            <div className='text-xs uppercase tracking-[0.2em] text-white/60'>
+              Latest update · {formatDate(latestPost.publishedAt ?? latestPost.updatedAt)}
+            </div>
+            <div className='text-xl font-semibold text-white'>{getPostTitle(latestPost)}</div>
+            <div className='space-y-4 text-sm text-white/80'>
+              {latestPostSections.length === 0 ? (
+                <p>Latest product updates from Kangur and StudiQ.</p>
+              ) : (
+                latestPostSections.map((section, index, all) => (
+                  <div key={`${section.label ?? 'section'}-${index}`} className='space-y-2'>
+                    {section.label ? (
+                      <div className='text-xs font-semibold uppercase tracking-[0.3em] text-white/50'>
+                        {section.label}
+                      </div>
+                    ) : null}
+                    <p className='whitespace-pre-line'>{section.body}</p>
+                    {index < all.length - 1 ? (
+                      <div className='border-t border-dashed border-white/20' />
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+            {latestPost.linkedinUrl ? (
+              <a
+                href={latestPost.linkedinUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
+                onClick={() =>
+                  trackKangurClientEvent('kangur_social_updates_link_click', {
+                    postId: latestPost.id,
+                    url: latestPost.linkedinUrl,
+                  })
                 }
-                className='h-52 w-full object-cover'
-                loading='lazy'
-              />
+              >
+                View on LinkedIn
+                <ExternalLink aria-hidden='true' className='h-4 w-4' />
+              </a>
+            ) : null}
+          </KangurInfoCard>
+
+          {archivePosts.length > 0 ? (
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between gap-3'>
+                <div>
+                  <div className='text-sm font-semibold text-white'>Recent updates archive</div>
+                  <div className='text-xs text-white/60'>
+                    Earlier published StudiQ and Kangur posts.
+                  </div>
+                </div>
+                <div className='text-xs uppercase tracking-[0.2em] text-white/50'>
+                  {archivePosts.length} more
+                </div>
+              </div>
+              <div className='grid gap-4 lg:grid-cols-2'>
+                {archivePosts.map((post) => (
+                  <KangurInfoCard
+                    key={post.id}
+                    padding='md'
+                    className='flex h-full flex-col gap-4'
+                  >
+                    {post.imageAssets?.[0]?.url ? (
+                      <div className='overflow-hidden rounded-xl border border-white/10 bg-black/10'>
+                        <img
+                          src={post.imageAssets[0].url}
+                          alt={
+                            post.imageAssets[0].filename ??
+                            post.imageAssets[0].id ??
+                            'Kangur update image'
+                          }
+                          className='h-36 w-full object-cover'
+                          loading='lazy'
+                        />
+                      </div>
+                    ) : null}
+                    <div className='space-y-2'>
+                      <div className='text-xs uppercase tracking-[0.2em] text-white/50'>
+                        {formatDate(post.publishedAt ?? post.updatedAt)}
+                      </div>
+                      <div className='text-lg font-semibold text-white'>
+                        {getPostTitle(post)}
+                      </div>
+                      <p className='text-sm text-white/75'>{getPostExcerpt(post)}</p>
+                    </div>
+                    {post.linkedinUrl ? (
+                      <a
+                        href={post.linkedinUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
+                        onClick={() =>
+                          trackKangurClientEvent('kangur_social_updates_link_click', {
+                            postId: post.id,
+                            url: post.linkedinUrl,
+                          })
+                        }
+                      >
+                        View on LinkedIn
+                        <ExternalLink aria-hidden='true' className='h-4 w-4' />
+                      </a>
+                    ) : null}
+                  </KangurInfoCard>
+                ))}
+              </div>
             </div>
           ) : null}
-          <div className='text-xs uppercase tracking-[0.2em] text-white/60'>
-            {formatDate(latestPost.publishedAt ?? latestPost.updatedAt)}
-          </div>
-          <div className='text-xl font-semibold text-white'>{getPostTitle(latestPost)}</div>
-          <div className='space-y-4 text-sm text-white/80'>
-            {latestPostSections.length === 0 ? (
-              <p>Latest product updates from Kangur and StudiQ.</p>
-            ) : (
-              latestPostSections.map((section, index, all) => (
-                <div key={`${section.label ?? 'section'}-${index}`} className='space-y-2'>
-                  {section.label ? (
-                    <div className='text-xs font-semibold uppercase tracking-[0.3em] text-white/50'>
-                      {section.label}
-                    </div>
-                  ) : null}
-                  <p className='whitespace-pre-line'>{section.body}</p>
-                  {index < all.length - 1 ? (
-                    <div className='border-t border-dashed border-white/20' />
-                  ) : null}
-                </div>
-              ))
-            )}
-          </div>
-          {latestPost.linkedinUrl ? (
-          <a
-            href={latestPost.linkedinUrl}
-            target='_blank'
-            rel='noopener noreferrer'
-            className={`mt-auto ${KANGUR_INLINE_CENTER_ROW_CLASSNAME} text-sm font-semibold text-white hover:underline`}
-            onClick={() =>
-              trackKangurClientEvent('kangur_social_updates_link_click', {
-                  postId: latestPost.id,
-                  url: latestPost.linkedinUrl,
-                })
-              }
-            >
-              View on LinkedIn
-              <ExternalLink aria-hidden='true' className='h-4 w-4' />
-            </a>
-          ) : null}
-        </KangurInfoCard>
+        </div>
       )}
     </KangurStandardPageLayout>
   );

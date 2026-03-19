@@ -82,6 +82,7 @@ describe('KangurLearnerProfileMasteryWidget', () => {
     expect(
       screen.getByText('Mongo opis tematów do powtórki i najmocniejszych obszarów.')
     ).toBeInTheDocument();
-    expect(screen.getByText('Najmocniejsze lekcje')).toBeInTheDocument();
+    expect(screen.getByText(/Nauka zegara/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Dzielenie/).length).toBeGreaterThan(0);
   });
 });

@@ -420,6 +420,12 @@ export const QUERY_KEYS = {
       range: string;
       scope: string;
       type: string;
+      search: string;
+      country: string;
+      referrerHost: string;
+      browser: string;
+      device: string;
+      bot: string;
     }) => [...QUERY_KEYS.analytics.all, 'events', { filters }] as const,
     insights: (limit?: number) => [...QUERY_KEYS.analytics.all, 'insights', { limit }] as const,
   },

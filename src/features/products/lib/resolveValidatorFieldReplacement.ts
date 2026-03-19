@@ -47,6 +47,13 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
+const getCategoryDisplayCandidates = (category: ProductCategory | null): string[] => {
+  if (!category) return [];
+  return [category.name_en, category.name, category.name_pl, category.name_de]
+    .map((value) => toTrimmedString(value))
+    .filter((value) => value.length > 0);
+};
+
 const resolveCategoryDisplayValue = (
   categoryId: string,
   categories: ReadonlyArray<ProductCategory> | undefined,
@@ -57,7 +64,7 @@ const resolveCategoryDisplayValue = (
   if (fromMap) return fromMap;
 
   const category = categories?.find((item) => toTrimmedString(item.id) === categoryId) ?? null;
-  const fromCategory = toTrimmedString(category?.name);
+  const fromCategory = getCategoryDisplayCandidates(category)[0] ?? '';
   if (fromCategory) return fromCategory;
 
   return fallbackValue;

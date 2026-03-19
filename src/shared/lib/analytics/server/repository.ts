@@ -48,6 +48,7 @@ type AnalyticsEventMongoDoc = {
   url?: string;
   title?: string;
   referrer?: string;
+  referrerHost?: string;
   userId?: string;
   utm?: AnalyticsUtmDoc;
   language?: string;
@@ -62,6 +63,7 @@ type AnalyticsEventMongoDoc = {
   ipMasked?: string;
   ipHash?: string;
   userAgent?: string;
+  ua?: AnalyticsEvent['ua'];
   country?: string;
   region?: string;
   city?: string;
@@ -85,8 +87,12 @@ async function ensureAnalyticsIndexes(): Promise<void> {
       col.createIndex({ visitorId: 1, ts: -1 }),
       col.createIndex({ sessionId: 1, ts: -1 }),
       col.createIndex({ referrer: 1, ts: -1 }),
+      col.createIndex({ referrerHost: 1, ts: -1 }),
       col.createIndex({ language: 1, ts: -1 }),
       col.createIndex({ country: 1, ts: -1 }),
+      col.createIndex({ 'ua.browser': 1, ts: -1 }),
+      col.createIndex({ 'ua.device': 1, ts: -1 }),
+      col.createIndex({ 'ua.isBot': 1, ts: -1 }),
     ]);
   }
 
@@ -99,6 +105,8 @@ const normalizeOptionalString = (value: string | null | undefined): string | und
   if (!trimmed) return undefined;
   return trimmed;
 };
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const normalizeUtm = (utm: AnalyticsUtm | null | undefined): AnalyticsUtmDoc | undefined => {
   if (!utm) return undefined;
@@ -180,6 +188,7 @@ const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEvent => ({
   ...(doc.url ? { url: doc.url } : {}),
   ...(doc.title ? { title: doc.title } : {}),
   ...(doc.referrer ? { referrer: doc.referrer } : {}),
+  ...(doc.referrerHost ? { referrerHost: doc.referrerHost } : {}),
   ...(doc.userId ? { userId: doc.userId } : {}),
   ...(doc.utm ? { utm: doc.utm } : {}),
   ...(doc.language ? { language: doc.language } : {}),
@@ -194,6 +203,7 @@ const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEvent => ({
   ...(doc.ipMasked ? { ipMasked: doc.ipMasked } : {}),
   ...(doc.ipHash ? { ipHash: doc.ipHash } : {}),
   ...(doc.userAgent ? { userAgent: doc.userAgent } : {}),
+  ...(doc.ua ? { ua: doc.ua } : {}),
   ...(doc.country ? { country: doc.country } : {}),
   ...(doc.region ? { region: doc.region } : {}),
   ...(doc.city ? { city: doc.city } : {}),
@@ -249,6 +259,7 @@ export async function insertAnalyticsEvent(
   const url = normalizeOptionalString(input.url);
   const title = normalizeOptionalString(input.title);
   const referrer = normalizeOptionalString(input.referrer);
+  const referrerHost = normalizeOptionalString(input.referrerHost);
   const userId = normalizeOptionalString(input.userId);
   const language = normalizeOptionalString(input.language);
   const timeZone = normalizeOptionalString(input.timeZone);
@@ -275,6 +286,7 @@ export async function insertAnalyticsEvent(
     ...(url ? { url } : {}),
     ...(title ? { title } : {}),
     ...(referrer ? { referrer } : {}),
+    ...(referrerHost ? { referrerHost } : {}),
     ...(userId ? { userId } : {}),
     ...(utm ? { utm } : {}),
     ...(language ? { language } : {}),
@@ -287,6 +299,7 @@ export async function insertAnalyticsEvent(
     ...(clientTsDate ? { clientTs: clientTsDate } : {}),
     ...ipFields,
     ...(serverUserAgent ? { userAgent: serverUserAgent } : {}),
+    ...(input.ua ? { ua: input.ua } : {}),
     ...(serverCountry ? { country: serverCountry } : {}),
     ...(serverRegion ? { region: serverRegion } : {}),
     ...(serverCity ? { city: serverCity } : {}),
@@ -302,12 +315,18 @@ export async function listAnalyticsEvents(input: {
   to: Date;
   scope?: AnalyticsScope | undefined;
   type?: AnalyticsEventType | undefined;
+  search?: string | undefined;
+  country?: string | undefined;
+  referrerHost?: string | undefined;
+  browser?: string | undefined;
+  device?: string | undefined;
+  isBot?: boolean | undefined;
   limit: number;
   skip: number;
 }): Promise<{ events: AnalyticsEvent[]; total: number }> {
   const redis = getRedisConnection();
   const version = await getAnalyticsCacheVersion();
-  const cacheKey = `${ANALYTICS_CACHE_PREFIX}:events:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}:${input.type ?? 'all'}:${input.limit}:${input.skip}`;
+  const cacheKey = `${ANALYTICS_CACHE_PREFIX}:events:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}:${input.type ?? 'all'}:${input.search ?? ''}:${input.country ?? ''}:${input.referrerHost ?? ''}:${input.browser ?? ''}:${input.device ?? ''}:${input.isBot === undefined ? 'all' : String(input.isBot)}:${input.limit}:${input.skip}`;
   if (redis) {
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -333,6 +352,41 @@ export async function listAnalyticsEvents(input: {
   }
   if (input.type) {
     match['type'] = input.type;
+  }
+  if (input.country) {
+    match['country'] = { $regex: escapeRegex(input.country), $options: 'i' };
+  }
+  if (input.referrerHost) {
+    match['referrerHost'] = { $regex: escapeRegex(input.referrerHost), $options: 'i' };
+  }
+  if (input.browser) {
+    match['ua.browser'] = { $regex: escapeRegex(input.browser), $options: 'i' };
+  }
+  if (input.device) {
+    match['ua.device'] = { $regex: `^${escapeRegex(input.device)}$`, $options: 'i' };
+  }
+  if (input.isBot !== undefined) {
+    match['ua.isBot'] = input.isBot;
+  }
+  if (input.search) {
+    const searchRegex = { $regex: escapeRegex(input.search), $options: 'i' };
+    match['$or'] = [
+      { path: searchRegex },
+      { search: searchRegex },
+      { url: searchRegex },
+      { title: searchRegex },
+      { referrer: searchRegex },
+      { referrerHost: searchRegex },
+      { visitorId: searchRegex },
+      { sessionId: searchRegex },
+      { ip: searchRegex },
+      { ipMasked: searchRegex },
+      { ipHash: searchRegex },
+      { userAgent: searchRegex },
+      { country: searchRegex },
+      { region: searchRegex },
+      { city: searchRegex },
+    ];
   }
 
   const [docs, total] = await Promise.all([

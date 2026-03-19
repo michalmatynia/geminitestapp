@@ -118,6 +118,38 @@ const buildProps = (
   }) as React.ComponentProps<typeof PatternNodeItem>;
 
 describe('PatternNodeItem', () => {
+  it('opens the pattern modal when the pattern label is clicked', () => {
+    const select = vi.fn();
+    const onEditPattern = vi.fn();
+    const pattern = buildPattern();
+
+    useValidatorPatternTreeContextMock.mockReturnValue({
+      patternById: new Map([[pattern.id, pattern]]),
+      isPending: false,
+      onEditPattern,
+      onDuplicatePattern: vi.fn(),
+      onDeletePattern: vi.fn(),
+      onTogglePattern: vi.fn(),
+      onOpenSemanticHistory: vi.fn(),
+    });
+
+    render(<PatternNodeItem {...buildProps()} select={select} />);
+
+    const labelButton = screen.getByRole('button', { name: 'Name EN to PL' });
+    const labelText = screen.getByText('Name EN to PL');
+
+    expect(labelButton.className).toContain('cursor-pointer');
+    expect(labelButton.className).not.toContain('hover:bg-sky-500/10');
+    expect(labelText.className).toContain('hover:scale-[1.02]');
+    expect(labelText.className).toContain('hover:text-sky-100');
+
+    fireEvent.click(labelButton);
+
+    expect(select).toHaveBeenCalledTimes(1);
+    expect(onEditPattern).toHaveBeenCalledWith(pattern);
+    expect(select.mock.invocationCallOrder[0]).toBeLessThan(onEditPattern.mock.invocationCallOrder[0]);
+  });
+
   it('renders a semantic history badge for patterns with audit history', () => {
     const pattern = buildPattern({
       semanticAudit: {

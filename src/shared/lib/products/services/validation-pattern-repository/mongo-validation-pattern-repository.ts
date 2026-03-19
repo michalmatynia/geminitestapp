@@ -42,15 +42,15 @@ import {
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
-  buildProductValidationSemanticAuditRecord,
-  getProductValidationSemanticState,
-  normalizeProductValidationSemanticAuditRecord,
   normalizeProductValidationSemanticState,
+  buildProductValidationSemanticAuditRecord,
+  normalizeProductValidationSemanticAuditRecord,
 } from '@/shared/lib/products/utils/validator-semantic-state';
+import { PRODUCT_VALIDATION_PATTERNS_COLLECTION } from '@/shared/lib/products/services/validation-pattern-semantic-migration';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-const COLLECTION = 'product_validation_patterns';
+const COLLECTION = PRODUCT_VALIDATION_PATTERNS_COLLECTION;
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_ENABLED_BY_DEFAULT = true;
 const DEFAULT_FORMATTER_ENABLED_BY_DEFAULT = false;
@@ -308,48 +308,7 @@ const normalizeLaunchOperator = (value: unknown): ProductValidationLaunchOperato
   }
 };
 
-const sortSerializableValue = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map((item) => sortSerializableValue(item));
-  }
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, nestedValue]) => [key, sortSerializableValue(nestedValue)])
-    );
-  }
-  return value;
-};
-
-const serializeForSemanticMigration = (value: unknown): string =>
-  JSON.stringify(sortSerializableValue(value ?? null));
-
-const getNormalizedSemanticFields = (
-  doc: Pick<
-    ProductValidationPatternDoc,
-    | 'semanticState'
-    | 'semanticAudit'
-    | 'semanticAuditHistory'
-    | 'label'
-    | 'target'
-    | 'locale'
-    | 'regex'
-    | 'replacementEnabled'
-    | 'replacementValue'
-    | 'launchEnabled'
-    | 'launchSourceMode'
-    | 'launchSourceField'
-    | 'launchOperator'
-    | 'launchValue'
-  >
-): {
-  semanticState: ProductValidationSemanticState | null;
-  semanticAudit: ProductValidationSemanticAuditRecord | null;
-  semanticAuditHistory: ProductValidationSemanticAuditRecord[];
-  needsPersistence: boolean;
-} => {
-  const semanticState = getProductValidationSemanticState(doc);
+const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern => {
   const semanticAudit = normalizeProductValidationSemanticAuditRecord(doc.semanticAudit);
   const semanticAuditHistory = Array.isArray(doc.semanticAuditHistory)
     ? doc.semanticAuditHistory
@@ -357,53 +316,6 @@ const getNormalizedSemanticFields = (
         .filter((entry): entry is ProductValidationSemanticAuditRecord => entry !== null)
     : [];
 
-  const needsPersistence =
-    serializeForSemanticMigration(doc.semanticState) !==
-      serializeForSemanticMigration(semanticState) ||
-    serializeForSemanticMigration(doc.semanticAudit) !==
-      serializeForSemanticMigration(semanticAudit) ||
-    serializeForSemanticMigration(doc.semanticAuditHistory ?? []) !==
-      serializeForSemanticMigration(semanticAuditHistory);
-
-  return {
-    semanticState,
-    semanticAudit,
-    semanticAuditHistory,
-    needsPersistence,
-  };
-};
-
-const migratePatternDocumentSemantics = async (
-  db: Db,
-  doc: ProductValidationPatternDoc
-): Promise<ProductValidationPatternDoc> => {
-  const normalizedSemanticFields = getNormalizedSemanticFields(doc);
-  if (!normalizedSemanticFields.needsPersistence) {
-    return {
-      ...doc,
-      ...normalizedSemanticFields,
-    };
-  }
-
-  await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(
-    { _id: doc._id },
-    {
-      $set: {
-        semanticState: normalizedSemanticFields.semanticState,
-        semanticAudit: normalizedSemanticFields.semanticAudit,
-        semanticAuditHistory: normalizedSemanticFields.semanticAuditHistory,
-      },
-    } as UpdateFilter<ProductValidationPatternDoc>
-  );
-
-  return {
-    ...doc,
-    ...normalizedSemanticFields,
-  };
-};
-
-const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern => {
-  const normalizedSemanticFields = getNormalizedSemanticFields(doc);
   return {
     id: doc._id.toString(),
     label: doc.label,
@@ -454,9 +366,9 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
         ? doc.launchFlags.trim()
         : null,
     appliesToScopes: normalizeProductValidationPatternScopes(doc.appliesToScopes),
-    semanticState: normalizedSemanticFields.semanticState,
-    semanticAudit: normalizedSemanticFields.semanticAudit,
-    semanticAuditHistory: normalizedSemanticFields.semanticAuditHistory,
+    semanticState: normalizeProductValidationSemanticState(doc.semanticState),
+    semanticAudit,
+    semanticAuditHistory,
     createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
   };
@@ -477,10 +389,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       .find({})
       .sort({ sequence: 1, target: 1, label: 1 })
       .toArray();
-    const migratedRows = await Promise.all(
-      rows.map((row) => migratePatternDocumentSemantics(db, row))
-    );
-    return migratedRows.map(toDomain);
+    return rows.map(toDomain);
   },
 
   async getPatternById(id: string): Promise<ProductValidationPattern | null> {
@@ -491,7 +400,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       .collection<ProductValidationPatternDoc>(COLLECTION)
       .findOne({ _id: toObjectId(id) });
     if (!row) return null;
-    return toDomain(await migratePatternDocumentSemantics(db, row));
+    return toDomain(row);
   },
 
   async createPattern(
@@ -604,7 +513,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (!currentRowRaw) {
       throw notFoundError('Validation pattern not found', { patternId: id });
     }
-    const currentRow = await migratePatternDocumentSemantics(db, currentRowRaw);
+    const currentRow = toDomain(currentRowRaw);
 
     const set: Partial<ProductValidationPatternDoc> = {
       updatedAt: new Date(),
@@ -716,7 +625,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     const semanticAudit =
       data.semanticState !== undefined
         ? buildProductValidationSemanticAuditRecord({
-            previous: getProductValidationSemanticState(currentRow),
+            previous: currentRow.semanticState,
             current: set.semanticState,
             source: resolveSemanticAuditSource(options),
             trigger: 'update',

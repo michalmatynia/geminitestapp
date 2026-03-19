@@ -563,7 +563,7 @@ export function SummaryContent(): JSX.Element {
               </Link>
             </Button>
             <Button asChild variant='outline' className='w-full justify-between gap-2'>
-              <Link href='/admin/analytics'>
+              <Link href='/admin/system/analytics'>
                 Global Analytics
                 <ArrowUpRightIcon className='size-3.5' />
               </Link>

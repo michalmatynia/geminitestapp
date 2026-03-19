@@ -604,6 +604,14 @@
       },
       "aiTutor": {
         "title": "AI Tutor für Eltern"
+      },
+      "scores": {
+        "title": "Ergebnisse des Lernenden",
+        "description": "Prüfe die letzten Spiele, die Genauigkeit und die Bereiche, die jetzt wiederholt werden sollten.",
+        "trackSummary": {
+          "label": "Fortschrittsspuren des Lernenden",
+          "description": "Die wichtigsten Abzeichen-Spuren, die der Lernende gerade aufbaut."
+        }
       }
     }
   },
@@ -1157,6 +1165,92 @@
       "badgeTracksHeading": "Abzeichenpfade"
     }
   },
+  "KangurLearnerProfileRuntime": {
+    "localMode": "Lokaler Modus",
+    "dateMissing": "Kein Datum",
+    "errors": {
+      "loadScores": "Der Ergebnisverlauf konnte nicht geladen werden."
+    },
+    "activityLabels": {
+      "addition": "Addition",
+      "subtraction": "Subtraktion",
+      "multiplication": "Multiplikation",
+      "division": "Division",
+      "decimals": "Brueche",
+      "powers": "Potenzen",
+      "roots": "Wurzeln",
+      "clock": "Uhr",
+      "calendar": "Kalender",
+      "geometry": "Geometrie",
+      "logical": "Logik",
+      "mixed": "Gemischt",
+      "english_basics": "Grundlagen",
+      "english_parts_of_speech": "Wortarten",
+      "english_sentence_structure": "Satzbau",
+      "english_subject_verb_agreement": "Subjekt-Verb-Kongruenz",
+      "english_articles": "Artikel",
+      "english_prepositions_time_place": "Praepositionen fuer Zeit und Ort"
+    },
+    "weeklyActivity": {
+      "sun": "So.",
+      "mon": "Mo.",
+      "tue": "Di.",
+      "wed": "Mi.",
+      "thu": "Do.",
+      "fri": "Fr.",
+      "sat": "Sa."
+    },
+    "guidedMomentum": {
+      "badges": {
+        "guidedStep": "Sicherer Schritt",
+        "guidedKeeper": "Bleibe auf Kurs"
+      },
+      "summary": {
+        "guidedStep": "{completed}/1 Runde",
+        "guidedKeeper": "{completed}/3 Runden",
+        "complete": "Alle Ziele erreicht!"
+      }
+    },
+    "recommendations": {
+      "actions": {
+        "openLesson": "Lektion oeffnen",
+        "startTraining": "Training starten",
+        "playNow": "Jetzt spielen",
+        "playToday": "Heute spielen"
+      },
+      "focusWeakestOperation": {
+        "title": "Fokussiere dich auf: {operation}",
+        "description": "Mache 2 kurze {operation}-Einheiten und ziele auf mindestens 80% Genauigkeit."
+      },
+      "improveAccuracy": {
+        "title": "Genauigkeit stabilisieren",
+        "description": "Waehle in den naechsten 3 Spielen den mittleren Modus und konzentriere dich mehr auf Genauigkeit als auf Zeit."
+      },
+      "strengthenLessonMastery": {
+        "title": "Wiederhole Lektion: {lessonTitle}",
+        "description": "Die aktuelle Beherrschung liegt bei {masteryPercent}%. Eine weitere Wiederholung dieser Lektion verbessert die Stabilitaet."
+      },
+      "dailyGoal": {
+        "title": "Erreiche das Tagesziel",
+        "descriptionSingle": "Es fehlt nur noch 1 Spiel bis zum Tagesziel. Heute hast du schon +{todayXpEarned} XP gesammelt.",
+        "descriptionMultiple": "Es fehlen noch {remainingGames} Spiele bis zum Tagesziel. Heute hast du schon +{todayXpEarned} XP gesammelt."
+      },
+      "boostXpMomentum": {
+        "title": "Hol mehr XP heute",
+        "descriptionWithOperation": "Das Spielziel ist schon geschafft, aber heute kamen nur +{todayXpEarned} XP zusammen. Eine staerkere {operation}-Einheit bringt normalerweise etwa {averageXpPerSession} XP pro Versuch.",
+        "descriptionFallback": "Das Spielziel ist schon geschafft, aber heute kamen nur +{todayXpEarned} XP zusammen. Eine staerkere Trainingseinheit sollte ueber {xpMomentumTarget} XP bringen."
+      },
+      "streakBootstrap": {
+        "title": "Baue eine Serie auf",
+        "description": "Spiele auch morgen, um eine Serie aufeinanderfolgender Tage zu starten."
+      },
+      "maintainMomentum": {
+        "title": "Tempo halten",
+        "descriptionWithOperation": "Du bist gut im Flow. In 7 Tagen hast du +{weeklyXpEarned} XP gesammelt. Fuege noch 1 {operation}-Einheit zur Festigung hinzu.",
+        "descriptionFallback": "Du bist gut im Flow. In 7 Tagen hast du +{weeklyXpEarned} XP gesammelt. Halte den heutigen Lernrhythmus bei."
+      }
+    }
+  },
   "KangurLessonsWidgets": {
     "emptyDescription": "Aktiviere Lektionen im Admin-Bereich, damit sie hier erscheinen.",
     "mastery": {
@@ -1671,6 +1765,107 @@
         "perfect": "Perfekt! Deine Figuren sehen großartig aus.",
         "good": "Starke Leistung! Deine Zeichnungen werden immer präziser.",
         "retry": "Übe weiter. Jede nächste Figur wird besser."
+      },
+      "feedback": {
+        "success": {
+          "circle": "Stark! Das sieht wie ein Kreis aus.",
+          "oval": "Stark! Das sieht wie ein Oval aus.",
+          "triangle": "Gut gemacht! Das ist ein richtiges Dreieck.",
+          "square": "Stark! Das sieht wie ein Quadrat aus.",
+          "diamond": "Gut gemacht! Das sieht wie eine Raute aus.",
+          "rectangle": "Gut! Das sieht wie ein Rechteck aus.",
+          "pentagon": "Klasse! Du hast ein Fünfeck gezeichnet.",
+          "hexagon": "Stark! Das sieht wie ein Sechseck aus."
+        },
+        "failure": {
+          "default": {
+            "circle": "Versuche eine rundere Linie zu zeichnen.",
+            "oval": "Versuche ein länglicheres Oval zu zeichnen.",
+            "triangle": "Versuche 3 klare Ecken zu zeichnen.",
+            "square": "Versuche 4 Seiten mit ähnlicher Länge zu zeichnen.",
+            "diamond": "Versuche diagonale Seiten und 4 klare Ecken zu zeichnen.",
+            "rectangle": "Versuche 4 Ecken zu zeichnen und eine Seite deutlich länger als die andere.",
+            "pentagon": "Versuche 5 klare Ecken zu zeichnen.",
+            "hexagon": "Versuche 6 klare Ecken zu zeichnen."
+          },
+          "closeShape": "Schließe die Form. Anfang und Ende der Linie liegen zu weit auseinander.",
+          "tooShortPath": "Die Linie ist zu kurz. Umfahre die Form weiter.",
+          "tooJaggedPath": "Die Linie ist zu zackig. Versuche flüssiger zu zeichnen.",
+          "addMoreCorners": "Füge mehr Ecken hinzu. Diese Form sollte ungefähr {idealCorners} haben.",
+          "tooManyCorners": "Du hast zu viele Ecken. Versuche ungefähr {idealCorners} zu zeichnen.",
+          "aspect": {
+            "square": "Ein Quadrat sollte Seiten mit ähnlicherer Länge haben.",
+            "rectangle": "Ein Rechteck sollte zwei deutlich längere Seiten haben.",
+            "circle": "Ein Kreis sollte gleichmäßiger und runder aussehen.",
+            "oval": "Ein Oval sollte stärker gestreckt sein.",
+            "diamond": "Eine Raute sollte weniger abgeflacht oder weniger gestreckt sein."
+          },
+          "drawLonger": "Zeichne eine größere Form in einer durchgehenden Linie.",
+          "tooSmall": "Die Form ist zu klein. Zeichne sie größer.",
+          "unreadable": "Die Zeichnung konnte nicht gelesen werden."
+        }
+      },
+      "inRound": {
+        "difficulty": {
+          "starter": "Starter",
+          "pro": "Pro",
+          "default": "Basis"
+        },
+        "difficultyChip": "Formen-Level",
+        "difficultyGroupAria": "Schwierigkeitsstufe der Formen",
+        "liveRegion": "Runde {current} von {total}. Zeichne die Form {shape}. Stufe {difficulty}.",
+        "progressValueText": "Runde {current} von {total}",
+        "modeLabel": "Formen • {difficulty}",
+        "prompt": "Zeichne: {shape}",
+        "canvasAria": "Zeichenfläche für die Form {shape}. Nutze Maus, Berührung oder Tastatur, um sie zu zeichnen.",
+        "drawHere": "Hier zeichnen",
+        "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor und Escape leert das Brett.",
+        "clear": "Leeren",
+        "check": "Prüfen",
+        "tooShort": "Zeichne die Form etwas länger, damit sie geprüft werden kann.",
+        "keyboard": {
+          "ready": "Zeichenfläche bereit für Tastaturzeichnen.",
+          "boardCleared": "Das Brett wurde geleert.",
+          "restarted": "Eine neue Formenrunde hat begonnen.",
+          "difficultyChanged": "Schwierigkeit auf {difficulty} geändert.",
+          "started": "Tastaturzeichnen gestartet.",
+          "finished": "Tastaturzeichnen beendet.",
+          "cleared": "Das Brett wurde geleert und der Cursor in die Mitte gesetzt."
+        },
+        "shapes": {
+          "circle": {
+            "label": "Kreis",
+            "hint": "Zeichne eine glatte, geschlossene Linie."
+          },
+          "oval": {
+            "label": "Oval",
+            "hint": "Zeichne eine Form ohne Ecken, aber etwas gestreckt."
+          },
+          "triangle": {
+            "label": "Dreieck",
+            "hint": "Versuche 3 deutliche Ecken zu machen."
+          },
+          "diamond": {
+            "label": "Raute",
+            "hint": "4 Ecken und die Seiten sollen diagonal aussehen."
+          },
+          "square": {
+            "label": "Quadrat",
+            "hint": "4 Seiten, jede Seite etwa gleich lang."
+          },
+          "rectangle": {
+            "label": "Rechteck",
+            "hint": "4 Ecken, mit zwei deutlich längeren Seiten."
+          },
+          "pentagon": {
+            "label": "Fünfeck",
+            "hint": "5 Ecken und eine geschlossene Form."
+          },
+          "hexagon": {
+            "label": "Sechseck",
+            "hint": "6 Ecken und eine geschlossene Linie."
+          }
+        }
       }
     },
     "geometryBasics": {
@@ -1807,6 +2002,83 @@
         "perfect": "Perfekt! Deine Spiegelungen sitzen genau.",
         "good": "Starke Leistung! Symmetrie fällt dir immer leichter.",
         "retry": "Versuche es weiter - jeder nächste Versuch wird genauer."
+      },
+      "feedback": {
+        "axis": {
+          "drawLonger": "Zeichne eine längere Symmetrielinie von einem Ende der Form zum anderen.",
+          "extendLine": "Die Achse sollte länger sein - zeichne sie fast durch die ganze Form.",
+          "keepStraightVertical": "Die Symmetrieachse sollte gerade und senkrecht sein.",
+          "keepStraightHorizontal": "Die Symmetrieachse sollte gerade und waagerecht sein.",
+          "moveToCenter": "Verschiebe die Achse näher zur Mitte der Form.",
+          "success": "Stark! Das ist eine richtige Symmetrieachse."
+        },
+        "mirror": {
+          "drawMissingHalf": "Zeichne die fehlende Hälfte, damit die Symmetrie geprüft werden kann.",
+          "drawMore": "Zeichne mehr von der Form - ein großer Teil der Spiegelung fehlt noch.",
+          "expectedSide": "Zeichne auf der grünen Seite der Symmetrieachse.",
+          "alignToGhost": "Versuche die Form näher an der gestrichelten Spiegelung zu zeichnen.",
+          "success": "Gut gemacht! Die Spiegelung passt zur Achse."
+        }
+      },
+      "inRound": {
+        "keyboard": {
+          "ready": "Zeichenfläche bereit zum Zeichnen.",
+          "boardCleared": "Das Brett wurde geleert.",
+          "started": "Tastaturzeichnen gestartet.",
+          "finished": "Tastaturzeichnen beendet.",
+          "cleared": "Das Brett wurde geleert und der Cursor in die Mitte gesetzt.",
+          "restarted": "Eine neue Symmetrierunde hat begonnen."
+        },
+        "tooShort": "Mach ein paar Striche, damit eine Linie zum Prüfen entsteht.",
+        "liveRegion": "Runde {current} von {total}. {prompt}",
+        "progressValueText": "Runde {current} von {total}",
+        "modeLabel": "Symmetrie • {mode}",
+        "mode": {
+          "axis": "Achse",
+          "mirror": "Spiegelung"
+        },
+        "mirror": {
+          "zoneHint": "Zeichne nur in der grünen Zone. Die graue Zone ist nicht zum Zeichnen da.",
+          "showHint": "Hinweis anzeigen",
+          "hideHint": "Hinweis ausblenden",
+          "ghostHint": "Die gestrichelte Linie zeigt die fehlende Spiegelung."
+        },
+        "canvasAria": "Zeichenfläche für Symmetrieachsen und Spiegelungen.",
+        "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor und Escape leert das Brett.",
+        "clear": "Leeren",
+        "check": "Prüfen",
+        "rounds": {
+          "axis-butterfly": {
+            "title": "Schmetterlingsachse",
+            "prompt": "Zeichne die Symmetrieachse des Schmetterlings.",
+            "hint": "Das ist eine senkrechte Linie durch die Mitte - folge dem grünen Streifen."
+          },
+          "mirror-heart": {
+            "title": "Herz im Spiegel",
+            "prompt": "Zeichne die fehlende Hälfte des Herzens.",
+            "hint": "Spiegele die Form an der Achse, indem du auf der grünen Seite zeichnest."
+          },
+          "axis-square": {
+            "title": "Quadratachse",
+            "prompt": "Zeichne die Symmetrieachse des Quadrats.",
+            "hint": "Das ist eine senkrechte Linie in der Mitte des Quadrats - der grüne Streifen zeigt die Achse."
+          },
+          "mirror-leaf": {
+            "title": "Blatt",
+            "prompt": "Zeichne die untere Hälfte des Blatts.",
+            "hint": "Spiegelung an der waagerechten Achse - zeichne in der grünen Zone."
+          },
+          "mirror-zigzag": {
+            "title": "Zickzack im Spiegel",
+            "prompt": "Zeichne die Spiegelung des Zickzacks.",
+            "hint": "Zeichne nur in der grünen Zone rechts von der Achse."
+          },
+          "axis-eye": {
+            "title": "Augenachse",
+            "prompt": "Zeichne die Symmetrieachse des Auges.",
+            "hint": "Das ist eine waagerechte Linie durch die Mitte - der grüne Streifen zeigt die Achse."
+          }
+        }
       }
     },
     "subtractingGarden": {
@@ -2425,6 +2697,264 @@
       "english_sentence_structure": "Satzbau",
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
       "english_prepositions_time_place": "Zeit- und Ortsprapositionen"
+    }
+  },
+  "KangurProgressRuntime": {
+    "levels": {
+      "1": "Anfänger 🐣",
+      "2": "Schüler ✏️",
+      "3": "Denker 🤔",
+      "4": "Zahlenmeister 🔢",
+      "5": "Mathematiker 📐",
+      "6": "Genie 🧠",
+      "7": "Legende 🏆"
+    },
+    "activityLabels": {
+      "alphabet": "Alphabet",
+      "alphabetCopy": "Buchstaben abschreiben",
+      "alphabetSyllables": "Silben und Wörter",
+      "alphabetWords": "Erste Wörter",
+      "alphabetMatching": "Buchstaben zuordnen",
+      "alphabetSequence": "Buchstabenreihenfolge",
+      "geometryShapeRecognition": "Geometrie",
+      "addition": "Addition",
+      "subtraction": "Subtraktion",
+      "multiplication": "Multiplikation",
+      "division": "Division",
+      "decimals": "Brüche",
+      "powers": "Potenzen",
+      "roots": "Wurzeln",
+      "mixed": "Gemischt",
+      "clock": "Uhr",
+      "calendar": "Kalender",
+      "geometryBasics": "Geometrische Grundlagen",
+      "geometryShapes": "Geometrische Formen",
+      "geometrySymmetry": "Symmetrie",
+      "geometryPerimeter": "Umfang",
+      "logicalThinking": "Logisches Denken",
+      "logicalPatterns": "Muster",
+      "logicalClassification": "Klassifikation",
+      "logicalReasoning": "Schlussfolgern",
+      "logicalAnalogies": "Analogien",
+      "logical": "Logik"
+    },
+    "clockSections": {
+      "hours": "Stunden",
+      "minutes": "Minuten",
+      "combined": "Volle Uhrzeit",
+      "mixed": "Gemischtes Training"
+    },
+    "activityKinds": {
+      "game": "Spiel: {label}",
+      "lessonPractice": "Übung: {label}",
+      "training": "Training: {label}",
+      "clockTraining": "Uhrtraining: {label}",
+      "lessonCompletion": "Lektion: {label}"
+    },
+    "badgeTracks": {
+      "onboarding": "Start",
+      "consistency": "Serie",
+      "mastery": "Meisterschaft",
+      "variety": "Vielfalt",
+      "challenge": "Herausforderungen",
+      "xp": "XP",
+      "quest": "Missionen",
+      "english": "Englisch"
+    },
+    "badges": {
+      "first_game": {
+        "name": "Erstes Spiel",
+        "desc": "Schließe das erste Spiel ab"
+      },
+      "perfect_10": {
+        "name": "Perfektes Ergebnis",
+        "desc": "Erreiche ein perfektes Ergebnis in einem Spiel"
+      },
+      "lesson_hero": {
+        "name": "Lektionsheld",
+        "desc": "Schließe die erste Lektion ab"
+      },
+      "clock_master": {
+        "name": "Uhrmeister",
+        "desc": "Schließe das Uhrtraining mit 5/5 ab"
+      },
+      "calendar_keeper": {
+        "name": "Kalendermeister",
+        "desc": "Schließe das Kalendertraining perfekt ab"
+      },
+      "geometry_artist": {
+        "name": "Formenkünstler",
+        "desc": "Schließe das Geometrie-Formentraining perfekt ab"
+      },
+      "streak_3": {
+        "name": "Power-Serie",
+        "desc": "Halte 3 starke Runden in Folge"
+      },
+      "accuracy_ace": {
+        "name": "Treffsicherer Kopf",
+        "desc": "Halte nach 25 Fragen durchschnittlich mindestens 85% richtige Antworten"
+      },
+      "ten_games": {
+        "name": "Zehn Spiele",
+        "desc": "Spiele 10 Spiele"
+      },
+      "xp_500": {
+        "name": "Halbes Tausend XP",
+        "desc": "Sammle insgesamt 500 XP"
+      },
+      "xp_1000": {
+        "name": "Tausender",
+        "desc": "Sammle insgesamt 1000 XP"
+      },
+      "quest_starter": {
+        "name": "Missionsentdecker",
+        "desc": "Schließe die erste Tagesmission ab"
+      },
+      "quest_keeper": {
+        "name": "Missionsjäger",
+        "desc": "Schließe 3 Tagesmissionen ab"
+      },
+      "guided_step": {
+        "name": "Sicherer Schritt",
+        "desc": "Schließe die erste empfohlene Runde ab"
+      },
+      "guided_keeper": {
+        "name": "Auf Kurs",
+        "desc": "Schließe 3 empfohlene Runden ab"
+      },
+      "mastery_builder": {
+        "name": "Meisterschaftsbauer",
+        "desc": "Bringe 3 Lektionen auf mindestens 75% Meisterschaft"
+      },
+      "variety": {
+        "name": "Allrounder",
+        "desc": "Spiele 5 verschiedene Operationen"
+      },
+      "english_first_game": {
+        "name": "Englisch-Start",
+        "desc": "Spiele das erste Englisch-Spiel"
+      },
+      "english_perfect": {
+        "name": "Perfektes Englisch",
+        "desc": "Erreiche 100% in einem Englisch-Spiel"
+      },
+      "english_pronoun_pro": {
+        "name": "Pronoun Pro",
+        "desc": "Erreiche 2 perfekte Ergebnisse in Pronoun Remix"
+      },
+      "english_sorter_star": {
+        "name": "Wortarten-Meister",
+        "desc": "Erreiche 2 perfekte Ergebnisse in Parts of Speech"
+      },
+      "english_sentence_builder": {
+        "name": "Satzarchitekt",
+        "desc": "Erreiche 80%+ und spiele 3 Sentence-Structure-Sitzungen"
+      },
+      "english_agreement_guardian": {
+        "name": "Übereinstimmungs-Wächter",
+        "desc": "Erreiche ein perfektes Ergebnis in Subject-Verb Agreement"
+      },
+      "english_grammar_collection": {
+        "name": "Grammatik-Sammlung",
+        "desc": "Spiele alle Englisch-Spiele"
+      },
+      "english_articles_reader": {
+        "name": "Artikel-Meister",
+        "desc": "Schließe die Lektion English: Articles ab"
+      },
+      "english_mastery_builder": {
+        "name": "English-Bauer",
+        "desc": "Bringe 3 Englisch-Lektionen auf 75% Meisterschaft"
+      }
+    },
+    "badgeSummaries": {
+      "game": "{current}/{target} {target, plural, one {Spiel} other {Spiele}}",
+      "perfectGame": "{current}/{target} {target, plural, one {perfektes Spiel} other {perfekte Spiele}}",
+      "lesson": "{current}/{target} {target, plural, one {Lektion} other {Lektionen}}",
+      "perfect": "{current}/{target} perfekt",
+      "streak": "{current}/{target} in Folge",
+      "questions": "{current}/{target} {target, plural, one {Frage} other {Fragen}}",
+      "percentGoal": "{current}% / {target}%",
+      "games": "{current}/{target} {target, plural, one {Spiel} other {Spiele}}",
+      "xp": "{current}/{target} XP",
+      "quest": "{current}/{target} {target, plural, one {Mission} other {Missionen}}",
+      "round": "{current}/{target} {target, plural, one {Runde} other {Runden}}",
+      "types": "{current}/{target} Typen",
+      "sessions": "{current}/{target} {target, plural, one {Sitzung} other {Sitzungen}}"
+    },
+    "momentum": {
+      "allGoalsCompleted": "Alle Ziele erreicht!"
+    },
+    "dailyQuest": {
+      "progress": {
+        "gamesPlayed": "{current}/{target} {target, plural, one {Runde heute} other {Runden heute}}",
+        "lessonsCompleted": "{current}/{target} {target, plural, one {Lektion heute} other {Lektionen heute}}",
+        "lessonMastery": "{current}% / {target}% Meisterschaft"
+      },
+      "expiresToday": "Läuft heute ab",
+      "reward": {
+        "claimed": "Belohnung abgeholt +{xp} XP",
+        "ready": "Belohnung bereit +{xp} XP",
+        "locked": "Belohnung +{xp} XP"
+      }
+    },
+    "questMomentum": {
+      "paceValue": "{xp} XP / Spiel"
+    },
+    "badgeGrid": {
+      "empty": "Mit weiterem Fortschritt erscheinen hier weitere Abzeichen."
+    },
+    "badgeTrackCard": {
+      "count": "{unlocked}/{total} Abzeichen",
+      "allUnlocked": "Alle Abzeichen freigeschaltet"
+    },
+    "badgeTrackHighlights": {
+      "placeholders": {
+        "quest": {
+          "title": "Schalte die erste Mission frei",
+          "description": "Dieses Panel erscheint hier, sobald die erste Tagesmission startet."
+        },
+        "mastery": {
+          "title": "Beginne Meisterschaft aufzubauen",
+          "description": "Das Panel füllt sich, sobald die erste Lektion Richtung Meisterschaft geht."
+        },
+        "genericPinned": {
+          "title": "Diese Spur wartet auf den Start",
+          "description": "Der erste Fortschritt in dieser Richtung zeigt das volle Abzeichen-Panel."
+        },
+        "generic": {
+          "label": "Nächste Spur",
+          "title": "Platz für das nächste Panel",
+          "description": "Schalte mehr Abzeichen frei, dann erscheint hier die nächste Fortschrittsrichtung."
+        }
+      }
+    },
+    "heroMilestone": {
+      "nextBadgeEyebrow": "Nächster Meilenstein"
+    },
+    "overview": {
+      "stats": {
+        "totalXp": "Gesamt-XP",
+        "xpPerGame": "XP / Spiel",
+        "gamesPlayed": "Gespielte Spiele",
+        "lessonsCompleted": "Abgeschlossene Lektionen",
+        "averageAccuracy": "Durchschnittliche Genauigkeit",
+        "bestStreak": "Beste Serie"
+      },
+      "levelEyebrow": "Level und Erfahrung",
+      "levelDescription": "Level {level} · insgesamt {xp} XP",
+      "nextLevel": "Bis Level {level}: {xp} XP",
+      "maxLevel": "Maximales Level erreicht!",
+      "dailyQuestEyebrow": "Mission des Tages",
+      "guidedMomentum": {
+        "descriptionWithBadge": "Bis zum Abzeichen {badge}: {summary}",
+        "descriptionUnlocked": "Alle Abzeichen des empfohlenen Weges sind freigeschaltet.",
+        "eyebrow": "Empfohlener Weg",
+        "title": "{count} empfohlene Runden"
+      },
+      "operationsHeading": "Geübte Operationen",
+      "topActivitiesHeading": "Am häufigsten geübte Aktivitäten",
+      "topActivityDescription": "{sessions} Sitzungen · {xp} XP / Spiel · Durchschnitt {accuracy}% · bestes Ergebnis {best}%"
     }
   }
 }

@@ -32,11 +32,12 @@ const kangurPlatform = getKangurPlatform();
 
 export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const translations = useTranslations('KangurLearnerProfileWidgets.overview');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const { progress, snapshot, user } = useKangurLearnerProfileRuntime();
   const { checkAppState } = useKangurAuthActions();
   const { subject } = useKangurSubjectFocus();
   const { entry: overviewContent } = useKangurPageContentEntry('learner-profile-overview');
-  const nextBadge = getNextLockedBadge(progress);
+  const nextBadge = getNextLockedBadge(progress, { translate: runtimeTranslations });
   const [dailyQuest, setDailyQuest] = useState<KangurDailyQuestState | null | undefined>(undefined);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -44,8 +45,13 @@ export function KangurLearnerProfileOverviewWidget(): React.JSX.Element {
   const selectedAvatar = getKangurAvatarById(activeLearner?.avatarId);
 
   useEffect(() => {
-    setDailyQuest(getCurrentKangurDailyQuest(progress, { subject }));
-  }, [progress, subject]);
+    setDailyQuest(
+      getCurrentKangurDailyQuest(progress, {
+        subject,
+        translate: runtimeTranslations,
+      })
+    );
+  }, [progress, runtimeTranslations, subject]);
 
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'

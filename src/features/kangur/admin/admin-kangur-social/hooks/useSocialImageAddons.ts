@@ -13,7 +13,6 @@ import {
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 
 import { emptyAddonForm, type AddonFormState } from '../AdminKangurSocialPage.Constants';
 
@@ -22,8 +21,6 @@ type SocialImageAddonsDeps = {
   setAddonForm: (value: AddonFormState) => void;
   batchCaptureBaseUrl: string;
   batchCapturePresetIds: string[];
-  handleSelectAddon: (addon: KangurSocialImageAddon) => void;
-  handleSelectAddons: (addons: KangurSocialImageAddon[]) => void;
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
 };
 
@@ -53,7 +50,6 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
         ...(waitForMs !== undefined ? { waitForMs } : {}),
       });
       deps.setAddonForm(emptyAddonForm);
-      deps.handleSelectAddon(created);
       trackKangurClientEvent(
         'kangur_social_addon_capture_success',
         deps.buildSocialContext({ addonId: created.id })
@@ -92,7 +88,6 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
         presetIds: deps.batchCapturePresetIds,
       });
       setBatchCaptureResult(result);
-      deps.handleSelectAddons(result.addons);
       const successCount = result.addons.length;
       const failureCount = result.failures.length;
       const failureSummary = successCount === 0 && failureCount > 0

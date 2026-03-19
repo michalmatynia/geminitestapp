@@ -19,6 +19,7 @@ import {
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
   getRecommendedSessionMomentum,
+  type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
@@ -236,14 +237,16 @@ const getStreakRecommendation = (
 
 const getGuidedRecommendation = (
   progress: KangurProgressState,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
-  const guidedMomentum = getRecommendedSessionMomentum(progress);
+  const progressLocalizer = { translate: progressTranslate };
+  const guidedMomentum = getRecommendedSessionMomentum(progress, progressLocalizer);
   if (guidedMomentum.completedSessions <= 0 || !guidedMomentum.nextBadgeName) {
     return null;
   }
 
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
   const activityLabel = topActivity
     ? resolveLocalizedRecommendationActivityLabel({
         activityKey: topActivity.key,
@@ -296,14 +299,16 @@ const getGuidedRecommendation = (
 
 const getTrackRecommendation = (
   progress: KangurProgressState,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
+  const progressLocalizer = { translate: progressTranslate };
   const track =
-    getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }).find(
+    getProgressBadgeTrackSummaries(progress, { maxTracks: 6 }, progressLocalizer).find(
       (entry) =>
         Boolean(entry.nextBadge) && (entry.unlockedCount > 0 || entry.progressPercent >= 40)
     ) ?? null;
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const topActivity = getProgressTopActivities(progress, 1, progressLocalizer)[0] ?? null;
   const activityLabel = topActivity
     ? resolveLocalizedRecommendationActivityLabel({
         activityKey: topActivity.key,
@@ -363,9 +368,10 @@ const getTrackRecommendation = (
 
 const getFallbackRecommendation = (
   progress: KangurProgressState,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null => {
-  const topActivity = getProgressTopActivities(progress, 1)[0] ?? null;
+  const topActivity = getProgressTopActivities(progress, 1, { translate: progressTranslate })[0] ?? null;
   if (!topActivity) {
     return null;
   }
@@ -408,13 +414,14 @@ const getFallbackRecommendation = (
 const getHomeRecommendation = (
   progress: KangurProgressState,
   locale: string,
-  translate?: RecommendationTranslate
+  translate?: RecommendationTranslate,
+  progressTranslate?: KangurProgressTranslate
 ): KangurHomeRecommendation | null =>
   getWeakestLessonRecommendation(progress, locale, translate) ??
-  getGuidedRecommendation(progress, translate) ??
+  getGuidedRecommendation(progress, translate, progressTranslate) ??
   getStreakRecommendation(progress, translate) ??
-  getTrackRecommendation(progress, translate) ??
-  getFallbackRecommendation(progress, translate);
+  getTrackRecommendation(progress, translate, progressTranslate) ??
+  getFallbackRecommendation(progress, translate, progressTranslate);
 
 const HOME_MOMENTUM_ROUTE_ACKNOWLEDGE_MS = 110;
 
@@ -433,7 +440,8 @@ export default function KangurGameHomeMomentumWidget({
 }: KangurGameHomeMomentumWidgetProps): React.JSX.Element | null {
   const locale = useLocale();
   const translations = useTranslations('KangurGameRecommendations');
-  const recommendation = getHomeRecommendation(progress, locale, translations);
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
+  const recommendation = getHomeRecommendation(progress, locale, translations, runtimeTranslations);
 
   if (!recommendation) {
     return null;

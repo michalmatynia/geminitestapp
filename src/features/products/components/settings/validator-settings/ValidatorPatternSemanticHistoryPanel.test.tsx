@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { getProductValidationSemanticAuditRecordKey } from '@/shared/lib/products/utils/validator-semantic-state';
@@ -127,6 +127,51 @@ describe('ValidatorPatternSemanticHistoryPanel', () => {
     expect(container.textContent?.match(/Migrated semantic operation/g)).toHaveLength(1);
   });
 
+  it('keeps long semantic labels contained inside the panel layout', () => {
+    render(
+      <ValidatorPatternSemanticHistoryPanel
+        pattern={buildPattern({
+          label:
+            'Name EN to PL semantic history pattern label that should wrap inside the panel without overflowing into the tree above',
+          semanticState: {
+            version: 2,
+            presetId:
+              'products.validator.semantic.operation.with-a-very-long-identifier.that-should-wrap-cleanly',
+            operation:
+              'products_validator_semantic_operation_with_a_very_long_identifier_that_should_wrap_cleanly',
+          },
+          semanticAuditHistory: [
+            {
+              recordedAt: '2026-03-19T11:30:00.000Z',
+              source: 'manual_save',
+              trigger: 'update',
+              transition: 'updated',
+              previous: null,
+              current: {
+                version: 2,
+                presetId:
+                  'products.validator.semantic.operation.with-a-very-long-identifier.that-should-wrap-cleanly',
+                operation:
+                  'products_validator_semantic_operation_with_a_very_long_identifier_that_should_wrap_cleanly',
+              },
+            },
+          ],
+        })}
+      />
+    );
+
+    const section = screen.getByText('Semantic History').closest('section');
+    expect(section).not.toBeNull();
+    expect(section).toHaveClass('w-full');
+    expect(section).toHaveClass('min-w-0');
+    expect(section).toHaveClass('overflow-hidden');
+
+    expect(
+      screen.getByText(/Selected pattern:/).querySelector('span')
+    ).toHaveClass('break-words');
+    expect(screen.getAllByText(/Current:/)[0]).toHaveClass('break-words');
+  });
+
   it('highlights the focused semantic audit entry', () => {
     const latestAudit = {
       recordedAt: '2026-03-19T11:30:00.000Z',
@@ -157,5 +202,15 @@ describe('ValidatorPatternSemanticHistoryPanel', () => {
     );
 
     expect(container.querySelector('.ring-sky-500\\/40')).not.toBeNull();
+  });
+
+  it('renders a close action when an onClose handler is provided', () => {
+    const onClose = vi.fn();
+
+    render(<ValidatorPatternSemanticHistoryPanel pattern={buildPattern()} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close History' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

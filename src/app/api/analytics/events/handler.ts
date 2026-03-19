@@ -6,6 +6,12 @@ import type { AnalyticsEventCreateInput, AnalyticsEventType } from '@/shared/con
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
 import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
+import {
+  buildAnalyticsRequestMeta,
+  deriveAnalyticsReferrerHost,
+  mergeAnalyticsMeta,
+  parseAnalyticsUserAgent,
+} from '@/shared/lib/analytics/server/enrichment';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   normalizeOptionalQueryString,
@@ -85,6 +91,18 @@ export const querySchema = z.object({
     (value) => normalizeOptionalQueryString(value) ?? 'all',
     z.enum(['all', 'pageview', 'event'])
   ),
+  search: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  country: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  referrerHost: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? '',
+    z.string()
+  ),
+  browser: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  device: z.preprocess((value) => normalizeOptionalQueryString(value) ?? '', z.string()),
+  bot: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    z.enum(['all', 'bots', 'humans'])
+  ),
 });
 
 const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
@@ -134,6 +152,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const country = req.headers.get('x-vercel-ip-country') ?? req.headers.get('cf-ipcountry') ?? null;
   const region = req.headers.get('x-vercel-ip-country-region') ?? null;
   const city = req.headers.get('x-vercel-ip-city') ?? null;
+  const requestMeta = buildAnalyticsRequestMeta(req);
+  const mergedMeta = mergeAnalyticsMeta(parsed.data.meta, requestMeta);
+  const referrerHost = deriveAnalyticsReferrerHost(parsed.data.referrer);
+  const ua = parseAnalyticsUserAgent(userAgent);
 
   const input: AnalyticsEventCreateInput = {
     type: parsed.data.type,
@@ -162,10 +184,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     ...(parsed.data.viewport ? { viewport: parsed.data.viewport } : {}),
     ...(parsed.data.screen ? { screen: parsed.data.screen } : {}),
     ...(parsed.data.connection ? { connection: parsed.data.connection } : {}),
-    ...(parsed.data.meta ? { meta: parsed.data.meta } : {}),
+    ...(mergedMeta ? { meta: mergedMeta } : {}),
     ...(parsed.data.clientTs !== null && parsed.data.clientTs !== undefined
       ? { clientTs: parsed.data.clientTs }
       : {}),
+    ...(referrerHost ? { referrerHost } : {}),
+    ...(ua ? { ua } : {}),
   };
 
   const serverContext = {
@@ -199,7 +223,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = querySchema.parse(_ctx.query ?? {});
   const page = query.page;
   const pageSize = query.pageSize;
   const skip = (page - 1) * pageSize;
@@ -208,6 +232,14 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const scope = scopeRaw === 'all' ? undefined : (scopeRaw);
   const typeRaw = query.type;
   const type: AnalyticsEventType | undefined = typeRaw === 'all' ? undefined : typeRaw;
+  const search = query.search;
+  const country = query.country;
+  const referrerHost = query.referrerHost;
+  const browser = query.browser;
+  const deviceRaw = query.device;
+  const device = deviceRaw === 'all' ? '' : deviceRaw;
+  const botRaw = query.bot;
+  const isBot = botRaw === 'all' ? undefined : botRaw === 'bots';
 
   const { from, to } = getRangeWindow(range);
   const result = await listAnalyticsEvents({
@@ -215,6 +247,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     to,
     ...(scope ? { scope } : {}),
     ...(type ? { type } : {}),
+    ...(search ? { search } : {}),
+    ...(country ? { country } : {}),
+    ...(referrerHost ? { referrerHost } : {}),
+    ...(browser ? { browser } : {}),
+    ...(device ? { device } : {}),
+    ...(isBot !== undefined ? { isBot } : {}),
     limit: pageSize,
     skip,
   });
@@ -228,6 +266,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       range,
       scope: scopeRaw,
       type: typeRaw,
+      search,
+      country,
+      referrerHost,
+      browser,
+      device: deviceRaw,
+      bot: botRaw,
       ...result,
     },
     {

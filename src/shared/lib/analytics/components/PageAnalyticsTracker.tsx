@@ -91,6 +91,105 @@ const getConnectionInfo = (): AnalyticsEventCreateInput['connection'] => {
   };
 };
 
+const getMediaPreference = (
+  query: string,
+  matchedValue: string | boolean,
+  unmatchedValue: string | boolean | null = null
+): string | boolean | null => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return null;
+  return window.matchMedia(query).matches ? matchedValue : unmatchedValue;
+};
+
+const getPerformanceMeta = (): Record<string, unknown> | null => {
+  if (typeof performance === 'undefined' || typeof performance.getEntriesByType !== 'function') {
+    return null;
+  }
+
+  const navigationEntry = performance.getEntriesByType('navigation')[0] as
+    | PerformanceNavigationTiming
+    | undefined;
+
+  if (!navigationEntry) return null;
+
+  return {
+    navigationType: navigationEntry.type ?? null,
+    redirectCount: navigationEntry.redirectCount ?? null,
+    responseEndMs:
+      typeof navigationEntry.responseEnd === 'number'
+        ? Math.round(navigationEntry.responseEnd)
+        : null,
+    domContentLoadedMs:
+      typeof navigationEntry.domContentLoadedEventEnd === 'number'
+        ? Math.round(navigationEntry.domContentLoadedEventEnd)
+        : null,
+    loadEventMs:
+      typeof navigationEntry.loadEventEnd === 'number'
+        ? Math.round(navigationEntry.loadEventEnd)
+        : null,
+    durationMs:
+      typeof navigationEntry.duration === 'number' ? Math.round(navigationEntry.duration) : null,
+    transferSize:
+      typeof navigationEntry.transferSize === 'number' ? navigationEntry.transferSize : null,
+    encodedBodySize:
+      typeof navigationEntry.encodedBodySize === 'number'
+        ? navigationEntry.encodedBodySize
+        : null,
+    decodedBodySize:
+      typeof navigationEntry.decodedBodySize === 'number'
+        ? navigationEntry.decodedBodySize
+        : null,
+  };
+};
+
+const getClientMeta = (): AnalyticsEventCreateInput['meta'] => {
+  const nav = navigator as Navigator & {
+    deviceMemory?: number;
+    connection?: {
+      saveData?: boolean;
+    };
+  };
+
+  const meta = {
+    client: {
+      historyLength: typeof history !== 'undefined' ? history.length : null,
+      onLine: typeof navigator !== 'undefined' ? navigator.onLine : null,
+      cookieEnabled: typeof navigator !== 'undefined' ? navigator.cookieEnabled : null,
+      platform: typeof navigator !== 'undefined' ? navigator.platform ?? null : null,
+      vendor: typeof navigator !== 'undefined' ? navigator.vendor ?? null : null,
+      hardwareConcurrency:
+        typeof navigator !== 'undefined' ? navigator.hardwareConcurrency ?? null : null,
+      deviceMemory:
+        typeof nav.deviceMemory === 'number' ? nav.deviceMemory : null,
+      maxTouchPoints:
+        typeof navigator !== 'undefined' ? navigator.maxTouchPoints ?? null : null,
+      doNotTrack:
+        typeof navigator !== 'undefined' ? navigator.doNotTrack ?? null : null,
+      webdriver:
+        typeof navigator !== 'undefined' ? ('webdriver' in navigator ? navigator.webdriver : null) : null,
+    },
+    document: {
+      visibilityState: typeof document !== 'undefined' ? document.visibilityState ?? null : null,
+      readyState: typeof document !== 'undefined' ? document.readyState ?? null : null,
+      hidden: typeof document !== 'undefined' ? document.hidden : null,
+    },
+    window: {
+      outerWidth: typeof window !== 'undefined' ? window.outerWidth ?? null : null,
+      outerHeight: typeof window !== 'undefined' ? window.outerHeight ?? null : null,
+      screenOrientation:
+        typeof window !== 'undefined' ? window.screen?.orientation?.type ?? null : null,
+    },
+    preferences: {
+      colorScheme: getMediaPreference('(prefers-color-scheme: dark)', 'dark', 'light'),
+      reducedMotion: getMediaPreference('(prefers-reduced-motion: reduce)', true, false),
+      contrast: getMediaPreference('(prefers-contrast: more)', 'more', 'no-preference'),
+      pointer: getMediaPreference('(pointer: coarse)', 'coarse', 'fine'),
+    },
+    performance: getPerformanceMeta(),
+  } satisfies Record<string, unknown>;
+
+  return meta;
+};
+
 const getUtm = (searchParams: URLSearchParams): AnalyticsEventCreateInput['utm'] => {
   const utm: Record<string, string> = {};
   const source = searchParams.get('utm_source');
@@ -162,6 +261,7 @@ export default function PageAnalyticsTracker(): null {
     const queryString = search ? `?${search}` : null;
     const utm = getUtm(new URLSearchParams(search));
     const connection = getConnectionInfo();
+    const meta = getClientMeta();
 
     const event: AnalyticsEventCreateInput = {
       type: 'pageview',
@@ -180,6 +280,7 @@ export default function PageAnalyticsTracker(): null {
       ...(viewport ? { viewport } : {}),
       ...(screen ? { screen } : {}),
       ...(connection ? { connection } : {}),
+      ...(meta ? { meta } : {}),
       clientTs,
     };
 

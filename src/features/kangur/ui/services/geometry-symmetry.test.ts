@@ -39,6 +39,9 @@ const buildPolyline = (vertices: Point2d[]): Point2d[] => {
   return points;
 };
 
+const createTranslate = (dictionary: Record<string, string>) =>
+  (key: string): string => dictionary[key] ?? key;
+
 describe('geometry symmetry evaluator', () => {
   it('accepts a clean vertical axis line', () => {
     const axis: SymmetryAxis = { orientation: 'vertical', position: 160 };
@@ -93,5 +96,41 @@ describe('geometry symmetry evaluator', () => {
       expectedSide: 'right',
     });
     expect(result.accepted).toBe(false);
+  });
+
+  it('returns translated feedback when a translator is provided', () => {
+    const translate = createTranslate({
+      'geometrySymmetry.feedback.axis.success':
+        'Great! That is a correct axis of symmetry.',
+      'geometrySymmetry.feedback.mirror.expectedSide':
+        'Draw on the green side of the symmetry axis.',
+    });
+    const axis: SymmetryAxis = { orientation: 'vertical', position: 160 };
+    const template = buildPolyline([
+      { x: 160, y: 60 },
+      { x: 125, y: 80 },
+      { x: 115, y: 120 },
+      { x: 140, y: 155 },
+    ]);
+
+    expect(
+      evaluateAxisDrawing(
+        buildPolyline([
+          { x: 160, y: 20 },
+          { x: 160, y: 200 },
+        ]),
+        axis,
+        translate
+      ).message
+    ).toBe('Great! That is a correct axis of symmetry.');
+    expect(
+      evaluateMirrorDrawing({
+        points: template,
+        template,
+        axis,
+        expectedSide: 'right',
+        translate,
+      }).message
+    ).toBe('Draw on the green side of the symmetry axis.');
   });
 });

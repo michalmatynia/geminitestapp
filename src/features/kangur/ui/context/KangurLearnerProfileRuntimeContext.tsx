@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import {
   createContext,
   useContext,
@@ -29,6 +30,7 @@ import {
 } from '@/features/kangur/ui/services/learner-profile-scores';
 import {
   buildKangurLearnerProfileSnapshot,
+  translateKangurLearnerProfileWithFallback,
 } from '@/features/kangur/ui/services/profile';
 import type { KangurLearnerProfileSnapshot } from '@/features/kangur/shared/contracts/kangur-profile';
 import type { KangurDifficulty, KangurOperation } from '@/features/kangur/ui/types';
@@ -39,6 +41,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 
 export const KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES = 3;
@@ -74,15 +77,28 @@ const resolvePracticeDifficulty = (averageAccuracy: number): KangurDifficulty =>
   return 'easy';
 };
 
-export const getKangurLearnerProfileDisplayName = (user: KangurUser | null): string =>
-  user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || 'Tryb lokalny';
+export const getKangurLearnerProfileDisplayName = (
+  user: KangurUser | null,
+  localModeLabel = 'Tryb lokalny'
+): string => getKangurLearnerProfileDisplayNameWithFallback(user, localModeLabel);
 
-export const formatKangurProfileDateTime = (value: string): string => {
+export const getKangurLearnerProfileDisplayNameWithFallback = (
+  user: KangurUser | null,
+  localModeLabel: string
+): string => user?.activeLearner?.displayName?.trim() || user?.full_name?.trim() || localModeLabel;
+
+export const formatKangurProfileDateTime = (
+  value: string,
+  options?: {
+    locale?: string | null | undefined;
+    dateMissingLabel?: string | undefined;
+  }
+): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return 'Brak daty';
+    return options?.dateMissingLabel ?? 'Brak daty';
   }
-  return parsed.toLocaleString('pl-PL', {
+  return parsed.toLocaleString(normalizeSiteLocale(options?.locale), {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
@@ -167,6 +183,8 @@ export function KangurLearnerProfileRuntimeProvider({
 }: {
   children: ReactNode;
 }): JSX.Element {
+  const locale = normalizeSiteLocale(useLocale());
+  const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
@@ -176,6 +194,11 @@ export function KangurLearnerProfileRuntimeProvider({
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [isLoadingScores, setIsLoadingScores] = useState(true);
   const [scoresError, setScoresError] = useState<string | null>(null);
+  const loadScoresErrorLabel = translateKangurLearnerProfileWithFallback(
+    (key, values) => runtimeTranslations(key as never, values as never),
+    'errors.loadScores',
+    'Nie udało się pobrać historii wyników.'
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -226,7 +249,7 @@ export function KangurLearnerProfileRuntimeProvider({
                 setScores([]);
                 setScoresError(null);
               } else {
-                setScoresError('Nie udało się pobrać historii wyników.');
+                setScoresError(loadScoresErrorLabel);
                 logKangurClientError(error, {
                   source: 'kangur.learner-profile',
                   action: 'load-scores',
@@ -254,7 +277,15 @@ export function KangurLearnerProfileRuntimeProvider({
     return () => {
       isActive = false;
     };
-  }, [hasUser, subject, user?.activeLearner?.id, user?.email, user?.full_name, kangurPlatform]);
+  }, [
+    hasUser,
+    kangurPlatform,
+    loadScoresErrorLabel,
+    subject,
+    user?.activeLearner?.id,
+    user?.email,
+    user?.full_name,
+  ]);
 
   const snapshot = useMemo(
     () =>
@@ -262,8 +293,10 @@ export function KangurLearnerProfileRuntimeProvider({
         progress,
         scores,
         dailyGoalGames: KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES,
+        locale,
+        translate: (key, values) => runtimeTranslations(key as never, values as never),
       }),
-    [progress, scores]
+    [locale, progress, runtimeTranslations, scores]
   );
   const maxWeeklyGames = useMemo(
     () => Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games)),

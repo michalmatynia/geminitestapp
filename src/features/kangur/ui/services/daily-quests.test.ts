@@ -158,4 +158,36 @@ describe('getCurrentKangurDailyQuest', () => {
     expect(secondClaim.xpAwarded).toBe(0);
     expect(secondClaim.quest?.reward.status).toBe('claimed');
   });
+
+  it('localizes quest runtime labels when a translator is provided', () => {
+    vi.setSystemTime(new Date('2026-03-10T09:00:00.000Z'));
+
+    const translate = (key: string, values?: Record<string, string | number>) => {
+      switch (key) {
+        case 'dailyQuest.progress.lessonMastery':
+          return `${values?.['current']}% / ${values?.['target']}% mastery`;
+        case 'dailyQuest.reward.ready':
+          return `Reward ready +${values?.['xp']} XP`;
+        case 'dailyQuest.expiresToday':
+          return 'Expires today';
+        default:
+          return key;
+      }
+    };
+
+    getCurrentKangurDailyQuest(progressWithWeakLesson, {
+      ownerKey: 'learner-1',
+      subject: 'maths',
+    });
+
+    const localizedQuest = getCurrentKangurDailyQuest(progressAfterRecovery, {
+      ownerKey: 'learner-1',
+      subject: 'maths',
+      translate,
+    });
+
+    expect(localizedQuest?.progress.summary).toBe('82% / 75% mastery');
+    expect(localizedQuest?.reward.label).toBe('Reward ready +55 XP');
+    expect(localizedQuest?.expiresLabel).toBe('Expires today');
+  });
 });

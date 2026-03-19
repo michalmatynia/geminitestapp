@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -9,17 +10,19 @@ import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/ad
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  AdminAiEyebrow,
+  AdminSectionBreadcrumbs,
   Badge,
   Button,
+  ClientOnly,
   EmptyState,
   FormSection,
   Input,
+  ListPanel,
   SearchInput,
-  SectionHeader,
   SelectSimple,
   useToast,
 } from '@/shared/ui';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -34,6 +37,10 @@ import {
   VALIDATOR_SCOPE_LABELS,
 } from './validator-scope';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  ValidatorDocsTooltipsPanel,
+  ValidatorDocsTooltipsProvider,
+} from '@/features/admin/components/AdminValidatorSettings';
 
 
 const scopeOptions: Array<LabeledOptionDto<ValidatorScope>> = [
@@ -125,6 +132,21 @@ const EDITOR_FIELDS: SettingsPanelField<ValidatorPatternListEditorState>[] = [
   },
 ];
 
+type ValidatorListsView = 'lists' | 'tooltips';
+
+const VALIDATOR_LISTS_VIEW_LABELS: Record<ValidatorListsView, string> = {
+  lists: 'Lists',
+  tooltips: 'Settings',
+};
+
+const VALIDATOR_LISTS_VIEW_TABS_ID_PREFIX = 'validator-lists-view';
+const getViewTriggerId = (view: ValidatorListsView): string =>
+  `${VALIDATOR_LISTS_VIEW_TABS_ID_PREFIX}-trigger-${view}`;
+const getViewContentId = (view: ValidatorListsView): string =>
+  `${VALIDATOR_LISTS_VIEW_TABS_ID_PREFIX}-content-${view}`;
+const toValidatorListsView = (value: string | null): ValidatorListsView =>
+  value === 'tooltips' ? 'tooltips' : 'lists';
+
 /**
  * Merges reordered visible items back into the full list array.
  *
@@ -156,6 +178,10 @@ function mergeReorderedVisible(
  * Validator docs: see docs/validator/function-reference.md#ui.adminvalidatorpatternlistspage
  */
 export function AdminValidatorPatternListsPage(): React.JSX.Element {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeView = toValidatorListsView(searchParams.get('view'));
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const settingsQuery = useSettingsMap({ scope: 'light' });
@@ -369,147 +395,242 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     [handleListChange, lists]
   );
 
+  const handleSelectView = useCallback(
+    (view: ValidatorListsView): void => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      if (view === 'lists') {
+        nextParams.delete('view');
+      } else {
+        nextParams.set('view', view);
+      }
+      const nextQuery = nextParams.toString();
+      router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
   return (
-    <div className='page-section space-y-6'>
-      <SectionHeader
-        eyebrow={<AdminAiEyebrow section='Global Validator' />}
-        title='Validation Pattern List Manager'
-        description='Create, manage, and enter validation pattern lists.'
-        actions={
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button type='button' variant='outline' size='xs' asChild>
-              <Link href='/admin/validator'>
-                <ArrowLeft className='mr-2 size-4' />
-                Back To Validator
-              </Link>
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              onClick={(): void => {
-                void handleSave();
-              }}
-              disabled={!isDirty || updateSetting.isPending}
+    <ValidatorDocsTooltipsProvider>
+      <div className='space-y-6'>
+        <ListPanel
+          variant='flat'
+          className='[&>div:first-child]:mb-3'
+          header={
+            <AdminTitleBreadcrumbHeader
+              title={
+                <h1 className='text-3xl font-bold tracking-tight text-white'>
+                  Validation Pattern Lists
+                </h1>
+              }
+              breadcrumb={
+                <AdminSectionBreadcrumbs
+                  section={{ label: 'Global Validator', href: '/admin/validator' }}
+                  current={activeView === 'tooltips' ? 'Settings' : 'Validation Pattern Lists'}
+                />
+              }
+              actions={
+                <>
+                  <Button type='button' variant='outline' size='xs' asChild>
+                    <Link href='/admin/validator'>
+                      <ArrowLeft className='mr-2 size-4' />
+                      Back To Validator
+                    </Link>
+                  </Button>
+                  <Button
+                    type='button'
+                    size='xs'
+                    onClick={(): void => {
+                      void handleSave();
+                    }}
+                    disabled={!isDirty || updateSetting.isPending}
+                  >
+                    <Save className='mr-2 size-4' />
+                    Save Lists
+                  </Button>
+                  <Badge variant='outline' className='border-white/10 text-gray-300'>
+                    {lists.length} lists
+                  </Badge>
+                  <Badge variant='outline' className='border-white/10 text-gray-300'>
+                    {totalLocked} locked
+                  </Badge>
+                </>
+              }
+            />
+          }
+          filters={
+            <div
+              role='tablist'
+              aria-label='Validator list manager views'
+              className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 md:max-w-md'
             >
-              <Save className='mr-2 size-4' />
-              Save Lists
-            </Button>
-          </div>
-        }
-      />
-
-      <FormSection
-        title='Add New List'
-        description='Create a new list and choose which validator scope it points to.'
-        className='space-y-3 p-4'
-      >
-        <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_280px_minmax(0,1fr)_auto]'>
-          <Input
-            value={newListName}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setNewListName(event.target.value);
-            }}
-            placeholder='List name'
-            aria-label='List name'
-            className='h-9'
-           title='List name'/>
-          <SelectSimple
-            size='sm'
-            value={newListScope}
-            onValueChange={(value: string): void => {
-              const matched = scopeOptions.find((option) => option.value === value);
-              setNewListScope(matched?.value ?? 'products');
-            }}
-            options={scopeOptions}
-            triggerClassName='h-9'
-           ariaLabel='Select option' title='Select option'/>
-          <Input
-            value={newListDescription}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setNewListDescription(event.target.value);
-            }}
-            placeholder='Optional description'
-            aria-label='List description'
-            className='h-9'
-           title='Optional description'/>
-          <Button type='button' onClick={handleAddList} className='h-9 whitespace-nowrap'>
-            <Plus className='mr-1.5 size-3.5' />
-            Add List
-          </Button>
-        </div>
-      </FormSection>
-
-      <FormSection
-        title='Available Lists'
-        description='Drag to reorder. Click Enter to manage patterns. Reset or Save when done.'
-        className='p-4'
-        actions={
-          <div className='flex flex-wrap items-center gap-2'>
-            <div className='max-w-sm'>
-              <SearchInput
-                placeholder='Search lists...'
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                }}
-                onClear={() => {
-                  setQuery('');
-                }}
-                size='sm'
-              />
+              {(['lists', 'tooltips'] as const).map((view) => {
+                const isActive = activeView === view;
+                return (
+                  <button
+                    key={view}
+                    type='button'
+                    role='tab'
+                    id={getViewTriggerId(view)}
+                    aria-controls={getViewContentId(view)}
+                    aria-selected={isActive}
+                    onClick={() => handleSelectView(view)}
+                    className={`inline-flex h-11 items-center justify-center rounded-md px-3 text-sm font-semibold transition-colors ${
+                      isActive
+                        ? 'border border-white/20 bg-white/10 text-white'
+                        : 'border border-transparent text-gray-300 hover:bg-white/5'
+                    }`}
+                  >
+                    {VALIDATOR_LISTS_VIEW_LABELS[view]}
+                  </button>
+                );
+              })}
             </div>
-            <Badge variant='outline' className='text-[10px]'>
-              {filteredLists.length === lists.length
-                ? `${lists.length} lists`
-                : `${filteredLists.length} / ${lists.length} shown`}
-            </Badge>
-            <Badge variant='outline' className='text-[10px]'>
-              {totalLocked} locked
-            </Badge>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={handleReset}
-              disabled={!isDirty || updateSetting.isPending}
-            >
-              Reset
-            </Button>
-          </div>
-        }
-      >
-        <div className='mt-3'>
-          {lists.length === 0 ? (
-            <EmptyState
-              title='No validation pattern lists'
-              description='Create a validation pattern list to get started.'
-            />
-          ) : (
-            <ValidatorListTree
-              lists={filteredLists}
-              onReorder={handleReorder}
-              onEdit={handleOpenEditor}
-              onToggleLock={handleToggleLock}
-              onRemove={handleRemoveList}
-              isPending={updateSetting.isPending}
-            />
-          )}
-        </div>
-      </FormSection>
+          }
+        >
+          <ClientOnly
+            fallback={
+              <FormSection variant='subtle' className='p-4'>
+                <p className='text-sm text-gray-400'>Loading validator list manager...</p>
+              </FormSection>
+            }
+          >
+            {activeView === 'tooltips' ? (
+              <section
+                role='tabpanel'
+                id={getViewContentId('tooltips')}
+                aria-labelledby={getViewTriggerId('tooltips')}
+                className='space-y-4'
+              >
+                <ValidatorDocsTooltipsPanel />
+              </section>
+            ) : (
+              <section
+                role='tabpanel'
+                id={getViewContentId('lists')}
+                aria-labelledby={getViewTriggerId('lists')}
+                className='space-y-6'
+              >
+                <FormSection
+                  title='Add New List'
+                  description='Create a new list and choose which validator scope it points to.'
+                  className='space-y-3 p-4'
+                >
+                  <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_280px_minmax(0,1fr)_auto]'>
+                    <Input
+                      value={newListName}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        setNewListName(event.target.value);
+                      }}
+                      placeholder='List name'
+                      aria-label='List name'
+                      className='h-9'
+                      title='List name'
+                    />
+                    <SelectSimple
+                      size='sm'
+                      value={newListScope}
+                      onValueChange={(value: string): void => {
+                        const matched = scopeOptions.find((option) => option.value === value);
+                        setNewListScope(matched?.value ?? 'products');
+                      }}
+                      options={scopeOptions}
+                      triggerClassName='h-9'
+                      ariaLabel='Select option'
+                      title='Select option'
+                    />
+                    <Input
+                      value={newListDescription}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        setNewListDescription(event.target.value);
+                      }}
+                      placeholder='Optional description'
+                      aria-label='List description'
+                      className='h-9'
+                      title='Optional description'
+                    />
+                    <Button type='button' onClick={handleAddList} className='h-9 whitespace-nowrap'>
+                      <Plus className='mr-1.5 size-3.5' />
+                      Add List
+                    </Button>
+                  </div>
+                </FormSection>
 
-      <SettingsPanelBuilder<ValidatorPatternListEditorState>
-        open={editorOpen}
-        onClose={handleCloseEditor}
-        title='Edit Validation Pattern List'
-        subtitle='Update list metadata and scope. Save Lists to persist changes.'
-        fields={EDITOR_FIELDS}
-        values={editorState}
-        onChange={handleEditorChange}
-        onSave={handleSaveEditor}
-        size='sm'
-      />
+                <FormSection
+                  title='Available Lists'
+                  description='Drag to reorder. Click Enter to manage patterns. Reset or Save when done.'
+                  className='p-4'
+                  actions={
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <div className='max-w-sm'>
+                        <SearchInput
+                          placeholder='Search lists...'
+                          value={query}
+                          onChange={(event) => {
+                            setQuery(event.target.value);
+                          }}
+                          onClear={() => {
+                            setQuery('');
+                          }}
+                          size='sm'
+                        />
+                      </div>
+                      <Badge variant='outline' className='text-[10px]'>
+                        {filteredLists.length === lists.length
+                          ? `${lists.length} lists`
+                          : `${filteredLists.length} / ${lists.length} shown`}
+                      </Badge>
+                      <Badge variant='outline' className='text-[10px]'>
+                        {totalLocked} locked
+                      </Badge>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={handleReset}
+                        disabled={!isDirty || updateSetting.isPending}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  }
+                >
+                  <div className='mt-3'>
+                    {lists.length === 0 ? (
+                      <EmptyState
+                        title='No validation pattern lists'
+                        description='Create a validation pattern list to get started.'
+                      />
+                    ) : (
+                      <ValidatorListTree
+                        lists={filteredLists}
+                        onReorder={handleReorder}
+                        onEdit={handleOpenEditor}
+                        onToggleLock={handleToggleLock}
+                        onRemove={handleRemoveList}
+                        isPending={updateSetting.isPending}
+                      />
+                    )}
+                  </div>
+                </FormSection>
+              </section>
+            )}
+          </ClientOnly>
+        </ListPanel>
 
-      <ConfirmationModal />
-    </div>
+        <SettingsPanelBuilder<ValidatorPatternListEditorState>
+          open={editorOpen}
+          onClose={handleCloseEditor}
+          title='Edit Validation Pattern List'
+          subtitle='Update list metadata and scope. Save Lists to persist changes.'
+          fields={EDITOR_FIELDS}
+          values={editorState}
+          onChange={handleEditorChange}
+          onSave={handleSaveEditor}
+          size='sm'
+        />
+
+        <ConfirmationModal />
+      </div>
+    </ValidatorDocsTooltipsProvider>
   );
 }

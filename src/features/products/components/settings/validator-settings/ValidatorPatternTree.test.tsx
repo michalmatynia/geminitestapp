@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductValidationPattern } from '@/shared/contracts/products';
@@ -25,8 +25,28 @@ vi.mock('@/features/foldertree', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
-  FolderTreePanel: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  Button: ({ children }: { children?: React.ReactNode }) => <button type='button'>{children}</button>,
+  FolderTreePanel: ({
+    children,
+    className,
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+  }) => (
+    <div data-testid='folder-tree-panel' className={className}>
+      {children}
+    </div>
+  ),
+  Button: ({
+    children,
+    onClick,
+  }: {
+    children?: React.ReactNode;
+    onClick?: () => void;
+  }) => (
+    <button type='button' onClick={onClick}>
+      {children}
+    </button>
+  ),
   FormField: ({ children, label }: { children?: React.ReactNode; label?: string }) => (
     <label>
       <span>{label}</span>
@@ -145,10 +165,46 @@ describe('ValidatorPatternTree', () => {
     render(<ValidatorPatternTree />);
 
     expect(screen.getByTestId('tree-viewport')).toBeInTheDocument();
+    expect(screen.getByTestId('folder-tree-panel')).toHaveClass('h-auto');
     expect(screen.getByText('Semantic History')).toBeInTheDocument();
     expect(screen.getByText('Current: Mirror Name Locale')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close History' })).toBeInTheDocument();
     expect(
       screen.getByText('Migrated semantic operation from "Mirror Latest Field" to "Mirror Name Locale".')
     ).toBeInTheDocument();
+  });
+
+  it('closes the semantic history panel without unmounting the tree viewport', () => {
+    const pattern = buildPattern();
+
+    useMasterFolderTreeShellMock.mockReturnValue({
+      appearance: { rootDropUi: null },
+      controller: { selectedNodeId: 'vpat:pattern-1' },
+      viewport: { scrollToNodeRef: { current: null } },
+    });
+
+    useValidatorSettingsContextMock.mockReturnValue({
+      patterns: [pattern],
+      orderedPatterns: [pattern],
+      sequenceGroups: new Map(),
+      groupDrafts: {},
+      setGroupDrafts: vi.fn(),
+      getGroupDraft: vi.fn(),
+      handleEditPattern: vi.fn(),
+      handleDuplicatePattern: vi.fn(),
+      setPatternToDelete: vi.fn(),
+      handleTogglePattern: vi.fn(),
+      handleSaveSequenceGroup: vi.fn(),
+      handleUngroup: vi.fn(),
+      patternActionsPending: false,
+      reorderPending: false,
+    });
+
+    render(<ValidatorPatternTree />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close History' }));
+
+    expect(screen.getByTestId('tree-viewport')).toBeInTheDocument();
+    expect(screen.queryByText('Semantic History')).not.toBeInTheDocument();
   });
 });

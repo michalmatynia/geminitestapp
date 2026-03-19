@@ -1,5 +1,19 @@
 export type KangurMiniGameTranslate = (key: string, values?: Record<string, any>) => string;
 
+export const translateKangurMiniGameWithFallback = (
+  translate: KangurMiniGameTranslate | undefined,
+  key: string,
+  fallback: string,
+  values?: Record<string, any>
+): string => {
+  if (!translate) {
+    return fallback;
+  }
+
+  const translated = translate(key, values);
+  return translated === key ? fallback : translated;
+};
+
 export const getKangurMiniGameFinishLabel = (
   translate: KangurMiniGameTranslate,
   variant: 'lesson' | 'topics' | 'play' | 'back' | 'menu' | 'done' | 'end'

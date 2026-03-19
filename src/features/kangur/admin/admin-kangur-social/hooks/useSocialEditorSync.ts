@@ -26,14 +26,6 @@ import {
 } from '../AdminKangurSocialPage.Constants';
 
 type SocialEditorSyncDeps = {
-  persistedSocialSettings: {
-    linkedinConnectionId: string | null;
-    brainModelId: string | null;
-    visionModelId: string | null;
-  };
-  setLinkedinConnectionId: (value: string | null) => void;
-  setBrainModelId: (value: string | null) => void;
-  setVisionModelId: (value: string | null) => void;
   linkedinConnections: Array<{ id: string; hasLinkedInAccessToken?: boolean }>;
   linkedinConnectionId: string | null;
   brainModelId: string | null;
@@ -105,9 +97,6 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
       setDocReferenceInput('');
       setImageAssets([]);
       setImageAddonIds([]);
-      deps.setLinkedinConnectionId(deps.persistedSocialSettings.linkedinConnectionId);
-      deps.setBrainModelId(deps.persistedSocialSettings.brainModelId);
-      deps.setVisionModelId(deps.persistedSocialSettings.visionModelId);
       setContextSummary(null);
       return;
     }
@@ -119,15 +108,6 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     });
     setScheduledAt(formatDatetimeLocal(activePost.scheduledAt));
     setDocReferenceInput(activePost.docReferences?.join(', ') ?? '');
-    deps.setLinkedinConnectionId(
-      activePost.linkedinConnectionId ?? deps.persistedSocialSettings.linkedinConnectionId ?? null
-    );
-    deps.setBrainModelId(
-      deps.persistedSocialSettings.brainModelId ?? activePost.brainModelId ?? null
-    );
-    deps.setVisionModelId(
-      deps.persistedSocialSettings.visionModelId ?? activePost.visionModelId ?? null
-    );
     setImageAddonIds(activePost.imageAddonIds ?? []);
     setImageAssets(
       (activePost.imageAssets ?? []).map((asset, index) => ({
@@ -136,20 +116,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
       }))
     );
     setContextSummary(activePost.contextSummary ?? null);
-  }, [activePost, deps.persistedSocialSettings]);
-
-  // Auto-select LinkedIn connection fallback
-  useEffect(() => {
-    if (!activePost) return;
-    if (activePost.linkedinConnectionId) return;
-    if (deps.linkedinConnectionId) return;
-    const fallback =
-      deps.linkedinConnections.find((connection) => connection.hasLinkedInAccessToken) ??
-      deps.linkedinConnections[0];
-    if (fallback) {
-      deps.setLinkedinConnectionId(fallback.id);
-    }
-  }, [activePost, deps.linkedinConnections, deps.linkedinConnectionId]);
+  }, [activePost]);
 
   // Image & addon handlers
   const handleAddImages = (filepaths: string[]): void => {

@@ -16,6 +16,7 @@ import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
+import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 
 type TriggerButtonBarProps = ComponentProps<
   typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
@@ -125,7 +126,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
-    <AdminProductsBreadcrumbs current='Product List' className='mt-1' />
+    <AdminProductsBreadcrumbs current='Product List' />
   );
 
   const renderCreateActions = (): React.JSX.Element => (
@@ -166,31 +167,22 @@ export const ProductListHeader = memo(function ProductListHeader({
   </div>
   );
 
-  const renderTitleWithActions = (): React.JSX.Element => (
-    <div className='flex items-center gap-2'>
-      <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
-      <div className='shrink-0'>{renderCreateActions()}</div>
-    </div>
+  const renderTitle = (): React.JSX.Element => (
+    <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
   );
 
-  const renderCreateActionsMobile = (): React.JSX.Element => (
-    <div className='flex items-start justify-between gap-2'>
-      <div>
-        <div className='space-y-1'>
-          {renderTitleWithActions()}
-          {renderHeaderBreadcrumb()}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderCreateActionsDesktop = (): React.JSX.Element => (
-    <div className='flex items-start justify-between gap-2'>
-      <div className='space-y-1'>
-        {renderTitleWithActions()}
-        {renderHeaderBreadcrumb()}
-      </div>
-    </div>
+  const renderTitleBreadcrumbHeader = (
+    titleStackClassName?: string,
+    actions?: ReactNode,
+    actionsClassName?: string
+  ): React.JSX.Element => (
+    <AdminTitleBreadcrumbHeader
+      title={renderTitle()}
+      breadcrumb={renderHeaderBreadcrumb()}
+      titleStackClassName={titleStackClassName}
+      actions={actions}
+      actionsClassName={actionsClassName}
+    />
   );
 
   const renderSelectorsAndTriggers = (): React.JSX.Element => (
@@ -258,7 +250,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       {showHeader && (
         <div className='space-y-3'>
           <div className='space-y-3 lg:hidden'>
-            {renderCreateActionsMobile()}
+            {renderTitleBreadcrumbHeader(undefined, renderCreateActions(), 'pt-0')}
 
             <div className='space-y-3'>
               <div className='relative z-10 flex justify-center'>{renderPaginationControl()}</div>
@@ -270,14 +262,15 @@ export const ProductListHeader = memo(function ProductListHeader({
           </div>
 
           <div className='hidden space-y-3 lg:block'>
-            <div className='flex items-start justify-between gap-3'>
-              <div className='min-w-0'>{renderCreateActionsDesktop()}</div>
-
-              <div className='relative z-0 flex w-full min-w-0 flex-wrap items-center justify-end gap-2 pt-1'>
+            {renderTitleBreadcrumbHeader(
+              'shrink-0 min-w-max',
+              <>
+                {renderCreateActions()}
                 {renderPaginationControl()}
                 {renderSelectorsAndTriggers()}
-              </div>
-            </div>
+              </>,
+              'relative z-0 min-w-0 flex-1 justify-end'
+            )}
             {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
           </div>
         </div>

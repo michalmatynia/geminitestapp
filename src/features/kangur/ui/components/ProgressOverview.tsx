@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl';
+
 import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
 import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
@@ -30,6 +32,8 @@ import {
   getProgressAverageXpPerSession,
   getProgressTopActivities,
   getRecommendedSessionMomentum,
+  getLocalizedKangurProgressTokenLabel,
+  translateKangurProgressWithFallback,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -48,17 +52,19 @@ export default function ProgressOverview({
   progress,
   dailyQuest = null,
 }: ProgressOverviewProps): React.JSX.Element {
+  const translations = useTranslations('KangurProgressRuntime');
   const overviewProgress = progress;
   const { totalXp, gamesPlayed, lessonsCompleted, operationsPlayed = [] } = progress;
-  const currentLevel = getCurrentLevel(totalXp);
-  const nextLevel = getNextLevel(totalXp);
+  const progressLocalizer = { translate: translations };
+  const currentLevel = getCurrentLevel(totalXp, progressLocalizer);
+  const nextLevel = getNextLevel(totalXp, progressLocalizer);
   const xpIntoLevel = totalXp - currentLevel.minXp;
   const xpNeeded = nextLevel ? nextLevel.minXp - currentLevel.minXp : 1;
   const percent = nextLevel ? Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100)) : 100;
   const averageAccuracy = getProgressAverageAccuracy(progress);
   const averageXpPerSession = getProgressAverageXpPerSession(progress);
-  const topActivities = getProgressTopActivities(progress);
-  const guidedMomentum = getRecommendedSessionMomentum(progress);
+  const topActivities = getProgressTopActivities(progress, 3, progressLocalizer);
+  const guidedMomentum = getRecommendedSessionMomentum(progress, progressLocalizer);
   const dailyQuestAccent =
     dailyQuest?.reward.status === 'claimed'
       ? 'emerald'
@@ -77,16 +83,60 @@ export default function ProgressOverview({
   const dailyQuestProgressLabel = dailyQuest ? `${dailyQuest.progress.percent}%` : '';
 
   const stats: ProgressStat[] = [
-    { accent: 'indigo', label: 'Łączne XP', value: totalXp },
-    { accent: 'violet', label: 'XP / grę', value: averageXpPerSession },
-    { accent: 'sky', label: 'Rozegrane gry', value: gamesPlayed },
+    {
+      accent: 'indigo',
+      label: translateKangurProgressWithFallback(
+        translations,
+        'overview.stats.totalXp',
+        'Łączne XP'
+      ),
+      value: totalXp,
+    },
+    {
+      accent: 'violet',
+      label: translateKangurProgressWithFallback(
+        translations,
+        'overview.stats.xpPerGame',
+        'XP / grę'
+      ),
+      value: averageXpPerSession,
+    },
+    {
+      accent: 'sky',
+      label: translateKangurProgressWithFallback(
+        translations,
+        'overview.stats.gamesPlayed',
+        'Rozegrane gry'
+      ),
+      value: gamesPlayed,
+    },
     {
       accent: 'emerald',
-      label: 'Ukończone lekcje',
+      label: translateKangurProgressWithFallback(
+        translations,
+        'overview.stats.lessonsCompleted',
+        'Ukończone lekcje'
+      ),
       value: lessonsCompleted,
     },
-    { accent: 'amber', label: 'Średnia skuteczność', value: `${averageAccuracy}%` },
-    { accent: 'rose', label: 'Najlepsza seria', value: progress.bestWinStreak ?? 0 },
+    {
+      accent: 'amber',
+      label: translateKangurProgressWithFallback(
+        translations,
+        'overview.stats.averageAccuracy',
+        'Średnia skuteczność'
+      ),
+      value: `${averageAccuracy}%`,
+    },
+    {
+      accent: 'rose',
+      label: translateKangurProgressWithFallback(
+        translations,
+        'overview.stats.bestStreak',
+        'Najlepsza seria'
+      ),
+      value: progress.bestWinStreak ?? 0,
+    },
   ];
 
   return (
@@ -96,11 +146,23 @@ export default function ProgressOverview({
           <KangurDisplayEmoji size='md'>🎖️</KangurDisplayEmoji>
           <div className='flex-1'>
             <KangurPanelIntro
-              eyebrow='Poziom i doświadczenie'
+              eyebrow={translateKangurProgressWithFallback(
+                translations,
+                'overview.levelEyebrow',
+                'Poziom i doświadczenie'
+              )}
               title={currentLevel.title}
               titleAs='p'
               titleClassName={`mt-1 text-lg font-extrabold sm:text-xl ${currentLevel.color}`}
-              description={`Poziom ${currentLevel.level} · ${totalXp} XP łącznie`}
+              description={translateKangurProgressWithFallback(
+                translations,
+                'overview.levelDescription',
+                `Poziom ${currentLevel.level} · ${totalXp} XP łącznie`,
+                {
+                  level: currentLevel.level,
+                  xp: totalXp,
+                }
+              )}
               descriptionClassName='mb-2'
             />
             <KangurProgressBar
@@ -112,8 +174,20 @@ export default function ProgressOverview({
             />
             <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
               {nextLevel
-                ? `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`
-                : 'Osiągnięto maksymalny poziom!'}
+                ? translateKangurProgressWithFallback(
+                    translations,
+                    'overview.nextLevel',
+                    `Do poziomu ${nextLevel.level}: ${xpNeeded - xpIntoLevel} XP`,
+                    {
+                      level: nextLevel.level,
+                      xp: xpNeeded - xpIntoLevel,
+                    }
+                  )
+                : translateKangurProgressWithFallback(
+                    translations,
+                    'overview.maxLevel',
+                    'Osiągnięto maksymalny poziom!'
+                  )}
             </p>
           </div>
         </KangurPanelRow>
@@ -143,7 +217,11 @@ export default function ProgressOverview({
               <KangurProgressHighlightHeader
                 description={dailyQuestHeaderDescription}
                 descriptionClassName='text-xs leading-5'
-                eyebrow='Misja dnia'
+                eyebrow={translateKangurProgressWithFallback(
+                  translations,
+                  'overview.dailyQuestEyebrow',
+                  'Misja dnia'
+                )}
                 title={dailyQuestHeaderTitle}
               />
               <KangurProgressHighlightChip
@@ -173,12 +251,33 @@ export default function ProgressOverview({
               <KangurProgressHighlightHeader
                 description={
                   guidedMomentum.nextBadgeName
-                    ? `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`
-                    : 'Wszystkie odznaki polecanego kierunku odblokowane.'
+                    ? translateKangurProgressWithFallback(
+                        translations,
+                        'overview.guidedMomentum.descriptionWithBadge',
+                        `Do odznaki ${guidedMomentum.nextBadgeName}: ${guidedMomentum.summary}`,
+                        {
+                          badge: guidedMomentum.nextBadgeName,
+                          summary: guidedMomentum.summary,
+                        }
+                      )
+                    : translateKangurProgressWithFallback(
+                        translations,
+                        'overview.guidedMomentum.descriptionUnlocked',
+                        'Wszystkie odznaki polecanego kierunku odblokowane.'
+                      )
                 }
                 descriptionClassName='text-xs leading-5'
-                eyebrow='Polecony kierunek'
-                title={`${guidedMomentum.completedSessions} polecone rundy`}
+                eyebrow={translateKangurProgressWithFallback(
+                  translations,
+                  'overview.guidedMomentum.eyebrow',
+                  'Polecony kierunek'
+                )}
+                title={translateKangurProgressWithFallback(
+                  translations,
+                  'overview.guidedMomentum.title',
+                  `${guidedMomentum.completedSessions} polecone rundy`,
+                  { count: guidedMomentum.completedSessions }
+                )}
               />
               <KangurProgressHighlightChip
                 accent='sky'
@@ -199,7 +298,13 @@ export default function ProgressOverview({
 
       {operationsPlayed.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <KangurPanelSectionHeading>Ćwiczone operacje</KangurPanelSectionHeading>
+          <KangurPanelSectionHeading>
+            {translateKangurProgressWithFallback(
+              translations,
+              'overview.operationsHeading',
+              'Ćwiczone operacje'
+            )}
+          </KangurPanelSectionHeading>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             {operationsPlayed.map((operation) => (
               <KangurStatusChip
@@ -208,7 +313,11 @@ export default function ProgressOverview({
                 className='capitalize'
                 data-testid={`progress-overview-operation-${operation}`}
               >
-                {operation}
+                {getLocalizedKangurProgressTokenLabel({
+                  token: operation,
+                  fallback: operation,
+                  translate: translations,
+                })}
               </KangurStatusChip>
             ))}
           </div>
@@ -217,17 +326,29 @@ export default function ProgressOverview({
 
       {topActivities.length > 0 && (
         <KangurGlassPanel padding='md' surface='solid' variant='subtle'>
-          <KangurPanelSectionHeading>Najczęściej ćwiczone aktywności</KangurPanelSectionHeading>
+          <KangurPanelSectionHeading>
+            {translateKangurProgressWithFallback(
+              translations,
+              'overview.topActivitiesHeading',
+              'Najczęściej ćwiczone aktywności'
+            )}
+          </KangurPanelSectionHeading>
           <div className='flex flex-col kangur-panel-gap'>
             {topActivities.map((activity) => (
               <KangurActivitySummaryCard
                 activity={activity}
                 dataTestId={`progress-overview-activity-${activity.key}`}
-                description={`${
-                  activity.sessionsPlayed
-                } sesji · ${activity.averageXpPerSession} XP / grę · średnio ${
-                  activity.averageAccuracy
-                }% · najlepszy wynik ${activity.bestScorePercent}%`}
+                description={translateKangurProgressWithFallback(
+                  translations,
+                  'overview.topActivityDescription',
+                  `${activity.sessionsPlayed} sesji · ${activity.averageXpPerSession} XP / grę · średnio ${activity.averageAccuracy}% · najlepszy wynik ${activity.bestScorePercent}%`,
+                  {
+                    sessions: activity.sessionsPlayed,
+                    xp: activity.averageXpPerSession,
+                    accuracy: activity.averageAccuracy,
+                    best: activity.bestScorePercent,
+                  }
+                )}
                 descriptionClassName='text-xs [color:var(--kangur-page-muted-text)]'
                 key={activity.key}
               />

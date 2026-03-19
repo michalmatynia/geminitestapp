@@ -89,6 +89,33 @@ describe('system logs delete handler', () => {
     });
   });
 
+  it('clears only info-level system logs when the info_logs target is selected', async () => {
+    clearSystemLogsMock.mockResolvedValue({ deleted: 6 });
+
+    const response = await DELETE_handler(
+      new NextRequest('http://localhost/api/system/logs?target=info_logs'),
+      createRequestContext()
+    );
+
+    expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
+    expect(clearSystemLogsMock).toHaveBeenCalledWith({
+      before: null,
+      level: 'info',
+    });
+    expect(clearActivityLogsMock).not.toHaveBeenCalled();
+    expect(clearAnalyticsEventsMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      target: 'info_logs',
+      deleted: 6,
+      deletedByTarget: {
+        systemLogs: 6,
+        activityLogs: 0,
+        pageAccessLogs: 0,
+      },
+    });
+  });
+
   it('clears all supported log groups for the all_logs target', async () => {
     clearSystemLogsMock.mockResolvedValue({ deleted: 9 });
     clearActivityLogsMock.mockResolvedValue({ deleted: 5 });

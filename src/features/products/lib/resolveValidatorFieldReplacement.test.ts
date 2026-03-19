@@ -17,6 +17,18 @@ const categories: ProductCategory[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
+  {
+    id: 'anime-pin',
+    name: 'Przypinki',
+    name_en: 'Anime Pin',
+    name_pl: 'Przypinki Anime',
+    name_de: 'Anime Pin',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
 ];
 
 describe('resolveValidatorFieldReplacement', () => {
@@ -64,6 +76,22 @@ describe('resolveValidatorFieldReplacement', () => {
       value: 'category-1',
       comparableValue: 'category-1',
       displayValue: 'Keychains',
+    });
+  });
+
+  it('prefers a human-readable localized category label for inferred category replacements', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'categoryId',
+        replacementValue: 'anime-pin',
+        categories,
+      })
+    ).toEqual({
+      kind: 'category',
+      fieldName: 'categoryId',
+      value: 'anime-pin',
+      comparableValue: 'anime-pin',
+      displayValue: 'Anime Pin',
     });
   });
 

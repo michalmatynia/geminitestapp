@@ -15,6 +15,28 @@ type LessonCopyOverride = {
   description?: string;
 };
 
+const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
+  alphabet_rysuj_litery: 'Trace the letters',
+  alphabet_syllables: 'Syllables and words',
+  alphabet_first_words: 'First words',
+  alphabet_matching: 'Match the letters',
+  alphabet_sequence: 'Letter order',
+  geometry_shapes: 'Geometric shapes',
+  maths_time: 'Time',
+  maths_arithmetic: 'Arithmetic',
+  maths_geometry: 'Geometry',
+  maths_logic: 'Logical thinking',
+  english_basics_section: 'Basics',
+  english_grammar: 'Grammar',
+};
+
+const ENGLISH_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
+  Gra: 'Game',
+  Lekcja: 'Lesson',
+  Section: 'Section',
+  Subsection: 'Subsection',
+};
+
 const ENGLISH_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
   alphabet: 'Alphabet',
   geometry: 'Shapes',
@@ -364,3 +386,23 @@ export const getLocalizedKangurAgeGroupLabel = (
   const sourceLabel = fallbackLabel ?? AGE_GROUP_LABEL_MAP.get(ageGroup) ?? ageGroup;
   return shouldUseEnglishOverrides(locale) ? ENGLISH_AGE_GROUP_LABELS[ageGroup] ?? sourceLabel : sourceLabel;
 };
+
+export const getLocalizedKangurLessonSectionLabel = (
+  sectionId: string,
+  locale: string | null | undefined,
+  fallbackLabel: string
+): string => {
+  if (!shouldUseEnglishOverrides(locale)) {
+    return fallbackLabel;
+  }
+
+  return ENGLISH_LESSON_SECTION_LABELS[sectionId] ?? fallbackLabel;
+};
+
+export const getLocalizedKangurLessonSectionTypeLabel = (
+  locale: string | null | undefined,
+  fallbackTypeLabel: string
+): string =>
+  shouldUseEnglishOverrides(locale)
+    ? ENGLISH_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel] ?? fallbackTypeLabel
+    : fallbackTypeLabel;

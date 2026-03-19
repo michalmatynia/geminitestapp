@@ -1,3 +1,4 @@
+import { useLocale, useTranslations } from 'next-intl';
 import { BrainCircuit } from 'lucide-react';
 
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
@@ -27,6 +28,7 @@ import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurTutorMoodId,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
+import { translateKangurLearnerProfileWithFallback } from '@/features/kangur/ui/services/profile';
 
 const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
   neutral: 'slate',
@@ -54,6 +56,8 @@ const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
 const formatMoodConfidence = (value: number): string => `${Math.round(value * 100)}%`;
 
 export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
+  const locale = useLocale();
+  const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
   const tutorContent = useKangurAiTutorContent();
   const { user } = useKangurLearnerProfileRuntime();
   const { entry: moodContent } = useKangurPageContentEntry('learner-profile-ai-tutor-mood');
@@ -62,7 +66,18 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
   const currentPreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.currentMoodId);
   const baselinePreset = getKangurAiTutorMoodCopy(tutorContent, learnerMood.baselineMoodId);
   const currentAccent = KANGUR_TUTOR_MOOD_ACCENTS[learnerMood.currentMoodId];
-  const learnerName = learner?.displayName?.trim() ?? 'Tryb lokalny';
+  const localModeLabel = translateKangurLearnerProfileWithFallback(
+    (key, values) => runtimeTranslations(key as never, values as never),
+    'localMode',
+    'Tryb lokalny'
+  );
+  const dateMissingLabel = translateKangurLearnerProfileWithFallback(
+    (key, values) => runtimeTranslations(key as never, values as never),
+    'dateMissing',
+    'Brak daty'
+  );
+  const learnerName =
+    learner?.displayName?.trim() ?? user?.full_name?.trim() ?? localModeLabel;
   const sectionTitle = moodContent?.title ?? tutorContent.profileMoodWidget.title;
   const sectionDescription =
     moodContent?.summary ??
@@ -73,7 +88,10 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
         )
       : tutorContent.profileMoodWidget.descriptionFallback);
   const updatedLabel = learnerMood.lastComputedAt
-    ? formatKangurProfileDateTime(learnerMood.lastComputedAt)
+    ? formatKangurProfileDateTime(learnerMood.lastComputedAt, {
+        locale,
+        dateMissingLabel,
+      })
     : tutorContent.profileMoodWidget.updatedFallback;
 
   return (

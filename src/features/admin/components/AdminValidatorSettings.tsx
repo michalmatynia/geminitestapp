@@ -1,3 +1,7 @@
 'use client';
 
-export { ValidatorDocsTooltipsProvider, ValidatorSettings } from '@/features/products';
+export {
+  ValidatorDocsTooltipsPanel,
+  ValidatorDocsTooltipsProvider,
+  ValidatorSettings,
+} from '@/features/products';

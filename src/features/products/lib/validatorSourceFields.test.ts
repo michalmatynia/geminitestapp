@@ -83,4 +83,20 @@ describe('validatorSourceFields', () => {
       nameEnSegment4RegexEscaped: 'Keychains \\(XL\\)\\+',
     });
   });
+
+  it('extracts the fourth name segment from the product title example used for category inference', () => {
+    expect(
+      buildProductValidationSourceValues({
+        baseValues: {
+          name_en: 'Awa Awa no Mi | 4 cm | Metal | Anime Pin | One Piece',
+          categoryId: '',
+        },
+        categories,
+        selectedCatalogIds: ['catalog-fallback'],
+      })
+    ).toMatchObject({
+      nameEnSegment4: 'Anime Pin',
+      nameEnSegment4RegexEscaped: 'Anime Pin',
+    });
+  });
 });

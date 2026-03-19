@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { buildLatestFieldMirrorSemanticState } from '@/features/products/lib/validatorSemanticPresets';
+import {
+  buildLatestFieldMirrorSemanticState,
+  buildNameSegmentCategorySemanticState,
+} from '@/features/products/lib/validatorSemanticPresets';
+import { buildProductValidationSourceValues } from '@/features/products/lib/validatorSourceFields';
 import {
   allowsPatternExecutionWithoutRegexMatch,
   areIssueMapsEquivalent,
@@ -339,6 +343,175 @@ describe('buildFieldIssues', () => {
       replacementScope: 'field',
       replacementActive: true,
     });
+  });
+
+  it('supports category inference from the full product title example', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'category',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['categoryId'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: 'nameEnSegment4',
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment4',
+      launchOperator: 'is_not_empty',
+      message: 'Infer category from name segment #4',
+      skipNoopReplacementProposal: false,
+      semanticState: buildNameSegmentCategorySemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: buildProductValidationSourceValues({
+        baseValues: {
+          name_en: 'Awa Awa no Mi | 4 cm | Metal | Anime Pin | One Piece',
+          categoryId: '',
+        },
+        selectedCatalogIds: ['catalog-1'],
+      }),
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['categoryId']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      replacementValue: 'Anime Pin',
+      replacementApplyMode: 'replace_whole_field',
+      replacementScope: 'field',
+      replacementActive: true,
+    });
+  });
+
+  it('proposes a category replacement when the current category differs from the inferred segment', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'category',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['categoryId'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: 'nameEnSegment4',
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment4',
+      launchOperator: 'is_not_empty',
+      message: 'Infer category from name segment #4',
+      skipNoopReplacementProposal: false,
+      semanticState: buildNameSegmentCategorySemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: {
+        categoryId: 'pins-category',
+        categoryName: 'Pins',
+        nameEnSegment4: 'Anime Pin',
+      },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['categoryId']).toHaveLength(1);
+    expect(issues['categoryId']?.[0]).toMatchObject({
+      patternId: pattern.id,
+      replacementValue: 'Anime Pin',
+      replacementActive: true,
+    });
+  });
+
+  it('suppresses category inference when the current category already matches semantically', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'category',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['categoryId'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: 'nameEnSegment4',
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment4',
+      launchOperator: 'is_not_empty',
+      message: 'Infer category from name segment #4',
+      skipNoopReplacementProposal: false,
+      semanticState: buildNameSegmentCategorySemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: {
+        categoryId: 'anime-pin-category',
+        categoryName: 'Anime Pins',
+        nameEnSegment4: 'Anime Pin',
+      },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['categoryId']).toBeUndefined();
   });
 
   it('emits sequence group aggregate issue when replacement transforms value', () => {

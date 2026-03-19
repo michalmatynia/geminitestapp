@@ -17,12 +17,21 @@ import { useSocialPipelineRunner } from './hooks/useSocialPipelineRunner';
 
 export function useAdminKangurSocialPage() {
   const settings = useSocialSettings();
+  const brainRoutingModelId = settings.brainModelOptions.effectiveModelId || null;
+  const visionRoutingModelId = settings.visionModelOptions.effectiveModelId || null;
+  const canGenerateSocialDraft = Boolean(brainRoutingModelId);
+  const socialDraftBlockedReason = canGenerateSocialDraft
+    ? null
+    : 'Assign an AI Brain model for StudiQ Social Post Generation in /admin/brain?tab=routing.';
+  const socialVisionWarning = visionRoutingModelId
+    ? null
+    : 'Visual analysis is not configured in AI Brain. Draft generation can continue, but screenshot analysis will be skipped.';
 
   const editor = useSocialEditorSync({
     linkedinConnections: settings.linkedinConnections,
     linkedinConnectionId: settings.linkedinConnectionId,
-    brainModelId: settings.brainModelId,
-    visionModelId: settings.visionModelId,
+    brainModelId: brainRoutingModelId,
+    visionModelId: visionRoutingModelId,
   });
 
   const buildSocialContext = useCallback((overrides?: Record<string, unknown>): Record<string, unknown> => ({
@@ -35,8 +44,9 @@ export function useAdminKangurSocialPage() {
     visualDocUpdateCount: editor.activePost?.visualDocUpdates?.length ?? 0,
     notesLength: editor.generationNotes.trim().length,
     hasLinkedInConnection: Boolean(settings.linkedinConnectionId),
-    brainModelId: settings.brainModelId ?? null,
-    visionModelId: settings.visionModelId ?? null,
+    brainModelId: brainRoutingModelId,
+    visionModelId: visionRoutingModelId,
+    modelSource: 'ai_brain',
     batchCapturePresetCount: settings.batchCapturePresetIds.length,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl.trim() || null,
     ...overrides,
@@ -50,10 +60,10 @@ export function useAdminKangurSocialPage() {
     editor.scheduledAt,
     editor.generationNotes,
     settings.linkedinConnectionId,
-    settings.brainModelId,
-    settings.visionModelId,
     settings.batchCapturePresetIds.length,
     settings.batchCaptureBaseUrl,
+    brainRoutingModelId,
+    visionRoutingModelId,
   ]);
 
   const crud = useSocialPostCrud({
@@ -66,8 +76,8 @@ export function useAdminKangurSocialPage() {
     imageAddonIds: editor.imageAddonIds,
     resolveDocReferences: editor.resolveDocReferences,
     linkedinConnectionId: settings.linkedinConnectionId,
-    brainModelId: settings.brainModelId,
-    visionModelId: settings.visionModelId,
+    brainModelId: null,
+    visionModelId: null,
     buildSocialContext,
   });
 
@@ -90,8 +100,10 @@ export function useAdminKangurSocialPage() {
     activePost: editor.activePost,
     resolveDocReferences: editor.resolveDocReferences,
     generationNotes: editor.generationNotes,
-    brainModelId: settings.brainModelId,
-    visionModelId: settings.visionModelId,
+    brainModelId: null,
+    visionModelId: null,
+    canGenerateDraft: canGenerateSocialDraft,
+    generateDraftBlockedReason: socialDraftBlockedReason,
     imageAddonIds: editor.imageAddonIds,
     projectUrl: settings.projectUrl,
     buildSocialContext,
@@ -106,8 +118,10 @@ export function useAdminKangurSocialPage() {
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     batchCapturePresetIds: settings.batchCapturePresetIds,
     linkedinConnectionId: settings.linkedinConnectionId,
-    brainModelId: settings.brainModelId,
-    visionModelId: settings.visionModelId,
+    brainModelId: null,
+    visionModelId: null,
+    canRunServerPipeline: canGenerateSocialDraft,
+    pipelineBlockedReason: socialDraftBlockedReason,
     projectUrl: settings.projectUrl,
     generationNotes: editor.generationNotes,
     resolveDocReferences: editor.resolveDocReferences,
@@ -186,6 +200,9 @@ export function useAdminKangurSocialPage() {
     linkedinConnectionId: settings.linkedinConnectionId,
     brainModelId: settings.brainModelId,
     visionModelId: settings.visionModelId,
+    canGenerateSocialDraft,
+    socialDraftBlockedReason,
+    socialVisionWarning,
     projectUrl: settings.projectUrl,
     setProjectUrl: settings.setProjectUrl,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,

@@ -930,6 +930,26 @@
     "description": "Sign in as a parent with email or as a learner with a nickname without leaving the page.",
     "closeAriaLabel": "Close sign-in"
   },
+  "KangurNavigation": {
+    "home": "Home page",
+    "lessons": "Lessons",
+    "duels": "Duels",
+    "parent": "Parent",
+    "subject": {
+      "label": "Choose subject",
+      "currentTitle": "Current subject: {subject}",
+      "dialogDescription": "Choose the subject you want to focus on now.",
+      "closeAriaLabel": "Close subject chooser",
+      "groupAriaLabel": "Subject chooser"
+    },
+    "ageGroup": {
+      "label": "Choose age group",
+      "currentTitle": "Current age group: {group}",
+      "dialogDescription": "Choose who the lessons should be tailored for.",
+      "closeAriaLabel": "Close age group chooser",
+      "groupAriaLabel": "Age group chooser"
+    }
+  },
   "KangurGameHomeActions": {
     "sectionLabel": "Choose an activity",
     "actions": {
@@ -2955,6 +2975,364 @@
       "operationsHeading": "Practised operations",
       "topActivitiesHeading": "Most practised activities",
       "topActivityDescription": "{sessions} sessions · {xp} XP / game · average {accuracy}% · best score {best}%"
+    }
+  },
+  "KangurStaticLessons": {
+    "adding": {
+      "lessonTitle": "Addition",
+      "sections": {
+        "basics": {
+          "title": "Addition basics",
+          "description": "What is addition? Single-digit addition + animation"
+        },
+        "crossTen": {
+          "title": "Adding past 10",
+          "description": "Make 10, then add the rest"
+        },
+        "doubleDigit": {
+          "title": "Two-digit addition",
+          "description": "Tens and ones separately"
+        },
+        "remember": {
+          "title": "Remember!",
+          "description": "Addition rules"
+        },
+        "synthesis": {
+          "title": "Addition synthesis",
+          "description": "Rhythmic answer lanes and quick sums"
+        },
+        "game": {
+          "title": "Ball game",
+          "description": "Practise addition by moving balls"
+        }
+      },
+      "slides": {
+        "basics": {
+          "meaning": {
+            "title": "What does it mean to add?",
+            "lead": "Addition means joining two groups together to count how many there are in all.",
+            "partLabel": "Part",
+            "totalLabel": "Whole",
+            "caption": "Part + part makes a whole.",
+            "startLabel": "Start",
+            "combineLabel": "Join",
+            "resultLabel": "Result"
+          },
+          "singleDigit": {
+            "title": "Single-digit addition",
+            "lead": "You can count on your fingers or in your head. Start with the bigger number!",
+            "step1": "Start with the bigger number: 4",
+            "step2": "Count up three steps: 5, 6, 7",
+            "step3": "The last number is the answer: 7 ✓",
+            "staircaseLabel": "Steps",
+            "countUpLabel": "counting on",
+            "caption": "Start at 4 and take three steps: 5, 6, 7.",
+            "startLargeChip": "Start with the bigger one",
+            "countUpChip": "Count on",
+            "quickResultChip": "Fast answer"
+          },
+          "motion": {
+            "title": "Addition in motion",
+            "lead": "The animation shows how two groups move and join into one sum.",
+            "caption": "The dots join into one group and create the sum.",
+            "groupA": "Group A",
+            "groupB": "Group B",
+            "sum": "Sum"
+          }
+        },
+        "crossTen": {
+          "overTen": {
+            "title": "Adding across 10",
+            "lead": "When the sum goes past 10, you can make 10 first and then add the rest.",
+            "caption": "7 + 3 = 10, 2 left, so 10 + 2 = 12 ✓",
+            "step1Title": "Step 1",
+            "step1Text": "Make 10: 7 + 3 = 10",
+            "step2Title": "Step 2",
+            "step2Text": "Add the rest: +2",
+            "targetLabel": "Goal: 10",
+            "remainingChip": "+2 left"
+          },
+          "numberLine": {
+            "title": "Jumps on the number line",
+            "lead": "Jump to 10 first, then add the rest.",
+            "caption": "8 + 2 = 10, 3 left, so 10 + 3 = 13.",
+            "startChip": "Start 8",
+            "plusTwoChip": "+2",
+            "tenChip": "10",
+            "plusThreeChip": "+3",
+            "resultChip": "13"
+          },
+          "tenFrame": {
+            "title": "Ten frame",
+            "lead": "Fill the missing spaces to 10, then add the rest next to it.",
+            "caption": "First +3 to make 10, then +2 more.",
+            "miniPlanTitle": "Mini plan",
+            "steps": [
+              "Fill the ten frame to 10",
+              "Add the rest next to it",
+              "Join both parts into the answer"
+            ]
+          }
+        },
+        "doubleDigit": {
+          "intro": {
+            "title": "Two-digit addition",
+            "lead": "Add tens and ones separately!",
+            "tensLabel": "Tens",
+            "onesLabel": "Ones",
+            "schemeTitle": "Pattern",
+            "schemeCaption": "tens + ones"
+          },
+          "motion": {
+            "title": "Two-digit addition in motion",
+            "lead": "First add the tens, then the ones. The animation shows how both groups join into the answer.",
+            "caption": "Tens: 20 + 10, ones: 4 + 3."
+          },
+          "blocks": {
+            "title": "Tens and ones blocks",
+            "lead": "Colour blocks show that tens and ones join separately.",
+            "caption": "First 20 + 10, then 4 + 3. The sum is built from both parts.",
+            "tensChip": "Tens",
+            "onesChip": "Ones",
+            "sumChip": "Sum"
+          },
+          "columns": {
+            "title": "Tens and ones columns",
+            "lead": "Place the numbers in columns: tens under tens, ones under ones. Then add them separately.",
+            "caption": "First the tens, then the ones. The answer is built from both columns.",
+            "tensLabel": "Tens",
+            "onesLabel": "Ones"
+          },
+          "abacus": {
+            "title": "Abacus",
+            "lead": "The abacus helps move the beads: tens and ones separately, then read the sum.",
+            "caption": "The beads move toward one shared sum.",
+            "tensChip": "Tens",
+            "onesChip": "Ones",
+            "sumChip": "Sum"
+          }
+        },
+        "remember": {
+          "rules": {
+            "title": "Addition rules",
+            "orderChip": "Order: 3 + 5 = 5 + 3",
+            "zeroChip": "Adding 0: 7 + 0 = 7",
+            "startChip": "Start with the bigger number",
+            "groupChip": "Group to 10",
+            "pairsTitle": "Pairs to 10",
+            "pairsText": "Look for pairs: 6 + 4 = 10",
+            "doublesTitle": "Doubles",
+            "doublesText": "Doubles give a quick answer: 5 + 5 = 10",
+            "groupingTitle": "Grouping",
+            "groupingText": "(2 + 3) + 4 = 2 + (3 + 4)",
+            "pathTitle": "Path",
+            "pathStep1Title": "Find pairs to 10",
+            "pathStep1Text": "6 + 4, 7 + 3, 8 + 2",
+            "pathStep2Title": "Use doubles",
+            "pathStep2Text": "5 + 5, 6 + 6",
+            "pathStep3Title": "Group numbers",
+            "pathStep3Text": "Start with the easier sum"
+          },
+          "commutative": {
+            "title": "Swap the addends",
+            "label": "Swap the addends",
+            "description": "Swap the order and compare the answer.",
+            "caption": "Change the order and the answer stays the same."
+          },
+          "associative": {
+            "title": "Brackets and grouping",
+            "bracketsLabel": "Brackets",
+            "groupingLabel": "grouping",
+            "description": "See that different grouping gives the same answer.",
+            "caption": "Group numbers so they are easier to add."
+          },
+          "zero": {
+            "title": "Zero = no change",
+            "zeroLabel": "Zero",
+            "noChangeLabel": "no change",
+            "description": "Add zero and see what happens.",
+            "caption": "Adding 0 does not change the answer."
+          },
+          "makeTen": {
+            "title": "Make 10",
+            "label": "Make 10",
+            "description": "Look for pairs that make 10.",
+            "caption": "Look for pairs that make 10."
+          },
+          "doubles": {
+            "title": "Doubles",
+            "label": "Doubles",
+            "description": "Repeat the same number and count faster.",
+            "caption": "Repeat the same number for a quick answer."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Ball game!"
+      },
+      "synthesis": {
+        "stageTitle": "Addition synthesis"
+      }
+    },
+    "subtracting": {
+      "lessonTitle": "Subtraction",
+      "sections": {
+        "basics": {
+          "title": "Subtraction basics",
+          "description": "What is subtraction? Single-digit subtraction"
+        },
+        "crossTen": {
+          "title": "Subtracting across 10",
+          "description": "Break through 10"
+        },
+        "doubleDigit": {
+          "title": "Two-digit subtraction",
+          "description": "Tens and ones separately"
+        },
+        "remember": {
+          "title": "Remember!",
+          "description": "Subtraction rules"
+        },
+        "game": {
+          "title": "Subtraction game",
+          "description": "Drag and remove objects"
+        }
+      },
+      "animations": {
+        "subtractingSvg": {
+          "ariaLabel": "Subtraction animation: 5 dots minus 2 dots leaves 3 dots."
+        },
+        "numberLine": {
+          "ariaLabel": "Number line animation: 13 minus 5 as jumps to 10 and beyond."
+        },
+        "tenFrame": {
+          "ariaLabel": "Ten-frame animation: subtracting 13 minus 5."
+        },
+        "differenceBar": {
+          "ariaLabel": "Difference animation: 12 minus 7 leaves 5.",
+          "differenceLabel": "difference 5"
+        },
+        "abacus": {
+          "ariaLabel": "Abacus animation: subtracting tens and ones separately.",
+          "tensLabel": "Tens",
+          "onesLabel": "Ones",
+          "startLabel": "Start",
+          "subtractLabel": "Subtract",
+          "resultLabel": "Result"
+        }
+      },
+      "slides": {
+        "basics": {
+          "meaning": {
+            "title": "What does it mean to subtract?",
+            "lead": "Subtraction means taking a part away from a group. We ask: how many are left?"
+          },
+          "singleDigit": {
+            "title": "Single-digit subtraction",
+            "lead": "Move back on the number line or count how much is missing to reach the answer.",
+            "step1": "Start at 9",
+            "step2": "Move back 4 steps: 8, 7, 6, 5",
+            "step3": "The last number is the answer: 5 ✓"
+          },
+          "motion": {
+            "title": "Subtraction in motion (SVG)",
+            "lead": "The animation shows how we take some dots away and the answer stays behind.",
+            "caption": "Two dots move away, three stay."
+          }
+        },
+        "crossTen": {
+          "overTen": {
+            "title": "Subtracting across 10",
+            "lead": "Split the subtrahend into two parts: first move down to 10, then subtract the rest.",
+            "caption": "13 − 3 = 10, 10 − 2 = 8 ✓",
+            "step1Title": "Step 1",
+            "step1Text": "Split 5 into 3 + 2",
+            "step2Title": "Step 2",
+            "step2Text": "Subtract 3: 13 − 3 = 10",
+            "step3Title": "Step 3",
+            "step3Text": "Subtract 2: 10 − 2 = 8"
+          },
+          "numberLine": {
+            "title": "Backward jumps on the number line",
+            "lead": "First go to 10, then keep moving back.",
+            "caption": "13 − 3 = 10, then 10 − 2 = 8."
+          },
+          "tenFrame": {
+            "title": "Ten frame",
+            "lead": "Take away the part above 10 first, then the rest from the frame.",
+            "caption": "First remove 3, then 2 more."
+          }
+        },
+        "doubleDigit": {
+          "intro": {
+            "title": "Two-digit subtraction",
+            "lead": "Subtract tens and ones separately!",
+            "tensLabel": "Tens",
+            "onesLabel": "Ones"
+          },
+          "abacus": {
+            "title": "Abacus",
+            "lead": "The abacus shows subtracting tens and ones separately.",
+            "caption": "Take the beads away, then read the answer."
+          }
+        },
+        "remember": {
+          "rules": {
+            "title": "Subtraction rules",
+            "orderChip": "Order matters: 7 − 3 ≠ 3 − 7",
+            "zeroChip": "Subtracting 0: 8 − 0 = 8",
+            "checkChip": "Check with addition: 5 + 3 = 8",
+            "breakChip": "Break it into steps: 13 − 5 = 10 − 2",
+            "stepBackTitle": "Move back in steps",
+            "stepBackLead": "Start with the bigger number: 9 − 4",
+            "stepBackPath": "9 -> 8 -> 7 -> 6 -> 5",
+            "checkTitle": "Check with addition",
+            "checkLead": "If answer + subtrahend equals the starting number, it is correct.",
+            "checkEquation": "5 + 3 = 8",
+            "orderTitle": "Order matters",
+            "orderLead": "7 − 3 is not the same as 3 − 7.",
+            "motionTitle": "Subtraction in motion",
+            "motionLead": "You take a part away and watch what is left.",
+            "motionCaption": "Two dots move away, three stay.",
+            "pathTitle": "Path",
+            "pathStep1Title": "Split the subtrahend",
+            "pathStep1Text": "5 = 3 + 2",
+            "pathStep2Title": "Go down to 10",
+            "pathStep2Text": "13 − 3 = 10",
+            "pathStep3Title": "Subtract the rest",
+            "pathStep3Text": "10 − 2 = 8",
+            "pathStep4Title": "Check with addition",
+            "pathStep4Text": "8 + 5 = 13"
+          },
+          "backJumps": {
+            "title": "Backward jumps",
+            "label": "Jumps on the line",
+            "lead": "Move back in two steps: to 10, then farther.",
+            "caption": "13 − 5 = 8."
+          },
+          "tenFrame": {
+            "title": "Ten frame",
+            "label": "Ten frame",
+            "lead": "First remove the part above 10, then the rest from the frame.",
+            "caption": "13 − 5 = 8."
+          },
+          "checkAddition": {
+            "title": "Check the answer with addition",
+            "label": "Checking",
+            "lead": "Add the subtrahend to the answer and see if you return to the starting number.",
+            "caption": "If addition matches, the subtraction is correct."
+          },
+          "difference": {
+            "title": "Difference between numbers",
+            "label": "Difference",
+            "lead": "Compare two numbers and see how much is missing to the larger one.",
+            "caption": "The difference is the missing part."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Subtraction game!"
+      }
     }
   }
 }

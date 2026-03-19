@@ -263,7 +263,14 @@ export function LessonsCatalog() {
           onBack={handleGoBack}
           testId='lessons-list-intro-card'
           title={lessonListIntroContent?.title ?? translations('pageTitle')}
-          visualTitle={<KangurLessonsWordmark className='mx-auto' data-testid='kangur-lessons-heading-art' />}
+          visualTitle={
+            <KangurLessonsWordmark
+              className='mx-auto'
+              data-testid='kangur-lessons-heading-art'
+              label={lessonListIntroContent?.title ?? translations('pageTitle')}
+              locale={locale}
+            />
+          }
         />
       </div>
       {isDeferredContentReady && (

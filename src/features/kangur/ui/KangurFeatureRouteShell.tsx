@@ -15,45 +15,15 @@ import {
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeaturePageShell } from '@/features/kangur/ui/KangurFeaturePage';
 import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives';
+import {
+  getKangurSlugFromPathname,
+} from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 import type { CSSProperties, JSX } from 'react';
-
-const getSlugFromPathname = (
-  pathname: string | null,
-  normalizedBasePath: string
-): string[] => {
-  const resolvedPathname = pathname?.trim() || normalizedBasePath;
-  const withoutQuery = resolvedPathname.split('?')[0] ?? resolvedPathname;
-  const normalizedPathname = withoutQuery.replace(/\/+$/, '') || '/';
-
-  if (normalizedBasePath === '/') {
-    return normalizedPathname
-      .split('/')
-      .map((segment) => segment.trim())
-      .filter(Boolean);
-  }
-
-  if (
-    normalizedPathname === normalizedBasePath ||
-    normalizedPathname === `${normalizedBasePath}/`
-  ) {
-    return [];
-  }
-
-  if (!normalizedPathname.startsWith(`${normalizedBasePath}/`)) {
-    return [];
-  }
-
-  return normalizedPathname
-    .slice(normalizedBasePath.length + 1)
-    .split('/')
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-};
 
 export function KangurFeatureRouteShell({
   basePath = KANGUR_BASE_PATH,
@@ -73,7 +43,7 @@ export function KangurFeatureRouteShell({
   const classOverrides = useKangurClassOverrides();
   const routeShellClassOverride = classOverrides.components['kangur-feature-route-shell']?.['root'];
   const slug = useMemo(
-    () => getSlugFromPathname(pathname, normalizedBasePath),
+    () => getKangurSlugFromPathname(pathname, normalizedBasePath),
     [normalizedBasePath, pathname]
   );
   const activeSlug = slug[0] ?? null;

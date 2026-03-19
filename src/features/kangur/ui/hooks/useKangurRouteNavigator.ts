@@ -5,17 +5,18 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   KANGUR_BASE_PATH,
-  normalizeKangurBasePath,
-  resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
 import {
   useOptionalKangurRouteTransitionActions,
   useOptionalKangurRouteTransitionState,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  isManagedLocalHref,
+  normalizeManagedKangurPathname,
+  resolveManagedKangurPageKeyFromHref,
+} from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-
-
 type KangurRouteNavigationOptions = {
   pageKey?: string | null;
   scroll?: boolean;
@@ -31,23 +32,6 @@ type KangurBackNavigationOptions = Pick<
   fallbackPageKey?: string | null;
 };
 
-const isManagedLocalHref = (href: string): boolean => href.startsWith('/') && !href.startsWith('//');
-
-const normalizeManagedPathname = (pathname: string | null | undefined): string | null => {
-  if (typeof pathname !== 'string') {
-    return null;
-  }
-
-  const trimmed = pathname.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const withoutQuery = trimmed.split('?')[0] ?? trimmed;
-  const normalized = withoutQuery.replace(/\/+$/, '') || '/';
-  return normalized;
-};
-
 const getManagedPathnameFromHref = (href: string): string | null => {
   return withKangurClientErrorSync(
     {
@@ -56,72 +40,8 @@ const getManagedPathnameFromHref = (href: string): string | null => {
       description: 'Parses managed Kangur hrefs into normalized pathnames.',
       context: { href },
     },
-    () => normalizeManagedPathname(new URL(href, 'https://kangur.local').pathname),
-    { fallback: normalizeManagedPathname(href) }
-  );
-};
-
-const getSlugFromPathname = (
-  pathname: string | null,
-  normalizedBasePath: string
-): string[] => {
-  const resolvedPathname = pathname?.trim() || normalizedBasePath;
-  const withoutQuery = resolvedPathname.split('?')[0] ?? resolvedPathname;
-  const normalizedPathname = withoutQuery.replace(/\/+$/, '') || '/';
-
-  if (normalizedBasePath === '/') {
-    return normalizedPathname
-      .split('/')
-      .map((segment) => segment.trim())
-      .filter(Boolean);
-  }
-
-  if (
-    normalizedPathname === normalizedBasePath ||
-    normalizedPathname === `${normalizedBasePath}/`
-  ) {
-    return [];
-  }
-
-  if (!normalizedPathname.startsWith(`${normalizedBasePath}/`)) {
-    return [];
-  }
-
-  return normalizedPathname
-    .slice(normalizedBasePath.length + 1)
-    .split('/')
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-};
-
-const resolveManagedPageKeyFromHref = (href: string, basePath: string): string | null => {
-  if (!isManagedLocalHref(href)) {
-    return null;
-  }
-
-  return withKangurClientErrorSync(
-    {
-      source: 'kangur.routing',
-      action: 'resolve-page-key',
-      description: 'Resolves the Kangur page key from a managed href.',
-      context: { href, basePath },
-    },
-    () => {
-      const parsed = new URL(href, 'https://kangur.local');
-      const normalizedBasePath = normalizeKangurBasePath(basePath);
-
-      if (
-        normalizedBasePath !== '/' &&
-        parsed.pathname !== normalizedBasePath &&
-        !parsed.pathname.startsWith(`${normalizedBasePath}/`)
-      ) {
-        return null;
-      }
-
-      const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
-      return resolveKangurPageKeyFromSlug(slug[0] ?? null);
-    },
-    { fallback: null }
+    () => normalizeManagedKangurPathname(new URL(href, 'https://kangur.local').pathname),
+    { fallback: normalizeManagedKangurPathname(href) }
   );
 };
 
@@ -157,8 +77,8 @@ export function useKangurRouteNavigator(): {
       }
 
       const targetPathname = href ? getManagedPathnameFromHref(href) : null;
-      const currentPathname = normalizeManagedPathname(pathname);
-      const normalizedRequestedHref = normalizeManagedPathname(requestedHref);
+      const currentPathname = normalizeManagedKangurPathname(pathname);
+      const normalizedRequestedHref = normalizeManagedKangurPathname(requestedHref);
 
       if (
         href &&
@@ -189,7 +109,7 @@ export function useKangurRouteNavigator(): {
       }
 
       const resolvedPageKey =
-        pageKey ?? (href ? resolveManagedPageKeyFromHref(href, basePath) : null);
+        pageKey ?? (href ? resolveManagedKangurPageKeyFromHref(href, basePath) : null);
       const transitionResult = routeTransitionActions.startRouteTransition({
         ...(href ? { href } : {}),
         ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),

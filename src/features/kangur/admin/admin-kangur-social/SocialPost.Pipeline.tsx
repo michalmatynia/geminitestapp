@@ -8,17 +8,21 @@ export function SocialPostPipeline({
   activePostId,
   pipelineStep,
   handleRunFullPipeline,
+  canRunPipeline,
+  pipelineBlockedReason,
 }: {
   activePostId: string | null;
   pipelineStep: 'idle' | 'loading_context' | 'capturing' | 'saving' | 'generating' | 'previewing' | 'done' | 'error';
   handleRunFullPipeline: () => Promise<void>;
+  canRunPipeline: boolean;
+  pipelineBlockedReason: string | null;
 }) {
   const isPipelineActive = pipelineStep !== 'idle' && pipelineStep !== 'done' && pipelineStep !== 'error';
 
   return (
     <FormSection
       title='Automation Pipeline'
-      description='Run the full capture → analysis → draft generation sequence.'
+      description='Queue the full server-side capture → analysis → draft generation sequence.'
       variant='subtle'
       className='p-4 border-primary/20 bg-primary/5'
       actions={
@@ -26,7 +30,7 @@ export function SocialPostPipeline({
           type='button'
           size='sm'
           onClick={() => void handleRunFullPipeline()}
-          disabled={!activePostId || isPipelineActive}
+          disabled={!activePostId || isPipelineActive || !canRunPipeline}
           className='gap-2 shadow-lg shadow-primary/20'
         >
           <Sparkles className={cn('h-4 w-4', isPipelineActive && 'animate-pulse')} />
@@ -84,8 +88,13 @@ export function SocialPostPipeline({
           })}
         </div>
         <p className='text-xs text-muted-foreground italic text-center'>
-          Automates the standard StudiQ social update workflow in one click.
+          Runs the standard StudiQ social update workflow as a server queue job.
         </p>
+        {!canRunPipeline && pipelineBlockedReason ? (
+          <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
+            {pipelineBlockedReason}
+          </div>
+        ) : null}
       </div>
     </FormSection>
   );

@@ -125,7 +125,6 @@ import {
   KANGUR_AI_TUTOR_SETTINGS_KEY,
 } from '@/features/kangur/settings-ai-tutor';
 import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
-import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 
 const expectInitialNarratorProbe = async (): Promise<void> => {
   await waitFor(() =>
@@ -219,9 +218,6 @@ describe('AdminKangurSettingsPage', () => {
       }
       if (key === KANGUR_PARENT_VERIFICATION_SETTINGS_KEY) {
         return JSON.stringify({ resendCooldownSeconds: 90 });
-      }
-      if (key === KANGUR_THEME_SETTINGS_KEY) {
-        return undefined;
       }
       return undefined;
     });

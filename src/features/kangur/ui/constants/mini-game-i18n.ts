@@ -1,10 +1,13 @@
-export type KangurMiniGameTranslate = (key: string, values?: Record<string, any>) => string;
+export type KangurMiniGameTranslate = (
+  key: string,
+  values?: Record<string, string | number | boolean | null>
+) => string;
 
 export const translateKangurMiniGameWithFallback = (
   translate: KangurMiniGameTranslate | undefined,
   key: string,
   fallback: string,
-  values?: Record<string, any>
+  values?: Record<string, string | number | boolean | null>
 ): string => {
   if (!translate) {
     return fallback;

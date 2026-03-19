@@ -17,8 +17,19 @@ type PipelineStatus = QueueHealthStatus & {
 type PipelineJobRecord = {
   id: string;
   status: string;
-  data: unknown;
+  data:
+    | {
+        type?: string;
+        input?: {
+          postId?: string | null;
+          docReferenceCount?: number;
+          imageAddonCount?: number;
+        };
+      }
+    | unknown;
   result: {
+    type?: string;
+    postId?: string | null;
     skipped?: boolean;
     reason?: string;
     addonsCreated?: number;
@@ -44,6 +55,7 @@ export function KangurSocialPipelineQueuePanel({
   const [loading, setLoading] = useState(false);
   const [triggering, setTriggering] = useState(false);
   const [togglingPause, setTogglingPause] = useState(false);
+  const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -103,9 +115,38 @@ export function KangurSocialPipelineQueuePanel({
     }
   }, [status?.isPaused, fetchData]);
 
+  const handleDeleteJob = useCallback(
+    async (jobId: string) => {
+      if (
+        !window.confirm(
+          'Delete this StudiQ Social pipeline job from the queue history? This cannot be undone.'
+        )
+      ) {
+        return;
+      }
+
+      setDeletingJobId(jobId);
+      setError(null);
+      try {
+        await api.delete('/api/kangur/social-pipeline/jobs', {
+          params: { id: jobId },
+        });
+        await fetchData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete pipeline job.');
+      } finally {
+        setDeletingJobId(null);
+      }
+    },
+    [fetchData]
+  );
+
   const isHealthy = status?.healthy ?? false;
   const isRunning = status?.running ?? false;
   const isPaused = status?.isPaused ?? false;
+  const hasActiveServerRun =
+    isRunning &&
+    ((status?.processing ?? false) || (status?.activeCount ?? 0) > 0);
   const isLoadingStatus = loading && !status;
 
   const lastPollLabel = useMemo(() => {
@@ -147,12 +188,12 @@ export function KangurSocialPipelineQueuePanel({
             ) : null}
           </div>
           <div className='flex items-center gap-1.5'>
-            {isRunning ? (
+            {!isPaused && !hasActiveServerRun ? (
               <Button
                 size='xs'
                 variant='outline'
                 onClick={() => void handleTrigger()}
-                disabled={triggering || isPaused}
+                disabled={triggering}
                 aria-label='Run pipeline now'
                 className='gap-1 text-[10px]'
               >
@@ -219,17 +260,19 @@ export function KangurSocialPipelineQueuePanel({
                 )}
               </Button>
             ) : null}
-            <Button
-              size='xs'
-              variant='outline'
-              onClick={() => void handleTrigger()}
-              disabled={triggering || !isRunning || isPaused}
-              aria-label='Run pipeline now'
-              className='gap-1.5'
-            >
-              <PlayIcon className='size-3' />
-              {triggering ? 'Triggering...' : 'Run Now'}
-            </Button>
+            {!isPaused && !hasActiveServerRun ? (
+              <Button
+                size='xs'
+                variant='outline'
+                onClick={() => void handleTrigger()}
+                disabled={triggering}
+                aria-label='Run pipeline now'
+                className='gap-1.5'
+              >
+                <PlayIcon className='size-3' />
+                {triggering ? 'Triggering...' : 'Run Now'}
+              </Button>
+            ) : null}
             <Button
               size='xs'
               variant='ghost'
@@ -301,6 +344,7 @@ export function KangurSocialPipelineQueuePanel({
               <thead>
                 <tr className='border-b border-border/40 text-left text-muted-foreground'>
                   <th className='pb-1.5 pr-3 font-medium'>Status</th>
+                  <th className='pb-1.5 pr-3 font-medium'>Job</th>
                   <th className='pb-1.5 pr-3 font-medium'>Addons</th>
                   <th className='pb-1.5 pr-3 font-medium'>Failures</th>
                   <th className='pb-1.5 pr-3 font-medium'>Duration</th>
@@ -309,7 +353,12 @@ export function KangurSocialPipelineQueuePanel({
               </thead>
               <tbody>
                 {jobs.slice(0, 20).map((job) => (
-                  <JobRow key={job.id} job={job} />
+                  <JobRow
+                    key={job.id}
+                    job={job}
+                    deleting={deletingJobId === job.id}
+                    onDeleteJob={handleDeleteJob}
+                  />
                 ))}
               </tbody>
             </table>
@@ -335,7 +384,15 @@ function StatusCard({ label, value }: { label: string; value: number }): React.J
   );
 }
 
-function JobRow({ job }: { job: PipelineJobRecord }): React.JSX.Element {
+function JobRow({
+  job,
+  deleting,
+  onDeleteJob,
+}: {
+  job: PipelineJobRecord;
+  deleting: boolean;
+  onDeleteJob: (jobId: string) => Promise<void>;
+}): React.JSX.Element {
   const statusVariant =
     job.status === 'completed'
       ? 'secondary'
@@ -348,6 +405,13 @@ function JobRow({ job }: { job: PipelineJobRecord }): React.JSX.Element {
   const statusLabel = job.result?.skipped
     ? `skipped (${job.result.reason ?? '?'})`
     : job.status;
+  const isManualRun = (job.data as { type?: string } | null)?.type === 'manual-post-pipeline';
+  const postId =
+    (job.data as { input?: { postId?: string | null } } | null)?.input?.postId ??
+    job.result?.postId ??
+    null;
+  const jobLabel = isManualRun ? 'Manual post pipeline' : 'Scheduled pipeline tick';
+  const jobMeta = isManualRun && postId ? `Post ${postId}` : null;
 
   const durationLabel =
     job.duration != null ? `${(job.duration / 1000).toFixed(1)}s` : '---';
@@ -357,6 +421,7 @@ function JobRow({ job }: { job: PipelineJobRecord }): React.JSX.Element {
     : job.status === 'active'
       ? 'Running...'
       : '---';
+  const canDelete = job.status === 'completed' || job.status === 'failed';
 
   return (
     <tr className='border-b border-border/20'>
@@ -364,6 +429,12 @@ function JobRow({ job }: { job: PipelineJobRecord }): React.JSX.Element {
         <Badge variant={statusVariant} className='text-[10px]'>
           {statusLabel}
         </Badge>
+      </td>
+      <td className='py-1.5 pr-3'>
+        <div className='font-medium text-foreground'>{jobLabel}</div>
+        {jobMeta ? (
+          <div className='text-[10px] text-muted-foreground'>{jobMeta}</div>
+        ) : null}
       </td>
       <td className='py-1.5 pr-3 tabular-nums'>
         {job.result?.addonsCreated ?? '---'}
@@ -378,6 +449,22 @@ function JobRow({ job }: { job: PipelineJobRecord }): React.JSX.Element {
           <span className='ml-2 text-destructive' title={job.failedReason}>
             {job.failedReason.slice(0, 60)}
           </span>
+        ) : null}
+        {canDelete ? (
+          <div className='mt-2'>
+            <Button
+              size='xs'
+              variant='ghost'
+              onClick={() => {
+                void onDeleteJob(job.id);
+              }}
+              disabled={deleting}
+              aria-label={`Delete pipeline job ${job.id}`}
+              className='h-auto px-0 text-[10px] text-destructive hover:text-destructive'
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
         ) : null}
       </td>
     </tr>

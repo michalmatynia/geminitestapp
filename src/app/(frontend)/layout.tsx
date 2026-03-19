@@ -2,6 +2,7 @@ import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(fr
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { getCmsThemeSettings } from '@/features/cms/server';
 import { getKangurStorefrontDefaultMode } from '@/features/kangur/server/storefront-appearance';
+import { FrontendPublicOwnerProvider } from '@/features/kangur/ui/FrontendPublicOwnerContext';
 import FrontendPublicOwnerShellClient from '@/features/kangur/ui/FrontendPublicOwnerShellClient';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
@@ -32,14 +33,16 @@ export default async function FrontendLayout({
       className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
     >
       <CmsStorefrontAppearanceProvider initialMode={storefrontAppearanceMode}>
-        <QueryErrorBoundary>
-          <FrontendPublicOwnerShellClient
-            publicOwner={publicOwner}
-            kangurInitialMode={kangurInitialMode}
-          >
-            {children}
-          </FrontendPublicOwnerShellClient>
-        </QueryErrorBoundary>
+        <FrontendPublicOwnerProvider publicOwner={publicOwner}>
+          <QueryErrorBoundary>
+            <FrontendPublicOwnerShellClient
+              publicOwner={publicOwner}
+              kangurInitialMode={kangurInitialMode}
+            >
+              {children}
+            </FrontendPublicOwnerShellClient>
+          </QueryErrorBoundary>
+        </FrontendPublicOwnerProvider>
       </CmsStorefrontAppearanceProvider>
     </main>
   );

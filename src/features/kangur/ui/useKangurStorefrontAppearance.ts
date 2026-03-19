@@ -9,7 +9,6 @@ import {
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
   resolveKangurThemeSettingsRawForMode,
-  KANGUR_THEME_SETTINGS_KEY,
   parseKangurThemeSettings,
   resolveKangurDefaultThemeForMode,
 } from '@/features/kangur/theme-settings';
@@ -25,7 +24,6 @@ export const useKangurStorefrontAppearance = () => {
     dawnThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dawn')),
     sunsetThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('sunset')),
     nightlyThemeRaw: settingsStore.get(getKangurThemeSettingsKeyForAppearanceMode('dark')),
-    legacyThemeRaw: settingsStore.get(KANGUR_THEME_SETTINGS_KEY),
   });
   const fallbackTheme = useMemo(() => resolveKangurDefaultThemeForMode(mode), [mode]);
   const theme = useMemo(

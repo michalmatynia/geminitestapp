@@ -20,7 +20,19 @@ vi.mock('@/features/kangur/lessons/lesson-ui-registry', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
-  KangurActiveLessonHeader: () => <div data-testid='mock-active-lesson-header' />,
+  KangurActiveLessonHeader: ({
+    onBack,
+    headerTestId = 'mock-active-lesson-header',
+  }: {
+    onBack: () => void;
+    headerTestId?: string;
+  }) => (
+    <div data-testid={headerTestId}>
+      <button type='button' onClick={onBack}>
+        Wroc do listy lekcji
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
@@ -90,21 +102,26 @@ const nextLesson = {
 };
 
 describe('ActiveLessonView mobile scroll controls', () => {
+  let activeLessonContentRef: React.RefObject<HTMLDivElement>;
+  let handleSelectLesson: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
+    activeLessonContentRef = React.createRef<HTMLDivElement>();
+    handleSelectLesson = vi.fn();
 
     useLessonsMock.mockReturnValue({
       activeLesson,
-      handleSelectLesson: vi.fn(),
+      handleSelectLesson,
       lessonDocuments: {},
       lessonAssignmentsByComponent: new Map(),
       completedLessonAssignmentsByComponent: new Map(),
       setIsActiveLessonComponentReady: vi.fn(),
       activeLessonHeaderRef: React.createRef<HTMLDivElement>(),
       activeLessonNavigationRef: React.createRef<HTMLDivElement>(),
-      activeLessonContentRef: React.createRef<HTMLDivElement>(),
+      activeLessonContentRef,
       activeLessonScrollRef: React.createRef<HTMLDivElement>(),
       orderedLessons: [activeLesson, nextLesson],
       isSecretLessonActive: false,
@@ -170,5 +187,36 @@ describe('ActiveLessonView mobile scroll controls', () => {
 
     expect(document.documentElement.style.overflow).toBe('');
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('returns through lesson back button when present in content', async () => {
+    const { rerender } = render(<ActiveLessonView />);
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+    rerender(<ActiveLessonView />);
+
+    await act(async () => {});
+    const inContentBackButton = document.createElement('button');
+    inContentBackButton.type = 'button';
+    inContentBackButton.dataset.kangurLessonBack = 'true';
+    const inContentBackClick = vi.fn();
+    inContentBackButton.addEventListener('click', inContentBackClick);
+    activeLessonContentRef.current?.appendChild(inContentBackButton);
+
+    const headerBackButton = screen.getByRole('button', { name: 'Wroc do listy lekcji' });
+    fireEvent.click(headerBackButton);
+
+    expect(inContentBackClick).toHaveBeenCalledTimes(1);
+    expect(handleSelectLesson).not.toHaveBeenCalled();
+  });
+
+  it('falls back to listing lesson when no in-content back button is available', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+    render(<ActiveLessonView />);
+    await act(async () => {});
+
+    const headerBackButton = screen.getByRole('button', { name: 'Wroc do listy lekcji' });
+    fireEvent.click(headerBackButton);
+
+    expect(handleSelectLesson).toHaveBeenCalledWith(null);
   });
 });

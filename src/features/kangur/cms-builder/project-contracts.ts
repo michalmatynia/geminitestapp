@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/shared/contracts/kangur';
 import {
   cmsPageComponentInputSchema,
   type PageComponentInput,
@@ -8,7 +7,6 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export const KANGUR_CMS_PROJECT_SETTING_KEY = 'kangur_cms_project_v1';
-export const KANGUR_CMS_THEME_SETTINGS_KEY = KANGUR_THEME_SETTINGS_KEY;
 
 export const KANGUR_CMS_SCREEN_KEYS = [
   'Game',

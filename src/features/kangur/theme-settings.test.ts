@@ -81,7 +81,7 @@ describe('parseKangurThemeSettings', () => {
     });
   });
 
-  it('uses legacy theme settings only when no slot themes exist', () => {
+  it('returns null when no slot theme exists for the active appearance mode', () => {
     expect(
       resolveKangurThemeSettingsRawForMode({
         mode: 'default',
@@ -89,9 +89,8 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: null,
         sunsetThemeRaw: null,
         nightlyThemeRaw: null,
-        legacyThemeRaw: 'legacy-theme',
       })
-    ).toBe('legacy-theme');
+    ).toBeNull();
 
     expect(
       resolveKangurThemeSettingsRawForMode({
@@ -100,12 +99,11 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: null,
         sunsetThemeRaw: null,
         nightlyThemeRaw: null,
-        legacyThemeRaw: 'legacy-theme',
       })
-    ).toBe('legacy-theme');
+    ).toBeNull();
   });
 
-  it('does not fall back to legacy theme once any slot theme exists', () => {
+  it('does not reuse other slot themes when the active slot is missing', () => {
     expect(
       resolveKangurThemeSettingsRawForMode({
         mode: 'default',
@@ -113,7 +111,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: null,
         sunsetThemeRaw: null,
         nightlyThemeRaw: 'nightly-theme',
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBeNull();
   });
@@ -126,7 +123,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: 'dawn-theme',
         sunsetThemeRaw: 'sunset-theme',
         nightlyThemeRaw: 'nightly-theme',
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBe('daily-theme');
 
@@ -137,7 +133,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: 'dawn-theme',
         sunsetThemeRaw: 'sunset-theme',
         nightlyThemeRaw: 'nightly-theme',
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBe('dawn-theme');
 
@@ -148,7 +143,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: 'dawn-theme',
         sunsetThemeRaw: 'sunset-theme',
         nightlyThemeRaw: 'nightly-theme',
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBe('sunset-theme');
 
@@ -159,7 +153,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: 'dawn-theme',
         sunsetThemeRaw: 'sunset-theme',
         nightlyThemeRaw: 'nightly-theme',
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBe('nightly-theme');
   });
@@ -172,7 +165,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: null,
         sunsetThemeRaw: null,
         nightlyThemeRaw: null,
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBeNull();
 
@@ -183,12 +175,11 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: 'dawn-theme',
         sunsetThemeRaw: null,
         nightlyThemeRaw: null,
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBeNull();
   });
 
-  it('prefers slot themes over legacy payloads when both exist', () => {
+  it('uses the active slot theme when that slot is configured', () => {
     expect(
       resolveKangurThemeSettingsRawForMode({
         mode: 'default',
@@ -196,7 +187,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: null,
         sunsetThemeRaw: null,
         nightlyThemeRaw: null,
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBe('daily-theme');
 
@@ -207,7 +197,6 @@ describe('parseKangurThemeSettings', () => {
         dawnThemeRaw: null,
         sunsetThemeRaw: null,
         nightlyThemeRaw: 'nightly-theme',
-        legacyThemeRaw: 'legacy-theme',
       })
     ).toBe('nightly-theme');
   });

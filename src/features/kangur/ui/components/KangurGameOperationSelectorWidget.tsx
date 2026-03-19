@@ -765,6 +765,11 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       }),
     [locale, normalizedProgress, runtimeTranslations, trainingSetupTranslations]
   );
+  const operationSelectorTitle = translateRecommendationWithFallback(
+    gamePageTranslations,
+    'operationSelector.title',
+    'Grajmy!'
+  );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
   const lessonQuizOptions = useMemo<LessonQuizOption[]>(() => {
@@ -961,16 +966,14 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
         headingSize='lg'
         onBack={handleHome}
         testId='kangur-game-operation-top-section'
-        title={translateRecommendationWithFallback(
-          gamePageTranslations,
-          'operationSelector.title',
-          'Grajmy!'
-        )}
+        title={operationSelectorTitle}
         visualTitle={
           <KangurGrajmyWordmark
             className='mx-auto'
             data-testid='kangur-grajmy-heading-art'
             idPrefix='kangur-game-operation-heading'
+            label={operationSelectorTitle}
+            locale={locale}
           />
         }
       />

@@ -341,6 +341,30 @@ describe('KangurFeatureApp', () => {
     expect(screen.queryByTestId('kangur-page-transition-skeleton')).toBeNull();
   });
 
+  it('shows the page skeleton immediately during the language-switch acknowledgement phase', () => {
+    routeTransitionStateMock.mockReturnValue({
+      isRouteAcknowledging: true,
+      isRoutePending: false,
+      isRouteWaitingForReady: false,
+      isRouteRevealing: false,
+      transitionPhase: 'acknowledging',
+      activeTransitionSourceId: 'kangur-language-switcher',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/en/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      pendingPageKey: null,
+      startRouteTransition: vi.fn(),
+      markRouteTransitionReady: vi.fn(),
+    });
+
+    render(<KangurFeatureApp />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
+      'Lessons:lessons-library'
+    );
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none', 'opacity-0');
+  });
+
   it('shows the page skeleton immediately once a button-led route handoff becomes pending', () => {
     routeTransitionStateMock.mockReturnValue({
       isRouteAcknowledging: false,

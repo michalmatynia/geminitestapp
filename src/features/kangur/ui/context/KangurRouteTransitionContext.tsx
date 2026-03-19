@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -328,10 +327,7 @@ export function KangurRouteTransitionProvider({
         phase: requestedAcknowledgeMs > 0 ? 'acknowledging' : 'pending',
       };
 
-      transitionStateRef.current = nextState;
-      startTransition(() => {
-        setTransitionState(nextState);
-      });
+      setNextTransitionState(nextState);
 
       if (requestedAcknowledgeMs > 0 && typeof window !== 'undefined') {
         acknowledgementTimeoutRef.current = window.setTimeout(() => {

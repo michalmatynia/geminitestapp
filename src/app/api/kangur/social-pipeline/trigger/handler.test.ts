@@ -1,0 +1,128 @@
+import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+
+const {
+  enqueueKangurSocialPipelineJobMock,
+  recoverKangurSocialPipelineQueueMock,
+  resolveKangurActorMock,
+  startKangurSocialPipelineQueueMock,
+  isRedisAvailableMock,
+} = vi.hoisted(() => ({
+  enqueueKangurSocialPipelineJobMock: vi.fn(),
+  recoverKangurSocialPipelineQueueMock: vi.fn(),
+  resolveKangurActorMock: vi.fn(),
+  startKangurSocialPipelineQueueMock: vi.fn(),
+  isRedisAvailableMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/services/kangur-actor', () => ({
+  resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
+}));
+
+vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+  enqueueKangurSocialPipelineJob: (...args: unknown[]) =>
+    enqueueKangurSocialPipelineJobMock(...args),
+  recoverKangurSocialPipelineQueue: (...args: unknown[]) =>
+    recoverKangurSocialPipelineQueueMock(...args),
+  startKangurSocialPipelineQueue: (...args: unknown[]) =>
+    startKangurSocialPipelineQueueMock(...args),
+}));
+
+vi.mock('@/shared/lib/queue', () => ({
+  isRedisAvailable: (...args: unknown[]) => isRedisAvailableMock(...args),
+}));
+
+import { POST_handler } from './handler';
+
+const createContext = (body?: Record<string, unknown>): ApiHandlerContext =>
+  ({
+    requestId: 'request-social-pipeline-trigger-1',
+    traceId: 'trace-social-pipeline-trigger-1',
+    correlationId: 'corr-social-pipeline-trigger-1',
+    startTime: Date.now(),
+    getElapsedMs: () => 1,
+    body,
+  }) as ApiHandlerContext;
+
+describe('social pipeline trigger handler', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resolveKangurActorMock.mockResolvedValue({
+      role: 'admin',
+      actorId: 'admin-1',
+    });
+    recoverKangurSocialPipelineQueueMock.mockResolvedValue([]);
+    enqueueKangurSocialPipelineJobMock.mockResolvedValue('job-123');
+    isRedisAvailableMock.mockReturnValue(true);
+  });
+
+  it('recovers stale jobs, starts the worker, and enqueues the scheduled tick job by default', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext()
+    );
+
+    expect(recoverKangurSocialPipelineQueueMock).toHaveBeenCalledTimes(1);
+    expect(startKangurSocialPipelineQueueMock).toHaveBeenCalledTimes(1);
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'pipeline-tick',
+    });
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'pipeline-tick',
+    });
+  });
+
+  it('enqueues a manual post pipeline job with forwarded cookies', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+        headers: {
+          cookie: 'session=abc123',
+        },
+      }),
+      createContext({
+        jobType: 'manual-post-pipeline',
+        input: {
+          postId: 'post-1',
+          editorState: {
+            titlePl: 'Tytul',
+            titleEn: 'Title',
+            bodyPl: 'Body PL',
+            bodyEn: 'Body EN',
+          },
+          imageAssets: [],
+          imageAddonIds: [],
+          batchCaptureBaseUrl: 'https://example.com',
+          batchCapturePresetIds: ['preset-1'],
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Focus on visuals',
+          docReferences: ['docs/kangur/example.mdx'],
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-pipeline',
+      input: expect.objectContaining({
+        postId: 'post-1',
+        actorId: 'admin-1',
+        forwardCookies: 'session=abc123',
+      }),
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-pipeline',
+    });
+  });
+});

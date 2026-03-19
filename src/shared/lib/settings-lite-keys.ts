@@ -6,7 +6,6 @@ import {
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
-  KANGUR_THEME_SETTINGS_KEY,
 } from '@/shared/contracts/kangur';
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
 import {
@@ -36,7 +35,6 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'noteSettings:editorMode',
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
-  KANGUR_THEME_SETTINGS_KEY,
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,

@@ -8,10 +8,9 @@ import {
   getMediaStyleVars,
 } from '@/features/cms/public';
 import {
-  KANGUR_DEFAULT_THEME,
-  parseKangurThemeSettings,
 } from '@/features/kangur/theme-settings';
 import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurLearnerProfileRuntimeBoundary } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import { KangurLessonsRuntimeBoundary } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
@@ -23,7 +22,6 @@ import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsSto
 import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
-  KANGUR_CMS_THEME_SETTINGS_KEY,
   parseKangurCmsProject,
   resolveKangurCmsScreenKey,
 } from './project';
@@ -103,16 +101,13 @@ export function KangurCmsRuntimeScreen({
 }): ReactNode {
   const settingsStore = useSettingsStore();
   const rawProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
-  const rawTheme = settingsStore.get(KANGUR_CMS_THEME_SETTINGS_KEY);
   const screenKey = resolveKangurCmsScreenKey(pageKey);
+  const { theme } = useKangurStorefrontAppearance();
 
   const project = useMemo(
     () => parseKangurCmsProject(rawProject, { fallbackToDefault: false }),
     [rawProject]
   );
-  const theme = useMemo(() => {
-    return parseKangurThemeSettings(rawTheme) ?? KANGUR_DEFAULT_THEME;
-  }, [rawTheme]);
   const scopedCustomCss = useMemo(
     () =>
       buildKangurScopedCustomCss(

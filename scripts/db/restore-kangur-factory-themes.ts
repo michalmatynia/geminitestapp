@@ -4,7 +4,6 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-  KANGUR_THEME_SETTINGS_KEY,
 } from '@/shared/contracts/kangur';
 import type { MongoPersistedStringSettingRecord } from '@/shared/contracts/settings';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -17,7 +16,6 @@ import {
 
 type CliOptions = {
   dryRun: boolean;
-  includeLegacy: boolean;
 };
 
 type SettingPayload = {
@@ -39,7 +37,6 @@ const SETTINGS_COLLECTION = 'settings';
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
     dryRun: true,
-    includeLegacy: false,
   };
 
   argv.forEach((arg) => {
@@ -51,16 +48,13 @@ const parseArgs = (argv: string[]): CliOptions => {
       options.dryRun = true;
       return;
     }
-    if (arg === '--include-legacy') {
-      options.includeLegacy = true;
-    }
   });
 
   return options;
 };
 
-const buildPayloads = (options: CliOptions): SettingPayload[] => {
-  const payloads: SettingPayload[] = [
+const buildPayloads = (): SettingPayload[] => {
+  return [
     {
       key: KANGUR_DAILY_THEME_SETTINGS_KEY,
       label: 'daily',
@@ -72,16 +66,6 @@ const buildPayloads = (options: CliOptions): SettingPayload[] => {
       theme: KANGUR_FACTORY_NIGHTLY_THEME,
     },
   ];
-
-  if (options.includeLegacy) {
-    payloads.push({
-      key: KANGUR_THEME_SETTINGS_KEY,
-      label: 'legacy',
-      theme: KANGUR_FACTORY_DAILY_THEME,
-    });
-  }
-
-  return payloads;
 };
 
 const resolveStoredValue = (doc: SettingDoc | null | undefined, key: string): string | null => {
@@ -108,7 +92,7 @@ async function main(): Promise<void> {
     const collection = db.collection<SettingDoc>(SETTINGS_COLLECTION);
     const now = new Date();
 
-    for (const payload of buildPayloads(options)) {
+    for (const payload of buildPayloads()) {
       const nextValue = serializeSetting(payload.theme);
       const existing = await collection.findOne({ key: payload.key }, { projection: { value: 1 } });
       const currentValue = resolveStoredValue(existing, payload.key);

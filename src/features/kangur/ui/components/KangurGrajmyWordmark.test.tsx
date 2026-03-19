@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { KangurGrajmyWordmark } from '@/features/kangur/ui/components/KangurGrajmyWordmark';
 
 describe('KangurGrajmyWordmark', () => {
-  it('renders the Grajmy wordmark as a standalone SVG path composition', () => {
+  it('renders the Polish Grajmy wordmark as a standalone SVG path composition', () => {
     const { container } = render(<KangurGrajmyWordmark />);
     const svg = container.querySelector('svg');
 
@@ -31,5 +31,31 @@ describe('KangurGrajmyWordmark', () => {
 
     expect(svg?.querySelector('#kangur-grajmy-wordmark-word-grad')).not.toBeNull();
     expect(svg?.querySelector('#kangur-grajmy-wordmark-shadow')).not.toBeNull();
+  });
+
+  it('renders the translated English play wordmark as SVG text', () => {
+    const { container } = render(<KangurGrajmyWordmark label="Let's play!" locale='en' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent("Let's play!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it("renders the translated German play wordmark as SVG text", () => {
+    const { container } = render(<KangurGrajmyWordmark label="Los geht's!" locale='de' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent("Los geht's!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
   });
 });

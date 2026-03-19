@@ -31,15 +31,23 @@ const serializeComparable = (value: unknown): string => JSON.stringify(value);
 
 const deepMerge = (base: unknown, override: unknown): unknown => {
   if (Array.isArray(base)) {
-    return override === undefined ? [...base] : override;
+    return override === undefined ? cloneValue(base) : override;
   }
 
   if (isPlainObject(base) && isPlainObject(override)) {
-    const keys = new Set([...Object.keys(base), ...Object.keys(override)]);
+    const next: PartialRecord = {};
 
-    return Object.fromEntries(
-      Array.from(keys).map((key) => [key, deepMerge(base[key], override[key])])
-    );
+    for (const [key, baseValue] of Object.entries(base)) {
+      next[key] = deepMerge(baseValue, override[key]);
+    }
+
+    for (const [key, overrideValue] of Object.entries(override)) {
+      if (!Object.prototype.hasOwnProperty.call(base, key)) {
+        next[key] = overrideValue;
+      }
+    }
+
+    return next;
   }
 
   return override === undefined ? cloneValue(base) : override;

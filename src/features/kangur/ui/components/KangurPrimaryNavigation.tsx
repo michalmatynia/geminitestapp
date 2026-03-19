@@ -13,7 +13,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -24,6 +24,7 @@ import { KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,
+  isKangurEmbeddedBasePath,
 } from '@/features/kangur/config/routing';
 import {
   loadPersistedTutorVisibilityHidden,
@@ -36,6 +37,7 @@ import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
 import { KangurChoiceDialog } from '@/features/kangur/ui/components/KangurChoiceDialog';
 import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurLanguageSwitcher } from '@/features/kangur/ui/components/KangurLanguageSwitcher';
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
@@ -62,6 +64,7 @@ import {
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
+import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
 
 type KangurPrimaryNavigationPage =
   | 'Competition'
@@ -210,6 +213,7 @@ export function KangurPrimaryNavigation({
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [isAgeGroupModalOpen, setIsAgeGroupModalOpen] = useState(false);
   const locale = useLocale();
+  const navTranslations = useTranslations('KangurNavigation');
   const { subject, setSubject } = useKangurSubjectFocus();
   const { ageGroup, setAgeGroup } = useKangurAgeGroupFocus();
   const enableTutorLabel =
@@ -581,7 +585,7 @@ export function KangurPrimaryNavigation({
   };
   const homeAction: KangurNavActionConfig = {
     active: homeActive,
-    ariaLabel: 'Strona główna',
+    ariaLabel: navTranslations('home'),
     className: `px-3 sm:px-4 ${mobileNavItemClassName}`,
     content: (
       <>
@@ -594,7 +598,7 @@ export function KangurPrimaryNavigation({
             className='-translate-y-[1px]'
           />
         </span>
-          <span className='sr-only'>Strona główna</span>
+        <span className='sr-only'>{navTranslations('home')}</span>
       </>
     ),
     docId: 'top_nav_home',
@@ -618,7 +622,7 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <BookOpen aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Lekcje</span>
+        <span className='truncate'>{navTranslations('lessons')}</span>
       </>
     ),
     docId: 'top_nav_lessons',
@@ -636,7 +640,7 @@ export function KangurPrimaryNavigation({
     },
   };
   const subjectAction: KangurNavActionConfig = {
-    ariaLabel: 'Wybierz przedmiot',
+    ariaLabel: navTranslations('subject.label'),
     className: yellowPillActionClassName,
     content: (
       <>
@@ -647,10 +651,10 @@ export function KangurPrimaryNavigation({
     docId: 'top_nav_subject_choice',
     onClick: () => setIsSubjectModalOpen(true),
     testId: 'kangur-primary-nav-subject',
-    title: `Aktualny przedmiot: ${subjectChoiceLabel}`,
+    title: navTranslations('subject.currentTitle', { subject: subjectChoiceLabel }),
   };
   const ageGroupAction: KangurNavActionConfig = {
-    ariaLabel: 'Wybierz grupę wiekową',
+    ariaLabel: navTranslations('ageGroup.label'),
     className: amberPillActionClassName,
     content: (
       <>
@@ -661,7 +665,7 @@ export function KangurPrimaryNavigation({
     docId: 'top_nav_age_group_choice',
     onClick: () => setIsAgeGroupModalOpen(true),
     testId: 'kangur-primary-nav-age-group',
-    title: `Aktualna grupa: ${ageGroupChoiceLabel}`,
+    title: navTranslations('ageGroup.currentTitle', { group: ageGroupChoiceLabel }),
   };
   const duelsAction: KangurNavActionConfig = {
     active: currentPage === 'Duels',
@@ -669,7 +673,7 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <Trophy aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Pojedynki</span>
+        <span className='truncate'>{navTranslations('duels')}</span>
       </>
     ),
     docId: 'top_nav_duels',
@@ -692,7 +696,7 @@ export function KangurPrimaryNavigation({
       content: (
         <>
           <LayoutGrid aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-          <span className='truncate'>Rodzic</span>
+          <span className='truncate'>{navTranslations('parent')}</span>
         </>
       ),
       docId: 'top_nav_parent_dashboard',
@@ -718,6 +722,9 @@ export function KangurPrimaryNavigation({
     sunset: 'Sunset',
     dark: 'Nightly',
   };
+  const shouldRenderLanguageSwitcher =
+    !isKangurEmbeddedBasePath(basePath) &&
+    DEFAULT_SITE_I18N_CONFIG.locales.filter((entry) => entry.enabled).length > 1;
   const appearanceControls = storefrontAppearance ? (
     <CmsStorefrontAppearanceButtons
       tone={kangurAppearance.tone}
@@ -794,12 +801,17 @@ export function KangurPrimaryNavigation({
     onActionClick?: () => void;
     wrapperClassName?: string;
     hideAppearanceControls?: boolean;
+    hideLanguageSwitcher?: boolean;
   }): React.ReactNode => {
-    const { onActionClick, wrapperClassName, hideAppearanceControls } = options ?? {};
+    const { onActionClick, wrapperClassName, hideAppearanceControls, hideLanguageSwitcher } =
+      options ?? {};
     const authActions = renderAuthActions(onActionClick);
     const resolvedAppearanceControls = hideAppearanceControls ? null : appearanceControls;
+    const resolvedShouldRenderLanguageSwitcher =
+      shouldRenderLanguageSwitcher && !hideLanguageSwitcher;
 
     if (
+      !resolvedShouldRenderLanguageSwitcher &&
       !resolvedAppearanceControls &&
       !rightAccessory &&
       !parentDashboardAction &&
@@ -817,6 +829,13 @@ export function KangurPrimaryNavigation({
         }
         data-testid='kangur-primary-nav-utility-actions'
       >
+        {resolvedShouldRenderLanguageSwitcher ? (
+          <KangurLanguageSwitcher
+            basePath={basePath}
+            className={mobileNavItemClassName}
+            currentPage={currentPage}
+          />
+        ) : null}
         {resolvedAppearanceControls}
         {rightAccessory}
         {parentDashboardAction
@@ -879,7 +898,9 @@ export function KangurPrimaryNavigation({
   );
   const leftContent = isMobile ? mobileNav : desktopNav;
   const shouldRenderMobileAppearanceHeader = Boolean(appearanceControlsInline);
+  const shouldRenderMobileLanguageHeader = shouldRenderLanguageSwitcher;
   const shouldHideMobileAppearanceControls = shouldRenderMobileAppearanceHeader;
+  const shouldHideMobileLanguageSwitcher = shouldRenderMobileLanguageHeader;
   const mobileMenuOverlay = isMobile ? (
     <div
       className={`fixed inset-0 z-50 transition-opacity duration-200 ${
@@ -910,11 +931,24 @@ export function KangurPrimaryNavigation({
           Menu Kangur
         </h2>
         <KangurTopNavGroup label={navigationLabel} className='w-full flex-col'>
-          <div className='flex w-full items-center' data-testid='kangur-primary-nav-mobile-header'>
-            {shouldRenderMobileAppearanceHeader ? (
-              <div className='flex items-center'>{appearanceControlsInline}</div>
+          <div
+            className='flex w-full items-center gap-2'
+            data-testid='kangur-primary-nav-mobile-header'
+          >
+            {shouldRenderMobileLanguageHeader || shouldRenderMobileAppearanceHeader ? (
+              <div
+                className='flex min-w-0 items-center gap-2'
+                data-testid='kangur-primary-nav-mobile-header-actions'
+              >
+                {shouldRenderMobileLanguageHeader ? (
+                  <KangurLanguageSwitcher basePath={basePath} currentPage={currentPage} />
+                ) : null}
+                {shouldRenderMobileAppearanceHeader ? (
+                  <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
+                ) : null}
+              </div>
             ) : null}
-            <div className='ml-auto flex items-center'>{mobileMenuCloseButton}</div>
+            <div className='ml-auto flex shrink-0 items-center'>{mobileMenuCloseButton}</div>
           </div>
           {renderPrimaryActions({
             onActionClick: closeMobileMenu,
@@ -925,6 +959,7 @@ export function KangurPrimaryNavigation({
             onActionClick: closeMobileMenu,
             wrapperClassName: 'flex w-full flex-col gap-2',
             hideAppearanceControls: shouldHideMobileAppearanceControls,
+            hideLanguageSwitcher: shouldHideMobileLanguageSwitcher,
           })}
         </KangurTopNavGroup>
       </div>
@@ -936,15 +971,15 @@ export function KangurPrimaryNavigation({
       onOpenChange={setIsSubjectModalOpen}
       header={
         <KangurDialogHeader
-          title='Wybierz przedmiot'
-          description='Wybierz przedmiot, na którym chcesz się teraz skupić.'
+          title={navTranslations('subject.label')}
+          description={navTranslations('subject.dialogDescription')}
         />
       }
-      title='Wybierz przedmiot'
+      title={navTranslations('subject.label')}
       defaultChoiceLabel={defaultSubjectLabel}
       currentChoiceLabel={subjectChoiceLabel}
-      closeAriaLabel='Zamknij wybór przedmiotu'
-      groupAriaLabel='Wybór przedmiotu'
+      closeAriaLabel={navTranslations('subject.closeAriaLabel')}
+      groupAriaLabel={navTranslations('subject.groupAriaLabel')}
       options={availableSubjects.map((item) => ({
         id: item.id,
         label: getLocalizedKangurSubjectLabel(item.id, locale, item.label),
@@ -959,15 +994,15 @@ export function KangurPrimaryNavigation({
       onOpenChange={setIsAgeGroupModalOpen}
       header={
         <KangurDialogHeader
-          title='Wybierz grupę wiekową'
-          description='Wybierz, dla kogo mają być dopasowane lekcje.'
+          title={navTranslations('ageGroup.label')}
+          description={navTranslations('ageGroup.dialogDescription')}
         />
       }
-      title='Wybierz grupę wiekową'
+      title={navTranslations('ageGroup.label')}
       defaultChoiceLabel={defaultAgeGroupLabel}
       currentChoiceLabel={ageGroupChoiceLabel}
-      closeAriaLabel='Zamknij wybór grupy wiekowej'
-      groupAriaLabel='Wybór grupy wiekowej'
+      closeAriaLabel={navTranslations('ageGroup.closeAriaLabel')}
+      groupAriaLabel={navTranslations('ageGroup.groupAriaLabel')}
       options={KANGUR_AGE_GROUPS.map((group) => ({
         id: group.id,
         label: getLocalizedKangurAgeGroupLabel(group.id, locale, group.label),

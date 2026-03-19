@@ -26,8 +26,6 @@ import type {
 import type { KangurSocialImageAddonsBatchResult } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
 import type { AddonFormState } from './AdminKangurSocialPage.Constants';
 
-import { BRAIN_MODEL_DEFAULT_VALUE } from './AdminKangurSocialPage.Constants';
-
 type SelectOption = {
   value: string;
   label: string;
@@ -79,6 +77,9 @@ type AdminKangurSocialSettingsModalProps = {
   docUpdatesAppliedCount: number;
   docUpdatesSkippedCount: number;
   docUpdatesPlan: KangurSocialDocUpdatePlan | null;
+  canGenerateDraft: boolean;
+  generateDraftBlockedReason: string | null;
+  socialVisionWarning: string | null;
   onBrainModelChange: (value: string) => void;
   onVisionModelChange: (value: string) => void;
   onLinkedInConnectionChange: (value: string) => void;
@@ -108,15 +109,15 @@ export function AdminKangurSocialSettingsModal(
     onSave,
     isSaving,
     hasUnsavedChanges,
-    brainModelId,
-    visionModelId,
+    brainModelId: _brainModelId,
+    visionModelId: _visionModelId,
     projectUrl,
     brainModelBadgeLabel,
     visionModelBadgeLabel,
-    brainModelSelectOptions,
-    visionModelSelectOptions,
-    brainModelLoading,
-    visionModelLoading,
+    brainModelSelectOptions: _brainModelSelectOptions,
+    visionModelSelectOptions: _visionModelSelectOptions,
+    brainModelLoading: _brainModelLoading,
+    visionModelLoading: _visionModelLoading,
     linkedinConnectionId,
     linkedInOptions,
     linkedinIntegration,
@@ -146,8 +147,11 @@ export function AdminKangurSocialSettingsModal(
     docUpdatesAppliedCount,
     docUpdatesSkippedCount,
     docUpdatesPlan,
-    onBrainModelChange,
-    onVisionModelChange,
+    canGenerateDraft,
+    generateDraftBlockedReason,
+    socialVisionWarning,
+    onBrainModelChange: _onBrainModelChange,
+    onVisionModelChange: _onVisionModelChange,
     onLinkedInConnectionChange,
     onProjectUrlChange,
     onDocReferenceInputChange,
@@ -182,7 +186,7 @@ export function AdminKangurSocialSettingsModal(
       open
       onClose={onClose}
       title='Social Settings'
-      subtitle='Model overrides and project references for StudiQ Social generation.'
+      subtitle='AI Brain routing and project references for StudiQ Social generation.'
       onSave={onSave}
       isSaving={isSaving}
       disableCloseWhileSaving
@@ -233,17 +237,21 @@ export function AdminKangurSocialSettingsModal(
                 </div>
                 <Badge variant='outline'>{brainModelBadgeLabel}</Badge>
               </div>
-              <div className='mt-3'>
-                <SelectSimple
-                  value={brainModelId || BRAIN_MODEL_DEFAULT_VALUE}
-                  onValueChange={onBrainModelChange}
-                  options={brainModelSelectOptions}
-                  placeholder='Select model override'
-                  size='sm'
-                  ariaLabel='Brain model override'
-                  title='Brain model override'
-                  disabled={brainModelLoading}
-                />
+              <div className='mt-3 space-y-3 text-sm text-muted-foreground'>
+                <p>StudiQ Social reads its generation model directly from AI Brain routing.</p>
+                {brainModelBadgeLabel === 'Not configured' ? (
+                  <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-900 dark:text-amber-200'>
+                    No AI Brain model is assigned for this capability yet.
+                  </div>
+                ) : (
+                  <p>Current AI Brain route: {brainModelBadgeLabel}</p>
+                )}
+                <a
+                  href='/admin/brain?tab=routing'
+                  className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'
+                >
+                  Open AI Brain routing
+                </a>
               </div>
             </Card>
 
@@ -261,17 +269,21 @@ export function AdminKangurSocialSettingsModal(
                 </div>
                 <Badge variant='outline'>{visionModelBadgeLabel}</Badge>
               </div>
-              <div className='mt-3'>
-                <SelectSimple
-                  value={visionModelId || BRAIN_MODEL_DEFAULT_VALUE}
-                  onValueChange={onVisionModelChange}
-                  options={visionModelSelectOptions}
-                  placeholder='Select model override'
-                  size='sm'
-                  ariaLabel='Vision model override'
-                  title='Vision model override'
-                  disabled={visionModelLoading}
-                />
+              <div className='mt-3 space-y-3 text-sm text-muted-foreground'>
+                <p>Visual analysis also resolves its model from AI Brain routing.</p>
+                {visionModelBadgeLabel === 'Not configured' ? (
+                  <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-900 dark:text-amber-200'>
+                    No AI Brain model is assigned for visual analysis yet.
+                  </div>
+                ) : (
+                  <p>Current AI Brain route: {visionModelBadgeLabel}</p>
+                )}
+                <a
+                  href='/admin/brain?tab=routing'
+                  className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'
+                >
+                  Open AI Brain routing
+                </a>
               </div>
             </Card>
           </div>
@@ -343,7 +355,7 @@ export function AdminKangurSocialSettingsModal(
                   variant='outline'
                   size='sm'
                   onClick={() => void onGenerate()}
-                  disabled={!activePost}
+                  disabled={!activePost || !canGenerateDraft}
                 >
                   Generate PL/EN draft
                 </Button>
@@ -353,6 +365,16 @@ export function AdminKangurSocialSettingsModal(
                     : 'Select a post in the list to use documentation generation.'}
                 </div>
               </div>
+              {!canGenerateDraft && generateDraftBlockedReason ? (
+                <div className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200'>
+                  {generateDraftBlockedReason}
+                </div>
+              ) : null}
+              {socialVisionWarning ? (
+                <div className='rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
+                  {socialVisionWarning}
+                </div>
+              ) : null}
               <div className='space-y-2 rounded-xl border border-border/60 bg-background/40 p-3'>
                 <div className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                   Docs used

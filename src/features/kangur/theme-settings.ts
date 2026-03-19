@@ -8,7 +8,6 @@ import {
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
-  KANGUR_THEME_SETTINGS_KEY,
 } from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
@@ -20,13 +19,13 @@ import { KANGUR_DAILY_CRYSTAL_THEME, KANGUR_NIGHTLY_CRYSTAL_THEME } from './them
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 export const KANGUR_DEFAULT_THEME = KANGUR_NIGHTLY_THEME;
+export type KangurThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
 
 export {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
-  KANGUR_THEME_SETTINGS_KEY,
 };
 
 // Re-export all themes
@@ -265,14 +264,12 @@ export const resolveKangurThemeSettingsRawForMode = ({
   dawnThemeRaw,
   sunsetThemeRaw,
   nightlyThemeRaw,
-  legacyThemeRaw,
 }: {
   mode: 'default' | 'dawn' | 'sunset' | 'dark';
   dailyThemeRaw: string | null | undefined;
   dawnThemeRaw: string | null | undefined;
   sunsetThemeRaw: string | null | undefined;
   nightlyThemeRaw: string | null | undefined;
-  legacyThemeRaw: string | null | undefined;
 }): string | null => {
   const resolveThemeRaw = (raw: string | null | undefined): string | null =>
     typeof raw === 'string' && raw.trim().length > 0 ? raw : null;
@@ -280,8 +277,6 @@ export const resolveKangurThemeSettingsRawForMode = ({
   const dawnRaw = resolveThemeRaw(dawnThemeRaw);
   const sunsetRaw = resolveThemeRaw(sunsetThemeRaw);
   const nightlyRaw = resolveThemeRaw(nightlyThemeRaw);
-  const hasSlotTheme = Boolean(dailyRaw || dawnRaw || sunsetRaw || nightlyRaw);
-  const legacyFallback = hasSlotTheme ? null : resolveThemeRaw(legacyThemeRaw);
 
   if (mode === 'dawn') {
     return dawnRaw;
@@ -290,10 +285,10 @@ export const resolveKangurThemeSettingsRawForMode = ({
     return sunsetRaw;
   }
   if (mode === 'dark') {
-    return nightlyRaw ?? legacyFallback;
+    return nightlyRaw;
   }
 
-  return dailyRaw ?? legacyFallback;
+  return dailyRaw;
 };
 
 export const resolveKangurDefaultThemeForMode = (

@@ -98,6 +98,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     handleBrainModelChange,
     handleVisionModelChange,
     handleLinkedInConnectionChange,
+    canGenerateSocialDraft,
+    socialDraftBlockedReason,
+    socialVisionWarning,
     resolveDocReferences,
     pipelineStep,
     handleRunFullPipeline,
@@ -166,9 +169,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
   );
 
   const brainModelBadgeLabel =
-    brainModelId ?? brainModelOptions.effectiveModelId ?? 'Not configured';
+    brainModelOptions.effectiveModelId || 'Not configured';
   const visionModelBadgeLabel =
-    visionModelId ?? visionModelOptions.effectiveModelId ?? 'Not configured';
+    visionModelOptions.effectiveModelId || 'Not configured';
 
   const linkedInExpiry = selectedLinkedInConnection?.linkedinExpiresAt
     ? new Date(selectedLinkedInConnection.linkedinExpiresAt)
@@ -320,6 +323,8 @@ export function AdminKangurSocialPage(): React.JSX.Element {
               activePostId={activePostId}
               pipelineStep={pipelineStep}
               handleRunFullPipeline={handleRunFullPipeline}
+              canRunPipeline={canGenerateSocialDraft}
+              pipelineBlockedReason={socialDraftBlockedReason}
             />
 
             <KangurSocialPipelineQueuePanel variant='compact' />
@@ -465,13 +470,18 @@ export function AdminKangurSocialPage(): React.JSX.Element {
         docUpdatesAppliedCount={docUpdatesAppliedCount}
         docUpdatesSkippedCount={docUpdatesSkippedCount}
         docUpdatesPlan={docUpdatesPlan}
+        canGenerateDraft={canGenerateSocialDraft}
+        generateDraftBlockedReason={socialDraftBlockedReason}
+        socialVisionWarning={socialVisionWarning}
         onBrainModelChange={handleBrainModelChange}
         onVisionModelChange={handleVisionModelChange}
         onLinkedInConnectionChange={handleLinkedInConnectionChange}
         onProjectUrlChange={setProjectUrl}
         onDocReferenceInputChange={setDocReferenceInput}
         onGenerationNotesChange={setGenerationNotes}
-        onLoadContext={handleLoadContext}
+        onLoadContext={async () => {
+          await handleLoadContext();
+        }}
         onGenerate={handleGenerate}
         onPreviewDocUpdates={handlePreviewDocUpdates}
         onApplyDocUpdates={handleApplyDocUpdates}

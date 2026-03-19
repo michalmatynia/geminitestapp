@@ -9,8 +9,9 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
+  KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
-  KANGUR_THEME_SETTINGS_KEY,
+  KANGUR_DEFAULT_THEME,
 } from '@/features/kangur/theme-settings';
 import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/storefront-appearance-settings';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
@@ -39,6 +40,8 @@ const setEnvValue = (key: string, value: string | undefined) => {
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
 }));
 
 vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
@@ -133,16 +136,10 @@ describe('useKangurStorefrontAppearance integration', () => {
     expect(screen.getByTestId('background')).toHaveTextContent('#ff00ff');
   });
 
-  it('falls back to the legacy theme when no slot themes exist', async () => {
+  it('falls back to the built-in nightly theme when no dark slot theme exists', async () => {
     settingsMapRef.current = new Map([
       [KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY, 'dark'],
-      [
-        KANGUR_THEME_SETTINGS_KEY,
-        serializeSetting({
-          backgroundColor: '#101010',
-          primaryColor: '#a855f7',
-        }),
-      ],
+      [KANGUR_NIGHTLY_THEME_SETTINGS_KEY, ''],
     ]);
 
     render(
@@ -156,6 +153,6 @@ describe('useKangurStorefrontAppearance integration', () => {
     await waitFor(() => {
       expect(screen.getByTestId('mode')).toHaveTextContent('dark');
     });
-    expect(screen.getByTestId('background')).toHaveTextContent('#101010');
+    expect(screen.getByTestId('background')).toHaveTextContent(KANGUR_DEFAULT_THEME.backgroundColor);
   });
 });

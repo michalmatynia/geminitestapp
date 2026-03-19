@@ -28,20 +28,16 @@ type KangurAiTutorNativeGuideLocaleOverlay = {
   entries: Record<string, GuideEntryOverlay>;
 };
 
-const TRANSLATABLE_ENTRY_KEYS = [
-  'title',
-  'shortDescription',
-  'fullDescription',
-  'hints',
-  'relatedGames',
-  'relatedTests',
-  'followUpActions',
-  'triggerPhrases',
-] as const;
-
 type ComparableNativeGuideEntry = Pick<
   KangurAiTutorNativeGuideEntry,
-  (typeof TRANSLATABLE_ENTRY_KEYS)[number]
+  | 'title'
+  | 'shortDescription'
+  | 'fullDescription'
+  | 'hints'
+  | 'relatedGames'
+  | 'relatedTests'
+  | 'followUpActions'
+  | 'triggerPhrases'
 >;
 
 export type KangurAiTutorNativeGuideTranslationStatus =

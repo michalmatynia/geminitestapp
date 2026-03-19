@@ -1,6 +1,11 @@
 import 'server-only';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type {
+  KangurSocialPipelineCaptureMode,
+  KangurSocialManualPipelineProgress,
+  KangurSocialManualPipelineProgressStep,
+} from '@/shared/contracts/kangur-social-pipeline';
 import {
   buildKangurSocialPostCombinedBody,
   kangurSocialPostSchema,
@@ -10,6 +15,7 @@ import {
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
 
 import { createKangurSocialImageAddonsBatch } from './social-image-addons-batch';
 import {
@@ -38,6 +44,9 @@ export type KangurSocialImageAddonsBatchResult = {
   addons: KangurSocialImageAddon[];
   failures: Array<{ id: string; reason: string }>;
   runId: string;
+  requestedPresetCount?: number;
+  usedPresetCount?: number;
+  usedPresetIds?: string[];
 };
 
 export type RunKangurSocialPostPipelineInput = {
@@ -45,8 +54,10 @@ export type RunKangurSocialPostPipelineInput = {
   editorState: EditorState;
   imageAssets: ImageFileSelection[];
   imageAddonIds: string[];
-  batchCaptureBaseUrl: string;
-  batchCapturePresetIds: string[];
+  captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>;
+  batchCaptureBaseUrl?: string;
+  batchCapturePresetIds?: string[];
+  batchCapturePresetLimit?: number | null;
   linkedinConnectionId: string | null;
   brainModelId: string | null;
   visionModelId: string | null;
@@ -60,17 +71,24 @@ export type RunKangurSocialPostPipelineInput = {
 export type KangurSocialManualPipelineJobResult = {
   type: 'manual-post-pipeline';
   postId: string;
+  captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>;
   addonsCreated: number;
   failures: number;
-  runId: string;
+  runId: string | null;
   contextSummary: string | null;
   contextDocCount: number;
   imageAddonIds: string[];
   imageAssets: ImageFileSelection[];
-  batchCaptureResult: KangurSocialImageAddonsBatchResult;
+  batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
   savedPost: KangurSocialPost;
   generatedPost: KangurSocialPost;
   docUpdates: KangurSocialDocUpdatesResponse | null;
+};
+
+type RunKangurSocialPostPipelineOptions = {
+  reportProgress?: (
+    progress: KangurSocialManualPipelineProgress
+  ) => Promise<void> | void;
 };
 
 const MAX_IMAGE_ADDON_IDS = 30;
@@ -98,6 +116,73 @@ const mergeImageAssets = (
   return merged;
 };
 
+const matchesImageAsset = (
+  asset: ImageFileSelection,
+  candidate: ImageFileSelection
+): boolean => {
+  const keys = new Set(
+    [asset.id, asset.filepath, asset.url].filter((value): value is string => Boolean(value))
+  );
+  return [candidate.id, candidate.filepath, candidate.url].some(
+    (value) => Boolean(value && keys.has(value))
+  );
+};
+
+const resolveEffectiveCapturePresetIds = (
+  presetIds: string[],
+  presetLimit: number | null | undefined
+): string[] => {
+  const selected = new Set(presetIds.map((id) => id.trim()).filter(Boolean));
+  const ordered = KANGUR_SOCIAL_CAPTURE_PRESETS
+    .map((preset) => preset.id)
+    .filter((id) => selected.has(id));
+  if (presetLimit == null) {
+    return ordered;
+  }
+  const normalizedLimit = Math.max(1, Math.floor(presetLimit));
+  return ordered.slice(0, normalizedLimit);
+};
+
+const removePresetBasedSelections = (params: {
+  imageAssets: ImageFileSelection[];
+  imageAddonIds: string[];
+  existingAddons: KangurSocialImageAddon[];
+  presetIds: string[];
+}): {
+  imageAssets: ImageFileSelection[];
+  imageAddonIds: string[];
+} => {
+  if (params.presetIds.length === 0 || params.existingAddons.length === 0) {
+    return {
+      imageAssets: params.imageAssets,
+      imageAddonIds: params.imageAddonIds,
+    };
+  }
+
+  const presetIdSet = new Set(params.presetIds);
+  const removedAddons = params.existingAddons.filter(
+    (addon) => addon.presetId && presetIdSet.has(addon.presetId)
+  );
+  if (removedAddons.length === 0) {
+    return {
+      imageAssets: params.imageAssets,
+      imageAddonIds: params.imageAddonIds,
+    };
+  }
+
+  const removedAddonIdSet = new Set(removedAddons.map((addon) => addon.id));
+  const removedAssets = removedAddons
+    .map((addon) => addon.imageAsset)
+    .filter((asset): asset is ImageFileSelection => Boolean(asset));
+
+  return {
+    imageAddonIds: params.imageAddonIds.filter((id) => !removedAddonIdSet.has(id)),
+    imageAssets: params.imageAssets.filter(
+      (asset) => !removedAssets.some((candidate) => matchesImageAsset(asset, candidate))
+    ),
+  };
+};
+
 const buildNoScreenshotsCapturedMessage = (
   failures: Array<{ id: string; reason: string }>
 ): string => {
@@ -114,7 +199,8 @@ const buildNoScreenshotsCapturedMessage = (
 };
 
 export async function runKangurSocialPostPipeline(
-  input: RunKangurSocialPostPipelineInput
+  input: RunKangurSocialPostPipelineInput,
+  options?: RunKangurSocialPostPipelineOptions
 ): Promise<KangurSocialManualPipelineJobResult> {
   const startedAt = Date.now();
   const postId = input.postId.trim();
@@ -122,12 +208,22 @@ export async function runKangurSocialPostPipeline(
     throw operationFailedError('Pipeline stopped: missing post id.');
   }
 
-  const batchCaptureBaseUrl = input.batchCaptureBaseUrl.trim();
-  const batchCapturePresetIds = input.batchCapturePresetIds
+  const captureMode = input.captureMode;
+  const batchCaptureBaseUrl = input.batchCaptureBaseUrl?.trim() ?? '';
+  const batchCapturePresetIds = (input.batchCapturePresetIds ?? [])
     .map((id) => id.trim())
     .filter(Boolean);
+  const batchCapturePresetLimit =
+    typeof input.batchCapturePresetLimit === 'number' &&
+    Number.isFinite(input.batchCapturePresetLimit)
+      ? Math.max(1, Math.floor(input.batchCapturePresetLimit))
+      : null;
+  const effectiveCapturePresetIds =
+    captureMode === 'fresh_capture'
+      ? resolveEffectiveCapturePresetIds(batchCapturePresetIds, batchCapturePresetLimit)
+      : [];
 
-  if (!batchCaptureBaseUrl || batchCapturePresetIds.length === 0) {
+  if (captureMode === 'fresh_capture' && (!batchCaptureBaseUrl || effectiveCapturePresetIds.length === 0)) {
     throw operationFailedError(
       'Pipeline stopped: configure batch capture base URL and presets first.'
     );
@@ -137,10 +233,51 @@ export async function runKangurSocialPostPipeline(
     .map((reference) => reference.trim())
     .filter(Boolean)
     .slice(0, 80);
+  const progressState: Omit<KangurSocialManualPipelineProgress, 'updatedAt'> = {
+    type: 'manual-post-pipeline',
+    step: 'loading_context',
+    captureMode,
+    message: null,
+    contextDocCount: null,
+    contextSummary: null,
+    addonsCreated: null,
+    captureFailureCount: null,
+    captureFailures: [],
+    requestedPresetCount: effectiveCapturePresetIds.length || null,
+    usedPresetCount: null,
+    usedPresetIds: [],
+    runId: null,
+  };
+  const publishProgress = async (
+    step: KangurSocialManualPipelineProgressStep,
+    updates?: Partial<
+      Omit<KangurSocialManualPipelineProgress, 'type' | 'step' | 'updatedAt'>
+    >
+  ): Promise<void> => {
+    if (!options?.reportProgress) return;
+    Object.assign(progressState, updates ?? {});
+    progressState.step = step;
+    await options.reportProgress({
+      ...progressState,
+      updatedAt: Date.now(),
+    });
+  };
+
+  await publishProgress('loading_context', {
+    message: 'Loading documentation context...',
+  });
   const docs = resolveKangurDocReferences(normalizedDocReferences);
   const context =
     docs.length > 0 ? await buildKangurDocContext(docs) : { summary: '', context: '' };
   const contextSummary = context.summary.trim() || null;
+  await publishProgress('loading_context', {
+    message:
+      docs.length > 0
+        ? `Loaded ${docs.length} documentation reference${docs.length === 1 ? '' : 's'}.`
+        : 'No documentation references selected.',
+    contextDocCount: docs.length,
+    contextSummary,
+  });
   const existingPost = await getKangurSocialPostById(postId);
 
   if (!existingPost) {
@@ -148,37 +285,93 @@ export async function runKangurSocialPostPipeline(
   }
 
   try {
-    const batchCaptureResult = await createKangurSocialImageAddonsBatch({
-      baseUrl: batchCaptureBaseUrl,
-      presetIds: batchCapturePresetIds,
-      createdBy: input.actorId,
-      forwardCookies: input.forwardCookies ?? null,
-    });
+    let batchCaptureResult: KangurSocialImageAddonsBatchResult | null = null;
+    let mergedImageAddonIds = input.imageAddonIds.slice(0, MAX_IMAGE_ADDON_IDS);
+    let mergedImageAssets = input.imageAssets.slice(0, MAX_IMAGE_ASSETS);
 
-    if (batchCaptureResult.addons.length === 0) {
-      throw operationFailedError(
-        buildNoScreenshotsCapturedMessage(batchCaptureResult.failures)
-      );
+    if (captureMode === 'fresh_capture') {
+      await publishProgress('capturing', {
+        message:
+          effectiveCapturePresetIds.length === 1
+            ? 'Capturing 1 selected screenshot preset...'
+            : `Capturing ${effectiveCapturePresetIds.length} selected screenshot presets...`,
+      });
+      batchCaptureResult = await createKangurSocialImageAddonsBatch({
+        baseUrl: batchCaptureBaseUrl,
+        presetIds: batchCapturePresetIds,
+        presetLimit: batchCapturePresetLimit,
+        createdBy: input.actorId,
+        forwardCookies: input.forwardCookies ?? null,
+      });
+
+      await publishProgress('capturing', {
+        message:
+          batchCaptureResult.addons.length > 0
+            ? `Captured ${batchCaptureResult.addons.length} screenshot${batchCaptureResult.addons.length === 1 ? '' : 's'} from ${batchCaptureResult.usedPresetCount ?? effectiveCapturePresetIds.length} preset${(batchCaptureResult.usedPresetCount ?? effectiveCapturePresetIds.length) === 1 ? '' : 's'}.`
+            : buildNoScreenshotsCapturedMessage(batchCaptureResult.failures),
+        addonsCreated: batchCaptureResult.addons.length,
+        captureFailureCount: batchCaptureResult.failures.length,
+        captureFailures: batchCaptureResult.failures,
+        requestedPresetCount:
+          batchCaptureResult.requestedPresetCount ?? effectiveCapturePresetIds.length,
+        usedPresetCount:
+          batchCaptureResult.usedPresetCount ?? effectiveCapturePresetIds.length,
+        usedPresetIds: batchCaptureResult.usedPresetIds ?? effectiveCapturePresetIds,
+        runId: batchCaptureResult.runId,
+      });
+
+      if (batchCaptureResult.addons.length === 0) {
+        throw operationFailedError(
+          buildNoScreenshotsCapturedMessage(batchCaptureResult.failures)
+        );
+      }
+
+      const preservedSelections = removePresetBasedSelections({
+        imageAssets: input.imageAssets,
+        imageAddonIds: input.imageAddonIds,
+        existingAddons: await findKangurSocialImageAddonsByIds(input.imageAddonIds),
+        presetIds: effectiveCapturePresetIds,
+      });
+
+      const capturedAddonIds = batchCaptureResult.addons.map((addon) => addon.id);
+      const capturedAssets = batchCaptureResult.addons
+        .map((addon) => addon.imageAsset)
+        .filter((asset): asset is ImageFileSelection => Boolean(asset));
+
+      mergedImageAddonIds = Array.from(
+        new Set([...preservedSelections.imageAddonIds, ...capturedAddonIds])
+      ).slice(0, MAX_IMAGE_ADDON_IDS);
+      mergedImageAssets = mergeImageAssets(
+        preservedSelections.imageAssets,
+        capturedAssets
+      ).slice(0, MAX_IMAGE_ASSETS);
+    } else {
+      await publishProgress('capturing', {
+        message: `Skipping Playwright capture and using ${Math.max(
+          input.imageAddonIds.length,
+          input.imageAssets.length
+        )} existing visual${Math.max(input.imageAddonIds.length, input.imageAssets.length) === 1 ? '' : 's'}.`,
+        addonsCreated: 0,
+        captureFailureCount: 0,
+        captureFailures: [],
+        requestedPresetCount: 0,
+        usedPresetCount: 0,
+        usedPresetIds: [],
+        runId: null,
+      });
     }
-
-    const capturedAddonIds = batchCaptureResult.addons.map((addon) => addon.id);
-    const capturedAssets = batchCaptureResult.addons
-      .map((addon) => addon.imageAsset)
-      .filter((asset): asset is ImageFileSelection => Boolean(asset));
-
-    const mergedImageAddonIds = Array.from(
-      new Set([...input.imageAddonIds, ...capturedAddonIds])
-    ).slice(0, MAX_IMAGE_ADDON_IDS);
-    const mergedImageAssets = mergeImageAssets(
-      input.imageAssets,
-      capturedAssets
-    ).slice(0, MAX_IMAGE_ASSETS);
 
     const combinedBody = buildKangurSocialPostCombinedBody(
       input.editorState.bodyPl,
       input.editorState.bodyEn
     );
 
+    await publishProgress('saving', {
+      message:
+        captureMode === 'fresh_capture'
+          ? `Linking ${mergedImageAddonIds.length} captured image${mergedImageAddonIds.length === 1 ? '' : 's'} to the draft.`
+          : `Saving the draft with ${mergedImageAddonIds.length} attached image${mergedImageAddonIds.length === 1 ? '' : 's'}.`,
+    });
     const savedPost = await upsertKangurSocialPost(
       kangurSocialPostSchema.parse({
         ...existingPost,
@@ -202,6 +395,12 @@ export async function runKangurSocialPostPipeline(
     );
 
     const imageAddons = await findKangurSocialImageAddonsByIds(mergedImageAddonIds);
+    await publishProgress('generating', {
+      message:
+        captureMode === 'fresh_capture'
+          ? 'Generating the draft from the fresh screenshots...'
+          : 'Generating the draft from the currently attached visuals...',
+    });
     const draft = await generateKangurSocialPostDraft({
       docReferences: normalizedDocReferences,
       notes: input.generationNotes,
@@ -240,6 +439,9 @@ export async function runKangurSocialPostPipeline(
 
     let docUpdates: KangurSocialDocUpdatesResponse | null = null;
     try {
+      await publishProgress('previewing', {
+        message: 'Preparing documentation diff...',
+      });
       docUpdates = {
         applied: false,
         plan: await planKangurSocialDocUpdates(generatedPost, { apply: false }),
@@ -256,9 +458,10 @@ export async function runKangurSocialPostPipeline(
     return {
       type: 'manual-post-pipeline',
       postId: generatedPost.id,
-      addonsCreated: batchCaptureResult.addons.length,
-      failures: batchCaptureResult.failures.length,
-      runId: batchCaptureResult.runId,
+      captureMode,
+      addonsCreated: batchCaptureResult?.addons.length ?? 0,
+      failures: batchCaptureResult?.failures.length ?? 0,
+      runId: batchCaptureResult?.runId ?? null,
       contextSummary,
       contextDocCount: docs.length,
       imageAddonIds: mergedImageAddonIds,
@@ -276,7 +479,8 @@ export async function runKangurSocialPostPipeline(
       durationMs: Date.now() - startedAt,
       docReferenceCount: normalizedDocReferences.length,
       imageAddonCount: input.imageAddonIds.length,
-      presetCount: batchCapturePresetIds.length,
+      captureMode,
+      presetCount: effectiveCapturePresetIds.length,
     });
     throw error;
   }

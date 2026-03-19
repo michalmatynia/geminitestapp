@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowLeft } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { createContext, useContext, useEffect, useId } from 'react';
 
 import {
@@ -59,11 +60,32 @@ const useLessonActivityStageContext = () => {
   return value;
 };
 
+const translateLessonChrome = (
+  translate: ReturnType<typeof useTranslations>,
+  key: string,
+  fallback: string
+): string => {
+  const translated = translate(key);
+  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+};
+
 function LessonActivityStageTopBar(): React.JSX.Element {
+  const lessonChrome = useTranslations('KangurLessonChrome');
   const { backButtonLabel, navigationPills, onBack, secretLessonPill } = useLessonActivityStageContext();
+  const navigationLabel = translateLessonChrome(
+    lessonChrome,
+    'lessonNavigation',
+    'Nawigacja lekcji'
+  );
+  const openSecretPanelLabel = translateLessonChrome(
+    lessonChrome,
+    'openSecretPanel',
+    'Otwórz sekretny panel'
+  );
+  const secretPanelTitle = translateLessonChrome(lessonChrome, 'secretPanelTitle', 'Sekretny panel');
 
   return (
-    <nav className='flex w-full flex-wrap items-center justify-between kangur-panel-gap' aria-label='Nawigacja lekcji'>
+    <nav className='flex w-full flex-wrap items-center justify-between kangur-panel-gap' aria-label={navigationLabel}>
       <KangurButton
         onClick={onBack}
         size='sm'
@@ -82,10 +104,10 @@ function LessonActivityStageTopBar(): React.JSX.Element {
             <button
               type='button'
               onClick={secretLessonPill.onOpen}
-              aria-label='Otwórz sekretny panel'
+              aria-label={openSecretPanelLabel}
               className='kangur-cta-pill h-[14px] min-w-[40px] cursor-pointer justify-center bg-gradient-to-r kangur-gradient-accent-amber kangur-gradient-with-mid text-[10px] font-black text-amber-950 shadow-sm ring-1 ring-amber-300/90'
               data-testid='lesson-activity-secret-indicator'
-              title='Sekretny panel'
+              title={secretPanelTitle}
             >
               <span aria-hidden='true'>★</span>
             </button>
@@ -143,6 +165,7 @@ export default function LessonActivityStage({
   shellTestId,
   title,
 }: LessonActivityStageProps): React.JSX.Element {
+  const lessonChrome = useTranslations('KangurLessonChrome');
   const registerSubsectionNavigation = useKangurRegisterLessonSubsectionNavigation();
   const secretLessonPill = useKangurLessonSecretPill();
   const titleId = useId();
@@ -157,9 +180,14 @@ export default function LessonActivityStage({
   const panelLabelledBy = shouldRenderStageHeader ? titleId : undefined;
   const panelDescribedBy = shouldRenderStageHeader && description ? descriptionId : undefined;
   const panelAriaLabel = shouldRenderStageHeader ? undefined : title;
+  const resolvedBackButtonLabel = translateLessonChrome(
+    lessonChrome,
+    'backToTopics',
+    backButtonLabel
+  );
   const contextValue: LessonActivityStageContextValue = {
     accent,
-    backButtonLabel,
+    backButtonLabel: resolvedBackButtonLabel,
     description,
     descriptionId: shouldRenderStageHeader ? descriptionId : undefined,
     headerTestId,

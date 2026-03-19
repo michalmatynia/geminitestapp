@@ -373,8 +373,8 @@ const createConnectionsResult = (
     page: overrides.page ?? 1,
     pageSize: overrides.pageSize ?? 25,
     totalPages: overrides.totalPages ?? 1,
-    range: overrides.range ?? '24h',
-    scope: overrides.scope ?? 'public',
+    range: overrides.range ?? '7d',
+    scope: overrides.scope ?? 'all',
     type: overrides.type ?? 'pageview',
     search: overrides.search ?? '',
     country: overrides.country ?? '',
@@ -734,8 +734,8 @@ describe('SystemLogsContent', () => {
       search: '',
       country: '',
       browser: '',
-      scope: 'public',
-      range: '24h',
+      scope: 'all',
+      range: '7d',
     });
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search connections...' }), {
@@ -805,8 +805,8 @@ describe('SystemLogsContent', () => {
         search: 'checkout',
         country: '',
         browser: '',
-        scope: 'public',
-        range: '24h',
+        scope: 'all',
+        range: '7d',
       });
     });
 

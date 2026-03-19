@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
 
 describe('KangurTreningWordmark', () => {
-  it('renders the Trening wordmark as a standalone SVG path composition', () => {
+  it('renders the Polish Trening wordmark as a standalone SVG path composition', () => {
     const { container } = render(<KangurTreningWordmark />);
     const svg = container.querySelector('svg');
 
@@ -31,5 +31,31 @@ describe('KangurTreningWordmark', () => {
 
     expect(svg?.querySelector('#kangur-trening-wordmark-word-grad')).not.toBeNull();
     expect(svg?.querySelector('#kangur-trening-wordmark-shadow')).not.toBeNull();
+  });
+
+  it('renders the translated English training wordmark as SVG text', () => {
+    const { container } = render(<KangurTreningWordmark label='Training' locale='en' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('renders the translated German training wordmark as SVG text', () => {
+    const { container } = render(<KangurTreningWordmark label='Training' locale='de' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
   });
 });

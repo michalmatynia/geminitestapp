@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKangurWordmark';
 
 describe('KangurKangurWordmark', () => {
-  it('renders the Kangur wordmark as a standalone SVG path composition', () => {
+  it('renders the Polish Kangur wordmark as a standalone SVG path composition', () => {
     const { container } = render(<KangurKangurWordmark />);
     const svg = container.querySelector('svg');
 
@@ -31,5 +31,31 @@ describe('KangurKangurWordmark', () => {
 
     expect(svg?.querySelector('#kangur-kangur-wordmark-word-grad')).not.toBeNull();
     expect(svg?.querySelector('#kangur-kangur-wordmark-shadow')).not.toBeNull();
+  });
+
+  it('renders the translated English Kangur wordmark as SVG text', () => {
+    const { container } = render(<KangurKangurWordmark label='Math Kangaroo' locale='en' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Math Kangaroo');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('renders the translated German Kangur wordmark as SVG text', () => {
+    const { container } = render(<KangurKangurWordmark label='Mathe-Kanguru' locale='de' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Mathe-Kanguru');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
   });
 });

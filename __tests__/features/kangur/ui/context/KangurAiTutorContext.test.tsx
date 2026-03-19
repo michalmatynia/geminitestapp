@@ -41,22 +41,20 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
     useOptionalKangurAuthMock(...args),
 }));
 
-vi.mock('@/features/kangur/observability/client', () => ({
-  ...(() => {
-    const {
-      trackKangurClientEventMock,
-      logKangurClientErrorMock,
-      withKangurClientError,
-      withKangurClientErrorSync,
-    } = globalThis.__kangurClientErrorMocks();
-    return {
-      trackKangurClientEvent: trackKangurClientEventMock,
-      logKangurClientError: logKangurClientErrorMock,
-      withKangurClientError,
-      withKangurClientErrorSync,
-    };
-  })(),
-}));
+vi.mock('@/features/kangur/observability/client', () => {
+  const {
+    trackKangurClientEventMock,
+    logKangurClientErrorMock,
+    withKangurClientError,
+    withKangurClientErrorSync,
+  } = globalThis.__kangurClientErrorMocks();
+  return {
+    trackKangurClientEvent: trackKangurClientEventMock,
+    logKangurClientError: logKangurClientErrorMock,
+    withKangurClientError,
+    withKangurClientErrorSync,
+  };
+});
 
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,

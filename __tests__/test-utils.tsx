@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import React from 'react';
+import { NextIntlClientProvider } from 'next-intl';
 
 import { ToastProvider } from '@/shared/ui/toast';
 
@@ -24,9 +25,16 @@ type CustomRenderOptions = {
 const customRender = (ui: React.ReactElement, options?: CustomRenderOptions): RenderResult => {
   const queryClient = options?.queryClient || createTestQueryClient();
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
-    </QueryClientProvider>
+    <NextIntlClientProvider
+      locale="pl"
+      messages={{}}
+      onError={() => {}}
+      getMessageFallback={({ key }) => key}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>{children}</ToastProvider>
+      </QueryClientProvider>
+    </NextIntlClientProvider>
   );
   return render(ui, { wrapper: Wrapper, ...options });
 };

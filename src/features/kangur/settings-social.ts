@@ -9,6 +9,7 @@ export type KangurSocialSettings = {
   linkedinConnectionId: string | null;
   batchCaptureBaseUrl: string | null;
   batchCapturePresetIds: string[];
+  batchCapturePresetLimit: number | null;
   projectUrl: string | null;
 };
 
@@ -21,6 +22,7 @@ export const DEFAULT_KANGUR_SOCIAL_SETTINGS: Readonly<KangurSocialSettings> = Ob
   linkedinConnectionId: null,
   batchCaptureBaseUrl: null,
   batchCapturePresetIds: DEFAULT_PRESET_IDS,
+  batchCapturePresetLimit: null,
   projectUrl: null,
 });
 
@@ -37,6 +39,23 @@ const normalizeBaseUrl = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizePresetLimit = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const normalized = Math.floor(value);
+    return normalized > 0 ? normalized : null;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) {
+      const normalized = Math.floor(parsed);
+      return normalized > 0 ? normalized : null;
+    }
+  }
+  return null;
 };
 
 const normalizePresetIds = (value: unknown): string[] => {
@@ -71,6 +90,7 @@ export const parseKangurSocialSettings = (
     linkedinConnectionId: normalizeOptionalId(parsed['linkedinConnectionId']),
     batchCaptureBaseUrl: normalizeBaseUrl(parsed['batchCaptureBaseUrl']),
     batchCapturePresetIds: normalizePresetIds(parsed['batchCapturePresetIds']),
+    batchCapturePresetLimit: normalizePresetLimit(parsed['batchCapturePresetLimit']),
     projectUrl: normalizeBaseUrl(parsed['projectUrl']),
   };
 };

@@ -91,12 +91,16 @@ export const useCreateKangurSocialImageAddon = (): MutationResult<
 export type KangurSocialImageAddonsBatchPayload = {
   baseUrl: string;
   presetIds?: string[];
+  presetLimit?: number | null;
 };
 
 export type KangurSocialImageAddonsBatchResult = {
   addons: KangurSocialImageAddon[];
   failures: Array<{ id: string; reason: string }>;
   runId: string;
+  requestedPresetCount?: number;
+  usedPresetCount?: number;
+  usedPresetIds?: string[];
 };
 
 export const useBatchCaptureKangurSocialImageAddons = (): MutationResult<

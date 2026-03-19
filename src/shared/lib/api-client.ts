@@ -136,7 +136,7 @@ export async function apiClient<T>(
     ]);
 
     if (response.ok) {
-      return data as unknown as T;
+      return data as T;
     }
 
     let errorMessage = response.statusText || 'Unknown API Error';
@@ -151,7 +151,7 @@ export async function apiClient<T>(
         errorId = dataObj['errorId'];
       }
       if (typeof dataObj['category'] === 'string') {
-        category = dataObj['category'] as ErrorCategory;
+        category = dataObj['category'];
       }
       if (Array.isArray(dataObj['suggestedActions'])) {
         suggestedActions = dataObj['suggestedActions'] as SuggestedAction[];

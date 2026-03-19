@@ -1,0 +1,102 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import type { ReactNode } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
+vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => ({
+    isAuthenticated: true,
+    user: { actorType: 'learner', ownerUserId: 'parent-1' },
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
+  default: () => <div>Mock Subtracting Garden Game</div>,
+}));
+
+import enMessages from '@/i18n/messages/en.json';
+import SubtractingLesson from '@/features/kangur/ui/components/SubtractingLesson';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+
+const renderLesson = (ui: ReactNode = <SubtractingLesson />) =>
+  render(
+    <NextIntlClientProvider locale='en' messages={enMessages}>
+      <KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>
+    </NextIntlClientProvider>
+  );
+
+describe('SubtractingLesson i18n', () => {
+  it('renders English hub labels', () => {
+    renderLesson();
+
+    expect(screen.getByRole('button', { name: /Subtraction basics/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Subtracting across 10/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Two-digit subtraction/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Remember!/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Subtraction game/i })).toBeInTheDocument();
+  });
+
+  it('renders English basics and crossing-10 slide copy', () => {
+    const { unmount } = renderLesson();
+
+    fireEvent.click(screen.getByRole('button', { name: /Subtraction basics/i }));
+
+    expect(screen.getByText('What does it mean to subtract?')).toBeInTheDocument();
+    expect(
+      screen.getByText('Subtraction means taking a part away from a group. We ask: how many are left?')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+
+    expect(screen.getByRole('button', { name: /Subtraction in motion/i })).toBeInTheDocument();
+
+    unmount();
+
+    renderLesson();
+
+    fireEvent.click(screen.getByRole('button', { name: /Subtracting across 10/i }));
+
+    expect(screen.getByText('Subtracting across 10')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Split the subtrahend into two parts: first move down to 10, then subtract the rest.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText('Subtract 2: 10 − 2 = 8')).toBeInTheDocument();
+  });
+
+  it('renders English two-digit and remember slide copy', () => {
+    const { unmount } = renderLesson();
+
+    fireEvent.click(screen.getByRole('button', { name: /Two-digit subtraction/i }));
+
+    expect(screen.getByText('Subtract tens and ones separately!')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+
+    expect(screen.getByRole('button', { name: /Abacus/i })).toBeInTheDocument();
+
+    unmount();
+
+    renderLesson();
+
+    fireEvent.click(screen.getByRole('button', { name: /Remember!/i }));
+
+    expect(screen.getByText('Subtraction rules')).toBeInTheDocument();
+    expect(screen.getByText('Move back in steps')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+    fireEvent.click(screen.getByTestId('lesson-slide-next-button'));
+
+    expect(screen.getByRole('button', { name: /Check the answer with addition/i })).toBeInTheDocument();
+  });
+});

@@ -75,7 +75,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       data = data.filter((lesson) => lesson.enabled !== false);
     }
     if (options.subject) {
-      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+      data = data.filter((lesson) => lesson.subject === options.subject);
     }
     return {
       data,
@@ -89,6 +89,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
     error: null,
   }),
 }));
+
+// Removed manual useKangurLessonSections and useKangurLessonTemplates mocks
+
+// Removed manual useKangurLessonSections and useKangurLessonTemplates mocks
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
@@ -332,7 +336,7 @@ describe('Lessons page mastery list', () => {
     renderLessonsPage();
 
     expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz będą gotowe.', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /nauka zegara/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Ladowanie lekcji...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-loading-fallback')).not.toBeInTheDocument();
@@ -343,7 +347,7 @@ describe('Lessons page mastery list', () => {
     });
 
     expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(screen.queryByText('Lekcje zaraz będą gotowe.', { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
   });
 
   it('keeps loading copy visible until deferred content resolves', async () => {
@@ -357,9 +361,9 @@ describe('Lessons page mastery list', () => {
 
     const section = screen.getByTestId('lessons-shell-transition');
     expect(section).toBeInTheDocument();
-    expect(screen.getByText('Lekcje zaraz będą gotowe.', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Lekcje zaraz beda gotowe.', { exact: false })).toBeInTheDocument();
     expect(
-      screen.queryByText('Wybierz temat i przejdź od razu do praktyki lub powtórki.')
+      screen.queryByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-list-transition')).not.toBeInTheDocument();
 
@@ -369,9 +373,9 @@ describe('Lessons page mastery list', () => {
 
     const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
-    expect(screen.queryByText('Lekcje zaraz będą gotowe.', { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
     expect(
-      screen.getByText('Wybierz temat i przejdź od razu do praktyki lub powtórki.')
+      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')
     ).toBeInTheDocument();
   });
 

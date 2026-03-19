@@ -43,6 +43,16 @@ vi.mock('next-intl', () => ({
             en: "Let's play!",
             pl: 'Grajmy!',
           },
+          'KangurGamePage.screens.training.label': {
+            de: 'Training einrichten',
+            en: 'Training setup',
+            pl: 'Konfiguracja treningu',
+          },
+          'KangurGamePage.screens.training.wordmarkLabel': {
+            de: 'Training',
+            en: 'Training',
+            pl: 'Trening',
+          },
         } as const
       )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
@@ -414,6 +424,71 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(intro).toHaveTextContent("Let's play!");
     expect(text).not.toBeNull();
     expect(text).toHaveTextContent("Let's play!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('renders the localized English training wordmark in the training heading art', () => {
+    localeState.value = 'en';
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Training setup');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('renders the localized German play wordmark in the operation heading art', () => {
+    localeState.value = 'de';
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent("Los geht's!");
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent("Los geht's!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('renders the localized German training wordmark in the training heading art', () => {
+    localeState.value = 'de';
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Training einrichten');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');

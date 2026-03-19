@@ -596,17 +596,30 @@ vi.mock('next/link', () => ({
 // Mock next-intl
 vi.mock('next-intl', () => {
   const React = require('react');
+  const plMessages = require('./src/i18n/messages/pl.json');
   return {
     NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-    useTranslations: () => vi.fn((key: string) => key),
+    useTranslations: (namespace?: string) => vi.fn((key: string) => {
+      let obj = namespace ? namespace.split('.').reduce((o: any, i: string) => o?.[i], plMessages) : plMessages;
+      let value = key.split('.').reduce((o: any, i: string) => o?.[i], obj);
+      return value || (namespace ? `${namespace}.${key}` : key);
+    }),
     useLocale: () => 'pl',
   };
 });
 
-vi.mock('use-intl', () => ({
-  useLocale: () => 'pl',
-  useTranslations: () => (key: string) => key,
-}));
+// Mock use-intl to handle inlined next-intl bypassing the global mock
+vi.mock('use-intl', () => {
+  const plMessages = require('./src/i18n/messages/pl.json');
+  return {
+    useTranslations: (namespace?: string) => vi.fn((key: string) => {
+      let obj = namespace ? namespace.split('.').reduce((o: any, i: string) => o?.[i], plMessages) : plMessages;
+      let value = key.split('.').reduce((o: any, i: string) => o?.[i], obj);
+      return value || (namespace ? `${namespace}.${key}` : key);
+    }),
+    useLocale: () => 'pl',
+  };
+});
 
 vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key: string) => key)),

@@ -59,6 +59,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     batchCaptureBaseUrl,
     setBatchCaptureBaseUrl,
     batchCapturePresetIds,
+    batchCapturePresetLimit,
+    setBatchCapturePresetLimit,
+    effectiveBatchCapturePresetCount,
     batchCaptureResult,
     deleteError,
     clearDeleteError,
@@ -100,10 +103,19 @@ export function AdminKangurSocialPage(): React.JSX.Element {
     handleLinkedInConnectionChange,
     canGenerateSocialDraft,
     socialDraftBlockedReason,
+    canRunFreshCapturePipeline,
+    socialBatchCaptureBlockedReason,
     socialVisionWarning,
     resolveDocReferences,
     pipelineStep,
+    pipelineProgress,
+    pipelineErrorMessage,
     handleRunFullPipeline,
+    handleRunFullPipelineWithFreshCapture,
+    captureOnlyPending,
+    captureOnlyMessage,
+    captureOnlyErrorMessage,
+    handleCaptureImagesOnly,
     publishingPostId,
     unpublishingPostId,
     contextSummary,
@@ -169,9 +181,9 @@ export function AdminKangurSocialPage(): React.JSX.Element {
   );
 
   const brainModelBadgeLabel =
-    brainModelOptions.effectiveModelId || 'Not configured';
+    brainModelId ?? brainModelOptions.effectiveModelId ?? 'Not configured';
   const visionModelBadgeLabel =
-    visionModelOptions.effectiveModelId || 'Not configured';
+    visionModelId ?? visionModelOptions.effectiveModelId ?? 'Not configured';
 
   const linkedInExpiry = selectedLinkedInConnection?.linkedinExpiresAt
     ? new Date(selectedLinkedInConnection.linkedinExpiresAt)
@@ -322,9 +334,22 @@ export function AdminKangurSocialPage(): React.JSX.Element {
             <SocialPostPipeline
               activePostId={activePostId}
               pipelineStep={pipelineStep}
+              pipelineProgress={pipelineProgress}
+              pipelineErrorMessage={pipelineErrorMessage}
               handleRunFullPipeline={handleRunFullPipeline}
+              handleRunFullPipelineWithFreshCapture={handleRunFullPipelineWithFreshCapture}
+              handleCaptureImagesOnly={handleCaptureImagesOnly}
               canRunPipeline={canGenerateSocialDraft}
+              canRunFreshCapturePipeline={canRunFreshCapturePipeline}
+              canCaptureImagesOnly={Boolean(activePostId) && Boolean(batchCaptureBaseUrl.trim()) && batchCapturePresetIds.length > 0}
               pipelineBlockedReason={socialDraftBlockedReason}
+              captureBlockedReason={socialBatchCaptureBlockedReason}
+              captureOnlyPending={captureOnlyPending}
+              captureOnlyMessage={captureOnlyMessage}
+              captureOnlyErrorMessage={captureOnlyErrorMessage}
+              batchCapturePresetCount={batchCapturePresetIds.length}
+              effectiveBatchCapturePresetCount={effectiveBatchCapturePresetCount}
+              batchCapturePresetLimit={batchCapturePresetLimit}
             />
 
             <KangurSocialPipelineQueuePanel variant='compact' />
@@ -453,6 +478,8 @@ export function AdminKangurSocialPage(): React.JSX.Element {
         createAddonPending={createAddonMutation.isPending}
         batchCaptureBaseUrl={batchCaptureBaseUrl}
         batchCapturePresetIds={batchCapturePresetIds}
+        batchCapturePresetLimit={batchCapturePresetLimit}
+        effectiveBatchCapturePresetCount={effectiveBatchCapturePresetCount}
         batchCapturePending={batchCaptureMutation.isPending}
         batchCaptureResult={batchCaptureResult}
         activePost={activePost}
@@ -487,6 +514,7 @@ export function AdminKangurSocialPage(): React.JSX.Element {
         onApplyDocUpdates={handleApplyDocUpdates}
         onHandleCreateAddon={handleCreateAddon}
         onBatchCaptureBaseUrlChange={setBatchCaptureBaseUrl}
+        onBatchCapturePresetLimitChange={setBatchCapturePresetLimit}
         onToggleCapturePreset={handleToggleCapturePreset}
         onSelectAllCapturePresets={selectAllCapturePresets}
         onClearCapturePresets={clearCapturePresets}

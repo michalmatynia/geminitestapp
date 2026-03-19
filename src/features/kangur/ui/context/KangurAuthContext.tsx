@@ -35,6 +35,7 @@ type KangurAuthContextValue = {
   isAuthenticated: boolean;
   canAccessParentAssignments: boolean;
   isLoadingAuth: boolean;
+  isLoggingOut?: boolean;
   isLoadingPublicSettings: boolean;
   authError: KangurAuthError | null;
   appPublicSettings: null;
@@ -107,9 +108,11 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   const basePath = routing?.basePath ?? KANGUR_BASE_PATH;
   const fallbackCallbackUrl = routing?.requestedPath ?? basePath;
   const authRequestVersionRef = useRef(0);
+  const logoutInFlightRef = useRef(false);
   const [user, setUser] = useState<KangurUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState<KangurAuthError | null>(null);
   const [appPublicSettings] = useState<null>(null);
@@ -168,39 +171,50 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
   }, [checkAppState]);
 
   const logout = useCallback((shouldRedirect = true): void => {
+    if (logoutInFlightRef.current) {
+      return;
+    }
+
+    logoutInFlightRef.current = true;
     authRequestVersionRef.current += 1;
     setUser(null);
     setIsAuthenticated(false);
     setAuthError(null);
+    setIsLoggingOut(true);
     setIsLoadingAuth(!shouldRedirect);
 
     void (async (): Promise<void> => {
-      await withKangurClientError(
-        {
-          source: 'kangur.auth',
-          action: 'logout',
-          description: 'Logs out the current Kangur session.',
-          context: { shouldRedirect },
-        },
-        async () => {
-          if (shouldRedirect) {
-            await kangurPlatform.auth.logout(window.location.href);
-            return true;
-          }
-          await kangurPlatform.auth.logout();
-          router.refresh();
-          await checkAppState();
-          return true;
-        },
-        {
-          fallback: false,
-          onError: () => {
-            if (!shouldRedirect) {
-              void checkAppState();
-            }
+      try {
+        await withKangurClientError(
+          {
+            source: 'kangur.auth',
+            action: 'logout',
+            description: 'Logs out the current Kangur session.',
+            context: { shouldRedirect },
           },
-        }
-      );
+          async () => {
+            if (shouldRedirect) {
+              await kangurPlatform.auth.logout(window.location.href);
+              return true;
+            }
+            await kangurPlatform.auth.logout();
+            router.refresh();
+            await checkAppState();
+            return true;
+          },
+          {
+            fallback: false,
+            onError: () => {
+              if (!shouldRedirect) {
+                void checkAppState();
+              }
+            },
+          }
+        );
+      } finally {
+        logoutInFlightRef.current = false;
+        setIsLoggingOut(false);
+      }
     })();
   }, [checkAppState, router]);
 
@@ -230,6 +244,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       isAuthenticated,
       canAccessParentAssignments,
       isLoadingAuth,
+      isLoggingOut,
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
@@ -240,6 +255,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
       canAccessParentAssignments,
       isAuthenticated,
       isLoadingAuth,
+      isLoggingOut,
       isLoadingPublicSettings,
       user,
     ]

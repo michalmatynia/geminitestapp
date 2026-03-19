@@ -81,6 +81,7 @@ type KangurNavActionConfig = {
   ariaLabel?: string;
   className?: string;
   content: React.ReactNode;
+  disabled?: boolean;
   docId: string;
   elementRef?: React.Ref<HTMLButtonElement>;
   href?: string;
@@ -183,6 +184,7 @@ export function KangurPrimaryNavigation({
     : canManageLearners;
   const effectiveShowParentDashboard = effectiveCanManageLearners && showParentDashboard;
   const authUser = auth?.user ?? null;
+  const isLoggingOut = auth?.isLoggingOut ?? false;
   const isParentAccount = authUser?.actorType === 'parent';
   const activeLearner = authUser?.activeLearner ?? null;
   const activeLearnerId = activeLearner?.id?.trim() ?? '';
@@ -437,9 +439,10 @@ export function KangurPrimaryNavigation({
     content: (
       <>
         <LogOut aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-        <span className='truncate'>Wyloguj</span>
+        <span className='truncate'>{isLoggingOut ? 'Wylogowywanie...' : 'Wyloguj'}</span>
       </>
     ),
+    disabled: isLoggingOut,
     docId: 'profile_logout',
     className: mobileNavItemClassName,
     onClick: onLogout,
@@ -454,8 +457,8 @@ export function KangurPrimaryNavigation({
     return {
       ...action,
       onClick: () => {
-        onActionClick();
         existingClick?.();
+        onActionClick();
       },
     };
   };

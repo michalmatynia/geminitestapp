@@ -25,14 +25,33 @@ const manualPipelineInputSchema = z.object({
   editorState: editorStateSchema,
   imageAssets: z.array(imageFileSelectionSchema).max(12).default([]),
   imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
-  batchCaptureBaseUrl: z.string().trim().url(),
-  batchCapturePresetIds: z.array(z.string().trim().min(1)).min(1),
+  captureMode: z.enum(['existing_assets', 'fresh_capture']).default('fresh_capture'),
+  batchCaptureBaseUrl: z.string().trim().url().optional(),
+  batchCapturePresetIds: z.array(z.string().trim().min(1)).optional(),
+  batchCapturePresetLimit: z.number().int().positive().nullable().optional(),
   linkedinConnectionId: z.string().trim().nullable().optional(),
   brainModelId: z.string().trim().nullable().optional(),
   visionModelId: z.string().trim().nullable().optional(),
   projectUrl: z.string().trim().optional().default(''),
   generationNotes: z.string().trim().optional().default(''),
   docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
+}).superRefine((value, ctx) => {
+  if (value.captureMode === 'fresh_capture') {
+    if (!value.batchCaptureBaseUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['batchCaptureBaseUrl'],
+        message: 'Fresh capture requires a batch capture base URL.',
+      });
+    }
+    if (!value.batchCapturePresetIds || value.batchCapturePresetIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['batchCapturePresetIds'],
+        message: 'Fresh capture requires at least one capture preset.',
+      });
+    }
+  }
 });
 
 const bodySchema = z

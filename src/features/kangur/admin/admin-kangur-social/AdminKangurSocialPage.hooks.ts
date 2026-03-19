@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   trackKangurClientEvent,
+  logKangurClientError,
 } from '@/features/kangur/observability/client';
-import { parseDatetimeLocal } from './AdminKangurSocialPage.Constants';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
+import { parseDatetimeLocal, mergeImageAssets } from './AdminKangurSocialPage.Constants';
 
 import { useSocialSettings } from './hooks/useSocialSettings';
 import { useSocialEditorSync } from './hooks/useSocialEditorSync';
@@ -14,24 +16,38 @@ import { useSocialImageAddons } from './hooks/useSocialImageAddons';
 import { useSocialContext } from './hooks/useSocialContext';
 import { useSocialGeneration } from './hooks/useSocialGeneration';
 import { useSocialPipelineRunner } from './hooks/useSocialPipelineRunner';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 
 export function useAdminKangurSocialPage() {
   const settings = useSocialSettings();
   const brainRoutingModelId = settings.brainModelOptions.effectiveModelId || null;
   const visionRoutingModelId = settings.visionModelOptions.effectiveModelId || null;
-  const canGenerateSocialDraft = Boolean(brainRoutingModelId);
+  const resolvedBrainModelId = settings.brainModelId || brainRoutingModelId;
+  const resolvedVisionModelId = settings.visionModelId || visionRoutingModelId;
+  const canGenerateSocialDraft = Boolean(resolvedBrainModelId);
+  const hasBatchCaptureConfig =
+    Boolean(settings.batchCaptureBaseUrl.trim()) && settings.batchCapturePresetIds.length > 0;
+  const effectiveBatchCapturePresetCount =
+    settings.batchCapturePresetLimit == null
+      ? settings.batchCapturePresetIds.length
+      : Math.min(settings.batchCapturePresetLimit, settings.batchCapturePresetIds.length);
   const socialDraftBlockedReason = canGenerateSocialDraft
     ? null
-    : 'Assign an AI Brain model for StudiQ Social Post Generation in /admin/brain?tab=routing.';
-  const socialVisionWarning = visionRoutingModelId
+    : 'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.';
+  const socialBatchCaptureBlockedReason = hasBatchCaptureConfig
     ? null
-    : 'Visual analysis is not configured in AI Brain. Draft generation can continue, but screenshot analysis will be skipped.';
+    : !settings.batchCaptureBaseUrl.trim()
+      ? 'Set a batch capture base URL in Social Settings first.'
+      : 'Select at least one capture preset in Social Settings first.';
+  const socialVisionWarning = resolvedVisionModelId
+    ? null
+    : 'Visual analysis is not configured. Choose a StudiQ Social vision model in Settings or assign AI Brain routing to enable screenshot analysis.';
 
   const editor = useSocialEditorSync({
     linkedinConnections: settings.linkedinConnections,
     linkedinConnectionId: settings.linkedinConnectionId,
-    brainModelId: brainRoutingModelId,
-    visionModelId: visionRoutingModelId,
+    brainModelId: resolvedBrainModelId,
+    visionModelId: resolvedVisionModelId,
   });
 
   const buildSocialContext = useCallback((overrides?: Record<string, unknown>): Record<string, unknown> => ({
@@ -44,11 +60,18 @@ export function useAdminKangurSocialPage() {
     visualDocUpdateCount: editor.activePost?.visualDocUpdates?.length ?? 0,
     notesLength: editor.generationNotes.trim().length,
     hasLinkedInConnection: Boolean(settings.linkedinConnectionId),
-    brainModelId: brainRoutingModelId,
-    visionModelId: visionRoutingModelId,
-    modelSource: 'ai_brain',
+    brainModelId: resolvedBrainModelId,
+    visionModelId: resolvedVisionModelId,
+    brainModelOverrideId: settings.brainModelId,
+    visionModelOverrideId: settings.visionModelId,
+    brainRoutingModelId,
+    visionRoutingModelId,
+    modelSource:
+      settings.brainModelId || settings.visionModelId ? 'social_settings' : 'ai_brain',
     batchCapturePresetCount: settings.batchCapturePresetIds.length,
+    batchCaptureEffectivePresetCount: effectiveBatchCapturePresetCount,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl.trim() || null,
+    batchCapturePresetLimit: settings.batchCapturePresetLimit,
     ...overrides,
   }), [
     editor.activePost?.id,
@@ -61,8 +84,14 @@ export function useAdminKangurSocialPage() {
     editor.generationNotes,
     settings.linkedinConnectionId,
     settings.batchCapturePresetIds.length,
+    effectiveBatchCapturePresetCount,
     settings.batchCaptureBaseUrl,
+    settings.batchCapturePresetLimit,
+    settings.brainModelId,
+    settings.visionModelId,
     brainRoutingModelId,
+    resolvedBrainModelId,
+    resolvedVisionModelId,
     visionRoutingModelId,
   ]);
 
@@ -76,8 +105,8 @@ export function useAdminKangurSocialPage() {
     imageAddonIds: editor.imageAddonIds,
     resolveDocReferences: editor.resolveDocReferences,
     linkedinConnectionId: settings.linkedinConnectionId,
-    brainModelId: null,
-    visionModelId: null,
+    brainModelId: settings.brainModelId,
+    visionModelId: settings.visionModelId,
     buildSocialContext,
   });
 
@@ -86,6 +115,7 @@ export function useAdminKangurSocialPage() {
     setAddonForm: editor.setAddonForm,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     batchCapturePresetIds: settings.batchCapturePresetIds,
+    batchCapturePresetLimit: settings.batchCapturePresetLimit,
     buildSocialContext,
   });
 
@@ -100,8 +130,8 @@ export function useAdminKangurSocialPage() {
     activePost: editor.activePost,
     resolveDocReferences: editor.resolveDocReferences,
     generationNotes: editor.generationNotes,
-    brainModelId: null,
-    visionModelId: null,
+    brainModelId: settings.brainModelId,
+    visionModelId: settings.visionModelId,
     canGenerateDraft: canGenerateSocialDraft,
     generateDraftBlockedReason: socialDraftBlockedReason,
     imageAddonIds: editor.imageAddonIds,
@@ -117,9 +147,10 @@ export function useAdminKangurSocialPage() {
     imageAddonIds: editor.imageAddonIds,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     batchCapturePresetIds: settings.batchCapturePresetIds,
+    batchCapturePresetLimit: settings.batchCapturePresetLimit,
     linkedinConnectionId: settings.linkedinConnectionId,
-    brainModelId: null,
-    visionModelId: null,
+    brainModelId: settings.brainModelId,
+    visionModelId: settings.visionModelId,
     canRunServerPipeline: canGenerateSocialDraft,
     pipelineBlockedReason: socialDraftBlockedReason,
     projectUrl: settings.projectUrl,
@@ -135,6 +166,95 @@ export function useAdminKangurSocialPage() {
     setBatchCaptureResult: imageAddons.setBatchCaptureResult,
     handleSelectAddons: editor.handleSelectAddons,
   });
+
+  const [captureOnlyPending, setCaptureOnlyPending] = useState(false);
+  const [captureOnlyMessage, setCaptureOnlyMessage] = useState<string | null>(null);
+  const [captureOnlyErrorMessage, setCaptureOnlyErrorMessage] = useState<string | null>(null);
+
+  const handleCaptureImagesOnly = useCallback(async (): Promise<void> => {
+    if (!editor.activePost) {
+      return;
+    }
+    if (!hasBatchCaptureConfig) {
+      setCaptureOnlyMessage(null);
+      setCaptureOnlyErrorMessage(socialBatchCaptureBlockedReason);
+      return;
+    }
+
+    setCaptureOnlyPending(true);
+    setCaptureOnlyErrorMessage(null);
+    setCaptureOnlyMessage('Capturing fresh screenshots and linking them to the active draft...');
+
+    try {
+      const result = await imageAddons.runBatchCapture();
+      const nextImageAddonIds = Array.from(
+        new Set([...editor.imageAddonIds, ...result.addons.map((addon) => addon.id)])
+      );
+      const nextImageAssets = mergeImageAssets(
+        editor.imageAssets,
+        result.addons
+          .map((addon) => addon.imageAsset)
+          .filter((asset): asset is ImageFileSelection => Boolean(asset))
+      );
+
+      if (result.addons.length > 0) {
+        const patched = await crud.patchMutation.mutateAsync({
+          id: editor.activePost.id,
+          updates: {
+            imageAddonIds: nextImageAddonIds,
+            imageAssets: nextImageAssets,
+          },
+        });
+
+        editor.setImageAddonIds(patched.imageAddonIds ?? nextImageAddonIds);
+        editor.setImageAssets(patched.imageAssets ?? nextImageAssets);
+      }
+
+      const usedPresetCount = result.usedPresetCount ?? effectiveBatchCapturePresetCount;
+      setCaptureOnlyMessage(
+        result.addons.length > 0
+          ? `Captured ${result.addons.length} screenshot${result.addons.length === 1 ? '' : 's'} from ${usedPresetCount} preset${usedPresetCount === 1 ? '' : 's'} and linked them to the draft.`
+          : 'Capture finished with no new screenshots to attach.'
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to capture screenshots.';
+      setCaptureOnlyMessage(null);
+      setCaptureOnlyErrorMessage(message);
+      void ErrorSystem.captureException(error);
+      logKangurClientError(error, {
+        source: 'AdminKangurSocialPage',
+        action: 'captureImagesOnly',
+        ...buildSocialContext({ error: true }),
+      });
+    } finally {
+      setCaptureOnlyPending(false);
+    }
+  }, [
+    buildSocialContext,
+    crud.patchMutation,
+    editor.activePost,
+    editor.imageAddonIds,
+    editor.imageAssets,
+    editor.setImageAddonIds,
+    editor.setImageAssets,
+    effectiveBatchCapturePresetCount,
+    hasBatchCaptureConfig,
+    imageAddons,
+    socialBatchCaptureBlockedReason,
+  ]);
+
+  const handleRunFullPipeline = useCallback(async (): Promise<void> => {
+    setCaptureOnlyMessage(null);
+    setCaptureOnlyErrorMessage(null);
+    await pipeline.handleRunFullPipeline();
+  }, [pipeline.handleRunFullPipeline]);
+
+  const handleRunFullPipelineWithFreshCapture = useCallback(async (): Promise<void> => {
+    setCaptureOnlyMessage(null);
+    setCaptureOnlyErrorMessage(null);
+    await pipeline.handleRunFullPipelineWithFreshCapture();
+  }, [pipeline.handleRunFullPipelineWithFreshCapture]);
 
   // Track model/connection changes via settings handlers with telemetry
   const handleBrainModelChange = useMemo(() => {
@@ -202,12 +322,17 @@ export function useAdminKangurSocialPage() {
     visionModelId: settings.visionModelId,
     canGenerateSocialDraft,
     socialDraftBlockedReason,
+    canRunFreshCapturePipeline: canGenerateSocialDraft && hasBatchCaptureConfig,
+    socialBatchCaptureBlockedReason,
     socialVisionWarning,
     projectUrl: settings.projectUrl,
     setProjectUrl: settings.setProjectUrl,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     setBatchCaptureBaseUrl: settings.setBatchCaptureBaseUrl,
     batchCapturePresetIds: settings.batchCapturePresetIds,
+    batchCapturePresetLimit: settings.batchCapturePresetLimit,
+    setBatchCapturePresetLimit: settings.setBatchCapturePresetLimit,
+    effectiveBatchCapturePresetCount,
     isSettingsDirty: settings.isSettingsDirty,
     isSavingSettings: settings.isSavingSettings,
     handleSaveSettings: settings.handleSaveSettings,
@@ -264,7 +389,14 @@ export function useAdminKangurSocialPage() {
 
     // Pipeline
     pipelineStep: pipeline.pipelineStep,
-    handleRunFullPipeline: pipeline.handleRunFullPipeline,
+    pipelineProgress: pipeline.pipelineProgress,
+    pipelineErrorMessage: pipeline.pipelineErrorMessage,
+    handleRunFullPipeline,
+    handleRunFullPipelineWithFreshCapture,
+    captureOnlyPending,
+    captureOnlyMessage,
+    captureOnlyErrorMessage,
+    handleCaptureImagesOnly,
 
     // Queries (for isPending checks in consumer)
     postsQuery: editor.postsQuery,

@@ -171,6 +171,7 @@ describe('KangurParentDashboardHeroWidget', () => {
       'bg-white/68',
       'text-center'
     );
+    expect(screen.getByTestId('kangur-parent-dashboard-heading-art')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'hero.unauthenticated.title' })).toHaveClass(
       'text-2xl',
       'sm:text-3xl'
@@ -229,6 +230,7 @@ describe('KangurParentDashboardHeroWidget', () => {
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass('text-center');
+    expect(screen.getByTestId('kangur-parent-dashboard-heading-art')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'hero.parentTitle' })).toHaveClass(
       'text-2xl',
       'sm:text-3xl'

@@ -27,9 +27,15 @@ type PipelineJobRecord = {
         };
       }
     | unknown;
+  progress: {
+    captureMode?: 'existing_assets' | 'fresh_capture';
+    requestedPresetCount?: number | null;
+    usedPresetCount?: number | null;
+  } | null;
   result: {
     type?: string;
     postId?: string | null;
+    captureMode?: 'existing_assets' | 'fresh_capture';
     skipped?: boolean;
     reason?: string;
     addonsCreated?: number;
@@ -411,7 +417,21 @@ function JobRow({
     job.result?.postId ??
     null;
   const jobLabel = isManualRun ? 'Manual post pipeline' : 'Scheduled pipeline tick';
-  const jobMeta = isManualRun && postId ? `Post ${postId}` : null;
+  const captureMode = job.progress?.captureMode ?? job.result?.captureMode ?? null;
+  const captureModeLabel =
+    captureMode === 'fresh_capture'
+      ? 'Fresh Playwright capture'
+      : captureMode === 'existing_assets'
+        ? 'Use attached visuals'
+        : null;
+  const presetUsageLabel =
+    captureMode === 'fresh_capture' &&
+    job.progress?.usedPresetCount != null &&
+    job.progress?.requestedPresetCount != null
+      ? `${job.progress.usedPresetCount}/${job.progress.requestedPresetCount} presets used`
+      : null;
+  const jobMeta = [isManualRun && postId ? `Post ${postId}` : null, captureModeLabel, presetUsageLabel]
+    .filter((value): value is string => Boolean(value));
 
   const durationLabel =
     job.duration != null ? `${(job.duration / 1000).toFixed(1)}s` : '---';
@@ -432,8 +452,12 @@ function JobRow({
       </td>
       <td className='py-1.5 pr-3'>
         <div className='font-medium text-foreground'>{jobLabel}</div>
-        {jobMeta ? (
-          <div className='text-[10px] text-muted-foreground'>{jobMeta}</div>
+        {jobMeta.length > 0 ? (
+          <div className='space-y-0.5 text-[10px] text-muted-foreground'>
+            {jobMeta.map((item) => (
+              <div key={item}>{item}</div>
+            ))}
+          </div>
         ) : null}
       </td>
       <td className='py-1.5 pr-3 tabular-nums'>

@@ -277,6 +277,7 @@
       },
       "training": {
         "label": "Konfiguracja treningu",
+        "wordmarkLabel": "Trening",
         "description": "Skonfiguruj trening mieszany i dobierz zakres pytan."
       },
       "kangur_setup": {
@@ -1349,6 +1350,30 @@
         "end": "Zakończ"
       }
     },
+    "questionCard": {
+      "progressLabel": "Pytanie {questionNumber} z {total}",
+      "timerAriaLabel": "Pozostały czas",
+      "timerValueText": "{timeLeft} sekund pozostało",
+      "clockTitle": "Którą godzinę pokazuje zegar?",
+      "clockDescription": "Wybierz odpowiedź, która pasuje do położenia wskazówek.",
+      "defaultDescription": "Jaka jest odpowiedź?",
+      "choicesAriaLabel": "Odpowiedzi",
+      "answerChoiceAriaLabel": "Odpowiedź {choice}",
+      "choiceStatus": {
+        "correct": "poprawna",
+        "incorrect": "niepoprawna",
+        "notChosen": "nie wybrano"
+      },
+      "result": {
+        "correct": "🎉 Dobrze!",
+        "timedOut": "⏰ Czas minął!",
+        "incorrect": "❌ Nie tym razem.",
+        "checking": "Sprawdzamy odpowiedź…",
+        "answerIs": "❌ Odpowiedź to {answer}",
+        "timedOutAnswer": "⏰ Czas minął! Odpowiedź: {answer}"
+      },
+      "clockAriaLabel": "Zegar analogowy pokazuje godzinę {time}."
+    },
     "adding": {
       "summary": {
         "perfect": "Idealnie! Jesteś mistrzem dodawania!",
@@ -2238,12 +2263,160 @@
     "clockTraining": {
       "mode": {
         "label": "Tryb",
-        "challenge": "Wyzwanie",
-        "practice": "Nauka"
+        "challenge": "Tryb Wyzwanie",
+        "practice": "Tryb Nauka"
+      },
+      "sections": {
+        "hours": "Godziny",
+        "minutes": "Minuty",
+        "combined": "Pełny czas",
+        "mixed": "Mieszane"
+      },
+      "medals": {
+        "gold": "Złoty medal",
+        "silver": "Srebrny medal",
+        "bronze": "Brązowy medal",
+        "default": "Medal"
       },
       "bestStreak": "Najlepsza seria",
       "adaptiveRetries": "Powtórki adaptacyjne",
+      "adaptiveRetriesWithCount": "Powtórki adaptacyjne: {count}",
+      "adaptiveRetryAdded": "Dodaliśmy krótką powtórkę tego zadania.",
+      "challengePill": "Wyzwanie",
+      "taskProgress": "Zadanie {current} z {total}",
+      "seriesProgress": "Seria {current}/{total}",
       "progressAriaLabel": "Dokładność w treningu zegara",
+      "emptyState": "Brak zadania.",
+      "actions": {
+        "finish": "Zakończ ćwiczenie ✅"
+      },
+      "content": {
+        "hours": {
+          "promptLabel": "Ustaw pełną godzinę"
+        },
+        "minutes": {
+          "promptLabel": "Ustaw minuty na tarczy"
+        },
+        "combined": {
+          "guidance": "Najpierw ustaw godzinę krótką wskazówką, potem dopracuj minuty długą wskazówką.",
+          "guidanceTitle": "Pełny odczyt czasu",
+          "legend": "Ćwiczysz oba ruchy naraz: godziny i minuty.",
+          "promptLabel": "Ustaw pełny czas"
+        },
+        "mixed": {
+          "guidance": "Raz ćwiczysz pełne godziny, raz minuty, a raz cały odczyt czasu. Korzystaj z obu wskazówek.",
+          "guidanceTitle": "Mieszany trening zegara",
+          "legend": "Łącz krótką i długą wskazówkę zależnie od zadania.",
+          "promptLabel": "Ustaw zegar na godzinę"
+        }
+      },
+      "prompt": {
+        "hours": {
+          "default": "Pełna godzina. Ustaw krótką wskazówkę, a minuty zostają na 00."
+        },
+        "minutes": {
+          "quarterPast": "Kwadrans. Krótka wskazówka zostaje na 12.",
+          "halfHour": "Pół godziny. Krótka wskazówka zostaje na 12.",
+          "fortyFiveMinutes": "45 minut. Krótka wskazówka zostaje na 12.",
+          "default": "Skup się na długiej wskazówce. Krótka wskazówka zostaje na 12."
+        },
+        "default": {
+          "fullHour": "Pełna godzina (minuty = 00).",
+          "quarterPast": "Kwadrans po {hour}.",
+          "halfTo": "Wpół do {nextHour}.",
+          "quarterTo": "Kwadrans do {nextHour}.",
+          "general": "Wskazówka godzin przesuwa się razem z minutami."
+        }
+      },
+      "feedback": {
+        "wrong": {
+          "title": {
+            "hours": {
+              "neighbor": "Prawie! To sąsiednia godzina.",
+              "close": "Blisko!"
+            },
+            "minutes": {
+              "veryNear": "Bardzo blisko z minutami!",
+              "near": "Prawie! Minuty są blisko."
+            },
+            "veryNear": "Bardzo blisko!",
+            "near": "Prawie!",
+            "default": "Spróbuj jeszcze raz!"
+          },
+          "hint": {
+            "hours": {
+              "minutesStayZero": "W treningu godzin dłuższa wskazówka zostaje na 12, więc minuty powinny być równe :00.",
+              "checkShortHand": "Sprawdź pozycję krótkiej wskazówki i wybierz pełną godzinę."
+            },
+            "minutes": {
+              "moveOneTick": "Długa wskazówka jest prawie dobrze. Przesuń ją jeszcze o jedną kreskę.",
+              "countByFives": "Policz kreski po 5 minut i popraw długą wskazówkę.",
+              "focusLongHand": "Skup się tylko na długiej wskazówce. Krótka zostaje na 12."
+            },
+            "combined": {
+              "adjustShortHand": "Długa wskazówka jest prawie dobrze. Dopracuj krótką wskazówkę (godziny).",
+              "focusLongHand": "Skup się na długiej wskazówce (minuty)."
+            },
+            "default": "Sprawdź obie wskazówki."
+          },
+          "details": {
+            "hours": "Twoja odpowiedź: {actual}. Poprawna: {expected}. Pomyłka o {distance} godz. {hint}",
+            "default": "Twoja odpowiedź: {actual}. Poprawna: {expected}. Różnica: {distance} min. {hint}"
+          }
+        },
+        "correct": {
+          "title": {
+            "default": "Brawo! Dobrze!",
+            "hours": "Brawo! To dobra godzina!",
+            "minutes": "Brawo! Minuty się zgadzają!",
+            "combined": "Brawo! Pełny czas ustawiony!"
+          },
+          "details": {
+            "default": "Ustawiłeś/aś poprawnie: {time}.",
+            "hours": "Ustawiłeś/aś poprawną pełną godzinę: {time}.",
+            "minutes": "Ustawiłeś/aś poprawne minuty: {time}.",
+            "combined": "Ustawiłeś/aś poprawny pełny czas: {time}.",
+            "challengeStreak": "Seria: {streak}."
+          }
+        },
+        "timeout": {
+          "title": "Czas minął!",
+          "details": {
+            "hours": "Nie zdążyłeś/aś ustawić pełnej godziny. Poprawna godzina: {time}.",
+            "minutes": "Nie zdążyłeś/aś ustawić minut. Poprawny odczyt: {time}.",
+            "combined": "Nie zdążyłeś/aś ustawić pełnego czasu. Poprawna godzina: {time}.",
+            "default": "Nie zdążyłeś/aś ustawić czasu. Poprawna godzina: {time}."
+          }
+        }
+      },
+      "snapMode": {
+        "step5": "Skok co 5 min",
+        "step1": "Dokładnie co 1 min"
+      },
+      "interactionHint": {
+        "correct": {
+          "summary": "Dobra odpowiedź. Za chwilę podsumowanie.",
+          "nextStage": "Dobra odpowiedź. Za chwilę kolejny etap.",
+          "nextTask": "Dobra odpowiedź. Za chwilę następne zadanie."
+        },
+        "wrong": {
+          "summary": "Sprawdziliśmy odpowiedź. Za chwilę podsumowanie.",
+          "nextStage": "Sprawdziliśmy odpowiedź. Za chwilę kolejny etap.",
+          "nextTask": "Sprawdziliśmy odpowiedź. Za chwilę następne zadanie."
+        },
+        "idle": {
+          "mixed": "Wskazówka godzin przesuwa się płynnie razem z minutami."
+        }
+      },
+      "legend": {
+        "hourHand": "Godziny (krótka)",
+        "minuteHand": "Minuty (długa)"
+      },
+      "submit": {
+        "correct": "Dobrze! ✅",
+        "wrong": "Błąd! ❌",
+        "idle": "Sprawdź! ✅"
+      },
       "summary": {
         "hours": {
           "perfect": "Świetnie! Pewnie odczytujesz pełne godziny.",
@@ -3333,6 +3506,267 @@
       "game": {
         "stageTitle": "Gra z odejmowaniem!"
       }
+    },
+    "geometryPerimeter": {
+      "lessonTitle": "Obwód figur",
+      "sections": {
+        "intro": {
+          "title": "Co to obwód?",
+          "description": "Definicja i zasada liczenia"
+        },
+        "kwadrat": {
+          "title": "Obwód kwadratu",
+          "description": "Wzór: 4 × a"
+        },
+        "prostokan": {
+          "title": "Obwód prostokata",
+          "description": "Wzór: 2 × (a + b)"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Wszystkie wzory razem"
+        },
+        "game": {
+          "title": "Gra: Rysuj obwód",
+          "description": "Rysuj po kratkach i wybieraj obwód"
+        }
+      },
+      "slides": {
+        "intro": {
+          "title": "Co to jest obwód?",
+          "lead": "Obwód to długosc całej krawędzi figury. Dodajemy wszystkie boki.",
+          "callout": "Idziemy dookoła figury i sumujemy.",
+          "caption": "Obwód mierzymy w centymetrach (cm), metrach (m) itp."
+        },
+        "kwadrat": {
+          "title": "Obwód kwadratu",
+          "sideLabel": "Każdy bok ma 3 cm",
+          "equation": "Obwód = 3 + 3 + 3 + 3 = 12 cm",
+          "formulaTitle": "Wzór dla kwadratu:",
+          "formulaCaption": "gdzie a to długosc boku",
+          "example": "Przykład: a = 5 cm -> O = 4 × 5 = 20 cm"
+        },
+        "prostokan": {
+          "title": "Obwód prostokąta",
+          "sidesLabel": "Boki: 6 cm, 4 cm, 6 cm, 4 cm",
+          "equation": "Obwód = 6 + 4 + 6 + 4 = 20 cm",
+          "formulaTitle": "Wzór dla prostokata:",
+          "formulaCaption": "gdzie a i b to długosci boków",
+          "example": "Przykład: a = 6, b = 4 -> O = 2 × (a + b) = 20 cm",
+          "oppositeCaption": "Przeciwległe boki są równe - dodaj pary.",
+          "sumCaption": "Dodaj wszystkie długości: O = 6 + 4 + 6 + 4 = 20"
+        },
+        "podsumowanie": {
+          "summaryTitle": "Podsumowanie",
+          "item1": "Obwód to suma wszystkich boków.",
+          "item2": "Dla kwadratu: O = 4 × a",
+          "item3": "Dla prostokąta: O = 2 × (a + b)",
+          "item4": "Jednostka obwodu to np. cm lub m.",
+          "item5": "Zawsze sprawdź, czy dodałeś każdy bok tylko raz.",
+          "traceTitle": "Podsumowanie w ruchu",
+          "traceCaption": "Obwód to pełne okrążenie figury.",
+          "sidesTitle": "Podsumowanie: pary boków",
+          "sidesCaption": "Dodaj pary boków: a + a, b + b."
+        }
+      },
+      "game": {
+        "stageTitle": "Gra: Rysuj obwód"
+      }
+    },
+    "clock": {
+      "lessonTitle": "Nauka zegara",
+      "lessonSections": {
+        "hours": {
+          "title": "Sekcja 1: Godziny (krótka wskazówka)",
+          "subtitle": "Uczymy się tylko krótkiej wskazówki i pełnych godzin (:00)."
+        },
+        "minutes": {
+          "title": "Sekcja 2: Minuty (długa wskazówka)",
+          "subtitle": "Uczymy się tylko długiej wskazówki i mapy minut."
+        },
+        "combined": {
+          "title": "Sekcja 3: Godziny i Minuty razem",
+          "subtitle": "Łączymy obie wskazówki i odczytujemy pełny czas."
+        }
+      },
+      "hubSections": {
+        "hours": {
+          "title": "Godziny",
+          "description": "Krótka wskazówka i pełne godziny"
+        },
+        "minutes": {
+          "title": "Minuty",
+          "description": "Długa wskazówka i liczenie co 5"
+        },
+        "combined": {
+          "title": "Łączenie wskazówek",
+          "description": "Czytaj pełny czas na zegarze"
+        },
+        "gameHours": {
+          "title": "Ćwiczenie: Godziny",
+          "description": "Trenuj pełne godziny i krótką wskazówkę"
+        },
+        "gameMinutes": {
+          "title": "Ćwiczenie: Minuty",
+          "description": "Ćwicz długą wskazówkę i minuty co 5"
+        },
+        "gameCombined": {
+          "title": "Ćwiczenie: Pełny czas",
+          "description": "Łącz godziny i minuty w pełny odczyt czasu"
+        },
+        "combinedLockedDescription": "Odblokuj po ukończeniu Godzin i Minut.",
+        "lockedLabel": "Zablokowane"
+      },
+      "slides": {
+        "hours": {
+          "whatShortHand": {
+            "title": "Co pokazuje krótka wskazówka?",
+            "tts": "Krótka wskazówka pokazuje godzinę. Na tej sekcji patrzymy tylko na nią.",
+            "clockThreeLabel": "Krótka wskazówka na 3",
+            "clockEightLabel": "Krótka wskazówka na 8",
+            "animationCaption": "Krótka wskazówka przeskakuje z godziny na godzinę.",
+            "caption": "Patrzymy na krótką wskazówkę. Ona mówi nam, która jest godzina."
+          },
+          "fullHours": {
+            "title": "Pełne godziny (:00)",
+            "tts": "Gdy jest pełna godzina, odczytujemy tylko godzinę z krótkiej wskazówki.",
+            "oneLabel": "1:00",
+            "sixLabel": "6:00",
+            "elevenLabel": "11:00",
+            "animationCaption": "Pełna godzina jest wtedy, gdy długa wskazówka stoi na 12.",
+            "caption": "W tej sekcji trenujemy tylko odczyt godziny: 1, 6, 11."
+          },
+          "quickTest": {
+            "title": "Szybki test godzin",
+            "tts": "Spójrz na krótką wskazówkę i nazwij godzinę. Minuty pomijamy.",
+            "clockLabel": "Jaka to godzina?",
+            "animationCaption": "Skup się na krótkiej wskazówce i nazwij godzinę.",
+            "stepTitle": "Krok:",
+            "stepText": "1. Znajdź krótką wskazówkę.\n2. Odczytaj numer, na który pokazuje.",
+            "result": "Wynik: 9:00"
+          }
+        },
+        "minutes": {
+          "whatLongHand": {
+            "title": "Co pokazuje długa wskazówka?",
+            "tts": "Długa wskazówka pokazuje minuty. W tej sekcji skupiamy się tylko na minutach.",
+            "clockLabel": "Długa wskazówka = minuty",
+            "animationCaption": "Długa wskazówka robi pełny obrót w 60 minut.",
+            "caption": "Długa wskazówka chodzi po tarczy i mówi, ile minut minęło."
+          },
+          "fiveMinuteMap": {
+            "title": "Mapa minut co 5",
+            "tts": "Każdy numer to kolejne pięć minut: 1 to 5, 2 to 10, 3 to 15 i tak dalej.",
+            "fifteenLabel": "3 = 15 min",
+            "thirtyLabel": "6 = 30 min",
+            "fortyFiveLabel": "9 = 45 min",
+            "animationCaption": "Skaczemy co 5 minut: :00, :05, :10, :15...",
+            "caption": "Zapamiętaj: każda kolejna liczba to +5 minut."
+          },
+          "quickTest": {
+            "title": "Szybki test minut",
+            "tts": "Patrz tylko na długą wskazówkę i nazwij minuty.",
+            "clockLabel": "Jaka to liczba minut?",
+            "animationCaption": "Każda mała kreska to 1 minuta.",
+            "stepTitle": "Krok:",
+            "stepText": "Długa wskazówka stoi przy 7.\n7 × 5 = 35 minut.",
+            "result": "Wynik: :35"
+          }
+        },
+        "combined": {
+          "combineHands": {
+            "title": "Jak łączyć obie wskazówki?",
+            "tts": "Najpierw czytamy godzinę z krótkiej wskazówki, potem minuty z długiej.",
+            "clockLabel": "Przykład: 8:30",
+            "animationCaption": "Krótka wskazówka pokazuje godzinę, długa minuty.",
+            "stepsTitle": "Kroki:",
+            "step1": "1. Krótka wskazówka: godzina = 8",
+            "step2": "2. Długa wskazówka: minuty = 30",
+            "result": "Wynik: 8:30"
+          },
+          "quarterPastQuarterTo": {
+            "title": "Kwadrans po i kwadrans do",
+            "tts": "Długa wskazówka na 3 to kwadrans po, a na 9 to kwadrans do następnej godziny.",
+            "quarterPastLabel": "5:15 - kwadrans po 5",
+            "quarterToLabel": "5:45 - kwadrans do 6",
+            "animationCaption": "Minuty 15 i 45 to kwadranse.",
+            "caption": "Odczytujemy godzinę i minuty jednocześnie."
+          },
+          "readyForPractice": {
+            "title": "Gotowy/a na ćwiczenie",
+            "tts": "Teraz potrafisz czytać godziny i minuty razem. Przejdź do ćwiczenia.",
+            "animationCaption": "Pół godziny to :30, długa wskazówka na 6.",
+            "caption": "Brawo! Umiesz:\n🔴 czytać godziny,\n🟢 czytać minuty,\n✅ łączyć obie wskazówki w pełny czas."
+          }
+        }
+      },
+      "animations": {
+        "hourHandSweep": {
+          "ariaLabel": "Animacja: krótka wskazówka przeskakuje co godzinę."
+        },
+        "minuteHandSweep": {
+          "ariaLabel": "Animacja: długa wskazówka robi pełny obrót."
+        },
+        "fiveMinuteSteps": {
+          "ariaLabel": "Animacja: skoki co 5 minut na tarczy zegara."
+        },
+        "combinedHands": {
+          "ariaLabel": "Animacja: dwie wskazówki pracują razem."
+        },
+        "quarter": {
+          "ariaLabel": "Animacja: kwadrans po i kwadrans do."
+        },
+        "halfPast": {
+          "ariaLabel": "Animacja: pół godziny, minuta na 6."
+        },
+        "minuteByMinute": {
+          "ariaLabel": "Animacja: minutowa wskazówka przesuwa się minuta po minucie."
+        },
+        "fullHourStep": {
+          "ariaLabel": "Animacja: krótka wskazówka zatrzymuje się na pełnych godzinach."
+        },
+        "secondHand": {
+          "ariaLabel": "Animacja: wskazówka sekundowa obraca się szybko."
+        }
+      },
+      "trainingSlides": {
+        "hours": {
+          "title": "Ćwiczenie: Godziny",
+          "tts": "Teraz przechodzisz do praktyki pełnych godzin. Ustawiaj krótką wskazówkę tak jak w pierwszym panelu ćwiczenia godzin."
+        },
+        "minutes": {
+          "title": "Ćwiczenie: Minuty",
+          "tts": "Teraz przechodzisz do praktyki minut. Ustawiaj długą wskazówkę tak jak w pierwszym panelu ćwiczenia minut."
+        },
+        "combined": {
+          "title": "Ćwiczenie: Pełny czas",
+          "tts": "Teraz przechodzisz do praktyki pełnego czasu. Ustawiaj obie wskazówki tak jak w pierwszym panelu ćwiczenia pełnego czasu."
+        }
+      },
+      "training": {
+        "panelLabel": "zadanie",
+        "goToPanel": "Przejdź do panelu {label}",
+        "previousPanel": "Poprzedni panel",
+        "nextPanel": "Następny panel",
+        "finishLesson": "Zakończ lekcję ✅",
+        "openChallenge": "Otwórz wyzwanie",
+        "nextTask": "Następne zadanie",
+        "backToTopics": "Wróć do tematów",
+        "leaveChallengeTitle": "Opuścić wyzwanie?",
+        "leaveChallengeMessage": "Jeśli opuścisz Tryb Wyzwanie teraz, to wyzwanie zostanie niezaliczone.",
+        "stay": "Zostań",
+        "leaveChallenge": "Opuść wyzwanie"
+      }
     }
+  },
+  "KangurLessonChrome": {
+    "lessonNavigation": "Nawigacja lekcji",
+    "openSecretPanel": "Otwórz sekretny panel",
+    "secretPanelTitle": "Sekretny panel",
+    "backToTopics": "Wróć do tematów",
+    "panelsNavigation": "Nawigacja paneli",
+    "previousPanel": "Poprzedni panel",
+    "nextPanel": "Następny panel",
+    "panelLabel": "Panel {index}"
   }
 }

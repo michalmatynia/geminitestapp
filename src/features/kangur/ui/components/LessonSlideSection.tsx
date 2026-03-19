@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type KeyboardEventHandler } from 'react';
 
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
@@ -52,6 +53,7 @@ export default function LessonSlideSection({
   dotActiveClass,
   dotDoneClass,
 }: LessonSlideSectionProps): React.JSX.Element {
+  const lessonChrome = useTranslations('KangurLessonChrome');
   const prefersReducedMotion = useReducedMotion();
   const slideMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const handleBack = useKangurLessonBackAction(onBack);
@@ -82,6 +84,24 @@ export default function LessonSlideSection({
   const shouldRenderArrowNavigation = totalSlides > 1;
   const isMobile = useKangurMobileBreakpoint();
   const syncLessonPanelCta = useKangurLessonPanelCtaSync();
+  const translateLessonChrome = (key: string, fallback: string): string => {
+    const translated = lessonChrome(key);
+    return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+  };
+  const backToTopicsLabel = translateLessonChrome('backToTopics', 'Wróć do tematów');
+  const panelsNavigationLabel = translateLessonChrome('panelsNavigation', 'Nawigacja paneli');
+  const previousPanelLabel = translateLessonChrome('previousPanel', 'Poprzedni panel');
+  const nextPanelLabel = translateLessonChrome('nextPanel', 'Następny panel');
+  const getPanelLabel = (index: number): string => {
+    try {
+      const translated = lessonChrome('panelLabel', { index });
+      return translated === 'panelLabel' || translated.endsWith('.panelLabel')
+        ? `Panel ${index}`
+        : translated;
+    } catch {
+      return `Panel ${index}`;
+    }
+  };
   const handlePanelNavigationCta = (ctaId: string, action: () => void): void => {
     panelTimeFlushRef.current?.();
     syncLessonPanelCta(ctaId);
@@ -236,8 +256,9 @@ export default function LessonSlideSection({
         return;
       }
 
-      const panelTitle =
-        slidesRef.current[panelIndex]?.title ?? `Panel ${panelIndex + 1}`;
+        const panelTitle =
+          slidesRef.current[panelIndex]?.title ??
+          getPanelLabel(panelIndex + 1);
       update(panelIndex, panelTitle, seconds);
     };
 
@@ -335,7 +356,7 @@ export default function LessonSlideSection({
       if (seconds > 0) {
         const panelTitle =
           slidesRef.current[state.activeIndex]?.title ??
-          `Panel ${state.activeIndex + 1}`;
+          getPanelLabel(state.activeIndex + 1);
         update(state.activeIndex, panelTitle, seconds);
       }
     }
@@ -355,10 +376,10 @@ export default function LessonSlideSection({
         className
       )}
       data-kangur-lesson-back='true'
-      data-kangur-lesson-back-label='Wróć do tematów'
+      data-kangur-lesson-back-label={backToTopicsLabel}
     >
       <ChevronLeft className='w-4 h-4' aria-hidden='true' />
-      Wróć do tematów
+      {backToTopicsLabel}
     </KangurButton>
   );
   const renderArrowNavigation = (className?: string): React.JSX.Element | null => {
@@ -373,19 +394,19 @@ export default function LessonSlideSection({
           className
         )}
         role='group'
-        aria-label='Nawigacja paneli'
+        aria-label={panelsNavigationLabel}
       >
         <KangurButton
           onClick={handlePreviousSlideCta}
           disabled={isPrevDisabled}
-          aria-label='Poprzedni panel'
+          aria-label={previousPanelLabel}
           aria-keyshortcuts='ArrowLeft PageUp'
           aria-controls={slidePanelId}
           className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
           data-testid='lesson-slide-prev-button'
           size='sm'
           type='button'
-          title='Poprzedni panel'
+          title={previousPanelLabel}
           variant='surface'
         >
           <ChevronLeft className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
@@ -394,14 +415,14 @@ export default function LessonSlideSection({
         <KangurButton
           onClick={handleNextSlideCta}
           disabled={isNextDisabled}
-          aria-label='Następny panel'
+          aria-label={nextPanelLabel}
           aria-keyshortcuts='ArrowRight PageDown'
           aria-controls={slidePanelId}
           className='justify-center px-4 shadow-sm [border-color:var(--kangur-soft-card-border)] disabled:opacity-20'
           data-testid='lesson-slide-next-button'
           size='sm'
           type='button'
-          title='Następny panel'
+          title={nextPanelLabel}
           variant='surface'
         >
           <ChevronRight className='h-4 w-4 flex-shrink-0' aria-hidden='true' />

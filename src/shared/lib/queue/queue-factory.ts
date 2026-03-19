@@ -87,7 +87,9 @@ export function createManagedQueue<TJobData>(
   };
 
   const processInline = async (data: TJobData): Promise<unknown> => {
-    return config.processor(data, `inline-${Date.now()}`);
+    return config.processor(data, `inline-${Date.now()}`, undefined, {
+      updateProgress: async () => {},
+    });
   };
 
   const enqueue = async (
@@ -164,7 +166,16 @@ export function createManagedQueue<TJobData>(
           );
         }, jobTimeoutMs);
         try {
-          return await config.processor(data, job.id ?? 'unknown', timeoutController.signal);
+          return await config.processor(
+            data,
+            job.id ?? 'unknown',
+            timeoutController.signal,
+            {
+              updateProgress: async (progress: unknown) => {
+                await job.updateProgress(progress as object | number);
+              },
+            }
+          );
         } finally {
           clearTimeout(timer);
         }

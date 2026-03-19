@@ -533,6 +533,79 @@ describe('KangurPrimaryNavigation', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
+  it('fires logout on the first tap from the mobile menu', async () => {
+    const onLogout = vi.fn();
+    setViewport({ width: 390, matches: true });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={onLogout}
+      />
+    );
+
+    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+    fireEvent.click(screen.getByRole('button', { name: /wyloguj/i }));
+
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the logout action while auth logout is already pending', () => {
+    const onLogout = vi.fn();
+    optionalAuthMock.mockReturnValue({
+      authError: null,
+      appPublicSettings: null,
+      canAccessParentAssignments: true,
+      checkAppState: vi.fn(),
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLoggingOut: true,
+      isLoadingPublicSettings: false,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      selectLearner: vi.fn(),
+      user: {
+        activeLearner: {
+          createdAt: '2026-03-08T10:00:00.000Z',
+          displayName: 'Maja',
+          id: 'learner-2',
+          loginName: 'maja',
+          ownerUserId: 'parent-1',
+          status: 'active',
+          updatedAt: '2026-03-08T10:00:00.000Z',
+        },
+        actorType: 'learner',
+        canManageLearners: false,
+        email: 'maja@example.com',
+        full_name: 'Maja',
+        id: 'learner-2',
+        learners: [],
+        ownerUserId: 'parent-1',
+        role: 'user',
+      },
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/kangur'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={onLogout}
+      />
+    );
+
+    const logoutButton = screen.getByTestId('kangur-primary-nav-logout');
+
+    expect(logoutButton).toBeDisabled();
+    expect(logoutButton).toHaveTextContent('Wylogowywanie...');
+
+    fireEvent.click(logoutButton);
+
+    expect(onLogout).not.toHaveBeenCalled();
+  });
+
   it('renders storefront appearance controls inside the Kangur navbar and updates the mode', () => {
     render(
       <CmsStorefrontAppearanceProvider initialMode='default'>
@@ -714,7 +787,7 @@ describe('KangurPrimaryNavigation', () => {
     const option = await screen.findByTestId('kangur-language-switcher-option-en');
     const optionLabel = within(option).getByText('English');
 
-    expect(menu.style.getPropertyValue('--kangur-language-menu-bg')).toBe('#131c33');
+    expect(menu.style.getPropertyValue('--kangur-language-menu-bg')).toBe('#1a1f38');
     expect(menu.style.getPropertyValue('--kangur-language-menu-text')).toBe('#f8fafc');
     expect(menu.style.getPropertyValue('--kangur-language-menu-hover-text')).toBe('');
     expect(menu.style.getPropertyValue('--kangur-language-menu-active-text')).toBe('');

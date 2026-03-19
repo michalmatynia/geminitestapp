@@ -1,7 +1,8 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
+import { KangurDuelsWordmark } from '@/features/kangur/ui/components/KangurDuelsWordmark';
 import {
   KangurButton,
   KangurGlassPanel,
@@ -62,6 +63,7 @@ type DuelsLobbyPanelProps = {
 };
 
 export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element {
+  const locale = useLocale();
   const lobbyTranslations = useTranslations('KangurDuels.lobby');
   const commonTranslations = useTranslations('KangurDuels.common');
   const {
@@ -92,6 +94,8 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
     onCreateChallenge,
     onResetFilters,
   } = props;
+  const lobbyHeadingLabel = lobbyTranslations('heading');
+
   return (
     <KangurGlassPanel
       className='flex flex-col kangur-panel-gap'
@@ -105,8 +109,15 @@ export function DuelsLobbyPanel(props: DuelsLobbyPanelProps): React.JSX.Element 
       <KangurPanelRow className='sm:items-center sm:justify-between'>
         <div className='space-y-1 min-w-0'>
           <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME} aria-live='polite' aria-atomic='true'>
-            <h3 id={lobbyHeadingId} className='text-lg font-semibold text-slate-900 sm:text-xl'>
-              {lobbyTranslations('heading')}
+            <h3 id={lobbyHeadingId} className='min-w-0'>
+              <span className='sr-only'>{lobbyHeadingLabel}</span>
+              <KangurDuelsWordmark
+                className='max-w-[228px] sm:max-w-[260px]'
+                data-testid='kangur-duels-heading-art'
+                idPrefix='kangur-duels-heading'
+                label={lobbyHeadingLabel}
+                locale={locale}
+              />
             </h3>
             <KangurStatusChip
               accent={lobbyEntriesCount > 0 ? 'emerald' : 'slate'}

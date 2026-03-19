@@ -118,6 +118,7 @@ describe('kangurSocialPipelineQueue', () => {
     const manualResult = {
       type: 'manual-post-pipeline' as const,
       postId: 'post-1',
+      captureMode: 'existing_assets' as const,
       addonsCreated: 2,
       failures: 0,
       runId: 'run-1',
@@ -146,14 +147,25 @@ describe('kangurSocialPipelineQueue', () => {
         type: 'manual-post-pipeline',
         input: {
           postId: 'post-1',
+          captureMode: 'existing_assets',
         },
       },
-      'job-1'
+      'job-1',
+      undefined,
+      {
+        updateProgress: vi.fn(),
+      }
     );
 
-    expect(runKangurSocialPostPipelineMock).toHaveBeenCalledWith({
-      postId: 'post-1',
-    });
+    expect(runKangurSocialPostPipelineMock).toHaveBeenCalledWith(
+      {
+        postId: 'post-1',
+        captureMode: 'existing_assets',
+      },
+      expect.objectContaining({
+        reportProgress: expect.any(Function),
+      })
+    );
     expect(result).toEqual(manualResult);
   });
 });

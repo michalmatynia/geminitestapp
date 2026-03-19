@@ -9,6 +9,7 @@ import {
   trackKangurClientEvent,
 } from '@/features/kangur/observability/client';
 import { api } from '@/shared/lib/api-client';
+import type { KangurSocialManualPipelineProgress } from '@/shared/contracts/kangur-social-pipeline';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   KangurSocialDocUpdatesResponse,
@@ -22,6 +23,7 @@ import {
   type EditorState,
   type PipelineStep,
 } from '../AdminKangurSocialPage.Constants';
+import type { KangurSocialPipelineCaptureMode } from '@/shared/contracts/kangur-social-pipeline';
 
 type SocialPipelineRunnerDeps = {
   activePost: KangurSocialPost | null;
@@ -31,6 +33,7 @@ type SocialPipelineRunnerDeps = {
   imageAddonIds: string[];
   batchCaptureBaseUrl: string;
   batchCapturePresetIds: string[];
+  batchCapturePresetLimit: number | null;
   linkedinConnectionId: string | null;
   brainModelId: string | null;
   visionModelId: string | null;
@@ -63,6 +66,7 @@ type PipelineTriggerResponse = {
 type ManualPipelineJobResult = {
   type: 'manual-post-pipeline';
   postId: string;
+  captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>;
   addonsCreated: number;
   failures: number;
   runId: string | null;
@@ -78,6 +82,7 @@ type ManualPipelineJobResult = {
 type PipelineJobRecord = {
   id: string;
   status: string;
+  progress: KangurSocialManualPipelineProgress | null;
   result: ManualPipelineJobResult | null;
   failedReason: string | null;
 };
@@ -99,6 +104,9 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>('idle');
+  const [pipelineProgress, setPipelineProgress] =
+    useState<KangurSocialManualPipelineProgress | null>(null);
+  const [pipelineErrorMessage, setPipelineErrorMessage] = useState<string | null>(null);
 
   const depsRef = useRef(deps);
   depsRef.current = deps;
@@ -106,14 +114,24 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
   useEffect(() => {
     deps.setDocUpdatesResult(null);
     deps.setBatchCaptureResult(null);
+    setPipelineProgress(null);
+    setPipelineErrorMessage(null);
   }, [deps.activePostId]);
 
-  const handleRunFullPipeline = useCallback(async (): Promise<void> => {
+  const syncProgress = useCallback((progress: KangurSocialManualPipelineProgress | null): void => {
+    if (!progress) return;
+    setPipelineProgress(progress);
+    setPipelineStep(progress.step);
+  }, []);
+
+  const runPipeline = useCallback(async (
+    captureMode: Extract<KangurSocialPipelineCaptureMode, 'existing_assets' | 'fresh_capture'>
+  ): Promise<void> => {
     const d = depsRef.current;
     if (!d.canRunServerPipeline) {
       toast(
         d.pipelineBlockedReason ??
-          'Assign an AI Brain model for StudiQ Social Post Generation first.',
+          'Choose a StudiQ Social post model in Settings or assign AI Brain routing first.',
         { variant: 'warning' }
       );
       return;
@@ -124,28 +142,71 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
     }
 
     const activePostId = d.activePost.id;
-    trackKangurClientEvent('kangur_social_pipeline_attempt', d.buildSocialContext());
+    trackKangurClientEvent(
+      'kangur_social_pipeline_attempt',
+      d.buildSocialContext({ captureMode })
+    );
 
     try {
+      setPipelineErrorMessage(null);
+      d.setBatchCaptureResult(null);
+      setPipelineProgress({
+        type: 'manual-post-pipeline',
+        step: 'loading_context',
+        captureMode,
+        message:
+          captureMode === 'fresh_capture'
+            ? 'Queued on the server. Waiting to start a fresh Playwright capture...'
+            : 'Queued on the server. Waiting to generate from the attached visuals...',
+        updatedAt: Date.now(),
+        contextDocCount: null,
+        contextSummary: null,
+        addonsCreated: null,
+        captureFailureCount: null,
+        captureFailures: [],
+        requestedPresetCount:
+          captureMode === 'fresh_capture'
+            ? d.batchCapturePresetLimit == null
+              ? d.batchCapturePresetIds.length
+              : Math.min(d.batchCapturePresetLimit, d.batchCapturePresetIds.length)
+            : 0,
+        usedPresetCount: null,
+        usedPresetIds: [],
+        runId: null,
+      });
       setPipelineStep('loading_context');
-      toast('Pipeline: queueing server run...', { variant: 'default' });
+      toast(
+        captureMode === 'fresh_capture'
+          ? 'Pipeline: queueing fresh-capture server run...'
+          : 'Pipeline: queueing server run from current visuals...',
+        { variant: 'default' }
+      );
+
+      const pipelineInput: Record<string, unknown> = {
+        postId: activePostId,
+        editorState: d.editorState,
+        imageAssets: d.imageAssets,
+        imageAddonIds: d.imageAddonIds,
+        captureMode,
+        linkedinConnectionId: d.linkedinConnectionId ?? null,
+        brainModelId: d.brainModelId ?? null,
+        visionModelId: d.visionModelId ?? null,
+        projectUrl: d.projectUrl || '',
+        generationNotes: d.generationNotes,
+        docReferences: d.resolveDocReferences(),
+      };
+
+      if (captureMode === 'fresh_capture') {
+        pipelineInput['batchCaptureBaseUrl'] = d.batchCaptureBaseUrl;
+        pipelineInput['batchCapturePresetIds'] = d.batchCapturePresetIds;
+        pipelineInput['batchCapturePresetLimit'] = d.batchCapturePresetLimit ?? null;
+      }
 
       const response = await api.post<PipelineTriggerResponse>(
         '/api/kangur/social-pipeline/trigger',
         {
           jobType: 'manual-post-pipeline',
-          input: {
-            postId: activePostId,
-            editorState: d.editorState,
-            imageAssets: d.imageAssets,
-            imageAddonIds: d.imageAddonIds,
-            batchCaptureBaseUrl: d.batchCaptureBaseUrl,
-            batchCapturePresetIds: d.batchCapturePresetIds,
-            linkedinConnectionId: d.linkedinConnectionId ?? null,
-            projectUrl: d.projectUrl || '',
-            generationNotes: d.generationNotes,
-            docReferences: d.resolveDocReferences(),
-          },
+          input: pipelineInput,
         },
         { timeout: 30_000 }
       );
@@ -155,9 +216,12 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       }
 
       setPipelineStep('capturing');
-      toast('Pipeline: queued on the server. Waiting for job completion...', {
-        variant: 'default',
-      });
+      toast(
+        captureMode === 'fresh_capture'
+          ? 'Pipeline: queued on the server. Waiting for fresh capture and generation...'
+          : 'Pipeline: queued on the server. Waiting for generation...',
+        { variant: 'default' }
+      );
 
       const pollStartedAt = Date.now();
       let finalJob: PipelineJobRecord | null = null;
@@ -177,6 +241,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         }
 
         finalJob = job;
+        syncProgress(job.progress);
 
         if (job.status === 'completed') {
           break;
@@ -186,7 +251,6 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
           throw new Error(job.failedReason ?? 'Server pipeline job failed.');
         }
 
-        setPipelineStep(job.status === 'active' ? 'generating' : 'capturing');
         await delay(PIPELINE_POLL_INTERVAL_MS);
       }
 
@@ -199,7 +263,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       }
 
       const result = finalJob.result;
-      if (!result.generatedPost || !result.batchCaptureResult) {
+      if (!result.generatedPost) {
         throw new Error('Pipeline completed without generated content.');
       }
 
@@ -215,8 +279,10 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       latestDeps.setDocUpdatesResult(result.docUpdates ?? null);
       latestDeps.setImageAddonIds(result.imageAddonIds ?? []);
       latestDeps.setImageAssets(result.imageAssets ?? []);
-      latestDeps.setBatchCaptureResult(result.batchCaptureResult);
-      latestDeps.handleSelectAddons(result.batchCaptureResult.addons);
+      latestDeps.setBatchCaptureResult(result.batchCaptureResult ?? null);
+      if (result.batchCaptureResult) {
+        latestDeps.handleSelectAddons(result.batchCaptureResult.addons);
+      }
 
       const postsQueryKey = QUERY_KEYS.kangur.socialPosts({
         scope: 'admin',
@@ -230,33 +296,50 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
 
       setPipelineStep('done');
-      toast('Pipeline complete — review your post and documentation updates', {
-        variant: 'success',
-      });
+      toast(
+        captureMode === 'fresh_capture'
+          ? 'Pipeline complete — fresh screenshots captured and draft updated.'
+          : 'Pipeline complete — review your post and documentation updates.',
+        { variant: 'success' }
+      );
       trackKangurClientEvent(
         'kangur_social_pipeline_success',
-        latestDeps.buildSocialContext()
+        latestDeps.buildSocialContext({ captureMode })
       );
     } catch (error) {
       setPipelineStep('error');
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown pipeline error';
+      setPipelineErrorMessage(errorMessage);
       toast(`Pipeline failed: ${errorMessage}`, { variant: 'error' });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.kangur.all });
       logKangurClientError(error, {
         source: 'AdminKangurSocialPage',
         action: 'runFullPipeline',
-        ...depsRef.current.buildSocialContext({ error: true }),
+        ...depsRef.current.buildSocialContext({ error: true, captureMode }),
       });
       trackKangurClientEvent(
         'kangur_social_pipeline_failed',
-        depsRef.current.buildSocialContext({ error: true })
+        depsRef.current.buildSocialContext({ error: true, captureMode })
       );
     }
   }, [queryClient, toast]);
 
+  const handleRunFullPipeline = useCallback(
+    async (): Promise<void> => runPipeline('existing_assets'),
+    [runPipeline]
+  );
+
+  const handleRunFullPipelineWithFreshCapture = useCallback(
+    async (): Promise<void> => runPipeline('fresh_capture'),
+    [runPipeline]
+  );
+
   return {
     pipelineStep,
+    pipelineProgress,
+    pipelineErrorMessage,
     handleRunFullPipeline,
+    handleRunFullPipelineWithFreshCapture,
   };
 }

@@ -88,11 +88,15 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
   workerOptions: {
     lockDuration: KANGUR_SOCIAL_PIPELINE_LOCK_DURATION_MS,
   },
-  processor: async (data, _jobId, signal) => {
+  processor: async (data, _jobId, signal, helpers) => {
     const startedAt = Date.now();
 
     if (data.type === 'manual-post-pipeline') {
-      const result = await runKangurSocialPostPipeline(data.input);
+      const result = await runKangurSocialPostPipeline(data.input, {
+        reportProgress: async (progress) => {
+          await helpers?.updateProgress(progress);
+        },
+      });
       void ErrorSystem.logInfo('Kangur social manual pipeline completed', {
         service: 'kangur-social-pipeline-queue',
         postId: result.postId,
@@ -135,6 +139,7 @@ const queue = createManagedQueue<KangurSocialPipelineJobData>({
     const result = await createKangurSocialImageAddonsBatch({
       baseUrl,
       presetIds,
+      presetLimit: settings.batchCapturePresetLimit ?? null,
       createdBy: 'kangur-social-pipeline-queue',
     });
 

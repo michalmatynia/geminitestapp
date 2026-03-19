@@ -68,10 +68,27 @@ describe('useSocialPipelineRunner', () => {
     apiGetMock.mockResolvedValue({
       id: 'job-1',
       status: 'completed',
+      progress: {
+        type: 'manual-post-pipeline',
+        step: 'previewing',
+        captureMode: 'existing_assets',
+        message: 'Preparing documentation diff...',
+        updatedAt: 1_700_000_000_500,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 1,
+        captureFailureCount: 0,
+        captureFailures: [],
+        requestedPresetCount: 0,
+        usedPresetCount: 0,
+        usedPresetIds: [],
+        runId: 'run-1',
+      },
       failedReason: null,
       result: {
         type: 'manual-post-pipeline',
         postId: 'post-1',
+        captureMode: 'existing_assets',
         addonsCreated: 1,
         failures: 0,
         runId: 'run-1',
@@ -129,6 +146,7 @@ describe('useSocialPipelineRunner', () => {
           imageAddonIds: [],
           batchCaptureBaseUrl: 'https://example.com',
           batchCapturePresetIds: ['preset-1'],
+          batchCapturePresetLimit: 1,
           linkedinConnectionId: null,
           brainModelId: 'brain-1',
           visionModelId: 'vision-1',
@@ -160,18 +178,12 @@ describe('useSocialPipelineRunner', () => {
         jobType: 'manual-post-pipeline',
         input: expect.objectContaining({
           postId: 'post-1',
-          batchCaptureBaseUrl: 'https://example.com',
+          captureMode: 'existing_assets',
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
         }),
       }),
       expect.any(Object)
-    );
-    expect(apiPostMock.mock.calls[0]?.[1]).not.toEqual(
-      expect.objectContaining({
-        input: expect.objectContaining({
-          brainModelId: expect.anything(),
-          visionModelId: expect.anything(),
-        }),
-      })
     );
     expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/jobs', {
       params: { id: 'job-1' },
@@ -194,10 +206,145 @@ describe('useSocialPipelineRunner', () => {
     expect(handleSelectAddons).toHaveBeenCalledWith([
       { id: 'addon-1', title: 'Addon 1' },
     ]);
+    expect(result.current.pipelineProgress).toEqual({
+      type: 'manual-post-pipeline',
+      step: 'previewing',
+      captureMode: 'existing_assets',
+      message: 'Preparing documentation diff...',
+      updatedAt: 1_700_000_000_500,
+      contextDocCount: 1,
+      contextSummary: 'summary',
+      addonsCreated: 1,
+      captureFailureCount: 0,
+      captureFailures: [],
+      requestedPresetCount: 0,
+      usedPresetCount: 0,
+      usedPresetIds: [],
+      runId: 'run-1',
+    });
+    expect(result.current.pipelineErrorMessage).toBeNull();
     expect(result.current.pipelineStep).toBe('done');
   });
 
-  it('does not queue a server job when AI Brain post generation is not configured', async () => {
+  it('sends fresh capture settings when the capture-backed pipeline is requested', async () => {
+    apiPostMock.mockResolvedValue({
+      success: true,
+      jobId: 'job-2',
+      jobType: 'manual-post-pipeline',
+    });
+    apiGetMock.mockResolvedValue({
+      id: 'job-2',
+      status: 'completed',
+      progress: {
+        type: 'manual-post-pipeline',
+        step: 'previewing',
+        captureMode: 'fresh_capture',
+        message: 'Preparing documentation diff...',
+        updatedAt: 1_700_000_000_900,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 2,
+        captureFailureCount: 0,
+        captureFailures: [],
+        requestedPresetCount: 3,
+        usedPresetCount: 2,
+        usedPresetIds: ['preset-1', 'preset-2'],
+        runId: 'run-2',
+      },
+      failedReason: null,
+      result: {
+        type: 'manual-post-pipeline',
+        postId: 'post-1',
+        captureMode: 'fresh_capture',
+        addonsCreated: 2,
+        failures: 0,
+        runId: 'run-2',
+        contextSummary: 'summary',
+        contextDocCount: 1,
+        imageAddonIds: ['addon-2'],
+        imageAssets: [{ id: 'asset-2', url: '/asset-2.png' }],
+        batchCaptureResult: {
+          addons: [{ id: 'addon-2', title: 'Addon 2' }],
+          failures: [],
+          runId: 'run-2',
+          requestedPresetCount: 3,
+          usedPresetCount: 2,
+          usedPresetIds: ['preset-1', 'preset-2'],
+        },
+        generatedPost: {
+          id: 'post-1',
+          titlePl: 'Generated PL',
+          titleEn: 'Generated EN',
+          bodyPl: 'Body PL',
+          bodyEn: 'Body EN',
+        },
+        docUpdates: null,
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        useSocialPipelineRunner({
+          activePost: {
+            id: 'post-1',
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+            status: 'draft',
+          } as never,
+          activePostId: 'post-1',
+          editorState: {
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+          },
+          imageAssets: [],
+          imageAddonIds: ['addon-old'],
+          batchCaptureBaseUrl: 'https://example.com',
+          batchCapturePresetIds: ['preset-1', 'preset-2', 'preset-3'],
+          batchCapturePresetLimit: 2,
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          canRunServerPipeline: true,
+          pipelineBlockedReason: null,
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Note',
+          resolveDocReferences: () => [],
+          buildSocialContext: () => ({ postId: 'post-1' }),
+          handleLoadContext: vi.fn(),
+          setActivePostId: vi.fn(),
+          setEditorState: vi.fn(),
+          setImageAddonIds: vi.fn(),
+          setImageAssets: vi.fn(),
+          setDocUpdatesResult: vi.fn(),
+          setBatchCaptureResult: vi.fn(),
+          handleSelectAddons: vi.fn(),
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleRunFullPipelineWithFreshCapture();
+    });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/kangur/social-pipeline/trigger',
+      expect.objectContaining({
+        input: expect.objectContaining({
+          captureMode: 'fresh_capture',
+          batchCaptureBaseUrl: 'https://example.com',
+          batchCapturePresetIds: ['preset-1', 'preset-2', 'preset-3'],
+          batchCapturePresetLimit: 2,
+        }),
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('does not queue a server job when no social or AI Brain post model is configured', async () => {
     const { result } = renderHook(
       () =>
         useSocialPipelineRunner({
@@ -220,12 +367,13 @@ describe('useSocialPipelineRunner', () => {
           imageAddonIds: [],
           batchCaptureBaseUrl: 'https://example.com',
           batchCapturePresetIds: ['preset-1'],
+          batchCapturePresetLimit: 1,
           linkedinConnectionId: null,
           brainModelId: null,
           visionModelId: null,
           canRunServerPipeline: false,
           pipelineBlockedReason:
-            'Assign an AI Brain model for StudiQ Social Post Generation in /admin/brain?tab=routing.',
+            'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
           projectUrl: 'https://example.com/project',
           generationNotes: 'Note',
           resolveDocReferences: () => [],
@@ -248,8 +396,107 @@ describe('useSocialPipelineRunner', () => {
 
     expect(apiPostMock).not.toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith(
-      'Assign an AI Brain model for StudiQ Social Post Generation in /admin/brain?tab=routing.',
+      'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
       { variant: 'warning' }
+    );
+  });
+
+  it('keeps capture failure details when the server job fails during screenshot capture', async () => {
+    apiPostMock.mockResolvedValue({
+      success: true,
+      jobId: 'job-2',
+      jobType: 'manual-post-pipeline',
+    });
+    apiGetMock.mockResolvedValue({
+      id: 'job-2',
+      status: 'failed',
+      progress: {
+        type: 'manual-post-pipeline',
+        step: 'capturing',
+        captureMode: 'fresh_capture',
+        message: 'Pipeline stopped: no screenshots captured. Failures: home: Timeout',
+        updatedAt: 1_700_000_001_000,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 0,
+        captureFailureCount: 1,
+        captureFailures: [{ id: 'home', reason: 'Timeout' }],
+        requestedPresetCount: 1,
+        usedPresetCount: 1,
+        usedPresetIds: ['home'],
+        runId: null,
+      },
+      failedReason: 'Pipeline stopped: no screenshots captured. Failures: home: Timeout',
+      result: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useSocialPipelineRunner({
+          activePost: {
+            id: 'post-1',
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+            status: 'draft',
+          } as never,
+          activePostId: 'post-1',
+          editorState: {
+            titlePl: 'Draft',
+            titleEn: '',
+            bodyPl: '',
+            bodyEn: '',
+          },
+          imageAssets: [],
+          imageAddonIds: [],
+          batchCaptureBaseUrl: 'https://example.com',
+          batchCapturePresetIds: ['preset-1'],
+          batchCapturePresetLimit: 1,
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          canRunServerPipeline: true,
+          pipelineBlockedReason: null,
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Note',
+          resolveDocReferences: () => ['docs/kangur/example.mdx'],
+          buildSocialContext: () => ({ postId: 'post-1' }),
+          handleLoadContext: vi.fn(),
+          setActivePostId: vi.fn(),
+          setEditorState: vi.fn(),
+          setImageAddonIds: vi.fn(),
+          setImageAssets: vi.fn(),
+          setDocUpdatesResult: vi.fn(),
+          setBatchCaptureResult: vi.fn(),
+          handleSelectAddons: vi.fn(),
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleRunFullPipeline();
+    });
+
+    expect(result.current.pipelineStep).toBe('error');
+    expect(result.current.pipelineProgress).toEqual({
+      type: 'manual-post-pipeline',
+      step: 'capturing',
+      captureMode: 'fresh_capture',
+      message: 'Pipeline stopped: no screenshots captured. Failures: home: Timeout',
+      updatedAt: 1_700_000_001_000,
+      contextDocCount: 1,
+      contextSummary: 'summary',
+      addonsCreated: 0,
+      captureFailureCount: 1,
+      captureFailures: [{ id: 'home', reason: 'Timeout' }],
+      requestedPresetCount: 1,
+      usedPresetCount: 1,
+      usedPresetIds: ['home'],
+      runId: null,
+    });
+    expect(result.current.pipelineErrorMessage).toBe(
+      'Pipeline stopped: no screenshots captured. Failures: home: Timeout'
     );
   });
 });

@@ -1,7 +1,18 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+
+import { translateClockLesson } from './ClockLesson.i18n';
+
 type ClockFrameProps = {
   ariaLabel: string;
   children: React.ReactNode;
   className?: string;
+};
+
+const useClockAnimationAriaLabel = (key: string, fallback: string): string => {
+  const translations = useTranslations('KangurStaticLessons.clock');
+  return translateClockLesson(translations, `animations.${key}.ariaLabel`, fallback);
 };
 
 function ClockFrame({ ariaLabel, children, className = 'h-full w-full' }: ClockFrameProps): React.JSX.Element {
@@ -44,8 +55,13 @@ function ClockFrame({ ariaLabel, children, className = 'h-full w-full' }: ClockF
 }
 
 export function ClockHourHandSweepAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'hourHandSweep',
+    'Animacja: krótka wskazówka przeskakuje co godzinę.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: krótka wskazówka przeskakuje co godzinę.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
         .hour-sweep {
@@ -70,8 +86,13 @@ export function ClockHourHandSweepAnimation(): React.JSX.Element {
 }
 
 export function ClockMinuteHandSweepAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'minuteHandSweep',
+    'Animacja: długa wskazówka robi pełny obrót.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: długa wskazówka robi pełny obrót.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
         .minute-sweep {
@@ -94,8 +115,13 @@ export function ClockMinuteHandSweepAnimation(): React.JSX.Element {
 }
 
 export function ClockFiveMinuteStepsAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'fiveMinuteSteps',
+    'Animacja: skoki co 5 minut na tarczy zegara.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: skoki co 5 minut na tarczy zegara.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .step { fill: #34d399; opacity: 0.2; animation: stepPulse 5s ease-in-out infinite; }
         .s2 { animation-delay: 0.6s; }
@@ -124,8 +150,13 @@ export function ClockFiveMinuteStepsAnimation(): React.JSX.Element {
 }
 
 export function ClockCombinedHandsAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'combinedHands',
+    'Animacja: dwie wskazówki pracują razem.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: dwie wskazówki pracują razem.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 6; stroke-linecap: round; }
         .minute-hand { stroke: #4f46e5; stroke-width: 4; stroke-linecap: round; }
@@ -156,8 +187,13 @@ export function ClockCombinedHandsAnimation(): React.JSX.Element {
 }
 
 export function ClockQuarterAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'quarter',
+    'Animacja: kwadrans po i kwadrans do.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: kwadrans po i kwadrans do.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
         .minute-a { transform-origin: 100px 100px; animation: quarterA 4.5s ease-in-out infinite; }
@@ -187,8 +223,13 @@ export function ClockQuarterAnimation(): React.JSX.Element {
 }
 
 export function ClockHalfPastAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'halfPast',
+    'Animacja: pół godziny, minuta na 6.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: pół godziny, minuta na 6.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 6; stroke-linecap: round; }
         .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
@@ -218,8 +259,13 @@ export function ClockHalfPastAnimation(): React.JSX.Element {
 }
 
 export function ClockMinuteByMinuteAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'minuteByMinute',
+    'Animacja: minutowa wskazówka przesuwa się minuta po minucie.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: minutowa wskazówka przesuwa się minuta po minucie.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .minute-hand { stroke: #16a34a; stroke-width: 4; stroke-linecap: round; }
         .minute-step {
@@ -242,8 +288,13 @@ export function ClockMinuteByMinuteAnimation(): React.JSX.Element {
 }
 
 export function ClockFullHourStepAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'fullHourStep',
+    'Animacja: krótka wskazówka zatrzymuje się na pełnych godzinach.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: krótka wskazówka zatrzymuje się na pełnych godzinach.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .hour-hand { stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
         .minute-hand { stroke: #4f46e5; stroke-width: 4; stroke-linecap: round; }
@@ -273,8 +324,13 @@ export function ClockFullHourStepAnimation(): React.JSX.Element {
 }
 
 export function ClockSecondHandAnimation(): React.JSX.Element {
+  const ariaLabel = useClockAnimationAriaLabel(
+    'secondHand',
+    'Animacja: wskazówka sekundowa obraca się szybko.'
+  );
+
   return (
-    <ClockFrame ariaLabel='Animacja: wskazówka sekundowa obraca się szybko.'>
+    <ClockFrame ariaLabel={ariaLabel}>
       <style>{`
         .second-hand { stroke: #ef4444; stroke-width: 2; stroke-linecap: round; }
         .second-sweep { transform-origin: 100px 100px; animation: secondSweep 1.8s linear infinite; }

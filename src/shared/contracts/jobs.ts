@@ -348,7 +348,14 @@ export type QueueConfig<TJobData = unknown> = {
   defaultJobOptions?: Record<string, unknown>; // Omit<JobsOptions, 'connection'>
   workerOptions?: Record<string, unknown>; // Omit<WorkerOptions, 'connection' | 'concurrency'>
   /** Third arg is an AbortSignal that fires when jobTimeoutMs is exceeded. */
-  processor: (data: TJobData, jobId: string, signal?: AbortSignal) => Promise<unknown>;
+  processor: (
+    data: TJobData,
+    jobId: string,
+    signal?: AbortSignal,
+    helpers?: {
+      updateProgress: (progress: unknown) => Promise<void>;
+    }
+  ) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
   onFailed?: (
     jobId: string,

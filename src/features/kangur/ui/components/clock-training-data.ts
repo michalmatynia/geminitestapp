@@ -3,6 +3,8 @@ import type {
   ClockTrainingSectionContent,
   ClockTrainingTaskPoolId,
 } from './clock-training-utils';
+import type { ClockTrainingTranslate } from './clock-training-i18n';
+import { translateClockTrainingWithFallback } from './clock-training-i18n';
 
 export const CLOCK_TRAINING_TASKS: Record<ClockTrainingTaskPoolId, ClockTask[]> = {
   mixed: [
@@ -83,7 +85,31 @@ const CLOCK_TRAINING_SECTION_CONTENT: Record<ClockTrainingTaskPoolId, ClockTrain
   };
 
 export function getClockTrainingSectionContent(
-  section: ClockTrainingTaskPoolId
+  section: ClockTrainingTaskPoolId,
+  translate?: ClockTrainingTranslate
 ): ClockTrainingSectionContent {
-  return CLOCK_TRAINING_SECTION_CONTENT[section] ?? CLOCK_TRAINING_SECTION_CONTENT.mixed;
+  const baseContent = CLOCK_TRAINING_SECTION_CONTENT[section] ?? CLOCK_TRAINING_SECTION_CONTENT.mixed;
+  const contentKey = `content.${section}`;
+
+  return {
+    ...baseContent,
+    promptLabel: translateClockTrainingWithFallback(
+      translate,
+      `${contentKey}.promptLabel`,
+      baseContent.promptLabel
+    ),
+    guidanceTitle: baseContent.guidanceTitle
+      ? translateClockTrainingWithFallback(
+          translate,
+          `${contentKey}.guidanceTitle`,
+          baseContent.guidanceTitle
+        )
+      : undefined,
+    guidance: baseContent.guidance
+      ? translateClockTrainingWithFallback(translate, `${contentKey}.guidance`, baseContent.guidance)
+      : undefined,
+    legend: baseContent.legend
+      ? translateClockTrainingWithFallback(translate, `${contentKey}.legend`, baseContent.legend)
+      : undefined,
+  };
 }

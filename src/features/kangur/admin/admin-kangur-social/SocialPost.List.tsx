@@ -32,6 +32,10 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'published', label: 'Published' },
   { value: 'failed', label: 'Failed' },
 ] as const;
+type SocialPostStatusFilter = (typeof STATUS_FILTER_OPTIONS)[number]['value'];
+
+const isSocialPostStatusFilter = (value: string): value is SocialPostStatusFilter =>
+  STATUS_FILTER_OPTIONS.some((option) => option.value === value);
 
 const buildSearchText = (post: KangurSocialPost): string =>
   [
@@ -71,7 +75,7 @@ export function SocialPostList({
   onDeletePost?: (post: KangurSocialPost) => void;
 }): React.JSX.Element {
   const [searchValue, setSearchValue] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState<(typeof STATUS_FILTER_OPTIONS)[number]['value']>('all');
+  const [statusFilter, setStatusFilter] = React.useState<SocialPostStatusFilter>('all');
   const [page, setPage] = React.useState(1);
 
   const filteredPosts = React.useMemo(() => {
@@ -137,13 +141,7 @@ export function SocialPostList({
             />
             <SelectSimple
               value={statusFilter}
-              onValueChange={(value) =>
-                setStatusFilter(
-                  STATUS_FILTER_OPTIONS.some((option) => option.value === value)
-                    ? value
-                    : 'all'
-                )
-              }
+              onValueChange={(value) => setStatusFilter(isSocialPostStatusFilter(value) ? value : 'all')}
               options={STATUS_FILTER_OPTIONS.map((option) => ({
                 value: option.value,
                 label: option.label,

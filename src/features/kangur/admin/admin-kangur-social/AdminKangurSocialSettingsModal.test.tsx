@@ -220,6 +220,9 @@ describe('AdminKangurSocialSettingsModal', () => {
         docUpdatesAppliedCount={0}
         docUpdatesSkippedCount={0}
         docUpdatesPlan={null}
+        canGenerateDraft={true}
+        generateDraftBlockedReason={null}
+        socialVisionWarning={null}
         onBrainModelChange={vi.fn()}
         onVisionModelChange={vi.fn()}
         onLinkedInConnectionChange={vi.fn()}
@@ -243,6 +246,10 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(screen.getByRole('tab', { name: 'Documentation' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Publishing' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Capture' })).toBeInTheDocument();
+    expect(screen.getAllByText('Open AI Brain routing')).toHaveLength(2);
+    expect(
+      screen.getByText('StudiQ Social reads its generation model directly from AI Brain routing.')
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
     expect(screen.getByLabelText('Documentation references')).toHaveValue(
@@ -267,4 +274,122 @@ describe('AdminKangurSocialSettingsModal', () => {
     expect(screen.getByText('Batch capture presets')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Capture presets' })).toBeInTheDocument();
   });
+
+  it('blocks draft generation when AI Brain post generation routing is missing', () => {
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={false}
+        brainModelId={null}
+        visionModelId={null}
+        projectUrl=''
+        brainModelBadgeLabel='Not configured'
+        visionModelBadgeLabel='gemma3:12b'
+        brainModelSelectOptions={[]}
+        visionModelSelectOptions={[]}
+        brainModelLoading={false}
+        visionModelLoading={false}
+        linkedinConnectionId={null}
+        linkedInOptions={[]}
+        linkedinIntegration={null}
+        selectedLinkedInConnection={null}
+        linkedInExpiryStatus={null}
+        linkedInExpiryLabel={null}
+        linkedInDaysRemaining={null}
+        addonForm={{
+          title: '',
+          sourceUrl: '',
+          selector: '',
+          description: '',
+          waitForMs: '',
+        }}
+        setAddonForm={vi.fn()}
+        createAddonPending={false}
+        batchCaptureBaseUrl=''
+        batchCapturePresetIds={[]}
+        batchCapturePending={false}
+        batchCaptureResult={null}
+        activePost={buildActivePost()}
+        contextSummary={null}
+        contextLoading={false}
+        docReferenceInput=''
+        generationNotes=''
+        docsUsed={[]}
+        hasVisualDocUpdates={false}
+        previewDocUpdatesPending={false}
+        applyDocUpdatesPending={false}
+        docUpdatesResult={null}
+        docUpdatesAppliedAt={null}
+        docUpdatesAppliedBy={null}
+        docUpdatesAppliedCount={0}
+        docUpdatesSkippedCount={0}
+        docUpdatesPlan={null}
+        canGenerateDraft={false}
+        generateDraftBlockedReason='Assign an AI Brain model for StudiQ Social Post Generation in /admin/brain?tab=routing.'
+        socialVisionWarning='Visual analysis is not configured in AI Brain. Draft generation can continue, but screenshot analysis will be skipped.'
+        onBrainModelChange={vi.fn()}
+        onVisionModelChange={vi.fn()}
+        onLinkedInConnectionChange={vi.fn()}
+        onProjectUrlChange={vi.fn()}
+        onDocReferenceInputChange={vi.fn()}
+        onGenerationNotesChange={vi.fn()}
+        onLoadContext={vi.fn()}
+        onGenerate={vi.fn()}
+        onPreviewDocUpdates={vi.fn()}
+        onApplyDocUpdates={vi.fn()}
+        onHandleCreateAddon={vi.fn()}
+        onBatchCaptureBaseUrlChange={vi.fn()}
+        onToggleCapturePreset={vi.fn()}
+        onSelectAllCapturePresets={vi.fn()}
+        onClearCapturePresets={vi.fn()}
+        onHandleBatchCapture={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Documentation' }));
+
+    expect(screen.getByRole('button', { name: 'Generate PL/EN draft' })).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Assign an AI Brain model for StudiQ Social Post Generation in /admin/brain?tab=routing.'
+      )
+    ).toBeInTheDocument();
+  });
 });
+
+function buildActivePost() {
+  return {
+    id: 'post-1',
+    titlePl: 'StudiQ Weekly Update',
+    titleEn: 'StudiQ Weekly Update',
+    bodyPl: '',
+    bodyEn: '',
+    combinedBody: '',
+    status: 'draft' as const,
+    scheduledAt: null,
+    publishedAt: null,
+    linkedinPostId: null,
+    linkedinUrl: null,
+    linkedinConnectionId: null,
+    brainModelId: null,
+    visionModelId: null,
+    publishError: null,
+    imageAssets: [],
+    imageAddonIds: [],
+    docReferences: [],
+    contextSummary: null,
+    generatedSummary: null,
+    visualSummary: null,
+    visualHighlights: [],
+    visualDocUpdates: [],
+    docUpdatesAppliedAt: null,
+    docUpdatesAppliedBy: null,
+    createdBy: null,
+    updatedBy: null,
+    createdAt: '2026-03-19T10:00:00.000Z',
+    updatedAt: '2026-03-19T10:00:00.000Z',
+  };
+}

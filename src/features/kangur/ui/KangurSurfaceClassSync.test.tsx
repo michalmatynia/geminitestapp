@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import { KANGUR_CLASS_OVERRIDES_SETTING_KEY } from '@/features/kangur/class-overrides';
-import { KANGUR_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
+import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
@@ -172,7 +172,7 @@ describe('KangurSurfaceClassSync', () => {
 
   it('applies a stored Kangur theme document to the page chrome', async () => {
     settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key !== KANGUR_THEME_SETTINGS_KEY) {
+      if (key !== KANGUR_DAILY_THEME_SETTINGS_KEY) {
         return undefined;
       }
 

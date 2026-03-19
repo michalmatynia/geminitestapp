@@ -12,12 +12,101 @@ const { startRouteTransitionMock } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
 }));
 
+const {
+  pathnameMock,
+  prefetchMock,
+  pushMock,
+  replaceMock,
+  searchParamsMock,
+} = vi.hoisted(() => ({
+  pathnameMock: vi.fn(),
+  prefetchMock: vi.fn(),
+  pushMock: vi.fn(),
+  replaceMock: vi.fn(),
+  searchParamsMock: vi.fn(),
+}));
+
 const { optionalAuthMock } = vi.hoisted(() => ({
   optionalAuthMock: vi.fn(),
 }));
 
 const { optionalTutorMock } = vi.hoisted(() => ({
   optionalTutorMock: vi.fn(),
+}));
+
+const { localeMock } = vi.hoisted(() => ({
+  localeMock: vi.fn(),
+}));
+
+const { translationMessages } = vi.hoisted(() => ({
+  translationMessages: {
+    pl: {
+      KangurNavigation: {
+        home: 'Strona główna',
+        lessons: 'Lekcje',
+        duels: 'Pojedynki',
+        parent: 'Rodzic',
+        subject: {
+          label: 'Wybierz przedmiot',
+          currentTitle: 'Aktualny przedmiot: {subject}',
+          dialogDescription: 'Wybierz przedmiot, na którym chcesz się teraz skupić.',
+          closeAriaLabel: 'Zamknij wybór przedmiotu',
+          groupAriaLabel: 'Wybór przedmiotu',
+        },
+        ageGroup: {
+          label: 'Wybierz grupę wiekową',
+          currentTitle: 'Aktualna grupa: {group}',
+          dialogDescription: 'Wybierz, dla kogo mają być dopasowane lekcje.',
+          closeAriaLabel: 'Zamknij wybór grupy wiekowej',
+          groupAriaLabel: 'Wybór grupy wiekowej',
+        },
+      },
+    },
+    en: {
+      KangurNavigation: {
+        home: 'Home page',
+        lessons: 'Lessons',
+        duels: 'Duels',
+        parent: 'Parent',
+        subject: {
+          label: 'Choose subject',
+          currentTitle: 'Current subject: {subject}',
+          dialogDescription: 'Choose the subject you want to focus on now.',
+          closeAriaLabel: 'Close subject chooser',
+          groupAriaLabel: 'Subject chooser',
+        },
+        ageGroup: {
+          label: 'Choose age group',
+          currentTitle: 'Current age group: {group}',
+          dialogDescription: 'Choose who the lessons should be tailored for.',
+          closeAriaLabel: 'Close age group chooser',
+          groupAriaLabel: 'Age group chooser',
+        },
+      },
+    },
+    de: {
+      KangurNavigation: {
+        home: 'Startseite',
+        lessons: 'Lektionen',
+        duels: 'Duelle',
+        parent: 'Eltern',
+        subject: {
+          label: 'Fach auswahlen',
+          currentTitle: 'Aktuelles Fach: {subject}',
+          dialogDescription: 'Wahle das Fach aus, auf das du dich jetzt konzentrieren mochtest.',
+          closeAriaLabel: 'Fachauswahl schliessen',
+          groupAriaLabel: 'Fachauswahl',
+        },
+        ageGroup: {
+          label: 'Altersgruppe auswahlen',
+          currentTitle: 'Aktuelle Gruppe: {group}',
+          dialogDescription: 'Wahle aus, fur wen die Lektionen angepasst werden sollen.',
+          closeAriaLabel: 'Altersgruppenauswahl schliessen',
+          groupAriaLabel: 'Altersgruppenauswahl',
+        },
+      },
+    },
+  },
 }));
 
 const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
@@ -53,8 +142,73 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathnameMock(),
+  useRouter: () => ({
+    back: vi.fn(),
+    prefetch: prefetchMock,
+    push: pushMock,
+    refresh: vi.fn(),
+    replace: replaceMock,
+  }),
+  useSearchParams: () => searchParamsMock(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
 vi.mock('next-auth/react', () => ({
   useSession: () => sessionMock(),
+}));
+
+vi.mock('next-intl', () => ({
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+  useLocale: () => localeMock(),
+  useTranslations:
+    (namespace?: string) =>
+    (key: string, values?: Record<string, string | number>) => {
+      const locale = localeMock() || 'pl';
+      const dictionary =
+        translationMessages[locale as keyof typeof translationMessages] ?? translationMessages.pl;
+      const namespaceParts = (namespace ?? '').split('.').filter(Boolean);
+      const keyParts = key.split('.').filter(Boolean);
+      const resolved = [...namespaceParts, ...keyParts].reduce<unknown>((current, part) => {
+        if (!current || typeof current !== 'object') {
+          return undefined;
+        }
+        return (current as Record<string, unknown>)[part];
+      }, dictionary);
+
+      if (typeof resolved !== 'string') {
+        return key;
+      }
+
+      return Object.entries(values ?? {}).reduce(
+        (message, [valueKey, value]) => message.replaceAll(`{${valueKey}}`, String(value)),
+        resolved
+      );
+    },
+}));
+
+vi.mock('@/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+  getPathname: vi.fn(),
+  permanentRedirect: vi.fn(),
+  redirect: vi.fn(),
+  usePathname: () => pathnameMock(),
+  useRouter: () => ({
+    prefetch: prefetchMock,
+    push: pushMock,
+    replace: replaceMock,
+  }),
 }));
 
 vi.mock('framer-motion', () => {
@@ -185,11 +339,16 @@ const setViewport = ({ width, matches }: { width: number; matches: boolean }): v
   });
 };
 
+const openLanguageMenu = (trigger?: HTMLElement): void => {
+  fireEvent.keyDown(trigger ?? screen.getByTestId('kangur-language-switcher-trigger'), {
+    key: 'ArrowDown',
+  });
+};
+
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
-  KANGUR_THEME_SETTINGS_KEY,
 } from '@/features/kangur/theme-settings';
 import { KangurPrimaryNavigation } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import {
@@ -201,7 +360,12 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localeMock.mockReturnValue('pl');
     setViewport({ width: 1024, matches: false });
+    pathnameMock.mockReturnValue('/kangur');
+    searchParamsMock.mockReturnValue(new URLSearchParams());
+    prefetchMock.mockReset();
+    replaceMock.mockReset();
     optionalAuthMock.mockReturnValue(null);
     optionalTutorMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
@@ -234,6 +398,7 @@ describe('KangurPrimaryNavigation', () => {
       status: 'success',
     });
     window.sessionStorage.clear();
+    document.cookie = 'NEXT_LOCALE=; Max-Age=0; Path=/';
   });
 
   it('renders the SVG logo inside the home control', () => {
@@ -400,7 +565,271 @@ describe('KangurPrimaryNavigation', () => {
     expect(screen.getByRole('button', { name: 'Switch to Daily theme' })).toBeInTheDocument();
   });
 
-  it('places the appearance toggle opposite the close button in the mobile menu header', async () => {
+  it('renders the language switcher inside the utility actions and marks the current locale', async () => {
+    localeMock.mockReturnValue('de');
+    pathnameMock.mockReturnValue('/de/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/de'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
+    const trigger = screen.getByTestId('kangur-language-switcher-trigger');
+
+    expect(utilityActions).toContainElement(trigger);
+
+    openLanguageMenu(trigger);
+
+    const activeOption = await screen.findByTestId('kangur-language-switcher-option-de');
+
+    expect(activeOption).toHaveAttribute('data-state', 'checked');
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('switches to a non-default locale while preserving search params', async () => {
+    localeMock.mockReturnValue('pl');
+    pathnameMock.mockReturnValue('/lessons');
+    searchParamsMock.mockReturnValue(new URLSearchParams('mode=solo&difficulty=hard'));
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    openLanguageMenu();
+    expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
+    expect(prefetchMock).toHaveBeenCalledWith('/de/lessons?mode=solo&difficulty=hard');
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?mode=solo&difficulty=hard',
+      pageKey: 'Lessons',
+      sourceId: 'kangur-language-switcher',
+    });
+    expect(replaceMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard', {
+      scroll: false,
+    });
+    expect(document.cookie).toContain('NEXT_LOCALE=en');
+  });
+
+  it('drops the locale prefix when switching back to the default locale', async () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/duels');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/en'
+        currentPage='Duels'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
+
+    expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
+  });
+
+  it('translates the desktop section labels and chooser copy for English locale', () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/en'
+        canManageLearners
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Home page' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lessons' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Duels' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Parent' })).toBeInTheDocument();
+
+    const subjectButton = screen.getByRole('button', { name: 'Choose subject' });
+    const ageGroupButton = screen.getByRole('button', { name: 'Choose age group' });
+
+    expect(subjectButton).toHaveAttribute('title', 'Current subject: Maths');
+    expect(ageGroupButton).toHaveAttribute('title', 'Current age group: Age 10');
+  });
+
+  it('translates the mobile section labels for German locale', async () => {
+    setViewport({ width: 390, matches: true });
+    localeMock.mockReturnValue('de');
+    pathnameMock.mockReturnValue('/de/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/de'
+        canManageLearners
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
+
+    expect(screen.getByRole('link', { name: 'Startseite' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lektionen' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Duelle' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Eltern' })).toBeInTheDocument();
+  });
+
+  it('uses theme-aware language menu colors and keeps the menu container clipped', async () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+
+    render(
+      <CmsStorefrontAppearanceProvider initialMode='dark'>
+        <KangurPrimaryNavigation
+          basePath='/en'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </CmsStorefrontAppearanceProvider>
+    );
+
+    openLanguageMenu();
+
+    const menu = await screen.findByTestId('kangur-language-switcher-menu');
+    const menuContainer = await screen.findByTestId('kangur-language-switcher-menu-container');
+    const options = await screen.findByTestId('kangur-language-switcher-options');
+    const polishOption = await screen.findByTestId('kangur-language-switcher-option-pl');
+    const germanOption = await screen.findByTestId('kangur-language-switcher-option-de');
+    const option = await screen.findByTestId('kangur-language-switcher-option-en');
+    const optionLabel = within(option).getByText('English');
+
+    expect(menu.style.getPropertyValue('--kangur-language-menu-bg')).toBe('#131c33');
+    expect(menu.style.getPropertyValue('--kangur-language-menu-text')).toBe('#f8fafc');
+    expect(menu.style.getPropertyValue('--kangur-language-menu-hover-text')).toBe('');
+    expect(menu.style.getPropertyValue('--kangur-language-menu-active-text')).toBe('');
+    expect(menu.style.overflow).toBe('hidden');
+    expect(menu.className).toContain('w-fit');
+    expect(menu.className).not.toContain('min-w-[13rem]');
+    expect(menuContainer).toHaveClass('rounded-[20px]', 'p-1');
+    expect(options).toHaveClass('flex', 'flex-col', 'gap-1.5');
+    expect(option.className).toContain('cursor-pointer');
+    expect(option.className).toContain('data-[state=checked]:cursor-default');
+    expect(option.className).toContain('py-2.5');
+    expect(option.className).toContain('pl-3.5');
+    expect(option.className).toContain('[color:var(--kangur-language-menu-text)]');
+    expect(option.className).toContain('data-[highlighted]:[color:var(--kangur-language-menu-text)]');
+    expect(option.className).toContain('data-[state=checked]:[color:var(--kangur-language-menu-text)]');
+    expect(option.className).toContain('[&>span:first-child]:hidden');
+    expect(option.className).not.toContain('hover:[color:var(--kangur-language-menu-hover-text)]');
+    expect(option.className).not.toContain('focus:[color:var(--kangur-language-menu-hover-text)]');
+    expect(option.className).not.toContain(
+      'data-[state=checked]:[color:var(--kangur-language-menu-active-text)]'
+    );
+    expect(option.className).not.toContain('text-[11px]');
+    expect(option.className).not.toContain('text-slate-');
+    expect(optionLabel).toHaveStyle({ color: 'var(--kangur-language-menu-text)' });
+    expect(within(polishOption).queryByText('Polish')).toBeNull();
+    expect(within(germanOption).queryByText('German')).toBeNull();
+  });
+
+  it('locks the language dropdown visual contract across the trigger and every locale row', async () => {
+    localeMock.mockReturnValue('pl');
+    pathnameMock.mockReturnValue('/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    const trigger = screen.getByTestId('kangur-language-switcher-trigger');
+    const triggerLabel = within(trigger).getByText('Polski');
+    const triggerFlagShell = trigger.querySelector('span[aria-hidden="true"]');
+    const triggerChevron = trigger.querySelector('svg.lucide-chevron-down');
+
+    expect(trigger).toHaveClass(
+      'min-w-[8.75rem]',
+      'shrink-0',
+      'overflow-hidden',
+      'gap-2',
+      'px-3'
+    );
+    expect(trigger.className).not.toContain('sm:w-[11rem]');
+    expect(trigger).toHaveAttribute('title', 'Language: Polski');
+    expect(triggerLabel).toHaveClass('flex-1', 'truncate', 'text-sm', 'font-semibold');
+    expect(triggerFlagShell).not.toBeNull();
+    expect(triggerFlagShell).toHaveClass('h-[1.15rem]', 'w-[1.7rem]', 'rounded-[6px]');
+    expect(triggerFlagShell?.querySelector('svg')).not.toBeNull();
+    expect(triggerChevron).not.toBeNull();
+    expect(triggerChevron).not.toHaveClass('ml-auto');
+
+    openLanguageMenu(trigger);
+
+    const menu = await screen.findByTestId('kangur-language-switcher-menu');
+    const menuContainer = await screen.findByTestId('kangur-language-switcher-menu-container');
+    const options = await screen.findByTestId('kangur-language-switcher-options');
+    const rows = [
+      await screen.findByTestId('kangur-language-switcher-option-pl'),
+      await screen.findByTestId('kangur-language-switcher-option-en'),
+      await screen.findByTestId('kangur-language-switcher-option-de'),
+    ];
+    const labels = ['Polski', 'English', 'Deutsch'] as const;
+
+    expect(menu).toHaveClass(
+      'w-fit',
+      'max-w-[calc(100vw-1rem)]',
+      'overflow-hidden',
+      'rounded-[26px]',
+      'p-2'
+    );
+    expect(menuContainer).toHaveClass('rounded-[20px]', 'p-1');
+    expect(options).toHaveClass('flex', 'flex-col', 'gap-1.5');
+    expect(rows).toHaveLength(labels.length);
+    expect(rows.map((row) => row.textContent?.trim())).toEqual(labels);
+
+    rows.forEach((row, index) => {
+      const label = within(row).getByText(labels[index]);
+      const flagShell = row.querySelector('div > span[aria-hidden="true"]');
+
+      expect(row).toHaveClass(
+        'min-h-[3.1rem]',
+        'rounded-[18px]',
+        'py-2.5',
+        'pl-3.5',
+        'pr-3.5',
+        'text-left'
+      );
+      expect(row.className).toContain('cursor-pointer');
+      expect(row.className).toContain('data-[state=checked]:cursor-default');
+      expect(row.className).toContain('[&>span:first-child]:hidden');
+      expect(flagShell).not.toBeNull();
+      expect(flagShell).toHaveClass('h-5', 'w-7', 'rounded-[7px]');
+      expect(flagShell?.querySelector('svg')).not.toBeNull();
+      expect(label).toHaveClass('truncate', 'text-sm', 'font-semibold');
+      expect(label).toHaveStyle({ color: 'var(--kangur-language-menu-text)' });
+    });
+
+    expect(rows[0]).toHaveAttribute('data-state', 'checked');
+    expect(within(rows[0]).queryByText('Polish')).toBeNull();
+    expect(within(rows[1]).queryByText('English')).not.toBeNull();
+    expect(within(rows[2]).queryByText('German')).toBeNull();
+  });
+
+  it('places the language selector left of the appearance toggle in the mobile menu header', async () => {
     setViewport({ width: 390, matches: true });
 
     render(
@@ -417,9 +846,18 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.click(await screen.findByTestId('kangur-primary-nav-mobile-toggle'));
 
     const header = screen.getByTestId('kangur-primary-nav-mobile-header');
+    const headerActions = screen.getByTestId('kangur-primary-nav-mobile-header-actions');
+    const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
     const headerScope = within(header);
+    const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
+    const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
 
-    expect(headerScope.getByRole('button', { name: 'Switch to Dawn theme' })).toBeInTheDocument();
+    expect(trigger).toBeInTheDocument();
+    expect(themeToggle).toBeInTheDocument();
+    expect(headerActions.firstElementChild).toBe(trigger);
+    expect(headerActions).toContainElement(trigger);
+    expect(headerActions).toContainElement(themeToggle);
+    expect(within(utilityActions).queryByTestId('kangur-language-switcher-trigger')).toBeNull();
     expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toBeInTheDocument();
   });
 

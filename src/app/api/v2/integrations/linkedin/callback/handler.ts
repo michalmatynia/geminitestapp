@@ -100,7 +100,7 @@ export async function GET_handler(
   let profileResolved = false;
   let profileHasVanity = false;
   const requestUrl = new URL(req.url);
-  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const query = (_ctx.query ?? {}) as unknown as z.infer<typeof querySchema>;
 
   try {
     stage = 'validate';

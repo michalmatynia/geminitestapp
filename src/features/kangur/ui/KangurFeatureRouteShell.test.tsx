@@ -33,6 +33,9 @@ const mockKangurRoutingState = {
 vi.mock('next/navigation', () => ({
   usePathname: () => usePathnameMock(),
   useSearchParams: () => useSearchParamsMock(),
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/observability/client', () => ({
@@ -133,6 +136,24 @@ describe('KangurFeatureRouteShell', () => {
     expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
       pageKey: 'Competition',
       requestedPath: '/kangur/competition',
+    });
+  });
+
+  it('maps localized public routes into canonical Kangur routing while preserving the localized href', () => {
+    usePathnameMock.mockReturnValue('/en/lessons');
+
+    render(<KangurFeatureRouteShell basePath='/' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/lessons',
+      requestedHref: '/en/lessons',
+      basePath: '/',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Lessons',
+      requestedPath: '/lessons',
     });
   });
 

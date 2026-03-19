@@ -12,6 +12,9 @@ const { usePathnameMock, kangurFeatureRouteShellMock } = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({

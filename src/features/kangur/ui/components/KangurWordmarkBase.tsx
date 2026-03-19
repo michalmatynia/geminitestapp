@@ -6,7 +6,9 @@ export type KangurWordmarkBaseProps = React.SVGProps<SVGSVGElement> & {
   idPrefix?: string;
   arcPath: string;
   wordTransform: string;
-  children: ReactNode;
+  children?: ReactNode;
+  textLabel?: string;
+  textProps?: React.SVGProps<SVGTextElement>;
 };
 
 export function KangurWordmarkBase({
@@ -15,6 +17,8 @@ export function KangurWordmarkBase({
   arcPath,
   wordTransform,
   children,
+  textLabel,
+  textProps,
   ...props
 }: KangurWordmarkBaseProps): React.JSX.Element {
   const iconId = idPrefix.replace(/[^a-zA-Z0-9_-]/g, '-');
@@ -63,11 +67,17 @@ export function KangurWordmarkBase({
           strokeLinecap='round'
           strokeWidth='10'
         />
-        <g fill={`url(#${wordGradId})`} transform={wordTransform}>
-          <g transform='scale(0.049 -0.051)'>
-            <g>{children}</g>
+        {textLabel ? (
+          <text fill={`url(#${wordGradId})`} {...textProps}>
+            {textLabel}
+          </text>
+        ) : (
+          <g fill={`url(#${wordGradId})`} transform={wordTransform}>
+            <g transform='scale(0.049 -0.051)'>
+              <g>{children}</g>
+            </g>
           </g>
-        </g>
+        )}
       </g>
     </svg>
   );

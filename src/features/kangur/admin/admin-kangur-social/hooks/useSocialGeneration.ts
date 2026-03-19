@@ -24,6 +24,8 @@ type SocialGenerationDeps = {
   generationNotes: string;
   brainModelId: string | null;
   visionModelId: string | null;
+  canGenerateDraft: boolean;
+  generateDraftBlockedReason: string | null;
   imageAddonIds: string[];
   projectUrl: string;
   buildSocialContext: (overrides?: Record<string, unknown>) => Record<string, unknown>;
@@ -38,6 +40,14 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
     useState<KangurSocialDocUpdatesResponse | null>(null);
 
   const handleGenerate = async (): Promise<void> => {
+    if (!deps.canGenerateDraft) {
+      toast(
+        deps.generateDraftBlockedReason ??
+          'Assign an AI Brain model for StudiQ Social Post Generation first.',
+        { variant: 'warning' }
+      );
+      return;
+    }
     if (!deps.activePost) return;
     trackKangurClientEvent(
       'kangur_social_post_generate_attempt',
@@ -48,8 +58,6 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         postId: deps.activePost.id,
         docReferences: deps.resolveDocReferences(),
         notes: deps.generationNotes,
-        modelId: deps.brainModelId ?? undefined,
-        visionModelId: deps.visionModelId ?? undefined,
         imageAddonIds: deps.imageAddonIds,
         projectUrl: deps.projectUrl || undefined,
       });

@@ -7,10 +7,10 @@ import {
   DragStateProvider,
   PageBuilderPageSkeleton,
   PageBuilderProvider,
-  ThemeSettingsProvider,
   type LeftPanelMode,
   usePageBuilder,
 } from '@/features/cms/public';
+import { ThemeSettingsProvider } from '@/features/cms/components/page-builder/ThemeSettingsContext';
 import type { SectionInstance } from '@/shared/contracts/cms';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -24,10 +24,12 @@ import {
 } from '@/features/kangur/observability/client';
 
 import {
+  getKangurThemeSettingsKeyForAppearanceMode,
   KANGUR_DEFAULT_DAILY_THEME,
   KANGUR_DEFAULT_DAWN_THEME,
   KANGUR_DEFAULT_SUNSET_THEME,
   KANGUR_DEFAULT_THEME,
+  type KangurThemeMode,
 } from '@/features/kangur/theme-settings';
 import { KangurCmsBuilderLeftPanel } from './KangurCmsBuilderLeftPanel';
 import { KangurCmsBuilderRightPanel } from './KangurCmsBuilderRightPanel';
@@ -36,14 +38,12 @@ import { KangurCmsBuilderRuntimeProvider } from './KangurCmsBuilderRuntimeContex
 import { KangurCmsPreviewPanel } from './KangurCmsPreviewPanel';
 import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
-  KANGUR_CMS_THEME_SETTINGS_KEY,
   buildKangurCmsBuilderState,
   parseKangurCmsProject,
   serializeKangurCmsSections,
   type KangurCmsProject,
   type KangurCmsScreenKey,
 } from './project';
-import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 
 const commitScreenSections = (
   project: KangurCmsProject,
@@ -60,7 +60,45 @@ const commitScreenSections = (
   },
 });
 
-function KangurCmsBuilderInner(): React.JSX.Element {
+const resolveThemePreviewFallback = (mode: KangurThemeMode): ThemeSettings => {
+  if (mode === 'dawn') return KANGUR_DEFAULT_DAWN_THEME;
+  if (mode === 'sunset') return KANGUR_DEFAULT_SUNSET_THEME;
+  if (mode === 'nightly') return KANGUR_DEFAULT_THEME;
+  return KANGUR_DEFAULT_DAILY_THEME;
+};
+
+const resolveThemePreviewStorageKey = (mode: KangurThemeMode): string => {
+  if (mode === 'dawn') {
+    return getKangurThemeSettingsKeyForAppearanceMode('dawn');
+  }
+  if (mode === 'sunset') {
+    return getKangurThemeSettingsKeyForAppearanceMode('sunset');
+  }
+  if (mode === 'nightly') {
+    return getKangurThemeSettingsKeyForAppearanceMode('dark');
+  }
+  return getKangurThemeSettingsKeyForAppearanceMode('default');
+};
+
+const renderBuilderThemeSettingsProvider = (
+  mode: KangurThemeMode,
+  children: React.ReactNode
+): React.ReactElement => (
+  <ThemeSettingsProvider
+    storageKey={resolveThemePreviewStorageKey(mode)}
+    defaultTheme={resolveThemePreviewFallback(mode)}
+  >
+    {children}
+  </ThemeSettingsProvider>
+);
+
+function KangurCmsBuilderInner({
+  themePreviewMode,
+  onThemeModeChange,
+}: {
+  themePreviewMode: KangurThemeMode;
+  onThemeModeChange: (mode: KangurThemeMode) => void;
+}): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
@@ -84,19 +122,11 @@ function KangurCmsBuilderInner(): React.JSX.Element {
   const [leftPanelMode, setLeftPanelMode] = useState<LeftPanelMode>('structure');
   const [themePreviewSection, setThemePreviewSection] = useState<string | null>(null);
   const [themePreviewTheme, setThemePreviewTheme] = useState<ThemeSettings | null>(null);
-  const [themePreviewMode, setThemePreviewMode] = useState<KangurThemeMode>('daily');
 
   const handleThemeModeChange = useCallback((mode: KangurThemeMode): void => {
-    setThemePreviewMode(mode);
     setThemePreviewTheme(null);
-  }, []);
-
-  const themeFallbackByMode = useMemo((): ThemeSettings => {
-    if (themePreviewMode === 'dawn') return KANGUR_DEFAULT_DAWN_THEME;
-    if (themePreviewMode === 'sunset') return KANGUR_DEFAULT_SUNSET_THEME;
-    if (themePreviewMode === 'nightly') return KANGUR_DEFAULT_THEME;
-    return KANGUR_DEFAULT_DAILY_THEME;
-  }, [themePreviewMode]);
+    onThemeModeChange(mode);
+  }, [onThemeModeChange]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -197,7 +227,7 @@ function KangurCmsBuilderInner(): React.JSX.Element {
         <KangurCmsBuilderRightPanel
           showThemePreview={leftPanelMode === 'theme'}
           themePreviewSection={themePreviewSection}
-          themePreviewTheme={themePreviewTheme ?? themeFallbackByMode}
+          themePreviewTheme={themePreviewTheme ?? resolveThemePreviewFallback(themePreviewMode)}
           themePreviewMode={themePreviewMode}
         />
         <KangurCmsBuilderStatusSidebar visible={statusSidebarOpen} />
@@ -220,6 +250,7 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
   const [draftProject, setDraftProject] = useState<KangurCmsProject | null>(null);
   const [activeScreenKey, setActiveScreenKey] = useState<KangurCmsScreenKey>('Game');
   const [isSaving, setIsSaving] = useState(false);
+  const [themePreviewMode, setThemePreviewMode] = useState<KangurThemeMode>('daily');
 
   useEffect((): void => {
     if (!persistedProject) return;
@@ -294,10 +325,8 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
   return (
     <PageBuilderProvider key={activeScreenKey} initialState={initialState}>
       <DragStateProvider>
-        <ThemeSettingsProvider
-          storageKey={KANGUR_CMS_THEME_SETTINGS_KEY}
-          defaultTheme={KANGUR_DEFAULT_THEME}
-        >
+        {renderBuilderThemeSettingsProvider(
+          themePreviewMode,
           <KangurCmsBuilderRuntimeProvider
             draftProject={draftProject}
             savedProject={savedProject}
@@ -306,9 +335,12 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
             onSave={handleSave}
             isSaving={isSaving}
           >
-            <KangurCmsBuilderInner />
+            <KangurCmsBuilderInner
+              themePreviewMode={themePreviewMode}
+              onThemeModeChange={setThemePreviewMode}
+            />
           </KangurCmsBuilderRuntimeProvider>
-        </ThemeSettingsProvider>
+        )}
       </DragStateProvider>
     </PageBuilderProvider>
   );

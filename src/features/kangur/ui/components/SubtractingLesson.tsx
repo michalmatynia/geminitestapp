@@ -1,5 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import SubtractingGardenGame from '@/features/kangur/ui/components/SubtractingGardenGame';
 import {
@@ -19,11 +22,192 @@ import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
+type SubtractingSlideSectionId = Exclude<SectionId, 'game'>;
+type SubtractingLessonTranslate = (key: string) => string;
+type WidenLessonCopy<T> = T extends string
+  ? string
+  : T extends readonly (infer U)[]
+    ? readonly WidenLessonCopy<U>[]
+    : T extends object
+      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
+      : T;
 
-function SubtractingSvgAnimation(): React.JSX.Element {
+const SUBTRACTING_LESSON_COPY_PL = {
+  lessonTitle: 'Odejmowanie',
+  sections: {
+    podstawy: {
+      title: 'Podstawy odejmowania',
+      description: 'Co to odejmowanie? Jednocyfrowe',
+    },
+    przekroczenie: {
+      title: 'Odejmowanie przez 10',
+      description: 'Rozkład przez dziesięć',
+    },
+    dwucyfrowe: {
+      title: 'Odejmowanie dwucyfrowe',
+      description: 'Dziesiątki i jedności osobno',
+    },
+    zapamietaj: {
+      title: 'Zapamiętaj!',
+      description: 'Zasady odejmowania',
+    },
+    game: {
+      title: 'Gra z odejmowaniem',
+      description: 'Przeciągaj i zabieraj obiekty',
+    },
+  },
+  animations: {
+    subtractingSvg: {
+      ariaLabel: 'Animacja odejmowania: 5 kropek minus 2 kropki daje 3 kropki.',
+    },
+    numberLine: {
+      ariaLabel: 'Animacja na osi liczbowej: 13 minus 5 jako skoki do 10 i dalej.',
+    },
+    tenFrame: {
+      ariaLabel: 'Animacja ramki dziesiątki: odejmowanie 13 minus 5.',
+    },
+    differenceBar: {
+      ariaLabel: 'Animacja różnicy: 12 minus 7 zostawia 5.',
+      differenceLabel: 'różnica 5',
+    },
+    abacus: {
+      ariaLabel: 'Animacja liczydła: odejmowanie dziesiątek i jedności osobno.',
+      tensLabel: 'Dziesiątki',
+      onesLabel: 'Jedności',
+      startLabel: 'Start',
+      subtractLabel: 'Odejmij',
+      resultLabel: 'Wynik',
+    },
+  },
+  slides: {
+    basics: {
+      meaning: {
+        title: 'Co to znaczy odejmować?',
+        lead: 'Odejmowanie to zabieranie części z grupy. Pytamy: ile zostało?',
+      },
+      singleDigit: {
+        title: 'Odejmowanie jednocyfrowe',
+        lead: 'Cofaj się na osi liczbowej lub licz, ile brakuje do wyniku.',
+        step1: 'Startuj od 9',
+        step2: 'Cofnij się o 4 kroki: 8, 7, 6, 5',
+        step3: 'Ostatnia liczba to wynik: 5 ✓',
+      },
+      motion: {
+        title: 'Odejmowanie w ruchu (SVG)',
+        lead: 'Animacja pokazuje, jak zabieramy część kropek i zostaje wynik.',
+        caption: 'Dwie kropki „odchodzą”, zostają trzy.',
+      },
+    },
+    crossTen: {
+      overTen: {
+        title: 'Odejmowanie z przekroczeniem 10',
+        lead: 'Rozdziel odjemnik na dwie części: najpierw zejdź do 10, potem odejmij resztę.',
+        caption: '13 − 3 = 10, 10 − 2 = 8 ✓',
+        step1Title: 'Krok 1',
+        step1Text: 'Rozłóż 5 na 3 + 2',
+        step2Title: 'Krok 2',
+        step2Text: 'Odejmij 3: 13 − 3 = 10',
+        step3Title: 'Krok 3',
+        step3Text: 'Odejmij 2: 10 − 2 = 8',
+      },
+      numberLine: {
+        title: 'Skoki wstecz na osi liczbowej',
+        lead: 'Najpierw do 10, potem dalej wstecz.',
+        caption: '13 − 3 = 10, potem 10 − 2 = 8.',
+      },
+      tenFrame: {
+        title: 'Ramka dziesiątki',
+        lead: 'Zabierz najpierw nadwyżkę ponad 10, potem resztę z ramki.',
+        caption: 'Najpierw zdejmij 3, potem jeszcze 2.',
+      },
+    },
+    doubleDigit: {
+      intro: {
+        title: 'Odejmowanie dwucyfrowe',
+        lead: 'Odejmuj osobno dziesiątki i jedności!',
+        tensLabel: 'Dziesiątki',
+        onesLabel: 'Jedności',
+      },
+      abacus: {
+        title: 'Liczydło',
+        lead: 'Liczydło pokazuje odejmowanie dziesiątek i jedności osobno.',
+        caption: 'Odejmij koraliki, a potem odczytaj wynik.',
+      },
+    },
+    remember: {
+      rules: {
+        title: 'Zasady odejmowania',
+        orderChip: 'Kolejność ma znaczenie: 7 − 3 ≠ 3 − 7',
+        zeroChip: 'Odejmowanie 0: 8 − 0 = 8',
+        checkChip: 'Sprawdź dodawaniem: 5 + 3 = 8',
+        breakChip: 'Rozbij na kroki: 13 − 5 = 10 − 2',
+        stepBackTitle: 'Cofaj się krokami',
+        stepBackLead: 'Startuj od większej liczby: 9 − 4',
+        stepBackPath: '9 -> 8 -> 7 -> 6 -> 5',
+        checkTitle: 'Sprawdzaj dodawaniem',
+        checkLead: 'Jeśli wynik + odjemnik daje odjemną, to dobrze.',
+        checkEquation: '5 + 3 = 8',
+        orderTitle: 'Kolejność ma znaczenie',
+        orderLead: '7 − 3 to nie to samo co 3 − 7.',
+        motionTitle: 'Odejmowanie w ruchu',
+        motionLead: 'Zabierasz część i patrzysz, ile zostało.',
+        motionCaption: 'Dwie kropki "odchodzą", zostają trzy.',
+        pathTitle: 'Ścieżka',
+        pathStep1Title: 'Rozbij odjemnik',
+        pathStep1Text: '5 = 3 + 2',
+        pathStep2Title: 'Zejdź do 10',
+        pathStep2Text: '13 − 3 = 10',
+        pathStep3Title: 'Odejmij resztę',
+        pathStep3Text: '10 − 2 = 8',
+        pathStep4Title: 'Sprawdź dodawaniem',
+        pathStep4Text: '8 + 5 = 13',
+      },
+      backJumps: {
+        title: 'Skoki wstecz',
+        label: 'Skoki na osi',
+        lead: 'Cofaj się w dwóch krokach: do 10, potem dalej.',
+        caption: '13 − 5 = 8.',
+      },
+      tenFrame: {
+        title: 'Ramka dziesiątki',
+        label: 'Ramka dziesiątki',
+        lead: 'Najpierw zdejmij nadwyżkę, potem resztę z ramki.',
+        caption: '13 − 5 = 8.',
+      },
+      checkAddition: {
+        title: 'Sprawdź wynik dodawaniem',
+        label: 'Sprawdzanie',
+        lead: 'Dodaj odjemnik do wyniku i zobacz, czy wracasz do odjemnej.',
+        caption: 'Jeśli dodawanie zgadza się, odejmowanie jest poprawne.',
+      },
+      difference: {
+        title: 'Różnica liczb',
+        label: 'Różnica',
+        lead: 'Porównaj dwie liczby i zobacz, ile brakuje do większej.',
+        caption: 'Różnica to "brakująca" część.',
+      },
+    },
+  },
+  game: {
+    stageTitle: 'Gra z odejmowaniem!',
+  },
+} as const;
+
+type SubtractingLessonCopy = WidenLessonCopy<typeof SUBTRACTING_LESSON_COPY_PL>;
+
+const translateSubtractingLesson = (
+  translate: SubtractingLessonTranslate,
+  key: string,
+  fallback: string
+): string => {
+  const translated = translate(key);
+  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+};
+
+function SubtractingSvgAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja odejmowania: 5 kropki minus 2 kropki daje 3 kropki.'
+      aria-label={ariaLabel}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 120'
@@ -86,10 +270,10 @@ function SubtractingSvgAnimation(): React.JSX.Element {
   );
 }
 
-function SubtractingNumberLineAnimation(): React.JSX.Element {
+function SubtractingNumberLineAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja na osi liczbowej: 13 minus 5 jako skoki do 10 i dalej.'
+      aria-label={ariaLabel}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 120'
@@ -152,10 +336,10 @@ function SubtractingNumberLineAnimation(): React.JSX.Element {
   );
 }
 
-function SubtractingTenFrameAnimation(): React.JSX.Element {
+function SubtractingTenFrameAnimation({ ariaLabel }: { ariaLabel: string }): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja ramki dziesiątki: odejmowanie 13 minus 5.'
+      aria-label={ariaLabel}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -259,10 +443,16 @@ function SubtractingTenFrameAnimation(): React.JSX.Element {
   );
 }
 
-function SubtractingDifferenceBarAnimation(): React.JSX.Element {
+function SubtractingDifferenceBarAnimation({
+  ariaLabel,
+  differenceLabel,
+}: {
+  ariaLabel: string;
+  differenceLabel: string;
+}): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja różnicy: 12 minus 7 zostawia 5.'
+      aria-label={ariaLabel}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 420 140'
@@ -288,7 +478,7 @@ function SubtractingDifferenceBarAnimation(): React.JSX.Element {
       `}</style>
       <text className='label' x='18' y='48'>12</text>
       <text className='label' x='18' y='92'>7</text>
-      <text className='diff-label' x='300' y='118'>różnica 5</text>
+      <text className='diff-label' x='300' y='118'>{differenceLabel}</text>
       <g>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((index) => (
           <rect
@@ -332,10 +522,24 @@ function SubtractingDifferenceBarAnimation(): React.JSX.Element {
   );
 }
 
-function SubtractingAbacusAnimation(): React.JSX.Element {
+function SubtractingAbacusAnimation({
+  ariaLabel,
+  tensLabel,
+  onesLabel,
+  startLabel,
+  subtractLabel,
+  resultLabel,
+}: {
+  ariaLabel: string;
+  tensLabel: string;
+  onesLabel: string;
+  startLabel: string;
+  subtractLabel: string;
+  resultLabel: string;
+}): React.JSX.Element {
   return (
     <svg
-      aria-label='Animacja liczydła: odejmowanie dziesiątek i jedności osobno.'
+      aria-label={ariaLabel}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 440 190'
@@ -379,11 +583,11 @@ function SubtractingAbacusAnimation(): React.JSX.Element {
         />
       ))}
       <line className='divider' strokeWidth='2' x1='220' x2='220' y1='36' y2='152' />
-      <text fill='#475569' fontSize='12' fontWeight='600' x='70' y='44'>Dziesiątki</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='250' y='44'>Jedności</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='56'>Start</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='96'>Odejmij</text>
-      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='136'>Wynik</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='70' y='44'>{tensLabel}</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='250' y='44'>{onesLabel}</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='56'>{startLabel}</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='96'>{subtractLabel}</text>
+      <text fill='#475569' fontSize='12' fontWeight='600' x='36' y='136'>{resultLabel}</text>
 
       <g>
         {[0, 1, 2, 3].map((index) => (
@@ -451,15 +655,562 @@ function SubtractingAbacusAnimation(): React.JSX.Element {
   );
 }
 
-export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
+const buildSubtractingLessonCopy = (
+  translate: SubtractingLessonTranslate
+): SubtractingLessonCopy => ({
+  lessonTitle: translateSubtractingLesson(
+    translate,
+    'lessonTitle',
+    SUBTRACTING_LESSON_COPY_PL.lessonTitle
+  ),
+  sections: {
+    podstawy: {
+      title: translateSubtractingLesson(
+        translate,
+        'sections.basics.title',
+        SUBTRACTING_LESSON_COPY_PL.sections.podstawy.title
+      ),
+      description: translateSubtractingLesson(
+        translate,
+        'sections.basics.description',
+        SUBTRACTING_LESSON_COPY_PL.sections.podstawy.description
+      ),
+    },
+    przekroczenie: {
+      title: translateSubtractingLesson(
+        translate,
+        'sections.crossTen.title',
+        SUBTRACTING_LESSON_COPY_PL.sections.przekroczenie.title
+      ),
+      description: translateSubtractingLesson(
+        translate,
+        'sections.crossTen.description',
+        SUBTRACTING_LESSON_COPY_PL.sections.przekroczenie.description
+      ),
+    },
+    dwucyfrowe: {
+      title: translateSubtractingLesson(
+        translate,
+        'sections.doubleDigit.title',
+        SUBTRACTING_LESSON_COPY_PL.sections.dwucyfrowe.title
+      ),
+      description: translateSubtractingLesson(
+        translate,
+        'sections.doubleDigit.description',
+        SUBTRACTING_LESSON_COPY_PL.sections.dwucyfrowe.description
+      ),
+    },
+    zapamietaj: {
+      title: translateSubtractingLesson(
+        translate,
+        'sections.remember.title',
+        SUBTRACTING_LESSON_COPY_PL.sections.zapamietaj.title
+      ),
+      description: translateSubtractingLesson(
+        translate,
+        'sections.remember.description',
+        SUBTRACTING_LESSON_COPY_PL.sections.zapamietaj.description
+      ),
+    },
+    game: {
+      title: translateSubtractingLesson(
+        translate,
+        'sections.game.title',
+        SUBTRACTING_LESSON_COPY_PL.sections.game.title
+      ),
+      description: translateSubtractingLesson(
+        translate,
+        'sections.game.description',
+        SUBTRACTING_LESSON_COPY_PL.sections.game.description
+      ),
+    },
+  },
+  animations: {
+    subtractingSvg: {
+      ariaLabel: translateSubtractingLesson(
+        translate,
+        'animations.subtractingSvg.ariaLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.subtractingSvg.ariaLabel
+      ),
+    },
+    numberLine: {
+      ariaLabel: translateSubtractingLesson(
+        translate,
+        'animations.numberLine.ariaLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.numberLine.ariaLabel
+      ),
+    },
+    tenFrame: {
+      ariaLabel: translateSubtractingLesson(
+        translate,
+        'animations.tenFrame.ariaLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.tenFrame.ariaLabel
+      ),
+    },
+    differenceBar: {
+      ariaLabel: translateSubtractingLesson(
+        translate,
+        'animations.differenceBar.ariaLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.differenceBar.ariaLabel
+      ),
+      differenceLabel: translateSubtractingLesson(
+        translate,
+        'animations.differenceBar.differenceLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.differenceBar.differenceLabel
+      ),
+    },
+    abacus: {
+      ariaLabel: translateSubtractingLesson(
+        translate,
+        'animations.abacus.ariaLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.abacus.ariaLabel
+      ),
+      tensLabel: translateSubtractingLesson(
+        translate,
+        'animations.abacus.tensLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.abacus.tensLabel
+      ),
+      onesLabel: translateSubtractingLesson(
+        translate,
+        'animations.abacus.onesLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.abacus.onesLabel
+      ),
+      startLabel: translateSubtractingLesson(
+        translate,
+        'animations.abacus.startLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.abacus.startLabel
+      ),
+      subtractLabel: translateSubtractingLesson(
+        translate,
+        'animations.abacus.subtractLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.abacus.subtractLabel
+      ),
+      resultLabel: translateSubtractingLesson(
+        translate,
+        'animations.abacus.resultLabel',
+        SUBTRACTING_LESSON_COPY_PL.animations.abacus.resultLabel
+      ),
+    },
+  },
+  slides: {
+    basics: {
+      meaning: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.basics.meaning.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.meaning.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.basics.meaning.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.meaning.lead
+        ),
+      },
+      singleDigit: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.basics.singleDigit.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.singleDigit.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.basics.singleDigit.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.singleDigit.lead
+        ),
+        step1: translateSubtractingLesson(
+          translate,
+          'slides.basics.singleDigit.step1',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.singleDigit.step1
+        ),
+        step2: translateSubtractingLesson(
+          translate,
+          'slides.basics.singleDigit.step2',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.singleDigit.step2
+        ),
+        step3: translateSubtractingLesson(
+          translate,
+          'slides.basics.singleDigit.step3',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.singleDigit.step3
+        ),
+      },
+      motion: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.basics.motion.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.motion.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.basics.motion.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.motion.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.basics.motion.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.basics.motion.caption
+        ),
+      },
+    },
+    crossTen: {
+      overTen: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.caption
+        ),
+        step1Title: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.step1Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.step1Title
+        ),
+        step1Text: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.step1Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.step1Text
+        ),
+        step2Title: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.step2Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.step2Title
+        ),
+        step2Text: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.step2Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.step2Text
+        ),
+        step3Title: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.step3Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.step3Title
+        ),
+        step3Text: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.overTen.step3Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.overTen.step3Text
+        ),
+      },
+      numberLine: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.numberLine.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.numberLine.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.numberLine.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.numberLine.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.numberLine.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.numberLine.caption
+        ),
+      },
+      tenFrame: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.tenFrame.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.tenFrame.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.tenFrame.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.tenFrame.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.crossTen.tenFrame.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.crossTen.tenFrame.caption
+        ),
+      },
+    },
+    doubleDigit: {
+      intro: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.intro.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.intro.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.intro.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.intro.lead
+        ),
+        tensLabel: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.intro.tensLabel',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.intro.tensLabel
+        ),
+        onesLabel: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.intro.onesLabel',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.intro.onesLabel
+        ),
+      },
+      abacus: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.abacus.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.abacus.title
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.abacus.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.abacus.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.doubleDigit.abacus.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.doubleDigit.abacus.caption
+        ),
+      },
+    },
+    remember: {
+      rules: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.title
+        ),
+        orderChip: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.orderChip',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.orderChip
+        ),
+        zeroChip: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.zeroChip',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.zeroChip
+        ),
+        checkChip: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.checkChip',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.checkChip
+        ),
+        breakChip: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.breakChip',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.breakChip
+        ),
+        stepBackTitle: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.stepBackTitle',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.stepBackTitle
+        ),
+        stepBackLead: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.stepBackLead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.stepBackLead
+        ),
+        stepBackPath: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.stepBackPath',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.stepBackPath
+        ),
+        checkTitle: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.checkTitle',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.checkTitle
+        ),
+        checkLead: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.checkLead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.checkLead
+        ),
+        checkEquation: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.checkEquation',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.checkEquation
+        ),
+        orderTitle: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.orderTitle',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.orderTitle
+        ),
+        orderLead: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.orderLead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.orderLead
+        ),
+        motionTitle: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.motionTitle',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.motionTitle
+        ),
+        motionLead: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.motionLead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.motionLead
+        ),
+        motionCaption: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.motionCaption',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.motionCaption
+        ),
+        pathTitle: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathTitle',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathTitle
+        ),
+        pathStep1Title: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep1Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep1Title
+        ),
+        pathStep1Text: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep1Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep1Text
+        ),
+        pathStep2Title: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep2Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep2Title
+        ),
+        pathStep2Text: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep2Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep2Text
+        ),
+        pathStep3Title: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep3Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep3Title
+        ),
+        pathStep3Text: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep3Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep3Text
+        ),
+        pathStep4Title: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep4Title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep4Title
+        ),
+        pathStep4Text: translateSubtractingLesson(
+          translate,
+          'slides.remember.rules.pathStep4Text',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.rules.pathStep4Text
+        ),
+      },
+      backJumps: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.remember.backJumps.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.backJumps.title
+        ),
+        label: translateSubtractingLesson(
+          translate,
+          'slides.remember.backJumps.label',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.backJumps.label
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.remember.backJumps.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.backJumps.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.remember.backJumps.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.backJumps.caption
+        ),
+      },
+      tenFrame: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.remember.tenFrame.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.tenFrame.title
+        ),
+        label: translateSubtractingLesson(
+          translate,
+          'slides.remember.tenFrame.label',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.tenFrame.label
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.remember.tenFrame.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.tenFrame.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.remember.tenFrame.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.tenFrame.caption
+        ),
+      },
+      checkAddition: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.remember.checkAddition.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.checkAddition.title
+        ),
+        label: translateSubtractingLesson(
+          translate,
+          'slides.remember.checkAddition.label',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.checkAddition.label
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.remember.checkAddition.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.checkAddition.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.remember.checkAddition.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.checkAddition.caption
+        ),
+      },
+      difference: {
+        title: translateSubtractingLesson(
+          translate,
+          'slides.remember.difference.title',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.difference.title
+        ),
+        label: translateSubtractingLesson(
+          translate,
+          'slides.remember.difference.label',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.difference.label
+        ),
+        lead: translateSubtractingLesson(
+          translate,
+          'slides.remember.difference.lead',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.difference.lead
+        ),
+        caption: translateSubtractingLesson(
+          translate,
+          'slides.remember.difference.caption',
+          SUBTRACTING_LESSON_COPY_PL.slides.remember.difference.caption
+        ),
+      },
+    },
+  },
+  game: {
+    stageTitle: translateSubtractingLesson(
+      translate,
+      'game.stageTitle',
+      SUBTRACTING_LESSON_COPY_PL.game.stageTitle
+    ),
+  },
+});
+
+const buildSubtractingLessonSlides = (
+  copy: SubtractingLessonCopy
+): Record<SubtractingSlideSectionId, LessonSlide[]> => ({
   podstawy: [
     {
-      title: 'Co to znaczy odejmować?',
+      title: copy.slides.basics.meaning.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Odejmowanie to zabieranie części z grupy. Pytamy: ile zostało?
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.basics.meaning.lead}</KangurLessonLead>
           <div className='flex items-center kangur-panel-gap'>
             <KangurDisplayEmoji size='md'>🍎🍎🍎🍎🍎</KangurDisplayEmoji>
             <KangurEquationDisplay
@@ -488,12 +1239,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Odejmowanie jednocyfrowe',
+      title: copy.slides.basics.singleDigit.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Cofaj się na osi liczbowej lub licz, ile brakuje do wyniku.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.basics.singleDigit.lead}</KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay
               accent='rose'
@@ -506,25 +1255,19 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                 <KangurIconBadge accent='rose' size='sm'>
                   1
                 </KangurIconBadge>
-                <span>
-                  Startuj od <b>9</b>
-                </span>
+                <span>{copy.slides.basics.singleDigit.step1}</span>
               </div>
               <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   2
                 </KangurIconBadge>
-                <span>
-                  Cofnij się o 4 kroki: 8, 7, 6, <b>5</b>
-                </span>
+                <span>{copy.slides.basics.singleDigit.step2}</span>
               </div>
               <div className={KANGUR_START_ROW_CLASSNAME}>
                 <KangurIconBadge accent='rose' size='sm'>
                   3
                 </KangurIconBadge>
-                <span>
-                  Ostatnia liczba to wynik: <b>5</b> ✓
-                </span>
+                <span>{copy.slides.basics.singleDigit.step3}</span>
               </div>
             </div>
           </KangurLessonCallout>
@@ -539,21 +1282,19 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Odejmowanie w ruchu (SVG)',
+      title: copy.slides.basics.motion.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Animacja pokazuje, jak zabieramy część kropek i zostaje wynik.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.basics.motion.lead}</KangurLessonLead>
           <KangurLessonCallout accent='rose' className='max-w-md text-center'>
             <div className='mx-auto w-full max-w-sm'>
-              <SubtractingSvgAnimation />
+              <SubtractingSvgAnimation ariaLabel={copy.animations.subtractingSvg.ariaLabel} />
             </div>
             <KangurEquationDisplay accent='rose' className='mt-2' size='sm'>
               5 − 2 = 3
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-1'>
-              Dwie kropki „odchodzą”, zostają trzy.
+              {copy.slides.basics.motion.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -562,76 +1303,68 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   przekroczenie: [
     {
-      title: 'Odejmowanie z przekroczeniem 10',
+      title: copy.slides.crossTen.overTen.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Rozdziel odjemnik na dwie części: najpierw zejdź do 10, potem odejmij resztę.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.crossTen.overTen.lead}</KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <KangurEquationDisplay accent='rose'>13 − 5 = ?</KangurEquationDisplay>
             <KangurLessonCaption className='mt-2'>
-              13 − <b>3</b> = 10, 10 − <b>2</b> = <b>8</b> ✓
+              {copy.slides.crossTen.overTen.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
           <div className='grid w-full kangur-panel-gap sm:grid-cols-3'>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
-                Krok 1
+                {copy.slides.crossTen.overTen.step1Title}
               </p>
-              <p className='mt-1'>Rozloz 5 na <b>3 + 2</b></p>
+              <p className='mt-1'>{copy.slides.crossTen.overTen.step1Text}</p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
-                Krok 2
+                {copy.slides.crossTen.overTen.step2Title}
               </p>
-              <p className='mt-1'>
-                Odejmij 3: <b>13 − 3 = 10</b>
-              </p>
+              <p className='mt-1'>{copy.slides.crossTen.overTen.step2Text}</p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
-                Krok 3
+                {copy.slides.crossTen.overTen.step3Title}
               </p>
-              <p className='mt-1'>
-                Odejmij 2: <b>10 − 2 = 8</b>
-              </p>
+              <p className='mt-1'>{copy.slides.crossTen.overTen.step3Text}</p>
             </KangurLessonCallout>
           </div>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Skoki wstecz na osi liczbowej',
+      title: copy.slides.crossTen.numberLine.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>Najpierw do 10, potem dalej wstecz.</KangurLessonLead>
+          <KangurLessonLead>{copy.slides.crossTen.numberLine.lead}</KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
-              <SubtractingNumberLineAnimation />
+              <SubtractingNumberLineAnimation ariaLabel={copy.animations.numberLine.ariaLabel} />
             </div>
             <KangurEquationDisplay accent='rose'>13 − 5 = 8</KangurEquationDisplay>
             <KangurLessonCaption className='mt-2'>
-              13 − <b>3</b> = 10, potem 10 − <b>2</b> = <b>8</b>.
+              {copy.slides.crossTen.numberLine.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Ramka dziesiątki',
+      title: copy.slides.crossTen.tenFrame.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Zabierz najpierw nadwyżkę ponad 10, potem resztę z ramki.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.crossTen.tenFrame.lead}</KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
-              <SubtractingTenFrameAnimation />
+              <SubtractingTenFrameAnimation ariaLabel={copy.animations.tenFrame.ariaLabel} />
             </div>
             <KangurEquationDisplay accent='rose'>13 − 5 = 8</KangurEquationDisplay>
             <KangurLessonCaption className='mt-2'>
-              Najpierw zdejmij <b>3</b>, potem jeszcze <b>2</b>.
+              {copy.slides.crossTen.tenFrame.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -640,24 +1373,22 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   dwucyfrowe: [
     {
-      title: 'Odejmowanie dwucyfrowe',
+      title: copy.slides.doubleDigit.intro.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Odejmuj osobno dziesiątki i jedności!
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.doubleDigit.intro.lead}</KangurLessonLead>
           <KangurLessonCallout accent='amber' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='amber'>47 − 23 = ?</KangurEquationDisplay>
             <div className='mt-3 grid gap-2 text-left text-sm [color:var(--kangur-page-text)]'>
               <div className='flex items-center justify-between rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2'>
                 <span className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
-                  Dziesiątki
+                  {copy.slides.doubleDigit.intro.tensLabel}
                 </span>
                 <span className='font-semibold'>40 − 20 = 20</span>
               </div>
               <div className='flex items-center justify-between rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2'>
                 <span className='text-xs font-semibold uppercase tracking-wide text-amber-700'>
-                  Jedności
+                  {copy.slides.doubleDigit.intro.onesLabel}
                 </span>
                 <span className='font-semibold'>7 − 3 = 4</span>
               </div>
@@ -670,18 +1401,23 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Liczydło',
+      title: copy.slides.doubleDigit.abacus.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Liczydło pokazuje odejmowanie dziesiątek i jedności osobno.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.doubleDigit.abacus.lead}</KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
-              <SubtractingAbacusAnimation />
+              <SubtractingAbacusAnimation
+                ariaLabel={copy.animations.abacus.ariaLabel}
+                tensLabel={copy.animations.abacus.tensLabel}
+                onesLabel={copy.animations.abacus.onesLabel}
+                startLabel={copy.animations.abacus.startLabel}
+                subtractLabel={copy.animations.abacus.subtractLabel}
+                resultLabel={copy.animations.abacus.resultLabel}
+              />
             </div>
             <KangurLessonCaption className='mt-1'>
-              Odejmij koraliki, a potem odczytaj wynik.
+              {copy.slides.doubleDigit.abacus.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -690,45 +1426,37 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   zapamietaj: [
     {
-      title: 'Zasady odejmowania',
+      title: copy.slides.remember.rules.title,
       content: (
         <KangurLessonStack>
           <div className='flex flex-wrap justify-center gap-2 text-xs font-semibold'>
-            <KangurLessonChip accent='rose'>Kolejność ma znaczenie: 7 − 3 ≠ 3 − 7</KangurLessonChip>
-            <KangurLessonChip accent='sky'>Odejmowanie 0: 8 − 0 = 8</KangurLessonChip>
-            <KangurLessonChip accent='emerald'>Sprawdź dodawaniem: 5 + 3 = 8</KangurLessonChip>
-            <KangurLessonChip accent='amber'>Rozbij na kroki: 13 − 5 = 10 − 2</KangurLessonChip>
+            <KangurLessonChip accent='rose'>{copy.slides.remember.rules.orderChip}</KangurLessonChip>
+            <KangurLessonChip accent='sky'>{copy.slides.remember.rules.zeroChip}</KangurLessonChip>
+            <KangurLessonChip accent='emerald'>{copy.slides.remember.rules.checkChip}</KangurLessonChip>
+            <KangurLessonChip accent='amber'>{copy.slides.remember.rules.breakChip}</KangurLessonChip>
           </div>
           <div className='grid w-full kangur-panel-gap sm:grid-cols-2'>
             <KangurLessonCallout accent='rose' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-rose-700'>
-                Cofaj się krokami
+                {copy.slides.remember.rules.stepBackTitle}
               </p>
-              <p className='mt-1'>
-                Startuj od większej liczby: <b>9 − 4</b>
-              </p>
-              <p className='mt-2'>
-                9 {'->'} 8 {'->'} 7 {'->'} 6 {'->'} <b>5</b>
-              </p>
+              <p className='mt-1'>{copy.slides.remember.rules.stepBackLead}</p>
+              <p className='mt-2'>{copy.slides.remember.rules.stepBackPath}</p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-emerald-700'>
-                Sprawdzaj dodawaniem
+                {copy.slides.remember.rules.checkTitle}
               </p>
-              <p className='mt-1'>
-                Jeśli wynik + odjemnik daje odjemna, to dobrze.
-              </p>
+              <p className='mt-1'>{copy.slides.remember.rules.checkLead}</p>
               <p className='mt-2'>
-                <b>5 + 3 = 8</b>
+                <b>{copy.slides.remember.rules.checkEquation}</b>
               </p>
             </KangurLessonCallout>
             <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
               <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
-                Kolejność ma znaczenie
+                {copy.slides.remember.rules.orderTitle}
               </p>
-              <p className='mt-1'>
-                <b>7 − 3</b> to nie to samo co <b>3 − 7</b>.
-              </p>
+              <p className='mt-1'>{copy.slides.remember.rules.orderLead}</p>
             </KangurLessonCallout>
           </div>
           <div className='grid w-full items-center kangur-panel-gap lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]'>
@@ -737,36 +1465,54 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
                 <KangurIconBadge accent='rose' size='sm'>
                   &lt;-
                 </KangurIconBadge>
-                <span>Odejmowanie w ruchu</span>
+                <span>{copy.slides.remember.rules.motionTitle}</span>
               </div>
               <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-                Zabierasz część i patrzysz, ile zostało.
+                {copy.slides.remember.rules.motionLead}
               </p>
               <div className='mt-2'>
-                <SubtractingSvgAnimation />
+                <SubtractingSvgAnimation ariaLabel={copy.animations.subtractingSvg.ariaLabel} />
               </div>
               <KangurLessonCaption className='mt-2'>
-                Dwie kropki "odchodzą", zostają trzy.
+                {copy.slides.remember.rules.motionCaption}
               </KangurLessonCaption>
             </KangurLessonInset>
             <div className='w-full max-w-md rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-left text-sm'>
-              <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>Ścieżka</p>
+              <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>
+                {copy.slides.remember.rules.pathTitle}
+              </p>
               <div className='mt-2 space-y-2 border-l-2 border-slate-200 pl-3'>
                 <div>
-                  <p className='font-semibold text-slate-700'>Rozbij odjemnik</p>
-                  <p className='text-xs text-slate-500'>5 = 3 + 2</p>
+                  <p className='font-semibold text-slate-700'>
+                    {copy.slides.remember.rules.pathStep1Title}
+                  </p>
+                  <p className='text-xs text-slate-500'>
+                    {copy.slides.remember.rules.pathStep1Text}
+                  </p>
                 </div>
                 <div>
-                  <p className='font-semibold text-slate-700'>Zejdź do 10</p>
-                  <p className='text-xs text-slate-500'>13 − 3 = 10</p>
+                  <p className='font-semibold text-slate-700'>
+                    {copy.slides.remember.rules.pathStep2Title}
+                  </p>
+                  <p className='text-xs text-slate-500'>
+                    {copy.slides.remember.rules.pathStep2Text}
+                  </p>
                 </div>
                 <div>
-                  <p className='font-semibold text-slate-700'>Odejmij resztę</p>
-                  <p className='text-xs text-slate-500'>10 − 2 = 8</p>
+                  <p className='font-semibold text-slate-700'>
+                    {copy.slides.remember.rules.pathStep3Title}
+                  </p>
+                  <p className='text-xs text-slate-500'>
+                    {copy.slides.remember.rules.pathStep3Text}
+                  </p>
                 </div>
                 <div>
-                  <p className='font-semibold text-slate-700'>Sprawdź dodawaniem</p>
-                  <p className='text-xs text-slate-500'>8 + 5 = 13</p>
+                  <p className='font-semibold text-slate-700'>
+                    {copy.slides.remember.rules.pathStep4Title}
+                  </p>
+                  <p className='text-xs text-slate-500'>
+                    {copy.slides.remember.rules.pathStep4Text}
+                  </p>
                 </div>
               </div>
             </div>
@@ -775,7 +1521,7 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Skoki wstecz',
+      title: copy.slides.remember.backJumps.title,
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='sky' className='text-center'>
@@ -783,21 +1529,23 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <KangurIconBadge accent='sky' size='sm'>
                 &lt;-
               </KangurIconBadge>
-              <span>Skoki na osi</span>
+              <span>{copy.slides.remember.backJumps.label}</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Cofaj się w dwóch krokach: do 10, potem dalej.
+              {copy.slides.remember.backJumps.lead}
             </p>
             <div className='mt-2'>
-              <SubtractingNumberLineAnimation />
+              <SubtractingNumberLineAnimation ariaLabel={copy.animations.numberLine.ariaLabel} />
             </div>
-            <KangurLessonCaption className='mt-2'>13 − 5 = 8.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>
+              {copy.slides.remember.backJumps.caption}
+            </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Ramka dziesiątki',
+      title: copy.slides.remember.tenFrame.title,
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='amber' className='text-center'>
@@ -805,21 +1553,23 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <KangurIconBadge accent='amber' size='sm'>
                 10
               </KangurIconBadge>
-              <span>Ramka dziesiątki</span>
+              <span>{copy.slides.remember.tenFrame.label}</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Najpierw zdejmij nadwyżkę, potem resztę z ramki.
+              {copy.slides.remember.tenFrame.lead}
             </p>
             <div className='mt-2'>
-              <SubtractingTenFrameAnimation />
+              <SubtractingTenFrameAnimation ariaLabel={copy.animations.tenFrame.ariaLabel} />
             </div>
-            <KangurLessonCaption className='mt-2'>13 − 5 = 8.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>
+              {copy.slides.remember.tenFrame.caption}
+            </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Sprawdź wynik dodawaniem',
+      title: copy.slides.remember.checkAddition.title,
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='emerald' className='text-center'>
@@ -827,10 +1577,10 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <KangurIconBadge accent='emerald' size='sm'>
                 OK
               </KangurIconBadge>
-              <span>Sprawdzanie</span>
+              <span>{copy.slides.remember.checkAddition.label}</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Dodaj odjemnik do wyniku i zobacz, czy wracasz do odjemnej.
+              {copy.slides.remember.checkAddition.lead}
             </p>
             <div className='mt-3 grid gap-2'>
               <KangurEquationDisplay accent='emerald' size='sm'>
@@ -841,14 +1591,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               </KangurEquationDisplay>
             </div>
             <KangurLessonCaption className='mt-2'>
-              Jeśli dodawanie zgadza się, odejmowanie jest poprawne.
+              {copy.slides.remember.checkAddition.caption}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Różnica liczb',
+      title: copy.slides.remember.difference.title,
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='teal' className='text-center'>
@@ -856,65 +1606,81 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <KangurIconBadge accent='teal' size='sm'>
                 =
               </KangurIconBadge>
-              <span>Różnica</span>
+              <span>{copy.slides.remember.difference.label}</span>
             </div>
             <p className='mt-2 text-xs font-semibold [color:var(--kangur-page-muted-text)]'>
-              Porównaj dwie liczby i zobacz, ile brakuje do większej.
+              {copy.slides.remember.difference.lead}
             </p>
             <div className='mt-2'>
-              <SubtractingDifferenceBarAnimation />
+              <SubtractingDifferenceBarAnimation
+                ariaLabel={copy.animations.differenceBar.ariaLabel}
+                differenceLabel={copy.animations.differenceBar.differenceLabel}
+              />
             </div>
             <KangurEquationDisplay accent='teal' className='mt-2' size='sm'>
               12 - 7 = 5
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-1'>
-              Różnica to "brakująca" część.
+              {copy.slides.remember.difference.caption}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-export const HUB_SECTIONS = [
+const buildSubtractingLessonSections = (copy: SubtractingLessonCopy) => [
   {
     id: 'podstawy',
     emoji: '➖',
-    title: 'Podstawy odejmowania',
-    description: 'Co to odejmowanie? Jednocyfrowe',
+    title: copy.sections.podstawy.title,
+    description: copy.sections.podstawy.description,
   },
   {
     id: 'przekroczenie',
     emoji: '🔟',
-    title: 'Odejmowanie przez 10',
-    description: 'Rozkład przez dziesięć',
+    title: copy.sections.przekroczenie.title,
+    description: copy.sections.przekroczenie.description,
   },
   {
     id: 'dwucyfrowe',
     emoji: '💡',
-    title: 'Odejmowanie dwucyfrowe',
-    description: 'Dziesiątki i jedności osobno',
+    title: copy.sections.dwucyfrowe.title,
+    description: copy.sections.dwucyfrowe.description,
   },
-  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Zasady odejmowania' },
+  {
+    id: 'zapamietaj',
+    emoji: '🧠',
+    title: copy.sections.zapamietaj.title,
+    description: copy.sections.zapamietaj.description,
+  },
   {
     id: 'game',
     emoji: '🎮',
-    title: 'Gra z odejmowaniem',
-    description: 'Przeciągaj i zabieraj obiekty',
+    title: copy.sections.game.title,
+    description: copy.sections.game.description,
     isGame: true,
   },
 ];
 
+export const SLIDES = buildSubtractingLessonSlides(SUBTRACTING_LESSON_COPY_PL);
+export const HUB_SECTIONS = buildSubtractingLessonSections(SUBTRACTING_LESSON_COPY_PL);
+
 export default function SubtractingLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.subtracting');
+  const copy = useMemo(() => buildSubtractingLessonCopy(translations), [translations]);
+  const localizedSlides = useMemo(() => buildSubtractingLessonSlides(copy), [copy]);
+  const localizedSections = useMemo(() => buildSubtractingLessonSections(copy), [copy]);
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='subtracting'
       lessonEmoji='➖'
-      lessonTitle='Odejmowanie'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={copy.lessonTitle}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-red-200'
       dotActiveClass='bg-red-400'
@@ -929,7 +1695,7 @@ export default function SubtractingLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-none',
             headerTestId: 'subtracting-lesson-game-header',
             shellTestId: 'subtracting-lesson-game-shell',
-            title: 'Gra z odejmowaniem!',
+            title: copy.game.stageTitle,
           },
           render: ({ onFinish }) => (
             <SubtractingGardenGame finishLabelVariant='topics' onFinish={onFinish} />

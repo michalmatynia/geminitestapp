@@ -393,6 +393,7 @@ export const socialPipelineTriggerHandler: SimpleRouteHandler = apiHandler(
   {
     source: 'kangur.social-pipeline.trigger.POST',
     service: 'kangur.api',
+    parseJsonBody: true,
   }
 );
 
@@ -401,6 +402,16 @@ export const socialPipelineJobsHandler: SimpleRouteHandler = apiHandler(
   {
     source: 'kangur.social-pipeline.jobs.GET',
     service: 'kangur.api',
+    querySchema: kangurSocialPipelineJobsRoute.querySchema,
+  }
+);
+
+export const socialPipelineJobsDeleteHandler: SimpleRouteHandler = apiHandler(
+  kangurSocialPipelineJobsRoute.DELETE_handler,
+  {
+    source: 'kangur.social-pipeline.jobs.DELETE',
+    service: 'kangur.api',
+    querySchema: kangurSocialPipelineJobsRoute.deleteQuerySchema,
   }
 );
 
@@ -515,8 +526,13 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
       return socialPipelineTriggerHandler(request);
     }
     if (segments[1] === 'jobs' && segments.length === 2) {
-      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
-      return socialPipelineJobsHandler(request);
+      if (request.method === 'GET') {
+        return socialPipelineJobsHandler(request);
+      }
+      if (request.method === 'DELETE') {
+        return socialPipelineJobsDeleteHandler(request);
+      }
+      return methodNotAllowed(request, ['GET', 'DELETE'], request.method);
     }
     if (segments[1] === 'pause' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);

@@ -120,10 +120,10 @@ export async function apiClient<T>(
 
     const bodyTimeout = Math.max(timeout, 30_000);
     const data: unknown = await Promise.race<unknown>([
-      response.text().then((text) => {
+      response.text().then<unknown>((text): unknown => {
         if (!text) return null;
         try {
-          return JSON.parse(text);
+          return JSON.parse(text) as unknown;
         } catch {
           return null;
         }
@@ -136,7 +136,7 @@ export async function apiClient<T>(
     ]);
 
     if (response.ok) {
-      return data as T;
+      return data as unknown as T;
     }
 
     let errorMessage = response.statusText || 'Unknown API Error';

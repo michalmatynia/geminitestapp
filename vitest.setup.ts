@@ -605,6 +605,7 @@ vi.mock('next-intl', () => {
 
 vi.mock('use-intl', () => ({
   useLocale: () => 'pl',
+  useTranslations: () => (key: string) => key,
 }));
 
 vi.mock('next-intl/server', () => ({

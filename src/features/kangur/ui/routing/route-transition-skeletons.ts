@@ -2,11 +2,9 @@ import {
   getKangurInternalQueryParamName,
   normalizeKangurBasePath,
   readKangurUrlParam,
-  resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
+import { isManagedLocalHref, resolveManagedKangurPageKeyFromHref } from '@/features/kangur/ui/routing/managed-paths';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
-
-
 export type KangurRouteTransitionSkeletonVariant =
   | 'game-home'
   | 'game-session'
@@ -21,72 +19,6 @@ type ResolveKangurRouteTransitionSkeletonInput = {
   pageKey?: string | null;
 };
 
-const isManagedLocalHref = (href: string): boolean => href.startsWith('/') && !href.startsWith('//');
-
-const normalizeManagedPathname = (pathname: string): string => {
-  const withoutQuery = pathname.split('?')[0] ?? pathname;
-  return withoutQuery.replace(/\/+$/, '') || '/';
-};
-
-const getSlugFromPathname = (pathname: string, normalizedBasePath: string): string[] => {
-  const normalizedPathname = normalizeManagedPathname(pathname);
-
-  if (normalizedBasePath === '/') {
-    return normalizedPathname
-      .split('/')
-      .map((segment) => segment.trim())
-      .filter(Boolean);
-  }
-
-  if (
-    normalizedPathname === normalizedBasePath ||
-    normalizedPathname === `${normalizedBasePath}/`
-  ) {
-    return [];
-  }
-
-  if (!normalizedPathname.startsWith(`${normalizedBasePath}/`)) {
-    return [];
-  }
-
-  return normalizedPathname
-    .slice(normalizedBasePath.length + 1)
-    .split('/')
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-};
-
-const resolvePageKeyFromHref = (href: string, basePath: string): string | null => {
-  if (!isManagedLocalHref(href)) {
-    return null;
-  }
-
-  return withKangurClientErrorSync(
-    {
-      source: 'kangur.route-skeleton',
-      action: 'resolve-page-key',
-      description: 'Resolves the Kangur route skeleton page key from a href.',
-      context: { href, basePath },
-    },
-    () => {
-      const parsed = new URL(href, 'https://kangur.local');
-      const normalizedBasePath = normalizeKangurBasePath(basePath);
-
-      if (
-        normalizedBasePath !== '/' &&
-        parsed.pathname !== normalizedBasePath &&
-        !parsed.pathname.startsWith(`${normalizedBasePath}/`)
-      ) {
-        return null;
-      }
-
-      const slug = getSlugFromPathname(parsed.pathname, normalizedBasePath);
-      return resolveKangurPageKeyFromSlug(slug[0] ?? null);
-    },
-    { fallback: null }
-  );
-};
-
 export const resolveKangurRouteTransitionSkeletonVariant = ({
   basePath,
   href,
@@ -94,7 +26,9 @@ export const resolveKangurRouteTransitionSkeletonVariant = ({
 }: ResolveKangurRouteTransitionSkeletonInput): KangurRouteTransitionSkeletonVariant => {
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const resolvedPageKey =
-    pageKey?.trim() || (href ? resolvePageKeyFromHref(href, normalizedBasePath) : null) || 'Game';
+    pageKey?.trim() ||
+    (href ? resolveManagedKangurPageKeyFromHref(href, normalizedBasePath) : null) ||
+    'Game';
 
   let searchParams: URLSearchParams | null = null;
   if (href && isManagedLocalHref(href)) {

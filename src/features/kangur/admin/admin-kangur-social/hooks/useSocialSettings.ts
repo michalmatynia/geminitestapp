@@ -103,8 +103,6 @@ export function useSocialSettings() {
   const normalizedProjectUrl = projectUrl.trim() || null;
 
   const isSettingsDirty =
-    persistedSocialSettings.brainModelId !== brainModelId ||
-    persistedSocialSettings.visionModelId !== visionModelId ||
     persistedSocialSettings.linkedinConnectionId !== linkedinConnectionId ||
     persistedSocialSettings.batchCaptureBaseUrl !== normalizedBatchCaptureBaseUrl ||
     persistedSocialSettings.projectUrl !== normalizedProjectUrl ||
@@ -116,8 +114,6 @@ export function useSocialSettings() {
   const handleSaveSettings = useCallback(async (): Promise<void> => {
     if (updateSetting.isPending) return;
     const payload = {
-      brainModelId: brainModelId ?? null,
-      visionModelId: visionModelId ?? null,
       linkedinConnectionId: linkedinConnectionId ?? null,
       batchCaptureBaseUrl: normalizedBatchCaptureBaseUrl,
       batchCapturePresetIds: normalizedBatchCapturePresetIds,
@@ -148,7 +144,6 @@ export function useSocialSettings() {
       toast('Failed to save social settings.', { variant: 'error' });
     }
   }, [
-    brainModelId,
     linkedinConnectionId,
     normalizedBatchCaptureBaseUrl,
     normalizedBatchCapturePresetIds,
@@ -157,7 +152,6 @@ export function useSocialSettings() {
     settingsStore,
     toast,
     updateSetting,
-    visionModelId,
   ]);
 
   const handleBrainModelChange = (value: string): void => {

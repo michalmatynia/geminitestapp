@@ -13,6 +13,8 @@ export async function GET_handler(
 ): Promise<Response> {
   const managed = getKangurSocialPipelineQueue();
   const status = await managed.getHealthStatus();
+  const effectiveRunning = (status.running ?? false) || (status.processing ?? false);
+  const effectiveHealthy = (status.healthy ?? false) || (status.processing ?? false);
 
   let isPaused = false;
   const rawQueue = managed.getQueue() as Queue | null;
@@ -21,7 +23,13 @@ export async function GET_handler(
   }
 
   return NextResponse.json(
-    { ...status, isPaused, repeatEveryMs: KANGUR_SOCIAL_PIPELINE_REPEAT_EVERY_MS },
+    {
+      ...status,
+      running: effectiveRunning,
+      healthy: effectiveHealthy,
+      isPaused,
+      repeatEveryMs: KANGUR_SOCIAL_PIPELINE_REPEAT_EVERY_MS,
+    },
     { headers: { 'Cache-Control': 'no-store' } }
   );
 }

@@ -158,12 +158,25 @@ export function useLessonsLogic() {
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
+  const clearFocusedLessonParam = useCallback((): void => {
+    if (typeof window === 'undefined') return;
+    const currentUrl = new URL(window.location.href);
+    const focusParamName = getKangurInternalQueryParamName('focus', basePath);
+    if (!currentUrl.searchParams.has(focusParamName)) return;
+    currentUrl.searchParams.delete(focusParamName);
+    window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+  }, [basePath]);
   const handleSelectLesson = useCallback(
     (lessonId: string | null, options?: { secret?: boolean }): void => {
+      if (lessonId === null) {
+        setIsSecretLessonActive(false);
+        setIsActiveLessonComponentReady(false);
+        clearFocusedLessonParam();
+      }
       setIsSecretLessonActive(Boolean(options?.secret));
       setActiveLessonId(lessonId);
     },
-    []
+    [clearFocusedLessonParam]
   );
 
   useEffect((): void => {

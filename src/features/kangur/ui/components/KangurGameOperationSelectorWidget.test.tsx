@@ -21,8 +21,30 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
   useKangurSubjectFocusMock: vi.fn(),
 }));
 
+const { localeState } = vi.hoisted(() => ({
+  localeState: {
+    value: 'pl' as 'de' | 'en' | 'pl',
+  },
+}));
+
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeState.value,
+  useTranslations:
+    (namespace?: string) =>
+    (key: string) =>
+      (
+        {
+          'KangurGamePage.operationSelector.title': {
+            de: "Los geht's!",
+            en: "Let's play!",
+            pl: 'Grajmy!',
+          },
+        } as const
+      )[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -64,8 +86,17 @@ vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
-  KangurPageIntroCard: ({ title }: { title: string }) => (
-    <div data-testid='mock-operation-intro'>{title}</div>
+  KangurPageIntroCard: ({
+    title,
+    visualTitle,
+  }: {
+    title: string;
+    visualTitle?: React.ReactNode;
+  }) => (
+    <div data-testid='mock-operation-intro'>
+      <span>{title}</span>
+      {visualTitle}
+    </div>
   ),
 }));
 
@@ -132,6 +163,7 @@ const buildRuntime = (progress: KangurProgressState, overrides: Record<string, u
 describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localeState.value = 'pl';
     getCurrentKangurDailyQuestMock.mockReturnValue(null);
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',
@@ -366,6 +398,25 @@ describe('KangurGameOperationSelectorWidget', () => {
         }),
       })
     );
+  });
+
+  it('renders the localized English play wordmark in the operation heading art', () => {
+    localeState.value = 'en';
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent("Let's play!");
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent("Let's play!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
   });
 
   it('prioritizes guided momentum before the generic badge-track push', () => {

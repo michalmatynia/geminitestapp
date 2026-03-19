@@ -45,6 +45,7 @@ import type { JSX } from 'react';
 
 const BOOT_SKELETON_MIN_VISIBLE_MS = 280;
 const NAVIGATION_SKELETON_DELAY_MS = 140;
+const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 
 const AuthenticatedApp = (): JSX.Element | null => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
@@ -84,6 +85,8 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const shouldShowBootLoader = (isBootLoading && !canRenderRouteWhileLoading) || isThemeLoading;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
+  const isLanguageSwitcherTransition =
+    activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent =
     isThemeLoading || (isBootLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
@@ -98,7 +101,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const isRouteSkeletonVisible = isNavigationSkeletonVisible;
   const isRouteContentVisuallyHidden =
     transitionPhase === 'waiting_for_ready' ||
-    (transitionPhase === 'pending' && isRouteSkeletonVisible);
+    ((transitionPhase === 'pending' ||
+      (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
+      isRouteSkeletonVisible);
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -147,6 +152,12 @@ const AuthenticatedApp = (): JSX.Element | null => {
     if (isBootLoading) {
       navigationSkeletonShownRef.current = false;
       setIsNavigationSkeletonVisible(false);
+      return;
+    }
+
+    if (isRouteAcknowledging && isLanguageSwitcherTransition) {
+      navigationSkeletonShownRef.current = true;
+      setIsNavigationSkeletonVisible(true);
       return;
     }
 
@@ -199,6 +210,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return undefined;
   }, [
     isBootLoading,
+    isLanguageSwitcherTransition,
     isNavigationTransitionActive,
     isRouteAcknowledging,
     isRoutePending,

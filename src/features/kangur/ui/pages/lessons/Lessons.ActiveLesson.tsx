@@ -106,7 +106,7 @@ export function ActiveLessonView() {
     } else {
       setLessonBackLabel((prev) => (prev === 'Wróć do tematów' ? prev : 'Wróć do tematów'));
     }
-  }, [activeLessonContentRef]);
+  }, [activeLessonContentRef, handleSelectLesson]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -230,12 +230,22 @@ export function ActiveLessonView() {
 
   const handleBackToTopics = useCallback((): void => {
     const container = activeLessonContentRef.current;
-    if (!container) return;
+    if (!container) {
+      handleSelectLesson(null);
+      return;
+    }
     const backButton = container.querySelector('[data-kangur-lesson-back="true"]');
     if (backButton instanceof HTMLButtonElement) {
-      backButton.click();
+      try {
+        backButton.click();
+        return;
+      } catch {
+        handleSelectLesson(null);
+        return;
+      }
     }
-  }, [activeLessonContentRef]);
+    handleSelectLesson(null);
+  }, [activeLessonContentRef, handleSelectLesson]);
 
   const headerSection = !isMobile ? (
     <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
@@ -245,7 +255,7 @@ export function ActiveLessonView() {
         lessonContentRef={activeLessonContentRef}
         activeLessonAssignment={activeLessonAssignment}
         completedActiveLessonAssignment={completedActiveLessonAssignment}
-        onBack={() => handleSelectLesson(null)}
+        onBack={handleBackToTopics}
         titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
         headerTestId='active-lesson-header'
         headerActionsTestId='active-lesson-header-icon-actions'
@@ -340,7 +350,7 @@ export function ActiveLessonView() {
       className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
       <KangurLessonNavigationProvider
-        onBack={() => handleSelectLesson(null)}
+        onBack={handleBackToTopics}
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
         {shouldLockScroll ? (

@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo } from 'react';
 import type { TranslationValues } from 'use-intl';
+import { BADGES, getCurrentLevel, getNextLevel } from '@kangur/core';
 
 import { CmsRuntimeProvider } from '@/features/cms/public';
 import { getKangurPageHref } from '@/features/kangur/config/routing';
@@ -43,10 +44,9 @@ import {
   selectKangurPriorityAssignments,
 } from '@/features/kangur/ui/services/delegated-assignments';
 import {
-  BADGES,
-  getCurrentLevel,
+  FALLBACK_LEVEL,
+  LEVELS,
   getLocalizedKangurProgressLevelTitle,
-  getNextLevel,
   translateKangurProgressWithFallback,
 } from '@/features/kangur/ui/services/progress';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
@@ -124,8 +124,8 @@ export function KangurCmsRuntimeDataProvider({
     [progressRuntimeTranslations]
   );
   const progressRuntime = useMemo(() => {
-    const currentLevel = getCurrentLevel(progress.totalXp);
-    const nextLevel = getNextLevel(progress.totalXp);
+    const currentLevel = getCurrentLevel(progress.totalXp, LEVELS, FALLBACK_LEVEL);
+    const nextLevel = getNextLevel(progress.totalXp, LEVELS);
     const xpIntoLevel = progress.totalXp - currentLevel.minXp;
     const xpNeeded = nextLevel ? Math.max(1, nextLevel.minXp - currentLevel.minXp) : 1;
     const levelProgressPercent = nextLevel

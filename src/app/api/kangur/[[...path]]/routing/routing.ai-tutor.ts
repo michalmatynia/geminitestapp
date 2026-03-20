@@ -14,6 +14,8 @@ import {
   kangurKnowledgeGraphSyncRequestSchema,
 } from '@/shared/contracts';
 import { postKangurAiTutorChatHandler } from '@/app/api/kangur/ai-tutor/chat/handler';
+import { GET_handler as getKangurAiTutorChatHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/history-handler';
+import { GET_handler as getKangurAiTutorChatAdminHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/admin-history/handler';
 import {
   getKangurAiTutorContentHandler,
   postKangurAiTutorContentHandler,
@@ -38,6 +40,16 @@ import { handleGetPost, methodNotAllowed, SimpleRouteHandler } from './routing.u
 
 export const aiTutorChatHandler: SimpleRouteHandler = apiHandler(postKangurAiTutorChatHandler, {
   source: 'kangur.ai-tutor.chat.POST',
+  service: 'kangur.api',
+});
+
+export const aiTutorChatHistoryHandler: SimpleRouteHandler = apiHandler(getKangurAiTutorChatHistoryHandler, {
+  source: 'kangur.ai-tutor.chat-history.GET',
+  service: 'kangur.api',
+});
+
+export const aiTutorChatAdminHistoryHandler: SimpleRouteHandler = apiHandler(getKangurAiTutorChatAdminHistoryHandler, {
+  source: 'kangur.ai-tutor.chat.admin-history.GET',
   service: 'kangur.api',
 });
 
@@ -126,8 +138,11 @@ export const handleAiTutorRouting = (request: NextRequest, segments: string[]): 
   if (segments[0] === 'ai-tutor') {
     const sub = segments[1];
     if (sub === 'chat' && segments.length === 2) {
-      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
-      return aiTutorChatHandler(request);
+      return handleGetPost(request, aiTutorChatHistoryHandler, aiTutorChatHandler);
+    }
+    if (sub === 'chat' && segments[2] === 'admin-history' && segments.length === 3) {
+      if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+      return aiTutorChatAdminHistoryHandler(request);
     }
     if (sub === 'content' && segments.length === 2) {
       return handleGetPost(request, aiTutorContentGetHandler, aiTutorContentPostHandler);

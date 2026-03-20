@@ -7,7 +7,7 @@ import type {
   KangurAssignmentUpdateInput,
 } from '@/features/kangur/services/ports';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import { kangurAssignmentSnapshotSchema } from '@/features/kangur/shared/contracts/kangur';
+import { kangurAssignmentSnapshotSchema } from '@kangur/contracts';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 
 import { KANGUR_ASSIGNMENTS_ENDPOINT } from './local-kangur-platform-endpoints';

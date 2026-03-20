@@ -17,7 +17,7 @@ import {
   kangurDuelReactionResponseSchema,
   kangurDuelStateResponseSchema,
 } from '@/features/kangur/shared/contracts/kangur-duels';
-import { kangurDuelLobbyChatSendResponseSchema } from '@/shared/contracts/kangur-duels-chat';
+import { kangurDuelLobbyChatSendResponseSchema } from '@/features/kangur/shared/contracts/kangur-duels-chat';
 import { reportKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';

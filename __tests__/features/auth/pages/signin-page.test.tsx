@@ -98,15 +98,15 @@ describe('SignInPage', () => {
 
   it('renders correctly', async () => {
     renderPage();
-    expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/^password$/i, { selector: 'input' });
+    expect(await screen.findByRole('heading', { name: /Zaloguj się/i })).toBeInTheDocument();
+    const emailInput = screen.getByLabelText(/Adres e-mail/i);
+    const passwordInput = screen.getByLabelText(/^Hasło$/i, { selector: 'input' });
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
     expect(emailInput).toHaveAttribute('autocomplete', 'email');
     expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i }).closest('form')).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Zaloguj się/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Zaloguj się/i }).closest('form')).toHaveAttribute(
       'aria-busy',
       'false'
     );
@@ -115,7 +115,7 @@ describe('SignInPage', () => {
   it('has no obvious accessibility violations in the sign-in form shell', async () => {
     const { container } = renderPage();
 
-    await screen.findByRole('heading', { name: /sign in/i });
+    await screen.findByRole('heading', { name: /Zaloguj się/i });
     await expectNoAxeViolations(container);
   });
 
@@ -130,10 +130,10 @@ describe('SignInPage', () => {
 
     renderPage();
 
-    const emailInput = await screen.findByLabelText(/email/i);
+    const emailInput = await screen.findByLabelText(/Adres e-mail/i);
     await user.type(emailInput, 'test@example.com');
-    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
+    await user.type(screen.getByLabelText(/^Hasło$/i, { selector: 'input' }), 'password123');
+    await user.click(screen.getByRole('button', { name: /Zaloguj się/i }));
 
     await waitFor(() => {
       expect(signIn).toHaveBeenCalledWith(
@@ -165,9 +165,9 @@ describe('SignInPage', () => {
 
     renderPage();
 
-    await user.type(await screen.findByLabelText(/email/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'password123');
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
+    await user.type(await screen.findByLabelText(/Adres e-mail/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/^Hasło$/i, { selector: 'input' }), 'password123');
+    await user.click(screen.getByRole('button', { name: /Zaloguj się/i }));
 
     await waitFor(() => {
       expect(routerPushMock).toHaveBeenCalledWith('/admin?tab=users#section');
@@ -185,11 +185,11 @@ describe('SignInPage', () => {
 
     renderPage();
 
-    await user.type(await screen.findByLabelText(/email/i), 'wrong@example.com');
-    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'wrong');
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
+    await user.type(await screen.findByLabelText(/Adres e-mail/i), 'wrong@example.com');
+    await user.type(screen.getByLabelText(/^Hasło$/i, { selector: 'input' }), 'wrong');
+    await user.click(screen.getByRole('button', { name: /Zaloguj się/i }));
 
-    expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
+    expect(await screen.findByText('Nieprawidłowy e-mail lub hasło.')).toBeInTheDocument();
   });
 
   it('shows a generic error message when sign in throws unexpectedly', async () => {
@@ -198,12 +198,12 @@ describe('SignInPage', () => {
 
     renderPage();
 
-    await user.type(await screen.findByLabelText(/email/i), 'x@example.com');
-    await user.type(screen.getByLabelText(/^password$/i, { selector: 'input' }), 'wrong');
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
+    await user.type(await screen.findByLabelText(/Adres e-mail/i), 'x@example.com');
+    await user.type(screen.getByLabelText(/^Hasło$/i, { selector: 'input' }), 'wrong');
+    await user.click(screen.getByRole('button', { name: /Zaloguj się/i }));
 
     expect(
-      await screen.findByText('An unexpected error occurred. Please try again.')
+      await screen.findByText('Wystąpił nieoczekiwany błąd. Spróbuj ponownie.')
     ).toBeInTheDocument();
   });
 
@@ -215,16 +215,16 @@ describe('SignInPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Invalid credentials.')).toBeInTheDocument();
+    expect(await screen.findByText('Nieprawidłowe dane logowania.')).toBeInTheDocument();
   });
 
   it('supports keyboard tab order across sign-in controls', async () => {
     renderPage();
 
-    const emailInput = await screen.findByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/^password$/i, { selector: 'input' });
+    const emailInput = await screen.findByLabelText(/Adres e-mail/i);
+    const passwordInput = screen.getByLabelText(/^Hasło$/i, { selector: 'input' });
     const togglePasswordButton = screen.getByRole('button', { name: /show password/i });
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    const submitButton = screen.getByRole('button', { name: /Zaloguj się/i });
     const form = submitButton.closest('form');
 
     expect(form).not.toBeNull();

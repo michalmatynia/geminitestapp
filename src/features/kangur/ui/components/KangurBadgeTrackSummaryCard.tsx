@@ -1,5 +1,9 @@
 import React, { type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import type {
+  KangurBadgeTrackKey,
+  KangurBadgeTrackSummary,
+} from '@kangur/core';
 import {
   KangurCardDescription,
   KangurCardTitle,
@@ -9,10 +13,6 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type {
-  KangurBadgeTrackKey,
-  KangurBadgeTrackSummary,
-} from '@/features/kangur/ui/services/progress';
 import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
 

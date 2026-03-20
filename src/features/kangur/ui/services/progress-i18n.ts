@@ -15,8 +15,9 @@ const interpolateFallbackTemplate = (
   template: string,
   values?: Record<string, KangurProgressTranslationValue>
 ): string =>
-  template.replace(/\{(\w+)\}/g, (match, token) => {
-    const value = values?.[token];
+  template.replace(/\{(\w+)\}/g, (match: string, token: string) => {
+    const interpolationValues: Record<string, unknown> | undefined = values;
+    const value = interpolationValues?.[token];
     return value === undefined ? match : String(value);
   });
 

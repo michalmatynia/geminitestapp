@@ -93,7 +93,7 @@ describe('KangurGameSetupMomentumCard', () => {
       'Misja dnia'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-training')).toHaveTextContent(
-      'Ta sesja przybliża misję dnia'
+      'Ta sesja przybliza misje dnia'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-training')).toHaveClass(
       '[color:var(--kangur-page-text)]'
@@ -115,13 +115,13 @@ describe('KangurGameSetupMomentumCard', () => {
     render(<KangurGameSetupMomentumCard mode='kangur' progress={buildProgress()} />);
 
     expect(screen.getByTestId('kangur-game-setup-momentum-label-kangur')).toHaveTextContent(
-      'Następna odznaka'
+      'Nastepna odznaka'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-title-kangur')).toHaveTextContent(
-      'Zagraj o kolejny próg'
+      'Zagraj o kolejny prog'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-description-kangur')).toHaveTextContent(
-      'Mocny wynik w tej rundzie przybliża odznakę Pół tysiąca XP. 420/500 XP.'
+      'Mocny wynik w tej rundzie przybliza odznake Pół tysiąca XP. 420/500 XP.'
     );
   });
 
@@ -145,7 +145,10 @@ describe('KangurGameSetupMomentumCard', () => {
       'Dopnij polecany kierunek'
     );
     expect(screen.getByTestId('kangur-game-setup-momentum-description-training')).toHaveTextContent(
-      'Ta sesja pcha polecany kierunek do odznaki Trzymam kierunek. 2/3 rundy.'
+      'Ta sesja pcha polecany kierunek do odznaki Trzymam kierunek.'
+    );
+    expect(screen.getByTestId('kangur-game-setup-momentum-description-training')).toHaveTextContent(
+      '2/3'
     );
   });
 

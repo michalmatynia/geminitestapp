@@ -2,7 +2,7 @@ import type {
   KangurLesson,
   KangurLessonAgeGroup,
   KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 
 export type KangurLessonListInput = {
   subject?: KangurLessonSubject;

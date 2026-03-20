@@ -5,7 +5,7 @@
 import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
@@ -380,6 +380,8 @@ import {
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 
 describe('KangurPrimaryNavigation', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     vi.clearAllMocks();
     routeTransitionStateMock.mockReturnValue(null);
@@ -424,6 +426,23 @@ describe('KangurPrimaryNavigation', () => {
     prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
     window.sessionStorage.clear();
     document.cookie = 'NEXT_LOCALE=; Max-Age=0; Path=/';
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: {
+        ...originalLocation,
+        hash: '',
+        replace: vi.fn(),
+      },
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation,
+    });
   });
 
   it('renders the SVG logo inside the home control', () => {
@@ -747,6 +766,30 @@ describe('KangurPrimaryNavigation', () => {
       transitionKind: 'locale-switch',
     });
     expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
+  });
+
+  it('forces a document replace when switching back to Polish from an unprefixed English lessons route', async () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/lessons');
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    prefetchMock.mockClear();
+    replaceMock.mockClear();
+
+    openLanguageMenu();
+    fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
+
+    expect(replaceMock).not.toHaveBeenCalled();
+    expect(window.location.replace).toHaveBeenCalledWith('/lessons');
+    expect(document.cookie).toContain('NEXT_LOCALE=pl');
   });
 
   it('warms the default locale target when opening the menu from a non-default locale', async () => {

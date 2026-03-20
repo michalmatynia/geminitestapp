@@ -248,18 +248,19 @@ const localizeLogicalPatternsLessonCopy = <T,>(
   source: T,
   prefix = ''
 ): WidenLessonCopy<T> => {
-  if (typeof source === "string") {
+  if (typeof source === 'string') {
     return translateLogicalPatternsLesson(translate, prefix, source) as WidenLessonCopy<T>;
   }
 
   if (Array.isArray(source)) {
-    return source.map((item, index) =>
+    const localizedItems: unknown[] = source.map((item, index): unknown =>
       localizeLogicalPatternsLessonCopy(
         translate,
-        item,
+        item as unknown,
         prefix ? `${prefix}.${index}` : String(index)
       )
-    ) as WidenLessonCopy<T>;
+    );
+    return localizedItems as WidenLessonCopy<T>;
   }
 
   if (source && typeof source === 'object') {

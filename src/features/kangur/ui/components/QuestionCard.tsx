@@ -59,8 +59,9 @@ const interpolateQuestionCardTemplate = (
     return template;
   }
 
-  return template.replace(/\{(\w+)\}/g, (match, key) => {
-    const value = values[key];
+  const interpolationValues: Record<string, unknown> = values;
+  return template.replace(/\{(\w+)\}/g, (match: string, key: string) => {
+    const value = interpolationValues[key];
     return value === undefined ? match : String(value);
   });
 };

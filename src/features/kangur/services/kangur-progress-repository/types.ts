@@ -1,4 +1,4 @@
-import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurProgressState } from '@kangur/contracts';
 
 export type KangurProgressRepository = {
   getProgress: (userKey: string) => Promise<KangurProgressState>;

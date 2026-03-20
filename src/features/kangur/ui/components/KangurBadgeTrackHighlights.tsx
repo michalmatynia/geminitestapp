@@ -1,4 +1,8 @@
 import { useTranslations } from 'next-intl';
+import type {
+  KangurBadgeTrackKey,
+  KangurBadgeTrackSummary,
+} from '@kangur/core';
 import KangurBadgeTrackPlaceholderCard from '@/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard';
 import {
   KangurBadgeTrackSummaryCard,
@@ -11,8 +15,6 @@ import {
   getBadgeTrackMeta,
   getProgressBadgeTrackSummaries,
   translateKangurProgressWithFallback,
-  type KangurBadgeTrackKey,
-  type KangurBadgeTrackSummary,
 } from '@/features/kangur/ui/services/progress';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';

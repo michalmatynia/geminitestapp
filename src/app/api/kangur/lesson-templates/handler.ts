@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonTemplateRepository } from '@/features/kangur/services/kangur-lesson-template-repository';
-import { kangurLessonSubjectSchema } from '@/features/kangur/shared/contracts/kangur';
+import { kangurLessonSubjectSchema } from '@kangur/contracts';
 import { kangurLessonTemplatesSchema } from '@/shared/contracts/kangur-lesson-templates';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';

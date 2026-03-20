@@ -18,7 +18,7 @@ import {
 import type {
   KangurAssignmentCreateTarget,
   KangurAssignmentTarget,
-} from '@/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

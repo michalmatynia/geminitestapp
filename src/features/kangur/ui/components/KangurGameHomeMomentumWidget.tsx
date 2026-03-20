@@ -19,8 +19,8 @@ import {
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
   getRecommendedSessionMomentum,
-  type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress';
+import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLessonComponentId, KangurRouteAction } from '@/features/kangur/shared/contracts/kangur';
 

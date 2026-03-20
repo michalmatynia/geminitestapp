@@ -5,7 +5,7 @@ import type { Db, Document } from 'mongodb';
 import type {
   KangurLessonDocument,
   KangurLessonDocumentStore,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { normalizeKangurLessonDocument } from '@/features/kangur/lesson-documents';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

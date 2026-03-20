@@ -17,7 +17,7 @@ import type {
   KangurAssignmentSnapshot,
   KangurAssignmentTarget,
   KangurScore,
-} from '@/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

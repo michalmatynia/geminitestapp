@@ -2,7 +2,7 @@ import { type NextRequest } from 'next/server';
 import { apiHandler, apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import {
   kangurAssignmentCreateInputSchema,
-} from '@/shared/contracts/kangur';
+} from '@kangur/contracts';
 import {
   getKangurAssignmentsHandler,
   postKangurAssignmentsHandler,

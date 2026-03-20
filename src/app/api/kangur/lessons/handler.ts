@@ -7,7 +7,7 @@ import {
   kangurLessonAgeGroupSchema,
   kangurLessonSubjectSchema,
   kangurLessonsSchema,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema, optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

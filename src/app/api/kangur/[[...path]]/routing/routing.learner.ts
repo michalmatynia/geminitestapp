@@ -7,7 +7,7 @@ import {
   kangurProgressStateSchema,
   kangurScoreCreateInputSchema,
   kangurSubjectFocusSchema,
-} from '@/shared/contracts/kangur';
+} from '@kangur/contracts';
 import {
   getKangurLearnerActivityHandler,
   postKangurLearnerActivityHandler,

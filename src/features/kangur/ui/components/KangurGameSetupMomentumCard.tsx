@@ -9,8 +9,8 @@ import {
   getNextLockedBadge,
   getProgressAverageXpPerSession,
   getRecommendedSessionMomentum,
-  type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress';
+import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 
@@ -102,7 +102,7 @@ const getSetupFocus = (
               'setupMomentum.guided.descriptionTraining',
               `Ta sesja pcha polecany kierunek do odznaki ${guidedMomentum.nextBadgeName}. ${guidedMomentum.summary}.`,
               {
-                nextBadgeName: guidedMomentum.nextBadgeName,
+                badge: guidedMomentum.nextBadgeName,
                 summary: guidedMomentum.summary,
               }
             ),

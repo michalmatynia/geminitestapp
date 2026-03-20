@@ -4,6 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import type { KangurBadgeTrackSummary } from '@kangur/core';
 
 import {
   KangurBadgeTrackSummaryCard,
@@ -12,7 +13,6 @@ import {
   KangurBadgeTrackCardBar,
   KANGUR_BADGE_TRACK_ACCENTS,
 } from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
-import type { KangurBadgeTrackSummary } from '@/features/kangur/ui/services/progress';
 
 const track: KangurBadgeTrackSummary = {
   key: 'challenge',

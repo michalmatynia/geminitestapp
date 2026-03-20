@@ -219,7 +219,7 @@ const EN_COPY: KangurCmsDefaultsCopy = {
       description:
         'This panel is already assembled from CMS blocks. Change labels, order, and actions without going back to code.',
       lessonsLabel: 'Lessons',
-      playLabel: "Let's play!",
+      playLabel: 'Let\'s play!',
       duelsLabel: 'Duels',
       kangurLabel: 'Kangur Mathematics',
     },

@@ -82,18 +82,14 @@ describe('KangurExam', () => {
     await userEvent.click(screen.getByRole('button', { name: /zakończ test/i }));
 
     expect(
-      await screen.findByRole('button', { name: /kangurExam\.actions\.backToMenu/i })
+      await screen.findByRole('button', { name: 'Wróć do menu' })
     ).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
-    expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
-    expect(screen.getByText('shared.scoreLabel: 1/1')).toHaveClass('[color:var(--kangur-page-text)]');
-    expect(screen.getByText('100% shared.correctAnswersSuffix')).toHaveClass(
+    expect(screen.getByTestId('kangur-exam-summary-shell')).toHaveClass('glass-panel', 'kangur-panel-soft');
+    expect(screen.getByText('Wynik: 1/1')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.getByText('100% poprawnych odpowiedzi')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
     expect(screen.getByTestId('kangur-exam-summary-emoji')).toHaveClass('inline-flex', 'text-6xl');
@@ -103,7 +99,7 @@ describe('KangurExam', () => {
     );
     expect(screen.getByTestId('kangur-exam-summary-progress-bar')).toHaveAttribute(
       'aria-valuetext',
-      '100% shared.correctAnswersSuffix'
+      '100% poprawnych odpowiedzi'
     );
     expect(screen.getByRole('list', { name: 'Przegląd pytań testowych' })).toBeInTheDocument();
 

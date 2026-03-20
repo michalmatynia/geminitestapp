@@ -1,6 +1,6 @@
 import type {
   KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 export type KangurLessonTemplateListInput = {

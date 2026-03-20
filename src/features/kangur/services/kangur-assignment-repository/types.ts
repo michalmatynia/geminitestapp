@@ -2,7 +2,7 @@ import type {
   KangurAssignment,
   KangurAssignmentRepositoryCreateInput,
   KangurAssignmentUpdateInput,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 
 export type KangurAssignmentListInput = {
   learnerKey: string;

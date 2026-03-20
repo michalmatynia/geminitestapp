@@ -6,7 +6,7 @@ import { getKangurLessonSectionRepository } from '@/features/kangur/services/kan
 import {
   kangurLessonAgeGroupSchema,
   kangurLessonSubjectSchema,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { kangurLessonSectionsSchema } from '@/shared/contracts/kangur-lesson-sections';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';

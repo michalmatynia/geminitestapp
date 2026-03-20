@@ -2,7 +2,7 @@ import { type NextRequest } from 'next/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import {
   kangurLearnerSignInInputSchema,
-} from '@/shared/contracts/kangur';
+} from '@kangur/contracts';
 import {
   kangurParentAccountCreateSchema,
   kangurParentAccountResendSchema,

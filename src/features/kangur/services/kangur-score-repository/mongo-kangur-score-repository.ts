@@ -6,7 +6,7 @@ import {
   resolveKangurScoreSubject,
   type KangurScore,
   type KangurScoreRepositoryCreateInput,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { normalizeSort } from './shared';

@@ -3,7 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { auth, findAuthUserById, normalizeAuthEmail } from '@/server/auth';
-import type { KangurAuthUser, KangurLearnerProfile } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurAuthUser, KangurLearnerProfile } from '@kangur/contracts';
 import { authError, notFoundError } from '@/features/kangur/shared/errors/app-error';
 
 import { getKangurLearnerById, listKangurLearnersByOwner } from './kangur-learner-repository';

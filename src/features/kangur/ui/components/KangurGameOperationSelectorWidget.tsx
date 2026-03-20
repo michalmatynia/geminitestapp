@@ -54,8 +54,8 @@ import {
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
   getRecommendedSessionMomentum,
-  type KangurProgressTranslate,
 } from '@/features/kangur/ui/services/progress';
+import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import type {
   KangurDifficulty,

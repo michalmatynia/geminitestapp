@@ -68,25 +68,24 @@ describe('PlayerProgressCard', () => {
   it('uses shared metric styling and grouped badge tracks for player progress', () => {
     render(<PlayerProgressCard progress={progress} />);
 
-    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('fallbackTitle');
+    expect(screen.getByTestId('player-progress-copy')).toHaveTextContent('Postepy ucznia');
     expect(screen.getByTestId('player-progress-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft'
     );
     expect(screen.getByTestId('player-progress-level-bar')).toHaveAttribute('aria-valuenow', '92');
-    expect(screen.getByText('metrics.games').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('metrics.lessons').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('metrics.accuracy').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('metrics.streak').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('metrics.xpPerGame').parentElement).toHaveClass('soft-card', 'border');
-    expect(screen.getByText('metrics.xpPerGame').parentElement).toHaveTextContent('27');
+    expect(screen.getByText('Gier').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Lekcji').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Skutecznosc').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('Seria').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('XP / grę').parentElement).toHaveClass('soft-card', 'border');
+    expect(screen.getByText('XP / grę').parentElement).toHaveTextContent('27');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
       'Trening zegara: Godziny'
     );
     expect(screen.getByTestId('player-progress-top-activity')).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent(
-      'topActivityDescription'
+      'Najczesciej cwiczysz'
     );
     expect(screen.getByTestId('player-progress-top-activity')).toHaveTextContent('112 XP');
     expect(screen.getByTestId('player-progress-next-badge')).toHaveTextContent(
@@ -100,10 +99,10 @@ describe('PlayerProgressCard', () => {
       '96'
     );
     expect(screen.getByTestId('player-progress-guided-momentum')).toHaveTextContent(
-      'guidedMomentumTitle'
+      'Polecony kierunek'
     );
     expect(screen.getByTestId('player-progress-guided-momentum')).toHaveTextContent(
-      'guidedMomentumDescriptionWithBadge'
+      'polecone rundy'
     );
     expect(screen.getByTestId('player-progress-guided-momentum-bar')).toHaveAttribute(
       'aria-valuenow',

@@ -9,7 +9,7 @@ import {
   type KangurScoreFilters,
   type KangurScoreLimit,
   type KangurScoreSort,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 

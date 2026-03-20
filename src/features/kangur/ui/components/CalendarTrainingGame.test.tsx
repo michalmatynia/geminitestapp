@@ -120,8 +120,7 @@ describe('CalendarTrainingGame', () => {
     expect(pendingProgress).toHaveClass('rounded-full', 'soft-cta');
     expect(screen.getByTestId('calendar-training-question-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft'
     );
     expect(screen.getByRole('group', { name: questionText })).toBeInTheDocument();
     expect(firstChoice).toHaveClass('soft-card');
@@ -168,8 +167,7 @@ describe('CalendarTrainingGame', () => {
     );
     expect(screen.getByTestId('calendar-training-summary-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft'
     );
     expect(screen.getByTestId('calendar-training-summary-title')).toHaveClass(
       'break-words',
@@ -177,17 +175,17 @@ describe('CalendarTrainingGame', () => {
       'font-extrabold',
       '[color:var(--kangur-page-text)]'
     );
-    expect(screen.getByText('calendarTraining.summary.perfect')).toHaveClass(
+    expect(screen.getByText('Idealnie! Świetnie znasz kalendarz!')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByText('shared.scoreLabel: 6/6')).toBeInTheDocument();
+    expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-training-summary-breakdown')).toHaveTextContent(
       'Ukończenie rundy +14'
     );
     expect(screen.getByTestId('calendar-training-summary-breakdown-accuracy')).toHaveTextContent(
       'Skuteczność +18'
     );
-    expect(screen.getByRole('button', { name: /shared\.restart/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Jeszcze raz' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

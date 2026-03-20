@@ -1,7 +1,7 @@
 import type {
   KangurLessonDocument,
   KangurLessonDocumentStore,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 
 export type KangurLessonDocumentRepository = {
   listLessonDocuments: () => Promise<KangurLessonDocumentStore>;

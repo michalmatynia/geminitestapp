@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import type { KangurBadgeTrackKey } from '@kangur/core';
 import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
 import {
   KangurProgressHighlightCardContent,
@@ -10,7 +11,6 @@ import {
 import {
   getNextLockedBadge,
   translateKangurProgressWithFallback,
-  type KangurBadgeTrackKey,
 } from '@/features/kangur/ui/services/progress';
 import { KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import type { KangurProgressState } from '@/features/kangur/ui/types';

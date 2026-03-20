@@ -154,7 +154,7 @@ describe('ParentDashboard page', () => {
 
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass(
       'glass-panel',
-      'border-white/78'
+      'kangur-panel-soft'
     );
     expect(
       screen.getByRole('heading', { name: 'Panel Rodzica / Nauczyciela' })

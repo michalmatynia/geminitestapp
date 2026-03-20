@@ -1,7 +1,7 @@
 import type {
   KangurDifficulty,
   KangurOperation,
-} from '@/features/kangur/shared/math-types';
+} from '@kangur/core';
 import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 export type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/shared/contracts/kangur';
 export type { KangurLessonMasteryEntry, KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
@@ -11,7 +11,7 @@ export type {
   KangurDifficultyConfigEntry,
   KangurOperation,
   KangurQuestion,
-} from '@/features/kangur/shared/math-types';
+} from '@kangur/core';
 
 export type KangurGameScreen =
   | 'home'

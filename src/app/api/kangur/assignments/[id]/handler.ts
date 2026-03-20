@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurAssignmentRepository } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { parseKangurAssignmentUpdatePayload } from '@/shared/validations/kangur';

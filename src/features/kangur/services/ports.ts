@@ -16,7 +16,7 @@ import type {
   KangurProgressState,
   KangurScore,
   KangurScoreCreateInput,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import type {
   KangurDuelAnswerInput as KangurDuelAnswerInputContract,
   KangurDuelCreateInput as KangurDuelCreateInputContract,
@@ -57,7 +57,7 @@ export type {
   KangurLearnerUpdateInput,
   KangurProgressState,
   KangurScoreCreateInput,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 
 export type KangurUser = KangurAuthUser;
 export type KangurScoreRecord = KangurScore;

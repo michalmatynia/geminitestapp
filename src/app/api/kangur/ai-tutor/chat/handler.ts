@@ -78,6 +78,7 @@ import {
   buildKnowledgeGraphResponseSummary,
   mergeFollowUpActions,
 } from './sources';
+import { persistConversationExchange } from './conversation-history';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -373,6 +374,17 @@ export async function postKangurAiTutorChatHandler(
       });
       const responseSources = tutorSettings.showSources ? resolvedSources : [];
 
+      // Fire-and-forget conversation history persistence
+      void persistConversationExchange({
+        learnerId,
+        surface: context?.surface,
+        contentId: context?.contentId,
+        userMessage: latestUserMessage ?? '',
+        assistantMessage: sectionExplainResponse.message,
+        answerResolutionMode: 'page_content',
+        tutorMoodId: tutorMood.currentMoodId,
+      });
+
       await persistTutorMoodState({
         learnerId,
         tutorMood,
@@ -569,6 +581,18 @@ export async function postKangurAiTutorChatHandler(
         extraSources: knowledgeGraphContext.status === 'hit' ? knowledgeGraphContext.sources : [],
       });
       const responseSources = tutorSettings.showSources ? resolvedSources : [];
+
+      // Fire-and-forget conversation history persistence
+      void persistConversationExchange({
+        learnerId,
+        surface: context?.surface,
+        contentId: context?.contentId,
+        userMessage: latestUserMessage ?? '',
+        assistantMessage: nativeGuideResponse.message,
+        answerResolutionMode: 'native_guide',
+        knowledgeGraphApplied,
+        tutorMoodId: tutorMood.currentMoodId,
+      });
 
       await persistTutorMoodState({
         learnerId,
@@ -869,6 +893,19 @@ export async function postKangurAiTutorChatHandler(
         });
       }
     }
+
+    // Fire-and-forget conversation history persistence
+    void persistConversationExchange({
+      learnerId,
+      surface: context?.surface,
+      contentId: context?.contentId,
+      userMessage: latestUserMessage ?? '',
+      assistantMessage: parsedTutorResponse.message,
+      answerResolutionMode: 'brain',
+      knowledgeGraphApplied,
+      tutorMoodId: tutorMood.currentMoodId,
+      ...(adaptiveCoachingMode ? { coachingFrameMode: adaptiveCoachingMode } : {}),
+    });
 
     await persistTutorMoodState({
       learnerId,

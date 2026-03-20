@@ -2,9 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DIFFICULTY_CONFIG } from '@kangur/core';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
-import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import type {
   KangurDifficulty,
   KangurDifficultyOption,

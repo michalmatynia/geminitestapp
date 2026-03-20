@@ -1,4 +1,4 @@
-import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonSubject } from '@kangur/contracts';
 
 export type KangurSubjectFocusRepository = {
   getSubjectFocus: (learnerId: string) => Promise<KangurLessonSubject | null>;

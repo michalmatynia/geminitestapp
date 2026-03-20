@@ -28,7 +28,7 @@ import {
   kangurLearnerActivityStatusSchema,
   kangurProgressStateSchema,
   type KangurProgressState,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 

@@ -9,10 +9,10 @@ import {
 import {
   ACTIVITY_LABELS,
   CLOCK_TRAINING_SECTION_LABELS,
-  LESSON_KEY_TO_OPERATION,
   LEVELS,
   FALLBACK_LEVEL,
   BADGE_TRACK_META,
+  resolveRewardOperation,
   type KangurProgressLevel,
   type KangurRewardCounterKey,
   type KangurLessonPracticeReward,
@@ -23,11 +23,20 @@ import {
   type KangurBadgeTrackKey,
 } from './progress.contracts';
 import {
-  BADGES,
   getAverageAccuracyPercent,
-  getBadgeProgress,
   getProgressBadges,
 } from './progress.badges';
+import {
+  checkNewBadges as checkNewBadgesCore,
+  getCurrentLevel as getCurrentLevelCore,
+  getNextLevel as getNextLevelCore,
+  getNextLockedBadge as getNextLockedBadgeCore,
+  getProgressAverageXpPerSession as getProgressAverageXpPerSessionCore,
+  getProgressBestAccuracy as getProgressBestAccuracyCore,
+  getProgressTopActivities as getProgressTopActivitiesCore,
+  getRecommendedSessionMomentum as getRecommendedSessionMomentumCore,
+  getRecommendedSessionProjection as getRecommendedSessionProjectionCore,
+} from '@kangur/core';
 import {
   getLocalizedKangurBadgeTrackLabel,
   getLocalizedKangurClockSectionLabel,
@@ -37,7 +46,6 @@ import {
   type KangurProgressLocalizer,
 } from './progress-i18n';
 import {
-  clampCounter,
   createRewardOutcome,
 } from './progress.rewards';
 import {
@@ -63,39 +71,6 @@ const resolveActivityTokenLabel = (
     fallback: ACTIVITY_LABELS[token] ?? token.replace(/_/g, ' ').trim(),
     translate: localizer?.translate,
   });
-
-const resolveRewardOperation = ({
-  operation,
-  lessonKey,
-  activityKey,
-}: {
-  operation?: string | null;
-  lessonKey?: string | null;
-  activityKey?: string | null;
-}): string | null => {
-  const normalizedOperation = operation?.trim();
-  if (normalizedOperation) {
-    return normalizedOperation;
-  }
-
-  const normalizedLessonKey = lessonKey?.trim();
-  if (normalizedLessonKey) {
-    return LESSON_KEY_TO_OPERATION[normalizedLessonKey] ?? normalizedLessonKey;
-  }
-
-  const normalizedActivityKey = activityKey?.trim();
-  if (!normalizedActivityKey) {
-    return null;
-  }
-
-  const [, rawPrimary = ''] = normalizedActivityKey.split(':');
-  const normalizedPrimary = rawPrimary.trim();
-  if (!normalizedPrimary) {
-    return null;
-  }
-
-  return LESSON_KEY_TO_OPERATION[normalizedPrimary] ?? normalizedPrimary;
-};
 
 export const formatKangurProgressActivityLabel = (
   activityKey: string,
@@ -163,22 +138,11 @@ export const formatKangurProgressActivityLabel = (
 export const getProgressAverageAccuracy = (progress: KangurProgressState): number =>
   getAverageAccuracyPercent(progress);
 
-export const getProgressAverageXpPerSession = (progress: KangurProgressState): number => {
-  if (progress.gamesPlayed <= 0) {
-    return 0;
-  }
+export const getProgressAverageXpPerSession = (progress: KangurProgressState): number =>
+  getProgressAverageXpPerSessionCore(progress);
 
-  return clampCounter(progress.totalXp / progress.gamesPlayed);
-};
-
-export const getProgressBestAccuracy = (progress: KangurProgressState): number => {
-  const activityStats = Object.values(progress.activityStats ?? {});
-  if (activityStats.length === 0) {
-    return getAverageAccuracyPercent(progress);
-  }
-
-  return Math.max(...activityStats.map((entry) => entry.bestScorePercent));
-};
+export const getProgressBestAccuracy = (progress: KangurProgressState): number =>
+  getProgressBestAccuracyCore(progress);
 
 export function createGameReward(
   progress: KangurProgressState,
@@ -341,12 +305,7 @@ export function getCurrentLevel(
   totalXp: number,
   localizer?: KangurProgressLocalizer
 ): KangurProgressLevel {
-  let currentLevel = LEVELS[0] ?? FALLBACK_LEVEL;
-  for (const level of LEVELS) {
-    if (totalXp >= level.minXp) {
-      currentLevel = level;
-    }
-  }
+  const currentLevel = getCurrentLevelCore(totalXp, LEVELS, FALLBACK_LEVEL);
   return {
     ...currentLevel,
     title: getLocalizedKangurProgressLevelTitle({
@@ -361,29 +320,22 @@ export function getNextLevel(
   totalXp: number,
   localizer?: KangurProgressLocalizer
 ): KangurProgressLevel | null {
-  for (const level of LEVELS) {
-    if (totalXp < level.minXp) {
-      return {
-        ...level,
-        title: getLocalizedKangurProgressLevelTitle({
-          level: level.level,
-          fallback: level.title,
-          translate: localizer?.translate,
-        }),
-      };
-    }
+  const nextLevel = getNextLevelCore(totalXp, LEVELS);
+  if (!nextLevel) {
+    return null;
   }
-  return null;
+  return {
+    ...nextLevel,
+    title: getLocalizedKangurProgressLevelTitle({
+      level: nextLevel.level,
+      fallback: nextLevel.title,
+      translate: localizer?.translate,
+    }),
+  };
 }
 
 export function checkNewBadges(progress: KangurProgressState): string[] {
-  const newBadges: string[] = [];
-  for (const badge of BADGES) {
-    if (!progress.badges.includes(badge.id) && getBadgeProgress(progress, badge).isUnlocked) {
-      newBadges.push(badge.id);
-    }
-  }
-  return newBadges;
+  return checkNewBadgesCore(progress);
 }
 
 export function addXp(
@@ -418,18 +370,9 @@ export function getNextLockedBadge(
   progress: KangurProgressState,
   localizer?: KangurProgressLocalizer
 ): KangurBadgeStatus | null {
-  const badgeStatuses = getProgressBadges(progress, localizer);
-  const locked = badgeStatuses.filter(b => !b.isUnlocked);
-  if (locked.length === 0) return null;
-  
-  return locked.sort((a, b) => {
-    if (a.progressPercent !== b.progressPercent) {
-      return b.progressPercent - a.progressPercent;
-    }
-    const aMeta = BADGE_TRACK_META[a.track];
-    const bMeta = BADGE_TRACK_META[b.track];
-    return (aMeta?.order ?? 99) - (bMeta?.order ?? 99);
-  })[0] ?? null;
+  return getNextLockedBadgeCore(progress, {
+    badges: getProgressBadges(progress, localizer),
+  });
 }
 
 export function getProgressTopActivities(
@@ -437,53 +380,25 @@ export function getProgressTopActivities(
   limit = 3,
   localizer?: KangurProgressLocalizer
 ): KangurProgressActivitySummary[] {
-  const entries = Object.entries(progress.activityStats ?? {});
-  return entries
-    .map(([key, stats]) => ({
-      key,
-      label: formatKangurProgressActivityLabel(key, localizer),
-      sessionsPlayed: stats.sessionsPlayed,
-      perfectSessions: stats.perfectSessions,
-      totalXpEarned: stats.totalXpEarned,
-      averageXpPerSession: stats.sessionsPlayed > 0 ? Math.round(stats.totalXpEarned / stats.sessionsPlayed) : 0,
-      averageAccuracy: Math.round((stats.totalCorrectAnswers / (stats.totalQuestionsAnswered || 1)) * 100),
-      bestScorePercent: stats.bestScorePercent,
-      currentStreak: stats.currentStreak,
-      bestStreak: stats.bestStreak,
-    }))
-    .sort((a, b) => b.totalXpEarned - a.totalXpEarned)
-    .slice(0, limit);
+  return getProgressTopActivitiesCore(progress, {
+    limit,
+    formatActivityLabel: (activityKey) =>
+      formatKangurProgressActivityLabel(activityKey, localizer),
+  });
 }
 
 export function getRecommendedSessionMomentum(
   progress: KangurProgressState,
   localizer?: KangurProgressLocalizer
 ): KangurRecommendedSessionMomentum {
-  const completed = progress.recommendedSessionsCompleted ?? 0;
-  const badges = getProgressBadges(progress, localizer).filter(
-    b => ['guided_step', 'guided_keeper'].includes(b.id)
-  );
-  const nextBadge = badges.find(b => !b.isUnlocked);
-  
-  if (!nextBadge) {
-    return {
-      completedSessions: completed,
-      progressPercent: 100,
-      summary: translateKangurProgressWithFallback(
-        localizer?.translate,
-        'momentum.allGoalsCompleted',
-        'Wszystkie cele osiągnięte!'
-      ),
-      nextBadgeName: null,
-    };
-  }
-  
-  return {
-    completedSessions: completed,
-    progressPercent: nextBadge.progressPercent,
-    summary: nextBadge.summary,
-    nextBadgeName: nextBadge.name,
-  };
+  return getRecommendedSessionMomentumCore(progress, {
+    badges: getProgressBadges(progress, localizer),
+    allGoalsCompletedLabel: translateKangurProgressWithFallback(
+      localizer?.translate,
+      'momentum.allGoalsCompleted',
+      'Wszystkie cele osiągnięte!'
+    ),
+  });
 }
 
 export function getRecommendedSessionProjection(
@@ -491,16 +406,9 @@ export function getRecommendedSessionProjection(
   isSuccessful: boolean,
   localizer?: KangurProgressLocalizer
 ): KangurRecommendedSessionProjection {
-  const current = getRecommendedSessionMomentum(progress, localizer);
-  
-  const projectedProgress = {
-    ...progress,
-    recommendedSessionsCompleted: (progress.recommendedSessionsCompleted ?? 0) + (isSuccessful ? 1 : 0),
-  };
-  
-  const projected = getRecommendedSessionMomentum(projectedProgress, localizer);
-  
-  return { current, projected };
+  return getRecommendedSessionProjectionCore(progress, isSuccessful, {
+    getMomentum: (progressState) => getRecommendedSessionMomentum(progressState, localizer),
+  });
 }
 
 const OPENED_TASKS_LIMIT = 60;

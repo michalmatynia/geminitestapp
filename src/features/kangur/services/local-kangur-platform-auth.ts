@@ -7,7 +7,7 @@ import {
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
 import type { KangurUser } from '@/features/kangur/services/ports';
-import { kangurAuthUserSchema } from '@/features/kangur/shared/contracts/kangur';
+import { kangurAuthUserSchema } from '@kangur/contracts';
 
 import { KANGUR_AUTH_ME_ENDPOINT } from './local-kangur-platform-endpoints';
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';

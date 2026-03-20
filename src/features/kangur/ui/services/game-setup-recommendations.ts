@@ -5,12 +5,12 @@ import {
   translateRecommendationWithFallback,
   type RecommendationTranslate,
 } from '@/features/kangur/ui/services/recommendation-i18n';
-import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
 } from '@/features/kangur/ui/services/progress';
+import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 import type {
   KangurDifficulty,
   KangurMode,

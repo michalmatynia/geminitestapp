@@ -936,7 +936,7 @@ export const buildAppearanceThemeSections = (
   fields: SettingsPanelField<ThemeSettings>[];
 }> =>
   THEME_SECTIONS.map((section) => {
-    const sectionId = section.id as AppearanceThemeSectionId;
+    const sectionId = section.id;
     const localized = SECTION_COPY[locale][sectionId] ?? {
       title: section.title,
       subtitle: section.subtitle,

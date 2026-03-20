@@ -3,7 +3,7 @@ import 'server-only';
 import type { Db, Document, Filter } from 'mongodb';
 
 import { canonicalizeKangurLessons, createDefaultKangurLessons } from '@/features/kangur/settings';
-import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson } from '@kangur/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { KangurLessonListInput, KangurLessonRepository } from './types';

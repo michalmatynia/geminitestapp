@@ -148,7 +148,7 @@ describe('KangurParentDashboardRuntimeContext', () => {
     fireEvent.click(screen.getByRole('button', { name: 'create' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('feedback')).toHaveTextContent('Ten nick jest już zajęty.');
+      expect(screen.getByTestId('feedback')).toHaveTextContent('Ten nick jest juz zajety.');
     });
     expect(createLearnerMock).not.toHaveBeenCalled();
   });
@@ -171,7 +171,7 @@ describe('KangurParentDashboardRuntimeContext', () => {
 
     await waitFor(() => {
       expect(createLearnerMock).toHaveBeenCalled();
-      expect(screen.getByTestId('feedback')).toHaveTextContent('Ten nick jest już zajęty.');
+      expect(screen.getByTestId('feedback')).toHaveTextContent('Ten nick jest juz zajety.');
     });
   });
 });

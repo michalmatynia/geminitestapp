@@ -235,10 +235,14 @@ export function ActiveLessonView() {
     [activeLessonScrollRef, updateScrollButtons]
   );
 
-  const handleBackToTopics = useCallback((): void => {
+  const handleReturnToLessonList = useCallback((): void => {
+    handleSelectLesson(null);
+  }, [handleSelectLesson]);
+
+  const handleLessonBackAction = useCallback((): void => {
     const container = activeLessonContentRef.current;
     if (!container) {
-      handleSelectLesson(null);
+      handleReturnToLessonList();
       return;
     }
     const backButton = container.querySelector('[data-kangur-lesson-back="true"]');
@@ -247,12 +251,12 @@ export function ActiveLessonView() {
         backButton.click();
         return;
       } catch {
-        handleSelectLesson(null);
+        handleReturnToLessonList();
         return;
       }
     }
-    handleSelectLesson(null);
-  }, [activeLessonContentRef, handleSelectLesson]);
+    handleReturnToLessonList();
+  }, [activeLessonContentRef, handleReturnToLessonList]);
 
   const headerSection = !isMobile ? (
     <div ref={activeLessonHeaderRef} id='kangur-lesson-header' className='w-full max-w-5xl'>
@@ -262,7 +266,7 @@ export function ActiveLessonView() {
         lessonContentRef={activeLessonContentRef}
         activeLessonAssignment={activeLessonAssignment}
         completedActiveLessonAssignment={completedActiveLessonAssignment}
-        onBack={handleBackToTopics}
+        onBack={handleReturnToLessonList}
         titleOverride={activeLessonHeaderContent?.title ?? 'Aktywna lekcja'}
         headerTestId='active-lesson-header'
         headerActionsTestId='active-lesson-header-icon-actions'
@@ -357,7 +361,7 @@ export function ActiveLessonView() {
       className={`w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
       <KangurLessonNavigationProvider
-        onBack={handleBackToTopics}
+        onBack={handleReturnToLessonList}
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
         {shouldLockScroll ? (
@@ -369,7 +373,7 @@ export function ActiveLessonView() {
                     size='sm'
                     variant='surface'
                     className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-                    onClick={handleBackToTopics}
+                    onClick={handleLessonBackAction}
                     aria-label={lessonBackLabel}
                     title={lessonBackLabel}
                   >

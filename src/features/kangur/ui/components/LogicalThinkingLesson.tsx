@@ -430,13 +430,14 @@ const localizeLogicalThinkingLessonCopy = <T,>(
   }
 
   if (Array.isArray(source)) {
-    return source.map((item, index) =>
+    const localizedItems: unknown[] = source.map((item, index): unknown =>
       localizeLogicalThinkingLessonCopy(
         translate,
-        item,
+        item as unknown,
         prefix ? `${prefix}.${index}` : String(index)
       )
-    ) as WidenLessonCopy<T>;
+    );
+    return localizedItems as WidenLessonCopy<T>;
   }
 
   if (source && typeof source === 'object') {

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { BADGES } from '@kangur/core';
 
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -8,7 +9,6 @@ import {
   KangurSurfacePanel,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { BADGES } from '@/features/kangur/ui/services/progress';
 import {
   getLocalizedKangurBadgeDescription,
   getLocalizedKangurBadgeName,

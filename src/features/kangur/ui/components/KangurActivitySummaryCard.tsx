@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { KangurProgressActivitySummary } from '@kangur/core';
 
 import {
   KangurCardDescription,
@@ -8,7 +9,6 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import type { KangurProgressActivitySummary } from '@/features/kangur/ui/services/progress';
 import { cn } from '@/features/kangur/shared/utils';
 
 type KangurActivitySummaryCardProps = {

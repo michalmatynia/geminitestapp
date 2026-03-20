@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { kangurLearnerSignInInputSchema } from '@/shared/contracts/kangur';
+import { kangurLearnerSignInInputSchema } from '@kangur/contracts';
 
 import { postKangurLearnerSignInHandler } from './handler';
 

@@ -12,7 +12,7 @@ import {
   kangurLessonSubjectSchema,
   type KangurLessonSubject,
   type KangurProgressState,
-} from '@/shared/contracts/kangur';
+} from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';

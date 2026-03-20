@@ -3,7 +3,7 @@ import 'server-only';
 import {
   kangurSubjectFocusSchema,
   type KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 import type { Filter } from 'mongodb';

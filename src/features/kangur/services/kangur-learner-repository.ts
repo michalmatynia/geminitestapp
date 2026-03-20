@@ -11,7 +11,7 @@ import {
   kangurLearnerProfilesSchema,
   type KangurLearnerStatus,
   type KangurLearnerUpdateInput,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,

@@ -125,8 +125,7 @@ describe('Leaderboard', () => {
 
     expect(screen.getByTestId('leaderboard-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft'
     );
     expect(operationGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(userGroup).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
@@ -191,7 +190,7 @@ describe('Leaderboard', () => {
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('emptyStateLabel')).toBeInTheDocument();
+    expect(screen.getByText('Brak wynikow dla tych filtrow.')).toBeInTheDocument();
   });
 
   it('uses Mongo-backed page-content titles when available', async () => {

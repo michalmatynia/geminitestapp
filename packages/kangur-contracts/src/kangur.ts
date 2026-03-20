@@ -1,72 +1,51 @@
 import { z } from 'zod';
 
+import { kangurLearnerPasswordSchema } from './kangur-learner-password';
+import {
+  kangurLessonActivityIdSchema,
+  kangurLessonAgeGroupSchema,
+  kangurLessonComponentIdSchema,
+  kangurLessonContentModeSchema,
+  kangurLessonNarrationVoiceSchema,
+  kangurLessonSubjectSchema,
+} from './kangur-lesson-constants';
+import type { KangurLessonSubject } from './kangur-lesson-constants';
 import {
   createDefaultKangurAiTutorLearnerMood,
   kangurAiTutorLearnerMoodSchema,
 } from './kangur-ai-tutor-mood';
+import { activityLogSchema } from './system';
 
 const nonEmptyTrimmedString = z.string().trim().min(1);
 
-export const KANGUR_LESSONS_SETTING_KEY = 'kangur_lessons_v1';
-export const KANGUR_LESSON_DOCUMENTS_SETTING_KEY = 'kangur_lesson_documents_v1';
+export {
+  KANGUR_LEARNER_PASSWORD_MAX_LENGTH,
+  KANGUR_LEARNER_PASSWORD_MIN_LENGTH,
+  KANGUR_LEARNER_PASSWORD_PATTERN,
+} from './kangur-learner-password';
+export * from './kangur-lesson-constants';
+export * from './kangur-settings-keys';
 
-export const kangurLessonComponentIdSchema = z.enum([
-  'clock',
-  'calendar',
-  'adding',
-  'subtracting',
-  'multiplication',
-  'division',
-  'geometry_basics',
-  'geometry_shapes',
-  'geometry_symmetry',
-  'geometry_perimeter',
-  'logical_thinking',
-  'logical_patterns',
-  'logical_classification',
-  'logical_reasoning',
-  'logical_analogies',
-]);
-export type KangurLessonComponentId = z.infer<typeof kangurLessonComponentIdSchema>;
+export const kangurQuestionChoiceSchema = z.union([z.number(), z.string()]);
+export type KangurQuestionChoice = z.infer<typeof kangurQuestionChoiceSchema>;
 
-export const kangurLessonContentModeSchema = z.enum(['component', 'document']);
-export type KangurLessonContentMode = z.infer<typeof kangurLessonContentModeSchema>;
-
-export const KANGUR_TTS_DEFAULT_LOCALE = 'pl-PL';
-export const KANGUR_TTS_DEFAULT_VOICE = 'coral';
-
-export const KANGUR_LESSON_ACTIVITY_IDS = [
-  'adding-ball',
-  'adding-synthesis',
-  'subtracting-game',
-  'multiplication-array',
-  'multiplication-quiz',
-  'division-game',
-  'geometry-drawing',
-  'calendar-interactive',
-  'clock-training',
-] as const;
-export const kangurLessonActivityIdSchema = z.enum(KANGUR_LESSON_ACTIVITY_IDS);
-export type KangurLessonActivityId = z.infer<typeof kangurLessonActivityIdSchema>;
-
-export const kangurLessonNarrationVoiceSchema = z.enum([
-  'alloy',
-  'ash',
-  'ballad',
-  'coral',
-  'echo',
-  'sage',
-  'shimmer',
-  'verse',
-  'marin',
-  'cedar',
-]);
-export type KangurLessonNarrationVoice = z.infer<typeof kangurLessonNarrationVoiceSchema>;
+export const kangurExamQuestionSchema = z.object({
+  id: nonEmptyTrimmedString.max(120),
+  question: z.string().max(10_000),
+  choices: z.array(kangurQuestionChoiceSchema).min(1).max(10),
+  answer: kangurQuestionChoiceSchema,
+  explanation: z.string().max(5_000).optional(),
+  image: z.string().nullable().optional(),
+  choiceDescriptions: z.array(z.string()).max(10).optional(),
+});
+export type KangurExamQuestion = z.infer<typeof kangurExamQuestionSchema>;
 
 export const kangurLessonSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   componentId: kangurLessonComponentIdSchema,
   contentMode: kangurLessonContentModeSchema.default('component'),
+  subject: kangurLessonSubjectSchema.default('maths'),
+  ageGroup: kangurLessonAgeGroupSchema.default('six_year_old'),
   title: nonEmptyTrimmedString.max(120),
   description: nonEmptyTrimmedString.max(240),
   emoji: nonEmptyTrimmedString.max(12),
@@ -74,6 +53,8 @@ export const kangurLessonSchema = z.object({
   activeBg: nonEmptyTrimmedString.max(80),
   sortOrder: z.number().int(),
   enabled: z.boolean(),
+  sectionId: z.string().trim().max(120).optional(),
+  subsectionId: z.string().trim().max(120).optional(),
 });
 export type KangurLesson = z.infer<typeof kangurLessonSchema>;
 
@@ -233,6 +214,8 @@ export const kangurLessonDocumentNarrationSchema = z
   .object({
     voice: kangurLessonNarrationVoiceSchema.optional(),
     locale: z.string().trim().min(2).max(16).optional(),
+    previewSourceSignature: z.string().trim().min(1).max(128).optional(),
+    lastPreviewedAt: z.string().datetime({ offset: true }).optional(),
   })
   .optional();
 export type KangurLessonDocumentNarration = z.infer<typeof kangurLessonDocumentNarrationSchema>;
@@ -272,6 +255,56 @@ export const kangurLessonMasterySchema = z.record(
 );
 export type KangurLessonMastery = z.infer<typeof kangurLessonMasterySchema>;
 
+export const kangurProgressTaskOpenKindSchema = z.enum(['game', 'lesson', 'test']);
+export type KangurProgressTaskOpenKind = z.infer<typeof kangurProgressTaskOpenKindSchema>;
+
+export const kangurProgressTaskOpenEntrySchema = z.object({
+  kind: kangurProgressTaskOpenKindSchema,
+  title: nonEmptyTrimmedString.max(160),
+  href: nonEmptyTrimmedString.max(420),
+  openedAt: z.string().datetime({ offset: true }),
+});
+export type KangurProgressTaskOpenEntry = z.infer<typeof kangurProgressTaskOpenEntrySchema>;
+
+export const kangurProgressTaskOpenListSchema = z
+  .array(kangurProgressTaskOpenEntrySchema)
+  .max(120);
+export type KangurProgressTaskOpenList = z.infer<typeof kangurProgressTaskOpenListSchema>;
+
+export const kangurLessonPanelProgressEntrySchema = z.object({
+  viewedCount: kangurProgressCounterSchema,
+  totalCount: kangurProgressCounterSchema,
+  lastViewedAt: z.string().datetime({ offset: true }).nullable().optional(),
+  label: z.string().trim().min(1).max(160).optional(),
+  sessionId: z.string().trim().min(1).max(80).optional(),
+  sessionStartedAt: z.string().datetime({ offset: true }).nullable().optional(),
+  sessionUpdatedAt: z.string().datetime({ offset: true }).nullable().optional(),
+  panelTimes: z
+    .record(
+      z.string().trim().min(1).max(80),
+      z.object({
+        seconds: kangurProgressCounterSchema,
+        title: z.string().trim().min(1).max(160).optional(),
+      })
+    )
+    .optional(),
+});
+export type KangurLessonPanelProgressEntry = z.infer<typeof kangurLessonPanelProgressEntrySchema>;
+
+export const kangurLessonPanelProgressSchema = z.record(
+  z.string().trim().min(1).max(80),
+  kangurLessonPanelProgressEntrySchema
+);
+export type KangurLessonPanelProgress = z.infer<typeof kangurLessonPanelProgressSchema>;
+
+export const kangurLessonPanelProgressStoreSchema = z.record(
+  z.string().trim().min(1).max(80),
+  kangurLessonPanelProgressSchema
+);
+export type KangurLessonPanelProgressStore = z.infer<
+  typeof kangurLessonPanelProgressStoreSchema
+>;
+
 const normalizeKangurLessonMasteryEntry = (value: unknown): KangurLessonMasteryEntry | null => {
   const parsed = kangurLessonMasteryEntrySchema.safeParse(value);
   if (!parsed.success) {
@@ -305,6 +338,147 @@ export const normalizeKangurLessonMastery = (value: unknown): KangurLessonMaster
   return normalized;
 };
 
+const normalizeKangurProgressTaskOpenEntry = (
+  value: unknown
+): KangurProgressTaskOpenEntry | null => {
+  const parsed = kangurProgressTaskOpenEntrySchema.safeParse(value);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return parsed.data;
+};
+
+export const normalizeKangurProgressTaskOpenList = (
+  value: unknown
+): KangurProgressTaskOpenList => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalized: KangurProgressTaskOpenList = [];
+  value.forEach((entry) => {
+    const normalizedEntry = normalizeKangurProgressTaskOpenEntry(entry);
+    if (normalizedEntry) {
+      normalized.push(normalizedEntry);
+    }
+  });
+
+  return normalized;
+};
+
+const normalizeKangurLessonPanelProgressEntry = (
+  value: unknown
+): KangurLessonPanelProgressEntry | null => {
+  const parsed = kangurLessonPanelProgressEntrySchema.safeParse(value);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return {
+    ...parsed.data,
+    lastViewedAt: parsed.data.lastViewedAt ?? null,
+    sessionStartedAt: parsed.data.sessionStartedAt ?? null,
+    sessionUpdatedAt: parsed.data.sessionUpdatedAt ?? null,
+  };
+};
+
+export const normalizeKangurLessonPanelProgress = (
+  value: unknown
+): KangurLessonPanelProgress => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const normalized: KangurLessonPanelProgress = {};
+  for (const [rawKey, rawEntry] of Object.entries(value as Record<string, unknown>)) {
+    const key = rawKey.trim();
+    if (!key || key.length > 80) {
+      continue;
+    }
+
+    const entry = normalizeKangurLessonPanelProgressEntry(rawEntry);
+    if (entry) {
+      normalized[key] = entry;
+    }
+  }
+
+  return normalized;
+};
+
+export const normalizeKangurLessonPanelProgressStore = (
+  value: unknown
+): KangurLessonPanelProgressStore => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const normalized: KangurLessonPanelProgressStore = {};
+  for (const [rawKey, rawEntry] of Object.entries(value as Record<string, unknown>)) {
+    const key = rawKey.trim();
+    if (!key || key.length > 80) {
+      continue;
+    }
+
+    normalized[key] = normalizeKangurLessonPanelProgress(rawEntry);
+  }
+
+  return normalized;
+};
+
+export const kangurActivityStatsEntrySchema = z.object({
+  sessionsPlayed: kangurProgressCounterSchema,
+  perfectSessions: kangurProgressCounterSchema,
+  totalCorrectAnswers: kangurProgressCounterSchema,
+  totalQuestionsAnswered: kangurProgressCounterSchema,
+  totalXpEarned: kangurProgressCounterSchema.default(0),
+  bestScorePercent: kangurLessonMasteryPercentSchema,
+  lastScorePercent: kangurLessonMasteryPercentSchema,
+  currentStreak: kangurProgressCounterSchema,
+  bestStreak: kangurProgressCounterSchema,
+  lastPlayedAt: z.string().datetime({ offset: true }).nullable(),
+});
+export type KangurActivityStatsEntry = z.infer<typeof kangurActivityStatsEntrySchema>;
+
+export const kangurActivityStatsSchema = z.record(
+  z.string().trim().min(1).max(80),
+  kangurActivityStatsEntrySchema
+);
+export type KangurActivityStats = z.infer<typeof kangurActivityStatsSchema>;
+
+const normalizeKangurActivityStatsEntry = (value: unknown): KangurActivityStatsEntry | null => {
+  const parsed = kangurActivityStatsEntrySchema.safeParse(value);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return {
+    ...parsed.data,
+    lastPlayedAt: parsed.data.lastPlayedAt ?? null,
+  };
+};
+
+export const normalizeKangurActivityStats = (value: unknown): KangurActivityStats => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  const normalized: KangurActivityStats = {};
+  for (const [rawKey, rawEntry] of Object.entries(value as Record<string, unknown>)) {
+    const key = rawKey.trim();
+    if (!key || key.length > 80) {
+      continue;
+    }
+
+    const entry = normalizeKangurActivityStatsEntry(rawEntry);
+    if (entry) {
+      normalized[key] = entry;
+    }
+  }
+
+  return normalized;
+};
+
 export const kangurProgressStateSchema = z.object({
   totalXp: kangurProgressCounterSchema,
   gamesPlayed: kangurProgressCounterSchema,
@@ -316,8 +490,100 @@ export const kangurProgressStateSchema = z.object({
   badges: kangurProgressListSchema,
   operationsPlayed: kangurProgressListSchema,
   lessonMastery: kangurLessonMasterySchema,
+  openedTasks: kangurProgressTaskOpenListSchema.optional(),
+  lessonPanelProgress: kangurLessonPanelProgressStoreSchema.optional(),
+  totalCorrectAnswers: kangurProgressCounterSchema.optional(),
+  totalQuestionsAnswered: kangurProgressCounterSchema.optional(),
+  currentWinStreak: kangurProgressCounterSchema.optional(),
+  bestWinStreak: kangurProgressCounterSchema.optional(),
+  dailyQuestsCompleted: kangurProgressCounterSchema.optional(),
+  recommendedSessionsCompleted: kangurProgressCounterSchema.optional(),
+  currentActivityRepeatStreak: kangurProgressCounterSchema.optional(),
+  lastRewardedActivityKey: z.string().trim().max(120).nullable().optional(),
+  activityStats: kangurActivityStatsSchema.optional(),
 });
 export type KangurProgressState = z.infer<typeof kangurProgressStateSchema>;
+
+export const kangurLearnerActivityKindSchema = z.enum(['game', 'lesson', 'test']);
+export type KangurLearnerActivityKind = z.infer<typeof kangurLearnerActivityKindSchema>;
+
+export const kangurLearnerActivitySnapshotSchema = z.object({
+  learnerId: nonEmptyTrimmedString.max(120),
+  kind: kangurLearnerActivityKindSchema,
+  title: nonEmptyTrimmedString.max(160),
+  href: nonEmptyTrimmedString.max(420),
+  startedAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+});
+export type KangurLearnerActivitySnapshot = z.infer<typeof kangurLearnerActivitySnapshotSchema>;
+
+export const kangurLearnerActivityUpdateInputSchema = z.object({
+  kind: kangurLearnerActivityKindSchema,
+  title: nonEmptyTrimmedString.max(160),
+  href: nonEmptyTrimmedString.max(420),
+});
+export type KangurLearnerActivityUpdateInput = z.infer<
+  typeof kangurLearnerActivityUpdateInputSchema
+>;
+
+export const kangurLearnerActivityStatusSchema = z.object({
+  snapshot: kangurLearnerActivitySnapshotSchema.nullable(),
+  isOnline: z.boolean(),
+});
+export type KangurLearnerActivityStatus = z.infer<typeof kangurLearnerActivityStatusSchema>;
+
+export const kangurLearnerSessionEntrySchema = z.object({
+  id: nonEmptyTrimmedString.max(120),
+  startedAt: z.string().datetime({ offset: true }),
+  endedAt: z.string().datetime({ offset: true }).nullable(),
+  durationSeconds: z.number().int().min(0).nullable(),
+});
+export type KangurLearnerSessionEntry = z.infer<typeof kangurLearnerSessionEntrySchema>;
+
+export const kangurLearnerSessionHistorySchema = z.object({
+  sessions: z.array(kangurLearnerSessionEntrySchema),
+  totalSessions: z.number().int().min(0),
+  nextOffset: z.number().int().min(0).nullable().optional(),
+  hasMore: z.boolean().optional(),
+});
+export type KangurLearnerSessionHistory = z.infer<typeof kangurLearnerSessionHistorySchema>;
+
+export const kangurLearnerInteractionEntrySchema = activityLogSchema;
+export type KangurLearnerInteractionEntry = z.infer<
+  typeof kangurLearnerInteractionEntrySchema
+>;
+
+export const kangurLearnerInteractionHistorySchema = z.object({
+  items: z.array(kangurLearnerInteractionEntrySchema),
+  total: z.number().int().min(0),
+  limit: z.number().int().min(1),
+  offset: z.number().int().min(0),
+});
+export type KangurLearnerInteractionHistory = z.infer<
+  typeof kangurLearnerInteractionHistorySchema
+>;
+
+export const kangurRoutePageSchema = z.enum([
+  'Game',
+  'Lessons',
+  'ParentDashboard',
+  'LearnerProfile',
+  'Duels',
+]);
+export type KangurRoutePage = z.infer<typeof kangurRoutePageSchema>;
+
+export const kangurRouteActionQuerySchema = z.record(
+  z.string().trim().min(1).max(80),
+  z.string().trim().max(240)
+);
+export type KangurRouteActionQuery = z.infer<typeof kangurRouteActionQuerySchema>;
+
+export const kangurRouteActionSchema = z.object({
+  label: nonEmptyTrimmedString.max(80),
+  page: kangurRoutePageSchema,
+  query: kangurRouteActionQuerySchema.optional(),
+});
+export type KangurRouteAction = z.infer<typeof kangurRouteActionSchema>;
 
 export const kangurLearnerStatusSchema = z.enum(['active', 'disabled']);
 export type KangurLearnerStatus = z.infer<typeof kangurLearnerStatusSchema>;
@@ -326,6 +592,8 @@ export const kangurLearnerProfileSchema = z.object({
   id: nonEmptyTrimmedString.max(120),
   ownerUserId: nonEmptyTrimmedString.max(120),
   displayName: nonEmptyTrimmedString.max(120),
+  age: z.number().int().min(3).max(99).nullable().optional(),
+  avatarId: z.string().trim().max(80).nullable().optional(),
   loginName: nonEmptyTrimmedString.max(80),
   status: kangurLearnerStatusSchema,
   legacyUserKey: z.string().trim().max(160).nullable().default(null),
@@ -340,24 +608,28 @@ export type KangurLearnerProfiles = z.infer<typeof kangurLearnerProfilesSchema>;
 
 export const kangurLearnerCreateInputSchema = z.object({
   displayName: nonEmptyTrimmedString.max(120),
+  age: z.number().int().min(3).max(99).optional(),
   loginName: nonEmptyTrimmedString.max(80),
-  password: z.string().min(8).max(160),
+  password: kangurLearnerPasswordSchema,
 });
 export type KangurLearnerCreateInput = z.infer<typeof kangurLearnerCreateInputSchema>;
 
 export const kangurLearnerUpdateInputSchema = z
   .object({
     displayName: nonEmptyTrimmedString.max(120).optional(),
+    age: z.number().int().min(3).max(99).optional(),
     loginName: nonEmptyTrimmedString.max(80).optional(),
-    password: z.string().min(8).max(160).optional(),
+    password: kangurLearnerPasswordSchema.optional(),
     status: kangurLearnerStatusSchema.optional(),
+    avatarId: z.string().trim().max(80).nullable().optional(),
   })
   .refine(
     (value) =>
       value.displayName !== undefined ||
       value.loginName !== undefined ||
       value.password !== undefined ||
-      value.status !== undefined,
+      value.status !== undefined ||
+      value.avatarId !== undefined,
     {
       message: 'At least one learner update field is required.',
     }
@@ -366,7 +638,7 @@ export type KangurLearnerUpdateInput = z.infer<typeof kangurLearnerUpdateInputSc
 
 export const kangurLearnerSignInInputSchema = z.object({
   loginName: nonEmptyTrimmedString.max(80),
-  password: z.string().min(1).max(160),
+  password: kangurLearnerPasswordSchema,
 });
 export type KangurLearnerSignInInput = z.infer<typeof kangurLearnerSignInInputSchema>;
 
@@ -384,6 +656,7 @@ export const kangurAuthUserSchema = z.object({
   actorType: kangurUserActorTypeSchema,
   canManageLearners: z.boolean(),
   ownerUserId: z.string().trim().max(120).nullable(),
+  ownerEmailVerified: z.boolean(),
   activeLearner: kangurLearnerProfileSchema.nullable(),
   learners: kangurLearnerProfilesSchema,
 });
@@ -404,16 +677,47 @@ export const createDefaultKangurProgressState = (): KangurProgressState => ({
   badges: [],
   operationsPlayed: [],
   lessonMastery: {},
+  openedTasks: [],
+  lessonPanelProgress: {},
+  totalCorrectAnswers: 0,
+  totalQuestionsAnswered: 0,
+  currentWinStreak: 0,
+  bestWinStreak: 0,
+  dailyQuestsCompleted: 0,
+  recommendedSessionsCompleted: 0,
+  currentActivityRepeatStreak: 0,
+  lastRewardedActivityKey: null,
+  activityStats: {},
 });
 
 export const normalizeKangurProgressState = (value: unknown): KangurProgressState => {
+  const defaults = createDefaultKangurProgressState();
+
   const parsed = kangurProgressStateSchema.safeParse(value);
   if (parsed.success) {
     return {
+      ...defaults,
       ...parsed.data,
       badges: mergeUniqueProgressValues(parsed.data.badges),
       operationsPlayed: mergeUniqueProgressValues(parsed.data.operationsPlayed),
       lessonMastery: normalizeKangurLessonMastery(parsed.data.lessonMastery),
+      openedTasks: normalizeKangurProgressTaskOpenList(parsed.data.openedTasks),
+      lessonPanelProgress: normalizeKangurLessonPanelProgressStore(
+        parsed.data.lessonPanelProgress
+      ),
+      totalCorrectAnswers: parsed.data.totalCorrectAnswers ?? defaults.totalCorrectAnswers,
+      totalQuestionsAnswered:
+        parsed.data.totalQuestionsAnswered ?? defaults.totalQuestionsAnswered,
+      currentWinStreak: parsed.data.currentWinStreak ?? defaults.currentWinStreak,
+      bestWinStreak: parsed.data.bestWinStreak ?? defaults.bestWinStreak,
+      dailyQuestsCompleted: parsed.data.dailyQuestsCompleted ?? defaults.dailyQuestsCompleted,
+      recommendedSessionsCompleted:
+        parsed.data.recommendedSessionsCompleted ?? defaults.recommendedSessionsCompleted,
+      currentActivityRepeatStreak:
+        parsed.data.currentActivityRepeatStreak ?? defaults.currentActivityRepeatStreak,
+      lastRewardedActivityKey:
+        parsed.data.lastRewardedActivityKey ?? defaults.lastRewardedActivityKey,
+      activityStats: normalizeKangurActivityStats(parsed.data.activityStats),
     };
   }
 
@@ -422,7 +726,6 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
     return createDefaultKangurProgressState();
   }
 
-  const defaults = createDefaultKangurProgressState();
   return {
     ...defaults,
     ...partial.data,
@@ -431,6 +734,25 @@ export const normalizeKangurProgressState = (value: unknown): KangurProgressStat
       partial.data.operationsPlayed ?? defaults.operationsPlayed
     ),
     lessonMastery: normalizeKangurLessonMastery(partial.data.lessonMastery),
+    openedTasks: normalizeKangurProgressTaskOpenList(
+      partial.data.openedTasks ?? defaults.openedTasks
+    ),
+    lessonPanelProgress: normalizeKangurLessonPanelProgressStore(
+      partial.data.lessonPanelProgress ?? defaults.lessonPanelProgress
+    ),
+    totalCorrectAnswers: partial.data.totalCorrectAnswers ?? defaults.totalCorrectAnswers,
+    totalQuestionsAnswered:
+      partial.data.totalQuestionsAnswered ?? defaults.totalQuestionsAnswered,
+    currentWinStreak: partial.data.currentWinStreak ?? defaults.currentWinStreak,
+    bestWinStreak: partial.data.bestWinStreak ?? defaults.bestWinStreak,
+    dailyQuestsCompleted: partial.data.dailyQuestsCompleted ?? defaults.dailyQuestsCompleted,
+    recommendedSessionsCompleted:
+      partial.data.recommendedSessionsCompleted ?? defaults.recommendedSessionsCompleted,
+    currentActivityRepeatStreak:
+      partial.data.currentActivityRepeatStreak ?? defaults.currentActivityRepeatStreak,
+    lastRewardedActivityKey:
+      partial.data.lastRewardedActivityKey ?? defaults.lastRewardedActivityKey,
+    activityStats: normalizeKangurActivityStats(partial.data.activityStats),
   };
 };
 
@@ -455,15 +777,36 @@ export type KangurScoreSort = z.infer<typeof kangurScoreSortSchema>;
 export const kangurScoreLimitSchema = z.number().int().min(1).max(500).default(100);
 export type KangurScoreLimit = z.infer<typeof kangurScoreLimitSchema>;
 
+const isEnglishScoreOperation = (operation: string): boolean =>
+  operation.trim().toLowerCase().startsWith('english_');
+const isAlphabetScoreOperation = (operation: string): boolean =>
+  operation.trim().toLowerCase().startsWith('alphabet_');
+
+export const resolveKangurScoreSubject = (input: {
+  operation: string;
+  subject?: KangurLessonSubject | null;
+}): KangurLessonSubject => {
+  if (isEnglishScoreOperation(input.operation)) {
+    return 'english';
+  }
+  if (isAlphabetScoreOperation(input.operation)) {
+    return 'alphabet';
+  }
+  return input.subject ?? 'maths';
+};
+
 export const kangurScoreSchema = z.object({
   id: nonEmptyTrimmedString,
   player_name: nonEmptyTrimmedString.max(80),
   score: z.number().int().min(0).max(10_000),
   operation: nonEmptyTrimmedString.max(64),
+  subject: kangurLessonSubjectSchema.default('maths'),
   total_questions: z.number().int().min(1).max(10_000),
   correct_answers: z.number().int().min(0).max(10_000),
   time_taken: z.number().int().min(0).max(86_400),
+  xp_earned: z.number().int().min(0).max(100_000).nullable().optional(),
   created_date: z.string().datetime({ offset: true }),
+  client_mutation_id: z.string().trim().max(120).nullable().optional(),
   created_by: z.string().trim().nullable().optional(),
   learner_id: z.string().trim().max(120).nullable().optional(),
   owner_user_id: z.string().trim().max(120).nullable().optional(),
@@ -489,6 +832,7 @@ export type KangurScoreRepositoryCreateInput = z.infer<
 export const kangurScoreFiltersSchema = z.object({
   player_name: z.string().trim().min(1).optional(),
   operation: z.string().trim().min(1).optional(),
+  subject: kangurLessonSubjectSchema.optional(),
   created_by: z.string().trim().min(1).optional(),
   learner_id: z.string().trim().min(1).optional(),
 });
@@ -499,6 +843,7 @@ export const kangurScoreListQuerySchema = z.object({
   limit: kangurScoreLimitSchema.optional(),
   player_name: kangurScoreFiltersSchema.shape.player_name,
   operation: kangurScoreFiltersSchema.shape.operation,
+  subject: kangurScoreFiltersSchema.shape.subject,
   created_by: kangurScoreFiltersSchema.shape.created_by,
   learner_id: kangurScoreFiltersSchema.shape.learner_id,
 });
@@ -523,6 +868,7 @@ export type KangurPracticeAssignmentOperation = z.infer<
 >;
 
 const kangurAssignmentIsoDateSchema = z.string().datetime({ offset: true });
+const kangurAssignmentTimeLimitMinutesSchema = z.number().int().min(1).max(240).nullable();
 
 export const kangurAssignmentCreateLessonTargetSchema = z.object({
   type: z.literal('lesson'),
@@ -570,6 +916,8 @@ export const kangurAssignmentSchema = z.object({
   description: nonEmptyTrimmedString.max(320),
   priority: kangurAssignmentPrioritySchema,
   archived: z.boolean().default(false),
+  timeLimitMinutes: kangurAssignmentTimeLimitMinutesSchema.optional(),
+  timeLimitStartsAt: kangurAssignmentIsoDateSchema.nullable().optional(),
   target: kangurAssignmentTargetSchema,
   assignedByName: z.string().trim().max(120).nullable().default(null),
   assignedByEmail: z.string().trim().max(160).nullable().default(null),
@@ -608,6 +956,7 @@ export const kangurAssignmentCreateInputSchema = z.object({
   title: nonEmptyTrimmedString.max(160),
   description: nonEmptyTrimmedString.max(320),
   priority: kangurAssignmentPrioritySchema,
+  timeLimitMinutes: kangurAssignmentTimeLimitMinutesSchema.optional(),
   target: kangurAssignmentCreateTargetSchema,
 });
 export type KangurAssignmentCreateInput = z.infer<typeof kangurAssignmentCreateInputSchema>;
@@ -629,10 +978,17 @@ export const kangurAssignmentUpdateInputSchema = z
   .object({
     archived: z.boolean().optional(),
     priority: kangurAssignmentPrioritySchema.optional(),
+    timeLimitMinutes: kangurAssignmentTimeLimitMinutesSchema.optional(),
   })
-  .refine((value) => value.archived !== undefined || value.priority !== undefined, {
-    message: 'At least one assignment update field is required.',
-  });
+  .refine(
+    (value) =>
+      value.archived !== undefined ||
+      value.priority !== undefined ||
+      value.timeLimitMinutes !== undefined,
+    {
+      message: 'At least one assignment update field is required.',
+    }
+  );
 export type KangurAssignmentUpdateInput = z.infer<typeof kangurAssignmentUpdateInputSchema>;
 
 export const kangurAssignmentListQuerySchema = z.object({

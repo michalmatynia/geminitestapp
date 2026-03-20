@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
+
 import { toWebsiteHelpTargetHref } from './KangurAiTutorWidget.helpers';
 
 describe('KangurAiTutorWidget helpers', () => {
@@ -33,5 +35,28 @@ describe('KangurAiTutorWidget helpers', () => {
         route: '/kangur/lessons',
       })
     ).toBe('/kangur/lessons');
+  });
+
+  it('normalizes legacy /kangur lesson targets for localized root-owned mounts', () => {
+    expect(
+      toWebsiteHelpTargetHref('/en', {
+        nodeId: 'page:kangur:lessons',
+        label: 'Lessons',
+        route: '/kangur/lessons?focus=division',
+      })
+    ).toBe('/en/lessons?focus=division');
+  });
+
+  it('maps lesson targets through embedded kangur routes instead of concatenating path segments', () => {
+    const embeddedBasePath = buildKangurEmbeddedBasePath('/home?preview=1');
+
+    expect(
+      toWebsiteHelpTargetHref(embeddedBasePath, {
+        nodeId: 'page:kangur:lessons',
+        label: 'Lessons',
+        route: '/lessons?focus=division',
+        anchorId: 'kangur-lessons-list',
+      })
+    ).toBe('/home?preview=1&kangur=lessons&focus=division#kangur-lessons-list');
   });
 });

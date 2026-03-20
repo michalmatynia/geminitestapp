@@ -6,7 +6,7 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
-import { kangurSubjectFocusSchema } from '@/shared/contracts/kangur';
+import { kangurSubjectFocusSchema } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

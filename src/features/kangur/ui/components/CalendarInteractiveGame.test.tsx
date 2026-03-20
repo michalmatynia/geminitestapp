@@ -19,10 +19,10 @@ describe('CalendarInteractiveGame', () => {
     render(<CalendarInteractiveGame onFinish={() => undefined} />);
 
     const previousMonthButton = screen.getByRole('button', {
-      name: 'calendarInteractive.inRound.previousMonth',
+      name: 'Poprzedni miesiąc',
     });
     const nextMonthButton = screen.getByRole('button', {
-      name: 'calendarInteractive.inRound.nextMonth',
+      name: 'Następny miesiąc',
     });
 
     expect(previousMonthButton).toHaveClass('kangur-cta-pill', 'surface-cta');
@@ -87,9 +87,9 @@ describe('CalendarInteractiveGame', () => {
 
     expect(screen.queryByTestId('calendar-interactive-section-badge')).toBeNull();
     expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
-      'calendarInteractive.section.dni.guidanceTitle'
+      'Trening dni tygodnia'
     );
-    expect(screen.getByText('calendarInteractive.section.dni.promptLabel')).toBeInTheDocument();
+    expect(screen.getByText('Znajdź właściwy dzień tygodnia')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-weekday-0')).toBeInTheDocument();
     expect(screen.queryByTestId('calendar-season-0')).toBeNull();
   });
@@ -101,9 +101,9 @@ describe('CalendarInteractiveGame', () => {
 
     expect(screen.queryByTestId('calendar-interactive-section-badge')).toBeNull();
     expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
-      'calendarInteractive.section.data.guidanceTitle'
+      'Trening dat'
     );
-    expect(screen.getByText('calendarInteractive.section.data.promptLabel')).toBeInTheDocument();
+    expect(screen.getByText('Odszukaj właściwą datę w kalendarzu')).toBeInTheDocument();
     expect(screen.getByTestId('calendar-interactive-calendar-shell')).toBeInTheDocument();
     expect(screen.queryByTestId('calendar-weekday-0')).toBeNull();
     expect(screen.queryByTestId('calendar-season-0')).toBeNull();
@@ -127,21 +127,17 @@ describe('CalendarInteractiveGame', () => {
       'inline-flex',
       'text-6xl'
     );
-    expect(screen.getByTestId('calendar-interactive-summary-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
+    expect(screen.getByTestId('calendar-interactive-summary-shell')).toHaveClass('glass-panel', 'kangur-panel-soft');
     expect(screen.getByTestId('calendar-interactive-summary-progress-bar')).toHaveAttribute(
       'aria-valuenow',
       '100'
     );
     expect(screen.getByTestId('calendar-interactive-summary-progress-bar')).toHaveAttribute(
       'aria-valuetext',
-      '100% shared.correctAnswersSuffix'
+      '100% poprawnych odpowiedzi'
     );
-    expect(screen.getByText('shared.scoreLabel: 6/6')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'shared.restart' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'shared.finish.back' })).toBeInTheDocument();
+    expect(screen.getByText('Wynik: 6/6')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Jeszcze raz' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć' })).toBeInTheDocument();
   });
 });

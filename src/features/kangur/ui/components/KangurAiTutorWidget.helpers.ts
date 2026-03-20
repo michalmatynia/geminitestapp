@@ -1,14 +1,23 @@
+import {
+  KANGUR_INTERNAL_QUERY_PARAM_KEYS,
+  getKangurInternalQueryParamName,
+  normalizeKangurBasePath,
+  normalizeKangurRequestedPath,
+  resolveKangurPublicBasePathFromHref,
+} from '@/features/kangur/config/routing';
 import type { KangurTutorAnchorRegistration } from '@/features/kangur/ui/context/kangur-tutor-types';
 import { buildKangurRecommendationHref } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
 import type {
   KangurAiTutorFollowUpAction,
   KangurAiTutorWebsiteHelpTarget,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 
 import type { GuidedTutorSectionKind, GuidedTutorTarget, TutorSurface } from './KangurAiTutorWidget.types';
 
 const SELECTION_PROTECTED_ZONE_PADDING_X = 36;
 const SELECTION_PROTECTED_ZONE_PADDING_Y = 20;
+const KANGUR_LOCAL_ORIGIN = 'https://kangur.local';
 
 export const normalizeTutorSelectionText = (
   value: string | null | undefined
@@ -54,18 +63,67 @@ export const toWebsiteHelpTargetHref = (
   basePath: string,
   target: KangurAiTutorWebsiteHelpTarget
 ): string => {
-  const normalizedBasePath = basePath.endsWith('/') && basePath !== '/' ? basePath.slice(0, -1) : basePath;
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
   const rawRoute = typeof target.route === 'string' ? target.route.trim() : '';
-  const normalizedRoute = rawRoute && rawRoute !== '/'
-    ? rawRoute.startsWith(normalizedBasePath)
-      ? rawRoute
-      : `${normalizedBasePath}${rawRoute.startsWith('/') ? rawRoute : `/${rawRoute}`}`
-    : normalizedBasePath;
+  const parsedRoute = rawRoute
+    ? new URL(rawRoute.startsWith('/') ? rawRoute : `/${rawRoute}`, KANGUR_LOCAL_ORIGIN)
+    : null;
+  const slugSegments = parsedRoute
+    ? (() => {
+        const localeStrippedPathname = stripSiteLocalePrefix(parsedRoute.pathname);
+        const publicBasePath = resolveKangurPublicBasePathFromHref(
+          localeStrippedPathname,
+          KANGUR_LOCAL_ORIGIN
+        );
+        const relativePath =
+          publicBasePath === '/'
+            ? localeStrippedPathname
+            : localeStrippedPathname === publicBasePath
+              ? '/'
+              : localeStrippedPathname.slice(publicBasePath.length);
+
+        return relativePath
+          .split('/')
+          .map((segment) => segment.trim())
+          .filter(Boolean);
+      })()
+    : [];
+  const href = normalizeKangurRequestedPath(slugSegments, normalizedBasePath);
+  const hrefWithQuery = parsedRoute
+    ? (() => {
+        if ([...parsedRoute.searchParams.keys()].length === 0) {
+          return href;
+        }
+
+        const parsedHref = new URL(href, KANGUR_LOCAL_ORIGIN);
+        const clearedKeys = new Set<string>();
+
+        for (const [key, value] of parsedRoute.searchParams.entries()) {
+          const resolvedKey = KANGUR_INTERNAL_QUERY_PARAM_KEYS.includes(
+            key as (typeof KANGUR_INTERNAL_QUERY_PARAM_KEYS)[number]
+          )
+            ? getKangurInternalQueryParamName(
+                key as (typeof KANGUR_INTERNAL_QUERY_PARAM_KEYS)[number],
+                normalizedBasePath
+              )
+            : key;
+
+          if (!clearedKeys.has(resolvedKey)) {
+            parsedHref.searchParams.delete(resolvedKey);
+            clearedKeys.add(resolvedKey);
+          }
+
+          parsedHref.searchParams.append(resolvedKey, value);
+        }
+
+        return `${parsedHref.pathname}${parsedHref.search}`;
+      })()
+    : href;
   const hash = typeof target.anchorId === 'string' && target.anchorId.trim()
     ? `#${target.anchorId.trim()}`
-    : '';
+    : parsedRoute?.hash ?? '';
 
-  return `${normalizedRoute}${hash}`;
+  return `${hrefWithQuery}${hash}`;
 };
 
 export const isAuthGuidedTutorTarget = (

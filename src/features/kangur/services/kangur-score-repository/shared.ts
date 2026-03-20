@@ -1,4 +1,4 @@
-import type { KangurScore, KangurScoreSort, KangurScoreSortField } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurScore, KangurScoreSort, KangurScoreSortField } from '@kangur/contracts';
 
 export type NormalizedSort = {
   field: KangurScoreSortField;

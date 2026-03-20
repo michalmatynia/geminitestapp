@@ -53,13 +53,13 @@ const buildFilter = (
   if (!input) return {};
   const filter: Filter<MongoKangurLessonSectionDocument> = {};
   if (input.subject) {
-    filter.subject = input.subject;
+    filter['subject'] = input.subject;
   }
   if (input.ageGroup) {
-    filter.ageGroup = input.ageGroup;
+    filter['ageGroup'] = input.ageGroup;
   }
   if (input.enabledOnly) {
-    filter.enabled = true;
+    filter['enabled'] = true;
   }
   return filter;
 };
@@ -96,8 +96,8 @@ export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository =
 
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonSectionDocument> = {};
-      if (input?.subject) fallbackFilter.subject = input.subject;
-      if (input?.ageGroup) fallbackFilter.ageGroup = input.ageGroup;
+      if (input?.subject) fallbackFilter['subject'] = input.subject;
+      if (input?.ageGroup) fallbackFilter['ageGroup'] = input.ageGroup;
       const existingCount = await collection.countDocuments(fallbackFilter);
       if (existingCount === 0) {
         const defaults = createDefaultKangurSections();

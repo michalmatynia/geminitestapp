@@ -6,9 +6,18 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useLessonsMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
+const {
+  useLessonsMock,
+  useKangurMobileBreakpointMock,
+  lessonDocumentBackButtonLabelMock,
+  lessonDocumentBackClickMock,
+  lessonComponentsMock,
+} = vi.hoisted(() => ({
   useLessonsMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
+  lessonDocumentBackButtonLabelMock: vi.fn(() => null),
+  lessonDocumentBackClickMock: vi.fn(),
+  lessonComponentsMock: {} as Record<string, React.ComponentType<unknown>>,
 }));
 
 vi.mock('@/features/kangur/lesson-documents', () => ({
@@ -16,7 +25,7 @@ vi.mock('@/features/kangur/lesson-documents', () => ({
 }));
 
 vi.mock('@/features/kangur/lessons/lesson-ui-registry', () => ({
-  LESSON_COMPONENTS: {},
+  LESSON_COMPONENTS: lessonComponentsMock,
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
@@ -36,7 +45,24 @@ vi.mock('@/features/kangur/ui/components/KangurActiveLessonHeader', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
-  KangurLessonDocumentRenderer: () => <div data-testid='mock-lesson-docs' />,
+  KangurLessonDocumentRenderer: () => {
+    const backButtonLabel = lessonDocumentBackButtonLabelMock();
+
+    return (
+      <div data-testid='mock-lesson-docs'>
+        {backButtonLabel ? (
+          <button
+            type='button'
+            data-kangur-lesson-back='true'
+            data-kangur-lesson-back-label={backButtonLabel}
+            onClick={() => lessonDocumentBackClickMock()}
+          >
+            {backButtonLabel}
+          </button>
+        ) : null}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
@@ -107,6 +133,13 @@ describe('ActiveLessonView mobile scroll controls', () => {
 
   beforeEach(() => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
+    lessonDocumentBackButtonLabelMock.mockReturnValue(null);
+    lessonDocumentBackClickMock.mockReset();
+    activeLesson.contentMode = 'document';
+    nextLesson.contentMode = 'document';
+    Object.keys(lessonComponentsMock).forEach((key) => {
+      delete lessonComponentsMock[key];
+    });
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
     activeLessonContentRef = React.createRef<HTMLDivElement>();
@@ -195,7 +228,7 @@ describe('ActiveLessonView mobile scroll controls', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
-  it('returns through lesson back button when present in content', async () => {
+  it('returns to the lessons list from the header even when in-content back is available', async () => {
     const { rerender } = render(<ActiveLessonView />);
     useKangurMobileBreakpointMock.mockReturnValue(false);
     rerender(<ActiveLessonView />);
@@ -211,8 +244,8 @@ describe('ActiveLessonView mobile scroll controls', () => {
     const headerBackButton = screen.getByRole('button', { name: 'Wroc do listy lekcji' });
     fireEvent.click(headerBackButton);
 
-    expect(inContentBackClick).toHaveBeenCalledTimes(1);
-    expect(handleSelectLesson).not.toHaveBeenCalled();
+    expect(inContentBackClick).not.toHaveBeenCalled();
+    expect(handleSelectLesson).toHaveBeenCalledWith(null);
   });
 
   it('falls back to listing lesson when no in-content back button is available', async () => {
@@ -224,5 +257,29 @@ describe('ActiveLessonView mobile scroll controls', () => {
     fireEvent.click(headerBackButton);
 
     expect(handleSelectLesson).toHaveBeenCalledWith(null);
+  });
+
+  it('uses the in-content back action from the mobile lesson controls when available', async () => {
+    activeLesson.contentMode = 'component';
+    lessonComponentsMock[activeLesson.componentId] = () => (
+      <button
+        type='button'
+        data-kangur-lesson-back='true'
+        data-kangur-lesson-back-label='Wroc do tematow'
+        onClick={() => lessonDocumentBackClickMock()}
+      >
+        Wroc do tematow
+      </button>
+    );
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+    const mobileBackButton = document.querySelector('button[title="Wroc do tematow"]');
+    expect(mobileBackButton).toBeInstanceOf(HTMLButtonElement);
+
+    fireEvent.click(mobileBackButton as HTMLButtonElement);
+
+    expect(lessonDocumentBackClickMock).toHaveBeenCalledTimes(1);
+    expect(handleSelectLesson).not.toHaveBeenCalled();
   });
 });

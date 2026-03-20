@@ -4,7 +4,7 @@ import {
   createDefaultKangurProgressState,
   type KangurAssignment,
   type KangurScore,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 
 import {
   buildKangurAssignmentDedupeKey,

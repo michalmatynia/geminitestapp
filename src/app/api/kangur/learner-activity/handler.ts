@@ -6,7 +6,7 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import { publishKangurLearnerActivityUpdate } from '@/features/kangur/services/learner-activity-stream-publisher';
-import { kangurLearnerActivityUpdateInputSchema } from '@/shared/contracts/kangur';
+import { kangurLearnerActivityUpdateInputSchema } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

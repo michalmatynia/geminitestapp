@@ -4,7 +4,7 @@ import type {
   KangurScoreLimit,
   KangurScoreRepositoryCreateInput,
   KangurScoreSort,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 
 export type KangurScoreListInput = {
   sort?: KangurScoreSort;

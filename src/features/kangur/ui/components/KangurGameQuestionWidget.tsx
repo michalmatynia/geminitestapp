@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { DIFFICULTY_CONFIG } from '@kangur/core';
 
 import { QuestionCard } from '@/features/kangur/ui/components/game';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
@@ -10,7 +11,6 @@ import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
-import { DIFFICULTY_CONFIG } from '@/features/kangur/ui/services/math-questions';
 import {
   getNextLockedBadge,
   getRecommendedSessionProjection,

@@ -9,6 +9,18 @@
       }
     ],
     "paths": {
+      "@kangur/contracts": [
+        "./packages/kangur-contracts/src/index.ts"
+      ],
+      "@kangur/contracts/*": [
+        "./packages/kangur-contracts/src/*"
+      ],
+      "@kangur/core": [
+        "./packages/kangur-core/src/index.ts"
+      ],
+      "@kangur/core/*": [
+        "./packages/kangur-core/src/*"
+      ],
       "@/*": [
         "./src/*"
       ],

@@ -56,7 +56,7 @@ const buildFilter = (
   if (!input) return {};
   const filter: Filter<MongoKangurLessonTemplateDocument> = {};
   if (input.subject) {
-    filter.subject = input.subject;
+    filter['subject'] = input.subject;
   }
   return filter;
 };
@@ -92,7 +92,7 @@ export const mongoKangurLessonTemplateRepository: KangurLessonTemplateRepository
 
     if (docs.length === 0) {
       const filter: Filter<MongoKangurLessonTemplateDocument> = {};
-      if (input?.subject) filter.subject = input.subject;
+      if (input?.subject) filter['subject'] = input.subject;
       const existingCount = await collection.countDocuments(filter);
       if (existingCount === 0) {
         const defaults = createDefaultKangurLessonTemplates();

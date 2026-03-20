@@ -11,7 +11,7 @@ import {
   kangurLearnerProfileSchema,
   kangurLearnerSessionHistorySchema,
   kangurLearnerInteractionHistorySchema,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import {
   reportKangurClientError,
   withKangurClientError,

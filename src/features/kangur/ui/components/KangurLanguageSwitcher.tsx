@@ -223,6 +223,7 @@ export function KangurLanguageSwitcher({
   const fallbackPath = buildCurrentPageFallbackPath(currentPage, basePath);
   const currentPathname = pathname?.trim() || fallbackPath;
   const currentHash = typeof window === 'undefined' ? '' : window.location.hash;
+  const currentHref = `${currentPathname}${search ? `?${search}` : ''}${currentHash}`;
   const palette = useMemo(
     () => resolveLanguageMenuPalette(kangurAppearance),
     [kangurAppearance]
@@ -392,6 +393,14 @@ export function KangurLanguageSwitcher({
                 path: '/',
                 sameSite: 'Lax',
               });
+
+              if (target.href === currentHref) {
+                if (typeof window !== 'undefined' && typeof window.location.replace === 'function') {
+                  window.location.replace(target.href);
+                  return;
+                }
+              }
+
               warmLocaleTarget(target);
               routeNavigator.replace(target.href, {
                 pageKey: currentPage,

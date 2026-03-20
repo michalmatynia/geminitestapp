@@ -7,12 +7,12 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 export type SiteMessages = typeof enMessages;
 
 const defaultMessageLoader = () =>
-  import('./messages/en.json').then((module) => module.default as SiteMessages);
+  import('./messages/en.json').then((module) => module.default);
 
 const messageLoaders: Partial<Record<string, () => Promise<SiteMessages>>> = {
-  pl: () => import('./messages/pl.json').then((module) => module.default as SiteMessages),
+  pl: () => import('./messages/pl.json').then((module) => module.default),
   en: defaultMessageLoader,
-  de: () => import('./messages/de.json').then((module) => module.default as SiteMessages),
+  de: () => import('./messages/de.json').then((module) => module.default),
 };
 
 export const loadSiteMessages = async (locale: string | null | undefined): Promise<SiteMessages> => {

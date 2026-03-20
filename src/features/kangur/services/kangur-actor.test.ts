@@ -16,7 +16,7 @@ vi.mock('./kangur-learner-session', () => ({
 }));
 
 import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
-import { kangurAuthUserSchema } from '@/features/kangur/shared/contracts/kangur';
+import { kangurAuthUserSchema } from '@kangur/contracts';
 import { auth, findAuthUserById } from '@/server/auth';
 
 import { listKangurLearnersByOwner } from './kangur-learner-repository';

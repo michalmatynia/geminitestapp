@@ -67,9 +67,10 @@ const localizeClockCopy = <T,>(
   }
 
   if (Array.isArray(source)) {
-    return source.map((item, index) =>
-      localizeClockCopy(item, `${prefix}.${index}`, translate)
-    ) as WidenLessonCopy<T>;
+    const localizedItems: unknown[] = source.map((item, index): unknown =>
+      localizeClockCopy(item as unknown, `${prefix}.${index}`, translate)
+    );
+    return localizedItems as WidenLessonCopy<T>;
   }
 
   return Object.fromEntries(

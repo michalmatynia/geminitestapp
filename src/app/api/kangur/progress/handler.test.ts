@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActivityTypes } from '@/shared/constants/observability';
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+import { createDefaultKangurProgressState } from '@kangur/contracts';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

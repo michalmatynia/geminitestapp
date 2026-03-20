@@ -31,7 +31,7 @@ import type {
   KangurDuelStatus,
   KangurDuelVisibility,
 } from '@/features/kangur/shared/contracts/kangur-duels';
-import { generateQuestions } from '@/features/kangur/shared/math-questions';
+import { generateQuestions } from '@kangur/core';
 import {
   badRequestError,
   notFoundError,

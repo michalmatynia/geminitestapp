@@ -5,7 +5,7 @@ import {
   createDefaultKangurProgressState,
   normalizeKangurProgressState,
   type KangurProgressState,
-} from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';
 

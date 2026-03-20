@@ -8,8 +8,8 @@ import type {
   KangurAssignment,
   KangurAssignmentRepositoryCreateInput,
   KangurAssignmentUpdateInput,
-} from '@/features/kangur/shared/contracts/kangur';
-import { kangurAssignmentSchema } from '@/features/kangur/shared/contracts/kangur';
+} from '@kangur/contracts';
+import { kangurAssignmentSchema } from '@kangur/contracts';
 import { notFoundError } from '@/features/kangur/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { executeMongoWriteWithRetry } from '@/shared/lib/db/mongo-write-retry';

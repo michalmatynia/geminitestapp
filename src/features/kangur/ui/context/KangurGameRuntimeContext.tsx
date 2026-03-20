@@ -11,6 +11,11 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslations } from 'next-intl';
+import {
+  DIFFICULTY_CONFIG,
+  generateQuestions,
+  generateTrainingQuestions,
+} from '@kangur/core';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -26,11 +31,6 @@ import {
   selectKangurPracticeAssignmentForScreen,
   selectKangurResultPracticeAssignment,
 } from '@/features/kangur/ui/services/delegated-assignments';
-import {
-  DIFFICULTY_CONFIG,
-  generateQuestions,
-  generateTrainingQuestions,
-} from '@/features/kangur/ui/services/math-questions';
 import type {
   KangurDifficulty,
   KangurGameScreen,

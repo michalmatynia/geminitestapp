@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
 import {
@@ -120,6 +120,27 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
 
   const isDirty = editorValue !== persistedEditorValue;
 
+  // Debounced editor value: avoids parse/stringify on every keystroke
+  const [debouncedEditorValue, setDebouncedEditorValue] = useState(editorValue);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Clear previous timer if user is still typing
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    // Set new timer: update parsed state 300ms after user stops typing
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedEditorValue(editorValue);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [editorValue]);
+
   const parsedState = useMemo<ParsedEditorState>(() => {
     return withKangurClientErrorSync(
       {
@@ -128,7 +149,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
         description: 'Parses the native guide editor JSON payload.',
       },
       () => ({
-        store: parseKangurAiTutorNativeGuideStore(JSON.parse(editorValue)),
+        store: parseKangurAiTutorNativeGuideStore(JSON.parse(debouncedEditorValue)),
         error: null,
       }),
       {
@@ -138,7 +159,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
         } as ParsedEditorState,
       }
     );
-  }, [editorValue]);
+  }, [debouncedEditorValue]);
 
   useEffect(() => {
     const firstEntryId = parsedState.store?.entries[0]?.id ?? null;

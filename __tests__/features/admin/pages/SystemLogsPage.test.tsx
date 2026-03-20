@@ -168,11 +168,15 @@ const createTestQueryClient = () =>
 
 const renderPage = () => {
   const queryClient = createTestQueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <SystemLogsPage />
-    </QueryClientProvider>
-  );
+  const user = userEvent.setup();
+  return {
+    user,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <SystemLogsPage />
+      </QueryClientProvider>
+    )
+  };
 };
 
 describe('SystemLogsPage', () => {
@@ -264,16 +268,20 @@ describe('SystemLogsPage', () => {
     vi.mocked(useSystemLogsActions).mockReturnValue(mockSystemLogsValue);
   });
 
-  it('renders logs list and metrics', () => {
-    renderPage();
+  it('renders logs list and metrics', async () => {
+    const { user } = renderPage();
 
     expect(screen.getByRole('heading', { name: 'Observation Post' })).toBeInTheDocument();
     expect(screen.getByText('Test Error')).toBeInTheDocument();
     expect(screen.getByText('Test Info')).toBeInTheDocument();
 
-    // Check metrics using flexible matchers for PropertyRow labels
-    expect(screen.getByText(/^Total Logs:/i)).toBeInTheDocument();
-    expect(screen.getByText(/^Errors:/i)).toBeInTheDocument();
+    // Switch to Metrics tab
+    const metricsTab = screen.getByRole('tab', { name: /Metrics/i });
+    await user.click(metricsTab);
+
+    // Check metrics
+    expect(screen.getByText('Total Logs')).toBeInTheDocument();
+    expect(screen.getByText('Errors')).toBeInTheDocument();
   });
 it('renders filter section', async () => {
   const { user } = renderPage();
@@ -293,7 +301,7 @@ it('renders filter section', async () => {
     const clearButton = screen.getByRole('button', { name: /Wipe Logs/i });
     await user.click(clearButton);
 
-    expect(screen.getByText('Wipe Logs')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Wipe Logs' })).toBeInTheDocument();
     expect(screen.getByText('Choose which log records should be deleted.')).toBeInTheDocument();
   });
 
@@ -304,7 +312,6 @@ it('renders filter section', async () => {
   });
 
   it('exports logs to clipboard', async () => {
-    const user = userEvent.setup();
     // Mock clipboard
     const mockWriteText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
@@ -312,7 +319,7 @@ it('renders filter section', async () => {
       configurable: true,
     });
 
-    renderPage();
+    const { user } = renderPage();
 
     const copyButton = screen.getByText('Export');
     await user.click(copyButton);

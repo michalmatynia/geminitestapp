@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  buildKangurAssignmentsPath,
+  createKangurApiClient,
+} from '@kangur/api-client';
 
 import type {
   KangurAssignmentCreateInput,
@@ -20,19 +24,14 @@ import {
 } from './local-kangur-platform-shared';
 
 const assignmentListSchema = z.array(kangurAssignmentSnapshotSchema);
+const kangurAssignmentsApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
 
-const buildAssignmentsUrl = (query?: KangurAssignmentListQuery): string => {
-  const search = new URLSearchParams();
-
-  if (query?.includeArchived) {
-    search.set('includeArchived', 'true');
-  }
-
-  const serialized = search.toString();
-  return serialized.length > 0
-    ? `${KANGUR_ASSIGNMENTS_ENDPOINT}?${serialized}`
-    : KANGUR_ASSIGNMENTS_ENDPOINT;
-};
+const buildAssignmentsUrl = (query?: KangurAssignmentListQuery): string =>
+  buildKangurAssignmentsPath(query);
 
 export const requestAssignmentsFromApi = async (
   query?: KangurAssignmentListQuery
@@ -52,21 +51,7 @@ export const requestAssignmentsFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur assignment list request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurAssignmentsApiClient.listAssignments(query);
       const parsed = assignmentListSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur assignment list payload validation failed.');
@@ -108,24 +93,7 @@ export const createAssignmentViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_ASSIGNMENTS_ENDPOINT, {
-        method: 'POST',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur assignment create request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurAssignmentsApiClient.createAssignment(input);
       const parsed = kangurAssignmentSnapshotSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur assignment create payload validation failed.');
@@ -173,24 +141,7 @@ export const updateAssignmentViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur assignment update request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurAssignmentsApiClient.updateAssignment(id, input);
       const parsed = kangurAssignmentSnapshotSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur assignment update payload validation failed.');
@@ -234,21 +185,7 @@ export const reassignAssignmentViaApi = async (id: string): Promise<KangurAssign
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur assignment reassign request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurAssignmentsApiClient.reassignAssignment(id);
       const parsed = kangurAssignmentSnapshotSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur assignment reassign payload validation failed.');

@@ -1,4 +1,8 @@
 import type {
+  KangurAssignmentCreateInput,
+  KangurAssignmentListQuery,
+  KangurAssignmentSnapshot,
+  KangurAssignmentUpdateInput,
   KangurLessonSubject,
   KangurProgressState,
   KangurScore,
@@ -66,6 +70,7 @@ const buildProgressPath = (query?: KangurProgressQuery): string => {
 };
 
 const SUBJECT_FOCUS_PATH = '/api/kangur/subject-focus';
+const ASSIGNMENTS_PATH = '/api/kangur/assignments';
 
 const buildScoreListPath = (query: KangurScoreListQuery = {}): string => {
   const search = new URLSearchParams();
@@ -81,6 +86,23 @@ const buildScoreListPath = (query: KangurScoreListQuery = {}): string => {
   const serialized = search.toString();
   return serialized ? `/api/kangur/scores?${serialized}` : '/api/kangur/scores';
 };
+
+const buildAssignmentsPath = (query?: KangurAssignmentListQuery): string => {
+  const search = new URLSearchParams();
+
+  if (query?.includeArchived) {
+    search.set('includeArchived', 'true');
+  }
+
+  const serialized = search.toString();
+  return serialized ? `${ASSIGNMENTS_PATH}?${serialized}` : ASSIGNMENTS_PATH;
+};
+
+const buildAssignmentPath = (id: string): string =>
+  `${ASSIGNMENTS_PATH}/${encodeURIComponent(id)}`;
+
+const buildAssignmentReassignPath = (id: string): string =>
+  `${buildAssignmentPath(id)}/reassign`;
 
 export const createKangurApiRequestError = (
   response: Pick<Response, 'status' | 'statusText'>,
@@ -150,6 +172,38 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
         method: 'PATCH',
         body: JSON.stringify(input),
       }),
+    listAssignments: (
+      query?: KangurAssignmentListQuery,
+      requestOptions?: KangurApiRequestOptions,
+    ) =>
+      request<KangurAssignmentSnapshot[]>(buildAssignmentsPath(query), {
+        ...requestOptions,
+        method: 'GET',
+      }),
+    createAssignment: (
+      input: KangurAssignmentCreateInput,
+      requestOptions?: KangurApiRequestOptions,
+    ) =>
+      request<KangurAssignmentSnapshot>(ASSIGNMENTS_PATH, {
+        ...requestOptions,
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    updateAssignment: (
+      id: string,
+      input: KangurAssignmentUpdateInput,
+      requestOptions?: KangurApiRequestOptions,
+    ) =>
+      request<KangurAssignmentSnapshot>(buildAssignmentPath(id), {
+        ...requestOptions,
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    reassignAssignment: (id: string, requestOptions?: KangurApiRequestOptions) =>
+      request<KangurAssignmentSnapshot>(buildAssignmentReassignPath(id), {
+        ...requestOptions,
+        method: 'POST',
+      }),
     listScores: (
       query?: KangurScoreListQuery,
       requestOptions?: KangurApiRequestOptions,
@@ -171,7 +225,11 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
 };
 
 export {
+  buildAssignmentsPath as buildKangurAssignmentsPath,
+  buildAssignmentPath as buildKangurAssignmentPath,
+  buildAssignmentReassignPath as buildKangurAssignmentReassignPath,
   buildProgressPath as buildKangurProgressPath,
   buildScoreListPath as buildKangurScoreListPath,
+  ASSIGNMENTS_PATH as KANGUR_ASSIGNMENTS_PATH,
   SUBJECT_FOCUS_PATH as KANGUR_SUBJECT_FOCUS_PATH,
 };

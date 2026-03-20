@@ -267,7 +267,7 @@ describe('SystemLogsPage', () => {
   it('renders logs list and metrics', () => {
     renderPage();
 
-    expect(screen.getByText('Observation Post')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Observation Post' })).toBeInTheDocument();
     expect(screen.getByText('Test Error')).toBeInTheDocument();
     expect(screen.getByText('Test Info')).toBeInTheDocument();
 
@@ -275,29 +275,26 @@ describe('SystemLogsPage', () => {
     expect(screen.getByText(/^Total Logs:/i)).toBeInTheDocument();
     expect(screen.getByText(/^Errors:/i)).toBeInTheDocument();
   });
+it('renders filter section', async () => {
+  const { user } = renderPage();
 
-  it('renders filter section', () => {
-    renderPage();
-    // In our mock PageLayout/DynamicFilters might not render "Filters" text exactly,
-    // let's check for "Log Filters" which is in SystemLogsPage.tsx
-    expect(screen.getByText(/Log Filters/i)).toBeInTheDocument();
-  });
+  const showFiltersButton = screen.getByRole('button', { name: /Show Filters/i });
+  await user.click(showFiltersButton);
+
+  // In our mock PageLayout/DynamicFilters might not render "Filters" text exactly,
+  // let's check for "Log Filters" which is in SystemLogsPage.tsx
+  expect(screen.getByText(/Log Filters/i)).toBeInTheDocument();
+});
 
   it('opens clear logs action without crashing', async () => {
     const user = userEvent.setup();
     renderPage();
 
-    const clearButton = screen.getByText('Wipe Logs');
+    const clearButton = screen.getByRole('button', { name: /Wipe Logs/i });
     await user.click(clearButton);
 
-    expect(mockConfirmAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Wipe Observation Logs',
-        confirmText: 'Confirm Wipe',
-        isDangerous: true,
-        onConfirm: mockHandleClearLogs,
-      })
-    );
+    expect(screen.getByText('Wipe Logs')).toBeInTheDocument();
+    expect(screen.getByText('Choose which log records should be deleted.')).toBeInTheDocument();
   });
 
   it('renders confirmation modal mount point', () => {

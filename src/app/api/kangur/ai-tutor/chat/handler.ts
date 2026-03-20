@@ -213,13 +213,14 @@ export async function postKangurAiTutorChatHandler(
       learnerId,
       dailyMessageLimit: tutorSettings.dailyMessageLimit,
     });
-    const contextRegistryBundle = requestedContextRegistryRefs.length > 0
-      ? await resolveKangurAiTutorContextRegistryBundle({
-        refs: requestedContextRegistryRefs,
-        maxNodes: 24,
-        depth: 1,
-      })
-      : null;
+    const contextRegistryBundle =
+      tutorSettings.knowledgeGraphEnabled && requestedContextRegistryRefs.length > 0
+        ? await resolveKangurAiTutorContextRegistryBundle({
+          refs: requestedContextRegistryRefs,
+          maxNodes: tutorSettings.contextRegistryMaxNodes,
+          depth: tutorSettings.contextRegistryDepth,
+        })
+        : null;
     const resolvedRuntimeDocuments = resolveKangurAiTutorRuntimeDocuments(contextRegistryBundle, context);
 
     const personaInstructions = await resolvePersonaInstructions(tutorSettings.agentPersonaId);

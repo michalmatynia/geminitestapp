@@ -2,6 +2,17 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 
+vi.mock('lucide-react', () => ({
+  Award: () => <div data-testid='icon-award' />,
+  BarChart2: () => <div data-testid='icon-barchart' />,
+  Compass: () => <div data-testid='icon-compass' />,
+  Flame: () => <div data-testid='icon-flame' />,
+  Sparkles: () => <div data-testid='icon-sparkles' />,
+  Target: () => <div data-testid='icon-target' />,
+  Eye: () => <div data-testid='icon-eye' />,
+  EyeOff: () => <div data-testid='icon-eye-off' />,
+}));
+
 const {
   useKangurLearnerProfileRuntimeMock,
   useKangurPageContentEntryMock,
@@ -49,6 +60,12 @@ describe('KangurLearnerProfileOverviewWidget placeholder', () => {
         weeklyXpEarned: 112,
         averageXpPerSession: 120,
         recommendedSessionsCompleted: 0,
+        bestAccuracy: 100,
+        currentStreakDays: 2,
+        longestStreakDays: 3,
+        todayGames: 1,
+        dailyGoalGames: 3,
+        dailyGoalPercent: 33,
       },
       progress: { 
         lessonMastery: {},
@@ -64,6 +81,7 @@ describe('KangurLearnerProfileOverviewWidget placeholder', () => {
         bestWinStreak: 2,
         activityStats: {},
       },
+      user: { activeLearner: { id: 'learner-1', avatarId: 'star-fox' } },
     });
   });
 

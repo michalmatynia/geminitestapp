@@ -48,7 +48,10 @@ const areAiTutorAppSettingsEqual = (
   left.motionPresetId === right.motionPresetId &&
   left.dailyMessageLimit === right.dailyMessageLimit &&
   left.guestIntroMode === right.guestIntroMode &&
-  left.homeOnboardingMode === right.homeOnboardingMode;
+  left.homeOnboardingMode === right.homeOnboardingMode &&
+  left.contextRegistryMaxNodes === right.contextRegistryMaxNodes &&
+  left.contextRegistryDepth === right.contextRegistryDepth &&
+  left.knowledgeGraphEnabled === right.knowledgeGraphEnabled;
 
 const parseAiTutorDailyMessageLimit = (value: string): number | null => {
   const parsed = Number.parseInt(value, 10);
@@ -165,6 +168,15 @@ export function useKangurSettings() {
   const [homeOnboardingMode, setHomeOnboardingMode] = useState<KangurAiTutorHomeOnboardingMode>(
     persistedAiTutorSettings.homeOnboardingMode
   );
+  const [contextRegistryMaxNodes, setContextRegistryMaxNodes] = useState(
+    String(persistedAiTutorSettings.contextRegistryMaxNodes)
+  );
+  const [contextRegistryDepth, setContextRegistryDepth] = useState(
+    String(persistedAiTutorSettings.contextRegistryDepth)
+  );
+  const [knowledgeGraphEnabled, setKnowledgeGraphEnabled] = useState(
+    persistedAiTutorSettings.knowledgeGraphEnabled
+  );
   const [copyStatus, setCopyStatus] = useState('Copy text');
   const [narratorProbe, setNarratorProbe] = useState<KangurLessonTtsProbeResponse | null>(null);
   const [isProbingNarrator, setIsProbingNarrator] = useState(false);
@@ -189,6 +201,9 @@ export function useKangurSettings() {
     );
     setGuestIntroMode(persistedAiTutorSettings.guestIntroMode);
     setHomeOnboardingMode(persistedAiTutorSettings.homeOnboardingMode);
+    setContextRegistryMaxNodes(String(persistedAiTutorSettings.contextRegistryMaxNodes));
+    setContextRegistryDepth(String(persistedAiTutorSettings.contextRegistryDepth));
+    setKnowledgeGraphEnabled(persistedAiTutorSettings.knowledgeGraphEnabled);
   }, [persistedAiTutorSettings]);
 
   useEffect(() => {
@@ -326,8 +341,11 @@ export function useKangurSettings() {
       dailyMessageLimit: parseAiTutorDailyMessageLimit(dailyMessageLimitInput),
       guestIntroMode,
       homeOnboardingMode,
+      contextRegistryMaxNodes: Math.max(1, Math.min(100, parseInt(contextRegistryMaxNodes) || 24)),
+      contextRegistryDepth: Math.max(0, Math.min(5, parseInt(contextRegistryDepth) || 1)),
+      knowledgeGraphEnabled,
     }),
-    [agentPersonaId, dailyMessageLimitInput, guestIntroMode, homeOnboardingMode, motionPresetId]
+    [agentPersonaId, dailyMessageLimitInput, guestIntroMode, homeOnboardingMode, motionPresetId, contextRegistryMaxNodes, contextRegistryDepth, knowledgeGraphEnabled]
   );
 
   const aiTutorSettingsDirty = !areAiTutorAppSettingsEqual(

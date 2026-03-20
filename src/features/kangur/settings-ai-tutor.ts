@@ -42,6 +42,9 @@ export type KangurAiTutorAppSettings = {
   dailyMessageLimit: number | null;
   guestIntroMode: KangurAiTutorGuestIntroMode;
   homeOnboardingMode: KangurAiTutorHomeOnboardingMode;
+  contextRegistryMaxNodes: number;
+  contextRegistryDepth: number;
+  knowledgeGraphEnabled: boolean;
 };
 
 export type KangurAiTutorLearnerGuardrails = {
@@ -72,6 +75,9 @@ export const DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS: Readonly<KangurAiTutorAppSett
   dailyMessageLimit: null,
   guestIntroMode: 'first_visit',
   homeOnboardingMode: 'first_visit',
+  contextRegistryMaxNodes: 24,
+  contextRegistryDepth: 1,
+  knowledgeGraphEnabled: true,
 });
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorLearnerGuardrails> =
@@ -233,6 +239,35 @@ const normalizeHomeOnboardingMode = (value: unknown): KangurAiTutorHomeOnboardin
   }
 };
 
+const normalizeContextRegistryMaxNodes = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.contextRegistryMaxNodes;
+  }
+  const normalized = Math.floor(value);
+  if (normalized <= 0 || normalized > 100) {
+    return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.contextRegistryMaxNodes;
+  }
+  return normalized;
+};
+
+const normalizeContextRegistryDepth = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.contextRegistryDepth;
+  }
+  const normalized = Math.floor(value);
+  if (normalized < 0 || normalized > 5) {
+    return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.contextRegistryDepth;
+  }
+  return normalized;
+};
+
+const normalizeKnowledgeGraphEnabled = (value: unknown): boolean => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  return DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.knowledgeGraphEnabled;
+};
+
 const normalizeKangurAiTutorAppSettingsFields = (
   input: Record<string, unknown>
 ): KangurAiTutorAppSettings => ({
@@ -244,6 +279,9 @@ const normalizeKangurAiTutorAppSettingsFields = (
   dailyMessageLimit: normalizeDailyMessageLimit(input['dailyMessageLimit']),
   guestIntroMode: normalizeGuestIntroMode(input['guestIntroMode']),
   homeOnboardingMode: normalizeHomeOnboardingMode(input['homeOnboardingMode']),
+  contextRegistryMaxNodes: normalizeContextRegistryMaxNodes(input['contextRegistryMaxNodes']),
+  contextRegistryDepth: normalizeContextRegistryDepth(input['contextRegistryDepth']),
+  knowledgeGraphEnabled: normalizeKnowledgeGraphEnabled(input['knowledgeGraphEnabled']),
 });
 
 export function normalizeKangurAiTutorAppSettings(raw: unknown): KangurAiTutorAppSettings {
@@ -284,6 +322,18 @@ function deriveLegacyKangurAiTutorAppSettings(
           DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.homeOnboardingMode
             ? resolved.homeOnboardingMode
             : legacy.homeOnboardingMode,
+        contextRegistryMaxNodes:
+          resolved.contextRegistryMaxNodes !== DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.contextRegistryMaxNodes
+            ? resolved.contextRegistryMaxNodes
+            : legacy.contextRegistryMaxNodes,
+        contextRegistryDepth:
+          resolved.contextRegistryDepth !== DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.contextRegistryDepth
+            ? resolved.contextRegistryDepth
+            : legacy.contextRegistryDepth,
+        knowledgeGraphEnabled:
+          resolved.knowledgeGraphEnabled !== DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS.knowledgeGraphEnabled
+            ? resolved.knowledgeGraphEnabled
+            : legacy.knowledgeGraphEnabled,
       };
     },
     { ...DEFAULT_KANGUR_AI_TUTOR_APP_SETTINGS }

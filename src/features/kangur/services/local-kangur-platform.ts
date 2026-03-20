@@ -3,6 +3,10 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 import {
+  buildKangurProgressPath,
+  createKangurApiClient,
+} from '@kangur/api-client';
+import {
   createGuestKangurScore,
   resetGuestKangurScoreSession,
 } from '@/features/kangur/services/guest-kangur-scores';
@@ -90,11 +94,13 @@ import {
 const progressResponseSchema = kangurProgressStateSchema;
 const learnerActivityStatusSchema = kangurLearnerActivityStatusSchema;
 
-const buildProgressEndpoint = (subject?: KangurProgressRequestOptions['subject']): string => {
-  if (!subject) {
-    return KANGUR_PROGRESS_ENDPOINT;
-  }
+const kangurProgressApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
 
+const buildProgressEndpoint = (subject?: KangurProgressRequestOptions['subject']): string => {
   return withKangurClientErrorSync(
     {
       source: 'kangur.local-platform',
@@ -104,12 +110,12 @@ const buildProgressEndpoint = (subject?: KangurProgressRequestOptions['subject']
         subject,
       },
     },
-    () => {
-      const url = new URL(KANGUR_PROGRESS_ENDPOINT, 'https://kangur.local');
-      url.searchParams.set('subject', subject);
-      return `${url.pathname}${url.search}`;
-    },
-    { fallback: `${KANGUR_PROGRESS_ENDPOINT}?subject=${encodeURIComponent(subject)}` }
+    () => buildKangurProgressPath(subject ? { subject } : undefined),
+    {
+      fallback: subject
+        ? `${KANGUR_PROGRESS_ENDPOINT}?subject=${encodeURIComponent(subject)}`
+        : KANGUR_PROGRESS_ENDPOINT,
+    }
   );
 };
 
@@ -131,21 +137,9 @@ const requestProgressFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur progress request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurProgressApiClient.getProgress(
+        options?.subject ? { subject: options.subject } : undefined
+      );
       const parsed = progressResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur progress payload validation failed.');
@@ -188,9 +182,7 @@ const updateProgressViaApi = async (
       },
     }),
     async () => {
-      const progressHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+      const progressHeaders: Record<string, string> = {};
       if (context?.source === KANGUR_PROGRESS_CTA_SOURCE) {
         progressHeaders[KANGUR_PROGRESS_SOURCE_HEADER] = context.source;
       }
@@ -198,22 +190,13 @@ const updateProgressViaApi = async (
         progressHeaders[KANGUR_PROGRESS_CTA_HEADER] = context.cta.trim();
       }
 
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: createActorAwareHeaders(progressHeaders),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur progress update request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurProgressApiClient.updateProgress(
+        input,
+        context?.subject ? { subject: context.subject } : undefined,
+        {
+          headers: progressHeaders,
+        }
+      );
       const parsed = progressResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur progress update payload validation failed.');

@@ -21,6 +21,12 @@
       "@kangur/core/*": [
         "./packages/kangur-core/src/*"
       ],
+      "@kangur/api-client": [
+        "./packages/kangur-api-client/src/index.ts"
+      ],
+      "@kangur/api-client/*": [
+        "./packages/kangur-api-client/src/*"
+      ],
       "@/*": [
         "./src/*"
       ],

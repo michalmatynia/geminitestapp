@@ -3,6 +3,7 @@ import {
   kangurSubjectFocusSchema,
   type KangurLessonSubject,
 } from '@/shared/contracts/kangur';
+import { createKangurApiClient } from '@kangur/api-client';
 import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 import {
   withKangurClientError,
@@ -16,6 +17,11 @@ export const KANGUR_SUBJECT_FOCUS_STORAGE_KEY = 'kangur_subject_focus_v1';
 export const KANGUR_SUBJECT_FOCUS_EVENT_NAME = 'kangur-subject-focus-changed';
 
 const DEFAULT_SUBJECT: KangurLessonSubject = DEFAULT_KANGUR_SUBJECT;
+const kangurSubjectFocusApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
 
 type KangurSubjectFocusStore = {
   version: 1;
@@ -141,20 +147,7 @@ const requestSubjectFocusFromApi = async (): Promise<KangurLessonSubject | null>
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_SUBJECT_FOCUS_ENDPOINT, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur subject focus request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurSubjectFocusApiClient.getSubjectFocus();
       const parsed = kangurSubjectFocusSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur subject focus payload validation failed.');
@@ -192,23 +185,7 @@ const updateSubjectFocusViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_SUBJECT_FOCUS_ENDPOINT, {
-        method: 'PATCH',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify({ subject }),
-      });
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur subject focus update failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurSubjectFocusApiClient.updateSubjectFocus({ subject });
       const parsed = kangurSubjectFocusSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur subject focus update payload validation failed.');

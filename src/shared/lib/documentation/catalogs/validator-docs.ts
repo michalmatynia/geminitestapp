@@ -154,6 +154,18 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     example: 'isReplacementAllowedForField(pattern, \'name_en\')',
   },
   {
+    id: 'core.allowsPatternExecutionWithoutRegexMatch',
+    symbol: 'allowsPatternExecutionWithoutRegexMatch',
+    file: 'src/features/products/validation-engine/core.ts',
+    purpose:
+      'Checks whether a pattern can execute its semantic operation without first matching a regex.',
+    params: ['pattern: candidate pattern with semantic runtime metadata.'],
+    returns: 'True when the configured semantic operation is allowed to run without a regex match.',
+    errors: ['No throws.'],
+    edgeCases: ['Patterns without semantic operation metadata return false.'],
+    example: 'allowsPatternExecutionWithoutRegexMatch(pattern)',
+  },
+  {
     id: 'core.isLatestPriceStockMirrorPattern',
     symbol: 'isLatestPriceStockMirrorPattern',
     file: 'src/features/products/validation-engine/core.ts',

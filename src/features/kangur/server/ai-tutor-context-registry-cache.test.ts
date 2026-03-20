@@ -141,4 +141,48 @@ describe('resolveKangurAiTutorContextRegistryBundle', () => {
 
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledTimes(2);
   });
+
+  it('evicts least recently used entry when cache is full (LRU)', async () => {
+    vi.useFakeTimers();
+    const bundleA = makeBundle('doc-A');
+    const bundleB = makeBundle('doc-B');
+    const bundleC = makeBundle('doc-C');
+
+    // Fill cache: A, B, C (max 64 entries, but we're testing LRU with just 3)
+    contextRegistryResolveRefsMock
+      .mockResolvedValueOnce(bundleA)
+      .mockResolvedValueOnce(bundleB)
+      .mockResolvedValueOnce(bundleC);
+
+    const refsA = [makeRef('page:a')];
+    const refsB = [makeRef('page:b')];
+    const refsC = [makeRef('page:c')];
+
+    await resolveKangurAiTutorContextRegistryBundle({ refs: refsA }); // A is added
+    await resolveKangurAiTutorContextRegistryBundle({ refs: refsB }); // B is added
+    await resolveKangurAiTutorContextRegistryBundle({ refs: refsC }); // C is added
+
+    // Advance time to expire A but keep B and C fresh
+    vi.advanceTimersByTime(30_500);
+
+    // Access B: moves it to end, making A the least recently used
+    await resolveKangurAiTutorContextRegistryBundle({ refs: refsB });
+    expect(contextRegistryResolveRefsMock).toHaveBeenCalledTimes(3); // No new calls
+
+    // Advance past A's TTL but B and C still fresh
+    vi.advanceTimersByTime(30_500);
+
+    // Force a new bundle to trigger eviction
+    const bundleD = makeBundle('doc-D');
+    contextRegistryResolveRefsMock.mockResolvedValueOnce(bundleD);
+    const refsD = [makeRef('page:d')];
+
+    // This causes A (least recently used) to be evicted, not B (recently accessed)
+    await resolveKangurAiTutorContextRegistryBundle({ refs: refsD });
+
+    // A should be re-resolved (not cached), but B should still be cached
+    contextRegistryResolveRefsMock.mockResolvedValueOnce(bundleA);
+    await resolveKangurAiTutorContextRegistryBundle({ refs: refsA });
+    expect(contextRegistryResolveRefsMock).toHaveBeenCalledTimes(5); // A was evicted and re-resolved
+  });
 });

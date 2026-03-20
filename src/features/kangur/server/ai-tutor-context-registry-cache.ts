@@ -63,6 +63,9 @@ export const resolveKangurAiTutorContextRegistryBundle = async (input: {
   const now = Date.now();
   const cached = bundleCache.get(cacheKey);
   if (cached && now - cached.cachedAt < BUNDLE_CACHE_TTL_MS) {
+    // Move to end (LRU): delete and re-insert to update insertion order
+    bundleCache.delete(cacheKey);
+    bundleCache.set(cacheKey, cached);
     return cached.bundle;
   }
 

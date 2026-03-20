@@ -24,6 +24,7 @@ Generated from `src/features/products/components/settings/validator-settings/val
 | core.isPatternLocaleMatch | `isPatternLocaleMatch` | `src/features/products/validation-engine/core.ts` | Checks locale compatibility between pattern and field. |
 | core.normalizeReplacementFields | `normalizeReplacementFields` | `src/features/products/validation-engine/core.ts` | Validates, deduplicates, and normalizes replacement field allowlist. |
 | core.isReplacementAllowedForField | `isReplacementAllowedForField` | `src/features/products/validation-engine/core.ts` | Checks whether replacement is permitted for a specific form field. |
+| core.allowsPatternExecutionWithoutRegexMatch | `allowsPatternExecutionWithoutRegexMatch` | `src/features/products/validation-engine/core.ts` | Checks whether a pattern can execute its semantic operation without first matching a regex. |
 | core.isLatestPriceStockMirrorPattern | `isLatestPriceStockMirrorPattern` | `src/features/products/validation-engine/core.ts` | Detects dynamic mirror patterns pulling latest price or stock values. |
 | core.isRuntimePatternEnabled | `isRuntimePatternEnabled` | `src/features/products/validation-engine/core.ts` | Identifies patterns delegated to runtime evaluator. |
 | core.resolvePatternLaunchSourceValue | `resolvePatternLaunchSourceValue` | `src/features/products/validation-engine/core.ts` | Resolves the value used to evaluate launch condition. |
@@ -202,6 +203,17 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - Errors: No throws.
 - Edge Cases: Empty allowlist means global replacement.
 - Example: `isReplacementAllowedForField(pattern, 'name_en')`
+
+### core.allowsPatternExecutionWithoutRegexMatch
+
+- File: `src/features/products/validation-engine/core.ts`
+- Symbol: `allowsPatternExecutionWithoutRegexMatch`
+- Purpose: Checks whether a pattern can execute its semantic operation without first matching a regex.
+- Parameters: pattern: candidate pattern with semantic runtime metadata.
+- Returns: True when the configured semantic operation is allowed to run without a regex match.
+- Errors: No throws.
+- Edge Cases: Patterns without semantic operation metadata return false.
+- Example: `allowsPatternExecutionWithoutRegexMatch(pattern)`
 
 ### core.isLatestPriceStockMirrorPattern
 

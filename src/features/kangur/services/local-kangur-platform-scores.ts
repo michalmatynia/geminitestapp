@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  buildKangurScoreListPath,
+  createKangurApiClient,
+} from '@kangur/api-client';
 
 import {
   hasGuestKangurScores,
@@ -32,6 +36,12 @@ const DEFAULT_SCORE_LIMIT = 100;
 const SCORE_CACHE_TTL_MS = 12_000;
 const scoreListSchema = z.array(kangurScoreSchema);
 
+const kangurScoreApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
+
 const buildScoresUrl = (params: {
   sort?: string;
   limit?: number;
@@ -40,20 +50,7 @@ const buildScoresUrl = (params: {
   subject?: KangurLessonSubject;
   created_by?: string;
   learner_id?: string;
-}): string => {
-  const search = new URLSearchParams();
-
-  if (params.sort) search.set('sort', params.sort);
-  if (typeof params.limit === 'number') search.set('limit', String(params.limit));
-  if (params.player_name) search.set('player_name', params.player_name);
-  if (params.operation) search.set('operation', params.operation);
-  if (params.subject) search.set('subject', params.subject);
-  if (params.created_by) search.set('created_by', params.created_by);
-  if (params.learner_id) search.set('learner_id', params.learner_id);
-
-  const query = search.toString();
-  return query ? `${KANGUR_SCORES_ENDPOINT}?${query}` : KANGUR_SCORES_ENDPOINT;
-};
+}): string => buildKangurScoreListPath(params);
 
 const getScoreDedupKey = (score: KangurScoreRecord): string =>
   score.client_mutation_id?.trim() || score.id;
@@ -152,7 +149,7 @@ export const requestMergedScores = async (params: {
   const url = buildScoresUrl(params);
 
   try {
-    const remoteRows = await requestScoresFromApi(url);
+    const remoteRows = await requestScoresFromApi(url, params);
     return mergeScoreRows({
       localRows,
       remoteRows,
@@ -176,7 +173,18 @@ export const requestMergedScores = async (params: {
   }
 };
 
-const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> => {
+const requestScoresFromApi = async (
+  url: string,
+  query: {
+    sort?: string;
+    limit?: number;
+    player_name?: string;
+    operation?: string;
+    subject?: KangurLessonSubject;
+    created_by?: string;
+    learner_id?: string;
+  }
+): Promise<KangurScoreRecord[]> => {
   const now = Date.now();
   const cached = scoreQueryCache.get(url);
   if (cached && cached.expiresAt > now) {
@@ -202,22 +210,7 @@ const requestScoresFromApi = async (url: string): Promise<KangurScoreRecord[]> =
           },
         }),
         async () => {
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: createActorAwareHeaders(),
-            credentials: 'same-origin',
-          });
-          if (!response.ok) {
-            const requestError = new Error(
-              `Kangur score list request failed with ${response.status}`
-            ) as Error & {
-              status: number;
-            };
-            requestError.status = response.status;
-            throw requestError;
-          }
-
-          const payload = (await response.json()) as unknown;
+          const payload = await kangurScoreApiClient.listScores(query);
           const parsed = scoreListSchema.safeParse(payload);
           if (!parsed.success) {
             throw new Error('Kangur score list payload validation failed.');
@@ -267,26 +260,7 @@ export const createScoreViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_SCORES_ENDPOINT, {
-        method: 'POST',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur score create request failed with ${response.status}`
-        ) as Error & {
-          status: number;
-        };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurScoreApiClient.createScore(input);
       const parsed = kangurScoreSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur score create payload validation failed.');

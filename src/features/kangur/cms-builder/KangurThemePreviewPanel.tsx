@@ -1,11 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Badge } from '@/features/kangur/shared/ui';
-import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
+import {
+  KANGUR_THEME_PREVIEW_SECTION_IDS,
+  type KangurThemeMode,
+} from '@/features/kangur/admin/components/kangur-theme-settings.copy';
 import { KANGUR_CENTER_ROW_SPACED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 type KangurThemePreviewPanelProps = {
@@ -14,11 +18,63 @@ type KangurThemePreviewPanelProps = {
   mode: KangurThemeMode;
 };
 
-const MODE_LABELS: Record<KangurThemeMode, string> = {
-  daily: 'Daily',
-  dawn: 'Dawn',
-  sunset: 'Sunset',
-  nightly: 'Nightly',
+type KangurThemePreviewSectionKey =
+  | 'corePalette'
+  | 'textOverrides'
+  | 'logoLoader'
+  | 'backgroundsSurfaces'
+  | 'buttons'
+  | 'navigationPills'
+  | 'gradients'
+  | 'homeActions'
+  | 'progressBars'
+  | 'inputs'
+  | 'typographyLayout'
+  | 'shapeSpacing'
+  | 'shadowsDepth';
+
+const normalizeThemePreviewSectionLabel = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z]+/g, ' ')
+    .trim();
+
+const THEME_PREVIEW_SECTION_KEY_BY_NORMALIZED_LABEL: Record<
+  string,
+  KangurThemePreviewSectionKey
+> = {
+  'core palette': 'corePalette',
+  'text overrides': 'textOverrides',
+  'logo loader': 'logoLoader',
+  'backgrounds and surfaces': 'backgroundsSurfaces',
+  buttons: 'buttons',
+  'navigation pills': 'navigationPills',
+  gradients: 'gradients',
+  'home actions': 'homeActions',
+  'progress bars': 'progressBars',
+  inputs: 'inputs',
+  'typography and layout': 'typographyLayout',
+  'shape and spacing': 'shapeSpacing',
+  'shadows and depth': 'shadowsDepth',
+};
+
+const resolveThemePreviewSectionKey = (
+  section: string | null | undefined
+): KangurThemePreviewSectionKey => {
+  if (!section) {
+    return 'corePalette';
+  }
+
+  if ((KANGUR_THEME_PREVIEW_SECTION_IDS as readonly string[]).includes(section)) {
+    return section as KangurThemePreviewSectionKey;
+  }
+
+  return (
+    THEME_PREVIEW_SECTION_KEY_BY_NORMALIZED_LABEL[
+      normalizeThemePreviewSectionLabel(section)
+    ] ?? 'corePalette'
+  );
 };
 
 const resolveAppearanceMode = (
@@ -219,21 +275,20 @@ function ButtonGloss(): React.JSX.Element {
 }
 
 const HOME_ACTIONS = [
-  { id: 'lessons', label: 'Lessons', icon: 'L' },
-  { id: 'play', label: 'Play', icon: 'P' },
-  { id: 'training', label: 'Training', icon: 'T' },
-  { id: 'kangur', label: 'Kangur', icon: 'K' },
+  { id: 'lessons', icon: 'L' },
+  { id: 'play', icon: 'P' },
+  { id: 'training', icon: 'T' },
+  { id: 'kangur', icon: 'K' },
 ] as const;
 
 function HomeActionCard({
   actionId,
-  label,
   icon,
 }: {
-  actionId: string;
-  label: string;
+  actionId: (typeof HOME_ACTIONS)[number]['id'];
   icon: string;
 }): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
     <div
       style={{
@@ -302,24 +357,25 @@ function HomeActionCard({
           WebkitTextFillColor: 'transparent',
         }}
       >
-        {label}
+        {t(`homeActions.items.${actionId}`)}
       </span>
     </div>
   );
 }
 
 function CorePalettePreview({ theme }: { theme: ThemeSettings }): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   const swatches = [
-    { label: 'Primary', color: theme.primaryColor },
-    { label: 'Secondary', color: theme.secondaryColor },
-    { label: 'Accent', color: theme.accentColor },
-    { label: 'Success', color: theme.successColor },
-    { label: 'Text', color: theme.textColor },
-    { label: 'Muted', color: theme.mutedTextColor },
+    { label: t('corePalette.swatches.primary'), color: theme.primaryColor },
+    { label: t('corePalette.swatches.secondary'), color: theme.secondaryColor },
+    { label: t('corePalette.swatches.accent'), color: theme.accentColor },
+    { label: t('corePalette.swatches.success'), color: theme.successColor },
+    { label: t('corePalette.swatches.text'), color: theme.textColor },
+    { label: t('corePalette.swatches.muted'), color: theme.mutedTextColor },
   ];
 
   return (
-    <PreviewCard title='Core Palette'>
+    <PreviewCard title={t('sections.corePalette')}>
       <PreviewScene>
         <div className='grid grid-cols-3 gap-2'>
           {swatches.map((swatch) => (
@@ -341,13 +397,14 @@ function CorePalettePreview({ theme }: { theme: ThemeSettings }): React.JSX.Elem
 }
 
 function TextOverridesPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Text Overrides'>
+    <PreviewCard title={t('sections.textOverrides')}>
       <PreviewScene className='space-y-2'>
         <div style={navStyle}>
-          <span style={pillActive}>Home</span>
-          <span style={pillInactive}>Library</span>
-          <span style={pillHover}>Hover</span>
+          <span style={pillActive}>{t('textOverrides.nav.home')}</span>
+          <span style={pillInactive}>{t('textOverrides.nav.library')}</span>
+          <span style={pillHover}>{t('textOverrides.nav.hover')}</span>
         </div>
         <div style={cardStyle}>
           <div
@@ -358,10 +415,10 @@ function TextOverridesPreview(): React.JSX.Element {
               marginBottom: 2,
             }}
           >
-            Card headline
+            {t('textOverrides.cardHeadline')}
           </div>
           <div style={{ color: 'var(--kangur-page-muted-text)', fontSize: 10 }}>
-            Muted helper text preview.
+            {t('textOverrides.helperText')}
           </div>
         </div>
       </PreviewScene>
@@ -370,8 +427,9 @@ function TextOverridesPreview(): React.JSX.Element {
 }
 
 function LogoPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Logo & Loader'>
+    <PreviewCard title={t('sections.logoLoader')}>
       <PreviewScene className='space-y-2'>
         <div className={KANGUR_CENTER_ROW_SPACED_CLASSNAME}>
           <div
@@ -423,29 +481,30 @@ function LogoPreview(): React.JSX.Element {
 }
 
 function BackgroundPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Backgrounds & Surfaces'>
+    <PreviewCard title={t('sections.backgroundsSurfaces')}>
       <PreviewScene className='space-y-2'>
         <div style={{ ...glassStyle, padding: '8px 10px' }}>
           <div style={{ fontSize: 10, color: 'var(--kangur-page-muted-text)' }}>
-            Glass panel surface
+            {t('backgroundsSurfaces.glassPanelSurface')}
           </div>
         </div>
         <div style={{ ...cardStyle, padding: '8px 10px' }}>
-          <div style={{ fontSize: 10 }}>Soft card surface</div>
+          <div style={{ fontSize: 10 }}>{t('backgroundsSurfaces.softCardSurface')}</div>
         </div>
         <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
           <div
             className='rounded-md border border-border/60 p-2'
             style={{ background: 'var(--kangur-page-background)' }}
           >
-            Page
+            {t('backgroundsSurfaces.page')}
           </div>
           <div
             className='rounded-md border border-border/60 p-2'
             style={{ background: 'var(--kangur-soft-card-background)' }}
           >
-            Card
+            {t('backgroundsSurfaces.card')}
           </div>
         </div>
       </PreviewScene>
@@ -454,35 +513,36 @@ function BackgroundPreview(): React.JSX.Element {
 }
 
 function ButtonsPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Buttons'>
+    <PreviewCard title={t('sections.buttons')}>
       <PreviewScene className='space-y-2'>
         <div className='flex flex-wrap gap-2'>
           <span style={buttonPrimary}>
             <ButtonGloss />
-            <span style={{ position: 'relative', zIndex: 2 }}>Primary</span>
+            <span style={{ position: 'relative', zIndex: 2 }}>{t('buttons.primary')}</span>
           </span>
           <span style={buttonPrimaryHover}>
             <ButtonGloss />
-            <span style={{ position: 'relative', zIndex: 2 }}>Hover</span>
+            <span style={{ position: 'relative', zIndex: 2 }}>{t('buttons.hover')}</span>
           </span>
           <span style={buttonSecondary}>
             <ButtonGloss />
-            <span style={{ position: 'relative', zIndex: 2 }}>Secondary</span>
+            <span style={{ position: 'relative', zIndex: 2 }}>{t('buttons.secondary')}</span>
           </span>
         </div>
         <div className='flex flex-wrap gap-2'>
           <span style={buttonSurface}>
             <ButtonGloss />
-            <span style={{ position: 'relative', zIndex: 2 }}>Surface</span>
+            <span style={{ position: 'relative', zIndex: 2 }}>{t('buttons.surface')}</span>
           </span>
           <span style={buttonWarning}>
             <ButtonGloss />
-            <span style={{ position: 'relative', zIndex: 2 }}>Warning</span>
+            <span style={{ position: 'relative', zIndex: 2 }}>{t('buttons.warning')}</span>
           </span>
           <span style={buttonSuccess}>
             <ButtonGloss />
-            <span style={{ position: 'relative', zIndex: 2 }}>Success</span>
+            <span style={{ position: 'relative', zIndex: 2 }}>{t('buttons.success')}</span>
           </span>
         </div>
       </PreviewScene>
@@ -491,13 +551,14 @@ function ButtonsPreview(): React.JSX.Element {
 }
 
 function PillsPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Navigation Pills'>
+    <PreviewCard title={t('sections.navigationPills')}>
       <PreviewScene>
         <div style={navStyle}>
-          <span style={pillActive}>Active</span>
-          <span style={pillInactive}>Library</span>
-          <span style={pillHover}>Hover</span>
+          <span style={pillActive}>{t('navigationPills.active')}</span>
+          <span style={pillInactive}>{t('navigationPills.library')}</span>
+          <span style={pillHover}>{t('navigationPills.hover')}</span>
         </div>
       </PreviewScene>
     </PreviewCard>
@@ -505,19 +566,20 @@ function PillsPreview(): React.JSX.Element {
 }
 
 function GradientsPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   const gradients = [
-    { label: 'Indigo', start: '--kangur-accent-indigo-start', end: '--kangur-accent-indigo-end' },
-    { label: 'Violet', start: '--kangur-accent-violet-start', end: '--kangur-accent-violet-end' },
-    { label: 'Emerald', start: '--kangur-accent-emerald-start', end: '--kangur-accent-emerald-end' },
-    { label: 'Sky', start: '--kangur-accent-sky-start', end: '--kangur-accent-sky-end' },
-    { label: 'Amber', start: '--kangur-accent-amber-start', end: '--kangur-accent-amber-end' },
-    { label: 'Rose', start: '--kangur-accent-rose-start', end: '--kangur-accent-rose-end' },
-    { label: 'Teal', start: '--kangur-accent-teal-start', end: '--kangur-accent-teal-end' },
-    { label: 'Slate', start: '--kangur-accent-slate-start', end: '--kangur-accent-slate-end' },
+    { label: t('gradients.indigo'), start: '--kangur-accent-indigo-start', end: '--kangur-accent-indigo-end' },
+    { label: t('gradients.violet'), start: '--kangur-accent-violet-start', end: '--kangur-accent-violet-end' },
+    { label: t('gradients.emerald'), start: '--kangur-accent-emerald-start', end: '--kangur-accent-emerald-end' },
+    { label: t('gradients.sky'), start: '--kangur-accent-sky-start', end: '--kangur-accent-sky-end' },
+    { label: t('gradients.amber'), start: '--kangur-accent-amber-start', end: '--kangur-accent-amber-end' },
+    { label: t('gradients.rose'), start: '--kangur-accent-rose-start', end: '--kangur-accent-rose-end' },
+    { label: t('gradients.teal'), start: '--kangur-accent-teal-start', end: '--kangur-accent-teal-end' },
+    { label: t('gradients.slate'), start: '--kangur-accent-slate-start', end: '--kangur-accent-slate-end' },
   ];
 
   return (
-    <PreviewCard title='Gradients'>
+    <PreviewCard title={t('sections.gradients')}>
       <PreviewScene>
         <div className='grid grid-cols-2 gap-2 text-[10px] text-gray-300'>
           {gradients.map((gradient) => (
@@ -538,17 +600,13 @@ function GradientsPreview(): React.JSX.Element {
 }
 
 function HomeActionsPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Home Actions'>
+    <PreviewCard title={t('sections.homeActions')}>
       <PreviewScene>
         <div className='grid grid-cols-2 gap-2'>
           {HOME_ACTIONS.map((action) => (
-            <HomeActionCard
-              key={action.id}
-              actionId={action.id}
-              label={action.label}
-              icon={action.icon}
-            />
+            <HomeActionCard key={action.id} actionId={action.id} icon={action.icon} />
           ))}
         </div>
       </PreviewScene>
@@ -557,8 +615,9 @@ function HomeActionsPreview(): React.JSX.Element {
 }
 
 function ProgressPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Progress Bars'>
+    <PreviewCard title={t('sections.progressBars')}>
       <PreviewScene>
         <div className='h-2 rounded-full' style={{ background: 'var(--kangur-progress-track)' }}>
           <div
@@ -575,15 +634,16 @@ function ProgressPreview(): React.JSX.Element {
 }
 
 function InputsPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Inputs'>
+    <PreviewCard title={t('sections.inputs')}>
       <PreviewScene>
         <input
           readOnly
           tabIndex={-1}
-          placeholder='Search prompt…'
+          placeholder={t('inputs.searchPlaceholder')}
           style={inputStyle}
-          aria-label='Input preview'
+          aria-label={t('inputs.ariaLabel')}
         />
       </PreviewScene>
     </PreviewCard>
@@ -591,8 +651,9 @@ function InputsPreview(): React.JSX.Element {
 }
 
 function TypographyPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Typography & Layout'>
+    <PreviewCard title={t('sections.typographyLayout')}>
       <PreviewScene className='space-y-2'>
         <div
           style={{
@@ -602,7 +663,7 @@ function TypographyPreview(): React.JSX.Element {
             lineHeight: 'var(--kangur-font-heading-line-height, 1.2)',
           }}
         >
-          Kangur Heading
+          {t('typography.heading')}
         </div>
         <div
           style={{
@@ -612,10 +673,12 @@ function TypographyPreview(): React.JSX.Element {
             color: 'var(--kangur-page-muted-text)',
           }}
         >
-          Body text sample with the current base size and line height.
+          {t('typography.bodySample')}
         </div>
         <div>
-          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Layout</div>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>
+            {t('typography.layout')}
+          </div>
           <div
             className='mt-1 h-2 rounded-full'
             style={{ background: 'var(--kangur-soft-card-border)' }}
@@ -635,14 +698,19 @@ function TypographyPreview(): React.JSX.Element {
 }
 
 function ShapePreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Shape & Spacing'>
+    <PreviewCard title={t('sections.shapeSpacing')}>
       <PreviewScene className='space-y-2'>
         <div style={{ ...glassStyle, padding: 'var(--kangur-panel-padding-md)' }}>
-          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Panel</div>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>
+            {t('shape.panel')}
+          </div>
         </div>
         <div style={{ ...cardStyle, padding: 'var(--kangur-card-padding-md)' }}>
-          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Card</div>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>
+            {t('shape.card')}
+          </div>
         </div>
       </PreviewScene>
     </PreviewCard>
@@ -650,14 +718,19 @@ function ShapePreview(): React.JSX.Element {
 }
 
 function ShadowPreview(): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   return (
-    <PreviewCard title='Shadows & Depth'>
+    <PreviewCard title={t('sections.shadowsDepth')}>
       <PreviewScene className='space-y-2'>
         <div style={{ ...glassStyle, padding: '10px 12px' }}>
-          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Glass panel</div>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>
+            {t('shadows.glassPanel')}
+          </div>
         </div>
         <div style={{ ...cardStyle, padding: '10px 12px' }}>
-          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>Soft card</div>
+          <div className='text-[10px] uppercase tracking-[0.2em] text-gray-400'>
+            {t('shadows.softCard')}
+          </div>
         </div>
       </PreviewScene>
     </PreviewCard>
@@ -667,9 +740,11 @@ function ShadowPreview(): React.JSX.Element {
 export function KangurThemePreviewPanel(
   props: KangurThemePreviewPanelProps
 ): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.themePreview');
   const { section, theme, mode } = props;
   const activeTheme = theme;
-  const resolvedSection = section ?? 'Core Palette';
+  const resolvedSectionKey = resolveThemePreviewSectionKey(section);
+  const resolvedSectionLabel = t(`sections.${resolvedSectionKey}`);
   const appearance = React.useMemo(
     () => resolveKangurStorefrontAppearance(resolveAppearanceMode(mode), activeTheme),
     [mode, activeTheme]
@@ -683,43 +758,29 @@ export function KangurThemePreviewPanel(
     <div className='flex min-h-0 flex-1 flex-col' style={appearanceVars}>
       <div className='border-b border-border px-4 py-3'>
         <div className='flex items-center justify-between gap-2'>
-          <div className='text-sm font-semibold text-white'>Theme Preview</div>
+          <div className='text-sm font-semibold text-white'>{t('title')}</div>
           <Badge variant='neutral' className='text-[10px] uppercase tracking-wide'>
-            {MODE_LABELS[mode]}
+            {t(`modes.${mode}`)}
           </Badge>
         </div>
-        <div className='text-xs text-gray-400 mt-1'>Editing: {resolvedSection}</div>
+        <div className='text-xs text-gray-400 mt-1'>
+          {t('editing', { section: resolvedSectionLabel })}
+        </div>
       </div>
       <div className='flex-1 overflow-y-auto p-4 space-y-3'>
-        {resolvedSection === 'Core Palette' && <CorePalettePreview theme={activeTheme} />}
-        {resolvedSection === 'Text Overrides' && <TextOverridesPreview />}
-        {resolvedSection === 'Logo & Loader' && <LogoPreview />}
-        {resolvedSection === 'Backgrounds and Surfaces' && <BackgroundPreview />}
-        {resolvedSection === 'Buttons' && <ButtonsPreview />}
-        {resolvedSection === 'Navigation Pills' && <PillsPreview />}
-        {resolvedSection === 'Gradients' && <GradientsPreview />}
-        {resolvedSection === 'Home Actions' && <HomeActionsPreview />}
-        {resolvedSection === 'Progress Bars' && <ProgressPreview />}
-        {resolvedSection === 'Inputs' && <InputsPreview />}
-        {resolvedSection === 'Typography and Layout' && <TypographyPreview />}
-        {resolvedSection === 'Shape and Spacing' && <ShapePreview />}
-        {resolvedSection === 'Shadows and Depth' && <ShadowPreview />}
-
-        {resolvedSection !== 'Core Palette' &&
-          resolvedSection !== 'Text Overrides' &&
-          resolvedSection !== 'Logo & Loader' &&
-          resolvedSection !== 'Backgrounds and Surfaces' &&
-          resolvedSection !== 'Buttons' &&
-          resolvedSection !== 'Navigation Pills' &&
-          resolvedSection !== 'Gradients' &&
-          resolvedSection !== 'Home Actions' &&
-          resolvedSection !== 'Progress Bars' &&
-          resolvedSection !== 'Inputs' &&
-          resolvedSection !== 'Typography and Layout' &&
-          resolvedSection !== 'Shape and Spacing' &&
-          resolvedSection !== 'Shadows and Depth' && (
-            <CorePalettePreview theme={activeTheme} />
-          )}
+        {resolvedSectionKey === 'corePalette' && <CorePalettePreview theme={activeTheme} />}
+        {resolvedSectionKey === 'textOverrides' && <TextOverridesPreview />}
+        {resolvedSectionKey === 'logoLoader' && <LogoPreview />}
+        {resolvedSectionKey === 'backgroundsSurfaces' && <BackgroundPreview />}
+        {resolvedSectionKey === 'buttons' && <ButtonsPreview />}
+        {resolvedSectionKey === 'navigationPills' && <PillsPreview />}
+        {resolvedSectionKey === 'gradients' && <GradientsPreview />}
+        {resolvedSectionKey === 'homeActions' && <HomeActionsPreview />}
+        {resolvedSectionKey === 'progressBars' && <ProgressPreview />}
+        {resolvedSectionKey === 'inputs' && <InputsPreview />}
+        {resolvedSectionKey === 'typographyLayout' && <TypographyPreview />}
+        {resolvedSectionKey === 'shapeSpacing' && <ShapePreview />}
+        {resolvedSectionKey === 'shadowsDepth' && <ShadowPreview />}
       </div>
     </div>
   );

@@ -1,3 +1,10 @@
+import type { TranslationValues } from 'use-intl';
+
+import {
+  type KangurMiniGameTranslate,
+  translateKangurMiniGameWithFallback,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
+
 export type LogicalAnalogyRelationId =
   | 'part_whole'
   | 'opposite'
@@ -29,6 +36,16 @@ export type LogicalAnalogyRelationRound = {
   relationIds: LogicalAnalogyRelationId[];
   targets: LogicalAnalogyRelationTarget[];
 };
+
+type LogicalAnalogiesGameTranslate = KangurMiniGameTranslate;
+
+const translateLogicalAnalogiesGameWithFallback = (
+  translate: LogicalAnalogiesGameTranslate | undefined,
+  key: string,
+  fallback: string,
+  values?: TranslationValues
+): string =>
+  translateKangurMiniGameWithFallback(translate, `logicalAnalogies.game.${key}`, fallback, values);
 
 export const LOGICAL_ANALOGY_RELATION_TOKENS: Record<
   LogicalAnalogyRelationId,
@@ -184,3 +201,150 @@ export const LOGICAL_ANALOGIES_RELATION_ROUNDS: LogicalAnalogyRelationRound[] = 
     ],
   },
 ];
+
+export const getLocalizedLogicalAnalogyRelationTokens = (
+  translate?: LogicalAnalogiesGameTranslate
+): Record<LogicalAnalogyRelationId, LogicalAnalogyRelationToken> => ({
+  part_whole: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.part_whole,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.part_whole.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.part_whole.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.part_whole.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.part_whole.hint
+    ),
+  },
+  opposite: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.opposite,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.opposite.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.opposite.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.opposite.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.opposite.hint
+    ),
+  },
+  tool_action: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.tool_action,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.tool_action.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.tool_action.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.tool_action.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.tool_action.hint
+    ),
+  },
+  cause_effect: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.cause_effect,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.cause_effect.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.cause_effect.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.cause_effect.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.cause_effect.hint
+    ),
+  },
+  category_example: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.category_example,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.category_example.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.category_example.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.category_example.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.category_example.hint
+    ),
+  },
+  place_inhabitants: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.place_inhabitants,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.place_inhabitants.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.place_inhabitants.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.place_inhabitants.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.place_inhabitants.hint
+    ),
+  },
+  material_object: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.material_object,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.material_object.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.material_object.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.material_object.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.material_object.hint
+    ),
+  },
+  sequence: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.sequence,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.sequence.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.sequence.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.sequence.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.sequence.hint
+    ),
+  },
+  creator_work: {
+    ...LOGICAL_ANALOGY_RELATION_TOKENS.creator_work,
+    label: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.creator_work.label',
+      LOGICAL_ANALOGY_RELATION_TOKENS.creator_work.label
+    ),
+    hint: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      'tokens.creator_work.hint',
+      LOGICAL_ANALOGY_RELATION_TOKENS.creator_work.hint
+    ),
+  },
+});
+
+export const getLocalizedLogicalAnalogiesRelationRounds = (
+  translate?: LogicalAnalogiesGameTranslate
+): LogicalAnalogyRelationRound[] =>
+  LOGICAL_ANALOGIES_RELATION_ROUNDS.map((round) => ({
+    ...round,
+    title: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      `rounds.${round.id}.title`,
+      round.title
+    ),
+    prompt: translateLogicalAnalogiesGameWithFallback(
+      translate,
+      `rounds.${round.id}.prompt`,
+      round.prompt
+    ),
+    targets: round.targets.map((target) => ({
+      ...target,
+      pair: translateLogicalAnalogiesGameWithFallback(
+        translate,
+        `rounds.${round.id}.targets.${target.id}.pair`,
+        target.pair
+      ),
+    })),
+  }));

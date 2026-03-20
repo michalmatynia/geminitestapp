@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, ChevronsLeft } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import {
   hasKangurLessonDocumentContent,
@@ -25,6 +26,7 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import { lockKangurLessonScroll, unlockKangurLessonScroll } from './lessons-scroll-lock';
 
 export function ActiveLessonView() {
+  const translations = useTranslations('KangurLessonsPage');
   const {
     activeLesson,
     handleSelectLesson,
@@ -53,7 +55,10 @@ export function ActiveLessonView() {
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [isHubListActive, setIsHubListActive] = useState(false);
   const [hasLessonBackAction, setHasLessonBackAction] = useState(false);
-  const [lessonBackLabel, setLessonBackLabel] = useState('Wróć do tematów');
+  const defaultBackToTopicsLabel = translations('mobileControls.backToTopics');
+  const scrollUpLabel = translations('mobileControls.scrollUp');
+  const scrollDownLabel = translations('mobileControls.scrollDown');
+  const [lessonBackLabel, setLessonBackLabel] = useState(defaultBackToTopicsLabel);
 
   if (!activeLesson) return null;
 
@@ -101,18 +106,20 @@ export function ActiveLessonView() {
         backButton.getAttribute('data-kangur-lesson-back-label') ||
         backButton.getAttribute('aria-label') ||
         backButton.textContent?.trim() ||
-        'Wróć do tematów';
+        defaultBackToTopicsLabel;
       setLessonBackLabel((prev) => (prev === nextLabel ? prev : nextLabel));
     } else {
-      setLessonBackLabel((prev) => (prev === 'Wróć do tematów' ? prev : 'Wróć do tematów'));
+      setLessonBackLabel((prev) =>
+        prev === defaultBackToTopicsLabel ? prev : defaultBackToTopicsLabel
+      );
     }
-  }, [activeLessonContentRef, handleSelectLesson]);
+  }, [activeLessonContentRef, defaultBackToTopicsLabel, handleSelectLesson]);
 
   useEffect(() => {
     if (!isMobile) {
       setIsHubListActive(false);
       setHasLessonBackAction(false);
-      setLessonBackLabel('Wróć do tematów');
+      setLessonBackLabel(defaultBackToTopicsLabel);
       return;
     }
 
@@ -135,7 +142,7 @@ export function ActiveLessonView() {
       window.cancelAnimationFrame(frameId);
       mutationObserver?.disconnect();
     };
-  }, [activeLesson.id, activeLessonContentRef, isMobile, updateLessonContentState]);
+  }, [activeLesson.id, activeLessonContentRef, defaultBackToTopicsLabel, isMobile, updateLessonContentState]);
 
   const shouldLockScroll = isMobile && !isHubListActive;
 
@@ -354,7 +361,7 @@ export function ActiveLessonView() {
         secretLessonPill={{ isUnlocked: isSecretLessonUnlocked, onOpen: handleOpenSecretLesson }}
       >
         {shouldLockScroll ? (
-          <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(100dvh-var(--kangur-top-bar-height,88px))]'>
+          <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))]'>
             {canScrollUp || hasLessonBackAction ? (
               <div className='flex w-full gap-2'>
                 {hasLessonBackAction ? (
@@ -376,10 +383,10 @@ export function ActiveLessonView() {
                     variant='surface'
                     className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
                     onClick={() => handleScrollBy('up')}
-                    aria-label='Przewiń w górę'
+                    aria-label={scrollUpLabel}
                   >
                     <ChevronUp className='h-4 w-4' aria-hidden='true' />
-                    Przewiń w górę
+                    {scrollUpLabel}
                   </KangurButton>
                 ) : null}
               </div>
@@ -398,12 +405,12 @@ export function ActiveLessonView() {
                 fullWidth
                 size='sm'
                 variant='surface'
-                className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)] pb-[calc(10px+env(safe-area-inset-bottom))]'
+                className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)] pb-[calc(10px+var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom)))]'
                 onClick={() => handleScrollBy('down')}
-                aria-label='Przewiń w dół'
+                aria-label={scrollDownLabel}
               >
                 <ChevronDown className='h-4 w-4' aria-hidden='true' />
-                Przewiń w dół
+                {scrollDownLabel}
               </KangurButton>
             ) : null}
           </div>

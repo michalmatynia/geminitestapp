@@ -18,6 +18,8 @@ import {
   type AiPathRunStatus,
 } from './ai-paths-runtime';
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import type { SettingRecord } from './settings';
+
 export {
   aiPathNodeStatusSchema,
   aiPathRunSchema,
@@ -44,10 +46,7 @@ export const createAiPathSchema = aiPathSchema.omit({
 });
 export type AiPathCreateInput = z.infer<typeof createAiPathSchema>;
 export type AiPathUpdateInput = Partial<AiPathCreateInput>;
-export type AiPathsSettingRecordDto = {
-  key: string;
-  value: string;
-};
+export type AiPathsSettingRecordDto = SettingRecord;
 export type AiPathsSettingRecord = AiPathsSettingRecordDto;
 /**
  * AI Path Run Record Contract

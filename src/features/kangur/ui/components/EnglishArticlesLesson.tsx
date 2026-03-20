@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishArticleFocusAnimation,
@@ -26,15 +29,16 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 
 type SectionId = 'intro' | 'a_an' | 'the' | 'zero' | 'practice' | 'summary';
 
-const SLIDES: Record<SectionId, LessonSlide[]> = {
+const buildEnglishArticlesSlides = (
+  translations: ReturnType<typeof useTranslations>
+): Record<SectionId, LessonSlide[]> => ({
   intro: [
     {
-      title: 'Articles w skrócie',
+      title: translations('slides.intro.overview.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Articles to krótkie słowa przed rzeczownikiem. W matematyce pomogą Ci
-            odróżnić <strong>przykład</strong> od <strong>konkretu</strong>.
+            {translations('slides.intro.overview.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-sm`}>
@@ -43,12 +47,13 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
               <KangurLessonChip accent='amber'>the solution</KangurLessonChip>
             </div>
             <KangurLessonCaption className='mt-3'>
-              a/an = dowolny przykład, the = coś znanego w kontekście.
+              {translations('slides.intro.overview.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonInset accent='amber' className='text-left'>
             <p className='text-sm font-semibold text-amber-700'>
-              We need <strong>a</strong> formula, then we use <strong>the</strong> formula from the board.
+              We need <strong>a</strong> formula, then we use <strong>the</strong> formula from
+              the board.
             </p>
           </KangurLessonInset>
         </KangurLessonStack>
@@ -57,28 +62,24 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   a_an: [
     {
-      title: 'A / An',
+      title: translations('slides.aAn.overview.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            <strong>A / an</strong> używamy, gdy mówimy o jednym, niekonkretnym przykładzie.
+            {translations('slides.aAn.overview.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='amber'
-            caption={
-              <>
-                Liczy się dźwięk: <strong>an equation</strong>, <strong>a graph</strong>.
-              </>
-            }
+            caption={translations('slides.aAn.overview.caption')}
           >
             <EnglishArticleVowelAnimation />
           </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             {[
-              'a unit (brzmi jak “yoo”)',
-              'an angle',
-              'an x-intercept (brzmi jak “ex”)',
-              'a variable',
+              translations('slides.aAn.overview.items.unit'),
+              translations('slides.aAn.overview.items.angle'),
+              translations('slides.aAn.overview.items.xIntercept'),
+              translations('slides.aAn.overview.items.variable'),
             ].map((text) => (
               <KangurLessonInset key={text} accent='amber' className='text-left'>
                 <p className='font-semibold text-amber-700'>{text}</p>
@@ -89,15 +90,15 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Przykład w zadaniu',
+      title: translations('slides.aAn.taskExample.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Gdy nie wiemy jeszcze, które to równanie, używamy <strong>a / an</strong>.
+            {translations('slides.aAn.taskExample.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='amber'
-            caption='To dowolne równanie, jeszcze nie wiadomo które.'
+            caption={translations('slides.aAn.taskExample.caption')}
             maxWidthClassName='max-w-full'
           >
             <KangurEquationDisplay accent='amber' size='sm'>
@@ -110,16 +111,15 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   the: [
     {
-      title: 'The = konkret',
+      title: translations('slides.the.focus.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            <strong>The</strong> oznacza coś znanego obu stronom rozmowy: już to widzimy,
-            omawialiśmy albo wskazaliśmy.
+            {translations('slides.the.focus.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='indigo'
-            caption='The triangle = ten konkretny trójkąt z tablicy.'
+            caption={translations('slides.the.focus.caption')}
           >
             <EnglishArticleFocusAnimation />
           </KangurLessonVisual>
@@ -140,16 +140,15 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   zero: [
     {
-      title: 'Brak przedimka',
+      title: translations('slides.zero.overview.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Czasem nie używamy żadnego przedimka, zwłaszcza przy rzeczownikach
-            niepoliczalnych i liczbie mnogiej.
+            {translations('slides.zero.overview.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='slate'
-            caption='Math, homework, graphs – bez a/an/the.'
+            caption={translations('slides.zero.overview.caption')}
           >
             <EnglishZeroArticleAnimation />
           </KangurLessonVisual>
@@ -171,11 +170,11 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Szybka praktyka',
+      title: translations('slides.practice.quick.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Uzupełnij zdania a / an / the lub bez przedimka.
+            {translations('slides.practice.quick.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className='space-y-2 text-sm text-slate-700'>
@@ -186,7 +185,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
               <p>5) Solve ___ linear equation. (a)</p>
             </div>
             <KangurLessonCaption className='mt-3'>
-              Odpowiedzi: an · the · — · the · a
+              {translations('slides.practice.quick.answersCaption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -195,74 +194,65 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Podsumowanie',
+      title: translations('slides.summary.recap.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Ściąga przed kolejną lekcją:
+            {translations('slides.summary.recap.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' padding='sm'>
             <ul className='space-y-2 text-sm text-slate-700'>
-              <li><strong>a/an</strong> = dowolny przykład (a graph, an equation)</li>
-              <li><strong>the</strong> = konkretny obiekt w kontekście (the graph on the board)</li>
-              <li><strong>—</strong> = brak przedimka dla math, homework, plural (Graphs show…)</li>
-              <li>Liczy się dźwięk: <strong>a unit</strong>, <strong>an angle</strong></li>
+              <li>{translations('slides.summary.recap.items.aAn')}</li>
+              <li>{translations('slides.summary.recap.items.the')}</li>
+              <li>{translations('slides.summary.recap.items.zero')}</li>
+              <li>{translations('slides.summary.recap.items.sound')}</li>
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-const HUB_SECTIONS = [
-  {
-    id: 'intro',
-    emoji: '📌',
-    title: 'Intro',
-    description: 'Po co są articles w zadaniach',
-  },
-  {
-    id: 'a_an',
-    emoji: '🎯',
-    title: 'A / An',
-    description: 'Nieokreślone przykłady',
-  },
-  {
-    id: 'the',
-    emoji: '🔎',
-    title: 'The',
-    description: 'Konkretny obiekt z kontekstu',
-  },
-  {
-    id: 'zero',
-    emoji: '⭕',
-    title: 'Zero Article',
-    description: 'Brak przedimka',
-  },
-  {
-    id: 'practice',
-    emoji: '✅',
-    title: 'Practice',
-    description: 'Szybkie uzupełnianie',
-  },
-  {
-    id: 'summary',
-    emoji: '🧠',
-    title: 'Summary',
-    description: 'Skrót zasad',
-  },
+const ARTICLES_SECTION_META: Array<{
+  id: SectionId;
+  emoji: string;
+  key: string;
+}> = [
+  { id: 'intro', emoji: '📌', key: 'intro' },
+  { id: 'a_an', emoji: '🎯', key: 'aAn' },
+  { id: 'the', emoji: '🔎', key: 'the' },
+  { id: 'zero', emoji: '⭕', key: 'zero' },
+  { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'summary', emoji: '🧠', key: 'summary' },
 ];
 
 export default function EnglishArticlesLesson(): React.JSX.Element {
+  const shellTranslations = useTranslations('KangurStaticLessons.englishArticlesShell');
+  const contentTranslations = useTranslations('KangurStaticLessons.englishArticles');
+  const localizedSections = useMemo(
+    () =>
+      ARTICLES_SECTION_META.map((section) => ({
+        id: section.id,
+        emoji: section.emoji,
+        title: shellTranslations(`sections.${section.key}.title`),
+        description: shellTranslations(`sections.${section.key}.description`),
+      })),
+    [shellTranslations]
+  );
+  const localizedSlides = useMemo(
+    () => buildEnglishArticlesSlides(contentTranslations),
+    [contentTranslations]
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='english_articles'
       lessonEmoji='📚'
-      lessonTitle='English: Articles'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={shellTranslations('lessonTitle')}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-amber'
       progressDotClassName='bg-amber-300'
       dotActiveClass='bg-amber-500'

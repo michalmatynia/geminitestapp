@@ -13,8 +13,10 @@ describe('SubtractingGame', () => {
 
     expect(screen.getByTestId('subtracting-game-round-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-panel-padding-lg',
+      'kangur-glass-surface-solid',
+      'kangur-panel-shell'
     );
     expect(screen.getByTestId('subtracting-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('subtracting-game-equation')).toHaveClass('text-3xl', 'text-red-500');

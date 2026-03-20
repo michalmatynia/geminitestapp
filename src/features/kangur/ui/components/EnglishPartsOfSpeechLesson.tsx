@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import EnglishPartsOfSpeechGame from '@/features/kangur/ui/components/EnglishPartsOfSpeechGame';
 import EnglishPronounsWarmupGame from '@/features/kangur/ui/components/EnglishPronounsWarmupGame';
@@ -37,16 +40,6 @@ type SectionId =
 
 type SlideSectionId = Exclude<SectionId, 'game_parts_of_speech' | 'game_pronouns_warmup'>;
 
-const SUBJECT_PRONOUNS = [
-  { pronoun: 'I', meaning: 'ja', example: 'I solve the equation.' },
-  { pronoun: 'you', meaning: 'ty / wy', example: 'You check the graph.' },
-  { pronoun: 'he', meaning: 'on', example: 'He explains the steps.' },
-  { pronoun: 'she', meaning: 'ona', example: 'She verifies the result.' },
-  { pronoun: 'it', meaning: 'ono / to', example: 'It looks correct.' },
-  { pronoun: 'we', meaning: 'my', example: 'We compare answers.' },
-  { pronoun: 'they', meaning: 'oni / one', example: 'They test the formula.' },
-];
-
 const POSSESSIVE_ADJECTIVES = [
   { word: 'my', noun: 'solution' },
   { word: 'your', noun: 'calculator' },
@@ -66,290 +59,341 @@ const POSSESSIVE_PRONOUNS = [
   { word: 'theirs', example: 'The project is theirs.' },
 ];
 
-const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
-  subject_pronouns: [
+const buildEnglishPartsOfSpeechSlides = (
+  translations: ReturnType<typeof useTranslations>
+): Record<SlideSectionId, LessonSlide[]> => {
+  const subjectPronouns = [
     {
-      title: 'Subject pronouns',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Subject pronouns mówią, <strong>kto wykonuje działanie</strong>. W matematyce to
-            często uczeń, nauczyciel albo zespół.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='sky' className='text-sm' padding='sm'>
-            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-              {SUBJECT_PRONOUNS.map((item) => (
-                <div
-                  key={item.pronoun}
-                  className='rounded-2xl border border-sky-100/80 bg-sky-50/80 px-3 py-2'
-                >
-                  <p className='text-sm font-semibold text-sky-700'>
-                    {item.pronoun} <span className='text-sky-500/80'>· {item.meaning}</span>
+      pronoun: 'I',
+      meaning: translations('slides.subjectPronouns.overview.items.i.meaning'),
+      example: 'I solve the equation.',
+    },
+    {
+      pronoun: 'you',
+      meaning: translations('slides.subjectPronouns.overview.items.you.meaning'),
+      example: 'You check the graph.',
+    },
+    {
+      pronoun: 'he',
+      meaning: translations('slides.subjectPronouns.overview.items.he.meaning'),
+      example: 'He explains the steps.',
+    },
+    {
+      pronoun: 'she',
+      meaning: translations('slides.subjectPronouns.overview.items.she.meaning'),
+      example: 'She verifies the result.',
+    },
+    {
+      pronoun: 'it',
+      meaning: translations('slides.subjectPronouns.overview.items.it.meaning'),
+      example: 'It looks correct.',
+    },
+    {
+      pronoun: 'we',
+      meaning: translations('slides.subjectPronouns.overview.items.we.meaning'),
+      example: 'We compare answers.',
+    },
+    {
+      pronoun: 'they',
+      meaning: translations('slides.subjectPronouns.overview.items.they.meaning'),
+      example: 'They test the formula.',
+    },
+  ];
+
+  return {
+    subject_pronouns: [
+      {
+        title: translations('slides.subjectPronouns.overview.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.subjectPronouns.overview.lead')}
+            </KangurLessonLead>
+            <KangurLessonCallout accent='sky' className='text-sm' padding='sm'>
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
+                {subjectPronouns.map((item) => (
+                  <div
+                    key={item.pronoun}
+                    className='rounded-2xl border border-sky-100/80 bg-sky-50/80 px-3 py-2'
+                  >
+                    <p className='text-sm font-semibold text-sky-700'>
+                      {item.pronoun} <span className='text-sky-500/80'>· {item.meaning}</span>
+                    </p>
+                    <p className='text-xs text-sky-700/80'>{item.example}</p>
+                  </div>
+                ))}
+              </div>
+            </KangurLessonCallout>
+            <KangurLessonCaption align='left'>
+              {translations('slides.subjectPronouns.overview.caption')}
+            </KangurLessonCaption>
+          </KangurLessonStack>
+        ),
+      },
+      {
+        title: translations('slides.subjectPronouns.heSheIt.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.subjectPronouns.heSheIt.lead')}
+            </KangurLessonLead>
+            <KangurLessonVisual
+              accent='sky'
+              caption={translations('slides.subjectPronouns.heSheIt.caption')}
+              captionClassName='mt-1'
+            >
+              <EnglishPronounSwapAnimation />
+              <KangurEquationDisplay accent='sky' className='mt-2' size='sm'>
+                x + 4 = 10
+              </KangurEquationDisplay>
+            </KangurLessonVisual>
+            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+              <KangurLessonChip accent='sky'>I solve</KangurLessonChip>
+              <KangurLessonChip accent='sky'>He solves</KangurLessonChip>
+              <KangurLessonChip accent='sky'>They solve</KangurLessonChip>
+            </div>
+          </KangurLessonStack>
+        ),
+      },
+    ],
+    possessive_adjectives: [
+      {
+        title: translations('slides.possessiveAdjectives.overview.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.possessiveAdjectives.overview.lead')}
+            </KangurLessonLead>
+            <KangurLessonVisual
+              accent='indigo'
+              caption={translations('slides.possessiveAdjectives.overview.caption')}
+            >
+              <EnglishPossessiveAdjectiveAnimation />
+            </KangurLessonVisual>
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
+              {POSSESSIVE_ADJECTIVES.map((item) => (
+                <KangurLessonInset key={item.word} accent='indigo' className='text-left'>
+                  <p className='text-sm font-semibold text-indigo-700'>
+                    {item.word} {item.noun}
                   </p>
-                  <p className='text-xs text-sky-700/80'>{item.example}</p>
-                </div>
+                </KangurLessonInset>
               ))}
             </div>
-          </KangurLessonCallout>
-          <KangurLessonCaption align='left'>
-            Skup się na tym, kto robi zadanie: solve, check, graph, explain.
-          </KangurLessonCaption>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'He/She/It + -s',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Dla <strong>he / she / it</strong> czasownik dostaje końcówkę <strong>-s</strong>.
-          </KangurLessonLead>
-          <KangurLessonVisual
-            accent='sky'
-            caption='Maya solves… → She solves…'
-            captionClassName='mt-1'
-          >
-            <EnglishPronounSwapAnimation />
-            <KangurEquationDisplay accent='sky' className='mt-2' size='sm'>
-              x + 4 = 10
-            </KangurEquationDisplay>
-          </KangurLessonVisual>
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-            <KangurLessonChip accent='sky'>I solve</KangurLessonChip>
-            <KangurLessonChip accent='sky'>He solves</KangurLessonChip>
-            <KangurLessonChip accent='sky'>They solve</KangurLessonChip>
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  possessive_adjectives: [
-    {
-      title: 'Possessive adjectives',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Possessive adjectives stoją <strong>przed rzeczownikiem</strong>. Pokazują, do kogo
-            coś należy.
-          </KangurLessonLead>
-          <KangurLessonVisual
-            accent='indigo'
-            caption='my solution, your calculator, their graph'
-          >
-            <EnglishPossessiveAdjectiveAnimation />
-          </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
-            {POSSESSIVE_ADJECTIVES.map((item) => (
-              <KangurLessonInset key={item.word} accent='indigo' className='text-left'>
-                <p className='text-sm font-semibold text-indigo-700'>
-                  {item.word} {item.noun}
-                </p>
-              </KangurLessonInset>
-            ))}
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Polecenia z lekcji',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Zwróć uwagę na „your” i „our” w poleceniach.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='slate' padding='sm'>
-            <div className='space-y-2 text-sm text-slate-700'>
-              <p className='font-semibold'>Check your work.</p>
-              <p className='font-semibold'>Show your steps.</p>
-              <p className='font-semibold'>Use our formula.</p>
-              <p className='font-semibold'>Compare your answer with mine.</p>
-            </div>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  possessive_pronouns: [
-    {
-      title: 'Possessive pronouns',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Possessive pronouns <strong>zastępują rzeczownik</strong>. Nie stawiamy już nic po
-            nich.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='teal' padding='sm'>
-            <div className={`${KANGUR_GRID_SPACED_CLASSNAME} text-sm`}>
-              <div className='rounded-2xl border border-teal-100/80 bg-teal-50/70 px-3 py-2'>
-                <p className='text-xs uppercase tracking-wide text-teal-600'>Z rzeczownikiem</p>
-                <p className='font-semibold text-teal-700'>This is my solution.</p>
+          </KangurLessonStack>
+        ),
+      },
+      {
+        title: translations('slides.possessiveAdjectives.classroomCommands.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.possessiveAdjectives.classroomCommands.lead')}
+            </KangurLessonLead>
+            <KangurLessonCallout accent='slate' padding='sm'>
+              <div className='space-y-2 text-sm text-slate-700'>
+                <p className='font-semibold'>Check your work.</p>
+                <p className='font-semibold'>Show your steps.</p>
+                <p className='font-semibold'>Use our formula.</p>
+                <p className='font-semibold'>Compare your answer with mine.</p>
               </div>
-              <div className='rounded-2xl border border-teal-100/80 bg-white px-3 py-2'>
-                <p className='text-xs uppercase tracking-wide text-teal-600'>Zaimek</p>
-                <p className='font-semibold text-teal-700'>This solution is mine.</p>
+            </KangurLessonCallout>
+          </KangurLessonStack>
+        ),
+      },
+    ],
+    possessive_pronouns: [
+      {
+        title: translations('slides.possessivePronouns.overview.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.possessivePronouns.overview.lead')}
+            </KangurLessonLead>
+            <KangurLessonCallout accent='teal' padding='sm'>
+              <div className={`${KANGUR_GRID_SPACED_CLASSNAME} text-sm`}>
+                <div className='rounded-2xl border border-teal-100/80 bg-teal-50/70 px-3 py-2'>
+                  <p className='text-xs uppercase tracking-wide text-teal-600'>
+                    {translations('slides.possessivePronouns.overview.labels.withNoun')}
+                  </p>
+                  <p className='font-semibold text-teal-700'>This is my solution.</p>
+                </div>
+                <div className='rounded-2xl border border-teal-100/80 bg-white px-3 py-2'>
+                  <p className='text-xs uppercase tracking-wide text-teal-600'>
+                    {translations('slides.possessivePronouns.overview.labels.pronoun')}
+                  </p>
+                  <p className='font-semibold text-teal-700'>This solution is mine.</p>
+                </div>
               </div>
-            </div>
-          </KangurLessonCallout>
-          <KangurLessonCaption align='left'>
-            my → mine, your → yours, our → ours.
-          </KangurLessonCaption>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Mine vs yours',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Gdy porównujesz rozwiązania, zaimek mówi, czyje jest które.
-          </KangurLessonLead>
-          <KangurLessonVisual accent='teal' caption='mine / yours / theirs'>
-            <EnglishPossessivePronounAnimation />
-          </KangurLessonVisual>
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-            {POSSESSIVE_PRONOUNS.slice(0, 6).map((item) => (
-              <KangurLessonChip key={item.word} accent='teal'>
-                {item.word}
-              </KangurLessonChip>
-            ))}
-          </div>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-xs text-slate-600`}>
-            {POSSESSIVE_PRONOUNS.slice(0, 3).map((item) => (
-              <span key={item.word}>{item.example}</span>
-            ))}
-          </div>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  practice: [
-    {
-      title: 'Krótka rozgrzewka',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Rozgrzewkę przenieśliśmy do mini gry z wyborem zaimków.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='sky' padding='sm'>
-            <div className='space-y-2 text-sm text-slate-700'>
-              <p>1) ___ graph shows the quadratic function.</p>
-              <p>2) The red calculator is ___.</p>
-              <p>3) You solved it, but ___ solution is different.</p>
-            </div>
-            <KangurLessonCaption className='mt-3'>
-              Wejdź do gry <strong>Pronoun Warm-up</strong> i uzupełnij zdania.
+            </KangurLessonCallout>
+            <KangurLessonCaption align='left'>
+              {translations('slides.possessivePronouns.overview.caption')}
             </KangurLessonCaption>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-    {
-      title: 'Mini-dialog',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Zobacz, jak w rozmowie mieszają się zaimki.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='slate' padding='sm'>
-            <div className='space-y-3 text-sm text-slate-700'>
-              <div className={KANGUR_START_ROW_SPACED_CLASSNAME}>
-                <span className='text-xs font-semibold text-slate-500'>A</span>
-                <div>
-                  <p className='font-semibold'>I solved the system. Is this your graph?</p>
-                  <p className='text-xs text-slate-500'>Rozwiązałem układ. Czy to twój wykres?</p>
-                </div>
-              </div>
-              <div className={KANGUR_START_ROW_SPACED_CLASSNAME}>
-                <span className='text-xs font-semibold text-slate-500'>B</span>
-                <div>
-                  <p className='font-semibold'>Yes, it&apos;s mine. Your answer matches ours.</p>
-                  <p className='text-xs text-slate-500'>Tak, jest mój. Twoja odpowiedź pasuje do naszej.</p>
-                </div>
-              </div>
+          </KangurLessonStack>
+        ),
+      },
+      {
+        title: translations('slides.possessivePronouns.compare.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.possessivePronouns.compare.lead')}
+            </KangurLessonLead>
+            <KangurLessonVisual
+              accent='teal'
+              caption={translations('slides.possessivePronouns.compare.caption')}
+            >
+              <EnglishPossessivePronounAnimation />
+            </KangurLessonVisual>
+            <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+              {POSSESSIVE_PRONOUNS.slice(0, 6).map((item) => (
+                <KangurLessonChip key={item.word} accent='teal'>
+                  {item.word}
+                </KangurLessonChip>
+              ))}
             </div>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-  ],
-  summary: [
-    {
-      title: 'Podsumowanie',
-      content: (
-        <KangurLessonStack align='start'>
-          <KangurLessonLead align='left'>
-            Masz bazę do mówienia o zadaniach, rozwiązaniach i pracy w grupie.
-          </KangurLessonLead>
-          <KangurLessonCallout accent='sky' padding='sm'>
-            <ul className='space-y-2 text-sm text-slate-700'>
-              <li>Subject pronouns: I / you / he / she / it / we / they</li>
-              <li>Possessive adjectives: my, your, his, her, its, our, their + noun</li>
-              <li>Possessive pronouns: mine, yours, his, hers, ours, theirs (bez rzeczownika)</li>
-              <li>Przykłady: solutions, graphs, proofs, calculators</li>
-            </ul>
-          </KangurLessonCallout>
-        </KangurLessonStack>
-      ),
-    },
-  ],
+            <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-xs text-slate-600`}>
+              {POSSESSIVE_PRONOUNS.slice(0, 3).map((item) => (
+                <span key={item.word}>{item.example}</span>
+              ))}
+            </div>
+          </KangurLessonStack>
+        ),
+      },
+    ],
+    practice: [
+      {
+        title: translations('slides.practice.warmup.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.practice.warmup.lead')}
+            </KangurLessonLead>
+            <KangurLessonCallout accent='sky' padding='sm'>
+              <div className='space-y-2 text-sm text-slate-700'>
+                <p>1) ___ graph shows the quadratic function.</p>
+                <p>2) The red calculator is ___.</p>
+                <p>3) You solved it, but ___ solution is different.</p>
+              </div>
+              <KangurLessonCaption className='mt-3'>
+                {translations('slides.practice.warmup.caption')}
+              </KangurLessonCaption>
+            </KangurLessonCallout>
+          </KangurLessonStack>
+        ),
+      },
+      {
+        title: translations('slides.practice.dialogue.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.practice.dialogue.lead')}
+            </KangurLessonLead>
+            <KangurLessonCallout accent='slate' padding='sm'>
+              <div className='space-y-3 text-sm text-slate-700'>
+                <div className={KANGUR_START_ROW_SPACED_CLASSNAME}>
+                  <span className='text-xs font-semibold text-slate-500'>A</span>
+                  <div>
+                    <p className='font-semibold'>I solved the system. Is this your graph?</p>
+                    <p className='text-xs text-slate-500'>
+                      {translations('slides.practice.dialogue.aTranslation')}
+                    </p>
+                  </div>
+                </div>
+                <div className={KANGUR_START_ROW_SPACED_CLASSNAME}>
+                  <span className='text-xs font-semibold text-slate-500'>B</span>
+                  <div>
+                    <p className='font-semibold'>Yes, it&apos;s mine. Your answer matches ours.</p>
+                    <p className='text-xs text-slate-500'>
+                      {translations('slides.practice.dialogue.bTranslation')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </KangurLessonCallout>
+          </KangurLessonStack>
+        ),
+      },
+    ],
+    summary: [
+      {
+        title: translations('slides.summary.recap.title'),
+        content: (
+          <KangurLessonStack align='start'>
+            <KangurLessonLead align='left'>
+              {translations('slides.summary.recap.lead')}
+            </KangurLessonLead>
+            <KangurLessonCallout accent='sky' padding='sm'>
+              <ul className='space-y-2 text-sm text-slate-700'>
+                <li>{translations('slides.summary.recap.items.subjectPronouns')}</li>
+                <li>{translations('slides.summary.recap.items.possessiveAdjectives')}</li>
+                <li>{translations('slides.summary.recap.items.possessivePronouns')}</li>
+                <li>{translations('slides.summary.recap.items.examples')}</li>
+              </ul>
+            </KangurLessonCallout>
+          </KangurLessonStack>
+        ),
+      },
+    ],
+  };
 };
 
-const HUB_SECTIONS = [
-  {
-    id: 'subject_pronouns',
-    emoji: '🎯',
-    title: 'Subject Pronouns',
-    description: 'Kto wykonuje działanie w zadaniu',
-  },
-  {
-    id: 'possessive_adjectives',
-    emoji: '🧮',
-    title: 'Possessive Adjectives',
-    description: 'my/your/his/her + rzeczownik',
-  },
-  {
-    id: 'possessive_pronouns',
-    emoji: '📌',
-    title: 'Possessive Pronouns',
-    description: 'mine/yours/hers bez rzeczownika',
-  },
-  {
-    id: 'practice',
-    emoji: '✅',
-    title: 'Practice',
-    description: 'Krótka rozgrzewka z przykładami',
-  },
-  {
-    id: 'game_pronouns_warmup',
-    emoji: '⚡',
-    title: 'Pronoun Warm-up',
-    description: 'Mini gra z wyborem zaimków',
-    isGame: true,
-  },
-  {
-    id: 'summary',
-    emoji: '🧠',
-    title: 'Summary',
-    description: 'Szybka ściąga z kluczowych form',
-  },
-  {
-    id: 'game_parts_of_speech',
-    emoji: '🎮',
-    title: 'Parts of Speech Game',
-    description: 'Przeciągnij słowa do właściwych kategorii',
-    isGame: true,
-  },
+const PRONOUNS_SECTION_META: Array<{
+  id: SectionId;
+  emoji: string;
+  key: string;
+  isGame?: boolean;
+}> = [
+  { id: 'subject_pronouns', emoji: '🎯', key: 'subjectPronouns' },
+  { id: 'possessive_adjectives', emoji: '🧮', key: 'possessiveAdjectives' },
+  { id: 'possessive_pronouns', emoji: '📌', key: 'possessivePronouns' },
+  { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'game_pronouns_warmup', emoji: '⚡', key: 'gamePronounsWarmup', isGame: true },
+  { id: 'summary', emoji: '🧠', key: 'summary' },
+  { id: 'game_parts_of_speech', emoji: '🎮', key: 'gamePartsOfSpeech', isGame: true },
 ];
 
 export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
+  const shellTranslations = useTranslations('KangurStaticLessons.englishPartsOfSpeechShell');
+  const contentTranslations = useTranslations('KangurStaticLessons.englishPartsOfSpeech');
+  const localizedSections = useMemo(
+    () =>
+      PRONOUNS_SECTION_META.map((section) => ({
+        id: section.id,
+        emoji: section.emoji,
+        title: shellTranslations(`sections.${section.key}.title`),
+        description: shellTranslations(`sections.${section.key}.description`),
+        isGame: section.isGame,
+      })),
+    [shellTranslations]
+  );
+  const localizedSlides = useMemo(
+    () => buildEnglishPartsOfSpeechSlides(contentTranslations),
+    [contentTranslations]
+  );
+  const sectionTitles = useMemo(
+    () =>
+      Object.fromEntries(localizedSections.map((section) => [section.id, section.title])) as Record<
+        SectionId,
+        string
+      >,
+    [localizedSections]
+  );
+  const sectionDescriptions = useMemo(
+    () =>
+      Object.fromEntries(
+        localizedSections.map((section) => [section.id, section.description ?? ''])
+      ) as Record<SectionId, string>,
+    [localizedSections]
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='english_parts_of_speech'
       lessonEmoji='📝'
-      lessonTitle='English: Pronouns'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={shellTranslations('lessonTitle')}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-sky'
       progressDotClassName='bg-sky-300'
       dotActiveClass='bg-sky-500'
@@ -363,35 +407,25 @@ export default function EnglishPartsOfSpeechLesson(): React.JSX.Element {
           sectionId: 'game_pronouns_warmup',
           stage: {
             accent: 'sky',
-            title: 'Gra: Pronoun Warm-up',
+            title: sectionTitles.game_pronouns_warmup,
             icon: '⚡',
-            description: 'Szybka rozgrzewka z zaimkami w matematycznych zdaniach.',
+            description: sectionDescriptions.game_pronouns_warmup,
             headerTestId: 'english-pronouns-warmup-game-header',
             shellTestId: 'english-pronouns-warmup-game-shell',
           },
-          render: ({ onFinish }) => (
-            <EnglishPronounsWarmupGame
-              finishLabel='Wróć do tematów'
-              onFinish={onFinish}
-            />
-          ),
+          render: ({ onFinish }) => <EnglishPronounsWarmupGame onFinish={onFinish} />,
         },
         {
           sectionId: 'game_parts_of_speech',
           stage: {
             accent: 'sky',
-            title: 'Gra: Parts of Speech',
+            title: sectionTitles.game_parts_of_speech,
             icon: '🎮',
-            description: 'Przeciągnij słowa do właściwych części mowy.',
+            description: sectionDescriptions.game_parts_of_speech,
             headerTestId: 'english-parts-of-speech-game-header',
             shellTestId: 'english-parts-of-speech-game-shell',
           },
-          render: ({ onFinish }) => (
-            <EnglishPartsOfSpeechGame
-              finishLabel='Wróć do tematów'
-              onFinish={onFinish}
-            />
-          ),
+          render: ({ onFinish }) => <EnglishPartsOfSpeechGame onFinish={onFinish} />,
         },
       ]}
     />

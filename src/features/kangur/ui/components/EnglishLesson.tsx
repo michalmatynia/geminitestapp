@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+
 import { EnglishPronounsPulseAnimation } from '@/features/kangur/ui/components/EnglishPronounsAnimations';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
@@ -16,32 +19,40 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 type SectionId = 'greetings' | 'phrases' | 'summary' | 'pronoun_remix';
 type SlideSectionId = SectionId;
 
-const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
+const buildEnglishBasicsSlides = (
+  translations: ReturnType<typeof useTranslations>
+): Record<SlideSectionId, LessonSlide[]> => ({
   greetings: [
     {
-      title: 'Hello! 👋',
+      title: translations('slides.greetings.hello.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Zaczynamy od najprostszych zwrotów. Wystarczą, by przywitać się i podziękować.
-          </KangurLessonLead>
+          <KangurLessonLead>{translations('slides.greetings.hello.lead')}</KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
             <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
               <KangurLessonInset accent='emerald'>
                 <p className='font-semibold text-emerald-700'>Hello</p>
-                <KangurLessonCaption className='mt-1'>Cześć / Dzień dobry</KangurLessonCaption>
+                <KangurLessonCaption className='mt-1'>
+                  {translations('slides.greetings.hello.captions.hello')}
+                </KangurLessonCaption>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald'>
                 <p className='font-semibold text-emerald-700'>Goodbye</p>
-                <KangurLessonCaption className='mt-1'>Do widzenia</KangurLessonCaption>
+                <KangurLessonCaption className='mt-1'>
+                  {translations('slides.greetings.hello.captions.goodbye')}
+                </KangurLessonCaption>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald'>
                 <p className='font-semibold text-emerald-700'>Please</p>
-                <KangurLessonCaption className='mt-1'>Proszę</KangurLessonCaption>
+                <KangurLessonCaption className='mt-1'>
+                  {translations('slides.greetings.hello.captions.please')}
+                </KangurLessonCaption>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald'>
                 <p className='font-semibold text-emerald-700'>Thank you</p>
-                <KangurLessonCaption className='mt-1'>Dziękuję</KangurLessonCaption>
+                <KangurLessonCaption className='mt-1'>
+                  {translations('slides.greetings.hello.captions.thankYou')}
+                </KangurLessonCaption>
               </KangurLessonInset>
             </div>
           </KangurLessonCallout>
@@ -49,17 +60,21 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Przedstaw się',
+      title: translations('slides.greetings.introduce.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonLead>
-            Kilka zdań pozwala szybko powiedzieć, kim jesteś.
+            {translations('slides.greetings.introduce.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
             <p className='text-lg font-semibold text-emerald-700'>My name is Ania.</p>
-            <KangurLessonCaption className='mt-1'>Mam na imię Ania.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-1'>
+              {translations('slides.greetings.introduce.captions.name')}
+            </KangurLessonCaption>
             <p className='mt-3 text-lg font-semibold text-emerald-700'>I am 9 years old.</p>
-            <KangurLessonCaption className='mt-1'>Mam 9 lat.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-1'>
+              {translations('slides.greetings.introduce.captions.age')}
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -67,14 +82,14 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   phrases: [
     {
-      title: 'Proste pytania',
+      title: translations('slides.phrases.questions.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Pytania pomagają prowadzić rozmowę. Oto najważniejsze startowe zwroty.
-          </KangurLessonLead>
+          <KangurLessonLead>{translations('slides.phrases.questions.lead')}</KangurLessonLead>
           <KangurLessonCallout accent='emerald' padding='sm'>
-            <KangurLessonCaption className='mb-2'>Powtórz na głos:</KangurLessonCaption>
+            <KangurLessonCaption className='mb-2'>
+              {translations('slides.phrases.questions.repeatCaption')}
+            </KangurLessonCaption>
             <div className='space-y-2 text-emerald-700'>
               <p className='font-semibold'>How are you?</p>
               <p className='font-semibold'>What is your name?</p>
@@ -85,17 +100,19 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Krótkie odpowiedzi',
+      title: translations('slides.phrases.answers.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Odpowiedzi mogą być krótkie i grzeczne.
-          </KangurLessonLead>
+          <KangurLessonLead>{translations('slides.phrases.answers.lead')}</KangurLessonLead>
           <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
             <p className='text-lg font-semibold text-emerald-700'>I&apos;m fine, thank you.</p>
-            <KangurLessonCaption className='mt-1'>Mam się dobrze, dziękuję.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-1'>
+              {translations('slides.phrases.answers.captions.fine')}
+            </KangurLessonCaption>
             <p className='mt-3 text-lg font-semibold text-emerald-700'>My name is Kuba.</p>
-            <KangurLessonCaption className='mt-1'>Mam na imię Kuba.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-1'>
+              {translations('slides.phrases.answers.captions.name')}
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -103,16 +120,14 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Powtórka',
+      title: translations('slides.summary.recap.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Świetnie! Potrafisz już powiedzieć kilka ważnych zwrotów.
-          </KangurLessonLead>
+          <KangurLessonLead>{translations('slides.summary.recap.lead')}</KangurLessonLead>
           <KangurLessonCallout accent='emerald' padding='sm'>
             <ul className='space-y-2 text-sm'>
-              <li>👋 Hello / Goodbye / Please / Thank you</li>
-              <li>🗣️ Umiesz zadać pytanie i odpowiedzieć</li>
+              <li>{translations('slides.summary.recap.items.greetings')}</li>
+              <li>{translations('slides.summary.recap.items.questions')}</li>
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -121,78 +136,68 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   pronoun_remix: [
     {
-      title: 'Pronoun Remix: Zasady',
+      title: translations('slides.pronounRemix.rules.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            W tej grze wybierasz formę, która pasuje do roli w zdaniu: kto robi, kogo
-            dotyczy, czyja to rzecz, albo kto robi coś sam.
-          </KangurLessonLead>
+          <KangurLessonLead>{translations('slides.pronounRemix.rules.lead')}</KangurLessonLead>
           <KangurLessonVisual
             accent='emerald'
-            caption='Klikaj poprawne formy: podmiotowe, dopełnienia, dzierżawcze, zwrotne.'
+            caption={translations('slides.pronounRemix.rules.caption')}
             maxWidthClassName='max-w-xs'
           >
             <EnglishPronounsPulseAnimation />
           </KangurLessonVisual>
           <KangurLessonCallout accent='emerald' className='text-sm' padding='sm'>
             <ul className='space-y-2'>
-              <li>
-                <strong>Subject</strong>: kto robi? (I, you, he, she, we, they)
-              </li>
-              <li>
-                <strong>Object</strong>: kogo/co? (me, him, her, us, them)
-              </li>
-              <li>
-                <strong>Possessive</strong>: czyje? (mine, his, hers, ours, theirs)
-              </li>
-              <li>
-                <strong>Reflexive</strong>: sam/a (myself, himself, herself, ourselves, themselves)
-              </li>
+              <li>{translations('slides.pronounRemix.rules.items.subject')}</li>
+              <li>{translations('slides.pronounRemix.rules.items.object')}</li>
+              <li>{translations('slides.pronounRemix.rules.items.possessive')}</li>
+              <li>{translations('slides.pronounRemix.rules.items.reflexive')}</li>
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-const HUB_SECTIONS = [
-  {
-    id: 'greetings',
-    emoji: '👋',
-    title: 'Greetings',
-    description: 'Powitania i przedstawianie się',
-  },
-  {
-    id: 'phrases',
-    emoji: '🗣️',
-    title: 'Phrases',
-    description: 'Proste pytania i odpowiedzi',
-  },
-  {
-    id: 'summary',
-    emoji: '✅',
-    title: 'Summary',
-    description: 'Krótka powtórka najważniejszych zwrotów',
-  },
-  {
-    id: 'pronoun_remix',
-    emoji: '🧠',
-    title: 'Pronoun Remix: Zasady',
-    description: 'Jak rozpoznać typ zaimka w zdaniu',
-  },
+const ENGLISH_BASICS_SECTION_META: Array<{
+  id: SectionId;
+  emoji: string;
+  key: string;
+}> = [
+  { id: 'greetings', emoji: '👋', key: 'greetings' },
+  { id: 'phrases', emoji: '🗣️', key: 'phrases' },
+  { id: 'summary', emoji: '✅', key: 'summary' },
+  { id: 'pronoun_remix', emoji: '🧠', key: 'pronounRemix' },
 ];
 
 export default function EnglishLesson(): React.JSX.Element {
+  const shellTranslations = useTranslations('KangurStaticLessons.englishBasicsShell');
+  const contentTranslations = useTranslations('KangurStaticLessons.englishBasics');
+  const localizedSections = useMemo(
+    () =>
+      ENGLISH_BASICS_SECTION_META.map((section) => ({
+        id: section.id,
+        emoji: section.emoji,
+        title: shellTranslations(`sections.${section.key}.title`),
+        description: shellTranslations(`sections.${section.key}.description`),
+      })),
+    [shellTranslations]
+  );
+  const localizedSlides = useMemo(
+    () => buildEnglishBasicsSlides(contentTranslations),
+    [contentTranslations]
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='english_basics'
       lessonEmoji='🗣️'
-      lessonTitle='Angielski: podstawy'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={shellTranslations('lessonTitle')}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
       dotActiveClass='bg-emerald-500'

@@ -7,6 +7,7 @@ import {
   KANGUR_BASE_PATH,
 } from '@/features/kangur/config/routing';
 import {
+  type KangurRouteTransitionKind,
   useOptionalKangurRouteTransitionActions,
   useOptionalKangurRouteTransitionState,
 } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -22,6 +23,7 @@ type KangurRouteNavigationOptions = {
   scroll?: boolean;
   sourceId?: string | null;
   acknowledgeMs?: number;
+  transitionKind?: KangurRouteTransitionKind | null;
 };
 
 type KangurBackNavigationOptions = Pick<
@@ -67,7 +69,11 @@ export function useKangurRouteNavigator(): {
         acknowledgeMs,
         pageKey,
         sourceId,
-      }: Pick<KangurRouteNavigationOptions, 'acknowledgeMs' | 'pageKey' | 'sourceId'> = {}
+        transitionKind,
+      }: Pick<
+        KangurRouteNavigationOptions,
+        'acknowledgeMs' | 'pageKey' | 'sourceId' | 'transitionKind'
+      > = {}
     ): { acknowledgeMs: number; started: boolean } => {
       if (!routeTransitionActions || (href !== null && !isManagedLocalHref(href))) {
         return {
@@ -115,6 +121,7 @@ export function useKangurRouteNavigator(): {
         ...(resolvedPageKey ? { pageKey: resolvedPageKey } : {}),
         ...(sourceId?.trim() ? { sourceId: sourceId.trim() } : {}),
         ...(typeof acknowledgeMs === 'number' && acknowledgeMs > 0 ? { acknowledgeMs } : {}),
+        ...(transitionKind ? { transitionKind } : {}),
       });
 
       if (

@@ -18,6 +18,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -115,10 +116,11 @@ type EnglishPronounsGameProps = {
 };
 
 export default function EnglishPronounsGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: EnglishPronounsGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -147,7 +149,12 @@ export default function EnglishPronounsGame({
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
       ? translations('englishPronouns.feedback.correct')
-      : `Prawidłowa odpowiedź: ${round.answer}.`;
+      : translateKangurMiniGameWithFallback(
+          translations,
+          'englishPronouns.feedback.incorrect',
+          'Correct answer: {answer}.',
+          { answer: round.answer }
+        );
 
     setScore(nextScore);
     setFeedback({ kind: isCorrect ? 'success' : 'error', text: feedbackText });
@@ -224,11 +231,7 @@ export default function EnglishPronounsGame({
               : translations('englishPronouns.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={
-            finishLabel === 'Wróć do tematów'
-              ? getKangurMiniGameFinishLabel(translations, 'topics')
-              : finishLabel
-          }
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
@@ -254,10 +257,22 @@ export default function EnglishPronounsGame({
       >
         <div className='flex items-center justify-between gap-2'>
           <KangurStatusChip accent={round.accent} className='text-[10px] uppercase tracking-[0.16em]'>
-            Round {roundIndex + 1}/{TOTAL_ROUNDS}
+            {translateKangurMiniGameWithFallback(
+              translations,
+              'englishPronouns.inRound.roundLabel',
+              'Round {current}/{total}',
+              {
+                current: roundIndex + 1,
+                total: TOTAL_ROUNDS,
+              }
+            )}
           </KangurStatusChip>
           <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-            Click
+            {translateKangurMiniGameWithFallback(
+              translations,
+              'englishPronouns.inRound.modeLabel',
+              'Click'
+            )}
           </KangurStatusChip>
         </div>
 
@@ -306,7 +321,11 @@ export default function EnglishPronounsGame({
           onClick={handleCheck}
           data-testid='english-pronouns-check'
         >
-          Sprawdź ✓
+          {translateKangurMiniGameWithFallback(
+            translations,
+            'englishPronouns.inRound.check',
+            'Check ✓'
+          )}
         </KangurButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>

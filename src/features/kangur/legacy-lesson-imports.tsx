@@ -21,10 +21,10 @@ import {
   HUB_SECTIONS as ADDING_HUB_SECTIONS,
   SLIDES as ADDING_SLIDES,
 } from './ui/components/AddingLesson';
-import {
-  HUB_SECTIONS as CALENDAR_HUB_SECTIONS,
-  SECTION_SLIDES as CALENDAR_SECTION_SLIDES,
-} from './ui/components/CalendarLesson';
+// import {
+//   HUB_SECTIONS as CALENDAR_HUB_SECTIONS,
+//   SECTION_SLIDES as CALENDAR_SECTION_SLIDES,
+// } from './ui/components/CalendarLesson';
 import { LESSON_SECTIONS as CLOCK_LESSON_SECTIONS } from './ui/components/ClockLesson';
 import {
   HUB_SECTIONS as DIVISION_HUB_SECTIONS,
@@ -251,9 +251,10 @@ const LEGACY_IMPORTERS: Record<KangurLessonComponentId, LegacyImportDefinition> 
   division: createSectionedDefinition(DIVISION_HUB_SECTIONS, DIVISION_SLIDES, {
     game: 'division-game',
   }),
-  calendar: createSectionedDefinition(CALENDAR_HUB_SECTIONS, CALENDAR_SECTION_SLIDES, {
-    game: 'calendar-interactive',
-  }),
+  calendar: { kind: 'flat', slides: [] },
+  // createSectionedDefinition(CALENDAR_HUB_SECTIONS, CALENDAR_SECTION_SLIDES, {
+  //   game: 'calendar-interactive',
+  // }),
   clock: createClockDefinition(),
   geometry_basics: createSectionedDefinition(GEOMETRY_BASICS_HUB_SECTIONS, GEOMETRY_BASICS_SLIDES),
   geometry_shapes: createSectionedDefinition(GEOMETRY_SHAPES_HUB_SECTIONS, GEOMETRY_SHAPES_SLIDES, {

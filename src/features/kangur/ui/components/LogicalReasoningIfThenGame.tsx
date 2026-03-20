@@ -3,9 +3,13 @@
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
-import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurButton,
+  KangurInfoCard,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
@@ -17,7 +21,7 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type IfThenCase = {
+export type LogicalReasoningIfThenCase = {
   id: string;
   rule: string;
   fact: string;
@@ -26,16 +30,60 @@ type IfThenCase = {
   explanation: string;
 };
 
+export type LogicalReasoningIfThenGameCopy = {
+  header: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    placedTemplate: string;
+  };
+  zones: {
+    pool: { title: string; hint: string; ariaLabel: string };
+    valid: { title: string; hint: string; ariaLabel: string };
+    invalid: { title: string; hint: string; ariaLabel: string };
+  };
+  card: {
+    ifLabel: string;
+    factLabel: string;
+    conclusionLabel: string;
+    selectAriaTemplate: string;
+  };
+  status: {
+    correct: string;
+    wrong: string;
+  };
+  selection: {
+    selectedTemplate: string;
+    idle: string;
+  };
+  moveButtons: {
+    toValid: string;
+    toInvalid: string;
+    toPool: string;
+  };
+  actions: {
+    check: string;
+    reset: string;
+  };
+  summary: {
+    perfect: string;
+    good: string;
+    retry: string;
+    resultTemplate: string;
+  };
+};
+
 type LogicalReasoningIfThenGameProps = {
-  cases: IfThenCase[];
+  cases: LogicalReasoningIfThenCase[];
+  copy: LogicalReasoningIfThenGameCopy;
 };
 
 type ZoneId = 'pool' | 'valid' | 'invalid';
 
 type GameState = {
-  pool: IfThenCase[];
-  valid: IfThenCase[];
-  invalid: IfThenCase[];
+  pool: LogicalReasoningIfThenCase[];
+  valid: LogicalReasoningIfThenCase[];
+  invalid: LogicalReasoningIfThenCase[];
 };
 
 type CardStatus = 'neutral' | 'correct' | 'wrong';
@@ -66,7 +114,7 @@ const moveBetweenLists = <T,>(
   return { source: sourceNext, destination: destinationNext };
 };
 
-const buildInitialState = (cases: IfThenCase[]): GameState => ({
+const buildInitialState = (cases: LogicalReasoningIfThenCase[]): GameState => ({
   pool: shuffle(cases),
   valid: [],
   invalid: [],
@@ -74,18 +122,6 @@ const buildInitialState = (cases: IfThenCase[]): GameState => ({
 
 const isZoneId = (value: string): value is ZoneId =>
   value === 'pool' || value === 'valid' || value === 'invalid';
-
-const zoneTitles: Record<ZoneId, string> = {
-  pool: 'Karty',
-  valid: 'Wynika',
-  invalid: 'Nie wynika',
-};
-
-const zoneHints: Record<ZoneId, string> = {
-  pool: 'Przeciągnij kartę do odpowiedniego pola.',
-  valid: 'Wniosek wynika z reguły i faktu.',
-  invalid: 'Wniosek nie wynika z reguły.',
-};
 
 const zoneAccents: Record<ZoneId, KangurAccent> = {
   pool: 'slate',
@@ -105,12 +141,6 @@ const statusAccent: Record<CardStatus, KangurAccent> = {
   wrong: 'rose',
 };
 
-const statusChip: Record<CardStatus, string> = {
-  neutral: '',
-  correct: 'Dobrze',
-  wrong: 'Źle',
-};
-
 const removeItemById = <T extends { id: string }>(
   items: T[],
   id: string
@@ -122,7 +152,17 @@ const removeItemById = <T extends { id: string }>(
   return { updated, item: item ?? null };
 };
 
-function getCardStatus(item: IfThenCase, zoneId: ZoneId, checked: boolean): CardStatus {
+const formatTemplate = (template: string, values: Record<string, string | number>): string =>
+  Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
+    template
+  );
+
+function getCardStatus(
+  item: LogicalReasoningIfThenCase,
+  zoneId: ZoneId,
+  checked: boolean
+): CardStatus {
   if (!checked || zoneId === 'pool') return 'neutral';
   const correctZone: ZoneId = item.valid ? 'valid' : 'invalid';
   return zoneId === correctZone ? 'correct' : 'wrong';
@@ -135,13 +175,15 @@ function DraggableCase({
   checked,
   isSelected,
   onSelect,
+  copy,
 }: {
-  item: IfThenCase;
+  item: LogicalReasoningIfThenCase;
   index: number;
   zoneId: ZoneId;
   checked: boolean;
   isSelected: boolean;
   onSelect: () => void;
+  copy: LogicalReasoningIfThenGameCopy;
 }): React.ReactElement | React.ReactPortal {
   const status = getCardStatus(item, zoneId, checked);
   const accent = statusAccent[status];
@@ -161,16 +203,17 @@ function DraggableCase({
         <div className='min-w-0 space-y-2'>
           <div className='rounded-xl border border-slate-200/60 bg-white/70 px-2 py-1'>
             <p className='text-[10px] font-semibold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
-              Jeśli...
+              {copy.card.ifLabel}
             </p>
             <p className='text-sm font-bold [color:var(--kangur-page-text)]'>{item.rule}</p>
           </div>
           <div className='space-y-1 text-xs'>
             <p className='[color:var(--kangur-page-muted-text)]'>
-              <span className='font-semibold text-slate-700'>Fakt:</span> {item.fact}
+              <span className='font-semibold text-slate-700'>{copy.card.factLabel}</span> {item.fact}
             </p>
             <p className='[color:var(--kangur-page-text)]'>
-              <span className='font-semibold text-slate-700'>Wniosek:</span> {item.conclusion}
+              <span className='font-semibold text-slate-700'>{copy.card.conclusionLabel}</span>{' '}
+              {item.conclusion}
             </p>
           </div>
         </div>
@@ -180,7 +223,7 @@ function DraggableCase({
             className='px-2 py-1 text-[10px] font-bold'
             size='sm'
           >
-            {statusChip[status]}
+            {status === 'correct' ? copy.status.correct : copy.status.wrong}
           </KangurStatusChip>
         ) : null}
       </div>
@@ -205,11 +248,13 @@ function DraggableCase({
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             className={cn(
-              'w-full text-left cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              'w-full cursor-grab text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
               isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
             )}
             aria-pressed={isSelected}
-            aria-label={`Wybierz kartę: ${item.conclusion}`}
+            aria-label={formatTemplate(copy.card.selectAriaTemplate, {
+              conclusion: item.conclusion,
+            })}
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -233,6 +278,7 @@ function DraggableCase({
 
 export default function LogicalReasoningIfThenGame({
   cases,
+  copy,
 }: LogicalReasoningIfThenGameProps): React.JSX.Element {
   const [state, setState] = useState<GameState>(() => buildInitialState(cases));
   const [checked, setChecked] = useState(false);
@@ -298,10 +344,10 @@ export default function LogicalReasoningIfThenGame({
 
   const summaryLabel = useMemo(() => {
     if (!attempted) return '';
-    if (score === total) return 'Super! Wszystko poprawnie.';
-    if (score >= Math.max(1, Math.floor(total * 0.6))) return 'Dobra robota! Popraw błędy.';
-    return 'Spróbuj jeszcze raz i sprawdź wskazówki.';
-  }, [attempted, score, total]);
+    if (score === total) return copy.summary.perfect;
+    if (score >= Math.max(1, Math.floor(total * 0.6))) return copy.summary.good;
+    return copy.summary.retry;
+  }, [attempted, copy.summary.good, copy.summary.perfect, copy.summary.retry, score, total]);
 
   const summaryAccent = useMemo<KangurAccent>(() => {
     if (!attempted) return 'slate';
@@ -310,18 +356,18 @@ export default function LogicalReasoningIfThenGame({
     return 'rose';
   }, [attempted, score, total]);
 
-  const selectedCase =
-    selectedCaseId
-      ? [...state.pool, ...state.valid, ...state.invalid].find((item) => item.id === selectedCaseId) ??
-        null
-      : null;
+  const selectedCase = selectedCaseId
+    ? [...state.pool, ...state.valid, ...state.invalid].find((item) => item.id === selectedCaseId) ??
+      null
+    : null;
 
   const moveSelectedCaseTo = (destinationId: ZoneId): void => {
     if (checked || !selectedCaseId) return;
     setState((prev) => {
       const zones: ZoneId[] = ['pool', 'valid', 'invalid'];
-      let moved: IfThenCase | null = null;
+      let moved: LogicalReasoningIfThenCase | null = null;
       const nextState = { ...prev };
+
       zones.forEach((zone) => {
         const { updated, item } = removeItemById(prev[zone], selectedCaseId);
         nextState[zone] = updated;
@@ -329,6 +375,7 @@ export default function LogicalReasoningIfThenGame({
           moved = item;
         }
       });
+
       if (!moved) return prev;
       nextState[destinationId] = [...nextState[destinationId], moved];
       return nextState;
@@ -343,17 +390,17 @@ export default function LogicalReasoningIfThenGame({
           <div className='flex flex-wrap items-start justify-between kangur-panel-gap'>
             <div>
               <p className='text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500'>
-                Gra logiczna
+                {copy.header.eyebrow}
               </p>
               <p className='text-sm font-bold [color:var(--kangur-page-text)]'>
-                Jeśli... to... czy wniosek wynika?
+                {copy.header.title}
               </p>
               <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
-                Przeciągnij każdą kartę do pola, gdzie wniosek <b>wynika</b> lub <b>nie wynika</b> z reguły.
+                {copy.header.description}
               </p>
             </div>
             <KangurStatusChip accent='indigo' className='px-3 py-1 text-xs font-bold' size='sm'>
-              Umieszczone: {placed}/{total}
+              {formatTemplate(copy.header.placedTemplate, { placed, total })}
             </KangurStatusChip>
           </div>
         </KangurInfoCard>
@@ -364,6 +411,7 @@ export default function LogicalReasoningIfThenGame({
               {(provided, snapshot) => {
                 const accent = zoneAccents[zoneId];
                 const tone = snapshot.isDraggingOver ? 'accent' : 'muted';
+                const zoneCopy = copy.zones[zoneId];
                 return (
                   <KangurInfoCard
                     ref={provided.innerRef}
@@ -379,11 +427,7 @@ export default function LogicalReasoningIfThenGame({
                     role='button'
                     tabIndex={checked ? -1 : 0}
                     aria-disabled={checked}
-                    aria-label={
-                      zoneId === 'valid'
-                        ? 'Strefa: wniosek wynika'
-                        : 'Strefa: wniosek nie wynika'
-                    }
+                    aria-label={zoneCopy.ariaLabel}
                     onClick={() => {
                       if (!selectedCaseId || checked) return;
                       moveSelectedCaseTo(zoneId);
@@ -400,7 +444,7 @@ export default function LogicalReasoningIfThenGame({
                   >
                     <div className={`mb-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:justify-between`}>
                       <p className='text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
-                        {zoneTitles[zoneId]}
+                        {zoneCopy.title}
                       </p>
                       <KangurStatusChip
                         accent={accent}
@@ -411,7 +455,7 @@ export default function LogicalReasoningIfThenGame({
                       </KangurStatusChip>
                     </div>
                     <p className='mb-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
-                      {zoneHints[zoneId]}
+                      {zoneCopy.hint}
                     </p>
                     <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                       {state[zoneId].map((item, index) => (
@@ -423,10 +467,9 @@ export default function LogicalReasoningIfThenGame({
                           checked={checked}
                           isSelected={selectedCaseId === item.id}
                           onSelect={() =>
-                            setSelectedCaseId((current) =>
-                              current === item.id ? null : item.id
-                            )
+                            setSelectedCaseId((current) => (current === item.id ? null : item.id))
                           }
+                          copy={copy}
                         />
                       ))}
                       {provided.placeholder}
@@ -450,7 +493,7 @@ export default function LogicalReasoningIfThenGame({
               role='button'
               tabIndex={checked ? -1 : 0}
               aria-disabled={checked}
-              aria-label='Strefa: nieprzypisane'
+              aria-label={copy.zones.pool.ariaLabel}
               onClick={() => {
                 if (!selectedCaseId || checked) return;
                 moveSelectedCaseTo('pool');
@@ -467,7 +510,7 @@ export default function LogicalReasoningIfThenGame({
             >
               <div className={`mb-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME} sm:justify-between`}>
                 <p className='text-xs font-bold uppercase tracking-wide [color:var(--kangur-page-muted-text)]'>
-                  {zoneTitles.pool}
+                  {copy.zones.pool.title}
                 </p>
                 <KangurStatusChip
                   accent='slate'
@@ -478,24 +521,23 @@ export default function LogicalReasoningIfThenGame({
                 </KangurStatusChip>
               </div>
               <p className='mb-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
-                {zoneHints.pool}
+                {copy.zones.pool.hint}
               </p>
               <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                  {state.pool.map((item, index) => (
-                    <DraggableCase
-                      key={item.id}
-                      item={item}
-                      index={index}
-                      zoneId='pool'
-                      checked={checked}
-                      isSelected={selectedCaseId === item.id}
-                      onSelect={() =>
-                        setSelectedCaseId((current) =>
-                          current === item.id ? null : item.id
-                        )
-                      }
-                    />
-                  ))}
+                {state.pool.map((item, index) => (
+                  <DraggableCase
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    zoneId='pool'
+                    checked={checked}
+                    isSelected={selectedCaseId === item.id}
+                    onSelect={() =>
+                      setSelectedCaseId((current) => (current === item.id ? null : item.id))
+                    }
+                    copy={copy}
+                  />
+                ))}
                 {provided.placeholder}
               </div>
             </KangurInfoCard>
@@ -510,8 +552,10 @@ export default function LogicalReasoningIfThenGame({
             aria-atomic='true'
           >
             {selectedCase
-              ? `Wybrana karta: ${selectedCase.conclusion}`
-              : 'Wybierz kartę, aby przenieść ją klawiaturą.'}
+              ? formatTemplate(copy.selection.selectedTemplate, {
+                  conclusion: selectedCase.conclusion,
+                })
+              : copy.selection.idle}
           </span>
           <KangurButton
             size='sm'
@@ -520,7 +564,7 @@ export default function LogicalReasoningIfThenGame({
             onClick={() => moveSelectedCaseTo('valid')}
             disabled={!selectedCase || checked}
           >
-            Do „wynika”
+            {copy.moveButtons.toValid}
           </KangurButton>
           <KangurButton
             size='sm'
@@ -529,7 +573,7 @@ export default function LogicalReasoningIfThenGame({
             onClick={() => moveSelectedCaseTo('invalid')}
             disabled={!selectedCase || checked}
           >
-            Do „nie wynika”
+            {copy.moveButtons.toInvalid}
           </KangurButton>
           <KangurButton
             size='sm'
@@ -538,7 +582,7 @@ export default function LogicalReasoningIfThenGame({
             onClick={() => moveSelectedCaseTo('pool')}
             disabled={!selectedCase || checked}
           >
-            Do puli
+            {copy.moveButtons.toPool}
           </KangurButton>
         </div>
 
@@ -549,10 +593,10 @@ export default function LogicalReasoningIfThenGame({
             size='sm'
             variant='primary'
           >
-            Sprawdź
+            {copy.actions.check}
           </KangurButton>
           <KangurButton onClick={reset} size='sm' type='button' variant='surface'>
-            Reset
+            {copy.actions.reset}
           </KangurButton>
         </div>
 
@@ -565,7 +609,7 @@ export default function LogicalReasoningIfThenGame({
           >
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <span className='font-bold [color:var(--kangur-page-text)]'>
-                Wynik: {score}/{total}
+                {formatTemplate(copy.summary.resultTemplate, { score, total })}
               </span>
               <KangurStatusChip
                 accent={summaryAccent}

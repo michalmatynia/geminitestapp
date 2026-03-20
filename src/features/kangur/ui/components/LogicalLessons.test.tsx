@@ -4,6 +4,7 @@
 
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -19,9 +20,14 @@ import LogicalPatternsLesson from '@/features/kangur/ui/components/LogicalPatter
 import LogicalReasoningLesson from '@/features/kangur/ui/components/LogicalReasoningLesson';
 import LogicalThinkingLesson from '@/features/kangur/ui/components/LogicalThinkingLesson';
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
+import plMessages from '@/i18n/messages/pl.json';
 
 const renderLesson = (ui: ReactNode) =>
-  render(<KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>);
+  render(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      <KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>
+    </NextIntlClientProvider>
+  );
 
 const getParagraphByTextContent = (snippet: string): HTMLElement =>
   screen.getByText(

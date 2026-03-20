@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
@@ -9,16 +10,13 @@ import {
   SLOT_ORDER,
   ThemeSelectionId,
 } from './AppearancePage.constants';
+import {
+  getAppearancePreviewCopy,
+  resolveAppearanceAdminLocale,
+  type AppearancePreviewSection,
+} from './appearance.copy';
 
 type PreviewTarget = 'current' | AppearanceSlot;
-
-const PREVIEW_TARGET_LABELS: Record<PreviewTarget, string> = {
-  current: 'Preview',
-  daily: 'Dzień',
-  dawn: 'Świt',
-  sunset: 'Zmierzch',
-  nightly: 'Noc',
-};
 
 const PREVIEW_TARGET_ORDER: PreviewTarget[] = ['current', ...SLOT_ORDER];
 
@@ -71,13 +69,6 @@ function ButtonGloss(): React.JSX.Element {
 }
 
 /* ── Home action mini-card ── */
-const HOME_ACTIONS = [
-  { id: 'lessons', label: 'Lekcje', emoji: '\ud83d\udcda' },
-  { id: 'play', label: 'Graj', emoji: '\ud83c\udfae' },
-  { id: 'training', label: 'Trening', emoji: '\ud83c\udfc6' },
-  { id: 'kangur', label: 'Kangur', emoji: '\ud83e\udd98' },
-] as const;
-
 function HomeActionCard({ actionId, label, emoji }: { actionId: string; label: string; emoji: string }): React.JSX.Element {
   return (
     <div
@@ -139,8 +130,6 @@ function HomeActionCard({ actionId, label, emoji }: { actionId: string; label: s
 }
 
 /* ── Collapsible section ── */
-type PreviewSection = 'page' | 'buttons' | 'cards' | 'colors' | 'chat' | 'components';
-
 export function ThemePreviewPanel({
   draft,
   selectedId,
@@ -152,10 +141,12 @@ export function ThemePreviewPanel({
   slotAssignments: Record<AppearanceSlot, { id: string; name: string } | null>;
   slotThemes: Record<AppearanceSlot, ThemeSettings>;
 }): React.JSX.Element {
+  const locale = resolveAppearanceAdminLocale(useLocale());
+  const copy = getAppearancePreviewCopy(locale);
   const [previewTarget, setPreviewTarget] = useState<PreviewTarget>('current');
-  const [collapsed, setCollapsed] = useState<Set<PreviewSection>>(new Set());
+  const [collapsed, setCollapsed] = useState<Set<AppearancePreviewSection>>(new Set());
 
-  const toggle = (section: PreviewSection) =>
+  const toggle = (section: AppearancePreviewSection) =>
     setCollapsed((prev) => {
       const next = new Set(prev);
       next.has(section) ? next.delete(section) : next.add(section);
@@ -322,7 +313,13 @@ export function ThemePreviewPanel({
     marginBottom: 5,
   };
 
-  const SectionToggle = ({ label, section }: { label: string; section: PreviewSection }) => (
+  const SectionToggle = ({
+    label,
+    section,
+  }: {
+    label: string;
+    section: AppearancePreviewSection;
+  }) => (
     <button
       type='button'
       onClick={() => toggle(section)}
@@ -358,7 +355,7 @@ export function ThemePreviewPanel({
               type='button'
               onClick={() => setPreviewTarget(target)}
               aria-pressed={previewTarget === target}
-              aria-label={PREVIEW_TARGET_LABELS[target]}
+              aria-label={copy.targetLabels[target]}
               className={[
                 'rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                 previewTarget === target
@@ -366,17 +363,22 @@ export function ThemePreviewPanel({
                   : 'text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
-              {PREVIEW_TARGET_LABELS[target]}
+              {copy.targetLabels[target]}
             </button>
           ))}
         </div>
       </div>
 
       {/* preview scene */}
-      <div style={sceneStyle} className='space-y-2 p-3' role='group' aria-label='Theme preview'>
+      <div
+        style={sceneStyle}
+        className='space-y-2 p-3'
+        role='group'
+        aria-label={copy.groupAriaLabel}
+      >
 
         {/* ════════════ PAGE: Logo + Nav + Heading ════════════ */}
-        <SectionToggle label='Page & Navigation' section='page' />
+        <SectionToggle label={copy.sectionLabels.page} section='page' />
         {!collapsed.has('page') && (
           <>
             {/* Logo wordmark */}
@@ -424,13 +426,13 @@ export function ThemePreviewPanel({
 
             {/* Nav bar */}
             <div style={navStyle}>
-              {['Kursy', 'Wyniki', 'Profil'].map((label, i) => (
+              {copy.navItems.map((label, i) => (
                 <span
                   key={label}
                   style={
                     i === 0
                       ? pillActive
-                      : label === 'Wyniki'
+                      : label === copy.navItems[1]
                         ? {
                           ...pillBase,
                           background: 'var(--kangur-nav-item-hover-background, transparent)',
@@ -457,16 +459,16 @@ export function ThemePreviewPanel({
                   margin: '2px 0 1px',
                 }}
               >
-                Alphabet — 6 lat
+                {copy.pageHeading}
               </div>
               <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 10, margin: 0, lineHeight: 1.4 }}>
-                Litery, sylaby i pierwsze słowa.
+                {copy.pageSubtext}
               </p>
             </div>
 
             {/* Home action cards */}
             <div style={{ display: 'flex', gap: 4 }}>
-              {HOME_ACTIONS.map((a) => (
+              {copy.homeActions.map((a) => (
                 <HomeActionCard key={a.id} actionId={a.id} label={a.label} emoji={a.emoji} />
               ))}
             </div>
@@ -474,24 +476,24 @@ export function ThemePreviewPanel({
         )}
 
         {/* ════════════ BUTTONS ════════════ */}
-        <SectionToggle label='Buttons' section='buttons' />
+        <SectionToggle label={copy.sectionLabels.buttons} section='buttons' />
         {!collapsed.has('buttons') && (
           <div style={cardStyle}>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
-              <span style={btnPrimary}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Primary</span></span>
-              <span style={btnPrimaryHover}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Hover</span></span>
-              <span style={btnSecondary}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Secondary</span></span>
+              <span style={btnPrimary}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.buttonLabels.primary}</span></span>
+              <span style={btnPrimaryHover}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.buttonLabels.hover}</span></span>
+              <span style={btnSecondary}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.buttonLabels.secondary}</span></span>
             </div>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-              <span style={btnSurface}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Surface</span></span>
-              <span style={btnWarning}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Warning</span></span>
-              <span style={btnSuccess}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Success</span></span>
+              <span style={btnSurface}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.buttonLabels.surface}</span></span>
+              <span style={btnWarning}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.buttonLabels.warning}</span></span>
+              <span style={btnSuccess}><ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.buttonLabels.success}</span></span>
             </div>
           </div>
         )}
 
         {/* ════════════ CARDS & INPUTS ════════════ */}
-        <SectionToggle label='Cards & Inputs' section='cards' />
+        <SectionToggle label={copy.sectionLabels.cards} section='cards' />
         {!collapsed.has('cards') && (
           <>
             {/* Lesson card */}
@@ -505,8 +507,8 @@ export function ThemePreviewPanel({
                   flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 600, fontSize: 12, margin: 0 }}>Lekcja 3 — Ułamki</p>
-                  <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>12 ćwiczeń · 45 min</p>
+                  <p style={{ fontWeight: 600, fontSize: 12, margin: 0 }}>{copy.lessonTitle}</p>
+                  <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>{copy.lessonMeta}</p>
                 </div>
               </div>
               {/* progress bar */}
@@ -515,16 +517,22 @@ export function ThemePreviewPanel({
               </div>
               <div style={{ display: 'flex', gap: 5 }}>
                 <span style={{ ...btnPrimary, fontSize: 10, padding: '4px 10px' }}>
-                  <ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Kontynuuj</span>
+                  <ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.continueLabel}</span>
                 </span>
                 <span style={{ ...btnSecondary, fontSize: 10, padding: '4px 10px' }}>
-                  <ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Wyniki</span>
+                  <ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.resultsLabel}</span>
                 </span>
               </div>
             </div>
 
             {/* Input */}
-            <input readOnly tabIndex={-1} placeholder='Wyszukaj ćwiczenie…' style={inputStyle} aria-label='preview input' />
+            <input
+              readOnly
+              tabIndex={-1}
+              placeholder={copy.searchPlaceholder}
+              style={inputStyle}
+              aria-label={copy.previewInputAria}
+            />
 
             {/* Glass panel */}
             <div style={glassStyle}>
@@ -537,8 +545,8 @@ export function ThemePreviewPanel({
                   flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, margin: 0 }}>Anna Kowalska</p>
-                  <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>Postęp: 74% · #12 w klasie</p>
+                  <p style={{ fontSize: 11, fontWeight: 600, margin: 0 }}>{copy.studentOneName}</p>
+                  <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>{copy.studentOneMeta}</p>
                 </div>
               </div>
             </div>
@@ -553,11 +561,11 @@ export function ThemePreviewPanel({
                 flexShrink: 0,
               }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, margin: 0 }}>Jan Nowak</p>
-                <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>1 240 pkt</p>
+                <p style={{ fontSize: 11, fontWeight: 600, margin: 0 }}>{copy.studentTwoName}</p>
+                <p style={{ color: 'var(--kangur-page-muted-text)', fontSize: 9, margin: 0 }}>{copy.studentTwoMeta}</p>
               </div>
               <span style={{ ...btnPrimary, fontSize: 9, padding: '3px 8px' }}>
-                <ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>Profil</span>
+                <ButtonGloss /><span style={{ position: 'relative', zIndex: 2 }}>{copy.profileLabel}</span>
               </span>
             </div>
 
@@ -571,7 +579,7 @@ export function ThemePreviewPanel({
                 overflow: 'hidden',
               }}
             >
-              {['Ułamki zwykłe', 'Ułamki dziesiętne', 'Procenty'].map((item, i) => (
+              {copy.dropdownItems.map((item, i) => (
                 <div
                   key={item}
                   style={{
@@ -591,21 +599,21 @@ export function ThemePreviewPanel({
         )}
 
         {/* ════════════ COLORS & GRADIENTS ════════════ */}
-        <SectionToggle label='Colors & Gradients' section='colors' />
+        <SectionToggle label={copy.sectionLabels.colors} section='colors' />
         {!collapsed.has('colors') && (
           <>
             {/* Accent gradients */}
-            <div style={sectionLabelStyle}>Accent Gradients</div>
+            <div style={sectionLabelStyle}>{copy.accentGradientsLabel}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3, marginBottom: 6 }}>
               {([
-                ['Indigo', '--kangur-accent-indigo-start', '--kangur-accent-indigo-end'],
-                ['Violet', '--kangur-accent-violet-start', '--kangur-accent-violet-end'],
-                ['Emerald', '--kangur-accent-emerald-start', '--kangur-accent-emerald-end'],
-                ['Sky', '--kangur-accent-sky-start', '--kangur-accent-sky-end'],
-                ['Amber', '--kangur-accent-amber-start', '--kangur-accent-amber-end'],
-                ['Rose', '--kangur-accent-rose-start', '--kangur-accent-rose-end'],
-                ['Teal', '--kangur-accent-teal-start', '--kangur-accent-teal-end'],
-                ['Slate', '--kangur-accent-slate-start', '--kangur-accent-slate-end'],
+                [copy.accentGradientNames[0], '--kangur-accent-indigo-start', '--kangur-accent-indigo-end'],
+                [copy.accentGradientNames[1], '--kangur-accent-violet-start', '--kangur-accent-violet-end'],
+                [copy.accentGradientNames[2], '--kangur-accent-emerald-start', '--kangur-accent-emerald-end'],
+                [copy.accentGradientNames[3], '--kangur-accent-sky-start', '--kangur-accent-sky-end'],
+                [copy.accentGradientNames[4], '--kangur-accent-amber-start', '--kangur-accent-amber-end'],
+                [copy.accentGradientNames[5], '--kangur-accent-rose-start', '--kangur-accent-rose-end'],
+                [copy.accentGradientNames[6], '--kangur-accent-teal-start', '--kangur-accent-teal-end'],
+                [copy.accentGradientNames[7], '--kangur-accent-slate-start', '--kangur-accent-slate-end'],
               ] as const).map(([name, start, end]) => (
                 <div key={name} style={{ textAlign: 'center' }}>
                   <div
@@ -624,16 +632,16 @@ export function ThemePreviewPanel({
             </div>
 
             {/* Logo palette */}
-            <div style={sectionLabelStyle}>Logo Palette</div>
+            <div style={sectionLabelStyle}>{copy.logoPaletteLabel}</div>
             <div style={{ display: 'flex', gap: 3, marginBottom: 6 }}>
               {([
-                ['Word\nStart', '--kangur-logo-word-start'],
-                ['Word\nMid', '--kangur-logo-word-mid'],
-                ['Word\nEnd', '--kangur-logo-word-end'],
-                ['Ring\nStart', '--kangur-logo-ring-start'],
-                ['Ring\nEnd', '--kangur-logo-ring-end'],
-                ['Accent\nStart', '--kangur-logo-accent-start'],
-                ['Accent\nEnd', '--kangur-logo-accent-end'],
+                [copy.logoPaletteNames[0], '--kangur-logo-word-start'],
+                [copy.logoPaletteNames[1], '--kangur-logo-word-mid'],
+                [copy.logoPaletteNames[2], '--kangur-logo-word-end'],
+                [copy.logoPaletteNames[3], '--kangur-logo-ring-start'],
+                [copy.logoPaletteNames[4], '--kangur-logo-ring-end'],
+                [copy.logoPaletteNames[5], '--kangur-logo-accent-start'],
+                [copy.logoPaletteNames[6], '--kangur-logo-accent-end'],
               ] as const).map(([name, v]) => (
                 <div key={name} style={{ textAlign: 'center', flex: '1 1 0' }}>
                   <div
@@ -645,24 +653,24 @@ export function ThemePreviewPanel({
                       border: '1px solid var(--kangur-soft-card-border)',
                       marginBottom: 1,
                     }}
-                  />
+                    />
                   <span style={{ fontSize: 6, color: 'var(--kangur-page-muted-text)', lineHeight: 1.1, display: 'block' }}>
-                    {name.replace('\n', ' ')}
+                    {name}
                   </span>
                 </div>
               ))}
             </div>
 
             {/* Badges */}
-            <div style={sectionLabelStyle}>Badges</div>
+            <div style={sectionLabelStyle}>{copy.badgesLabel}</div>
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {([
-                ['Nowe', 'indigo'],
-                ['-20%', 'amber'],
-                ['Done', 'emerald'],
-                ['Ważne', 'rose'],
-                ['Info', 'sky'],
-                ['VIP', 'violet'],
+                [copy.badges[0], 'indigo'],
+                [copy.badges[1], 'amber'],
+                [copy.badges[2], 'emerald'],
+                [copy.badges[3], 'rose'],
+                [copy.badges[4], 'sky'],
+                [copy.badges[5], 'violet'],
               ] as const).map(([text, gradient]) => (
                 <span
                   key={text}
@@ -684,7 +692,7 @@ export function ThemePreviewPanel({
         )}
 
         {/* ════════════ CHAT ════════════ */}
-        <SectionToggle label='Chat' section='chat' />
+        <SectionToggle label={copy.sectionLabels.chat} section='chat' />
         {!collapsed.has('chat') && (
           <div
             style={{
@@ -719,9 +727,9 @@ export function ThemePreviewPanel({
                 border: '1px solid var(--kangur-chat-avatar-shell-border)',
                 flexShrink: 0,
               }} />
-              Asystent AI
+              {copy.assistantName}
               <div style={{ flex: 1 }} />
-              <span style={{ fontSize: 8, color: 'var(--kangur-chat-muted-text)', fontWeight: 400 }}>online</span>
+              <span style={{ fontSize: 8, color: 'var(--kangur-chat-muted-text)', fontWeight: 400 }}>{copy.assistantStatus}</span>
             </div>
 
             {/* AI bubble */}
@@ -745,7 +753,7 @@ export function ThemePreviewPanel({
                 color: 'var(--kangur-chat-panel-text)',
                 maxWidth: '82%',
               }}>
-                Cześć! W czym mogę Ci dzisiaj pomóc?
+                {copy.assistantGreeting}
               </div>
             </div>
 
@@ -760,7 +768,7 @@ export function ThemePreviewPanel({
               color: 'var(--kangur-chat-panel-text)',
               marginLeft: 21,
             }}>
-              Podpowiedź: zapytaj o ułamki
+              {copy.assistantHint}
             </div>
 
             {/* User bubble */}
@@ -773,7 +781,7 @@ export function ThemePreviewPanel({
               fontSize: 9,
               maxWidth: '75%',
             }}>
-              Wyjaśnij mi ułamki dziesiętne
+              {copy.userPrompt}
             </div>
 
             {/* Success surface */}
@@ -786,12 +794,12 @@ export function ThemePreviewPanel({
               color: 'var(--kangur-chat-panel-text)',
               marginLeft: 21,
             }}>
-              Odpowiedź wygenerowana pomyślnie
+              {copy.successMessage}
             </div>
 
             {/* Chips */}
             <div style={{ display: 'flex', gap: 3, marginLeft: 21 }}>
-              {['Więcej', 'Quiz'].map((chip) => (
+              {copy.chatChips.map((chip) => (
                 <span key={chip} style={{
                   background: 'var(--kangur-chat-chip-background)',
                   border: '1px solid var(--kangur-chat-chip-border)',
@@ -818,13 +826,13 @@ export function ThemePreviewPanel({
               fontSize: 9,
               color: 'var(--kangur-text-field-placeholder)',
             }}>
-              Napisz wiadomość…
+              {copy.composerPlaceholder}
             </div>
           </div>
         )}
 
         {/* ════════════ COMPONENTS ════════════ */}
-        <SectionToggle label='Components' section='components' />
+        <SectionToggle label={copy.sectionLabels.components} section='components' />
         {!collapsed.has('components') && (
           <>
             {/* Panels side by side */}
@@ -836,7 +844,7 @@ export function ThemePreviewPanel({
                 borderRadius: 'var(--kangur-panel-radius-elevated, 20px)',
                 padding: '8px',
               }}>
-                <div style={{ ...sectionLabelStyle, marginBottom: 3 }}>Elevated</div>
+                <div style={{ ...sectionLabelStyle, marginBottom: 3 }}>{copy.elevatedLabel}</div>
                 <div style={{ height: 4, borderRadius: 99, background: 'var(--kangur-progress-track)', marginBottom: 4 }}>
                   <div style={{ width: '45%', height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, var(--kangur-accent-emerald-start), var(--kangur-accent-emerald-end))' }} />
                 </div>
@@ -849,7 +857,7 @@ export function ThemePreviewPanel({
                 borderRadius: 'var(--kangur-panel-radius-subtle, 12px)',
                 padding: '8px',
               }}>
-                <div style={{ ...sectionLabelStyle, marginBottom: 3 }}>Subtle</div>
+                <div style={{ ...sectionLabelStyle, marginBottom: 3 }}>{copy.subtleLabel}</div>
                 <div style={{ height: 4, borderRadius: 99, background: 'var(--kangur-progress-track)', marginBottom: 4 }}>
                   <div style={{ width: '82%', height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, var(--kangur-accent-sky-start), var(--kangur-accent-sky-end))' }} />
                 </div>
@@ -866,7 +874,7 @@ export function ThemePreviewPanel({
               padding: 3,
               gap: 2,
             }}>
-              {['Dzień', 'Tydzień', 'Miesiąc'].map((label, i) => (
+              {copy.segmentedLabels.map((label, i) => (
                 <div key={label} style={{
                   flex: 1,
                   textAlign: 'center',
@@ -898,7 +906,7 @@ export function ThemePreviewPanel({
               opacity: 0.6,
               boxSizing: 'border-box',
             }}>
-              Pole wyłączone
+              {copy.disabledFieldLabel}
             </div>
 
             {/* Control row */}
@@ -913,10 +921,10 @@ export function ThemePreviewPanel({
                     borderRadius: 6,
                     padding: '3px 7px',
                     fontSize: 8,
-                    fontWeight: 500,
-                  }}
-                >
-                  Control
+                  fontWeight: 500,
+                }}
+              >
+                  {copy.controlLabel}
                 </div>
               ))}
             </div>

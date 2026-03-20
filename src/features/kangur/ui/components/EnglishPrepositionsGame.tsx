@@ -18,6 +18,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -64,91 +65,91 @@ const ROUNDS: ClickRound[] = [
   {
     id: 'time-at',
     accent: 'rose',
-    prompt: 'Wybierz przyimek czasu.',
+    prompt: 'Choose the time preposition.',
     question: 'We meet ___ 7:30.',
     answer: 'at',
     options: ['at', 'on', 'in'],
-    hint: 'Dokładna godzina → at.',
+    hint: 'Exact time -> at.',
     visual: 'timeline',
   },
   {
     id: 'time-on',
     accent: 'rose',
-    prompt: 'Wybierz przyimek czasu.',
+    prompt: 'Choose the time preposition.',
     question: 'Our test is ___ Tuesday.',
     answer: 'on',
     options: ['on', 'in', 'at'],
-    hint: 'Dzień tygodnia → on.',
+    hint: 'Day of the week -> on.',
     visual: 'time',
   },
   {
     id: 'time-in',
     accent: 'rose',
-    prompt: 'Wybierz przyimek czasu.',
+    prompt: 'Choose the time preposition.',
     question: 'She practices ___ July.',
     answer: 'in',
     options: ['in', 'on', 'at'],
-    hint: 'Miesiąc → in.',
+    hint: 'Month -> in.',
     visual: 'time',
   },
   {
     id: 'time-before',
     accent: 'rose',
-    prompt: 'Wybierz przyimek czasu.',
+    prompt: 'Choose the time preposition.',
     question: 'Finish the homework ___ class.',
     answer: 'before',
     options: ['before', 'after', 'during'],
-    hint: 'Przed lekcją → before.',
+    hint: 'Before class -> before.',
     visual: 'time',
   },
   {
     id: 'place-on',
     accent: 'amber',
-    prompt: 'Wybierz przyimek miejsca.',
+    prompt: 'Choose the place preposition.',
     question: 'The notes are ___ the board.',
     answer: 'on',
     options: ['on', 'in', 'at'],
-    hint: 'Powierzchnia → on.',
+    hint: 'Surface -> on.',
     visual: 'place',
   },
   {
     id: 'place-at',
     accent: 'amber',
-    prompt: 'Wybierz przyimek miejsca.',
+    prompt: 'Choose the place preposition.',
     question: 'We wait ___ the bus stop.',
     answer: 'at',
     options: ['at', 'on', 'in'],
-    hint: 'Punkt / miejsce spotkania → at.',
+    hint: 'Point or meeting place -> at.',
     visual: 'place',
   },
   {
     id: 'relation-between',
     accent: 'violet',
-    prompt: 'Wybierz przyimek relacji.',
+    prompt: 'Choose the relation preposition.',
     question: 'Point P is ___ A and B.',
     answer: 'between',
     options: ['between', 'behind', 'above'],
-    hint: 'P leży pomiędzy punktami A i B.',
+    hint: 'P lies in the space separating A and B.',
     visual: 'relation',
   },
   {
     id: 'relation-above',
     accent: 'violet',
-    prompt: 'Wybierz przyimek relacji.',
+    prompt: 'Choose the relation preposition.',
     question: 'The lamp is ___ the table.',
     answer: 'above',
     options: ['above', 'below', 'between'],
-    hint: 'Lampa znajduje się nad stołem.',
+    hint: 'The lamp is higher than the table.',
     visual: 'relation',
   },
   {
     id: 'relation-below',
     accent: 'violet',
-    prompt: 'Wybierz przyimek relacji.',
+    prompt: 'Choose the relation preposition.',
     question: 'The box is ___ the desk.',
     answer: 'below',
     options: ['below', 'above', 'between'],
-    hint: 'Pudełko jest pod biurkiem.',
+    hint: 'The box is lower than the desk.',
     visual: 'relation',
   },
 ];
@@ -165,6 +166,18 @@ type EnglishPrepositionsGameProps = {
   onFinish: () => void;
 };
 
+const getPrepositionsRoundMessage = (
+  translate: ReturnType<typeof useTranslations>,
+  roundId: string,
+  field: 'prompt' | 'hint',
+  fallback: string
+): string =>
+  translateKangurMiniGameWithFallback(
+    translate,
+    `englishPrepositions.inRound.click.rounds.${roundId}.${field}`,
+    fallback
+  );
+
 const renderRoundVisual = (visual: ClickRound['visual']): React.JSX.Element => {
   if (visual === 'timeline') {
     return <EnglishPrepositionsTimelineAnimation />;
@@ -179,10 +192,11 @@ const renderRoundVisual = (visual: ClickRound['visual']): React.JSX.Element => {
 };
 
 export default function EnglishPrepositionsGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: EnglishPrepositionsGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -194,6 +208,19 @@ export default function EnglishPrepositionsGame({
   const sessionStartedAtRef = useRef(Date.now());
 
   const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
+  const roundPrompt = getPrepositionsRoundMessage(translations, round.id, 'prompt', round.prompt);
+  const roundHint = getPrepositionsRoundMessage(translations, round.id, 'hint', round.hint);
+  const roundLabel = translateKangurMiniGameWithFallback(
+    translations,
+    'englishPrepositions.inRound.roundLabel',
+    `Round ${roundIndex + 1}/${TOTAL_ROUNDS}`,
+    { current: roundIndex + 1, total: TOTAL_ROUNDS }
+  );
+  const modeLabel = translateKangurMiniGameWithFallback(
+    translations,
+    'englishPrepositions.inRound.click.topicLabel',
+    'Prepositions'
+  );
 
   useEffect(() => {
     setFeedback(null);
@@ -211,7 +238,12 @@ export default function EnglishPrepositionsGame({
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
       ? translations('englishPrepositions.feedback.correct')
-      : `Prawidłowa odpowiedź: ${round.answer}.`;
+      : translateKangurMiniGameWithFallback(
+          translations,
+          'englishPrepositions.feedback.incorrect',
+          `Correct answer: ${round.answer}.`,
+          { answer: round.answer }
+        );
 
     setScore(nextScore);
     setFeedback({ kind: isCorrect ? 'success' : 'error', text: feedbackText });
@@ -288,11 +320,7 @@ export default function EnglishPrepositionsGame({
               : translations('englishPrepositions.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={
-            finishLabel === 'Wróć do tematów'
-              ? getKangurMiniGameFinishLabel(translations, 'topics')
-              : finishLabel
-          }
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
@@ -318,10 +346,10 @@ export default function EnglishPrepositionsGame({
       >
         <div className='flex items-center justify-between gap-2'>
           <KangurStatusChip accent={round.accent} className='text-[10px] uppercase tracking-[0.16em]'>
-            Round {roundIndex + 1}/{TOTAL_ROUNDS}
+            {roundLabel}
           </KangurStatusChip>
           <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-            Prepositions
+            {modeLabel}
           </KangurStatusChip>
         </div>
 
@@ -330,8 +358,8 @@ export default function EnglishPrepositionsGame({
         </div>
 
         <KangurInfoCard accent={round.accent} tone='accent' padding='sm' className='text-sm'>
-          <p className='font-semibold'>{round.prompt}</p>
-          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>{round.hint}</p>
+          <p className='font-semibold'>{roundPrompt}</p>
+          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>{roundHint}</p>
         </KangurInfoCard>
 
         <div className={KANGUR_STACK_SPACED_CLASSNAME}>
@@ -378,7 +406,7 @@ export default function EnglishPrepositionsGame({
           onClick={handleCheck}
           data-testid='english-prepositions-check'
         >
-          Sprawdź ✓
+          {translations('englishPrepositions.inRound.check')}
         </KangurButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>

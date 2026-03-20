@@ -4,7 +4,10 @@
 
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
+
+import plMessages from '@/i18n/messages/pl.json';
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => ({
@@ -45,7 +48,11 @@ import GeometrySymmetryLesson from '@/features/kangur/ui/components/GeometrySymm
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 const renderLesson = (ui: ReactNode) =>
-  render(<KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>);
+  render(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      <KangurLessonNavigationProvider onBack={vi.fn()}>{ui}</KangurLessonNavigationProvider>
+    </NextIntlClientProvider>
+  );
 
 describe('Geometry lessons shared surfaces', () => {
   it('uses the lighter helper copy palette in the geometry basics lesson', () => {
@@ -101,8 +108,8 @@ describe('Geometry lessons shared surfaces', () => {
 
     expect(screen.getByTestId('geometry-shapes-game-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',

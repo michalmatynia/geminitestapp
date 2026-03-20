@@ -20,6 +20,10 @@ import {
   getProgressSubject,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import {
+  translateKangurProgressWithFallback,
+  type KangurProgressTranslate,
+} from '@/features/kangur/ui/services/progress-i18n';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -59,6 +63,8 @@ type BuildKangurCompletedGameOutcomeInput = {
   taken: number;
   totalQuestions: number;
   allowRewards?: boolean;
+  progressTranslate?: KangurProgressTranslate;
+  resultTranslate?: KangurProgressTranslate;
 };
 
 type BuildKangurCompletedGameOutcomeResult = {
@@ -180,6 +186,8 @@ export const buildKangurCompletedGameOutcome = ({
   taken,
   totalQuestions,
   allowRewards = true,
+  progressTranslate,
+  resultTranslate,
 }: BuildKangurCompletedGameOutcomeInput): BuildKangurCompletedGameOutcomeResult => {
   const selectedOperation = operation ?? 'mixed';
   const greatThreshold = Math.max(1, Math.ceil(totalQuestions * 0.8));
@@ -214,12 +222,16 @@ export const buildKangurCompletedGameOutcome = ({
   const dailyQuestBefore = getCurrentKangurDailyQuest(storedProgress, {
     persist: false,
     subject,
+    translate: progressTranslate,
   });
   const sessionRewardResult = addXp(sessionReward.xp, sessionReward.progressUpdates);
   let awardedXp = sessionReward.xp;
   const awardedBreakdown = [...(sessionReward.breakdown ?? [])];
   let finalProgress = sessionRewardResult.updated;
-  const questClaim = claimCurrentKangurDailyQuestReward(finalProgress, { subject });
+  const questClaim = claimCurrentKangurDailyQuestReward(finalProgress, {
+    subject,
+    translate: progressTranslate,
+  });
   let awardedBadges = [...sessionRewardResult.newBadges];
   let dailyQuestAfter = questClaim.quest;
 
@@ -238,7 +250,9 @@ export const buildKangurCompletedGameOutcome = ({
     dailyQuestAfter = questClaim.quest;
   }
 
-  const nextBadge = getNextLockedBadge(finalProgress);
+  const nextBadge = getNextLockedBadge(finalProgress, {
+    translate: progressTranslate,
+  });
   const nextBadgeToastHint = nextBadge
     ? {
       emoji: nextBadge.emoji,
@@ -260,10 +274,23 @@ export const buildKangurCompletedGameOutcome = ({
       label: activeSessionRecommendation.label,
       title: activeSessionRecommendation.title,
       summary: dailyQuestToastHint
-        ? 'Ten ruch domknął polecany kierunek i misję dnia.'
+        ? translateKangurProgressWithFallback(
+            resultTranslate,
+            'xpToast.recommendationSummaryWithQuest',
+            'Ten ruch domknął polecany kierunek i misję dnia.'
+          )
         : nextBadgeToastHint
-          ? `Ten ruch najmocniej przybliża odznakę ${nextBadgeToastHint.name}.`
-          : 'To był najmocniejszy ruch dla bieżącego postępu.',
+          ? translateKangurProgressWithFallback(
+              resultTranslate,
+              'xpToast.recommendationSummaryWithBadge',
+              'Ten ruch najmocniej przybliża odznakę {badge}.',
+              { badge: nextBadgeToastHint.name }
+            )
+          : translateKangurProgressWithFallback(
+              resultTranslate,
+              'xpToast.recommendationSummaryDefault',
+              'To był najmocniejszy ruch dla bieżącego postępu.'
+            ),
     }
     : null;
 

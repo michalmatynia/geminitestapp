@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { useToast } from '@/features/kangur/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
@@ -45,6 +46,12 @@ import {
 } from './AppearancePage.constants';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  getAppearanceContextCopy,
+  getAppearanceSlotLabel,
+  getAppearanceThemeSelectionLabel,
+  resolveAppearanceAdminLocale,
+} from './appearance.copy';
 
 
 type AppearancePageContextValue = {
@@ -92,6 +99,8 @@ const AppearancePageStateContext = createContext<AppearancePageStateContextValue
 const AppearancePageActionsContext = createContext<AppearancePageActionsContextValue | null>(null);
 
 export function AppearancePageProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const locale = resolveAppearanceAdminLocale(useLocale());
+  const contextCopy = getAppearanceContextCopy(locale);
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -128,17 +137,19 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
   );
 
   const SLOT_FACTORY_LABELS: Record<AppearanceSlot, string> = {
-    daily: 'Motyw dzienny (fabryczny)',
-    dawn: 'Motyw świtowy (fabryczny)',
-    sunset: 'Motyw zachodu (fabryczny)',
-    nightly: 'Motyw nocny (fabryczny)',
+    daily: getAppearanceThemeSelectionLabel(locale, FACTORY_DAILY_ID, []),
+    dawn: getAppearanceThemeSelectionLabel(locale, FACTORY_DAWN_ID, []),
+    sunset: getAppearanceThemeSelectionLabel(locale, FACTORY_SUNSET_ID, []),
+    nightly: getAppearanceThemeSelectionLabel(locale, FACTORY_NIGHTLY_ID, []),
   };
 
   const slotLabelsByKey = useMemo(() => {
     const getLabel = (slot: AppearanceSlot, key: string) => {
       const raw = settingsStore.get(key);
-      if (!raw?.trim() || !slotAssignments[slot]) return SLOT_FACTORY_LABELS[slot];
-      return slotAssignments[slot].name;
+      const assignment = slotAssignments[slot];
+      if (!raw?.trim() || !assignment) return SLOT_FACTORY_LABELS[slot];
+      const localizedName = getAppearanceThemeSelectionLabel(locale, assignment.id, catalog);
+      return localizedName !== String(assignment.id) ? localizedName : assignment.name;
     };
     return {
       daily: getLabel('daily', KANGUR_DAILY_THEME_SETTINGS_KEY),
@@ -146,7 +157,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       sunset: getLabel('sunset', KANGUR_SUNSET_THEME_SETTINGS_KEY),
       nightly: getLabel('nightly', KANGUR_NIGHTLY_THEME_SETTINGS_KEY),
     };
-  }, [slotAssignments, settingsStore]);
+  }, [catalog, locale, slotAssignments, settingsStore]);
 
   const storedDefaultMode = useMemo(
     () => parseKangurStorefrontAppearanceMode(settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY)),
@@ -184,7 +195,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
             toast(
               error instanceof Error
                 ? error.message
-                : 'Nie udało się zapisać domyślnego motywu.',
+                : contextCopy.defaultModeSaveError,
               { variant: 'error' }
             );
             setDefaultModeDraft(storedDefaultMode);
@@ -193,11 +204,19 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       );
 
       if (didSave) {
-        toast('Domyślny motyw startowy zaktualizowany.', { variant: 'success' });
+        toast(contextCopy.defaultModeSaveSuccess, { variant: 'success' });
       }
       setIsDefaultModeSaving(false);
     },
-    [defaultModeDraft, storedDefaultMode, toast, updateSetting]
+    [
+      contextCopy.defaultModeSaveError,
+      contextCopy.defaultModeSaveSuccess,
+      defaultModeDraft,
+      locale,
+      storedDefaultMode,
+      toast,
+      updateSetting,
+    ]
   );
 
   const [selectedId, setSelectedId] = useState<ThemeSelectionId>(BUILTIN_DAILY_ID);
@@ -271,13 +290,13 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
     (id: ThemeSelectionId) => {
       if (id === selectedId) return;
       if (isDirty) {
-        if (!confirm('Masz niezapisane zmiany w aktualnym motywie. Czy na pewno chcesz przełączyć?')) return;
+        if (!confirm(contextCopy.unsavedSwitchConfirm)) return;
       }
       setSelectedId(id);
       setDraftState(loadTheme(id));
       setIsDirty(false);
     },
-    [isDirty, loadTheme, selectedId]
+    [contextCopy.unsavedSwitchConfirm, isDirty, loadTheme, selectedId]
   );
 
   const handleResetToFactory = useCallback(() => {
@@ -300,20 +319,9 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
   const resolveThemeName = useCallback(
     (id: ThemeSelectionId): string => {
-      if (id === PRESET_DAILY_CRYSTAL_ID) return 'Daily Crystal (preset)';
-      if (id === PRESET_NIGHTLY_CRYSTAL_ID) return 'Nightly Crystal (preset)';
-      if (id === BUILTIN_DAILY_ID) return 'Motyw dzienny (wbudowany)';
-      if (id === BUILTIN_DAWN_ID) return 'Motyw świtowy (wbudowany)';
-      if (id === BUILTIN_SUNSET_ID) return 'Motyw zachodu (wbudowany)';
-      if (id === BUILTIN_NIGHTLY_ID) return 'Motyw nocny (wbudowany)';
-      if (id === FACTORY_DAILY_ID) return 'Motyw dzienny (fabryczny)';
-      if (id === FACTORY_DAWN_ID) return 'Motyw świtowy (fabryczny)';
-      if (id === FACTORY_SUNSET_ID) return 'Motyw zachodu (fabryczny)';
-      if (id === FACTORY_NIGHTLY_ID) return 'Motyw nocny (fabryczny)';
-      const entry = catalog.find((e) => e.id === id);
-      return entry?.name ?? String(id);
+      return getAppearanceThemeSelectionLabel(locale, id, catalog);
     },
-    [catalog]
+    [catalog, locale]
   );
 
   const slotSettingsKey = (slot: AppearanceSlot): string =>
@@ -350,7 +358,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
           fallback: false,
           onError: (error) => {
             toast(
-              error instanceof Error ? error.message : 'Nie udało się przypisać motywu.',
+              error instanceof Error ? error.message : contextCopy.assignError,
               { variant: 'error' }
             );
           },
@@ -358,12 +366,22 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       );
 
       if (didAssign) {
-        toast(`Motyw przypisany do slotu "${SLOT_CONFIG[slot].label}".`, {
+        toast(contextCopy.assignSuccess(getAppearanceSlotLabel(locale, slot)), {
           variant: 'success',
         });
       }
     },
-    [draft, resolveThemeName, selectedId, slotAssignments, toast, updateSetting]
+    [
+      contextCopy.assignError,
+      contextCopy.assignSuccess,
+      draft,
+      locale,
+      resolveThemeName,
+      selectedId,
+      slotAssignments,
+      toast,
+      updateSetting,
+    ]
   );
 
   const handleUnassignFromSlot = useCallback(
@@ -388,7 +406,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
           fallback: false,
           onError: (error) => {
             toast(
-              error instanceof Error ? error.message : 'Nie udało się odpisać motywu.',
+              error instanceof Error ? error.message : contextCopy.unassignError,
               { variant: 'error' }
             );
           },
@@ -396,18 +414,25 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       );
 
       if (didUnassign) {
-        toast(`Slot "${SLOT_CONFIG[slot].label}" przywrócony do fabrycznego.`, {
+        toast(contextCopy.unassignSuccess(getAppearanceSlotLabel(locale, slot)), {
           variant: 'success',
         });
       }
     },
-    [slotAssignments, toast, updateSetting]
+    [
+      contextCopy.unassignError,
+      contextCopy.unassignSuccess,
+      locale,
+      slotAssignments,
+      toast,
+      updateSetting,
+    ]
   );
 
   const handleSave = useCallback(async () => {
     const isBuiltin = [BUILTIN_DAILY_ID, BUILTIN_DAWN_ID, BUILTIN_SUNSET_ID, BUILTIN_NIGHTLY_ID].includes(selectedId);
     if (!isBuiltin && !catalog.some((e) => e.id === selectedId)) {
-      toast('Nie można zapisać zmian w motywie fabrycznym.', { variant: 'error' });
+      toast(contextCopy.saveFactoryError, { variant: 'error' });
       return;
     }
 
@@ -444,7 +469,7 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
       {
         fallback: false,
         onError: (error) => {
-          toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', {
+          toast(error instanceof Error ? error.message : contextCopy.saveError, {
             variant: 'error',
           });
         },
@@ -453,10 +478,19 @@ export function AppearancePageProvider({ children }: { children: React.ReactNode
 
     if (didSave) {
       setIsDirty(false);
-      toast('Motyw został zapisany.', { variant: 'success' });
+      toast(contextCopy.saveSuccess, { variant: 'success' });
     }
     setIsSaving(false);
-  }, [catalog, draft, selectedId, toast, updateSetting]);
+  }, [
+    catalog,
+    contextCopy.saveError,
+    contextCopy.saveFactoryError,
+    contextCopy.saveSuccess,
+    draft,
+    selectedId,
+    toast,
+    updateSetting,
+  ]);
 
   const updateCatalog = useCallback((nextRaw: string) => {
     setCatalogOverrideRaw(nextRaw);

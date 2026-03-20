@@ -2,13 +2,20 @@
 
 import { useMemo, useState } from 'react';
 
-import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
-import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import {
+  KangurButton,
+  KangurInfoCard,
+  KangurStatusChip,
+} from '@/features/kangur/ui/design/primitives';
+import {
+  KANGUR_PANEL_GAP_CLASSNAME,
+  KANGUR_WRAP_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import { cn } from '@/features/kangur/shared/utils';
 
 type SlotId = 'fact' | 'rule' | 'conclusion';
 
-type Round = {
+export type LogicalIfThenStepsRound = {
   id: string;
   fact: string;
   rule: string;
@@ -24,50 +31,47 @@ type Card = {
 
 type FeedbackKind = 'success' | 'error' | 'info' | null;
 
+export type LogicalIfThenStepsGameCopy = {
+  completion: {
+    title: string;
+    description: string;
+    restart: string;
+  };
+  header: {
+    stepTemplate: string;
+    instruction: string;
+  };
+  slots: Record<
+    SlotId,
+    {
+      label: string;
+      hint: string;
+    }
+  >;
+  deckTitle: string;
+  cardAriaTemplate: string;
+  feedback: {
+    fillAll: string;
+    successTemplate: string;
+    error: string;
+  };
+  actions: {
+    check: string;
+    retry: string;
+    next: string;
+  };
+};
+
+type LogicalIfThenStepsGameProps = {
+  rounds: LogicalIfThenStepsRound[];
+  copy: LogicalIfThenStepsGameCopy;
+};
+
 const SLOT_ORDER: SlotId[] = ['fact', 'rule', 'conclusion'];
-
-const SLOT_LABELS: Record<SlotId, string> = {
-  fact: 'Fakt',
-  rule: 'Jeśli… to…',
-  conclusion: 'Wniosek',
-};
-
-const SLOT_HINTS: Record<SlotId, string> = {
-  fact: 'Co już wiemy?',
-  rule: 'Jaka zasada łączy fakty?',
-  conclusion: 'Co z tego wynika?',
-};
-
-const ROUNDS: Round[] = [
-  {
-    id: 'birds',
-    fact: 'Kanarek jest ptakiem.',
-    rule: 'Jeśli coś jest ptakiem, to ma skrzydła.',
-    conclusion: 'Kanarek ma skrzydła.',
-    distractors: ['Kanarek pływa.', 'Kanarek jest rybą.'],
-    explanation: 'Fakt spełnia warunek, więc wniosek musi być prawdziwy.',
-  },
-  {
-    id: 'rain',
-    fact: 'Dziś pada deszcz.',
-    rule: 'Jeśli pada deszcz, to bierzemy parasol.',
-    conclusion: 'Bierzemy parasol.',
-    distractors: ['Zakładamy okulary przeciwsłoneczne.', 'Niebo jest bezchmurne.'],
-    explanation: 'Gdy warunek jest spełniony, wykonujemy działanie z reguły.',
-  },
-  {
-    id: 'even',
-    fact: 'Liczba 8 jest parzysta.',
-    rule: 'Jeśli liczba jest parzysta, to dzieli się przez 2.',
-    conclusion: '8 dzieli się przez 2.',
-    distractors: ['8 jest liczbą pierwszą.', '8 dzieli się przez 3.'],
-    explanation: 'Parzystość oznacza podzielność przez 2, więc wniosek jest poprawny.',
-  },
-];
 
 const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
 
-const buildCards = (round: Round): Card[] =>
+const buildCards = (round: LogicalIfThenStepsRound): Card[] =>
   shuffle([
     { id: 'fact', text: round.fact },
     { id: 'rule', text: round.rule },
@@ -75,7 +79,16 @@ const buildCards = (round: Round): Card[] =>
     ...round.distractors.map((text, index) => ({ id: `distractor-${index}`, text })),
   ]);
 
-export default function LogicalIfThenStepsGame(): React.JSX.Element {
+const formatTemplate = (template: string, values: Record<string, string | number>): string =>
+  Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
+    template
+  );
+
+export default function LogicalIfThenStepsGame({
+  rounds,
+  copy,
+}: LogicalIfThenStepsGameProps): React.JSX.Element {
   const [roundIndex, setRoundIndex] = useState(0);
   const [slots, setSlots] = useState<Record<SlotId, string | null>>({
     fact: null,
@@ -86,8 +99,8 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
   const [feedback, setFeedback] = useState<FeedbackKind>(null);
   const [completed, setCompleted] = useState(false);
 
-  const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
-  const cards = useMemo(() => buildCards(round), [round]);
+  const round = rounds[roundIndex] ?? rounds[0];
+  const cards = useMemo(() => (round ? buildCards(round) : []), [round]);
   const cardMap = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
 
   const allFilled = SLOT_ORDER.every((slot) => slots[slot]);
@@ -126,7 +139,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
   };
 
   const handleNext = (): void => {
-    if (roundIndex + 1 >= ROUNDS.length) {
+    if (roundIndex + 1 >= rounds.length) {
       setCompleted(true);
       return;
     }
@@ -140,15 +153,25 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
     resetRound();
   };
 
+  if (!round) {
+    return <div className='sr-only' />;
+  }
+
   if (completed) {
     return (
       <KangurInfoCard accent='emerald' tone='accent' padding='md' className='w-full text-center'>
-        <p className='text-lg font-extrabold text-emerald-700'>Brawo! 🧠</p>
+        <p className='text-lg font-extrabold text-emerald-700'>{copy.completion.title}</p>
         <p className='mt-2 text-sm [color:var(--kangur-page-text)]'>
-          Umiesz już budować wnioski krok po kroku.
+          {copy.completion.description}
         </p>
-        <KangurButton className='mt-3' onClick={handleRestart} size='sm' type='button' variant='surface'>
-          Zagraj jeszcze raz
+        <KangurButton
+          className='mt-3'
+          onClick={handleRestart}
+          size='sm'
+          type='button'
+          variant='surface'
+        >
+          {copy.completion.restart}
         </KangurButton>
       </KangurInfoCard>
     );
@@ -158,11 +181,12 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
     <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <KangurStatusChip accent='indigo' className='px-3 py-1 text-[11px] font-extrabold' size='sm'>
-          Krok {roundIndex + 1} / {ROUNDS.length}
+          {formatTemplate(copy.header.stepTemplate, {
+            current: roundIndex + 1,
+            total: rounds.length,
+          })}
         </KangurStatusChip>
-        <span className='text-xs [color:var(--kangur-page-muted-text)]'>
-          Kliknij karty i ułóż: fakt → reguła → wniosek
-        </span>
+        <span className='text-xs [color:var(--kangur-page-muted-text)]'>{copy.header.instruction}</span>
       </div>
 
       <div className='grid kangur-panel-gap sm:grid-cols-3'>
@@ -170,11 +194,9 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
           const cardId = slots[slot];
           const card = cardId ? cardMap.get(cardId) : null;
           const slotStatus = checked ? (cardId === slot ? 'correct' : 'wrong') : 'neutral';
-          const slotLabel = SLOT_LABELS[slot];
-          const slotHint = SLOT_HINTS[slot];
-          const slotAriaLabel = card
-            ? `${slotLabel}: ${card.text}`
-            : `${slotLabel}: ${slotHint}`;
+          const slotLabel = copy.slots[slot].label;
+          const slotHint = copy.slots[slot].hint;
+          const slotAriaLabel = card ? `${slotLabel}: ${card.text}` : `${slotLabel}: ${slotHint}`;
 
           return (
             <button
@@ -198,9 +220,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
                   {card.text}
                 </span>
               ) : (
-                <span className='text-xs [color:var(--kangur-page-muted-text)]'>
-                  {slotHint}
-                </span>
+                <span className='text-xs [color:var(--kangur-page-muted-text)]'>{slotHint}</span>
               )}
             </button>
           );
@@ -208,7 +228,9 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
       </div>
 
       <KangurInfoCard accent='slate' tone='neutral' padding='sm' className='w-full'>
-        <p className='text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2'>Karty</p>
+        <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500'>
+          {copy.deckTitle}
+        </p>
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
           {poolCards.map((card) => (
             <button
@@ -217,7 +239,7 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
               onClick={() => handleCardClick(card.id)}
               className='rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left text-xs font-semibold [color:var(--kangur-page-text)] shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md'
               disabled={checked}
-              aria-label={`Karta: ${card.text}`}
+              aria-label={formatTemplate(copy.cardAriaTemplate, { text: card.text })}
             >
               {card.text}
             </button>
@@ -236,10 +258,10 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
           aria-atomic='true'
         >
           {feedback === 'info'
-            ? 'Uzupełnij wszystkie kroki, aby sprawdzić wniosek.'
+            ? copy.feedback.fillAll
             : feedback === 'success'
-              ? `Świetnie! ${round.explanation}`
-              : 'Spróbuj jeszcze raz — zamień karty na właściwe miejsca.'}
+              ? formatTemplate(copy.feedback.successTemplate, { explanation: round.explanation })
+              : copy.feedback.error}
         </KangurInfoCard>
       ) : null}
 
@@ -251,16 +273,16 @@ export default function LogicalIfThenStepsGame(): React.JSX.Element {
           variant='primary'
           className='px-4'
         >
-          Sprawdź
+          {copy.actions.check}
         </KangurButton>
         {checked ? (
           <>
             <KangurButton onClick={resetRound} size='sm' type='button' variant='surface'>
-              Spróbuj ponownie
+              {copy.actions.retry}
             </KangurButton>
             {isCorrect ? (
               <KangurButton onClick={handleNext} size='sm' type='button' variant='surface'>
-                Dalej
+                {copy.actions.next}
               </KangurButton>
             ) : null}
           </>

@@ -598,12 +598,24 @@ vi.mock('next-intl', () => {
   const React = require('react');
   const plMessages = require('./src/i18n/messages/pl.json');
   return {
-    NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-    useTranslations: (namespace?: string) => vi.fn((key: string) => {
-      let obj = namespace ? namespace.split('.').reduce((o: any, i: string) => o?.[i], plMessages) : plMessages;
-      let value = key.split('.').reduce((o: any, i: string) => o?.[i], obj);
+    NextIntlClientProvider: ({ children }: { children: React.ReactNode; messages?: any }) =>
+      React.createElement(React.Fragment, null, children),
+    useTranslations: (namespace?: string) => vi.fn((key: string, values?: any) => {
+      const getNested = (obj: any, path: string) => {
+        return path.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
+      };
+      const messages = plMessages;
+      // Try resolving as an absolute key first, then relative to namespace
+      let value = getNested(messages, key) || getNested(namespace ? getNested(messages, namespace) : messages, key);
+      
+      if (typeof value === 'string' && values) {
+        Object.keys(values).forEach((k) => {
+          value = value.replace(`{${k}}`, values[k]);
+        });
+      }
       return value || (namespace ? `${namespace}.${key}` : key);
     }),
+    useMessages: () => plMessages,
     useLocale: () => 'pl',
   };
 });
@@ -612,9 +624,19 @@ vi.mock('next-intl', () => {
 vi.mock('use-intl', () => {
   const plMessages = require('./src/i18n/messages/pl.json');
   return {
-    useTranslations: (namespace?: string) => vi.fn((key: string) => {
-      let obj = namespace ? namespace.split('.').reduce((o: any, i: string) => o?.[i], plMessages) : plMessages;
-      let value = key.split('.').reduce((o: any, i: string) => o?.[i], obj);
+    useTranslations: (namespace?: string) => vi.fn((key: string, values?: any) => {
+      const getNested = (obj: any, path: string) => {
+        return path.split('.').reduce((o, i) => (o ? o[i] : undefined), obj);
+      };
+      const messages = plMessages;
+      // Try resolving as an absolute key first, then relative to namespace
+      let value = getNested(messages, key) || getNested(namespace ? getNested(messages, namespace) : messages, key);
+      
+      if (typeof value === 'string' && values) {
+        Object.keys(values).forEach((k) => {
+          value = value.replace(`{${k}}`, values[k]);
+        });
+      }
       return value || (namespace ? `${namespace}.${key}` : key);
     }),
     useLocale: () => 'pl',

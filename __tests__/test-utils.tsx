@@ -4,6 +4,7 @@ import React from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 
 import { ToastProvider } from '@/shared/ui/toast';
+import plMessages from '@/i18n/messages/pl.json';
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -27,7 +28,7 @@ const customRender = (ui: React.ReactElement, options?: CustomRenderOptions): Re
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <NextIntlClientProvider
       locale="pl"
-      messages={{}}
+      messages={plMessages}
       onError={() => {}}
       getMessageFallback={({ key }) => key}
     >

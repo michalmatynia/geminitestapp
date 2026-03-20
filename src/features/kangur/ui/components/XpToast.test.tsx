@@ -57,17 +57,17 @@ describe('XpToast', () => {
 
     expect(screen.getByTestId('xp-toast-xp-shell')).toHaveClass(
       'glass-panel',
-      'border-indigo-200/70',
+      'kangur-surface-panel-accent-indigo',
       'rounded-[34px]'
     );
     expect(screen.getByTestId('xp-toast-badge-shell-first_game')).toHaveClass(
       'glass-panel',
-      'border-amber-200/80',
+      'kangur-surface-panel-accent-amber',
       'rounded-[34px]'
     );
     expect(screen.getByText('+25 XP')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-indigo-start,#a855f7))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-indigo-start,#a855f7))]'
     );
     expect(screen.getByText('Świetnie, trzymasz polecany kierunek')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-breakdown')).toBeInTheDocument();
@@ -78,8 +78,8 @@ describe('XpToast', () => {
       'Skuteczność +15'
     );
     expect(screen.getByText(/Nowa odznaka/)).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-amber-start,#fb923c))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-amber-start,#fb923c))]'
     );
     expect(screen.getByText('Pierwsza gra')).toBeInTheDocument();
     expect(screen.getByTestId('xp-toast-badge-desc-first_game')).toHaveTextContent(

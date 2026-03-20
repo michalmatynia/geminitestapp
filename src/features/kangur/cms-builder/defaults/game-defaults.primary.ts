@@ -24,8 +24,14 @@ import {
   makeGameScreenVisibilitySettings,
   makeGameTrainingSetupPanel,
 } from './game-defaults.helpers';
+import { resolveKangurCmsDefaultsCopy } from './defaults-i18n';
 
-export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
+export const createDefaultGameScreenPrimaryComponents = (
+  locale?: string | null
+): PageComponentInput[] => {
+  const copy = resolveKangurCmsDefaultsCopy(locale);
+
+  return [
     makeBlockSection({
       id: 'kangur-game-navigation',
       blocks: [makeWidgetBlock('kangur-widget-game-navigation', 'game-navigation')],
@@ -76,14 +82,14 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                     ...makeGameUserVisibilitySettings('falsy'),
                   },
                   blocks: [
-                    makeTextBlock('kangur-game-home-guest-label', 'Imie gracza', {
+                    makeTextBlock('kangur-game-home-guest-label', copy.game.guest.playerLabel, {
                       fontSize: 14,
                       fontWeight: '700',
                       letterSpacing: 1.8,
                       textColor: '#97a0c3',
                     }),
                     makeInputBlock('kangur-game-home-guest-name', {
-                      inputPlaceholder: 'Wpisz swoje imie...',
+                      inputPlaceholder: copy.game.guest.playerPlaceholder,
                       inputAutoComplete: 'nickname',
                       inputMaxLength: 20,
                       fontSize: 18,
@@ -117,13 +123,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       blocks: [
                         makeTextBlock(
                           'kangur-game-home-guest-login-copy',
-                          'Zaloguj się, aby Twój wynik pojawił się na tablicy.',
+                          copy.game.guest.loginCopy,
                           {
                             fontSize: 15,
                             textColor: '#8c97bb',
                           }
                         ),
-                        makeButtonBlock('kangur-game-home-guest-login-button', 'Zaloguj się', {
+                        makeButtonBlock('kangur-game-home-guest-login-button', copy.game.guest.loginButton, {
                           buttonStyle: 'solid',
                           runtimeActionSource: 'kangur',
                           runtimeActionPath: 'game.navigateToLogin',
@@ -169,7 +175,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                   blocks: [
                     makeTextBlock(
                       'kangur-game-home-assignment-spotlight-priority',
-                      'Priorytet wysoki',
+                      copy.game.spotlight.priority,
                       {
                         fontSize: 12,
                         fontWeight: '700',
@@ -179,13 +185,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.priorityLabel',
-                          fallback: 'Priorytet wysoki',
+                          fallback: copy.game.spotlight.priority,
                         },
                       }
                     ),
                     makeHeadingBlock(
                       'kangur-game-home-assignment-spotlight-title',
-                      'Zadanie od rodzica',
+                      copy.game.spotlight.title,
                       28,
                       {
                         textColor: '#1e293b',
@@ -193,13 +199,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.title',
-                          fallback: 'Zadanie od rodzica',
+                          fallback: copy.game.spotlight.title,
                         },
                       }
                     ),
                     makeTextBlock(
                       'kangur-game-home-assignment-spotlight-description',
-                      'Wróć do zadania i kontynuuj wyzwanie.',
+                      copy.game.spotlight.description,
                       {
                         fontSize: 15,
                         textColor: '#64748b',
@@ -207,7 +213,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.description',
-                          fallback: 'Wróć do zadania i kontynuuj wyzwanie.',
+                          fallback: copy.game.spotlight.description,
                         },
                       }
                     ),
@@ -227,7 +233,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                     }),
                     makeTextBlock(
                       'kangur-game-home-assignment-spotlight-progress-label',
-                      '0% ukończono',
+                      copy.game.spotlight.progressLabel,
                       {
                         fontSize: 14,
                         textColor: '#7a86b0',
@@ -235,13 +241,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.progressLabel',
-                          fallback: '0% ukończono',
+                          fallback: copy.game.spotlight.progressLabel,
                         },
                       }
                     ),
                     makeButtonBlock(
                       'kangur-game-home-assignment-spotlight-button',
-                      'Kontynuuj zadanie',
+                      copy.game.spotlight.actionLabel,
                       {
                         runtimeActionSource: 'kangur',
                         runtimeActionPath: 'game.homeSpotlight.openAssignment',
@@ -257,7 +263,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           enabled: true,
                           source: 'kangur',
                           path: 'game.homeSpotlight.actionLabel',
-                          fallback: 'Kontynuuj zadanie',
+                          fallback: copy.game.spotlight.actionLabel,
                         },
                       }
                     ),
@@ -300,13 +306,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       blocks: [
                         makeHeadingBlock(
                           'kangur-game-home-priority-title',
-                          'Priorytetowe zadania',
+                          copy.game.priorityPanel.title,
                           26,
                           {
                             textColor: '#1e293b',
                           }
                         ),
-                        makeTextBlock('kangur-game-home-priority-count', '0 zadań', {
+                        makeTextBlock('kangur-game-home-priority-count', copy.game.priorityPanel.countLabel, {
                           fontSize: 14,
                           fontWeight: '700',
                           textColor: '#94a3b8',
@@ -314,7 +320,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                             enabled: true,
                             source: 'kangur',
                             path: 'game.priorityAssignments.countLabel',
-                            fallback: '0 zadań',
+                            fallback: copy.game.priorityPanel.countLabel,
                           },
                         }),
                       ],
@@ -341,7 +347,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           blocks: [
                             makeTextBlock(
                               'kangur-game-home-priority-item-priority',
-                              'Priorytet wysoki',
+                              copy.game.priorityPanel.itemPriority,
                               {
                                 fontSize: 12,
                                 fontWeight: '700',
@@ -351,13 +357,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                                   enabled: true,
                                   source: 'item',
                                   path: 'priorityLabel',
-                                  fallback: 'Priorytet wysoki',
+                                  fallback: copy.game.priorityPanel.itemPriority,
                                 },
                               }
                             ),
                             makeHeadingBlock(
                               'kangur-game-home-priority-item-title',
-                              'Zadanie',
+                              copy.game.priorityPanel.itemTitle,
                               22,
                               {
                                 headingSize: 'small',
@@ -366,13 +372,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                                   enabled: true,
                                   source: 'item',
                                   path: 'title',
-                                  fallback: 'Zadanie',
+                                  fallback: copy.game.priorityPanel.itemTitle,
                                 },
                               }
                             ),
                             makeTextBlock(
                               'kangur-game-home-priority-item-description',
-                              'Opis zadania.',
+                              copy.game.priorityPanel.itemDescription,
                               {
                                 fontSize: 14,
                                 textColor: '#64748b',
@@ -380,7 +386,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                                   enabled: true,
                                   source: 'item',
                                   path: 'description',
-                                  fallback: 'Opis zadania.',
+                                  fallback: copy.game.priorityPanel.itemDescription,
                                 },
                               }
                             ),
@@ -400,7 +406,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                             }),
                             makeTextBlock(
                               'kangur-game-home-priority-item-progress-label',
-                              '0% ukończono',
+                              copy.game.priorityPanel.itemProgressLabel,
                               {
                                 fontSize: 13,
                                 textColor: '#7a86b0',
@@ -408,13 +414,13 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                                   enabled: true,
                                   source: 'item',
                                   path: 'progressLabel',
-                                  fallback: '0% ukończono',
+                                  fallback: copy.game.priorityPanel.itemProgressLabel,
                                 },
                               }
                             ),
                             makeButtonBlock(
                               'kangur-game-home-priority-item-button',
-                              'Kontynuuj zadanie',
+                              copy.game.priorityPanel.itemActionLabel,
                               {
                                 runtimeActionSource: 'item',
                                 runtimeActionPath: 'openAssignment',
@@ -430,7 +436,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                                   enabled: true,
                                   source: 'item',
                                   path: 'actionLabel',
-                                  fallback: 'Kontynuuj zadanie',
+                                  fallback: copy.game.priorityPanel.itemActionLabel,
                                 },
                               }
                             ),
@@ -440,7 +446,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       {
                         collectionSource: 'kangur',
                         collectionPath: 'game.priorityAssignments.items',
-                        emptyMessage: 'Brak aktywnych zadań od rodzica.',
+                        emptyMessage: copy.game.priorityPanel.emptyMessage,
                         itemLimit: 3,
                         itemsGap: 14,
                         itemGap: 0,
@@ -481,18 +487,18 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                     },
                   },
                   blocks: [
-                    makeHeadingBlock('kangur-game-home-actions-heading', 'Co chcesz zrobić?', 26, {
+                    makeHeadingBlock('kangur-game-home-actions-heading', copy.game.actions.title, 26, {
                       textColor: '#1e293b',
                     }),
                     makeTextBlock(
                       'kangur-game-home-actions-copy',
-                      'Ten panel jest już zlozony z bloków CMS. Zmieniaj etykiety, kolejnosc i akcje bez wracania do kodu.',
+                      copy.game.actions.description,
                       {
                         fontSize: 15,
                         textColor: '#7a86b0',
                       }
                     ),
-                    makeButtonBlock('kangur-game-home-lessons-button', 'Lekcje', {
+                    makeButtonBlock('kangur-game-home-lessons-button', copy.game.actions.lessonsLabel, {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'page.navigateToPage',
                       runtimeActionArgs: 'Lessons',
@@ -504,7 +510,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       borderRadius: 20,
                       borderWidth: 1,
                     }),
-                    makeButtonBlock('kangur-game-home-play-button', 'Grajmy!', {
+                    makeButtonBlock('kangur-game-home-play-button', copy.game.actions.playLabel, {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'game.handleStartGame',
                       buttonDisabledSource: 'kangur',
@@ -518,7 +524,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       borderRadius: 20,
                       borderWidth: 1,
                     }),
-                    makeButtonBlock('kangur-game-home-duels-button', 'Pojedynki', {
+                    makeButtonBlock('kangur-game-home-duels-button', copy.game.actions.duelsLabel, {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'page.navigateToPage',
                       runtimeActionArgs: 'Duels',
@@ -530,7 +536,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       borderRadius: 20,
                       borderWidth: 1,
                     }),
-                    makeButtonBlock('kangur-game-home-kangur-button', 'Kangur Matematyczny', {
+                    makeButtonBlock('kangur-game-home-kangur-button', copy.game.actions.kangurLabel, {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'game.setScreen',
                       runtimeActionArgs: 'kangur_setup',
@@ -571,18 +577,18 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                     },
                   },
                   blocks: [
-                    makeHeadingBlock('kangur-game-home-progress-title', 'Raczkujacy', 28, {
+                    makeHeadingBlock('kangur-game-home-progress-title', copy.game.progress.levelTitle, 28, {
                       textColor: '#1e293b',
                       connection: {
                         enabled: true,
                         source: 'kangur',
                         path: 'progress.currentLevelTitle',
-                        fallback: 'Raczkujacy',
+                        fallback: copy.game.progress.levelTitle,
                       },
                     }),
                     makeTextBlock(
                       'kangur-game-home-progress-summary',
-                      'Poziom 1 · 0 XP łącznie',
+                      copy.game.progress.summary,
                       {
                         fontSize: 14,
                         textColor: '#7a86b0',
@@ -590,7 +596,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                           enabled: true,
                           source: 'kangur',
                           path: 'progress.levelSummary',
-                          fallback: 'Poziom 1 · 0 XP łącznie',
+                          fallback: copy.game.progress.summary,
                         },
                       }
                     ),
@@ -604,19 +610,19 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                         blockGap: 12,
                       },
                       blocks: [
-                        makeTextBlock('kangur-game-home-progress-current', '0 XP', {
+                        makeTextBlock('kangur-game-home-progress-current', copy.game.progress.currentXp, {
                           fontSize: 12,
                           textColor: '#64748b',
                           connection: {
                             enabled: true,
                             source: 'kangur',
                             path: 'progress.xpIntoLevelLabel',
-                            fallback: '0 XP',
+                            fallback: copy.game.progress.currentXp,
                           },
                         }),
                         makeTextBlock(
                           'kangur-game-home-progress-remaining',
-                          'Do poziomu 2: 100 XP',
+                          copy.game.progress.remainingXp,
                           {
                             fontSize: 12,
                             textAlign: 'right',
@@ -625,7 +631,7 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                               enabled: true,
                               source: 'kangur',
                               path: 'progress.xpToNextLevelLabel',
-                              fallback: 'Do poziomu 2: 100 XP',
+                              fallback: copy.game.progress.remainingXp,
                             },
                           }
                         ),
@@ -656,19 +662,19 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
                       blocks: [
                         makeGameMetricCard({
                           id: 'kangur-game-home-progress-games',
-                          label: 'Gier',
+                          label: copy.game.progress.gamesLabel,
                           connectionPath: 'progress.gamesPlayedLabel',
                           fillColor: '#eef2ff',
                         }),
                         makeGameMetricCard({
                           id: 'kangur-game-home-progress-lessons',
-                          label: 'Lekcji',
+                          label: copy.game.progress.lessonsLabel,
                           connectionPath: 'progress.lessonsCompletedLabel',
                           fillColor: '#f5f3ff',
                         }),
                         makeGameMetricCard({
                           id: 'kangur-game-home-progress-badges',
-                          label: 'Odznak',
+                          label: copy.game.progress.badgesLabel,
                           connectionPath: 'progress.badgesUnlockedCountLabel',
                           fillColor: '#fff7ed',
                         }),
@@ -692,9 +698,9 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
       blocks: [
         makeGameLeaderboardPanel({
           id: 'kangur-game-home-leaderboard',
-          title: 'Najlepsze wyniki',
-          description:
-            'Ta tablica wyników jest teraz składana z bloków CMS. Zmieniaj filtry, teksty i wygląd bez wracania do widgetu.',
+          title: copy.game.homeLeaderboard.title,
+          description: copy.game.homeLeaderboard.description,
+          locale: locale ?? undefined,
         }),
       ],
       paddingTop: 0,
@@ -705,7 +711,12 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
     }),
     makeBlockSection({
       id: 'kangur-game-training-setup',
-      blocks: [makeGameTrainingSetupPanel({ id: 'kangur-game-training-setup' })],
+      blocks: [
+        makeGameTrainingSetupPanel({
+          id: 'kangur-game-training-setup',
+          locale: locale ?? undefined,
+        }),
+      ],
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -754,7 +765,12 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
     }),
     makeBlockSection({
       id: 'kangur-game-operation-selector',
-      blocks: [makeGameOperationSelectorPanel({ id: 'kangur-game-operation-selector' })],
+      blocks: [
+        makeGameOperationSelectorPanel({
+          id: 'kangur-game-operation-selector',
+          locale: locale ?? undefined,
+        }),
+      ],
       paddingTop: 0,
       paddingBottom: 0,
       paddingLeft: 0,
@@ -770,4 +786,5 @@ export const GAME_SCREEN_COMPONENTS_PRIMARY: PageComponentInput[] = [
       paddingRight: 0,
       settings: makeGameScreenVisibilitySettings('playing'),
     }),
-];
+  ];
+};

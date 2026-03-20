@@ -22,6 +22,7 @@ import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPl
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import {
   KangurButton,
   KangurEmptyState,
@@ -95,6 +96,7 @@ export default function Tests(): React.JSX.Element {
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('tests');
   const settingsStore = useSettingsStore();
   const { ageGroup } = useKangurAgeGroupFocus();
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const isAdultFocus = ageGroup === 'grown_ups';
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
   const [activeSuiteId, setActiveSuiteId] = useState<string | null>(null);
@@ -285,7 +287,8 @@ export default function Tests(): React.JSX.Element {
     [basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user]
   );
 
-  const isTestsPageReady = isDeferredContentReady;
+  const isTestsPageReady =
+    routeTransitionState?.activeTransitionKind === 'locale-switch' || isDeferredContentReady;
 
   useKangurRoutePageReady({
     pageKey: 'Tests',

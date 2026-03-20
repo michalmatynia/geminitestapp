@@ -18,6 +18,7 @@ import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared
 import {
   KANGUR_LESSONS_SETTING_KEY,
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   kangurLessonAgeGroupSchema,
   kangurLessonContentModeSchema,
   kangurLessonComponentIdSchema,
@@ -30,7 +31,11 @@ import {
 } from '@/features/kangur/shared/contracts/kangur';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
-export { KANGUR_LESSONS_SETTING_KEY, KANGUR_LESSON_DOCUMENTS_SETTING_KEY };
+export {
+  KANGUR_LESSONS_SETTING_KEY,
+  KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
+  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
+};
 export { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY };
 export * from './help-settings';
 
@@ -43,6 +48,7 @@ export const KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_MS =
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_NOTIFICATIONS_ENABLED = true;
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_EMAIL_VERIFICATION = true;
 export const KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_CAPTCHA = true;
+export const KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED = true;
 
 export type KangurNarratorEngine = 'server' | 'client';
 export type KangurParentVerificationEmailSettings = {
@@ -51,6 +57,10 @@ export type KangurParentVerificationEmailSettings = {
   notificationsDisabledUntil: string | null;
   requireEmailVerification: boolean;
   requireCaptcha: boolean;
+};
+
+export type KangurPhoneSimulationSettings = {
+  enabled: boolean;
 };
 
 export type KangurNarratorSettings = {
@@ -238,6 +248,9 @@ const resolveKangurParentVerificationRequireCaptcha = (
   fallback: boolean
 ): boolean => (typeof value === 'boolean' ? value : fallback);
 
+const resolveKangurPhoneSimulationEnabled = (value: unknown): boolean =>
+  typeof value === 'boolean' ? value : KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED;
+
 const resolveKangurParentVerificationNotificationsDisabledUntil = (
   value: unknown
 ): string | null => {
@@ -413,6 +426,11 @@ export const createDefaultKangurNarratorSettings = (): KangurNarratorSettings =>
   voice: KANGUR_TTS_DEFAULT_VOICE,
 });
 
+export const createDefaultKangurPhoneSimulationSettings =
+  (): KangurPhoneSimulationSettings => ({
+    enabled: KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
+  });
+
 export const normalizeKangurNarratorSettings = (value: unknown): KangurNarratorSettings => {
   if (!isRecord(value)) {
     return createDefaultKangurNarratorSettings();
@@ -431,6 +449,18 @@ export const createDefaultKangurParentVerificationEmailSettings = (): KangurPare
   requireEmailVerification: KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_EMAIL_VERIFICATION,
   requireCaptcha: KANGUR_PARENT_VERIFICATION_DEFAULT_REQUIRE_CAPTCHA,
 });
+
+export const normalizeKangurPhoneSimulationSettings = (
+  value: unknown
+): KangurPhoneSimulationSettings => {
+  if (!isRecord(value)) {
+    return createDefaultKangurPhoneSimulationSettings();
+  }
+
+  return {
+    enabled: resolveKangurPhoneSimulationEnabled(value['enabled']),
+  };
+};
 
 export const normalizeKangurParentVerificationEmailSettings = (
   value: unknown
@@ -574,6 +604,13 @@ export const parseKangurParentVerificationEmailSettings = (
 ): KangurParentVerificationEmailSettings =>
   normalizeKangurParentVerificationEmailSettings(
     parseJsonSetting<unknown>(raw, createDefaultKangurParentVerificationEmailSettings())
+  );
+
+export const parseKangurPhoneSimulationSettings = (
+  raw: string | null | undefined
+): KangurPhoneSimulationSettings =>
+  normalizeKangurPhoneSimulationSettings(
+    parseJsonSetting<unknown>(raw, createDefaultKangurPhoneSimulationSettings())
   );
 
 const ensureUniqueAppendedLessonId = (baseId: string, usedIds: Set<string>): string => {

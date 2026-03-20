@@ -24,6 +24,7 @@ import {
   KangurLearnerProfileRuntimeBoundary,
   useKangurLearnerProfileRuntime,
 } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
+import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurButton,
@@ -63,6 +64,7 @@ const PROFILE_MAIN_ID = 'kangur-learner-profile-main';
 
 function LearnerProfileContent(): React.JSX.Element {
   const { user, isLoadingScores } = useKangurLearnerProfileRuntime();
+  const routeTransitionState = useOptionalKangurRouteTransitionState();
   const auth = useKangurAuth();
   const isAuthenticated = auth.isAuthenticated ?? Boolean(auth.user);
   const { push: navigateTo } = useKangurRouteNavigator();
@@ -86,7 +88,10 @@ function LearnerProfileContent(): React.JSX.Element {
     sessionContext: { surface: 'profile' },
   });
 
-  useKangurRoutePageReady({ pageKey: 'LearnerProfile', ready: !isLoadingScores });
+  useKangurRoutePageReady({
+    pageKey: 'LearnerProfile',
+    ready: routeTransitionState?.activeTransitionKind === 'locale-switch' || !isLoadingScores,
+  });
 
   const handleTabChange = useCallback((tabId: LearnerProfileTabId) => {
     setActiveTab(tabId);

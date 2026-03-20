@@ -21,6 +21,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -99,34 +100,58 @@ type EnglishPartsOfSpeechGameProps = {
   onFinish: () => void;
 };
 
+const getPartsOfSpeechRoundMessage = (
+  translate: ReturnType<typeof useTranslations>,
+  roundId: string,
+  field: 'title' | 'prompt' | 'hint',
+  fallback: string
+): string =>
+  translateKangurMiniGameWithFallback(
+    translate,
+    `englishPartsOfSpeech.inRound.rounds.${roundId}.${field}`,
+    fallback
+  );
+
+const getPartsOfSpeechPartMessage = (
+  translate: ReturnType<typeof useTranslations>,
+  part: PartOfSpeech,
+  field: 'label' | 'description',
+  fallback: string
+): string =>
+  translateKangurMiniGameWithFallback(
+    translate,
+    `englishPartsOfSpeech.inRound.parts.${part}.${field}`,
+    fallback
+  );
+
 const PART_META: Record<PartOfSpeech, Omit<SpeechBin, 'id'>> = {
   noun: {
     label: 'Noun',
-    description: 'Osoba, rzecz, pojęcie',
+    description: 'Person, thing, idea',
     accent: 'sky',
     emoji: '🔷',
   },
   verb: {
     label: 'Verb',
-    description: 'Czynność lub akcja',
+    description: 'Action or movement',
     accent: 'emerald',
     emoji: '⚡',
   },
   adjective: {
     label: 'Adjective',
-    description: 'Opisuje cechę',
+    description: 'Describes a quality',
     accent: 'amber',
     emoji: '✨',
   },
   preposition: {
     label: 'Preposition',
-    description: 'Miejsce i relacja',
+    description: 'Place or relation',
     accent: 'violet',
     emoji: '📍',
   },
   adverb: {
     label: 'Adverb',
-    description: 'Jak? kiedy? jak często?',
+    description: 'How? when? how often?',
     accent: 'indigo',
     emoji: '💫',
   },
@@ -136,8 +161,8 @@ const ROUNDS: Round[] = [
   {
     id: 'math-core',
     title: 'Math starter pack',
-    prompt: 'Przeciągnij słowa do właściwej części mowy.',
-    hint: 'Noun = rzecz, Verb = działanie, Adjective = cecha.',
+    prompt: 'Sort the words into the correct part of speech.',
+    hint: 'Noun = thing, Verb = action, Adjective = quality.',
     accent: 'sky',
     parts: ['noun', 'verb', 'adjective'],
     tokens: [
@@ -153,8 +178,8 @@ const ROUNDS: Round[] = [
   {
     id: 'positions',
     title: 'Geometry positions',
-    prompt: 'Sortuj słowa o miejscu i działaniu.',
-    hint: 'Prepositions pokazują relacje: between, above.',
+    prompt: 'Sort the words about place and action.',
+    hint: 'Prepositions show relations: between, above.',
     accent: 'violet',
     parts: ['noun', 'verb', 'preposition'],
     tokens: [
@@ -170,8 +195,8 @@ const ROUNDS: Round[] = [
   {
     id: 'speed',
     title: 'Adverbs in action',
-    prompt: 'Dodaj tempo i styl działania.',
-    hint: 'Adverbs opisują jak: quickly, carefully.',
+    prompt: 'Add tempo and style to the action.',
+    hint: 'Adverbs describe how: quickly, carefully.',
     accent: 'amber',
     parts: ['verb', 'adverb', 'adjective'],
     tokens: [
@@ -371,10 +396,11 @@ function DraggableToken({
 }
 
 export default function EnglishPartsOfSpeechGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: EnglishPartsOfSpeechGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
     buildRoundState(ROUNDS[0]!)
@@ -392,10 +418,20 @@ export default function EnglishPartsOfSpeechGame({
 
   const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
   const bins = useMemo(
-    () => round.parts.map((part) => ({ id: part, ...PART_META[part] })),
-    [round.parts]
+    () =>
+      round.parts.map((part) => ({
+        id: part,
+        ...PART_META[part],
+        label: getPartsOfSpeechPartMessage(translations, part, 'label', PART_META[part].label),
+        description: getPartsOfSpeechPartMessage(
+          translations,
+          part,
+          'description',
+          PART_META[part].description
+        ),
+      })),
+    [round.parts, translations]
   );
-
   const expectedByPart = useMemo(() => {
     return round.parts.reduce<Record<PartOfSpeech, Set<string>>>((acc, part) => {
       acc[part] = new Set(round.tokens.filter((token) => token.part === part).map((token) => token.id));
@@ -489,7 +525,12 @@ export default function EnglishPartsOfSpeechGame({
       text:
         correctCount === round.tokens.length
           ? translations('englishPartsOfSpeech.feedback.roundPerfect')
-          : `Masz ${correctCount}/${round.tokens.length} poprawnych. Sprawdź kolory i działaj dalej.`,
+          : translateKangurMiniGameWithFallback(
+              translations,
+              'englishPartsOfSpeech.feedback.roundProgress',
+              `You got ${correctCount}/${round.tokens.length} correct. Check the colours and keep going.`,
+              { correct: correctCount, total: round.tokens.length }
+            ),
     });
     setSelectedTokenId(null);
   };
@@ -637,11 +678,7 @@ export default function EnglishPartsOfSpeechGame({
               : translations('englishPartsOfSpeech.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={
-            finishLabel === 'Wróć do tematów'
-              ? getKangurMiniGameFinishLabel(translations, 'topics')
-              : finishLabel
-          }
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           restartLabel={translations('shared.restart')}
           onRestart={() => {
@@ -683,17 +720,32 @@ export default function EnglishPartsOfSpeechGame({
             <div className={cn('relative z-10 flex flex-col', KANGUR_PANEL_GAP_CLASSNAME)}>
               <div className='flex items-center justify-between gap-2'>
                 <KangurStatusChip accent={round.accent} className='text-[10px] uppercase tracking-[0.16em]'>
-                  Round {roundIndex + 1}/{TOTAL_ROUNDS}
+                  {translateKangurMiniGameWithFallback(
+                    translations,
+                    'englishPartsOfSpeech.inRound.roundLabel',
+                    `Round ${roundIndex + 1}/${TOTAL_ROUNDS}`,
+                    { current: roundIndex + 1, total: TOTAL_ROUNDS }
+                  )}
                 </KangurStatusChip>
                 <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-                  Drag & Drop
+                  {translateKangurMiniGameWithFallback(
+                    translations,
+                    'englishPartsOfSpeech.inRound.modeLabel',
+                    'Drag and drop'
+                  )}
                 </KangurStatusChip>
               </div>
               <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-[1.1fr_0.9fr] sm:items-center`}>
                 <div>
-                  <p className='text-lg font-bold text-slate-800'>{round.title}</p>
-                  <p className='text-sm text-slate-600'>{round.prompt}</p>
-                  <p className='mt-1 text-xs font-semibold text-slate-500'>{round.hint}</p>
+                  <p className='text-lg font-bold text-slate-800'>
+                    {getPartsOfSpeechRoundMessage(translations, round.id, 'title', round.title)}
+                  </p>
+                  <p className='text-sm text-slate-600'>
+                    {getPartsOfSpeechRoundMessage(translations, round.id, 'prompt', round.prompt)}
+                  </p>
+                  <p className='mt-1 text-xs font-semibold text-slate-500'>
+                    {getPartsOfSpeechRoundMessage(translations, round.id, 'hint', round.hint)}
+                  </p>
                 </div>
                 <div className='rounded-[18px] border border-white/70 bg-white/80 p-2'>
                   {resolveRoundVisual()}
@@ -704,7 +756,7 @@ export default function EnglishPartsOfSpeechGame({
 
           <KangurInfoCard accent='slate' className='w-full' padding='md' tone='neutral'>
             <p className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 text-center'>
-              Pool of words
+              {translations('englishPartsOfSpeech.inRound.poolLabel')}
             </p>
             <Droppable droppableId='pool' direction='horizontal'>
               {(provided, snapshot) => (
@@ -719,7 +771,7 @@ export default function EnglishPartsOfSpeechGame({
                   role='button'
                   tabIndex={checked ? -1 : 0}
                   aria-disabled={checked}
-                  aria-label='Pula słów do sortowania'
+                  aria-label={translations('englishPartsOfSpeech.inRound.poolAria')}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
@@ -743,7 +795,9 @@ export default function EnglishPartsOfSpeechGame({
                   ))}
                   {provided.placeholder}
                   {roundState.pool.length === 0 ? (
-                    <p className='text-xs font-semibold text-slate-400'>Pula pusta</p>
+                    <p className='text-xs font-semibold text-slate-400'>
+                      {translations('englishPartsOfSpeech.inRound.poolEmpty')}
+                    </p>
                   ) : null}
                 </div>
               )}
@@ -775,7 +829,9 @@ export default function EnglishPartsOfSpeechGame({
                         role='button'
                         tabIndex={checked ? -1 : 0}
                         aria-disabled={checked}
-                        aria-label={`${bin.label} bin`}
+                        aria-label={translations('englishPartsOfSpeech.inRound.binAria', {
+                          label: bin.label,
+                        })}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
@@ -817,7 +873,7 @@ export default function EnglishPartsOfSpeechGame({
                           {provided.placeholder}
                           {checked && items.length === 0 ? (
                             <p className='text-xs font-semibold text-rose-600'>
-                              Brakuje słów
+                              {translations('englishPartsOfSpeech.inRound.missingWords')}
                             </p>
                           ) : null}
                         </div>
@@ -844,11 +900,14 @@ export default function EnglishPartsOfSpeechGame({
                 onClick={handleReset}
                 disabled={checked}
               >
-                Wyczyść rundę
+                {translations('englishPartsOfSpeech.inRound.clearRound')}
               </KangurButton>
               {checked ? (
                 <KangurStatusChip accent={feedbackAccent}>
-                  {roundCorrect}/{round.tokens.length} trafień
+                  {translations('englishPartsOfSpeech.inRound.hitsLabel', {
+                    hits: roundCorrect,
+                    total: round.tokens.length,
+                  })}
                 </KangurStatusChip>
               ) : null}
             </div>
@@ -860,11 +919,13 @@ export default function EnglishPartsOfSpeechGame({
                 onClick={handleCheck}
                 disabled={!isRoundComplete}
               >
-                Sprawdź
+                {translations('englishPartsOfSpeech.inRound.check')}
               </KangurButton>
             ) : (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
-                {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
+                {roundIndex + 1 >= TOTAL_ROUNDS
+                  ? translations('englishPartsOfSpeech.inRound.seeResult')
+                  : translations('englishPartsOfSpeech.inRound.next')}
               </KangurButton>
             )}
           </div>

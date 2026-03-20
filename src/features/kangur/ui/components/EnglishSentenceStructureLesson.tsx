@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
   EnglishConnectorBridgeAnimation,
@@ -30,20 +33,27 @@ type SectionId =
   | 'practice'
   | 'summary';
 
-const SLIDES: Record<SectionId, LessonSlide[]> = {
+const buildEnglishSentenceStructureSlides = (
+  translations: ReturnType<typeof useTranslations>
+): Record<SectionId, LessonSlide[]> => ({
   blueprint: [
     {
-      title: 'SVO blueprint',
+      title: translations('slides.blueprint.core.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Najczęstszy układ zdania to <strong>Subject → Verb → Object</strong>.
+            {translations('slides.blueprint.core.lead')}
           </KangurLessonLead>
-          <KangurLessonVisual accent='violet' caption='Subject + Verb + Object'>
+          <KangurLessonVisual
+            accent='violet'
+            caption={translations('slides.blueprint.core.caption')}
+          >
             <EnglishSentenceBlueprintAnimation />
           </KangurLessonVisual>
           <KangurLessonInset accent='violet' className='text-left'>
-            <p className='text-sm font-semibold text-violet-700'>The student solves the equation.</p>
+            <p className='text-sm font-semibold text-violet-700'>
+              The student solves the equation.
+            </p>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
@@ -51,11 +61,11 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   order: [
     {
-      title: 'Order z dodatkami',
+      title: translations('slides.order.additions.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Dodatki (time, place, manner) zwykle idą po obiekcie.
+            {translations('slides.order.additions.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' padding='sm'>
             <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
@@ -64,7 +74,9 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
               <KangurLessonChip accent='violet'>Object</KangurLessonChip>
               <KangurLessonChip accent='violet'>Time</KangurLessonChip>
             </div>
-            <KangurLessonCaption className='mt-2'>We solve the equation today in class.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-2'>
+              {translations('slides.order.additions.caption')}
+            </KangurLessonCaption>
           </KangurLessonCallout>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
             {[
@@ -83,13 +95,16 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   questions: [
     {
-      title: 'Questions z do/does',
+      title: translations('slides.questions.doDoes.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            W Present Simple pytania tworzymy przez <strong>Do/Does + subject + verb</strong>.
+            {translations('slides.questions.doDoes.lead')}
           </KangurLessonLead>
-          <KangurLessonVisual accent='violet' caption='Do you? / Does she?'>
+          <KangurLessonVisual
+            accent='violet'
+            caption={translations('slides.questions.doDoes.caption')}
+          >
             <EnglishQuestionFlipAnimation />
           </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
@@ -109,13 +124,16 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   connectors: [
     {
-      title: 'Łączenie zdań',
+      title: translations('slides.connectors.linking.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Używaj spójników, żeby połączyć myśli w jedno zdanie.
+            {translations('slides.connectors.linking.lead')}
           </KangurLessonLead>
-          <KangurLessonVisual accent='amber' caption='and / but / so / because'>
+          <KangurLessonVisual
+            accent='amber'
+            caption={translations('slides.connectors.linking.caption')}
+          >
             <EnglishConnectorBridgeAnimation />
           </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
@@ -135,11 +153,11 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Ułóż zdanie',
+      title: translations('slides.practice.buildSentence.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Ułóż zdanie w poprawnej kolejności.
+            {translations('slides.practice.buildSentence.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' padding='sm'>
             <div className='space-y-2 text-sm text-slate-700'>
@@ -148,18 +166,18 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
               <p>3) the graph / after class / checks / He</p>
             </div>
             <KangurLessonCaption className='mt-3'>
-              Odpowiedzi: She solves the equation. / We practice geometry today. / He checks the graph after class.
+              {translations('slides.practice.buildSentence.answersCaption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Zamień na pytanie',
+      title: translations('slides.practice.makeQuestion.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Zmień zdanie na pytanie z do/does.
+            {translations('slides.practice.makeQuestion.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' padding='sm'>
             <div className='space-y-2 text-sm text-slate-700'>
@@ -168,7 +186,7 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
               <p>3) They use the graph.</p>
             </div>
             <KangurLessonCaption className='mt-3'>
-              Odpowiedzi: Do you understand the formula? / Does she explain the proof? / Do they use the graph?
+              {translations('slides.practice.makeQuestion.answersCaption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -177,18 +195,18 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Podsumowanie',
+      title: translations('slides.summary.recap.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Najważniejsze reguły składni:
+            {translations('slides.summary.recap.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='violet' padding='sm'>
             <ul className='space-y-2 text-sm text-slate-700'>
-              <li>SVO: Subject + Verb + Object</li>
-              <li>Time/place zwykle na końcu</li>
-              <li>Questions: Do/Does + subject + verb</li>
-              <li>Connectors: and, but, so, because</li>
+              <li>{translations('slides.summary.recap.items.svo')}</li>
+              <li>{translations('slides.summary.recap.items.timePlace')}</li>
+              <li>{translations('slides.summary.recap.items.questions')}</li>
+              <li>{translations('slides.summary.recap.items.connectors')}</li>
             </ul>
           </KangurLessonCallout>
           <KangurEquationDisplay accent='violet' className='mt-2' size='sm'>
@@ -198,56 +216,47 @@ const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
-};
+});
 
-const HUB_SECTIONS = [
-  {
-    id: 'blueprint',
-    emoji: '🧩',
-    title: 'Blueprint',
-    description: 'SVO i podstawowy układ zdania',
-  },
-  {
-    id: 'order',
-    emoji: '🧭',
-    title: 'Order',
-    description: 'Dodatki czasu i miejsca',
-  },
-  {
-    id: 'questions',
-    emoji: '❓',
-    title: 'Questions',
-    description: 'Do/Does w praktyce',
-  },
-  {
-    id: 'connectors',
-    emoji: '🔗',
-    title: 'Connectors',
-    description: 'Łączenie zdań spójnikami',
-  },
-  {
-    id: 'practice',
-    emoji: '✅',
-    title: 'Practice',
-    description: 'Szybka rozgrzewka',
-  },
-  {
-    id: 'summary',
-    emoji: '🧠',
-    title: 'Summary',
-    description: 'Najważniejsze reguły',
-  },
+const SENTENCE_STRUCTURE_SECTION_META: Array<{
+  id: SectionId;
+  emoji: string;
+  key: string;
+}> = [
+  { id: 'blueprint', emoji: '🧩', key: 'blueprint' },
+  { id: 'order', emoji: '🧭', key: 'order' },
+  { id: 'questions', emoji: '❓', key: 'questions' },
+  { id: 'connectors', emoji: '🔗', key: 'connectors' },
+  { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'summary', emoji: '🧠', key: 'summary' },
 ];
 
 export default function EnglishSentenceStructureLesson(): React.JSX.Element {
+  const shellTranslations = useTranslations('KangurStaticLessons.englishSentenceStructureShell');
+  const contentTranslations = useTranslations('KangurStaticLessons.englishSentenceStructure');
+  const localizedSections = useMemo(
+    () =>
+      SENTENCE_STRUCTURE_SECTION_META.map((section) => ({
+        id: section.id,
+        emoji: section.emoji,
+        title: shellTranslations(`sections.${section.key}.title`),
+        description: shellTranslations(`sections.${section.key}.description`),
+      })),
+    [shellTranslations]
+  );
+  const localizedSlides = useMemo(
+    () => buildEnglishSentenceStructureSlides(contentTranslations),
+    [contentTranslations]
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='english_sentence_structure'
       lessonEmoji='🧩'
-      lessonTitle='Angielski: składnia zdania'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={shellTranslations('lessonTitle')}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-violet'
       progressDotClassName='bg-violet-300'
       dotActiveClass='bg-violet-500'

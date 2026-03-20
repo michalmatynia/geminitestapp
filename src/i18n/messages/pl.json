@@ -237,7 +237,22 @@
     "tryAgain": "Sprobuj ponownie",
     "backToHome": "Wroc do Kangura",
     "loadingApp": "Ladowanie aplikacji Kangur",
-    "loadingPage": "Ladowanie strony Kangura"
+    "loadingPage": "Ladowanie strony Kangura",
+    "loadingLanguage": "Przelaczanie jezyka Kangura",
+    "accessibility": {
+      "pageAnnouncement": "Widok: {label}",
+      "languageSwitchAnnouncement": "Przelaczanie jezyka: {label}",
+      "pages": {
+        "Competition": "Kangur Matematyczny",
+        "Game": "Strona glowna",
+        "Lessons": "Lekcje",
+        "Tests": "Testy",
+        "LearnerProfile": "Profil ucznia",
+        "ParentDashboard": "Panel rodzica",
+        "Duels": "Pojedynki",
+        "default": "Strona Kangur"
+      }
+    }
   },
   "KangurShell": {
     "creatorCredentials": "Tworca: {name} · utworzono {year} ·",
@@ -251,7 +266,12 @@
     "emptyTitle": "Brak aktywnych lekcji",
     "emptyDescription": "Brak aktywnych lekcji dla grupy {ageGroup}.",
     "groupTypeLabel": "Grupa",
-    "subsectionTypeLabel": "Podsekcja"
+    "subsectionTypeLabel": "Podsekcja",
+    "mobileControls": {
+      "backToTopics": "Wróć do tematów",
+      "scrollUp": "Przewiń w górę",
+      "scrollDown": "Przewiń w dół"
+    }
   },
   "KangurLearnerProfilePage": {
     "tabs": {
@@ -270,6 +290,10 @@
     "resultProgress": "Wynik {score}/{total}",
     "activityTitle": "Gra: {title}",
     "statusAnnouncement": "Widok: {label}",
+    "phoneSimulation": {
+      "scrollUp": "Przewiń w górę",
+      "scrollDown": "Przewiń w dół"
+    },
     "screens": {
       "home": {
         "label": "Ekran startowy",
@@ -1381,6 +1405,111 @@
         "retry": "Nie poddawaj się!"
       }
     },
+    "addingSynthesis": {
+      "intro": {
+        "newGame": "Nowa gra",
+        "style": "Synthesia-style",
+        "title": "Synteza dodawania",
+        "description": "Licz w głowie, patrz jak działanie spada do linii i uderz w tor z poprawnym wynikiem. Zaczynasz od prostych sum, potem przechodzisz przez 10 i kończysz na dwóch cyfrach.",
+        "rhythmLabel": "Rytm gry",
+        "rhythmValue": "{notes} nut • {lanes} tory • szybka informacja zwrotna",
+        "howToPlayLabel": "Jak grać",
+        "howToPlay": {
+          "chooseLane": "Klikaj odpowiedni tor lub naciskaj 1, 2, 3, 4.",
+          "timing": "Im bliżej linii trafisz, tym lepszy rytm.",
+          "feedback": "Po każdym błędzie dostajesz szybką podpowiedź."
+        },
+        "start": "Start syntezę"
+      },
+      "shared": {
+        "backToAdding": "Wróć do Dodawania"
+      },
+      "stages": {
+        "warmup": {
+          "title": "Rozgrzewka",
+          "description": "Sumy do 10. Najpierw znajdź większą liczbę i dolicz resztę.",
+          "coachingTip": "Policz od większej liczby i patrz, jak działanie spada do linii."
+        },
+        "bridge_ten": {
+          "title": "Most do 10",
+          "description": "Przekraczaj 10, rozbijając drugą liczbę na kawałek do 10 i resztę.",
+          "coachingTip": "Zobacz, ile brakuje do 10, a potem dodaj to, co zostało."
+        },
+        "double_digits": {
+          "title": "Dwie cyfry",
+          "description": "Dodawaj dziesiątki i jedności osobno, a przy przeniesieniu zamieniaj 10 jedności na nową dziesiątkę.",
+          "coachingTip": "Najpierw dziesiątki, potem jedności. Gdy wyjdzie 10 lub więcej, przenieś jedną dziesiątkę."
+        }
+      },
+      "hints": {
+        "warmup": "Zacznij od {larger} i dolicz {smaller}: {steps}.",
+        "bridgeTen": "{left} potrzebuje {toTen} do 10. Rozbij {right} na {toTen} i {leftover}, potem policz 10 + {leftover} = {answer}.",
+        "doubleDigits": "Dziesiątki dają {tens}, jedności dają {ones}. Razem {answer}.",
+        "doubleDigitsCarry": "Dziesiątki dają {tens}. Jedności dają {ones}, czyli {carryOnes} i jedna nowa dziesiątka. Razem wychodzi {answer}."
+      },
+      "focus": {
+        "warmup": "Zacznij od większej liczby i dolicz małe kroki.",
+        "bridgeTen": "Najpierw dopełnij do 10, potem dodaj to, co zostało.",
+        "doubleDigits": "Rozdziel dziesiątki i jedności, a potem połącz oba wyniki.",
+        "doubleDigitsCarry": "Pilnuj jedności. Gdy uzbierasz 10, przenieś jedną dziesiątkę."
+      },
+      "feedback": {
+        "perfect": {
+          "title": "Idealne trafienie",
+          "description": "{left} + {right} = {answer}. Uderzyłeś dokładnie przy linii."
+        },
+        "great": {
+          "title": "Super timing",
+          "description": "{left} + {right} = {answer}. Dobra odpowiedź i dobry rytm."
+        },
+        "good": {
+          "title": "Dobra odpowiedź",
+          "description": "{left} + {right} = {answer}. Następnym razem spróbuj trafić bliżej linii."
+        },
+        "wrong": {
+          "title": "To nie ten tor",
+          "description": "{left} + {right} daje {answer}, nie {chosen}."
+        },
+        "miss": {
+          "title": "Nuta minęła linię",
+          "description": "Poprawny wynik to {answer}. Złap kolejną nutę szybciej."
+        }
+      },
+      "summary": {
+        "sessionComplete": "Sesja zakończona",
+        "score": "Wynik {score}/{total}",
+        "messages": {
+          "strong": "Bardzo mocna sesja. Dodawanie trzyma rytm i tempo.",
+          "good": "Dobry wynik. Jeszcze kilka rund i te sumy będą wchodziły automatycznie.",
+          "retry": "Masz już bazę. Powtórz sesję i skup się na podpowiedziach przy trudniejszych nutach."
+        },
+        "stats": {
+          "accuracy": "Skuteczność",
+          "perfectHits": "Idealne trafienia",
+          "bestStreak": "Najlepsza seria",
+          "round": "Runda"
+        },
+        "playAgain": "Zagraj jeszcze raz"
+      },
+      "playing": {
+        "noteCount": "Nuta {current}/{total}",
+        "stats": {
+          "streak": "Seria",
+          "perfect": "Idealne",
+          "hit": "Trafione"
+        },
+        "laneLabel": "Tor {index}",
+        "laneAria": "Tor {index}: {choice}",
+        "hitLine": "Linia przy {percent}%",
+        "hitPrompt": "Uderz we właściwy tor",
+        "chooseLane": "Wybierz tor",
+        "accuracy": "Dokładność {accuracy}%",
+        "hintTitle": "Podpowiedź do tej nuty",
+        "keyboardHint": "Jeśli wolisz klawiaturę, naciśnij 1, 2, 3 lub 4.",
+        "sessionProgress": "Postęp sesji",
+        "endAttempt": "Zakończ próbę"
+      }
+    },
     "subtraction": {
       "summary": {
         "perfect": "Idealnie! Mistrz odejmowania!",
@@ -1553,6 +1682,138 @@
         "perfect": "Idealnie! Rozpoznajesz relacje w każdym kontekście.",
         "good": "Świetnie! Masz oko do relacji.",
         "retry": "Dobra próba! Spróbuj jeszcze raz i zobacz różnice."
+      },
+      "game": {
+        "fallbackTitle": "Relacje",
+        "fallbackPrompt": "Brak danych do gry.",
+        "rushModeChip": "Bridge Rush ⏱",
+        "quietMode": "Tryb spokojny",
+        "rushMode": "Bridge Rush",
+        "rushModeHint": "Tryb Bridge Rush: zdąż przed końcem czasu. Zmiana trybu restartuje grę.",
+        "modeResetHint": "Zmiana trybu restartuje grę.",
+        "stageTitle": "Most relacji",
+        "roundLabel": "Runda {current}/{total}",
+        "timeExpired": "Czas minął",
+        "instructions": "Przeciągnij relację na kartę pary albo kliknij relację i potem kliknij parę. Ikony relacji podpowiadają typy zależności.",
+        "relationIconsLabel": "Ikony relacji",
+        "relationHintPrefix": "Podpowiedź: {hint}",
+        "relationHintIdle": "Najedź lub dotknij ikonę, aby zobaczyć podpowiedź.",
+        "relationsHeading": "Relacje",
+        "poolCount": "{count} w puli",
+        "poolAriaLabel": "Pula relacji do przeciągania",
+        "emptyPool": "Wszystkie relacje są już użyte.",
+        "relationAriaLabel": "Relacja: {label}",
+        "clearRound": "Wyczyść rundę",
+        "hitsLabel": "{correct}/{total} trafień",
+        "targetsHeading": "Pary do dopasowania",
+        "relationBadge": "relacja",
+        "dropHint": "Użyj tego miejsca, aby dopasować relację do pary.",
+        "dropZoneCta": "Upuść relację",
+        "correctRelation": "Poprawnie: {label}",
+        "oneToOneHint": "Każda relacja pasuje tylko do jednej pary.",
+        "check": "Sprawdź",
+        "seeResult": "Zobacz wynik",
+        "next": "Dalej",
+        "tokens": {
+          "part_whole": {
+            "label": "część → całość",
+            "hint": "element należy do większej całości"
+          },
+          "opposite": {
+            "label": "przeciwieństwo",
+            "hint": "słowa o przeciwnym znaczeniu"
+          },
+          "tool_action": {
+            "label": "narzędzie → czynność",
+            "hint": "narzędzie służy do działania"
+          },
+          "cause_effect": {
+            "label": "przyczyna → skutek",
+            "hint": "jedno zdarzenie wywołuje drugie"
+          },
+          "category_example": {
+            "label": "kategoria → przykład",
+            "hint": "ogólna grupa i jej przykład"
+          },
+          "place_inhabitants": {
+            "label": "miejsce → mieszkańcy",
+            "hint": "kto lub co mieszka w danym miejscu"
+          },
+          "material_object": {
+            "label": "materiał → przedmiot",
+            "hint": "z czego coś jest zrobione"
+          },
+          "sequence": {
+            "label": "kolejność → następstwo",
+            "hint": "co jest kolejnym krokiem"
+          },
+          "creator_work": {
+            "label": "twórca → dzieło",
+            "hint": "kto tworzy i co powstaje"
+          }
+        },
+        "rounds": {
+          "rozgrzewka": {
+            "title": "Rozgrzewka: dwie proste relacje",
+            "prompt": "Zacznij od przeciwieństw i kategorii.",
+            "targets": {
+              "r1-1": {
+                "pair": "Gorący → zimny"
+              },
+              "r1-2": {
+                "pair": "Owoc → jabłko"
+              }
+            }
+          },
+          "codzienne": {
+            "title": "Relacje z życia",
+            "prompt": "Połącz część z całością, narzędzie z działaniem i miejsce z mieszkańcami.",
+            "targets": {
+              "r2-1": {
+                "pair": "Płatek → kwiat"
+              },
+              "r2-2": {
+                "pair": "Pędzel → malowanie"
+              },
+              "r2-3": {
+                "pair": "Ul → pszczoły"
+              }
+            }
+          },
+          "przyczyny": {
+            "title": "Przyczyna, materiał i następstwo",
+            "prompt": "Trudniejszy zestaw: co wywołuje skutek i co z czego powstaje.",
+            "targets": {
+              "r3-1": {
+                "pair": "Deszcz → kałuża"
+              },
+              "r3-2": {
+                "pair": "Wełna → sweter"
+              },
+              "r3-3": {
+                "pair": "Ziarno → roślina"
+              }
+            }
+          },
+          "mieszanka": {
+            "title": "Most relacji: miks",
+            "prompt": "Połącz cztery różne typy relacji w jednym układzie.",
+            "targets": {
+              "r4-1": {
+                "pair": "Autor → książka"
+              },
+              "r4-2": {
+                "pair": "Wysoki → niski"
+              },
+              "r4-3": {
+                "pair": "Koło → rower"
+              },
+              "r4-4": {
+                "pair": "Instrument → gitara"
+              }
+            }
+          }
+        }
       }
     },
     "logicalClassification": {
@@ -1567,18 +1828,44 @@
       }
     },
     "englishPronouns": {
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "modeLabel": "Klikanie",
+        "check": "Sprawdź ✓"
+      },
       "feedback": {
-        "correct": "Świetnie! Trafione."
+        "correct": "Świetnie! Trafione.",
+        "incorrect": "Prawidłowa odpowiedź: {answer}."
       },
       "summary": {
-        "perfect": "Perfekcyjnie! Pronouns on point.",
+        "perfect": "Perfekcyjnie! Zaimki masz opanowane.",
         "good": "Dobra robota!",
         "retry": "Jeszcze jedna runda i będzie super."
       }
     },
     "englishPronounsWarmup": {
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "modeLabel": "Rozgrzewka",
+        "check": "Sprawdź ✓",
+        "rounds": {
+          "warmup-graph": {
+            "prompt": "Wybierz poprawną formę dzierżawczą.",
+            "hint": "Mówimy o naszym wykresie - our + rzeczownik."
+          },
+          "warmup-calculator": {
+            "prompt": "Wybierz poprawną formę dzierżawczą.",
+            "hint": "Po \"is\" używamy zaimka dzierżawczego: mine."
+          },
+          "warmup-solution": {
+            "prompt": "Wybierz poprawną formę dzierżawczą.",
+            "hint": "Przed rzeczownikiem używamy your."
+          }
+        }
+      },
       "feedback": {
-        "correct": "Świetnie! Trafione."
+        "correct": "Świetnie! Trafione.",
+        "incorrect": "Prawidłowa odpowiedź: {answer}."
       },
       "summary": {
         "perfect": "Perfekcyjnie! Rozgrzewka zaliczona.",
@@ -1586,9 +1873,242 @@
         "retry": "Jeszcze jedna runda i będzie super."
       }
     },
+    "calendar": {
+      "lessonTitle": "Nauka kalendarza",
+      "labels": {
+        "schoolTag": "Szkoła",
+        "weekendTag": "Weekend",
+        "daysSuffix": "dni",
+        "howToWriteDate": "Jak zapisać datę?",
+        "shortDatePrefix": "Lub:",
+        "datePattern": "Dzień / Miesiąc / Rok"
+      },
+      "sections": {
+        "intro": {
+          "title": "Czym jest kalendarz?",
+          "description": "Rok, miesiące i dni"
+        },
+        "dni": {
+          "title": "Dni tygodnia",
+          "description": "Od poniedziałku do niedzieli"
+        },
+        "miesiace": {
+          "title": "Miesiące i pory roku",
+          "description": "12 miesięcy i cztery pory roku"
+        },
+        "data": {
+          "title": "Jak czytać datę?",
+          "description": "Dzień / Miesiąc / Rok"
+        },
+        "gameDays": {
+          "title": "Ćwiczenie: Dni tygodnia",
+          "description": "Weekend, dni tygodnia i układ kolumn"
+        },
+        "gameMonths": {
+          "title": "Ćwiczenie: Miesiące",
+          "description": "Miesiące, kolejność i pory roku"
+        },
+        "gameDates": {
+          "title": "Ćwiczenie: Daty",
+          "description": "Wyszukuj właściwe daty w kalendarzu"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "Czym jest kalendarz?",
+            "tts": "Kalendarz to sposób organizowania czasu. Rok ma 12 miesięcy i 365 dni. Tydzień ma 7 dni.",
+            "body": "Kalendarz to sposób organizowania czasu.",
+            "yearStat": "Rok ma 12 miesięcy i 365 dni.",
+            "weekStat": "Tydzień ma 7 dni."
+          },
+          "yearLoop": {
+            "title": "Rok w pętli",
+            "tts": "Miesiące wracają co roku w tej samej kolejności.",
+            "caption": "Po grudniu znów zaczyna się styczeń."
+          },
+          "seasons": {
+            "title": "Pory roku",
+            "tts": "Mamy cztery pory roku, które powtarzają się cyklicznie.",
+            "caption": "Wiosna, lato, jesień, zima."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Dni tygodnia",
+            "tts": "Tydzień ma 7 dni: poniedziałek, wtorek, środa, czwartek, piątek, sobota, niedziela."
+          },
+          "rhythm": {
+            "title": "Tydzień w rytmie",
+            "tts": "Dni tygodnia następują po sobie w stałej kolejności.",
+            "caption": "Po niedzieli znowu jest poniedziałek."
+          },
+          "weekend": {
+            "title": "Weekend",
+            "tts": "Sobota i niedziela to weekend.",
+            "caption": "Weekend wyróżnia się kolorem."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 miesięcy roku",
+            "tts": "Rok ma 12 miesięcy podzielonych na cztery pory roku."
+          },
+          "monthLength": {
+            "title": "Ile dni ma miesiąc?",
+            "tts": "Większość miesięcy ma 30 lub 31 dni. Luty ma tylko 28 dni."
+          },
+          "monthsWheel": {
+            "title": "Koło miesięcy",
+            "tts": "Miesiące ustawiają się w kole i powtarzają co roku.",
+            "caption": "Miesiące krążą bez końca."
+          },
+          "lengthAnimation": {
+            "title": "Długość miesięcy",
+            "tts": "Niektóre miesiące mają 31 dni, inne 30, a luty 28.",
+            "caption": "Zapamiętaj długości miesięcy."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "Jak czytać datę?",
+            "tts": "Datę zapisujemy jako dzień, miesiąc, rok. Na przykład: 15 marca 2025.",
+            "longExample": "15 marca 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Zapis daty",
+            "tts": "Datę zapisujemy jako dzień, miesiąc i rok, na przykład 15 przez 03 przez 2025.",
+            "caption": "Dzień / Miesiąc / Rok."
+          },
+          "findDay": {
+            "title": "Znajdź dzień",
+            "tts": "W kalendarzu wybieramy konkretny dzień.",
+            "caption": "Wskaż właściwą datę."
+          }
+        }
+      }
+    },
+    "calendar": {
+      "lessonTitle": "Nauka kalendarza",
+      "labels": {
+        "schoolTag": "Szkoła",
+        "weekendTag": "Weekend",
+        "daysSuffix": "dni",
+        "howToWriteDate": "Jak zapisać datę?",
+        "shortDatePrefix": "Lub:",
+        "datePattern": "Dzień / Miesiąc / Rok"
+      },
+      "sections": {
+        "intro": {
+          "title": "Czym jest kalendarz?",
+          "description": "Rok, miesiące i dni"
+        },
+        "dni": {
+          "title": "Dni tygodnia",
+          "description": "Od poniedziałku do niedzieli"
+        },
+        "miesiace": {
+          "title": "Miesiące i pory roku",
+          "description": "12 miesięcy i cztery pory roku"
+        },
+        "data": {
+          "title": "Jak czytać datę?",
+          "description": "Dzień / Miesiąc / Rok"
+        },
+        "gameDays": {
+          "title": "Ćwiczenie: Dni tygodnia",
+          "description": "Weekend, dni tygodnia i układ kolumn"
+        },
+        "gameMonths": {
+          "title": "Ćwiczenie: Miesiące",
+          "description": "Miesiące, kolejność i pory roku"
+        },
+        "gameDates": {
+          "title": "Ćwiczenie: Daty",
+          "description": "Wyszukuj właściwe daty w kalendarzu"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "Czym jest kalendarz?",
+            "tts": "Kalendarz to sposób organizowania czasu. Rok ma 12 miesięcy i 365 dni. Tydzień ma 7 dni.",
+            "body": "Kalendarz to sposób organizowania czasu.",
+            "yearStat": "Rok ma 12 miesięcy i 365 dni.",
+            "weekStat": "Tydzień ma 7 dni."
+          },
+          "yearLoop": {
+            "title": "Rok w pętli",
+            "tts": "Miesiące wracają co roku w tej samej kolejności.",
+            "caption": "Po grudniu znów zaczyna się styczeń."
+          },
+          "seasons": {
+            "title": "Pory roku",
+            "tts": "Mamy cztery pory roku, które powtarzają się cyklicznie.",
+            "caption": "Wiosna, lato, jesień, zima."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Dni tygodnia",
+            "tts": "Tydzień ma 7 dni: poniedziałek, wtorek, środa, czwartek, piątek, sobota, niedziela."
+          },
+          "rhythm": {
+            "title": "Tydzień w rytmie",
+            "tts": "Dni tygodnia następują po sobie w stałej kolejności.",
+            "caption": "Po niedzieli znowu jest poniedziałek."
+          },
+          "weekend": {
+            "title": "Weekend",
+            "tts": "Sobota i niedziela to weekend.",
+            "caption": "Weekend wyróżnia się kolorem."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 miesięcy roku",
+            "tts": "Rok ma 12 miesięcy podzielonych na cztery pory roku."
+          },
+          "monthLength": {
+            "title": "Ile dni ma miesiąc?",
+            "tts": "Większość miesięcy ma 30 lub 31 dni. Luty ma tylko 28 dni."
+          },
+          "monthsWheel": {
+            "title": "Koło miesięcy",
+            "tts": "Miesiące ustawiają się w kole i powtarzają co roku.",
+            "caption": "Miesiące krążą bez końca."
+          },
+          "lengthAnimation": {
+            "title": "Długość miesięcy",
+            "tts": "Niektóre miesiące mają 31 dni, inne 30, a luty 28.",
+            "caption": "Zapamiętaj długości miesięcy."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "Jak czytać datę?",
+            "tts": "Datę zapisujemy jako dzień, miesiąc, rok. Na przykład: 15 marca 2025.",
+            "longExample": "15 marca 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Zapis daty",
+            "tts": "Datę zapisujemy jako dzień, miesiąc i rok, na przykład 15 przez 03 przez 2025.",
+            "caption": "Dzień / Miesiąc / Rok."
+          },
+          "findDay": {
+            "title": "Znajdź dzień",
+            "tts": "W kalendarzu wybieramy konkretny dzień.",
+            "caption": "Wskaż właściwą datę."
+          }
+        }
+      }
+    },
     "englishPrepositions": {
       "feedback": {
-        "correct": "Świetnie! Trafione."
+        "correct": "Świetnie! Trafione.",
+        "incorrect": "Poprawna odpowiedź: {answer}."
       },
       "summary": {
         "perfect": "Perfekcyjnie! Prepositions opanowane.",
@@ -1601,6 +2121,47 @@
         "check": "Sprawdź",
         "next": "Dalej",
         "seeResult": "Zobacz wynik",
+        "click": {
+          "topicLabel": "Przyimki",
+          "rounds": {
+            "time-at": {
+              "prompt": "Wybierz przyimek czasu.",
+              "hint": "Dokładna godzina -> at."
+            },
+            "time-on": {
+              "prompt": "Wybierz przyimek czasu.",
+              "hint": "Dzień tygodnia -> on."
+            },
+            "time-in": {
+              "prompt": "Wybierz przyimek czasu.",
+              "hint": "Miesiąc -> in."
+            },
+            "time-before": {
+              "prompt": "Wybierz przyimek czasu.",
+              "hint": "Przed lekcją -> before."
+            },
+            "place-on": {
+              "prompt": "Wybierz przyimek miejsca.",
+              "hint": "Powierzchnia -> on."
+            },
+            "place-at": {
+              "prompt": "Wybierz przyimek miejsca.",
+              "hint": "Punkt lub miejsce spotkania -> at."
+            },
+            "relation-between": {
+              "prompt": "Wybierz przyimek relacji.",
+              "hint": "P leży pomiędzy punktami A i B."
+            },
+            "relation-above": {
+              "prompt": "Wybierz przyimek relacji.",
+              "hint": "Lampa jest wyżej niż stół."
+            },
+            "relation-below": {
+              "prompt": "Wybierz przyimek relacji.",
+              "hint": "Pudełko jest niżej niż biurko."
+            }
+          }
+        },
         "order": {
           "modeLabel": "Szyk wyrazów",
           "buildLabel": "Ułóż: {sentence}",
@@ -1796,12 +2357,66 @@
     },
     "englishPartsOfSpeech": {
       "feedback": {
-        "roundPerfect": "Perfekcyjnie! Wszystkie słowa na miejscu."
+        "roundPerfect": "Perfekcyjnie! Wszystkie słowa na miejscu.",
+        "roundProgress": "Masz {correct}/{total} poprawnych. Sprawdź kolory i działaj dalej."
       },
       "summary": {
         "perfect": "Perfekcyjnie! Rozpoznajesz części mowy bezbłędnie.",
         "good": "Świetnie! Jeszcze chwila i będzie idealnie.",
         "retry": "Dobra robota! Spróbuj jeszcze raz i popraw wynik."
+      },
+      "inRound": {
+        "roundLabel": "Runda {current}/{total}",
+        "modeLabel": "Przeciągnij i upuść",
+        "poolLabel": "Pula słów",
+        "poolAria": "Pula słów do sortowania",
+        "poolEmpty": "Pula pusta",
+        "binAria": "Koszyk {label}",
+        "missingWords": "Brakuje słów",
+        "clearRound": "Wyczyść rundę",
+        "hitsLabel": "{hits}/{total} trafień",
+        "check": "Sprawdź",
+        "next": "Dalej",
+        "seeResult": "Zobacz wynik",
+        "rounds": {
+          "math-core": {
+            "title": "Matematyczny starter",
+            "prompt": "Przeciągnij słowa do właściwej części mowy.",
+            "hint": "Noun = rzecz, Verb = działanie, Adjective = cecha."
+          },
+          "positions": {
+            "title": "Pozycje w geometrii",
+            "prompt": "Sortuj słowa o miejscu i działaniu.",
+            "hint": "Prepositions pokazują relacje: between, above."
+          },
+          "speed": {
+            "title": "Przysłówki w akcji",
+            "prompt": "Dodaj tempo i styl działania.",
+            "hint": "Adverbs opisują jak: quickly, carefully."
+          }
+        },
+        "parts": {
+          "noun": {
+            "label": "Rzeczownik",
+            "description": "Osoba, rzecz, pojęcie"
+          },
+          "verb": {
+            "label": "Czasownik",
+            "description": "Czynność lub akcja"
+          },
+          "adjective": {
+            "label": "Przymiotnik",
+            "description": "Opisuje cechę"
+          },
+          "preposition": {
+            "label": "Przyimek",
+            "description": "Miejsce i relacja"
+          },
+          "adverb": {
+            "label": "Przysłówek",
+            "description": "Jak? kiedy? jak często?"
+          }
+        }
       }
     },
     "geometryDrawing": {
@@ -2909,6 +3524,7 @@
       "alphabetWords": "Pierwsze słowa",
       "alphabetMatching": "Dopasuj litery",
       "alphabetSequence": "Kolejność liter",
+      "geometry": "Geometria",
       "geometryShapeRecognition": "Geometria",
       "addition": "Dodawanie",
       "subtraction": "Odejmowanie",
@@ -2943,6 +3559,22 @@
       "training": "Trening: {label}",
       "clockTraining": "Trening zegara: {label}",
       "lessonCompletion": "Lekcja: {label}"
+    },
+    "rewardBreakdown": {
+      "base": "Ukończenie rundy",
+      "accuracy": "Skuteczność",
+      "difficulty": "Poziom trudności",
+      "speed": "Tempo",
+      "streak": "Seria",
+      "firstActivity": "Pierwsza mocna próba",
+      "improvement": "Poprawa wyniku",
+      "mastery": "Postęp opanowania",
+      "variety": "Nowa ścieżka",
+      "guidedFocus": "Polecony kierunek",
+      "perfect": "Pełny wynik",
+      "antiRepeat": "Powtarzana aktywność",
+      "minimumFloor": "Minimalna nagroda",
+      "dailyQuest": "Misja dnia"
     },
     "badgeTracks": {
       "onboarding": "Start",
@@ -3148,6 +3780,32 @@
       "operationsHeading": "Ćwiczone operacje",
       "topActivitiesHeading": "Najczęściej ćwiczone aktywności",
       "topActivityDescription": "{sessions} sesji · {xp} XP / grę · średnio {accuracy}% · najlepszy wynik {best}%"
+    }
+  },
+  "KangurGameResult": {
+    "xpToast": {
+      "defaultLead": "Świetnie, zdobywasz kolejne punkty",
+      "recommendationLead": "Świetnie, trzymasz polecany kierunek",
+      "nextBadgePrefix": "Następna odznaka:",
+      "dailyQuestPrefix": "Misja dnia ukończona:",
+      "recommendationPrefix": "Polecony kierunek:",
+      "recommendationSummaryWithQuest": "Ten ruch domknął polecany kierunek i misję dnia.",
+      "recommendationSummaryWithBadge": "Ten ruch najmocniej przybliża odznakę {badge}.",
+      "recommendationSummaryDefault": "To był najmocniejszy ruch dla bieżącego postępu.",
+      "newBadgeLabel": "Nowa odznaka"
+    },
+    "resultWidget": {
+      "rewardChip": "Nagroda za runde",
+      "rewardTitleDefault": "Ta runda przesunęła postęp do przodu.",
+      "rewardTitleRecommended": "Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.",
+      "nextBadgePrefix": "Następna odznaka:",
+      "recommendationPrefix": "Polecony kierunek:",
+      "recommendationPlayedChip": "Zagrano zgodnie z rekomendacja",
+      "newBadgesChip": "Nowe odznaki",
+      "dailyQuestCompletedChip": "Misja dnia ukończona",
+      "dailyQuestBonus": "Bonus +{xp} XP",
+      "nextBadgeChip": "Następna odznaka",
+      "nextBadgeRemaining": "Do odznaki brakuje: {summary}"
     }
   },
   "KangurStaticLessons": {
@@ -3757,6 +4415,2290 @@
         "stay": "Zostań",
         "leaveChallenge": "Opuść wyzwanie"
       }
+    },
+    "geometryBasics": {
+      "lessonTitle": "Podstawy geometrii",
+      "terms": {
+        "point": "Punkt",
+        "segment": "Odcinek"
+      },
+      "sections": {
+        "punkt": {
+          "title": "Punkt i odcinek",
+          "description": "Podstawowe elementy geometrii"
+        },
+        "bok": {
+          "title": "Bok i wierzchołek",
+          "description": "Części figur wielokątnych"
+        },
+        "kat": {
+          "title": "Kąt",
+          "description": "Ostry, prosty i rozwarty"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Wszystko razem"
+        },
+        "game": {
+          "title": "Gra: Geo-misja",
+          "description": "Punkt, odcinek, bok i kąt w praktyce"
+        }
+      },
+      "slides": {
+        "punkt": {
+          "segment": {
+            "title": "Punkt i odcinek",
+            "pointLead": "to jedno miejsce na kartce.",
+            "segmentLead": "łączy dwa punkty.",
+            "segmentLabel": "Odcinek AB",
+            "caption": "Odcinek ma początek i koniec — to dwa punkty."
+          },
+          "pointOnSegment": {
+            "title": "Punkt na odcinku",
+            "lead": "Punkt może leżeć gdziekolwiek na odcinku.",
+            "caption": "To wciąż ten sam odcinek, tylko punkt się przesuwa."
+          }
+        },
+        "bok": {
+          "sideAndVertex": {
+            "title": "Bok i wierzchołek",
+            "lead": "W figurach wielokątnych mamy boki i wierzchołki (rogi).",
+            "caption": "Kwadrat ma 4 boki i 4 wierzchołki.",
+            "note": "Boki to odcinki. Wierzchołki to punkty, w których boki się spotykają."
+          },
+          "countSides": {
+            "title": "Policz boki",
+            "lead": "Obwiedź figurę i policz każdy bok.",
+            "caption": "Każde podświetlenie to jeden bok."
+          }
+        },
+        "kat": {
+          "whatIsAngle": {
+            "title": "Co to jest kąt?",
+            "lead": "Kąt powstaje tam, gdzie spotykają się dwa odcinki.",
+            "rightAngleCaption": "To kąt prosty (90°).",
+            "chips": {
+              "acute": "Ostry < 90°",
+              "right": "Prosty = 90°",
+              "obtuse": "Rozwarty > 90°"
+            }
+          },
+          "angleTypes": {
+            "title": "Rodzaje kątów",
+            "lead": "Mały, prosty i rozwarty kąt wyglądają inaczej.",
+            "caption": "Porównuj szerokość ramion kąta."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Podsumowanie",
+            "items": {
+              "point": {
+                "term": "Punkt",
+                "definition": "pojedyncze miejsce"
+              },
+              "segment": {
+                "term": "Odcinek",
+                "definition": "łączy dwa punkty"
+              },
+              "sideAndVertex": {
+                "term": "Bok i wierzchołek",
+                "definition": "części figury"
+              },
+              "angle": {
+                "term": "Kąt",
+                "definition": "miejsce spotkania dwóch odcinków"
+              }
+            }
+          },
+          "pointAndSegment": {
+            "title": "Punkt i odcinek",
+            "caption": "Punkt i odcinek."
+          },
+          "pointOnSegment": {
+            "title": "Punkt na odcinku",
+            "caption": "Punkt na odcinku."
+          },
+          "sidesAndVertices": {
+            "title": "Boki i wierzchołki",
+            "caption": "Boki i wierzchołki."
+          },
+          "countSides": {
+            "title": "Policz boki",
+            "caption": "Policz boki."
+          },
+          "angleTypes": {
+            "title": "Rodzaje kątów",
+            "caption": "Rodzaje kątów."
+          },
+          "angleKinds": {
+            "title": "Ostry, prosty, rozwarty",
+            "caption": "Ostry, prosty, rozwarty."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Geo-misja"
+      }
+    },
+    "geometryShapes": {
+      "lessonTitle": "Figury geometryczne",
+      "shapeCards": {
+        "circle": {
+          "name": "Koło",
+          "details": "0 boków i 0 rogów"
+        },
+        "triangle": {
+          "name": "Trójkąt",
+          "details": "3 boki i 3 rogi"
+        },
+        "square": {
+          "name": "Kwadrat",
+          "details": "4 równe boki i 4 rogi"
+        },
+        "rectangle": {
+          "name": "Prostokąt",
+          "details": "4 boki i 4 rogi"
+        },
+        "pentagon": {
+          "name": "Pięciokąt",
+          "details": "5 boków i 5 rogów"
+        },
+        "hexagon": {
+          "name": "Sześciokąt",
+          "details": "6 boków i 6 rogów"
+        }
+      },
+      "sections": {
+        "podstawowe": {
+          "title": "Podstawowe figury",
+          "description": "Koło, trójkąt, kwadrat, prostokąt"
+        },
+        "ileBokow": {
+          "title": "Boki i rogi",
+          "description": "Każda figura pod lupą"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Najważniejsze informacje"
+        },
+        "game": {
+          "title": "Rysuj figury",
+          "description": "Narysuj kształt i zdobądź XP"
+        }
+      },
+      "slides": {
+        "podstawowe": {
+          "intro": {
+            "title": "Poznaj figury",
+            "orbitCaption": "Figury mogą się obracać i nadal są tym samym kształtem."
+          },
+          "outline": {
+            "title": "Obrys figury",
+            "caption": "Zamknięty obrys tworzy kształt figury."
+          },
+          "build": {
+            "title": "Budowanie figury",
+            "caption": "Łączymy odcinki, aż figura się domknie."
+          }
+        },
+        "ileBokow": {
+          "count": {
+            "title": "Ile boków i rogów?"
+          },
+          "countSides": {
+            "title": "Policz boki",
+            "caption": "Boki zapalają się po kolei — każdy to odcinek."
+          },
+          "corners": {
+            "title": "Rogi figury",
+            "caption": "Wierzchołki to rogi, w których spotykają się boki."
+          },
+          "segmentSide": {
+            "title": "Odcinek to bok",
+            "caption": "Bok figury to odcinek między dwoma punktami."
+          },
+          "drawSide": {
+            "title": "Rysowanie boku",
+            "caption": "Punkt porusza się i zostawia odcinek."
+          }
+        },
+        "podsumowanie": {
+          "rotate": {
+            "title": "Podsumowanie w ruchu: obrót",
+            "caption": "Obrót nie zmienia figury."
+          },
+          "sides": {
+            "title": "Podsumowanie w ruchu: boki",
+            "caption": "Boki i rogi opisują kształt."
+          },
+          "interior": {
+            "title": "Podsumowanie w ruchu: wnętrze",
+            "caption": "Wnętrze figury to jej pole."
+          },
+          "build": {
+            "title": "Podsumowanie w ruchu: budowa",
+            "caption": "Łącz odcinki, aż figura się domknie."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Rysuj figury"
+      }
+    },
+    "calendar": {
+      "lessonTitle": "Nauka kalendarza",
+      "labels": {
+        "schoolTag": "Szkoła",
+        "weekendTag": "Weekend",
+        "daysSuffix": "dni",
+        "howToWriteDate": "Jak zapisać datę?",
+        "shortDatePrefix": "Lub:",
+        "datePattern": "Dzień / Miesiąc / Rok"
+      },
+      "sections": {
+        "intro": {
+          "title": "Czym jest kalendarz?",
+          "description": "Rok, miesiące i dni"
+        },
+        "dni": {
+          "title": "Dni tygodnia",
+          "description": "Od poniedziałku do niedzieli"
+        },
+        "miesiace": {
+          "title": "Miesiące i pory roku",
+          "description": "12 miesięcy i cztery pory roku"
+        },
+        "data": {
+          "title": "Jak czytać datę?",
+          "description": "Dzień / Miesiąc / Rok"
+        },
+        "gameDays": {
+          "title": "Ćwiczenie: Dni tygodnia",
+          "description": "Weekend, dni tygodnia i układ kolumn"
+        },
+        "gameMonths": {
+          "title": "Ćwiczenie: Miesiące",
+          "description": "Miesiące, kolejność i pory roku"
+        },
+        "gameDates": {
+          "title": "Ćwiczenie: Daty",
+          "description": "Wyszukuj właściwe daty w kalendarzu"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "Czym jest kalendarz?",
+            "tts": "Kalendarz to sposób organizowania czasu. Rok ma 12 miesięcy i 365 dni. Tydzień ma 7 dni.",
+            "body": "Kalendarz to sposób organizowania czasu.",
+            "yearStat": "Rok ma 12 miesięcy i 365 dni.",
+            "weekStat": "Tydzień ma 7 dni."
+          },
+          "yearLoop": {
+            "title": "Rok w pętli",
+            "tts": "Miesiące wracają co roku w tej samej kolejności.",
+            "caption": "Po grudniu znów zaczyna się styczeń."
+          },
+          "seasons": {
+            "title": "Pory roku",
+            "tts": "Mamy cztery pory roku, które powtarzają się cyklicznie.",
+            "caption": "Wiosna, lato, jesień, zima."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Dni tygodnia",
+            "tts": "Tydzień ma 7 dni: poniedziałek, wtorek, środa, czwartek, piątek, sobota, niedziela."
+          },
+          "rhythm": {
+            "title": "Tydzień w rytmie",
+            "tts": "Dni tygodnia następują po sobie w stałej kolejności.",
+            "caption": "Po niedzieli znowu jest poniedziałek."
+          },
+          "weekend": {
+            "title": "Weekend",
+            "tts": "Sobota i niedziela to weekend.",
+            "caption": "Weekend wyróżnia się kolorem."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 miesięcy roku",
+            "tts": "Rok ma 12 miesięcy podzielonych na cztery pory roku."
+          },
+          "monthLength": {
+            "title": "Ile dni ma miesiąc?",
+            "tts": "Większość miesięcy ma 30 lub 31 dni. Luty ma tylko 28 dni."
+          },
+          "monthsWheel": {
+            "title": "Koło miesięcy",
+            "tts": "Miesiące ustawiają się w kole i powtarzają co roku.",
+            "caption": "Miesiące krążą bez końca."
+          },
+          "lengthAnimation": {
+            "title": "Długość miesięcy",
+            "tts": "Niektóre miesiące mają 31 dni, inne 30, a luty 28.",
+            "caption": "Zapamiętaj długości miesięcy."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "Jak czytać datę?",
+            "tts": "Datę zapisujemy jako dzień, miesiąc, rok. Na przykład: 15 marca 2025.",
+            "longExample": "15 marca 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Zapis daty",
+            "tts": "Datę zapisujemy jako dzień, miesiąc i rok, na przykład 15 przez 03 przez 2025.",
+            "caption": "Dzień / Miesiąc / Rok."
+          },
+          "findDay": {
+            "title": "Znajdź dzień",
+            "tts": "W kalendarzu wybieramy konkretny dzień.",
+            "caption": "Wskaż właściwą datę."
+          }
+        }
+      }
+    },
+    "englishPrepositions": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Przyimki w skrócie",
+            "lead": "Przyimki pokazują, kiedy i gdzie coś się dzieje. W zadaniach i poleceniach pojawiają się cały czas.",
+            "caption": "Czas i miejsce w jednym zdaniu."
+          }
+        },
+        "time": {
+          "core": {
+            "title": "At / On / In w czasie",
+            "lead": "Główna zasada jest prosta: at = dokładny moment, on = dzień albo data, in = miesiąc, rok albo pora dnia.",
+            "caption": "at 7:30 · on Tuesday · in July"
+          },
+          "sequence": {
+            "title": "Before / During / After",
+            "lead": "Gdy opisujesz kolejność, używaj before, during i after. Do granic czasu dodaj until oraz since.",
+            "caption": "before class · during the test · after school"
+          },
+          "cheatsheet": {
+            "title": "Ściąga czasu",
+            "lead": "Szybka pomoc, gdy zawahasz się w zadaniu."
+          }
+        },
+        "place": {
+          "core": {
+            "title": "At / In / On w miejscu",
+            "lead": "Miejsce też ma trzy poziomy: at = punkt, in = wnętrze, on = powierzchnia.",
+            "caption": "at school · in the classroom · on the board"
+          },
+          "schoolMap": {
+            "title": "Szkoła jak mapa",
+            "lead": "Jedno miejsce, trzy perspektywy:",
+            "items": {
+              "atSchool": "punkt spotkania / instytucja",
+              "inClassroom": "jesteś w środku",
+              "onDesk": "coś leży na powierzchni"
+            }
+          }
+        },
+        "relations": {
+          "core": {
+            "title": "Relacje w przestrzeni",
+            "lead": "Gdy opisujesz położenie punktów lub figur, używasz przyimków relacji.",
+            "caption": "between · above · below"
+          }
+        },
+        "traps": {
+          "common": {
+            "title": "Najczęstsze pułapki",
+            "lead": "Te zwroty łatwo pomylić. Warto zapamiętać je jako gotowe klocki.",
+            "notes": {
+              "atNight": "noc jako moment",
+              "inTheNight": "rzadkie w tym znaczeniu",
+              "onTheBus": "transport publiczny",
+              "inTheCar": "mały pojazd, wnętrze",
+              "atSchool": "instytucja / punkt",
+              "inTheClassroom": "konkretne wnętrze"
+            }
+          }
+        },
+        "practice": {
+          "quick": {
+            "title": "Szybka rozgrzewka",
+            "lead": "Rozgrzewkę przenieśliśmy do gry z układaniem słów.",
+            "examplesLabel": "Przykładowe rozsypanki:",
+            "caption": "Wejdź do gry Word Order Warm-up w sekcji gier."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Podsumowanie",
+            "lead": "Najważniejsze zasady w pigułce:",
+            "items": {
+              "at": "at = dokładny czas / punkt (at 6:00, at the bus stop)",
+              "on": "on = dzień, data albo powierzchnia (on Monday, on the board)",
+              "in": "in = miesiąc, rok albo wnętrze (in July, in the room)",
+              "between": "between = pomiędzy (between A and B)",
+              "questions": "Pytaj: kiedy, gdzie, na czym, w czym?"
+            }
+          }
+        }
+      }
+    },
+    "englishPrepositionsShell": {
+      "lessonTitle": "Angielski: przyimki",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "Po co są przyimki"
+        },
+        "time": {
+          "title": "Czas",
+          "description": "At / On / In w czasie"
+        },
+        "place": {
+          "title": "Miejsce",
+          "description": "At / In / On w miejscu"
+        },
+        "relations": {
+          "title": "Relacje",
+          "description": "Between, above, below"
+        },
+        "traps": {
+          "title": "Pułapki",
+          "description": "Najczęstsze błędy"
+        },
+        "practice": {
+          "title": "Ćwiczenia",
+          "description": "Szybka rozgrzewka"
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Ściąga zasad"
+        },
+        "gamePrepositions": {
+          "title": "Prepositions Sprint",
+          "description": "Krótka gra z wyborem"
+        },
+        "gamePrepositionsSort": {
+          "title": "Sort: Time + Place + Relations",
+          "description": "Przeciągnij zwroty do właściwych relacji"
+        },
+        "gamePrepositionsOrder": {
+          "title": "Word Order Warm-up",
+          "description": "Układanie zdań z przyimkami"
+        }
+      }
+    },
+    "englishPartsOfSpeech": {
+      "slides": {
+        "subjectPronouns": {
+          "overview": {
+            "title": "Subject Pronouns",
+            "lead": "Subject pronouns pokazują, kto wykonuje działanie. W zadaniach matematycznych to często uczeń, nauczyciel albo zespół.",
+            "caption": "Skup się na tym, kto robi zadanie: solve, check, graph, explain.",
+            "items": {
+              "i": { "meaning": "ja" },
+              "you": { "meaning": "ty / wy" },
+              "he": { "meaning": "on" },
+              "she": { "meaning": "ona" },
+              "it": { "meaning": "ono / to" },
+              "we": { "meaning": "my" },
+              "they": { "meaning": "oni / one" }
+            }
+          },
+          "heSheIt": {
+            "title": "He/She/It + -s",
+            "lead": "Dla he, she i it czasownik zwykle dostaje końcówkę -s.",
+            "caption": "Maya solves… → She solves…"
+          }
+        },
+        "possessiveAdjectives": {
+          "overview": {
+            "title": "Possessive Adjectives",
+            "lead": "Possessive adjectives stoją przed rzeczownikiem. Pokazują, do kogo coś należy.",
+            "caption": "my solution, your calculator, their graph"
+          },
+          "classroomCommands": {
+            "title": "Polecenia z lekcji",
+            "lead": "Zwróć uwagę na your i our w poleceniach."
+          }
+        },
+        "possessivePronouns": {
+          "overview": {
+            "title": "Possessive Pronouns",
+            "lead": "Possessive pronouns zastępują rzeczownik. Nic już po nich nie stawiamy.",
+            "labels": {
+              "withNoun": "Z rzeczownikiem",
+              "pronoun": "Zaimek"
+            },
+            "caption": "my → mine, your → yours, our → ours."
+          },
+          "compare": {
+            "title": "Mine vs yours",
+            "lead": "Gdy porównujesz rozwiązania, zaimek pokazuje, czyje jest które.",
+            "caption": "mine / yours / theirs"
+          }
+        },
+        "practice": {
+          "warmup": {
+            "title": "Krótka rozgrzewka",
+            "lead": "Rozgrzewkę przenieśliśmy do mini gry z wyborem zaimków.",
+            "caption": "Wejdź do gry Pronoun Warm-up i uzupełnij zdania."
+          },
+          "dialogue": {
+            "title": "Mini-dialog",
+            "lead": "Zobacz, jak zaimki mieszają się w krótkiej rozmowie.",
+            "aTranslation": "Rozwiązałem układ. Czy to twój wykres?",
+            "bTranslation": "Tak, jest mój. Twoja odpowiedź pasuje do naszej."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Podsumowanie",
+            "lead": "To wystarczy, żeby mówić o zadaniach, rozwiązaniach i pracy w grupie.",
+            "items": {
+              "subjectPronouns": "Subject pronouns: I / you / he / she / it / we / they",
+              "possessiveAdjectives": "Possessive adjectives: my, your, his, her, its, our, their + rzeczownik",
+              "possessivePronouns": "Possessive pronouns: mine, yours, his, hers, ours, theirs (bez rzeczownika)",
+              "examples": "Przykłady: solutions, graphs, proofs, calculators"
+            }
+          }
+        }
+      }
+    },
+    "englishPartsOfSpeechShell": {
+      "lessonTitle": "Angielski: zaimki",
+      "sections": {
+        "subjectPronouns": {
+          "title": "Subject Pronouns",
+          "description": "Kto wykonuje działanie w zadaniu"
+        },
+        "possessiveAdjectives": {
+          "title": "Possessive Adjectives",
+          "description": "my/your/his/her + rzeczownik"
+        },
+        "possessivePronouns": {
+          "title": "Possessive Pronouns",
+          "description": "mine/yours/hers bez rzeczownika"
+        },
+        "practice": {
+          "title": "Ćwiczenia",
+          "description": "Krótka rozgrzewka z przykładami"
+        },
+        "gamePronounsWarmup": {
+          "title": "Pronoun Warm-up",
+          "description": "Szybka rozgrzewka z zaimkami w matematycznych zdaniach"
+        },
+        "summary": {
+          "title": "Podsumowanie",
+          "description": "Szybka ściąga z kluczowych form"
+        },
+        "gamePartsOfSpeech": {
+          "title": "Parts of Speech Game",
+          "description": "Przeciągnij słowa do właściwych kategorii"
+        }
+      }
+    },
+    "englishSubjectVerbAgreement": {
+      "slides": {
+        "core": {
+          "match": {
+            "title": "Subject + verb = zgodność",
+            "lead": "Subject-verb agreement to prosta zasada: czasownik musi zgadzać się z liczbą podmiotu. W Present Simple często chodzi o końcówkę -s.",
+            "caption": "Singular → verb + -s. Plural → base verb.",
+            "labels": {
+              "singular": "Singular",
+              "plural": "Plural"
+            },
+            "notes": {
+              "singular": "Coach = jedna osoba",
+              "plural": "Coaches = kilka osób"
+            }
+          },
+          "findSubject": {
+            "title": "Znajdź prawdziwy podmiot",
+            "lead": "Najwięcej błędów pojawia się wtedy, gdy zdanie ma dużo dodatków. Znajdź, kto albo co wykonuje działanie, i dopasuj czasownik tylko do tego słowa.",
+            "steps": {
+              "crossOut": "W myślach skreśl dodatki po of, with albo in.",
+              "askQuestion": "Zadaj pytanie Who? albo What?.",
+              "matchVerb": "Dopasuj czasownik tylko do tego podmiotu."
+            },
+            "exampleNote": "Podmiot = list (singular), nie tasks."
+          }
+        },
+        "thirdPerson": {
+          "endings": {
+            "title": "He/She/It + -s",
+            "lead": "Dla he, she i it zwykle dodajemy do czasownika -s albo -es.",
+            "caption": "She plays, he watches, it goes.",
+            "ruleTitle": "Kiedy -es i -ies?"
+          },
+          "auxiliaries": {
+            "title": "Do/Does i Have/Has",
+            "lead": "W pytaniach i przeczeniach ważne są formy do/does oraz have/has.",
+            "labels": {
+              "thirdPerson": "Third person",
+              "others": "Others"
+            }
+          }
+        },
+        "beVerbs": {
+          "forms": {
+            "title": "Am / Is / Are",
+            "lead": "Czasownik be ma w Present Simple trzy formy. Trzeba je zapamiętać.",
+            "caption": "I am • he/she/it is • we/you/they are"
+          },
+          "thereIs": {
+            "title": "There is / There are",
+            "lead": "Gdy zdanie zaczyna się od there, czasownik zgadza się z tym, co pojawia się po nim.",
+            "notes": {
+              "singular": "Jedno wydarzenie.",
+              "plural": "Kilka wydarzeń."
+            }
+          }
+        },
+        "tricky": {
+          "everyone": {
+            "title": "Everyone = singular",
+            "lead": "Słowa takie jak everyone, everybody, each czy someone są gramatycznie pojedyncze.",
+            "notes": {
+              "everyone": "Everyone = singular",
+              "each": "Each = singular"
+            }
+          },
+          "eitherOr": {
+            "title": "Either/or, neither/nor",
+            "lead": "W konstrukcjach either/or i neither/nor czasownik zgadza się z najbliższym podmiotem.",
+            "chip": "Closest subject rule"
+          },
+          "collective": {
+            "title": "Collective nouns",
+            "lead": "Team, class i family oznaczają grupę, ale w szkolnym angielskim zwykle traktujemy je jako singular.",
+            "caption": "W tekstach brytyjskich czasem spotkasz plural, ale na lekcjach trzymaj się singular."
+          }
+        },
+        "interruptions": {
+          "middle": {
+            "title": "Frazy w środku",
+            "lead": "Dodatkowe frazy między podmiotem a czasownikiem nie zmieniają zgody.",
+            "chip": "Ignore the middle"
+          }
+        },
+        "practice": {
+          "quick": {
+            "title": "Quick check",
+            "lead": "Wybierz poprawną formę czasownika.",
+            "answersCaption": "Odpowiedzi: play · is · gives · are"
+          },
+          "fix": {
+            "title": "Fix the sentence",
+            "lead": "Popraw zdania tak, by czasownik pasował do podmiotu.",
+            "labels": {
+              "before": "Before",
+              "after": "After"
+            }
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Summary",
+            "lead": "Masz już zestaw reguł, który chroni przed najczęstszymi błędami.",
+            "items": {
+              "singular": "Singular subject → verb + -s (he/she/it).",
+              "plural": "Plural subject → base verb (they/we/you).",
+              "beForms": "Am/is/are oraz have/has i do/does.",
+              "everyone": "Everyone/each/somebody = singular.",
+              "eitherOr": "Either/or → czasownik zgadza się z najbliższym podmiotem."
+            }
+          }
+        }
+      }
+    },
+    "englishSubjectVerbAgreementShell": {
+      "lessonTitle": "Angielski: subject-verb agreement",
+      "sections": {
+        "core": {
+          "title": "Agreement Basics",
+          "description": "Podmiot + czasownik w jednej linii"
+        },
+        "thirdPerson": {
+          "title": "Third Person -s",
+          "description": "He/She/It i końcówka -s"
+        },
+        "beVerbs": {
+          "title": "Be Verbs",
+          "description": "Am / is / are oraz there is/are"
+        },
+        "tricky": {
+          "title": "Tricky Subjects",
+          "description": "Everyone, either/or, collective nouns"
+        },
+        "interruptions": {
+          "title": "Extra Phrases",
+          "description": "Nie daj się zmylić dodatkom w zdaniu"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Szybki trening i korekty"
+        },
+        "gameAgreement": {
+          "title": "Gra: Subject-verb agreement",
+          "description": "Kliknij poprawną formę czasownika w zdaniach."
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Krótka ściąga z reguł"
+        }
+      }
+    },
+    "englishSentenceStructure": {
+      "slides": {
+        "blueprint": {
+          "core": {
+            "title": "SVO blueprint",
+            "lead": "Najczęstszy układ zdania to Subject → Verb → Object.",
+            "caption": "Subject + Verb + Object"
+          }
+        },
+        "order": {
+          "additions": {
+            "title": "Order z dodatkami",
+            "lead": "Dodatki takie jak czas, miejsce albo sposób zwykle stoją po obiekcie.",
+            "caption": "We solve the equation today in class."
+          }
+        },
+        "questions": {
+          "doDoes": {
+            "title": "Questions z do/does",
+            "lead": "W Present Simple pytania tworzymy przez Do/Does + subject + verb.",
+            "caption": "Do you? / Does she?"
+          }
+        },
+        "connectors": {
+          "linking": {
+            "title": "Łączenie zdań",
+            "lead": "Używaj spójników, żeby połączyć myśli w jedno zdanie.",
+            "caption": "and / but / so / because"
+          }
+        },
+        "practice": {
+          "buildSentence": {
+            "title": "Ułóż zdanie",
+            "lead": "Ułóż słowa w poprawnej kolejności.",
+            "answersCaption": "Odpowiedzi: She solves the equation. / We practice geometry today. / He checks the graph after class."
+          },
+          "makeQuestion": {
+            "title": "Zamień na pytanie",
+            "lead": "Zmień zdanie na pytanie z do albo does.",
+            "answersCaption": "Odpowiedzi: Do you understand the formula? / Does she explain the proof? / Do they use the graph?"
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Podsumowanie",
+            "lead": "Najważniejsze reguły składni:",
+            "items": {
+              "svo": "SVO: Subject + Verb + Object",
+              "timePlace": "Time/place zwykle na końcu zdania.",
+              "questions": "Questions: Do/Does + subject + verb",
+              "connectors": "Connectors: and, but, so, because"
+            }
+          }
+        }
+      }
+    },
+    "englishSentenceStructureShell": {
+      "lessonTitle": "Angielski: składnia zdania",
+      "sections": {
+        "blueprint": {
+          "title": "Blueprint",
+          "description": "SVO i podstawowy układ zdania"
+        },
+        "order": {
+          "title": "Order",
+          "description": "Dodatki czasu i miejsca"
+        },
+        "questions": {
+          "title": "Questions",
+          "description": "Do/Does w praktyce"
+        },
+        "connectors": {
+          "title": "Connectors",
+          "description": "Łączenie zdań spójnikami"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Szybka rozgrzewka"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Najważniejsze reguły"
+        }
+      }
+    },
+    "englishArticles": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Przedimki w skrócie",
+            "lead": "Przedimki to krótkie słowa przed rzeczownikiem. Pokazują, czy mówimy o dowolnym przykładzie, czymś konkretnym czy bez przedimka.",
+            "caption": "a/an = dowolny przykład, the = coś konkretnego, zero article = brak przedimka"
+          }
+        },
+        "aAn": {
+          "overview": {
+            "title": "A / An w praktyce",
+            "lead": "Używaj a lub an, gdy wspominasz o czymś pierwszy raz albo gdy to tylko jeden przykład z wielu.",
+            "caption": "a przed dźwiękiem spółgłoski, an przed dźwiękiem samogłoski",
+            "items": {
+              "unit": "a unit circle",
+              "angle": "an angle",
+              "xIntercept": "an x-intercept",
+              "variable": "a variable"
+            }
+          },
+          "taskExample": {
+            "title": "Przykład z zadania",
+            "lead": "Zwracaj uwagę na dźwięk na początku słowa, a nie tylko na zapis.",
+            "caption": "Mówimy an equation, bo equation zaczyna się od dźwięku samogłoski."
+          }
+        },
+        "the": {
+          "focus": {
+            "title": "The dla czegoś konkretnego",
+            "lead": "Użyj the, gdy obie osoby dokładnie wiedzą, o jaki obiekt chodzi.",
+            "caption": "Ten przedimek wskazuje na konkretny wykres, wynik albo kąt."
+          }
+        },
+        "zero": {
+          "overview": {
+            "title": "Zero article",
+            "lead": "Czasem po angielsku nie używa się żadnego przedimka, szczególnie przy przedmiotach szkolnych, ogólnych stwierdzeniach i niektórych liczbach mnogich.",
+            "caption": "Bez przedimka przed ogólnymi nazwami przedmiotów i ogólnymi liczbami mnogimi"
+          }
+        },
+        "practice": {
+          "quick": {
+            "title": "Szybkie ćwiczenie",
+            "lead": "Wstaw a, an, the albo brak przedimka.",
+            "answersCaption": "Odpowiedzi: an, the, —, the, a"
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Powtórka zasad",
+            "lead": "Zapamiętaj te cztery krótkie pytania kontrolne, zanim wybierzesz przedimek.",
+            "items": {
+              "aAn": "a/an dla nieokreślonego przykładu",
+              "the": "the dla czegoś konkretnego albo już znanego",
+              "zero": "brak przedimka przy ogólnych stwierdzeniach lub niektórych liczbach mnogich",
+              "sound": "Słuchaj pierwszego dźwięku, a nie tylko liter"
+            }
+          }
+        }
+      }
+    },
+    "englishArticlesShell": {
+      "lessonTitle": "Angielski: articles",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "Po co są articles w zadaniach"
+        },
+        "aAn": {
+          "title": "A / An",
+          "description": "Nieokreślone przykłady"
+        },
+        "the": {
+          "title": "The",
+          "description": "Konkretny obiekt z kontekstu"
+        },
+        "zero": {
+          "title": "Zero Article",
+          "description": "Brak przedimka"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Szybkie uzupełnianie"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Skrót zasad"
+        }
+      }
+    },
+    "englishBasics": {
+      "slides": {
+        "greetings": {
+          "hello": {
+            "title": "Hello i goodbye",
+            "lead": "Zaczynamy od najprostszych zwrotów, których możesz używać każdego dnia.",
+            "captions": {
+              "hello": "Cześć / Dzień dobry",
+              "goodbye": "Pa / Do zobaczenia",
+              "please": "Proszę",
+              "thankYou": "Dziękuję"
+            }
+          },
+          "introduce": {
+            "title": "Przedstawianie się",
+            "lead": "Dwoma krótkimi zdaniami podasz swoje imię i wiek.",
+            "captions": {
+              "name": "Mam na imię ...",
+              "age": "Mam ... lat."
+            }
+          }
+        },
+        "phrases": {
+          "questions": {
+            "title": "Przydatne pytania",
+            "lead": "Te pytania często usłyszysz w szkole albo gdy poznajesz kogoś nowego.",
+            "repeatCaption": "Powiedz je raz na głos."
+          },
+          "answers": {
+            "title": "Proste odpowiedzi",
+            "lead": "Krótkie odpowiedzi pomagają prowadzić rozmowę dalej.",
+            "captions": {
+              "fine": "Mam się dobrze, dziękuję.",
+              "name": "Mam na imię ..."
+            }
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Krótka powtórka",
+            "lead": "Te zwroty wystarczą już do krótkiej rozmowy po angielsku.",
+            "items": {
+              "greetings": "Przywitaj kogoś słowem Hello albo Goodbye.",
+              "questions": "Zapytaj o imię, skąd ktoś jest albo jak się czuje."
+            }
+          }
+        },
+        "pronounRemix": {
+          "rules": {
+            "title": "Pronoun Remix",
+            "lead": "Przed grą warto szybko powtórzyć cztery najważniejsze grupy zaimków.",
+            "caption": "Każdy kolor pokazuje inną rolę zaimka w zdaniu.",
+            "items": {
+              "subject": "Zaimki podmiotu: I, you, he, she, it, we, they",
+              "object": "Zaimki dopełnienia: me, you, him, her, it, us, them",
+              "possessive": "Formy dzierżawcze pokazują własność: my, your, his ...",
+              "reflexive": "Zaimki zwrotne wracają do podmiotu: myself, yourself ..."
+            }
+          }
+        }
+      }
+    },
+    "englishBasicsShell": {
+      "lessonTitle": "Angielski: podstawy",
+      "sections": {
+        "greetings": {
+          "title": "Greetings",
+          "description": "Powitania i przedstawianie się"
+        },
+        "phrases": {
+          "title": "Phrases",
+          "description": "Proste pytania i odpowiedzi"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Krótka powtórka najważniejszych zwrotów"
+        },
+        "pronounRemix": {
+          "title": "Pronoun Remix: Zasady",
+          "description": "Jak rozpoznać typ zaimka w zdaniu"
+        }
+      }
+    },
+    "logicalAnalogies": {
+      "lessonTitle": "Analogie",
+      "sections": {
+        "intro": {
+          "title": "Analogia — wstęp i słowne",
+          "description": "Co to analogia? Relacje między słowami"
+        },
+        "liczby_ksztalty": {
+          "title": "Analogie liczbowe i kształtów",
+          "description": "Operacje matematyczne i transformacje kształtów"
+        },
+        "relacje": {
+          "title": "Część–całość i przyczyna–skutek",
+          "description": "Dwa ważne typy analogii relacyjnych"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Wszystkie typy analogii razem"
+        },
+        "game_relacje": {
+          "title": "Most relacji",
+          "description": "Przeciągnij lub kliknij relacje do par"
+        }
+      },
+      "slides": {
+        "intro": {
+          "introQuestion": {
+            "title": "Co to jest analogia?",
+            "lead": "Analogia to ta sama relacja między różnymi parami. Zamiast myśleć o konkretnych rzeczach, szukasz wzorca połączenia.",
+            "notationLabel": "Zapis analogii:",
+            "notationCaption": "„A do B tak jak C do D\"",
+            "examplePair": "Ptak : latać = ryba : ❓",
+            "exampleHint": "Relacja: stworzenie → sposób poruszania",
+            "exampleAnswer": "Odpowiedź: pływać 🐟"
+          },
+          "relationBridge": {
+            "title": "Relacja A:B = C:D",
+            "lead": "W analogii porównujesz dwie pary, które mają tę samą relację.",
+            "caption": "Najpierw rozpoznaj relację A → B, potem zastosuj ją do C → D."
+          },
+          "verbalAnalogies": {
+            "title": "Analogie słowne",
+            "lead": "Analogie słowne korzystają z relacji między słowami: kategoria, przeciwieństwo, część całości, czynność i inne.",
+            "examples": {
+              "dogCat": {
+                "pair": "Pies : szczekać = kot : ❓",
+                "hint": "Zwierzę → wydawany dźwięk",
+                "answer": "miauczeć 🐈"
+              },
+              "hotCold": {
+                "pair": "Gorący : zimny = dzień : ❓",
+                "hint": "Antonim (przeciwieństwo)",
+                "answer": "noc 🌙"
+              },
+              "fingerHand": {
+                "pair": "Palec : ręka = liść : ❓",
+                "hint": "Część → całość",
+                "answer": "drzewo 🌳"
+              },
+              "scissorsPencil": {
+                "pair": "Nożyczki : cięcie = ołówek : ❓",
+                "hint": "Narzędzie → jego funkcja",
+                "answer": "pisanie ✏️"
+              }
+            }
+          }
+        },
+        "liczby_ksztalty": {
+          "numericAnalogies": {
+            "title": "Analogie liczbowe",
+            "lead": "W analogiach liczbowych szukasz tej samej operacji matematycznej w obu parach.",
+            "examples": {
+              "double": {
+                "pair": "2 : 4 = 5 : ❓",
+                "hint": "Relacja: ×2",
+                "answer": "10",
+                "workings": "2×2=4, 5×2=10"
+              },
+              "half": {
+                "pair": "10 : 5 = 8 : ❓",
+                "hint": "Relacja: ÷2",
+                "answer": "4",
+                "workings": "10÷2=5, 8÷2=4"
+              },
+              "square": {
+                "pair": "3 : 9 = 4 : ❓",
+                "hint": "Relacja: do kwadratu (×siebie)",
+                "answer": "16",
+                "workings": "3²=9, 4²=16"
+              },
+              "triple": {
+                "pair": "1 : 3 = 4 : ❓",
+                "hint": "Relacja: ×3",
+                "answer": "12",
+                "workings": "1×3=3, 4×3=12"
+              }
+            }
+          },
+          "shapeAnalogies": {
+            "title": "Analogie kształtów",
+            "lead": "Analogie kształtów zmieniają rozmiar, orientację, kolor lub liczbę elementów według tej samej reguły.",
+            "rules": {
+              "rotate": {
+                "rule": "Reguła: obrót o 90° w prawo",
+                "sequence": "➡️ : ⬇️ = ⬆️ : ➡️"
+              },
+              "addOne": {
+                "rule": "Reguła: dodaj jeden element",
+                "sequence": "⭐ : ⭐⭐ = 🔵 : 🔵🔵"
+              }
+            }
+          },
+          "numberMotion": {
+            "title": "Relacja liczbowa w ruchu",
+            "lead": "Działanie musi być takie samo po obu stronach analogii.",
+            "caption": "Ta sama operacja przenosi się na drugą parę."
+          },
+          "shapeTransform": {
+            "title": "Transformacja kształtu",
+            "lead": "Jeśli jeden kształt obraca się, drugi musi zmienić się tak samo.",
+            "caption": "Reguła obrotu lub skali działa po obu stronach."
+          }
+        },
+        "relacje": {
+          "partWhole": {
+            "title": "Analogie część–całość",
+            "lead": "Relacja część–całość to jedna z najczęstszych w analogiach.",
+            "examples": {
+              "pageBook": {
+                "pair": "Strona : książka = cegła : ❓",
+                "answer": "mur / budynek 🧱"
+              },
+              "noteMelody": {
+                "pair": "Nuta : melodia = litera : ❓",
+                "answer": "słowo / zdanie 🔤"
+              },
+              "petalFlower": {
+                "pair": "Płatek : kwiat = piksel : ❓",
+                "answer": "obraz / zdjęcie 🖼️"
+              },
+              "dropOcean": {
+                "pair": "Kropla : ocean = ziarnko : ❓",
+                "answer": "plaża / piasek 🏖️"
+              }
+            }
+          },
+          "partWholeAnimation": {
+            "title": "Część i całość — animacja",
+            "lead": "Części łączą się w jedną całość, tak jak w analogii.",
+            "caption": "Elementy tworzą większy obiekt."
+          },
+          "causeEffect": {
+            "title": "Analogie przyczyna–skutek",
+            "lead": "Przyczyna powoduje skutek. Analogia przenosi tę samą zależność na inną parę.",
+            "examples": {
+              "rainSun": {
+                "pair": "Deszcz : mokra ziemia = słońce : ❓",
+                "answer": "sucha ziemia / opalenizna ☀️"
+              },
+              "exerciseReading": {
+                "pair": "Ćwiczenie : silniejsze mięśnie = czytanie : ❓",
+                "answer": "więcej wiedzy / mądrość 📚"
+              },
+              "winterSpring": {
+                "pair": "Zima : śnieg = wiosna : ❓",
+                "answer": "kwiaty / deszcz 🌸"
+              }
+            }
+          },
+          "causeEffectAnimation": {
+            "title": "Przyczyna i skutek — animacja",
+            "lead": "To, co się dzieje najpierw, wywołuje kolejne zdarzenie.",
+            "caption": "Łańcuch przyczyna → skutek pojawia się w analogii."
+          }
+        },
+        "podsumowanie": {
+          "recap": {
+            "title": "Podsumowanie",
+            "items": {
+              "analogy": "🔗 Analogia — A:B = C:D, ta sama relacja w nowej parze",
+              "verbal": "🗣️ Słowne — kategoria, antonim, czynność, cecha",
+              "numeric": "🔢 Liczbowe — +, −, ×, ÷, potęga — szukaj operacji",
+              "shapes": "🔷 Kształtów — obrót, kolor, liczba, rozmiar",
+              "partWhole": "🧩 Część–całość — element → zbiór, do którego należy",
+              "causeEffect": "⚡ Przyczyna–skutek — co wywołuje co?"
+            },
+            "closing": "Analogie pozwalają przenosić wiedzę do zupełnie nowych sytuacji!"
+          },
+          "map": {
+            "title": "Mapa relacji",
+            "lead": "Zobacz, jak analogia łączy dwie pary w jedną regułę.",
+            "caption": "Relacja powtarza się w nowej parze."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Most relacji"
+      },
+      "animations": {
+        "analogyBridge": "Animacja: relacja A:B = C:D.",
+        "numberOperation": "Animacja: relacja liczbowa z tą samą operacją.",
+        "shapeTransform": "Animacja: kształt obraca się według tej samej reguły.",
+        "partWhole": "Animacja: części łączą się w całość.",
+        "causeEffect": "Animacja: przyczyna prowadzi do skutku."
+      }
+    },
+    "logicalPatterns": {
+      "lessonTitle": "Wzorce i ciągi",
+      "sections": {
+        "intro": {
+          "title": "Wzorce — wprowadzenie",
+          "description": "Co to wzorzec? Kolory i kształty"
+        },
+        "ciagi_arytm": {
+          "title": "Ciągi arytmetyczne",
+          "description": "Stała różnica co krok"
+        },
+        "ciagi_geom": {
+          "title": "Ciągi geometryczne i Fibonacci",
+          "description": "Mnożenie i specjalne ciągi"
+        },
+        "strategie": {
+          "title": "Jak szukać reguły?",
+          "description": "Strategia + podsumowanie"
+        },
+        "game_warsztat": {
+          "title": "Gra: Warsztat wzorców",
+          "description": "Uzupełnij sekwencje i poznaj reguły"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsPattern": {
+            "title": "Co to jest wzorzec?",
+            "lead": "Wzorzec to układ, który powtarza się według pewnej reguły. Gdy ją znajdziesz — możesz przewidzieć, co będzie dalej!",
+            "everywhereLabel": "Wzorce są wszędzie:",
+            "examples": {
+              "alternatingColors": "🔴🔵🔴🔵 — naprzemienne kolory",
+              "increasingNumbers": "1, 2, 3, 4, 5 — każda liczba o 1 większa",
+              "repeatingShape": "♦️🔷♦️🔷 — powtarzający się kształt",
+              "weekdays": "pon., wt., śr., czw. — dni tygodnia"
+            }
+          },
+          "colorsAndShapes": {
+            "title": "Wzorce kolorów i kształtów",
+            "lead": "Wzorce mogą używać kolorów, kształtów lub obu naraz. Patrz na powtarzającą się grupę — to jest jednostka wzorca.",
+            "answerLabel": "Odpowiedź:",
+            "examples": {
+              "ab": {
+                "label": "Wzorzec AB",
+                "seq": "🔴 🔵 🔴 🔵 🔴 ❓",
+                "answer": "🔵"
+              },
+              "aab": {
+                "label": "Wzorzec AAB",
+                "seq": "⭐ ⭐ 🌙 ⭐ ⭐ ❓",
+                "answer": "🌙"
+              },
+              "abbc": {
+                "label": "Wzorzec ABBC",
+                "seq": "🟥 🟦 🟦 🟩 🟥 🟦 ❓",
+                "answer": "🟦"
+              }
+            }
+          },
+          "patternUnit": {
+            "title": "Jednostka wzorca",
+            "lead": "Jednostka wzorca to najmniejszy fragment, który się powtarza.",
+            "caption": "Zaznaczamy powtarzającą się parę i przesuwamy dalej."
+          },
+          "missingElement": {
+            "title": "Uzupełnij brakujący element",
+            "lead": "Gdy znasz jednostkę, możesz szybko uzupełnić brakujące miejsce.",
+            "caption": "Wzorzec AAB powtarza się w tej samej kolejności."
+          },
+          "threeElementPattern": {
+            "title": "Wzorzec trzy-elementowy",
+            "lead": "Czasem wzorzec ma trzy elementy, które powtarzają się w tej samej kolejności.",
+            "caption": "Zaznacz cykl A-B-C i obserwuj, jak się powtarza."
+          }
+        },
+        "ciagi_arytm": {
+          "addition": {
+            "title": "Ciągi liczbowe — dodawanie",
+            "lead": "W ciągu liczbowym każda liczba powstaje z poprzedniej według tej samej zasady. Najczęściej dodajemy tę samą wartość.",
+            "answerLabel": "Odpowiedź:",
+            "examples": {
+              "plusTwo": {
+                "hint": "+2 co krok",
+                "seq": "2, 4, 6, 8, 10, ❓",
+                "answer": "12"
+              },
+              "plusFive": {
+                "hint": "+5 co krok",
+                "seq": "5, 10, 15, 20, ❓",
+                "answer": "25"
+              },
+              "decreasingStep": {
+                "hint": "+10, +9, +8... (malejący krok)",
+                "seq": "1, 11, 20, 28, ❓",
+                "answer": "35 (krok maleje o 1)"
+              }
+            }
+          },
+          "constantStep": {
+            "title": "Stały krok",
+            "lead": "W ciągu arytmetycznym dodajemy tę samą liczbę na każdym kroku.",
+            "caption": "Ten sam krok powtarza się w każdym miejscu."
+          },
+          "decreasing": {
+            "title": "Ciąg malejący",
+            "lead": "W ciągu arytmetycznym możemy też odejmować stałą liczbę.",
+            "caption": "Każdy krok to ten sam spadek."
+          }
+        },
+        "ciagi_geom": {
+          "multiplicationFibonacci": {
+            "title": "Ciągi liczbowe — mnożenie i Fibonacci",
+            "lead": "Gdy każda liczba jest wielokrotnością poprzedniej, ciąg rośnie bardzo szybko! To ciąg geometryczny.",
+            "answerLabel": "Odpowiedź:",
+            "examples": {
+              "timesTwo": {
+                "hint": "×2 co krok",
+                "seq": "1, 2, 4, 8, 16, ❓",
+                "answer": "32"
+              },
+              "timesThree": {
+                "hint": "×3 co krok",
+                "seq": "2, 6, 18, 54, ❓",
+                "answer": "162"
+              },
+              "fibonacci": {
+                "hint": "Ciąg Fibonacciego (a+b=c)",
+                "seq": "1, 1, 2, 3, 5, 8, ❓",
+                "answer": "13 (5+8=13)"
+              }
+            }
+          },
+          "geometricGrowth": {
+            "title": "Wzrost geometryczny",
+            "lead": "Gdy iloraz jest stały, każdy wyraz rośnie szybciej od poprzedniego.",
+            "caption": "Podwajanie daje coraz wyższe słupki."
+          },
+          "fibonacciMotion": {
+            "title": "Fibonacci w ruchu",
+            "lead": "Każdy wyraz to suma dwóch poprzednich.",
+            "caption": "3 + 5 daje 8."
+          },
+          "doublingDots": {
+            "title": "Podwajanie w kropkach",
+            "lead": "Geometria liczb może być widoczna jako rosnąca liczba kropek.",
+            "caption": "Każdy etap to dwa razy więcej elementów."
+          }
+        },
+        "strategie": {
+          "howToLookForRule": {
+            "title": "Jak szukać reguły?",
+            "steps": {
+              "countUnit": "Policz elementy jednostki — jak wiele przed powtórzeniem?",
+              "checkDifference": "Sprawdź różnicę — odejmij sąsiednie liczby. Czy jest stała?",
+              "checkRatio": "Sprawdź iloraz — podziel sąsiednie liczby. Czy jest stały?",
+              "previousRelation": "Szukaj relacji dwóch poprzednich — jak Fibonacci.",
+              "verifyRule": "Zweryfikuj regułę — sprawdź ją na wszystkich znanych elementach!"
+            },
+            "exerciseLabel": "Ćwiczenie:",
+            "exerciseSequence": "3, 6, 12, 24, ❓",
+            "exerciseAnswer": "Iloraz: 2, 2, 2 — stały! Reguła: ×2 → 48"
+          },
+          "checkDifferenceAndRatio": {
+            "title": "Sprawdź różnicę i iloraz",
+            "lead": "Najpierw sprawdź różnicę, a jeśli nie działa, poszukaj stałego ilorazu.",
+            "caption": "Dwie szybkie kontrole pomagają znaleźć regułę."
+          },
+          "checklist": {
+            "title": "Lista kontrolna",
+            "lead": "Zawsze przechodź po tych samych krokach, a reguła szybko się ujawni.",
+            "caption": "Odhaczaj kolejne pomysły, aż znajdziesz właściwy."
+          },
+          "summary": {
+            "title": "Podsumowanie",
+            "items": {
+              "repeatingUnit": "🔁 Wzorzec AB/AAB — powtarzająca się jednostka",
+              "arithmetic": "➕ Ciąg arytmetyczny — stała różnica między elementami",
+              "geometric": "✖️ Ciąg geometryczny — stały iloraz między elementami",
+              "fibonacci": "🌀 Fibonacci — suma dwóch poprzednich",
+              "strategy": "🔍 Strategia — szukaj różnicy, ilorazu lub relacji"
+            },
+            "closing": "Wzorce i ciągi to podstawa matematyki i informatyki!"
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Warsztat wzorców"
+      }
+    },
+    "logicalClassification": {
+      "lessonTitle": "Klasyfikacja",
+      "sections": {
+        "intro": {
+          "title": "Klasyfikacja — wstęp",
+          "description": "Co to klasyfikacja? Grupowanie według cech"
+        },
+        "diagram": {
+          "title": "Wiele cech i diagram Venna",
+          "description": "Wielokryteriowe grupowanie i przecięcia zbiorów"
+        },
+        "intruz": {
+          "title": "Znajdź intruza",
+          "description": "Poziom 1, 2 i 3 — co nie pasuje?"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Wszystkie zasady razem"
+        },
+        "game": {
+          "title": "Laboratorium klasyfikacji",
+          "description": "Sortuj i znajdź intruza"
+        }
+      },
+      "slides": {
+        "intro": {
+          "basics": {
+            "title": "Co to jest klasyfikacja?",
+            "lead": "Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porządku w myśleniu i w życiu!",
+            "caption": "Najpierw zauważ cechę — potem przyporządkuj do właściwej grupy.",
+            "criteriaLabel": "Klasyfikujemy według:",
+            "criteria": {
+              "color": "🎨 Koloru — czerwone vs. niebieskie",
+              "shape": "🔷 Kształtu — okrągłe vs. kwadratowe",
+              "size": "📏 Rozmiaru — duże vs. małe",
+              "category": "📂 Kategorii — owoce vs. warzywa",
+              "number": "🔢 Liczby — parzyste vs. nieparzyste"
+            }
+          },
+          "grouping": {
+            "title": "Grupowanie według cech",
+            "lead": "Patrz na wszystkie cechy i wybierz te, która jest wspólna dla całej grupy.",
+            "caption": "Rozmiar to prosta cecha — duże i małe elementy tworzą różne zbiory.",
+            "cards": {
+              "flyingAnimals": {
+                "title": "Zwierzęta latające",
+                "items": "🦅 🦆 🐝 🦋",
+                "note": "Cecha: mają skrzydła"
+              },
+              "waterAnimals": {
+                "title": "Zwierzęta wodne",
+                "items": "🐟 🐬 🦈 🐙",
+                "note": "Cecha: żyją w wodzie"
+              },
+              "evenNumbers": {
+                "title": "Liczby parzyste",
+                "items": "2 4 6 8",
+                "note": "Cecha: dzielą się przez 2"
+              },
+              "oddNumbers": {
+                "title": "Liczby nieparzyste",
+                "items": "1 3 5 7",
+                "note": "Cecha: nie dzielą się przez 2"
+              }
+            }
+          },
+          "shapeSorting": {
+            "title": "Sortowanie według kształtu",
+            "lead": "Kształt to cecha, którą łatwo rozpoznać — wystarczy spojrzeć na krawędzie i kąty.",
+            "caption": "Koła i kwadraty trafiają do różnych pojemników.",
+            "cards": {
+              "circles": {
+                "title": "Koła",
+                "items": "⚪ ⚪ ⚪",
+                "note": "Cecha: brak kątów"
+              },
+              "squares": {
+                "title": "Kwadraty",
+                "items": "⬜ ⬜ ⬜",
+                "note": "Cecha: cztery równe boki"
+              }
+            }
+          },
+          "categories": {
+            "title": "Kategorie i sortowanie",
+            "lead": "Kategorie to większe „pudełka” na rzeczy. Dzięki nim łatwo utrzymasz porządek.",
+            "caption": "Każdy element ląduje w odpowiednim koszyku.",
+            "examplesLabel": "Przykłady kategorii:",
+            "examples": {
+              "fruit": "🍎 Owoce",
+              "vegetables": "🥕 Warzywa",
+              "toys": "🧸 Zabawki"
+            }
+          }
+        },
+        "diagram": {
+          "multiCriteria": {
+            "title": "Wiele cech naraz",
+            "lead": "Czasem trzeba wziąć pod uwagę dwie cechy jednocześnie. To trudniejsze, ale daje precyzyjniejszy podział.",
+            "gridCaption": "Dwie cechy tworzą siatkę 2×2 — każda kratka to osobna grupa.",
+            "axesCaption": "Najpierw wybierz osie kryteriów, a potem przypisz elementy do pola.",
+            "exampleLabel": "Figury: duże/małe × czerwone/niebieskie",
+            "items": {
+              "bigRed": {
+                "label": "Duże czerwone",
+                "icons": "🔴🔴"
+              },
+              "bigBlue": {
+                "label": "Duże niebieskie",
+                "icons": "🔵🔵"
+              },
+              "smallRed": {
+                "label": "Małe czerwone",
+                "icons": "🔴"
+              },
+              "smallBlue": {
+                "label": "Małe niebieskie",
+                "icons": "🔵"
+              }
+            },
+            "summary": "2 cechy × 2 wartości = 4 różne grupy"
+          },
+          "venn": {
+            "title": "Diagram Venna",
+            "lead": "Diagram Venna pokazuje, co należy do jednej grupy, do drugiej, lub do obu jednocześnie — to część wspólna (przecięcie).",
+            "overlapCaption": "Środek diagramu to część wspólna — elementy należące do obu grup.",
+            "unionCaption": "Unia to wszystko, co jest w zbiorze A lub w zbiorze B.",
+            "exampleLabel": "Kocha sport vs. kocha muzykę",
+            "zones": {
+              "onlySport": {
+                "label": "Tylko sport",
+                "icons": "⚽ 🏀"
+              },
+              "both": {
+                "label": "Oba!",
+                "icons": "🤸"
+              },
+              "onlyMusic": {
+                "label": "Tylko muzyka",
+                "icons": "🎸 🎹"
+              }
+            }
+          },
+          "switchCriteria": {
+            "title": "Zmiana kryterium",
+            "lead": "Te same elementy można posortować na różne sposoby — zależy od tego, jakie kryterium wybierzesz.",
+            "caption": "Najpierw kolor, potem kształt — układ grup się zmienia.",
+            "pickLabel": "Wybierz kryterium:",
+            "tips": {
+              "first": "Najpierw najprostsza cecha (np. kolor).",
+              "second": "Potem dokładniejsza (np. kształt)."
+            }
+          }
+        },
+        "intruz": {
+          "level1": {
+            "title": "Znajdź intruza — poziom 1",
+            "lead": "Jeden element nie pasuje do grupy. Znajdź go i wyjaśnij, dlaczego wyłamuje się z reguły.",
+            "caption": "Intruz łamie regułę — dlatego wyróżnia się na tle grupy.",
+            "examples": {
+              "fruits": {
+                "items": "🍎 🍌 🥕 🍇 🍓",
+                "answer": "🥕 — to warzywo, reszta to owoce"
+              },
+              "numbers": {
+                "items": "2, 4, 7, 8, 10",
+                "answer": "7 — tylko ona jest nieparzysta"
+              },
+              "animals": {
+                "items": "🐦 🦅 🐝 🐈 🦋",
+                "answer": "🐈 — kot nie lata, reszta ma skrzydła"
+              }
+            }
+          },
+          "level2": {
+            "title": "Znajdź intruza — poziom 2",
+            "lead": "Trudniejsze zagadki — intruz może być ukryty pod nieoczywistą cechą.",
+            "caption": "Najpierw znajdź regułę, a potem element, który jej nie spełnia.",
+            "examples": {
+              "multiples": {
+                "items": "3, 6, 9, 12, 16",
+                "answer": "16 — nie jest wielokrotnością 3"
+              },
+              "space": {
+                "items": "🌍 🌙 ☀️ ⭐ 🪐",
+                "answer": "🌙 — tylko księżyc nie świeci własnym światłem"
+              },
+              "shapes": {
+                "items": "kwadrat, trójkąt, koło, romb",
+                "answer": "Koło — jedyna figura bez kątów i prostych boków"
+              }
+            }
+          },
+          "level3": {
+            "title": "Znajdź intruza — poziom 3",
+            "lead": "Intruz może zaburzać wzór lub kolejność. Sprawdź, co się powtarza.",
+            "caption": "Wzór się powtarza, ale jeden element go psuje.",
+            "examples": {
+              "shape": {
+                "items": "⚪ ⬜ ⚪ 🔺 ⚪ ⬜",
+                "answer": "🔺 — inny kształt niż reszta"
+              },
+              "color": {
+                "items": "🔴 🔵 🔴 🔵 🟢 🔴",
+                "answer": "🟢 — inny kolor w środku wzoru"
+              }
+            }
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Podsumowanie",
+            "caption": "Pamiętaj: cecha, grupowanie, przecięcie i intruz.",
+            "items": {
+              "classification": "🗂️ Klasyfikacja — grupuj według jednej wspólnej cechy",
+              "manyCriteria": "🔀 Wiele cech — precyzyjny podział wymaga kilku kryteriów",
+              "venn": "🔵🟡 Diagram Venna — część wspólna to przecięcie dwóch zbiorów",
+              "oddOneOut1": "🔎 Intruz poz. 1 — oczywista cecha łamana przez jeden element",
+              "oddOneOut2": "🧩 Intruz poz. 2 — nieoczywiste cechy ukryte głębiej",
+              "oddOneOut3": "🎯 Intruz poz. 3 — zaburzony wzór lub sekwencja"
+            },
+            "closing": "Klasyfikacja to klucz do porządku w świecie i w głowie!"
+          },
+          "color": {
+            "title": "Kolor",
+            "caption": "Kolor"
+          },
+          "shape": {
+            "title": "Kształt",
+            "caption": "Kształt"
+          },
+          "parity": {
+            "title": "Parzyste i nieparzyste",
+            "caption": "Parzyste i nieparzyste"
+          },
+          "twoCriteria": {
+            "title": "Dwie cechy naraz",
+            "caption": "Dwie cechy naraz"
+          },
+          "intersection": {
+            "title": "Przecięcie zbiorów",
+            "caption": "Przecięcie zbiorów"
+          },
+          "oddOneOut": {
+            "title": "Intruz",
+            "caption": "Intruz"
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Laboratorium klasyfikacji"
+      }
+    },
+    "logicalReasoning": {
+      "lessonTitle": "Wnioskowanie",
+      "sections": {
+        "wnioskowanie": {
+          "title": "Wnioskowanie i Jeśli…to…",
+          "description": "Dedukcja, indukcja, warunek logiczny"
+        },
+        "kwantyfikatory": {
+          "title": "Wszyscy / Niektórzy / Żaden",
+          "description": "Zasięg twierdzeń i prawda/fałsz"
+        },
+        "zagadki": {
+          "title": "Zagadki logiczne",
+          "description": "Rozwiązywanie zagadek krok po kroku"
+        },
+        "podsumowanie": {
+          "title": "Podsumowanie",
+          "description": "Wszystkie zasady razem"
+        },
+        "gra": {
+          "title": "Gra: Wniosek",
+          "description": "Oceń, czy wniosek wynika"
+        }
+      },
+      "slides": {
+        "wnioskowanie": {
+          "basics": {
+            "title": "Co to jest wnioskowanie?",
+            "lead": "Wnioskowanie to wyciąganie nowych wniosków z tego, co już wiemy. Idziemy od znanych faktów do nowej prawdy.",
+            "typesLabel": "Dwa typy wnioskowania:",
+            "types": {
+              "deduction": {
+                "title": "Dedukcja (od ogółu do szczegółu)",
+                "example": "Wszystkie psy szczekają. Burek jest psem. → Burek szczeka."
+              },
+              "induction": {
+                "title": "Indukcja (od szczegółu do ogółu)",
+                "example": "Obserwuję 100 łabędzi — wszystkie są białe. → (Prawdopodobnie) wszystkie łabędzie są białe."
+              }
+            }
+          },
+          "ifThen": {
+            "title": "Jeśli… to…",
+            "lead": "Zdanie „Jeśli P, to Q\" znaczy: gdy P jest prawdziwe, Q też musi być prawdziwe.",
+            "examples": [
+              {
+                "rule": "Jeśli pada deszcz → wezmę parasol.",
+                "note": "Pada deszcz? → wezmę parasol. ✅"
+              },
+              {
+                "rule": "Jeśli liczba jest parzysta → dzieli się przez 2.",
+                "note": "8 jest parzyste → 8 ÷ 2 = 4 ✅"
+              }
+            ],
+            "warning": {
+              "title": "Uwaga na odwrotność!",
+              "note": "„Jeśli P, to Q\" NIE znaczy „Jeśli Q, to P\"! Biorę parasol → nie musi padać. ❌"
+            }
+          },
+          "deductionPractice": {
+            "title": "Dedukcja w praktyce",
+            "lead": "Dedukcja prowadzi od ogólnej reguły do konkretnego wniosku.",
+            "caption": "Reguła + fakt = pewny wniosek."
+          },
+          "induction": {
+            "title": "Indukcja — szukanie reguły",
+            "lead": "Indukcja zbiera obserwacje i buduje prawdopodobną regułę.",
+            "caption": "Im więcej przykładów, tym pewniejsza reguła."
+          },
+          "condition": {
+            "title": "Warunek logiczny",
+            "lead": "Warunek pokazuje związek: gdy P jest prawdziwe, Q musi być prawdziwe.",
+            "caption": "Strzałka oznacza kierunek wniosku."
+          }
+        },
+        "kwantyfikatory": {
+          "quantifiers": {
+            "title": "Wszyscy, niektórzy, żaden",
+            "lead": "Kwantyfikatory mówią o zasięgu twierdzenia.",
+            "cards": [
+              {
+                "icon": "✅",
+                "label": "Wszyscy",
+                "accent": "emerald",
+                "text": "Wszyscy ludzie oddychają. → Jeśli jesteś człowiekiem, oddychasz."
+              },
+              {
+                "icon": "⚠️",
+                "label": "Niektórzy",
+                "accent": "amber",
+                "text": "Niektóre koty są rude. → Nie możesz powiedzieć, że TWÓJ kot jest rudy!"
+              },
+              {
+                "icon": "❌",
+                "label": "Żaden",
+                "accent": "rose",
+                "text": "Żaden ptak nie jest ssakiem. → Orzeł jest ptakiem → Orzeł nie jest ssakiem."
+              }
+            ]
+          },
+          "trueFalse": {
+            "title": "Prawda czy fałsz?",
+            "lead": "Zdanie logiczne musi być albo prawdziwe, albo fałszywe. Sprawdzaj każde twierdzenie osobno!",
+            "examples": [
+              {
+                "stmt": "4 + 3 = 7",
+                "answer": true,
+                "explain": "Poprawne obliczenie."
+              },
+              {
+                "stmt": "Trójkąt ma 4 boki.",
+                "answer": false,
+                "explain": "Trójkąt ma 3 boki."
+              },
+              {
+                "stmt": "Jeśli 5>3 i 3>1, to 5>1.",
+                "answer": true,
+                "explain": "Przechodniość: 5>3>1."
+              },
+              {
+                "stmt": "Liczba 9 jest parzysta.",
+                "answer": false,
+                "explain": "9÷2=4 reszty 1 — nieparzysta."
+              }
+            ]
+          },
+          "scope": {
+            "title": "Zasięg kwantyfikatorów",
+            "lead": "Sprawdzaj, czy zdanie dotyczy wszystkich, tylko niektórych, czy żadnych elementów.",
+            "caption": "Zmiana kwantyfikatora potrafi całkowicie zmienić sens zdania."
+          }
+        },
+        "zagadki": {
+          "puzzle": {
+            "title": "Zagadka logiczna",
+            "lead": "Zagadki logiczne wymagają łączenia kilku informacji naraz.",
+            "titleLabel": "Zagadka: Kto mieszka w którym domu?",
+            "clues": [
+              "🏠 Są trzy domy: czerwony, niebieski, zielony.",
+              "👧 Ania nie mieszka w czerwonym.",
+              "👦 Bartek mieszka w niebieskim.",
+              "👩 Celina nie mieszka w zielonym."
+            ],
+            "solutionLabel": "Rozwiązanie:",
+            "solution": "Bartek → niebieski ✅\nCelina → nie zielony, nie niebieski → czerwony ✅\nAnia → zielony ✅"
+          },
+          "steps": {
+            "title": "Rozwiązywanie krok po kroku",
+            "items": [
+              "Przeczytaj wszystkie wskazówki — nie spiesz się.",
+              "Wypisz, co jest pewne — zacznij od faktów bezpośrednich.",
+              "Eliminuj niemożliwe opcje — to zwęża pole odpowiedzi.",
+              "Wnioskuj ze znanych faktów — zastosuj „Jeśli… to…\".",
+              "Sprawdź odpowiedź — czy pasuje do wszystkich wskazówek?"
+            ],
+            "closing": "Dobry logik nigdy nie zgaduje — zawsze uzasadnia każdy krok!"
+          },
+          "eliminate": {
+            "title": "Eliminuj niemożliwe",
+            "lead": "Skreślaj opcje, które nie pasują do wskazówek, aż zostanie właściwa odpowiedź.",
+            "caption": "Eliminacja to najkrótsza droga do poprawnego rozwiązania."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Podsumowanie",
+            "items": [
+              "💡 Wnioskowanie — od faktów do nowych wniosków",
+              "➡️ Jeśli… to… — warunek i jego konsekwencja",
+              "🔢 Wszyscy/Niektórzy/Żaden — zasięg twierdzenia",
+              "✅❌ Prawda/fałsz — każde zdanie ma jedną wartość",
+              "🧩 Zagadki — łącz wskazówki, eliminuj błędy",
+              "🪜 Krok po kroku — cierpliwość i plan to klucz"
+            ],
+            "closing": "Wnioskowanie to supermoc detektywa — używaj go każdego dnia!"
+          }
+        },
+        "gra": {
+          "interactive": {
+            "title": "Gra: Czy wniosek wynika?",
+            "lead": "Przeciągnij karty do pola „Wynika” lub „Nie wynika” i sprawdź poprawność."
+          }
+        }
+      },
+      "game": {
+        "cases": [
+          {
+            "id": "case-umbrella",
+            "rule": "Jeśli pada deszcz, to biorę parasol.",
+            "fact": "Pada deszcz.",
+            "conclusion": "Biorę parasol.",
+            "valid": true,
+            "explanation": "Warunek jest spełniony, więc wniosek wynika."
+          },
+          {
+            "id": "case-even",
+            "rule": "Jeśli liczba jest parzysta, to dzieli się przez 2.",
+            "fact": "8 jest parzyste.",
+            "conclusion": "8 ÷ 2 = 4.",
+            "valid": true,
+            "explanation": "Z parzystości wynika podzielność przez 2."
+          },
+          {
+            "id": "case-reverse",
+            "rule": "Jeśli jestem kotem, to mam wąsy.",
+            "fact": "Mam wąsy.",
+            "conclusion": "Jestem kotem.",
+            "valid": false,
+            "explanation": "To odwrotność. Wąsy nie oznaczają, że to na pewno kot."
+          },
+          {
+            "id": "case-contrary",
+            "rule": "Jeśli mam bilet, to mogę wejść.",
+            "fact": "Nie mam biletu.",
+            "conclusion": "Nie mogę wejść.",
+            "valid": false,
+            "explanation": "To zaprzeczenie warunku. Brak biletu nie mówi nic pewnego."
+          },
+          {
+            "id": "case-sun",
+            "rule": "Jeśli świeci słońce, to jest jasno.",
+            "fact": "Świeci słońce.",
+            "conclusion": "Jest jasno.",
+            "valid": true,
+            "explanation": "Gdy P jest prawdziwe, Q też musi być prawdziwe."
+          }
+        ],
+        "ui": {
+          "header": {
+            "eyebrow": "Gra logiczna",
+            "title": "Jeśli... to... czy wniosek wynika?",
+            "description": "Przeciągnij każdą kartę do pola, gdzie wniosek wynika lub nie wynika z reguły.",
+            "placedTemplate": "Umieszczone: {placed}/{total}"
+          },
+          "zones": {
+            "pool": {
+              "title": "Karty",
+              "hint": "Przeciągnij kartę do odpowiedniego pola.",
+              "ariaLabel": "Strefa: nieprzypisane"
+            },
+            "valid": {
+              "title": "Wynika",
+              "hint": "Wniosek wynika z reguły i faktu.",
+              "ariaLabel": "Strefa: wniosek wynika"
+            },
+            "invalid": {
+              "title": "Nie wynika",
+              "hint": "Wniosek nie wynika z reguły.",
+              "ariaLabel": "Strefa: wniosek nie wynika"
+            }
+          },
+          "card": {
+            "ifLabel": "Jeśli...",
+            "factLabel": "Fakt:",
+            "conclusionLabel": "Wniosek:",
+            "selectAriaTemplate": "Wybierz kartę: {conclusion}"
+          },
+          "status": {
+            "correct": "Dobrze",
+            "wrong": "Źle"
+          },
+          "selection": {
+            "selectedTemplate": "Wybrana karta: {conclusion}",
+            "idle": "Wybierz kartę, aby przenieść ją klawiaturą."
+          },
+          "moveButtons": {
+            "toValid": "Do „wynika”",
+            "toInvalid": "Do „nie wynika”",
+            "toPool": "Do puli"
+          },
+          "actions": {
+            "check": "Sprawdź",
+            "reset": "Reset"
+          },
+          "summary": {
+            "perfect": "Super! Wszystko poprawnie.",
+            "good": "Dobra robota! Popraw błędy.",
+            "retry": "Spróbuj jeszcze raz i sprawdź wskazówki.",
+            "resultTemplate": "Wynik: {score}/{total}"
+          }
+        }
+      }
+    },
+    "logicalThinking": {
+      "lessonTitle": "Myślenie logiczne",
+      "sections": {
+        "wprowadzenie": {
+          "title": "Wprowadzenie",
+          "description": "Czym jest myślenie logiczne?"
+        },
+        "wzorce": {
+          "title": "Wzorce i ciągi",
+          "description": "Powtarzające się układy i przewidywanie"
+        },
+        "klasyfikacja": {
+          "title": "Klasyfikacja",
+          "description": "Grupowanie i szukanie intruza"
+        },
+        "wnioskowanie": {
+          "title": "Wnioskowanie",
+          "description": "Myślenie krok po kroku: jeśli... to..."
+        },
+        "analogie": {
+          "title": "Analogie",
+          "description": "Ta sama relacja w nowym przykładzie"
+        },
+        "zapamietaj": {
+          "title": "Zapamiętaj",
+          "description": "Najważniejsze zasady logicznego myślenia"
+        },
+        "wnioskowanie_gra": {
+          "title": "Gra: Jeśli… to…",
+          "description": "Układanie faktów, reguły i wniosku"
+        },
+        "laboratorium_gra": {
+          "title": "Gra: Logiczne Laboratorium 🧪",
+          "description": "Wzorzec, klasyfikacja i analogia"
+        }
+      },
+      "slides": {
+        "wprowadzenie": {
+          "basics": {
+            "title": "Co to jest myślenie logiczne? 🧠",
+            "lead": "Myślenie logiczne to umiejętność zauważania zasad, porządkowania informacji i wyciągania wniosków krok po kroku.",
+            "caption": "Najpierw obserwujesz, potem łączysz fakty i wyciągasz wniosek.",
+            "helpTitle": "Logiczne myślenie pomaga:",
+            "helpItems": [
+              "🔍 Znajdować wzorce i ciągi",
+              "📦 Porządkować i grupować rzeczy",
+              "💡 Rozwiązywać zagadki i łamigłówki",
+              "✅ Sprawdzać, czy coś ma sens"
+            ]
+          },
+          "steps": {
+            "title": "Trzy kroki logiki 🧩",
+            "lead": "Najpierw obserwujesz, potem łączysz fakty, a na końcu sprawdzasz wniosek.",
+            "caption": "Obserwuj → łącz → wniosek.",
+            "exampleLabel": "Spróbuj znaleźć regułę:",
+            "exampleSequence": "🔺 🔺 🔵 🔺 🔺 🔵 ❓",
+            "exampleAnswer": "Odpowiedź: 🔺 🔺 🔵 (powtarza się układ)."
+          }
+        },
+        "wzorce": {
+          "basics": {
+            "title": "Wzorce i ciągi 🔢",
+            "lead": "Wzorzec to powtarzający się układ. Gdy go znajdziesz, możesz przewidzieć, co będzie dalej!",
+            "caption": "Wzorzec powtarza się w stałym rytmie.",
+            "shapePrompt": "Co jest dalej?",
+            "shapeSequence": "🔴 🔵 🔴 🔵 🔴 ❓",
+            "shapeAnswer": "Odpowiedź: 🔵 (wzorzec: czerwony – niebieski)",
+            "numberPrompt": "Ciąg liczbowy – co dalej?",
+            "numberSequence": "2, 4, 6, 8, ❓",
+            "numberAnswer": "Odpowiedź: 10 (co 2 w górę)"
+          },
+          "growth": {
+            "title": "Wzorzec rośnie 📈",
+            "lead": "Wzorzec może się powtarzać i jednocześnie rosnąć. To też jest reguła!",
+            "caption": "Każdy kolejny element jest większy.",
+            "examplePrompt": "Ciąg rosnący – co dalej?",
+            "exampleSequence": "1, 2, 4, 8, ❓",
+            "exampleAnswer": "Odpowiedź: 16 (×2)"
+          }
+        },
+        "klasyfikacja": {
+          "grouping": {
+            "title": "Klasyfikacja – grupowanie 📦",
+            "lead": "Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy.",
+            "caption": "Ta sama cecha prowadzi do tej samej grupy.",
+            "cards": {
+              "fruits": {
+                "title": "Owoce",
+                "items": "🍎 🍌 🍇 🍓"
+              },
+              "vegetables": {
+                "title": "Warzywa",
+                "items": "🥕 🥦 🧅 🌽"
+              },
+              "seaAnimals": {
+                "title": "Zwierzęta morskie",
+                "items": "🐠 🐙 🦈 🐚"
+              },
+              "landAnimals": {
+                "title": "Zwierzęta lądowe",
+                "items": "🐘 🦁 🐄 🐇"
+              }
+            },
+            "closing": "Cecha wspólna to klucz do grupowania!"
+          },
+          "key": {
+            "title": "Klucz klasyfikacji 🗝️",
+            "lead": "Najpierw wybierasz cechę, a potem elementy trafiają do właściwej grupy.",
+            "caption": "Jedna cecha = jedna decyzja.",
+            "exampleLabel": "Cecha: ma skrzydła",
+            "exampleItems": "🕊️ 🐝 🐟 🐶",
+            "exampleAnswer": "Grupa \"tak\": 🕊️ 🐝"
+          },
+          "oddOneOut": {
+            "title": "Znajdź intruza 🔎",
+            "lead": "W każdej grupie jeden element do niej nie pasuje. Znajdź go i wyjaśnij dlaczego!",
+            "itemsPrompt": "Który nie pasuje?",
+            "itemsSequence": "🍎 🍌 🥕 🍇",
+            "itemsAnswer": "🥕 – to warzywo, reszta to owoce",
+            "numberPrompt": "Która liczba nie pasuje?",
+            "numberSequence": "2, 4, 7, 8, 10",
+            "numberAnswer": "7 – tylko ona jest nieparzysta"
+          }
+        },
+        "wnioskowanie": {
+          "basics": {
+            "title": "Wnioskowanie: jeśli... to... 💡",
+            "lead": "Wnioskowanie to wyciąganie wniosków z tego, co wiemy. Używamy schematu: jeśli... to...",
+            "caption": "Jeśli spełniony jest warunek, to pojawia się wniosek.",
+            "examples": [
+              "Jeśli pada deszcz, to wezmę parasol. ☔",
+              "Jeśli wszystkie koty mają cztery łapy, a Mruczek jest kotem, to Mruczek ma cztery łapy. 🐱",
+              "Jeśli liczba jest parzysta, to dzieli się przez 2. Czy 6 jest parzyste? Tak! 6 ÷ 2 = 3 ✓"
+            ]
+          }
+        },
+        "wnioskowanie_gra": {
+          "interactive": {
+            "title": "Gra: Jeśli… to… krok po kroku",
+            "lead": "Ułóż fakt, regułę i wniosek w odpowiedniej kolejności."
+          }
+        },
+        "analogie": {
+          "basics": {
+            "title": "Analogie – co pasuje? 🔗",
+            "lead": "Analogia to podobna relacja między różnymi parami. Uzupełnij brakujące ogniwo!",
+            "caption": "Szukamy tej samej relacji w dwóch parach.",
+            "examples": [
+              "Ptak lata, ryba... pływa 🐟",
+              "Dzień jest do słońca, jak noc jest do... księżyca 🌙",
+              "2 jest do 4, jak 3 jest do... 6 (×2)"
+            ]
+          },
+          "map": {
+            "title": "Mapa analogii 🧭",
+            "lead": "Sprawdź relację w pierwszej parze i przenieś ją na drugą.",
+            "caption": "Relacja A → B powtarza się w C → D.",
+            "example": "Nóż : kroi = pędzel : maluje 🎨"
+          }
+        },
+        "laboratorium_gra": {
+          "interactive": {
+            "title": "Gra: Logiczne Laboratorium 🧪",
+            "lead": "Wykonaj trzy misje: wzorzec, klasyfikacja i analogia. Przeciągaj i klikaj!"
+          }
+        },
+        "zapamietaj": {
+          "overview": {
+            "title": "Zapamiętaj! 🌟",
+            "caption": "Zapamiętaj najważniejsze pojęcia i wracaj do nich często.",
+            "items": [
+              "🔁 Wzorzec – znajdź regułę i przewiduj, co dalej",
+              "📦 Klasyfikacja – grupuj według wspólnej cechy",
+              "🔎 Intruz – jeden element łamie regułę grupy",
+              "💡 Jeśli... to... – wyciągaj wnioski krok po kroku",
+              "🔗 Analogia – ta sama relacja, inny przykład"
+            ],
+            "closing": "Myślenie logiczne to supermoc! Ćwicz je każdego dnia. 🧠✨"
+          }
+        }
+      },
+      "games": {
+        "ifThen": {
+          "rounds": [
+            {
+              "id": "birds",
+              "fact": "Kanarek jest ptakiem.",
+              "rule": "Jeśli coś jest ptakiem, to ma skrzydła.",
+              "conclusion": "Kanarek ma skrzydła.",
+              "distractors": [
+                "Kanarek pływa.",
+                "Kanarek jest rybą."
+              ],
+              "explanation": "Fakt spełnia warunek, więc wniosek musi być prawdziwy."
+            },
+            {
+              "id": "rain",
+              "fact": "Dziś pada deszcz.",
+              "rule": "Jeśli pada deszcz, to bierzemy parasol.",
+              "conclusion": "Bierzemy parasol.",
+              "distractors": [
+                "Zakładamy okulary przeciwsłoneczne.",
+                "Niebo jest bezchmurne."
+              ],
+              "explanation": "Gdy warunek jest spełniony, wykonujemy działanie z reguły."
+            },
+            {
+              "id": "even",
+              "fact": "Liczba 8 jest parzysta.",
+              "rule": "Jeśli liczba jest parzysta, to dzieli się przez 2.",
+              "conclusion": "8 dzieli się przez 2.",
+              "distractors": [
+                "8 jest liczbą pierwszą.",
+                "8 dzieli się przez 3."
+              ],
+              "explanation": "Parzystość oznacza podzielność przez 2, więc wniosek jest poprawny."
+            }
+          ],
+          "ui": {
+            "completion": {
+              "title": "Brawo! 🧠",
+              "description": "Umiesz już budować wnioski krok po kroku.",
+              "restart": "Zagraj jeszcze raz"
+            },
+            "header": {
+              "stepTemplate": "Krok {current} / {total}",
+              "instruction": "Kliknij karty i ułóż: fakt → reguła → wniosek"
+            },
+            "slots": {
+              "fact": {
+                "label": "Fakt",
+                "hint": "Co już wiemy?"
+              },
+              "rule": {
+                "label": "Jeśli… to…",
+                "hint": "Jaka zasada łączy fakty?"
+              },
+              "conclusion": {
+                "label": "Wniosek",
+                "hint": "Co z tego wynika?"
+              }
+            },
+            "deckTitle": "Karty",
+            "cardAriaTemplate": "Karta: {text}",
+            "feedback": {
+              "fillAll": "Uzupełnij wszystkie kroki, aby sprawdzić wniosek.",
+              "successTemplate": "Świetnie! {explanation}",
+              "error": "Spróbuj jeszcze raz — zamień karty na właściwe miejsca."
+            },
+            "actions": {
+              "check": "Sprawdź",
+              "retry": "Spróbuj ponownie",
+              "next": "Dalej"
+            }
+          }
+        },
+        "lab": {
+          "analogyRounds": [
+            {
+              "id": "bird",
+              "prompt": "Ptak : lata = Ryba : ?",
+              "options": [
+                {
+                  "id": "swims",
+                  "label": "pływa"
+                },
+                {
+                  "id": "runs",
+                  "label": "biega"
+                },
+                {
+                  "id": "sleeps",
+                  "label": "śpi"
+                }
+              ],
+              "correctId": "swims",
+              "explanation": "Ryby poruszają się w wodzie, więc „pływa” pasuje do relacji."
+            },
+            {
+              "id": "day",
+              "prompt": "Dzień : słońce = Noc : ?",
+              "options": [
+                {
+                  "id": "moon",
+                  "label": "księżyc"
+                },
+                {
+                  "id": "rain",
+                  "label": "deszcz"
+                },
+                {
+                  "id": "cloud",
+                  "label": "chmura"
+                }
+              ],
+              "correctId": "moon",
+              "explanation": "W nocy kojarzymy światło z księżycem."
+            }
+          ],
+          "ui": {
+            "completion": {
+              "title": "Brawo! 🧠",
+              "description": "Rozwiązałeś wszystkie zadania logicznego laboratorium.",
+              "restart": "Zagraj jeszcze raz"
+            },
+            "header": {
+              "stageTemplate": "Etap {current} / {total}",
+              "instruction": "Przeciągnij i klikaj, aby ukończyć misję."
+            },
+            "pattern": {
+              "prompt": "Uzupełnij wzorzec: znajdź dwie następne figury.",
+              "slotLabels": {
+                "first": "Pole 1",
+                "second": "Pole 2"
+              },
+              "filledSlotAriaTemplate": "{slot}: {token}",
+              "emptySlotAriaTemplate": "{slot}: puste",
+              "selectTokenAriaTemplate": "Wybierz symbol {token}",
+              "selectedTemplate": "Wybrany kafelek: {token}",
+              "idle": "Wybierz kafelek, aby przenieść go klawiaturą.",
+              "moveToFirst": "Do pola 1",
+              "moveToSecond": "Do pola 2",
+              "moveToPool": "Do puli"
+            },
+            "classify": {
+              "prompt": "Posegreguj obrazki według cechy: ma skrzydła.",
+              "yesZoneLabel": "Ma skrzydła",
+              "noZoneLabel": "Nie ma skrzydeł",
+              "yesZoneAriaLabel": "Strefa: ma skrzydła",
+              "noZoneAriaLabel": "Strefa: nie ma skrzydeł",
+              "selectItemAriaTemplate": "Wybierz obrazek {item}",
+              "selectedTemplate": "Wybrany obrazek: {item}",
+              "idle": "Wybierz obrazek, aby przenieść go klawiaturą.",
+              "moveToYes": "Do „ma skrzydła”",
+              "moveToNo": "Do „nie ma skrzydeł”",
+              "moveToPool": "Do puli"
+            },
+            "analogy": {
+              "prompt": "Uzupełnij analogię.",
+              "optionAriaTemplate": "Opcja: {option}"
+            },
+            "feedback": {
+              "info": "Uzupełnij zadanie, aby sprawdzić odpowiedź.",
+              "success": "Świetnie! Tak trzymać.",
+              "error": "Ups, spróbuj jeszcze raz."
+            },
+            "actions": {
+              "check": "Sprawdź",
+              "retry": "Spróbuj ponownie",
+              "next": "Dalej",
+              "finish": "Zakończ"
+            }
+          }
+        }
+      }
     }
   },
   "KangurLessonChrome": {
@@ -4031,6 +6973,147 @@
         "great": "Niesamowita robota! Tak trzymaj.",
         "good": "Dobra robota! Cwiczenie czyni mistrza.",
         "tryAgain": "Probuj dalej. Dasz rade."
+      }
+    }
+  },
+  "KangurCmsBuilder": {
+    "previewPanel": {
+      "toggleViewing": {
+        "showSidePanels": "Pokaz panele boczne",
+        "showCanvasOnly": "Pokaz samo platno"
+      },
+      "toolbar": {
+        "backToKangur": "Powrot do Kangur",
+        "status": {
+          "saved": "Zapisano",
+          "unsaved": "Niezapisane"
+        },
+        "screenLabels": {
+          "Game": "Gra",
+          "Lessons": "Lekcje",
+          "LearnerProfile": "Profil ucznia",
+          "ParentDashboard": "Panel rodzica"
+        },
+        "previewModes": {
+          "desktop": "Desktop",
+          "mobile": "Telefon"
+        },
+        "openRuntime": "Otworz runtime",
+        "toggleStatusSidebar": "Przelacz pasek statusu",
+        "statusSidebar": "Status",
+        "undo": "Cofnij",
+        "redo": "Ponow",
+        "saving": "Zapisywanie...",
+        "saveProject": "Zapisz projekt"
+      },
+      "empty": {
+        "selectScreen": "Wybierz ekran Kangur do edycji.",
+        "noSections": "Brak sekcji. Uzyj panelu struktury, aby je dodac."
+      }
+    },
+    "rightPanel": {
+      "title": "Inspektor",
+      "empty": {
+        "selectTarget": "Wybierz sekcje, kolumne siatki lub blok do edycji.",
+        "toolbarHint": "Przelaczanie ekranow, zapis projektu i tryb podgladu sa w pasku narzedzi buildera."
+      }
+    },
+    "themePreview": {
+      "title": "Podglad motywu",
+      "editing": "Edytujesz: {section}",
+      "modes": {
+        "daily": "Dzienny",
+        "dawn": "Swit",
+        "sunset": "Zachod",
+        "nightly": "Nocny"
+      },
+      "sections": {
+        "corePalette": "Paleta glowna",
+        "textOverrides": "Nadpisania tekstu",
+        "logoLoader": "Logo i loader",
+        "backgroundsSurfaces": "Tla i powierzchnie",
+        "buttons": "Przyciski",
+        "navigationPills": "Pills nawigacji",
+        "gradients": "Gradienty",
+        "homeActions": "Akcje strony glownej",
+        "progressBars": "Paski postepu",
+        "inputs": "Pola",
+        "typographyLayout": "Typografia i uklad",
+        "shapeSpacing": "Ksztalt i odstepy",
+        "shadowsDepth": "Cienie i glebia"
+      },
+      "corePalette": {
+        "swatches": {
+          "primary": "Glowny",
+          "secondary": "Drugoplanowy",
+          "accent": "Akcent",
+          "success": "Sukces",
+          "text": "Tekst",
+          "muted": "Wyciszony"
+        }
+      },
+      "textOverrides": {
+        "nav": {
+          "home": "Start",
+          "library": "Biblioteka",
+          "hover": "Hover"
+        },
+        "cardHeadline": "Naglowek karty",
+        "helperText": "Podglad pomocniczego tekstu."
+      },
+      "backgroundsSurfaces": {
+        "glassPanelSurface": "Powierzchnia szklanego panelu",
+        "softCardSurface": "Powierzchnia miekkiej karty",
+        "page": "Strona",
+        "card": "Karta"
+      },
+      "buttons": {
+        "primary": "Glowny",
+        "hover": "Hover",
+        "secondary": "Drugorzedny",
+        "surface": "Powierzchnia",
+        "warning": "Ostrzezenie",
+        "success": "Sukces"
+      },
+      "navigationPills": {
+        "active": "Aktywny",
+        "library": "Biblioteka",
+        "hover": "Hover"
+      },
+      "gradients": {
+        "indigo": "Indigo",
+        "violet": "Fiolet",
+        "emerald": "Szmaragd",
+        "sky": "Blekit",
+        "amber": "Bursztyn",
+        "rose": "Roz",
+        "teal": "Turkus",
+        "slate": "Lupkowy"
+      },
+      "homeActions": {
+        "items": {
+          "lessons": "Lekcje",
+          "play": "Graj",
+          "training": "Trening",
+          "kangur": "Kangur"
+        }
+      },
+      "inputs": {
+        "searchPlaceholder": "Szukaj promptu...",
+        "ariaLabel": "Podglad pola"
+      },
+      "typography": {
+        "heading": "Naglowek Kangur",
+        "bodySample": "Przykladowy tekst z biezacym rozmiarem bazowym i wysokoscia linii.",
+        "layout": "Uklad"
+      },
+      "shape": {
+        "panel": "Panel",
+        "card": "Karta"
+      },
+      "shadows": {
+        "glassPanel": "Szklany panel",
+        "softCard": "Miekka karta"
       }
     }
   }

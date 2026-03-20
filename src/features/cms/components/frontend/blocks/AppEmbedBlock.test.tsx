@@ -88,13 +88,8 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/features/kangur/public', async () => {
   return {
-    buildKangurEmbeddedBasePath: kangurAdapterTestDouble.buildKangurEmbeddedBasePath,
-    getKangurPageSlug: kangurAdapterTestDouble.getKangurPageSlug,
-    getKangurInternalQueryParamKeys: kangurAdapterTestDouble.getKangurInternalQueryParamKeys,
-    KANGUR_MAIN_PAGE_KEY: kangurAdapterTestDouble.KANGUR_MAIN_PAGE_KEY,
-    KANGUR_PAGE_TO_SLUG: kangurAdapterTestDouble.KANGUR_PAGE_TO_SLUG,
-    readKangurUrlParam: kangurAdapterTestDouble.readKangurUrlParam,
-    KANGUR_EMBED_QUERY_PARAM: kangurAdapterTestDouble.KANGUR_EMBED_QUERY_PARAM,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    ...kangurAdapterTestDouble,
     KangurFeaturePage: ({
       slug,
       basePath,

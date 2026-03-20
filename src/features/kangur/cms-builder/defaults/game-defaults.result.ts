@@ -9,8 +9,14 @@ import {
 } from '../project-factories';
 import { makeGameMetricCard, makeRuntimeVisibilitySettings } from '../project-sections';
 import { makeGameLeaderboardPanel, makeGameScreenVisibilitySettings } from './game-defaults.helpers';
+import { resolveKangurCmsDefaultsCopy } from './defaults-i18n';
 
-export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
+export const createDefaultGameScreenResultComponents = (
+  locale?: string | null
+): PageComponentInput[] => {
+  const copy = resolveKangurCmsDefaultsCopy(locale);
+
+  return [
     makeBlockSection({
       id: 'kangur-game-result-summary',
       blocks: [
@@ -51,7 +57,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                 }),
               },
               blocks: [
-                makeTextBlock('kangur-game-result-assignment-eyebrow', 'Zadanie od rodzica', {
+                makeTextBlock('kangur-game-result-assignment-eyebrow', copy.game.result.assignmentEyebrow, {
                   fontSize: 12,
                   fontWeight: '700',
                   letterSpacing: 1.4,
@@ -60,12 +66,12 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                     enabled: true,
                     source: 'kangur',
                     path: 'game.result.assignmentEyebrow',
-                    fallback: 'Zadanie od rodzica',
+                    fallback: copy.game.result.assignmentEyebrow,
                   },
                 }),
                 makeHeadingBlock(
                   'kangur-game-result-assignment-title',
-                  'Priorytetowe zadanie',
+                  copy.game.result.assignmentTitle,
                   28,
                   {
                     textColor: '#1e293b',
@@ -73,13 +79,13 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.assignmentTitle',
-                      fallback: 'Priorytetowe zadanie',
+                      fallback: copy.game.result.assignmentTitle,
                     },
                   }
                 ),
                 makeTextBlock(
                   'kangur-game-result-assignment-description',
-                  'Wróć do zadania i kontynuuj wyzwanie.',
+                  copy.game.result.assignmentDescription,
                   {
                     fontSize: 15,
                     textColor: '#64748b',
@@ -87,7 +93,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.assignmentDescription',
-                      fallback: 'Wróć do zadania i kontynuuj wyzwanie.',
+                      fallback: copy.game.result.assignmentDescription,
                     },
                   }
                 ),
@@ -107,7 +113,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                 }),
                 makeTextBlock(
                   'kangur-game-result-assignment-progress-label',
-                  '0% ukończono',
+                  copy.game.result.assignmentProgressLabel,
                   {
                     fontSize: 14,
                     textColor: '#7a86b0',
@@ -115,11 +121,11 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.assignmentProgressLabel',
-                      fallback: '0% ukończono',
+                      fallback: copy.game.result.assignmentProgressLabel,
                     },
                   }
                 ),
-                makeButtonBlock('kangur-game-result-assignment-button', 'Kontynuuj zadanie', {
+                makeButtonBlock('kangur-game-result-assignment-button', copy.game.result.assignmentActionLabel, {
                   runtimeActionSource: 'kangur',
                   runtimeActionPath: 'game.result.openAssignment',
                   buttonStyle: 'solid',
@@ -134,7 +140,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                     enabled: true,
                     source: 'kangur',
                     path: 'game.result.assignmentActionLabel',
-                    fallback: 'Kontynuuj zadanie',
+                    fallback: copy.game.result.assignmentActionLabel,
                   },
                 }),
               ],
@@ -166,7 +172,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                 },
               },
               blocks: [
-                makeTextBlock('kangur-game-result-stars', '1 / 3 gwiazdki', {
+                makeTextBlock('kangur-game-result-stars', copy.game.result.starsLabel, {
                   fontSize: 14,
                   fontWeight: '700',
                   textAlign: 'center',
@@ -175,21 +181,21 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                     enabled: true,
                     source: 'kangur',
                     path: 'game.result.starsLabel',
-                    fallback: '1 / 3 gwiazdki',
+                    fallback: copy.game.result.starsLabel,
                   },
                 }),
-                makeHeadingBlock('kangur-game-result-title', 'Swietna robota, Graczu!', 34, {
+                makeHeadingBlock('kangur-game-result-title', copy.game.result.title, 34, {
                   textColor: '#1e293b',
                   connection: {
                     enabled: true,
                     source: 'kangur',
                     path: 'game.result.title',
-                    fallback: 'Swietna robota, Graczu!',
+                    fallback: copy.game.result.title,
                   },
                 }),
                 makeTextBlock(
                   'kangur-game-result-message',
-                  'Dobra robota! Ćwiczenie czyni mistrza.',
+                  copy.game.result.message,
                   {
                     fontSize: 17,
                     textAlign: 'center',
@@ -198,7 +204,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                       enabled: true,
                       source: 'kangur',
                       path: 'game.result.message',
-                      fallback: 'Dobra robota! Ćwiczenie czyni mistrza.',
+                      fallback: copy.game.result.message,
                     },
                   }
                 ),
@@ -214,30 +220,30 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                   blocks: [
                     makeGameMetricCard({
                       id: 'kangur-game-result-score',
-                      label: 'Wynik',
+                      label: copy.game.result.scoreMetric,
                       connectionPath: 'game.result.scoreLabel',
                       fillColor: '#eef2ff',
                     }),
                     makeGameMetricCard({
                       id: 'kangur-game-result-accuracy',
-                      label: 'Dokładność',
+                      label: copy.game.result.accuracyMetric,
                       connectionPath: 'game.result.accuracyLabel',
                       fillColor: '#ecfeff',
                       textColor: '#0f766e',
                     }),
                     makeGameMetricCard({
                       id: 'kangur-game-result-time',
-                      label: 'Czas',
+                      label: copy.game.result.timeMetric,
                       connectionPath: 'game.result.timeTakenLabel',
                       fillColor: '#fff7ed',
                       textColor: '#c2410c',
                     }),
                     makeGameMetricCard({
                       id: 'kangur-game-result-topic',
-                      label: 'Temat',
+                      label: copy.game.result.topicMetric,
                       connectionPath: 'game.result.operationLabel',
                       fillColor: '#f5f3ff',
-                      fallback: 'Trening mieszany',
+                      fallback: copy.game.result.topicFallback,
                       textColor: '#6d28d9',
                       valueFontSize: 22,
                     }),
@@ -267,7 +273,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                     blockGap: 12,
                   },
                   blocks: [
-                    makeButtonBlock('kangur-game-result-restart', 'Zagraj ponownie', {
+                    makeButtonBlock('kangur-game-result-restart', copy.game.result.restartLabel, {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'game.handleRestart',
                       buttonStyle: 'solid',
@@ -279,7 +285,7 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
                       borderRadius: 22,
                       borderWidth: 1,
                     }),
-                    makeButtonBlock('kangur-game-result-home', 'Strona główna', {
+                    makeButtonBlock('kangur-game-result-home', copy.game.result.homeLabel, {
                       runtimeActionSource: 'kangur',
                       runtimeActionPath: 'game.handleHome',
                       buttonStyle: 'outline',
@@ -309,9 +315,9 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
       blocks: [
         makeGameLeaderboardPanel({
           id: 'kangur-game-result-leaderboard',
-          title: 'Tablica wyników',
-          description:
-            'Po zakończeniu gry nadal możesz przebudować ten ranking z poziomu CMS buildera.',
+          title: copy.game.result.leaderboardTitle,
+          description: copy.game.result.leaderboardDescription,
+          locale: locale ?? undefined,
         }),
       ],
       paddingTop: 0,
@@ -320,4 +326,5 @@ export const GAME_SCREEN_COMPONENTS_RESULT: PageComponentInput[] = [
       paddingRight: 0,
       settings: makeGameScreenVisibilitySettings('result'),
     }),
-];
+  ];
+};

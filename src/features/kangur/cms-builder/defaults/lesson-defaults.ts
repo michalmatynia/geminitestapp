@@ -10,19 +10,23 @@ import {
   makeGridRow,
   makeGridSection,
 } from '../project-sections';
+import { resolveKangurCmsDefaultsCopy } from './defaults-i18n';
 
-export const createDefaultLessonsScreenComponents = (): PageComponentInput[] =>
-  withOrders([
+export const createDefaultLessonsScreenComponents = (
+  locale?: string | null
+): PageComponentInput[] => {
+  const copy = resolveKangurCmsDefaultsCopy(locale);
+
+  return withOrders([
     makeBlockSection({
       id: 'kangur-lessons-intro',
-      title: 'Lekcje',
-      description:
-        'Ten ekran jest już składany w CMS builderze. Zmieniaj układ, teksty i rozmieszczenie widgetów bez wracania do kodu strony.',
+      title: copy.lessons.title,
+      description: copy.lessons.description,
       blocks: [
         makeWidgetBlock('kangur-widget-lessons-progress', 'player-progress'),
         makeWidgetBlock('kangur-widget-lessons-assignments', 'priority-assignments', {
-          title: 'Priorytetowe zadania',
-          emptyLabel: 'Brak aktywnych priorytetów.',
+          title: copy.lessons.priorityAssignmentsTitle,
+          emptyLabel: copy.lessons.priorityAssignmentsEmpty,
           limit: 2,
         }),
       ],
@@ -55,3 +59,4 @@ export const createDefaultLessonsScreenComponents = (): PageComponentInput[] =>
       paddingTop: 0,
     }),
   ]);
+};

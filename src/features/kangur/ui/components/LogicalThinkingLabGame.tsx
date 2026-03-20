@@ -3,14 +3,14 @@
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo, useState } from 'react';
 
+import { cn } from '@/features/kangur/shared/utils';
+import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 import { KangurButton, KangurInfoCard, KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import { cn } from '@/features/kangur/shared/utils';
-import { KangurDragDropContext } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -31,7 +31,7 @@ type ClassifyItem = {
   target: 'yes' | 'no';
 };
 
-type AnalogyRound = {
+export type LogicalThinkingLabAnalogyRound = {
   id: string;
   prompt: string;
   options: { id: string; label: string }[];
@@ -40,6 +40,66 @@ type AnalogyRound = {
 };
 
 type FeedbackKind = 'success' | 'error' | 'info' | null;
+
+export type LogicalThinkingLabGameCopy = {
+  completion: {
+    title: string;
+    description: string;
+    restart: string;
+  };
+  header: {
+    stageTemplate: string;
+    instruction: string;
+  };
+  pattern: {
+    prompt: string;
+    slotLabels: {
+      first: string;
+      second: string;
+    };
+    filledSlotAriaTemplate: string;
+    emptySlotAriaTemplate: string;
+    selectTokenAriaTemplate: string;
+    selectedTemplate: string;
+    idle: string;
+    moveToFirst: string;
+    moveToSecond: string;
+    moveToPool: string;
+  };
+  classify: {
+    prompt: string;
+    yesZoneLabel: string;
+    noZoneLabel: string;
+    yesZoneAriaLabel: string;
+    noZoneAriaLabel: string;
+    selectItemAriaTemplate: string;
+    selectedTemplate: string;
+    idle: string;
+    moveToYes: string;
+    moveToNo: string;
+    moveToPool: string;
+  };
+  analogy: {
+    prompt: string;
+    optionAriaTemplate: string;
+  };
+  feedback: {
+    info: string;
+    success: string;
+    error: string;
+  };
+  actions: {
+    check: string;
+    retry: string;
+    next: string;
+    finish: string;
+  };
+};
+
+type LogicalThinkingLabGameProps = {
+  analogyRounds: LogicalThinkingLabAnalogyRound[];
+  copy: LogicalThinkingLabGameCopy;
+};
 
 const STAGES: StageId[] = ['pattern', 'classify', 'analogy'];
 
@@ -58,35 +118,6 @@ const CLASSIFY_ITEMS: ClassifyItem[] = [
   { id: 'dog', label: '🐶', target: 'no' },
   { id: 'cat', label: '🐱', target: 'no' },
   { id: 'fish', label: '🐟', target: 'no' },
-];
-
-const ANALOGY_ROUND_BIRD_OPTIONS = [
-  { id: 'swims', label: 'pływa' },
-  { id: 'runs', label: 'biega' },
-  { id: 'sleeps', label: 'śpi' },
-];
-
-const ANALOGY_ROUND_DAY_OPTIONS = [
-  { id: 'moon', label: 'księżyc' },
-  { id: 'rain', label: 'deszcz' },
-  { id: 'cloud', label: 'chmura' },
-];
-
-const ANALOGY_ROUNDS: AnalogyRound[] = [
-  {
-    id: 'bird',
-    prompt: 'Ptak : lata = Ryba : ?',
-    options: ANALOGY_ROUND_BIRD_OPTIONS,
-    correctId: 'swims',
-    explanation: 'Ryby poruszają się w wodzie, więc „pływa” pasuje do relacji.',
-  },
-  {
-    id: 'day',
-    prompt: 'Dzień : słońce = Noc : ?',
-    options: ANALOGY_ROUND_DAY_OPTIONS,
-    correctId: 'moon',
-    explanation: 'W nocy kojarzymy światło z księżycem.',
-  },
 ];
 
 const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
@@ -134,7 +165,16 @@ const removeItemById = <T extends { id: string }>(
   return { updated, item: item ?? null };
 };
 
-export default function LogicalThinkingLabGame(): React.JSX.Element {
+const formatTemplate = (template: string, values: Record<string, string | number>): string =>
+  Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
+    template
+  );
+
+export default function LogicalThinkingLabGame({
+  analogyRounds,
+  copy,
+}: LogicalThinkingLabGameProps): React.JSX.Element {
   const [stageIndex, setStageIndex] = useState(0);
   const [patternState, setPatternState] = useState(buildPatternState);
   const [patternChecked, setPatternChecked] = useState(false);
@@ -149,7 +189,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
   const [completed, setCompleted] = useState(false);
 
   const stage = STAGES[stageIndex] ?? 'pattern';
-  const analogyRound = ANALOGY_ROUNDS[analogyIndex] ?? ANALOGY_ROUNDS[0]!;
+  const analogyRound = analogyRounds[analogyIndex] ?? analogyRounds[0];
 
   useEffect(() => {
     setPatternSelectedTokenId(null);
@@ -178,7 +218,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
         : classifyState['classify-no'].some((entry) => entry.id === item.id)
     );
 
-  const analogyCorrect = analogySelected === analogyRound.correctId;
+  const analogyCorrect = analogySelected === analogyRound?.correctId;
 
   const handlePatternDragEnd = (result: DropResult): void => {
     if (patternChecked) return;
@@ -331,6 +371,15 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
     setFeedback(null);
   };
 
+  const handleRestart = (): void => {
+    setCompleted(false);
+    setStageIndex(0);
+    resetPattern();
+    resetClassify();
+    setAnalogyIndex(0);
+    resetAnalogy();
+  };
+
   const goNextStage = (): void => {
     if (stageIndex + 1 >= STAGES.length) {
       setCompleted(true);
@@ -370,7 +419,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
   };
 
   const handleAnalogyNext = (): void => {
-    if (analogyIndex + 1 >= ANALOGY_ROUNDS.length) {
+    if (analogyIndex + 1 >= analogyRounds.length) {
       goNextStage();
       return;
     }
@@ -378,22 +427,25 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
     resetAnalogy();
   };
 
+  if (!analogyRound) {
+    return <div className='sr-only' />;
+  }
+
   if (completed) {
     return (
       <KangurInfoCard accent='emerald' tone='accent' padding='md' className='w-full text-center'>
-        <p className='text-lg font-extrabold text-emerald-700'>Brawo! 🧠</p>
+        <p className='text-lg font-extrabold text-emerald-700'>{copy.completion.title}</p>
         <p className='mt-2 text-sm [color:var(--kangur-page-text)]'>
-          Rozwiązałeś wszystkie zadania logicznego laboratorium.
+          {copy.completion.description}
         </p>
-        <KangurButton onClick={() => {
-          setCompleted(false);
-          setStageIndex(0);
-          resetPattern();
-          resetClassify();
-          setAnalogyIndex(0);
-          resetAnalogy();
-        }} size='sm' type='button' variant='surface' className='mt-3'>
-          Zagraj jeszcze raz
+        <KangurButton
+          onClick={handleRestart}
+          size='sm'
+          type='button'
+          variant='surface'
+          className='mt-3'
+        >
+          {copy.completion.restart}
         </KangurButton>
       </KangurInfoCard>
     );
@@ -403,18 +455,17 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
     <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <KangurStatusChip accent='violet' className='px-3 py-1 text-[11px] font-extrabold' size='sm'>
-          Etap {stageIndex + 1} / {STAGES.length}
+          {formatTemplate(copy.header.stageTemplate, {
+            current: stageIndex + 1,
+            total: STAGES.length,
+          })}
         </KangurStatusChip>
-        <span className='text-xs [color:var(--kangur-page-muted-text)]'>
-          Przeciągnij i klikaj, aby ukończyć misję.
-        </span>
+        <span className='text-xs [color:var(--kangur-page-muted-text)]'>{copy.header.instruction}</span>
       </div>
 
       {stage === 'pattern' ? (
         <div className='flex flex-col kangur-panel-gap'>
-          <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-            Uzupełnij wzorzec: znajdź dwie następne figury.
-          </p>
+          <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>{copy.pattern.prompt}</p>
           <KangurDragDropContext onDragEnd={handlePatternDragEnd}>
             <div className='flex flex-wrap items-center justify-center gap-2 text-2xl'>
               {PATTERN_SEQUENCE.map((token, index) => (
@@ -422,39 +473,37 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                   {token}
                 </span>
               ))}
-              {(['pattern-slot-1', 'pattern-slot-2'] as PatternZoneId[]).map((slotId) => (
-                <Droppable key={slotId} droppableId={slotId} direction='horizontal'>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={cn(
-                        'flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed text-xl',
-                        snapshot.isDraggingOver ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200'
-                      )}
-                      role='button'
-                      tabIndex={patternChecked ? -1 : 0}
-                      aria-disabled={patternChecked}
-                      aria-label={
-                        patternState[slotId][0]
-                          ? `Pole ${slotId === 'pattern-slot-1' ? '1' : '2'}: ${patternState[slotId][0]?.label}`
-                          : `Pole ${slotId === 'pattern-slot-1' ? '1' : '2'}: puste`
-                      }
-                      onClick={() => {
-                        if (patternChecked) return;
-                        if (patternSelectedTokenId) {
-                          movePatternSelectedTo(slotId);
-                          return;
+              {(['pattern-slot-1', 'pattern-slot-2'] as PatternZoneId[]).map((slotId) => {
+                const slotLabel =
+                  slotId === 'pattern-slot-1'
+                    ? copy.pattern.slotLabels.first
+                    : copy.pattern.slotLabels.second;
+
+                return (
+                  <Droppable key={slotId} droppableId={slotId} direction='horizontal'>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={cn(
+                          'flex h-12 w-12 items-center justify-center rounded-xl border-2 border-dashed text-xl',
+                          snapshot.isDraggingOver ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200'
+                        )}
+                        role='button'
+                        tabIndex={patternChecked ? -1 : 0}
+                        aria-disabled={patternChecked}
+                        aria-label={
+                          patternState[slotId][0]
+                            ? formatTemplate(copy.pattern.filledSlotAriaTemplate, {
+                                slot: slotLabel,
+                                token: patternState[slotId][0]?.label ?? '',
+                              })
+                            : formatTemplate(copy.pattern.emptySlotAriaTemplate, {
+                                slot: slotLabel,
+                              })
                         }
-                        const slotToken = patternState[slotId][0];
-                        if (slotToken) {
-                          setPatternSelectedTokenId(slotToken.id);
-                        }
-                      }}
-                      onKeyDown={(event) => {
-                        if (patternChecked) return;
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
+                        onClick={() => {
+                          if (patternChecked) return;
                           if (patternSelectedTokenId) {
                             movePatternSelectedTo(slotId);
                             return;
@@ -463,50 +512,66 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                           if (slotToken) {
                             setPatternSelectedTokenId(slotToken.id);
                           }
-                        }
-                      }}
-                    >
-                      {patternState[slotId].map((token, tokenIndex) => (
-                        <Draggable
-                          key={token.id}
-                          draggableId={token.id}
-                          index={tokenIndex}
-                          isDragDisabled={patternChecked}
-                          disableInteractiveElementBlocking
-                        >
-                          {(dragProvided) => (
-                            <button
-                              type='button'
-                              ref={dragProvided.innerRef}
-                              {...dragProvided.draggableProps}
-                              {...dragProvided.dragHandleProps}
-                              className={cn(
-                                'text-2xl rounded-md px-1',
-                                patternSelectedTokenId === token.id &&
-                                  'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-white'
-                              )}
-                              aria-pressed={patternSelectedTokenId === token.id}
-                              aria-label={`Wybierz symbol ${token.label}`}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                if (patternChecked) return;
-                                setPatternSelectedTokenId((current) =>
-                                  current === token.id ? null : token.id
-                                );
-                              }}
-                            >
-                              {token.label}
-                            </button>
-                          )}
-                        </Draggable>
-                      ))}
-                      {patternState[slotId].length === 0 ? '?' : null}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              ))}
+                        }}
+                        onKeyDown={(event) => {
+                          if (patternChecked) return;
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            if (patternSelectedTokenId) {
+                              movePatternSelectedTo(slotId);
+                              return;
+                            }
+                            const slotToken = patternState[slotId][0];
+                            if (slotToken) {
+                              setPatternSelectedTokenId(slotToken.id);
+                            }
+                          }
+                        }}
+                      >
+                        {patternState[slotId].map((token, tokenIndex) => (
+                          <Draggable
+                            key={token.id}
+                            draggableId={token.id}
+                            index={tokenIndex}
+                            isDragDisabled={patternChecked}
+                            disableInteractiveElementBlocking
+                          >
+                            {(dragProvided) => (
+                              <button
+                                type='button'
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={cn(
+                                  'rounded-md px-1 text-2xl',
+                                  patternSelectedTokenId === token.id &&
+                                    'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-white'
+                                )}
+                                aria-pressed={patternSelectedTokenId === token.id}
+                                aria-label={formatTemplate(copy.pattern.selectTokenAriaTemplate, {
+                                  token: token.label,
+                                })}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  if (patternChecked) return;
+                                  setPatternSelectedTokenId((current) =>
+                                    current === token.id ? null : token.id
+                                  );
+                                }}
+                              >
+                                {token.label}
+                              </button>
+                            )}
+                          </Draggable>
+                        ))}
+                        {patternState[slotId].length === 0 ? '?' : null}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                );
+              })}
             </div>
             <Droppable droppableId='pattern-pool' direction='horizontal'>
               {(provided, snapshot) => (
@@ -538,7 +603,9 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                               'ring-2 ring-indigo-300/80 ring-offset-2 ring-offset-white'
                           )}
                           aria-pressed={patternSelectedTokenId === token.id}
-                          aria-label={`Wybierz symbol ${token.label}`}
+                          aria-label={formatTemplate(copy.pattern.selectTokenAriaTemplate, {
+                            token: token.label,
+                          })}
                           onClick={(event) => {
                             event.preventDefault();
                             if (patternChecked) return;
@@ -564,8 +631,10 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 aria-atomic='true'
               >
                 {patternSelectedToken
-                  ? `Wybrany kafelek: ${patternSelectedToken.label}`
-                  : 'Wybierz kafelek, aby przenieść go klawiaturą.'}
+                  ? formatTemplate(copy.pattern.selectedTemplate, {
+                      token: patternSelectedToken.label,
+                    })
+                  : copy.pattern.idle}
               </span>
               <KangurButton
                 size='sm'
@@ -574,7 +643,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 onClick={() => movePatternSelectedTo('pattern-slot-1')}
                 disabled={!patternSelectedToken || patternChecked}
               >
-                Do pola 1
+                {copy.pattern.moveToFirst}
               </KangurButton>
               <KangurButton
                 size='sm'
@@ -583,7 +652,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 onClick={() => movePatternSelectedTo('pattern-slot-2')}
                 disabled={!patternSelectedToken || patternChecked}
               >
-                Do pola 2
+                {copy.pattern.moveToSecond}
               </KangurButton>
               <KangurButton
                 size='sm'
@@ -592,7 +661,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 onClick={() => movePatternSelectedTo('pattern-pool')}
                 disabled={!patternSelectedToken || patternChecked}
               >
-                Do puli
+                {copy.pattern.moveToPool}
               </KangurButton>
             </div>
           </KangurDragDropContext>
@@ -601,9 +670,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
 
       {stage === 'classify' ? (
         <div className='flex flex-col kangur-panel-gap'>
-          <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-            Posegreguj obrazki według cechy: <b>ma skrzydła</b>.
-          </p>
+          <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>{copy.classify.prompt}</p>
           <KangurDragDropContext onDragEnd={handleClassifyDragEnd}>
             <div className='grid kangur-panel-gap sm:grid-cols-2'>
               {(['classify-yes', 'classify-no'] as ClassifyZoneId[]).map((zoneId) => (
@@ -622,7 +689,11 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                       role='button'
                       tabIndex={classifyChecked ? -1 : 0}
                       aria-disabled={classifyChecked}
-                      aria-label={zoneId === 'classify-yes' ? 'Strefa: ma skrzydła' : 'Strefa: nie ma skrzydeł'}
+                      aria-label={
+                        zoneId === 'classify-yes'
+                          ? copy.classify.yesZoneAriaLabel
+                          : copy.classify.noZoneAriaLabel
+                      }
                       onClick={() => {
                         if (classifyChecked || !classifySelectedTokenId) return;
                         moveClassifySelectedTo(zoneId);
@@ -637,7 +708,9 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                       }}
                     >
                       <span className='text-xs font-bold uppercase tracking-[0.18em] text-slate-500'>
-                        {zoneId === 'classify-yes' ? 'Ma skrzydła' : 'Nie ma skrzydeł'}
+                        {zoneId === 'classify-yes'
+                          ? copy.classify.yesZoneLabel
+                          : copy.classify.noZoneLabel}
                       </span>
                       <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-2xl`}>
                         {classifyState[zoneId].map((item, index) => (
@@ -660,7 +733,9 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                                     'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
                                 )}
                                 aria-pressed={classifySelectedTokenId === item.id}
-                                aria-label={`Wybierz obrazek ${item.label}`}
+                                aria-label={formatTemplate(copy.classify.selectItemAriaTemplate, {
+                                  item: item.label,
+                                })}
                                 onClick={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
@@ -712,7 +787,9 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                               'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
                           )}
                           aria-pressed={classifySelectedTokenId === item.id}
-                          aria-label={`Wybierz obrazek ${item.label}`}
+                          aria-label={formatTemplate(copy.classify.selectItemAriaTemplate, {
+                            item: item.label,
+                          })}
                           onClick={(event) => {
                             event.preventDefault();
                             if (classifyChecked) return;
@@ -738,8 +815,10 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 aria-atomic='true'
               >
                 {classifySelectedItem
-                  ? `Wybrany obrazek: ${classifySelectedItem.label}`
-                  : 'Wybierz obrazek, aby przenieść go klawiaturą.'}
+                  ? formatTemplate(copy.classify.selectedTemplate, {
+                      item: classifySelectedItem.label,
+                    })
+                  : copy.classify.idle}
               </span>
               <KangurButton
                 size='sm'
@@ -748,7 +827,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 onClick={() => moveClassifySelectedTo('classify-yes')}
                 disabled={!classifySelectedItem || classifyChecked}
               >
-                Do „ma skrzydła”
+                {copy.classify.moveToYes}
               </KangurButton>
               <KangurButton
                 size='sm'
@@ -757,7 +836,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 onClick={() => moveClassifySelectedTo('classify-no')}
                 disabled={!classifySelectedItem || classifyChecked}
               >
-                Do „nie ma skrzydeł”
+                {copy.classify.moveToNo}
               </KangurButton>
               <KangurButton
                 size='sm'
@@ -766,7 +845,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                 onClick={() => moveClassifySelectedTo('classify-pool')}
                 disabled={!classifySelectedItem || classifyChecked}
               >
-                Do puli
+                {copy.classify.moveToPool}
               </KangurButton>
             </div>
           </KangurDragDropContext>
@@ -775,9 +854,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
 
       {stage === 'analogy' ? (
         <div className='flex flex-col kangur-panel-gap'>
-          <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>
-            Uzupełnij analogię.
-          </p>
+          <p className='text-sm font-semibold [color:var(--kangur-page-text)]'>{copy.analogy.prompt}</p>
           <KangurInfoCard accent='violet' tone='neutral' padding='sm' className='w-full text-center'>
             <p className='text-base font-bold text-violet-700'>{analogyRound.prompt}</p>
           </KangurInfoCard>
@@ -802,7 +879,9 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
                     isCorrect && 'border-emerald-300 bg-emerald-50',
                     isWrong && 'border-rose-300 bg-rose-50'
                   )}
-                  aria-label={`Opcja: ${option.label}`}
+                  aria-label={formatTemplate(copy.analogy.optionAriaTemplate, {
+                    option: option.label,
+                  })}
                   aria-pressed={isSelected}
                 >
                   {option.label}
@@ -811,9 +890,7 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
             })}
           </div>
           {analogyChecked ? (
-            <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-              {analogyRound.explanation}
-            </p>
+            <p className='text-xs [color:var(--kangur-page-muted-text)]'>{analogyRound.explanation}</p>
           ) : null}
         </div>
       ) : null}
@@ -829,25 +906,25 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
           aria-atomic='true'
         >
           {feedback === 'info'
-            ? 'Uzupełnij zadanie, aby sprawdzić odpowiedź.'
+            ? copy.feedback.info
             : feedback === 'success'
-              ? 'Świetnie! Tak trzymać.'
-              : 'Ups, spróbuj jeszcze raz.'}
+              ? copy.feedback.success
+              : copy.feedback.error}
         </KangurInfoCard>
       ) : null}
 
       <div className={KANGUR_WRAP_ROW_CLASSNAME}>
         <KangurButton onClick={handleCheck} size='sm' type='button' variant='primary'>
-          Sprawdź
+          {copy.actions.check}
         </KangurButton>
         {stage === 'pattern' && patternChecked ? (
           <>
             <KangurButton onClick={resetPattern} size='sm' type='button' variant='surface'>
-              Spróbuj ponownie
+              {copy.actions.retry}
             </KangurButton>
             {patternCorrect ? (
               <KangurButton onClick={goNextStage} size='sm' type='button' variant='surface'>
-                Dalej
+                {copy.actions.next}
               </KangurButton>
             ) : null}
           </>
@@ -855,11 +932,11 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
         {stage === 'classify' && classifyChecked ? (
           <>
             <KangurButton onClick={resetClassify} size='sm' type='button' variant='surface'>
-              Spróbuj ponownie
+              {copy.actions.retry}
             </KangurButton>
             {classifyCorrect ? (
               <KangurButton onClick={goNextStage} size='sm' type='button' variant='surface'>
-                Dalej
+                {copy.actions.next}
               </KangurButton>
             ) : null}
           </>
@@ -867,11 +944,11 @@ export default function LogicalThinkingLabGame(): React.JSX.Element {
         {stage === 'analogy' && analogyChecked ? (
           <>
             <KangurButton onClick={resetAnalogy} size='sm' type='button' variant='surface'>
-              Spróbuj ponownie
+              {copy.actions.retry}
             </KangurButton>
             {analogyCorrect ? (
               <KangurButton onClick={handleAnalogyNext} size='sm' type='button' variant='surface'>
-                {analogyIndex + 1 >= ANALOGY_ROUNDS.length ? 'Zakończ' : 'Dalej'}
+                {analogyIndex + 1 >= analogyRounds.length ? copy.actions.finish : copy.actions.next}
               </KangurButton>
             ) : null}
           </>

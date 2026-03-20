@@ -13,18 +13,22 @@ describe('UserNotRegisteredError', () => {
 
     expect(screen.getByTestId('user-not-registered-shell')).toHaveClass(
       'glass-panel',
-      'border-amber-200/80'
+      'kangur-panel-soft',
+      'rounded-[34px]',
+      'kangur-surface-panel-accent-amber',
+      'kangur-panel-padding-xl',
+      'kangur-panel-shell'
     );
-    expect(screen.getByText('restricted')).toHaveClass(
+    expect(screen.getByText('Dostep ograniczony')).toHaveClass(
       'text-[11px]',
       'uppercase',
       'tracking-[0.18em]'
     );
-    expect(screen.getByRole('heading', { name: 'title' })).toHaveClass(
+    expect(screen.getByRole('heading', { name: 'To konto nie ma jeszcze dostepu do Kangura' })).toHaveClass(
       'text-3xl',
       'font-extrabold'
     );
-    expect(screen.getByText('description')).toBeInTheDocument();
-    expect(screen.getByText('checkLabel')).toBeInTheDocument();
+    expect(screen.getByText(/Wyglada na to, ze Twoje konto/)).toBeInTheDocument();
+    expect(screen.getByText('Jesli to pomylka, sprawdz:')).toBeInTheDocument();
   });
 });

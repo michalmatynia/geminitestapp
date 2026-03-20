@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { useMemo } from 'react';
 
 import {
@@ -99,14 +100,15 @@ export function KangurCmsRuntimeScreen({
   pageKey: string | null | undefined;
   fallback?: ReactNode;
 }): ReactNode {
+  const locale = useLocale();
   const settingsStore = useSettingsStore();
   const rawProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const screenKey = resolveKangurCmsScreenKey(pageKey);
   const { theme } = useKangurStorefrontAppearance();
 
   const project = useMemo(
-    () => parseKangurCmsProject(rawProject, { fallbackToDefault: false }),
-    [rawProject]
+    () => parseKangurCmsProject(rawProject, { fallbackToDefault: false, locale }),
+    [locale, rawProject]
   );
   const scopedCustomCss = useMemo(
     () =>

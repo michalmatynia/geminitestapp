@@ -61,6 +61,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     isRouteRevealing,
     transitionPhase,
     activeTransitionSourceId,
+    activeTransitionKind,
     pendingPageKey,
     activeTransitionPageKey,
     activeTransitionSkeletonVariant,
@@ -86,6 +87,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const isLanguageSwitcherTransition =
+    activeTransitionKind === 'locale-switch' ||
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent =
@@ -99,11 +101,15 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const transitionPageKey =
     pendingPageKey ?? activeTransitionPageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
   const isRouteSkeletonVisible = isNavigationSkeletonVisible;
+  const shouldKeepRouteContentVisibleDuringTransition =
+    isLanguageSwitcherTransition && isRouteSkeletonVisible;
   const isRouteContentVisuallyHidden =
-    transitionPhase === 'waiting_for_ready' ||
-    ((transitionPhase === 'pending' ||
-      (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
-      isRouteSkeletonVisible);
+    !shouldKeepRouteContentVisibleDuringTransition &&
+    (transitionPhase === 'waiting_for_ready' ||
+      ((transitionPhase === 'pending' ||
+        (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
+        isRouteSkeletonVisible));
+  const isRouteContentInteractionBlocked = isRouteSkeletonVisible;
 
   useEffect(() => {
     if (authErrorType === 'auth_required') {
@@ -252,8 +258,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
             aria-busy={isNavigationTransitionActive}
             aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
             className={cn(
-              'w-full min-w-0',
-              embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
+              'w-full min-w-0 kangur-shell-viewport-height',
+              embedded ? 'min-h-full' : null,
+              isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
               isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
             )}
             data-route-transition-phase={transitionPhase}
@@ -276,7 +283,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
           >
             <KangurPageTransitionSkeleton
               pageKey={transitionPageKey}
-              reason='navigation'
+              reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
               variant={activeTransitionSkeletonVariant}
             />
           </motion.div>

@@ -95,7 +95,10 @@ const pruneHiddenWidgetsFromProject = (project: KangurCmsProject): KangurCmsProj
   },
 });
 
-const upgradeLegacyScreenComponents = (project: KangurCmsProject): KangurCmsProject => {
+const upgradeLegacyScreenComponents = (
+  project: KangurCmsProject,
+  locale?: string | null
+): KangurCmsProject => {
   const gameWidgetId = resolveSingleWidgetId(project.screens.Game);
   const lessonsWidgetId = resolveSingleWidgetId(project.screens.Lessons);
   const learnerProfileWidgetId = resolveSingleWidgetId(project.screens.LearnerProfile);
@@ -117,14 +120,14 @@ const upgradeLegacyScreenComponents = (project: KangurCmsProject): KangurCmsProj
         gameWidgetId === 'game-screen'
           ? {
             ...project.screens.Game,
-            components: createDefaultGameScreenComponents(),
+            components: createDefaultGameScreenComponents(locale),
           }
           : project.screens.Game,
       Lessons:
         lessonsWidgetId === 'lessons-screen'
           ? {
             ...project.screens.Lessons,
-            components: createDefaultLessonsScreenComponents(),
+            components: createDefaultLessonsScreenComponents(locale),
           }
           : project.screens.Lessons,
       LearnerProfile:
@@ -163,24 +166,28 @@ export function resolveKangurCmsScreenKey(
 
 export function parseKangurCmsProject(
   raw: string | null | undefined,
-  options?: { fallbackToDefault?: boolean }
+  options?: { fallbackToDefault?: boolean; locale?: string | null }
 ): KangurCmsProject | null {
   const fallbackToDefault = options?.fallbackToDefault ?? true;
+  const locale = options?.locale ?? null;
   const parsed = parseJsonSetting<unknown>(raw, null);
 
   if (!parsed) {
-    return fallbackToDefault ? createDefaultKangurCmsProject() : null;
+    return fallbackToDefault ? createDefaultKangurCmsProject(locale) : null;
   }
 
   const result = kangurCmsProjectSchema.safeParse(parsed);
   if (!result.success) {
-    return fallbackToDefault ? createDefaultKangurCmsProject() : null;
+    return fallbackToDefault ? createDefaultKangurCmsProject(locale) : null;
   }
 
-  return pruneHiddenWidgetsFromProject(upgradeLegacyScreenComponents(result.data));
+  return pruneHiddenWidgetsFromProject(upgradeLegacyScreenComponents(result.data, locale));
 }
 
-export function buildKangurCmsSyntheticPage(screen: KangurCmsScreen): Page {
+export function buildKangurCmsSyntheticPage(
+  screen: KangurCmsScreen,
+  locale?: string | null
+): Page {
   const timestamp = now();
 
   return {
@@ -188,7 +195,7 @@ export function buildKangurCmsSyntheticPage(screen: KangurCmsScreen): Page {
     createdAt: timestamp,
     updatedAt: timestamp,
     name: `Kangur ${screen.name}`,
-    locale: 'pl',
+    locale: locale ?? 'pl',
     translationGroupId: `kangur-cms-${screen.key.toLowerCase()}`,
     sourceLocale: null,
     translationStatus: 'draft',
@@ -217,10 +224,11 @@ export function buildKangurCmsPageSummary(screen: KangurCmsScreen): PageSummary 
 
 export function buildKangurCmsBuilderState(
   project: KangurCmsProject,
-  screenKey: KangurCmsScreenKey
+  screenKey: KangurCmsScreenKey,
+  locale?: string | null
 ): PageBuilderState {
   const screen = project.screens[screenKey];
-  const currentPage = buildKangurCmsSyntheticPage(screen);
+  const currentPage = buildKangurCmsSyntheticPage(screen, locale);
   const sections: SectionInstance[] = currentPage.components.map(
     (component: PageComponentInput) => ({
       id: component.content.sectionId,

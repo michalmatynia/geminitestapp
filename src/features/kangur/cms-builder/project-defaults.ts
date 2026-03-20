@@ -17,19 +17,19 @@ export {
   createDefaultAuthScreenComponents,
 };
 
-export function createDefaultKangurCmsProject(): KangurCmsProject {
+export function createDefaultKangurCmsProject(locale?: string | null): KangurCmsProject {
   return {
     version: 1,
     screens: {
       Game: {
         key: 'Game',
         name: KANGUR_CMS_SCREEN_LABELS.Game,
-        components: createDefaultGameScreenComponents(),
+        components: createDefaultGameScreenComponents(locale),
       },
       Lessons: {
         key: 'Lessons',
         name: KANGUR_CMS_SCREEN_LABELS.Lessons,
-        components: createDefaultLessonsScreenComponents(),
+        components: createDefaultLessonsScreenComponents(locale),
       },
       LearnerProfile: {
         key: 'LearnerProfile',

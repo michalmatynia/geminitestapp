@@ -26,6 +26,231 @@ import {
 import { resolveKangurRuntimeThemeVars } from './appearance-logic/CmsStorefrontAppearance.runtime-vars';
 import { resolveDefaultKangurStorefrontAppearance } from './appearance-logic/CmsStorefrontAppearance.default-vars';
 
+type KangurAccentThemeInput = {
+  start: string;
+  end: string;
+};
+
+type KangurAccentThemeName =
+  | 'indigo'
+  | 'violet'
+  | 'emerald'
+  | 'sky'
+  | 'amber'
+  | 'rose'
+  | 'teal'
+  | 'slate';
+
+const buildKangurAccentThemeVars = (args: {
+  softCardBackground: string;
+  softCardBorder: string;
+  glassPanelBorder: string;
+  textFieldBorder: string;
+  toneText: string;
+  pageMutedText: string;
+  pageBackground: string;
+  contrastText: string;
+  isDark: boolean;
+  accents: Record<KangurAccentThemeName, KangurAccentThemeInput>;
+}): Record<string, string> =>
+  Object.entries(args.accents).reduce<Record<string, string>>((vars, [name, accent]) => {
+    vars[`--kangur-accent-${name}-border`] = mixCssColor(args.softCardBorder, accent.end, 58);
+    vars[`--kangur-accent-${name}-surface-panel-border`] = mixCssColor(
+      args.glassPanelBorder,
+      accent.end,
+      56
+    );
+    vars[`--kangur-accent-${name}-media-border`] = mixCssColor(args.softCardBorder, accent.end, 58);
+    vars[`--kangur-accent-${name}-soft-surface-background`] = mixCssColor(
+      args.softCardBackground,
+      accent.start,
+      92
+    );
+    vars[`--kangur-accent-${name}-soft-surface-border`] = mixCssColor(
+      args.softCardBorder,
+      accent.end,
+      58
+    );
+    vars[`--kangur-accent-${name}-soft-fill`] = mixCssColor(
+      args.softCardBackground,
+      accent.start,
+      args.isDark ? 82 : 88
+    );
+    vars[`--kangur-accent-${name}-solid-fill`] = mixCssColor(
+      accent.end,
+      args.pageBackground,
+      args.isDark ? 72 : 82
+    );
+    vars[`--kangur-accent-${name}-text`] = mixCssColor(
+      args.toneText,
+      accent.end,
+      args.isDark ? 74 : 68
+    );
+    vars[`--kangur-accent-${name}-muted-text`] = mixCssColor(
+      args.pageMutedText,
+      accent.end,
+      args.isDark ? 78 : 72
+    );
+    vars[`--kangur-accent-${name}-contrast-text`] = args.contrastText;
+    vars[`--kangur-accent-${name}-soft-surface-shadow`] = `0 18px 40px -32px ${applyTransparency(
+      accent.end,
+      args.isDark ? 0.4 : 0.35
+    )}`;
+    vars[`--kangur-accent-${name}-focus-border`] = mixCssColor(
+      args.textFieldBorder,
+      accent.end,
+      48
+    );
+    vars[`--kangur-accent-${name}-focus-ring`] = applyTransparency(
+      accent.end,
+      args.isDark ? 0.32 : 0.26
+    );
+    return vars;
+  }, {});
+
+const buildKangurGlassSurfaceThemeVars = (args: {
+  softCardBackground: string;
+  softCardBorder: string;
+  glassPanelBorder: string;
+  glassPanelShadow: string;
+  pageBackground: string;
+  accents: Record<KangurAccentThemeName, KangurAccentThemeInput>;
+}): Record<string, string> => ({
+  '--kangur-glass-surface-mist-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    args.pageBackground,
+    78
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 62)} 100%)`,
+  '--kangur-glass-surface-mist-border': mixCssColor(args.glassPanelBorder, args.pageBackground, 94),
+  '--kangur-glass-surface-mist-soft-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    args.pageBackground,
+    64
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 48)} 100%)`,
+  '--kangur-glass-surface-mist-soft-border': mixCssColor(
+    args.glassPanelBorder,
+    args.pageBackground,
+    88
+  ),
+  '--kangur-glass-surface-mist-strong-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    args.pageBackground,
+    86
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 74)} 100%)`,
+  '--kangur-glass-surface-mist-strong-border': mixCssColor(
+    args.glassPanelBorder,
+    args.pageBackground,
+    96
+  ),
+  '--kangur-glass-surface-frost-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    args.pageBackground,
+    94
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 88)} 100%)`,
+  '--kangur-glass-surface-frost-border': mixCssColor(args.softCardBorder, args.pageBackground, 92),
+  '--kangur-glass-surface-solid-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    'transparent',
+    98
+  )} 0%, ${args.softCardBackground} 100%)`,
+  '--kangur-glass-surface-solid-border': mixCssColor(args.softCardBorder, args.pageBackground, 96),
+  '--kangur-glass-surface-neutral-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    args.pageBackground,
+    94
+  )} 0%, ${args.softCardBackground} 100%)`,
+  '--kangur-glass-surface-neutral-border': args.softCardBorder,
+  '--kangur-glass-surface-rose-background': `radial-gradient(circle at top, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['rose'].start,
+    84
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 94)} 44%, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['rose'].end,
+    86
+  )} 100%)`,
+  '--kangur-glass-surface-rose-border': mixCssColor(
+    args.softCardBorder,
+    args.accents['rose'].end,
+    58
+  ),
+  '--kangur-glass-surface-warm-glow-background': `radial-gradient(circle at top, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['amber'].start,
+    82
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 94)} 42%, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['amber'].end,
+    84
+  )} 100%)`,
+  '--kangur-glass-surface-warm-glow-border': mixCssColor(
+    args.softCardBorder,
+    args.accents['amber'].end,
+    56
+  ),
+  '--kangur-glass-surface-success-glow-background': `radial-gradient(circle at top, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['emerald'].start,
+    82
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 94)} 44%, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['emerald'].end,
+    84
+  )} 100%)`,
+  '--kangur-glass-surface-success-glow-border': mixCssColor(
+    args.softCardBorder,
+    args.accents['emerald'].end,
+    56
+  ),
+  '--kangur-glass-surface-play-glow-background': `radial-gradient(circle at top, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['indigo'].start,
+    82
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 96)} 42%, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['indigo'].end,
+    84
+  )} 100%)`,
+  '--kangur-glass-surface-play-glow-border': mixCssColor(
+    args.softCardBorder,
+    args.accents['indigo'].end,
+    56
+  ),
+  '--kangur-glass-surface-play-field-background': `radial-gradient(circle at top, ${mixCssColor(
+    args.softCardBackground,
+    'transparent',
+    96
+  )} 0%, ${mixCssColor(args.softCardBackground, args.accents['indigo'].start, 88)} 58%, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['amber'].start,
+    84
+  )} 100%)`,
+  '--kangur-glass-surface-play-field-border': mixCssColor(
+    args.softCardBorder,
+    args.accents['indigo'].end,
+    76
+  ),
+  '--kangur-glass-surface-play-field-shadow': `inset 0 1px 0 ${mixCssColor(
+    args.softCardBackground,
+    'transparent',
+    72
+  )}, ${args.glassPanelShadow}`,
+  '--kangur-glass-surface-teal-field-background': `linear-gradient(180deg, ${mixCssColor(
+    args.softCardBackground,
+    args.accents['teal'].start,
+    92
+  )} 0%, ${mixCssColor(args.softCardBackground, args.pageBackground, 88)} 100%)`,
+  '--kangur-glass-surface-teal-field-border': mixCssColor(
+    args.softCardBorder,
+    args.accents['teal'].end,
+    72
+  ),
+  '--kangur-glass-surface-teal-field-shadow': `0 14px 34px -26px ${applyTransparency(
+    args.accents['teal'].end,
+    0.34
+  )}`,
+});
+
 const resolveThemedKangurStorefrontAppearance = (
   theme: ThemeSettings,
   mode: CmsStorefrontAppearanceMode
@@ -106,6 +331,40 @@ const resolveThemedKangurStorefrontAppearance = (
           border: borderColor,
           accent,
         };
+  const accentThemes: Record<KangurAccentThemeName, KangurAccentThemeInput> = {
+    indigo: {
+      start: theme.gradientIndigoStart,
+      end: theme.gradientIndigoEnd,
+    },
+    violet: {
+      start: theme.gradientVioletStart,
+      end: theme.gradientVioletEnd,
+    },
+    emerald: {
+      start: theme.gradientEmeraldStart,
+      end: theme.gradientEmeraldEnd,
+    },
+    sky: {
+      start: theme.gradientSkyStart,
+      end: theme.gradientSkyEnd,
+    },
+    amber: {
+      start: theme.gradientAmberStart,
+      end: theme.gradientAmberEnd,
+    },
+    rose: {
+      start: theme.gradientRoseStart,
+      end: theme.gradientRoseEnd,
+    },
+    teal: {
+      start: theme.gradientTealStart,
+      end: theme.gradientTealEnd,
+    },
+    slate: {
+      start: theme.gradientSlateStart,
+      end: theme.gradientSlateEnd,
+    },
+  };
   const surfaceTone =
     isDarkStorefrontAppearanceMode(mode)
       ? resolveStorefrontAppearanceTone(
@@ -298,6 +557,48 @@ const resolveThemedKangurStorefrontAppearance = (
     blur: theme.cardShadowBlur,
     color: cardShadowBase,
     opacity: theme.cardShadowOpacity,
+  });
+  const glassPanelBackground = `linear-gradient(180deg, ${panelGradientStartWithAlpha} 0%, ${panelGradientEndWithAlpha} 100%)`;
+  const glassPanelBorder = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(borderColor, '#ffffff', 34)
+    : mixCssColor(borderColor, '#ffffff', 74);
+  const softCardBackground = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(surfaceTone.background, pageTone.background, 90)
+    : mixCssColor(surfaceTone.background, '#ffffff', 94);
+  const softCardBorder = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(borderColor, '#ffffff', 28)
+    : darkenCssColor(borderColor, 4);
+  const navGroupBackground = `linear-gradient(180deg, ${navGradientStartWithAlpha} 0%, ${navGradientEndWithAlpha} 100%)`;
+  const navGroupBorder = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(borderColor, '#ffffff', 34)
+    : mixCssColor(borderColor, '#ffffff', 72);
+  const textFieldBorder = isDarkStorefrontAppearanceMode(mode)
+    ? mixCssColor(inputTone.border, '#ffffff', 28)
+    : inputTone.border;
+  const contrastText = primaryButtonText;
+  const contrastMutedText = applyTransparency(primaryButtonText, isDark ? 0.74 : 0.68);
+  const overlayBackdrop = isNonEmptyString(theme.popupOverlayColor)
+    ? theme.popupOverlayColor.trim()
+    : backdrop;
+  const accentThemeVars = buildKangurAccentThemeVars({
+    softCardBackground,
+    softCardBorder,
+    glassPanelBorder,
+    textFieldBorder,
+    toneText,
+    pageMutedText,
+    pageBackground: pageTone.background,
+    contrastText,
+    isDark,
+    accents: accentThemes,
+  });
+  const glassSurfaceThemeVars = buildKangurGlassSurfaceThemeVars({
+    softCardBackground,
+    softCardBorder,
+    glassPanelBorder,
+    glassPanelShadow,
+    pageBackground: pageTone.background,
+    accents: accentThemes,
   });
   const primaryButtonBackgroundComputed = `linear-gradient(90deg, ${mixCssColor(
     primaryButtonBase,
@@ -494,27 +795,15 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-logo-inner-end': logoInnerEnd,
       '--kangur-logo-shadow': logoShadow,
       '--kangur-logo-glint': logoGlint,
-      '--kangur-glass-panel-background': `linear-gradient(180deg, ${panelGradientStartWithAlpha} 0%, ${panelGradientEndWithAlpha} 100%)`,
-      '--kangur-glass-panel-border':
-        isDarkStorefrontAppearanceMode(mode)
-          ? mixCssColor(borderColor, '#ffffff', 34)
-          : mixCssColor(borderColor, '#ffffff', 74),
+      '--kangur-glass-panel-background': glassPanelBackground,
+      '--kangur-glass-panel-border': glassPanelBorder,
       '--kangur-glass-panel-shadow': glassPanelShadow,
-      '--kangur-soft-card-background':
-        isDarkStorefrontAppearanceMode(mode)
-          ? mixCssColor(surfaceTone.background, pageTone.background, 90)
-          : mixCssColor(surfaceTone.background, '#ffffff', 94),
-      '--kangur-soft-card-border':
-        isDarkStorefrontAppearanceMode(mode)
-          ? mixCssColor(borderColor, '#ffffff', 28)
-          : darkenCssColor(borderColor, 4),
+      '--kangur-soft-card-background': softCardBackground,
+      '--kangur-soft-card-border': softCardBorder,
       '--kangur-soft-card-shadow': softCardShadow,
       '--kangur-soft-card-text': cardText,
-      '--kangur-nav-group-background': `linear-gradient(180deg, ${navGradientStartWithAlpha} 0%, ${navGradientEndWithAlpha} 100%)`,
-      '--kangur-nav-group-border':
-        isDarkStorefrontAppearanceMode(mode)
-          ? mixCssColor(borderColor, '#ffffff', 34)
-          : mixCssColor(borderColor, '#ffffff', 72),
+      '--kangur-nav-group-background': navGroupBackground,
+      '--kangur-nav-group-border': navGroupBorder,
       '--kangur-nav-item-text':
         navTextOverride ??
         (isDarkStorefrontAppearanceMode(mode)
@@ -541,10 +830,7 @@ const resolveThemedKangurStorefrontAppearance = (
           ? mixCssColor(navActiveText, '#ffffff', 92)
           : darkenCssColor(navActiveBackground, 24)),
       '--kangur-text-field-background': inputTone.background,
-      '--kangur-text-field-border':
-        isDarkStorefrontAppearanceMode(mode)
-          ? mixCssColor(inputTone.border, '#ffffff', 28)
-          : inputTone.border,
+      '--kangur-text-field-border': textFieldBorder,
       '--kangur-text-field-text': inputTone.text,
       '--kangur-text-field-placeholder':
         isDarkStorefrontAppearanceMode(mode)
@@ -558,6 +844,10 @@ const resolveThemedKangurStorefrontAppearance = (
         isDarkStorefrontAppearanceMode(mode)
           ? mixCssColor(inputTone.border, '#ffffff', 18)
           : mixCssColor(inputTone.border, pageTone.background, 72),
+      '--kangur-contrast-text': contrastText,
+      '--kangur-contrast-muted-text': contrastMutedText,
+      '--kangur-overlay-backdrop': overlayBackdrop,
+      '--kangur-overlay-backdrop-strong': backdropStrong,
       '--kangur-progress-track': progressTrack,
       '--kangur-accent-indigo-start': theme.gradientIndigoStart,
       '--kangur-accent-indigo-end': theme.gradientIndigoEnd,
@@ -575,6 +865,8 @@ const resolveThemedKangurStorefrontAppearance = (
       '--kangur-accent-teal-end': theme.gradientTealEnd,
       '--kangur-accent-slate-start': theme.gradientSlateStart,
       '--kangur-accent-slate-end': theme.gradientSlateEnd,
+      ...accentThemeVars,
+      ...glassSurfaceThemeVars,
       '--kangur-gradient-soft-mid': gradientSoftMid,
       '--kangur-cta-primary-start': primaryGradientStart,
       '--kangur-cta-primary-mid': primaryGradientMid,

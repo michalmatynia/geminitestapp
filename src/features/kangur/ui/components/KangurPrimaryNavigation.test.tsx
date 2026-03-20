@@ -267,6 +267,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  prefetchKangurPageContentStore: vi.fn().mockResolvedValue(undefined),
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
@@ -678,15 +679,18 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
+    prefetchMock.mockClear();
     openLanguageMenu();
-    expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
-    expect(prefetchMock).toHaveBeenCalledWith('/de/lessons?mode=solo&difficulty=hard');
+    expect(prefetchMock).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-en'));
 
+    expect(prefetchMock).toHaveBeenCalledTimes(1);
+    expect(prefetchMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard');
     expect(startRouteTransitionMock).toHaveBeenCalledWith({
       href: '/en/lessons?mode=solo&difficulty=hard',
       pageKey: 'Lessons',
       sourceId: 'kangur-language-switcher',
+      transitionKind: 'locale-switch',
     });
     expect(replaceMock).toHaveBeenCalledWith('/en/lessons?mode=solo&difficulty=hard', {
       scroll: false,
@@ -707,9 +711,17 @@ describe('KangurPrimaryNavigation', () => {
       />
     );
 
+    prefetchMock.mockClear();
     openLanguageMenu();
     fireEvent.click(await screen.findByTestId('kangur-language-switcher-option-pl'));
 
+    expect(prefetchMock).toHaveBeenCalledWith('/duels');
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/duels',
+      pageKey: 'Duels',
+      sourceId: 'kangur-language-switcher',
+      transitionKind: 'locale-switch',
+    });
     expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
   });
 
@@ -921,6 +933,7 @@ describe('KangurPrimaryNavigation', () => {
     const header = screen.getByTestId('kangur-primary-nav-mobile-header');
     const headerActions = screen.getByTestId('kangur-primary-nav-mobile-header-actions');
     const utilityActions = screen.getByTestId('kangur-primary-nav-utility-actions');
+    const mobileMenuDialog = screen.getByRole('dialog');
     const headerScope = within(header);
     const trigger = within(headerActions).getByTestId('kangur-language-switcher-trigger');
     const themeToggle = headerScope.getByRole('button', { name: 'Switch to Dawn theme' });
@@ -930,6 +943,9 @@ describe('KangurPrimaryNavigation', () => {
     expect(headerActions.firstElementChild).toBe(trigger);
     expect(headerActions).toContainElement(trigger);
     expect(headerActions).toContainElement(themeToggle);
+    expect(mobileMenuDialog.className).toContain(
+      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
+    );
     expect(within(utilityActions).queryByTestId('kangur-language-switcher-trigger')).toBeNull();
     expect(headerScope.getByRole('button', { name: /zamknij menu/i })).toBeInTheDocument();
   });

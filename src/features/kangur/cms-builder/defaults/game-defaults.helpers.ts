@@ -5,6 +5,7 @@ import {
   makeTextBlock,
   makeWidgetBlock,
 } from '../project-factories';
+import { resolveKangurCmsDefaultsCopy } from './defaults-i18n';
 import { makeRuntimeVisibilitySettings } from '../project-sections';
 import { makeLeaderboardSection } from '../project-leaderboard';
 
@@ -30,6 +31,7 @@ export const makeGameLeaderboardPanel = (input: {
   id: string;
   title: string;
   description: string;
+  locale?: string;
 }): BlockInstance =>
   makeContainerBlock({
     id: input.id,
@@ -62,11 +64,17 @@ export const makeGameLeaderboardPanel = (input: {
         fontSize: 15,
         textColor: '#7a86b0',
       }),
-      makeLeaderboardSection({ id: `${input.id}-ranking` }).content.blocks[1] as BlockInstance,
+      makeLeaderboardSection({
+        id: `${input.id}-ranking`,
+        title: resolveKangurCmsDefaultsCopy(input.locale).shared.leaderboard.title,
+        description: resolveKangurCmsDefaultsCopy(input.locale).shared.leaderboard.description,
+        playerFallback: resolveKangurCmsDefaultsCopy(input.locale).shared.leaderboard.playerFallback,
+        metaFallback: resolveKangurCmsDefaultsCopy(input.locale).shared.leaderboard.metaFallback,
+      }).content.blocks[1] as BlockInstance,
     ],
   });
 
-export const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance =>
+export const makeGameTrainingSetupPanel = (input: { id: string; locale?: string }): BlockInstance =>
   makeContainerBlock({
     id: input.id,
     settings: {
@@ -84,14 +92,22 @@ export const makeGameTrainingSetupPanel = (input: { id: string }): BlockInstance
       },
     },
     blocks: [
-      makeHeadingBlock(`${input.id}-title`, 'Ustawienia treningu', 26, {
+      makeHeadingBlock(
+        `${input.id}-title`,
+        resolveKangurCmsDefaultsCopy(input.locale).shared.trainingSetupTitle,
+        26,
+        {
         textColor: '#1e293b',
-      }),
+        }
+      ),
       makeWidgetBlock(`${input.id}-widget`, 'game-training-setup'),
     ],
   });
 
-export const makeGameOperationSelectorPanel = (input: { id: string }): BlockInstance =>
+export const makeGameOperationSelectorPanel = (input: {
+  id: string;
+  locale?: string;
+}): BlockInstance =>
   makeContainerBlock({
     id: input.id,
     settings: {
@@ -109,9 +125,14 @@ export const makeGameOperationSelectorPanel = (input: { id: string }): BlockInst
       },
     },
     blocks: [
-      makeHeadingBlock(`${input.id}-title`, 'Wybierz operację', 26, {
+      makeHeadingBlock(
+        `${input.id}-title`,
+        resolveKangurCmsDefaultsCopy(input.locale).shared.operationSelectorTitle,
+        26,
+        {
         textColor: '#1e293b',
-      }),
+        }
+      ),
       makeWidgetBlock(`${input.id}-widget`, 'game-operation-selector'),
     ],
   });

@@ -472,58 +472,41 @@ describe('Kangur shared primitives', () => {
       'kangur-panel-soft',
       'kangur-panel-padding-lg',
       'rounded-[34px]',
-      'flex'
-    );
-    expect(screen.getByTestId('kangur-surface-panel')).toHaveClass(
-      '[--kangur-panel-surface-border:color-mix(in_srgb,var(--kangur-glass-panel-border)_56%,var(--kangur-accent-sky-end,#818cf8))]'
+      'flex',
+      'kangur-surface-panel-accent-sky'
     );
     expect(screen.getByTestId('kangur-glass-panel')).toHaveClass(
-      'glass-panel'
+      'glass-panel',
+      'kangur-glass-surface-solid'
     );
-    expect(screen.getByTestId('kangur-glass-panel').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
-      'var(--kangur-soft-card-border'
-    );
+    expect(screen.getByTestId('kangur-glass-panel').getAttribute('style')).toBeNull();
     expect(screen.getByTestId('kangur-glass-panel-frost')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-frost').style.getPropertyValue('--kangur-panel-surface-background')).toContain(
-      'var(--kangur-soft-card-background'
+      'glass-panel',
+      'kangur-glass-surface-frost'
     );
     expect(screen.getByTestId('kangur-glass-panel-mist-soft')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-mist-soft').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
-      'var(--kangur-glass-panel-border'
+      'glass-panel',
+      'kangur-glass-surface-mist-soft'
     );
     expect(screen.getByTestId('kangur-glass-panel-warm-glow')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-warm-glow').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
-      'var(--kangur-accent-amber-end'
+      'glass-panel',
+      'kangur-glass-surface-warm-glow'
     );
     expect(screen.getByTestId('kangur-glass-panel-success-glow')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-success-glow').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
-      'var(--kangur-accent-emerald-end'
+      'glass-panel',
+      'kangur-glass-surface-success-glow'
     );
     expect(screen.getByTestId('kangur-glass-panel-play-glow')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-play-glow').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
-      'var(--kangur-accent-indigo-end'
+      'glass-panel',
+      'kangur-glass-surface-play-glow'
     );
     expect(screen.getByTestId('kangur-glass-panel-play-field')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-play-field').style.getPropertyValue('--kangur-panel-surface-shadow')).toContain(
-      'var(--kangur-glass-panel-shadow'
+      'glass-panel',
+      'kangur-glass-surface-play-field'
     );
     expect(screen.getByTestId('kangur-glass-panel-teal-field')).toHaveClass(
-      'glass-panel'
-    );
-    expect(screen.getByTestId('kangur-glass-panel-teal-field').style.getPropertyValue('--kangur-panel-surface-border')).toContain(
-      'var(--kangur-accent-teal-end'
+      'glass-panel',
+      'kangur-glass-surface-teal-field'
     );
     expect(screen.getByTestId('kangur-menu-item')).toHaveClass(
       'kangur-menu-item',
@@ -534,7 +517,7 @@ describe('Kangur shared primitives', () => {
       'soft-card',
       'kangur-card-surface',
       'kangur-media-padding-md',
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,var(--kangur-accent-amber-end,#facc15))]',
+      'kangur-media-frame-accent-amber',
       'kangur-gradient-accent-soft-amber'
     );
     expect(screen.getByTestId('kangur-result-badge')).toHaveClass(
@@ -549,12 +532,12 @@ describe('Kangur shared primitives', () => {
     expect(screen.getByTestId('kangur-input')).toHaveClass(
       'soft-card',
       'border',
-      '[--kangur-text-field-focus-border:color-mix(in_srgb,var(--kangur-text-field-border)_48%,var(--kangur-accent-indigo-end,#6366f1))]'
+      'kangur-text-field-accent-indigo'
     );
     expect(screen.getByTestId('kangur-select')).toHaveClass(
       'soft-card',
       'border',
-      '[--kangur-text-field-focus-border:color-mix(in_srgb,var(--kangur-text-field-border)_48%,var(--kangur-accent-indigo-end,#6366f1))]'
+      'kangur-text-field-accent-indigo'
     );
     expect(screen.getByTestId('kangur-progress')).toHaveClass(
       'h-2',

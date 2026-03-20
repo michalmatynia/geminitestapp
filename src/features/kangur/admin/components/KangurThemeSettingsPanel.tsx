@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   FONT_OPTIONS,
   ThemeSettingsFieldsSection,
@@ -20,70 +20,38 @@ import {
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import type { SettingsFieldRenderProps } from '@/shared/contracts/ui/settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Alert, Button, FormSection, Input, useToast } from '@/features/kangur/shared/ui';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  buildKangurThemeFontWeightOptions,
+  buildKangurThemeHomeActionFields,
+  getKangurThemeModeCopy,
+  getKangurThemePanelCopy,
+  getKangurThemeSectionCopy,
+  localizeKangurThemeField,
+  mapKangurThemeSectionToPreviewSection,
+  resolveKangurThemeSettingsLocale,
+  type KangurThemeMode as KangurThemeModeType,
+  type KangurThemePreviewSectionId,
+  type KangurThemeSectionId,
+} from './kangur-theme-settings.copy';
 
 
-type ThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
-export type KangurThemeMode = ThemeMode;
-
-const FONT_WEIGHT_OPTIONS = [
-  { value: '300', label: 'Light (300)' },
-  { value: '400', label: 'Regular (400)' },
-  { value: '500', label: 'Medium (500)' },
-  { value: '600', label: 'Semibold (600)' },
-  { value: '700', label: 'Bold (700)' },
-  { value: '800', label: 'Extrabold (800)' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<string>>;
-
-const HOME_ACTION_FIELD_GROUPS = [
-  { prefix: 'homeActionLessons', label: 'Lessons' },
-  { prefix: 'homeActionPlay', label: 'Play' },
-  { prefix: 'homeActionTraining', label: 'Training' },
-  { prefix: 'homeActionKangur', label: 'Kangur' },
-] as const;
-
-const HOME_ACTION_FIELD_TOKENS = [
-  { suffix: 'TextColor', label: 'Text Color' },
-  { suffix: 'TextActiveColor', label: 'Active Text Color' },
-  { suffix: 'LabelStart', label: 'Label Gradient Start' },
-  { suffix: 'LabelMid', label: 'Label Gradient Mid' },
-  { suffix: 'LabelEnd', label: 'Label Gradient End' },
-  { suffix: 'LabelStartActive', label: 'Active Label Gradient Start' },
-  { suffix: 'LabelMidActive', label: 'Active Label Gradient Mid' },
-  { suffix: 'LabelEndActive', label: 'Active Label Gradient End' },
-  { suffix: 'AccentStart', label: 'Accent Gradient Start' },
-  { suffix: 'AccentMid', label: 'Accent Gradient Mid' },
-  { suffix: 'AccentEnd', label: 'Accent Gradient End' },
-  { suffix: 'UnderlayStart', label: 'Underlay Gradient Start' },
-  { suffix: 'UnderlayMid', label: 'Underlay Gradient Mid' },
-  { suffix: 'UnderlayEnd', label: 'Underlay Gradient End' },
-  { suffix: 'UnderlayTintStart', label: 'Underlay Tint Start' },
-  { suffix: 'UnderlayTintMid', label: 'Underlay Tint Mid' },
-  { suffix: 'UnderlayTintEnd', label: 'Underlay Tint End' },
-  { suffix: 'AccentShadowColor', label: 'Accent Shadow' },
-  { suffix: 'UnderlayShadowColor', label: 'Underlay Shadow' },
-  { suffix: 'SurfaceShadowColor', label: 'Surface Shadow' },
-] as const;
-
-const HOME_ACTION_FIELDS: SettingsPanelField<ThemeSettings>[] = HOME_ACTION_FIELD_GROUPS.flatMap(
-  (group) =>
-    HOME_ACTION_FIELD_TOKENS.map((token) => ({
-      key: `${group.prefix}${token.suffix}` as keyof ThemeSettings,
-      label: `${group.label} ${token.label}`,
-      type: 'color',
-    }))
-);
+export type KangurThemeMode = KangurThemeModeType;
+type ThemeMode = KangurThemeMode;
 
 const KANGUR_THEME_SECTIONS: Array<{
+  id: KangurThemeSectionId;
   title: string;
   subtitle: string;
   fields: SettingsPanelField<ThemeSettings>[];
 }> = [
   {
+    id: 'corePalette',
     title: 'Core Palette',
     subtitle: 'Shared tones for highlights, text, and feedback states across Kangur.',
     fields: [
@@ -96,6 +64,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'textOverrides',
     title: 'Text Overrides',
     subtitle: 'Optional overrides for page, cards, and navigation text colors.',
     fields: [
@@ -144,6 +113,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'logoLoader',
     title: 'Logo & Loader',
     subtitle: 'Tune the Kangur logo gradients used on the boot loader and navigation.',
     fields: [
@@ -167,6 +137,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'backgroundsSurfaces',
     title: 'Backgrounds and Surfaces',
     subtitle: 'Base page, panel, card, and chat shell colors.',
     fields: [
@@ -189,6 +160,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'buttons',
     title: 'Buttons',
     subtitle: 'Primary and secondary CTA colors used by the live storefront.',
     fields: [
@@ -214,7 +186,7 @@ const KANGUR_THEME_SECTIONS: Array<{
         key: 'btnFontWeight',
         label: 'Button Font Weight',
         type: 'select',
-        options: FONT_WEIGHT_OPTIONS,
+        options: [],
       },
       { key: 'btnBorderWidth', label: 'Button Border Width', type: 'number', min: 0, max: 4, suffix: 'px' },
       {
@@ -228,6 +200,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'buttonShadows',
     title: 'Button Shadows',
     subtitle: 'Drop shadows for the primary and secondary button shell.',
     fields: [
@@ -245,6 +218,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'gelEffects',
     title: 'Gel Effects',
     subtitle: 'Gloss overlay, inner shadows, text shadow, and outer glow for gel-style buttons.',
     fields: [
@@ -303,6 +277,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'navigationPills',
     title: 'Navigation Pills',
     subtitle: 'Sidebar and tab pill styling for default and active states.',
     fields: [
@@ -326,6 +301,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'gradients',
     title: 'Gradients',
     subtitle: 'Accent gradients used by lesson tiles, badges, and decorative highlights.',
     fields: [
@@ -348,12 +324,14 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'homeActions',
     title: 'Home Actions',
     subtitle:
       'Theme the four main home buttons (icons stay untouched). Leave a field empty to keep the default tone.',
-    fields: HOME_ACTION_FIELDS,
+    fields: [],
   },
   {
+    id: 'progressBars',
     title: 'Progress Bars',
     subtitle: 'Track colors for progress indicators across Kangur.',
     fields: [
@@ -408,6 +386,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'inputs',
     title: 'Inputs',
     subtitle: 'Search, answer, and tutor prompt field colors.',
     fields: [
@@ -420,6 +399,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'typographyLayout',
     title: 'Typography and Layout',
     subtitle: 'Fonts, base text rhythm, and page width used by the live Kangur shell.',
     fields: [
@@ -511,6 +491,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'shapeSpacing',
     title: 'Shape and Spacing',
     subtitle: 'Shared radius controls for panels, navigation, buttons, and inputs.',
     fields: [
@@ -573,6 +554,7 @@ const KANGUR_THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'shadowsDepth',
     title: 'Shadows and Depth',
     subtitle: 'Fine-tune glass panel and card shadow softness.',
     fields: [
@@ -647,45 +629,25 @@ const KANGUR_THEME_SECTIONS: Array<{
 const MODE_CONFIG: Record<
   ThemeMode,
   {
-    label: string;
     storageKey: string;
     defaultTheme: ThemeSettings;
-    resetLabel: string;
-    resetDescription: string;
-    toastMessage: string;
   }
 > = {
   daily: {
-    label: 'Motyw dzienny',
     storageKey: KANGUR_DAILY_THEME_SETTINGS_KEY,
     defaultTheme: KANGUR_DEFAULT_DAILY_THEME,
-    resetLabel: 'Przywróć motyw dzienny',
-    resetDescription: 'Nadpisuje ten motyw pięknym, ciepłym wzorcem dziennym.',
-    toastMessage: 'Motyw dzienny przywrócony do domyślnych ustawień.',
   },
   dawn: {
-    label: 'Motyw świtowy',
     storageKey: KANGUR_DAWN_THEME_SETTINGS_KEY,
     defaultTheme: KANGUR_DEFAULT_DAWN_THEME,
-    resetLabel: 'Przywróć motyw świtowy',
-    resetDescription: 'Nadpisuje ten motyw jasnym, porannym wzorcem świtu.',
-    toastMessage: 'Motyw świtowy przywrócony do domyślnych ustawień.',
   },
   sunset: {
-    label: 'Motyw zachodu',
     storageKey: KANGUR_SUNSET_THEME_SETTINGS_KEY,
     defaultTheme: KANGUR_DEFAULT_SUNSET_THEME,
-    resetLabel: 'Przywróć motyw zachodu',
-    resetDescription: 'Nadpisuje ten motyw ciepłym wzorcem zachodu.',
-    toastMessage: 'Motyw zachodu przywrócony do domyślnych ustawień.',
   },
   nightly: {
-    label: 'Motyw nocny',
     storageKey: KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
     defaultTheme: KANGUR_DEFAULT_THEME,
-    resetLabel: 'Przywróć motyw nocny',
-    resetDescription: 'Nadpisuje ten motyw ciemnym wzorcem nocnym.',
-    toastMessage: 'Motyw nocny przywrócony do domyślnych ustawień.',
   },
 };
 
@@ -700,10 +662,12 @@ export function KangurThemeSettingsPanel({
   onThemeChange,
   onModeChange,
 }: KangurThemeSettingsPanelProps): React.JSX.Element {
+  const locale = resolveKangurThemeSettingsLocale(useLocale());
   const handleSectionChange = onSectionChange;
   const handleThemeChange = onThemeChange;
   const [mode, setMode] = useState<ThemeMode>('daily');
   const config = MODE_CONFIG[mode];
+  const modeCopy = getKangurThemeModeCopy(locale, mode);
 
   useEffect((): void => {
     onModeChange?.(mode);
@@ -714,13 +678,13 @@ export function KangurThemeSettingsPanel({
       {/* Theme mode tab strip */}
       <div className='flex gap-2 rounded-2xl border border-border/60 bg-card/30 p-1.5'>
         {(Object.entries(MODE_CONFIG) as Array<[ThemeMode, (typeof MODE_CONFIG)[ThemeMode]]>).map(
-          ([key, cfg]) => (
+          ([key]) => (
             <button
               key={key}
               type='button'
               onClick={() => setMode(key)}
               aria-pressed={mode === key}
-              aria-label={cfg.label}
+              aria-label={getKangurThemeModeCopy(locale, key).label}
               className={[
                 'flex-1 rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ring-offset-background',
                 mode === key
@@ -728,7 +692,7 @@ export function KangurThemeSettingsPanel({
                   : 'text-muted-foreground hover:text-foreground',
               ].join(' ')}
             >
-              {cfg.label}
+              {getKangurThemeModeCopy(locale, key).label}
             </button>
           )
         )}
@@ -741,10 +705,11 @@ export function KangurThemeSettingsPanel({
         defaultTheme={config.defaultTheme}
       >
         <KangurThemeSettingsEditor
+          locale={locale}
           mode={mode}
           storageKey={config.storageKey}
           defaultTheme={config.defaultTheme}
-          resetLabel={config.resetLabel}
+          resetLabel={modeCopy.resetLabel}
           onSectionChange={handleSectionChange}
           onThemeChange={handleThemeChange}
         />
@@ -754,6 +719,7 @@ export function KangurThemeSettingsPanel({
 }
 
 function KangurThemeSettingsEditor({
+  locale,
   mode,
   storageKey,
   defaultTheme,
@@ -761,6 +727,7 @@ function KangurThemeSettingsEditor({
   onSectionChange,
   onThemeChange,
 }: {
+  locale: ReturnType<typeof resolveKangurThemeSettingsLocale>;
   mode: ThemeMode;
   storageKey: string;
   defaultTheme: ThemeSettings;
@@ -772,27 +739,110 @@ function KangurThemeSettingsEditor({
   const { toast } = useToast();
   const [isResetting, setIsResetting] = useState(false);
   const theme = useThemeSettingsValue();
-  const lastSectionRef = useRef<string | null>(null);
+  const lastSectionRef = useRef<KangurThemePreviewSectionId | null>(null);
+  const panelCopy = getKangurThemePanelCopy(locale);
+  const modeCopy = getKangurThemeModeCopy(locale, mode);
+  const fontWeightOptions = buildKangurThemeFontWeightOptions(locale);
+  const localizedSections = useMemo(
+    () =>
+      KANGUR_THEME_SECTIONS.map((section) => {
+        const localizedCopy = getKangurThemeSectionCopy(locale, section.id);
+        const fields: SettingsPanelField<ThemeSettings>[] =
+          section.id === 'homeActions'
+            ? buildKangurThemeHomeActionFields(locale)
+            : section.fields.map((field) => {
+              const localizedField = localizeKangurThemeField(locale, field);
+              if (field.key === 'btnFontWeight' && field.type === 'select') {
+                return {
+                  ...localizedField,
+                  options: fontWeightOptions,
+                };
+              }
+              if (
+                section.id === 'progressBars' &&
+                field.key === 'progressTrackColor' &&
+                field.type === 'custom'
+              ) {
+                return {
+                  ...localizedField,
+                  render: ({ value, onChange, disabled }: SettingsFieldRenderProps) => {
+                    const resolvedValue = typeof value === 'string' ? value : '';
+                    const trimmedValue = resolvedValue.trim();
+                    const isAuto = trimmedValue.length === 0;
+
+                    return (
+                      <div className='flex items-center gap-2'>
+                        <div
+                          className={`size-8 rounded border border-border shrink-0 overflow-hidden ${
+                            isAuto ? 'bg-muted/40' : ''
+                          }`}
+                          style={isAuto ? undefined : { backgroundColor: trimmedValue }}
+                        >
+                          <input
+                            type='color'
+                            value={trimmedValue || '#000000'}
+                            onChange={(event) => onChange(event.target.value)}
+                            className='opacity-0 size-full cursor-pointer'
+                            disabled={disabled}
+                            aria-label={panelCopy.progressTrackColorPickerAria}
+                          />
+                        </div>
+                        <Input
+                          value={resolvedValue}
+                          onChange={(event) => onChange(event.target.value)}
+                          placeholder={panelCopy.auto}
+                          disabled={disabled}
+                          className='font-mono'
+                          aria-label={panelCopy.progressTrackColorValueAria}
+                          title={panelCopy.auto}
+                        />
+                        <Button
+                          type='button'
+                          size='xs'
+                          variant={isAuto ? 'secondary' : 'outline'}
+                          onClick={() => onChange('')}
+                          disabled={disabled || isAuto}
+                        >
+                          {panelCopy.auto}
+                        </Button>
+                      </div>
+                    );
+                  },
+                };
+              }
+              return localizedField;
+            });
+
+        return {
+          ...section,
+          title: localizedCopy.title,
+          subtitle: localizedCopy.subtitle,
+          fields,
+        };
+      }),
+    [fontWeightOptions, locale, panelCopy.auto, panelCopy.progressTrackColorPickerAria, panelCopy.progressTrackColorValueAria]
+  );
 
   useEffect((): void => {
     onThemeChange?.(theme);
   }, [onThemeChange, theme]);
 
   useEffect((): void => {
-    if (!KANGUR_THEME_SECTIONS[0]) return;
-    onSectionChange?.(KANGUR_THEME_SECTIONS[0].title);
-  }, [onSectionChange]);
+    if (!localizedSections[0]) return;
+    onSectionChange?.(mapKangurThemeSectionToPreviewSection(localizedSections[0].id));
+  }, [localizedSections, onSectionChange]);
 
   const handleSectionActivate = useCallback(
-    (title: string): void => {
-      if (lastSectionRef.current === title) return;
-      lastSectionRef.current = title;
-      onSectionChange?.(title);
+    (sectionId: KangurThemeSectionId): void => {
+      const previewSectionId = mapKangurThemeSectionToPreviewSection(sectionId);
+      if (lastSectionRef.current === previewSectionId) return;
+      lastSectionRef.current = previewSectionId;
+      onSectionChange?.(previewSectionId);
     },
     [onSectionChange]
   );
 
-  const handleReset = async (): Promise<void> => {
+  const handleReset = useCallback(async (): Promise<void> => {
     setIsResetting(true);
     const didReset = await withKangurClientError(
       {
@@ -811,7 +861,7 @@ function KangurThemeSettingsEditor({
       {
         fallback: false,
         onError: (error) => {
-          toast(error instanceof Error ? error.message : 'Nie udało się przywrócić motywu.', {
+          toast(error instanceof Error ? error.message : panelCopy.resetError, {
             variant: 'error',
           });
         },
@@ -819,17 +869,15 @@ function KangurThemeSettingsEditor({
     );
 
     if (didReset) {
-      toast(MODE_CONFIG[mode].toastMessage, { variant: 'success' });
+      toast(modeCopy.toastMessage, { variant: 'success' });
     }
     setIsResetting(false);
-  };
+  }, [defaultTheme, mode, modeCopy.toastMessage, panelCopy.resetError, storageKey, toast, updateSetting]);
 
   return (
     <div className='space-y-4'>
-      <Alert variant='info' title='Autosave'>
-        Changes in this editor save to Mongo automatically and feed the live Kangur storefront
-        theme. This panel only shows tokens that the public Kangur runtime maps today, so every
-        field here has a live storefront effect.
+      <Alert variant='info' title={panelCopy.autosaveTitle}>
+        {panelCopy.autosaveDescription}
       </Alert>
 
       {/* Reset to default */}
@@ -837,7 +885,7 @@ function KangurThemeSettingsEditor({
         <div className='min-w-0'>
           <p className='text-sm font-medium text-foreground'>{resetLabel}</p>
           <p className='text-xs text-muted-foreground'>
-            {MODE_CONFIG[mode].resetDescription}
+            {modeCopy.resetDescription}
           </p>
         </div>
         <Button
@@ -847,17 +895,17 @@ function KangurThemeSettingsEditor({
           onClick={() => void handleReset()}
           className='ml-4 shrink-0'
         >
-          {isResetting ? 'Przywracam...' : 'Przywróć domyślne'}
+          {isResetting ? panelCopy.restoring : panelCopy.restoreDefaultButton}
         </Button>
       </div>
 
       <div className='space-y-4'>
-        {KANGUR_THEME_SECTIONS.map((section) => (
+        {localizedSections.map((section) => (
           <div
-            key={section.title}
-            onFocusCapture={() => handleSectionActivate(section.title)}
-            onPointerEnter={() => handleSectionActivate(section.title)}
-            onPointerDown={() => handleSectionActivate(section.title)}
+            key={section.id}
+            onFocusCapture={() => handleSectionActivate(section.id)}
+            onPointerEnter={() => handleSectionActivate(section.id)}
+            onPointerDown={() => handleSectionActivate(section.id)}
           >
             <FormSection
               title={section.title}

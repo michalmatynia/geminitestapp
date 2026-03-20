@@ -3,7 +3,11 @@
  */
 
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import plMessages from '@/i18n/messages/pl.json';
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuth: () => ({
@@ -16,6 +20,13 @@ import { KangurLessonNavigationWidget } from '@/features/kangur/ui/components/Ka
 import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 
 import CalendarLesson from '@/features/kangur/ui/components/CalendarLesson';
+
+const renderWithIntl = (element: ReactElement) =>
+  render(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      {element}
+    </NextIntlClientProvider>
+  );
 
 const addXpMock = vi.fn();
 const loadProgressMock = vi.fn(() => ({
@@ -61,7 +72,7 @@ describe('CalendarLesson section hub layout', () => {
   });
 
   it('renders calendar sections as a lesson hub with dedicated training cards', () => {
-    render(<CalendarLesson />);
+    renderWithIntl(<CalendarLesson />);
 
     expect(screen.getByTestId('lesson-hub-section-intro')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-hub-section-dni')).toBeInTheDocument();
@@ -84,7 +95,7 @@ describe('CalendarLesson section hub layout', () => {
   });
 
   it('opens a lesson section and returns to topics', async () => {
-    render(<CalendarLesson />);
+    renderWithIntl(<CalendarLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-miesiace'));
 
@@ -107,7 +118,7 @@ describe('CalendarLesson section hub layout', () => {
   });
 
   it('updates hub progress after viewing more slides in a section', async () => {
-    render(<CalendarLesson />);
+    renderWithIntl(<CalendarLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-miesiace'));
 
@@ -135,7 +146,7 @@ describe('CalendarLesson section hub layout', () => {
   });
 
   it('opens dedicated training cards and passes the selected section into the game', async () => {
-    render(<CalendarLesson />);
+    renderWithIntl(<CalendarLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_dates'));
 
@@ -167,7 +178,7 @@ describe('CalendarLesson section hub layout', () => {
   });
 
   it('hides lesson-to-lesson navigation while a calendar training game is active', async () => {
-    render(
+    renderWithIntl(
       <KangurLessonNavigationProvider onBack={vi.fn()}>
         <CalendarLesson />
         <KangurLessonNavigationWidget
@@ -193,7 +204,7 @@ describe('CalendarLesson section hub layout', () => {
   });
 
   it('does not award lesson completion xp twice when switching calendar training sections', async () => {
-    render(<CalendarLesson />);
+    renderWithIntl(<CalendarLesson />);
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_days'));
 

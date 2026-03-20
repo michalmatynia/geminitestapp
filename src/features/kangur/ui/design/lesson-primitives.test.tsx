@@ -23,7 +23,7 @@ describe('Kangur lesson primitives', () => {
     expect(screen.getByTestId('lesson-inset')).toHaveClass(
       'kangur-lesson-inset',
       'kangur-card-padding-sm',
-      'border-teal-100/90'
+      'kangur-border-accent-teal'
     );
   });
 

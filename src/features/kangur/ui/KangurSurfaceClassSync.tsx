@@ -3,7 +3,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { useOptionalCmsStorefrontAppearance, type CmsStorefrontAppearanceMode } from '@/features/cms/public';
-import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
@@ -18,7 +17,6 @@ const KANGUR_ACTIVE_SURFACE_PREVIOUS_SCROLLBAR_GUTTER_DATA_KEY =
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_BACKGROUND_DATA_KEY = 'kangurPrevSurfaceBackground';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_VARS_DATA_KEY = 'kangurPrevSurfaceVars';
 const KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY = 'kangurPrevSurfaceAppearanceMode';
-const KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY = 'kangurPrevSurfaceClassOverrides';
 
 type KangurSurfaceTarget = {
   element: HTMLElement;
@@ -133,52 +131,6 @@ const restoreKangurSurfaceStyle = (target: HTMLElement): void => {
   delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_MODE_DATA_KEY];
 };
 
-const splitClassList = (value: string | undefined): string[] =>
-  typeof value === 'string'
-    ? value
-        .split(/\s+/)
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-    : [];
-
-const applyKangurSurfaceClassOverrides = (
-  target: HTMLElement,
-  className: string | undefined
-): void => {
-  const classes = splitClassList(className);
-  if (classes.length === 0) {
-    return;
-  }
-
-  const added = classes.filter((name) => !target.classList.contains(name));
-  if (added.length > 0) {
-    target.classList.add(...added);
-    target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY] =
-      JSON.stringify(added);
-  }
-};
-
-const restoreKangurSurfaceClassOverrides = (target: HTMLElement): void => {
-  const stored = target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY];
-  if (typeof stored === 'string' && stored.length > 0) {
-    const parsed = withKangurClientErrorSync(
-      {
-        source: 'kangur.surface',
-        action: 'restore-classes',
-        description: 'Restores Kangur surface class overrides.',
-      },
-      () => JSON.parse(stored) as string[],
-      { fallback: null }
-    );
-    if (parsed) {
-      parsed.forEach((entry) => {
-        target.classList.remove(entry);
-      });
-    }
-  }
-  delete target.dataset[KANGUR_ACTIVE_SURFACE_PREVIOUS_CLASS_OVERRIDES_DATA_KEY];
-};
-
 export function KangurSurfaceClassSync({
   children,
 }: {
@@ -186,7 +138,6 @@ export function KangurSurfaceClassSync({
 }): React.JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();
   const kangurAppearance = useKangurStorefrontAppearance();
-  const classOverrides = useKangurClassOverrides();
   const appearanceMode = appearance?.mode ?? 'default';
   const debugRef = useRef<string | null>(null);
 
@@ -202,7 +153,6 @@ export function KangurSurfaceClassSync({
         kangurAppearance.vars,
         { applyScrollbarGutter: slot === 'app' || (!hasAppTarget && slot === 'body') }
       );
-      applyKangurSurfaceClassOverrides(element, classOverrides.globals[slot]);
     });
 
     if (isKangurThemeDebugEnabled()) {
@@ -221,11 +171,10 @@ export function KangurSurfaceClassSync({
     return () => {
       targets.forEach(({ element }) => {
         element.classList.remove(KANGUR_ACTIVE_SURFACE_CLASSNAME);
-        restoreKangurSurfaceClassOverrides(element);
         restoreKangurSurfaceStyle(element);
       });
     };
-  }, [appearanceMode, classOverrides, kangurAppearance]);
+  }, [appearanceMode, kangurAppearance]);
 
   return <>{children}</>;
 }

@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
@@ -16,7 +17,8 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_WRAP_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getCurrentKangurDailyQuest } from '@/features/kangur/ui/services/daily-quests';
-import { BADGES, getNextLockedBadge } from '@/features/kangur/ui/services/progress';
+import { getNextLockedBadge, getProgressBadges } from '@/features/kangur/ui/services/progress';
+import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress-i18n';
 
 type KangurResultSectionCardProps = {
   accent: ComponentProps<typeof KangurInfoCard>['accent'];
@@ -50,6 +52,8 @@ function KangurResultSectionChips({ children }: { children: ReactNode }): React.
 }
 
 export function KangurGameResultWidget(): React.JSX.Element | null {
+  const resultTranslations = useTranslations('KangurGameResult');
+  const progressTranslations = useTranslations('KangurProgressRuntime');
   const {
     activeSessionRecommendation,
     basePath,
@@ -71,11 +75,16 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
     return null;
   }
 
-  const currentQuest = getCurrentKangurDailyQuest(progress, { subject });
-  const nextBadge = getNextLockedBadge(progress);
-  const unlockedBadgeDetails = (xpToast.newBadges ?? [])
-    .map((badgeId) => BADGES.find((badge) => badge.id === badgeId))
-    .filter((badge): badge is (typeof BADGES)[number] => Boolean(badge));
+  const progressLocalizer = { translate: progressTranslations };
+  const currentQuest = getCurrentKangurDailyQuest(progress, {
+    subject,
+    translate: progressTranslations,
+  });
+  const nextBadge = getNextLockedBadge(progress, progressLocalizer);
+  const unlockedBadgeIds = new Set(xpToast.newBadges ?? []);
+  const unlockedBadgeDetails = getProgressBadges(progress, progressLocalizer).filter((badge) =>
+    unlockedBadgeIds.has(badge.id)
+  );
 
   return (
     <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
@@ -107,7 +116,11 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               labelStyle='caps'
               size='sm'
             >
-              Nagroda za runde
+              {translateKangurProgressWithFallback(
+                resultTranslations,
+                'resultWidget.rewardChip',
+                'Nagroda za runde'
+              )}
             </KangurStatusChip>
             <KangurStatusChip
               accent='violet'
@@ -121,8 +134,16 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
 
           <KangurCardTitle data-testid='kangur-result-reward-title'>
             {xpToast.recommendation
-              ? 'Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.'
-              : 'Ta runda przesunęła postęp do przodu.'}
+              ? translateKangurProgressWithFallback(
+                  resultTranslations,
+                  'resultWidget.rewardTitleRecommended',
+                  'Ta runda trafiła w polecany kierunek i przesunęła postęp do przodu.'
+                )
+              : translateKangurProgressWithFallback(
+                  resultTranslations,
+                  'resultWidget.rewardTitleDefault',
+                  'Ta runda przesunęła postęp do przodu.'
+                )}
           </KangurCardTitle>
 
           <KangurRewardBreakdownChips
@@ -138,7 +159,12 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               className='break-words text-xs leading-6 [color:var(--kangur-page-text)]'
               data-testid='kangur-result-reward-next-badge'
             >
-              Następna odznaka: {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
+              {translateKangurProgressWithFallback(
+                resultTranslations,
+                'resultWidget.nextBadgePrefix',
+                'Następna odznaka:'
+              )}{' '}
+              {xpToast.nextBadge.emoji} {xpToast.nextBadge.name} ·{' '}
               {xpToast.nextBadge.summary}
             </div>
           ) : null}
@@ -147,7 +173,12 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               className='break-words text-xs leading-6 text-violet-700'
               data-testid='kangur-result-reward-recommendation'
             >
-              Polecony kierunek: {xpToast.recommendation.title} · {xpToast.recommendation.summary}
+              {translateKangurProgressWithFallback(
+                resultTranslations,
+                'resultWidget.recommendationPrefix',
+                'Polecony kierunek:'
+              )}{' '}
+              {xpToast.recommendation.title} · {xpToast.recommendation.summary}
             </div>
           ) : null}
         </KangurResultSectionCard>
@@ -174,7 +205,11 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               {activeSessionRecommendation.label}
             </KangurStatusChip>
           }
-          label='Zagrano zgodnie z rekomendacja'
+          label={translateKangurProgressWithFallback(
+            resultTranslations,
+            'resultWidget.recommendationPlayedChip',
+            'Zagrano zgodnie z rekomendacja'
+          )}
           labelSize='sm'
           labelStyle='caps'
           labelTestId='kangur-result-recommendation-chip'
@@ -192,7 +227,11 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
               labelStyle='caps'
               size='sm'
             >
-              Nowe odznaki
+              {translateKangurProgressWithFallback(
+                resultTranslations,
+                'resultWidget.newBadgesChip',
+                'Nowe odznaki'
+              )}
             </KangurStatusChip>
             <KangurStatusChip
               accent='violet'
@@ -241,7 +280,11 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                   labelStyle='caps'
                   size='sm'
                 >
-                  Misja dnia ukończona
+                  {translateKangurProgressWithFallback(
+                    resultTranslations,
+                    'resultWidget.dailyQuestCompletedChip',
+                    'Misja dnia ukończona'
+                  )}
                 </KangurStatusChip>
                 {xpToast.dailyQuest.xpAwarded > 0 ? (
                   <KangurStatusChip
@@ -250,7 +293,12 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                     labelStyle='caps'
                     size='sm'
                   >
-                    Bonus +{xpToast.dailyQuest.xpAwarded} XP
+                    {translateKangurProgressWithFallback(
+                      resultTranslations,
+                      'resultWidget.dailyQuestBonus',
+                      'Bonus +{xp} XP',
+                      { xp: xpToast.dailyQuest.xpAwarded }
+                    )}
                   </KangurStatusChip>
                 ) : null}
               </>
@@ -263,7 +311,11 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                 labelStyle='caps'
                 size='sm'
               >
-                Następna odznaka
+                {translateKangurProgressWithFallback(
+                  resultTranslations,
+                  'resultWidget.nextBadgeChip',
+                  'Następna odznaka'
+                )}
               </KangurStatusChip>
             ) : null}
 
@@ -308,7 +360,12 @@ export function KangurGameResultWidget(): React.JSX.Element | null {
                 relaxed
                 size='xs'
               >
-                Do odznaki brakuje: {nextBadge.summary}
+                {translateKangurProgressWithFallback(
+                  resultTranslations,
+                  'resultWidget.nextBadgeRemaining',
+                  'Do odznaki brakuje: {summary}',
+                  { summary: nextBadge.summary }
+                )}
               </KangurCardDescription>
               <KangurProgressBar
                 accent='amber'

@@ -6,6 +6,10 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('next-intl', () => ({
+  useLocale: () => 'pl',
+}));
+
 const {
   toastMock,
   mutateAsyncMock,
@@ -158,11 +162,11 @@ describe('ThemeCatalogModal', () => {
   it('shows newest themes first by default and exposes catalog metadata', () => {
     render(<ThemeCatalogModal />);
 
-    fireEvent.click(screen.getByRole('button', { name: /katalog motywów/i }));
+    fireEvent.click(screen.getByRole('button', { name: /katalog motywow/i }));
 
-    expect(screen.getByRole('dialog', { name: 'Katalog zapisanych motywów' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Katalog zapisanych motywow' })).toBeInTheDocument();
     expect(getVisibleThemeNames()).toEqual(['Beta', 'Gamma', 'Alpha']);
-    expect(screen.getByText('Pokazano 3 z 3 motywów')).toBeInTheDocument();
+    expect(screen.getByText('Pokazano 3 z 3 motywow')).toBeInTheDocument();
     expect(screen.getAllByText(/Utworzono:/i)).toHaveLength(3);
     expect(screen.getAllByText(/Zaktualizowano:/i)).toHaveLength(3);
   });
@@ -170,31 +174,31 @@ describe('ThemeCatalogModal', () => {
   it('filters themes by name and updates the visible count', () => {
     render(<ThemeCatalogModal />);
 
-    fireEvent.click(screen.getByRole('button', { name: /katalog motywów/i }));
+    fireEvent.click(screen.getByRole('button', { name: /katalog motywow/i }));
     fireEvent.change(screen.getByLabelText('Filtruj motywy w katalogu'), {
       target: { value: 'ga' },
     });
 
     expect(getVisibleThemeNames()).toEqual(['Gamma']);
-    expect(screen.getByText('Pokazano 1 z 3 motywów')).toBeInTheDocument();
+    expect(screen.getByText('Pokazano 1 z 3 motywow')).toBeInTheDocument();
   });
 
   it('supports sorting by oldest, updated date, and alphabetical name', () => {
     render(<ThemeCatalogModal />);
 
-    fireEvent.click(screen.getByRole('button', { name: /katalog motywów/i }));
+    fireEvent.click(screen.getByRole('button', { name: /katalog motywow/i }));
 
-    fireEvent.change(screen.getByLabelText('Sortowanie katalogu motywów'), {
+    fireEvent.change(screen.getByLabelText('Sortowanie katalogu motywow'), {
       target: { value: 'created-asc' },
     });
     expect(getVisibleThemeNames()).toEqual(['Alpha', 'Gamma', 'Beta']);
 
-    fireEvent.change(screen.getByLabelText('Sortowanie katalogu motywów'), {
+    fireEvent.change(screen.getByLabelText('Sortowanie katalogu motywow'), {
       target: { value: 'updated-desc' },
     });
     expect(getVisibleThemeNames()).toEqual(['Gamma', 'Beta', 'Alpha']);
 
-    fireEvent.change(screen.getByLabelText('Sortowanie katalogu motywów'), {
+    fireEvent.change(screen.getByLabelText('Sortowanie katalogu motywow'), {
       target: { value: 'name-asc' },
     });
     expect(getVisibleThemeNames()).toEqual(['Alpha', 'Beta', 'Gamma']);
@@ -203,12 +207,12 @@ describe('ThemeCatalogModal', () => {
   it('shows a dedicated empty state when filters hide every theme', () => {
     render(<ThemeCatalogModal />);
 
-    fireEvent.click(screen.getByRole('button', { name: /katalog motywów/i }));
+    fireEvent.click(screen.getByRole('button', { name: /katalog motywow/i }));
     fireEvent.change(screen.getByLabelText('Filtruj motywy w katalogu'), {
       target: { value: 'zzz' },
     });
 
     expect(getVisibleThemeNames()).toEqual([]);
-    expect(screen.getByText('Brak motywów pasujących do bieżących filtrów.')).toBeInTheDocument();
+    expect(screen.getByText('Brak motywow pasujacych do biezacych filtrow.')).toBeInTheDocument();
   });
 });

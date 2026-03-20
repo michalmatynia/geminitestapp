@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 import { ComponentSettingsPanel, usePageBuilder } from '@/features/cms/public';
@@ -20,6 +22,7 @@ export function KangurCmsBuilderRightPanel({
   themePreviewTheme,
   themePreviewMode = 'daily',
 }: KangurCmsBuilderRightPanelProps): React.JSX.Element {
+  const t = useTranslations('KangurCmsBuilder.rightPanel');
   const { state, selectedBlock, selectedColumn, selectedSection } = usePageBuilder();
   const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
   const previewSection = themePreviewSection;
@@ -51,16 +54,13 @@ export function KangurCmsBuilderRightPanel({
           isFocusMode={!state.currentPage}
           header={
             <div className='border-b border-border px-4 py-3 text-sm font-semibold text-white'>
-              Inspector
+              {t('title')}
             </div>
           }
         >
           <div className='space-y-3 p-4 text-sm text-gray-400'>
-            <p>Select a section, grid column, or block to edit it.</p>
-            <p>
-              Screen switching, project save, and preview mode controls live in the builder
-              toolbar.
-            </p>
+            <p>{t('empty.selectTarget')}</p>
+            <p>{t('empty.toolbarHint')}</p>
           </div>
         </SidePanel>
       )}

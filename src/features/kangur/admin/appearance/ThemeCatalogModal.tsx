@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import {
   AppModal,
   Badge,
@@ -22,25 +23,13 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { useAppearancePage } from './AppearancePage.context';
 import { withKangurClientError } from '@/features/kangur/observability/client';
-
-type CatalogSortOption =
-  | 'created-desc'
-  | 'created-asc'
-  | 'updated-desc'
-  | 'name-asc'
-  | 'name-desc';
-
-const CATALOG_SORT_OPTIONS = [
-  { value: 'created-desc', label: 'Najnowsze' },
-  { value: 'created-asc', label: 'Najstarsze' },
-  { value: 'updated-desc', label: 'Ostatnio zaktualizowane' },
-  { value: 'name-asc', label: 'Nazwa A-Z' },
-  { value: 'name-desc', label: 'Nazwa Z-A' },
-] as const;
-
-const CATALOG_DATE_FORMATTER = new Intl.DateTimeFormat('pl-PL', {
-  dateStyle: 'medium',
-});
+import {
+  compareAppearanceCatalogNames,
+  formatAppearanceCatalogTimestamp,
+  getAppearanceThemeCatalogCopy,
+  resolveAppearanceAdminLocale,
+  type AppearanceCatalogSortOption,
+} from './appearance.copy';
 
 const resolveCatalogTimestamp = (
   primary: string | null | undefined,
@@ -57,19 +46,9 @@ const resolveCatalogTimestamp = (
   return 0;
 };
 
-const formatCatalogTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'brak daty';
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) {
-    return 'brak daty';
-  }
-  return CATALOG_DATE_FORMATTER.format(new Date(timestamp));
-};
-
-const compareCatalogNames = (a: string, b: string): number =>
-  a.localeCompare(b, 'pl', { sensitivity: 'base', numeric: true });
-
 export function ThemeCatalogModal(): React.JSX.Element {
+  const locale = resolveAppearanceAdminLocale(useLocale());
+  const copy = getAppearanceThemeCatalogCopy(locale);
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
   const {
@@ -85,17 +64,22 @@ export function ThemeCatalogModal(): React.JSX.Element {
   const [isCreating, setIsSavingNew] = useState(false);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
-  const [catalogSort, setCatalogSort] = useState<CatalogSortOption>('created-desc');
+  const [catalogSort, setCatalogSort] = useState<AppearanceCatalogSortOption>('created-desc');
 
   const catalogNames = useMemo(
     () => new Set(catalog.map((entry) => entry.name.trim()).filter(Boolean)),
     [catalog]
   );
-  const normalizedCatalogSearchQuery = catalogSearchQuery.trim().toLocaleLowerCase();
+  const normalizedCatalogSearchQuery = catalogSearchQuery
+    .trim()
+    .toLocaleLowerCase(copy.compareLocale);
 
   const visibleCatalog = useMemo(() => {
     const filtered = catalog.filter((entry) =>
-      entry.name.trim().toLocaleLowerCase().includes(normalizedCatalogSearchQuery)
+      entry.name
+        .trim()
+        .toLocaleLowerCase(copy.compareLocale)
+        .includes(normalizedCatalogSearchQuery)
     );
 
     return filtered.sort((left, right) => {
@@ -103,31 +87,31 @@ export function ThemeCatalogModal(): React.JSX.Element {
         case 'created-asc':
           return (
             resolveCatalogTimestamp(left.createdAt) - resolveCatalogTimestamp(right.createdAt) ||
-            compareCatalogNames(left.name, right.name)
+            compareAppearanceCatalogNames(locale, left.name, right.name)
           );
         case 'updated-desc':
           return (
             resolveCatalogTimestamp(right.updatedAt, right.createdAt) -
               resolveCatalogTimestamp(left.updatedAt, left.createdAt) ||
-            compareCatalogNames(left.name, right.name)
+            compareAppearanceCatalogNames(locale, left.name, right.name)
           );
         case 'name-asc':
-          return compareCatalogNames(left.name, right.name);
+          return compareAppearanceCatalogNames(locale, left.name, right.name);
         case 'name-desc':
-          return compareCatalogNames(right.name, left.name);
+          return compareAppearanceCatalogNames(locale, right.name, left.name);
         case 'created-desc':
         default:
           return (
             resolveCatalogTimestamp(right.createdAt) - resolveCatalogTimestamp(left.createdAt) ||
-            compareCatalogNames(left.name, right.name)
+            compareAppearanceCatalogNames(locale, left.name, right.name)
           );
       }
     });
-  }, [catalog, catalogSort, normalizedCatalogSearchQuery]);
+  }, [catalog, catalogSort, locale, normalizedCatalogSearchQuery]);
 
   const buildUniqueName = (baseName: string): string => {
     const trimmed = baseName.trim();
-    if (!trimmed) return 'Nowy motyw';
+    if (!trimmed) return copy.createDefaultName;
     if (!catalogNames.has(trimmed)) return trimmed;
     let counter = 2;
     let candidate = `${trimmed} (${counter})`;
@@ -182,7 +166,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
       {
         fallback: false,
         onError: (error) => {
-          toast(error instanceof Error ? error.message : 'Błąd zapisu motywu.', {
+          toast(error instanceof Error ? error.message : copy.createError, {
             variant: 'error',
           });
         },
@@ -191,7 +175,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
 
     if (didCreate) {
       setNewThemeName('');
-      toast('Nowy motyw został dodany do katalogu.', { variant: 'success' });
+      toast(copy.createSuccess, { variant: 'success' });
     }
     setIsSavingNew(false);
   };
@@ -206,29 +190,28 @@ export function ThemeCatalogModal(): React.JSX.Element {
         context: { themeId: entry.id },
       },
       async () => {
-        const nextName = buildUniqueName(`${entry.name} (kopia)`);
+        const nextName = buildUniqueName(`${entry.name} (${copy.duplicateSuffix})`);
         await createCatalogEntry(nextName, entry.settings);
         return true;
       },
       {
         fallback: false,
         onError: (error) => {
-          toast(
-            error instanceof Error ? error.message : 'Nie udało się zduplikować motywu.',
-            { variant: 'error' }
-          );
+          toast(error instanceof Error ? error.message : copy.duplicateError, {
+            variant: 'error',
+          });
         },
       }
     );
 
     if (didDuplicate) {
-      toast('Motyw został zduplikowany.', { variant: 'success' });
+      toast(copy.duplicateSuccess, { variant: 'success' });
     }
     setDuplicatingId(null);
   };
 
   const handleDeleteFromCatalog = async (id: string) => {
-    if (!confirm('Czy na pewno chcesz usunąć ten motyw z katalogu?')) return;
+    if (!confirm(copy.confirmDelete)) return;
     const didDelete = await withKangurClientError(
       {
         source: 'kangur.admin.theme-catalog',
@@ -249,7 +232,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
       {
         fallback: false,
         onError: (error) => {
-          toast(error instanceof Error ? error.message : 'Błąd usuwania motywu.', {
+          toast(error instanceof Error ? error.message : copy.deleteError, {
             variant: 'error',
           });
         },
@@ -257,17 +240,17 @@ export function ThemeCatalogModal(): React.JSX.Element {
     );
 
     if (didDelete) {
-      toast('Motyw został usunięty.', { variant: 'success' });
+      toast(copy.deleteSuccess, { variant: 'success' });
     }
   };
 
   return (
     <>
       <Button variant='outline' size='sm' onClick={() => setIsCatalogOpen(true)}>
-        Katalog motywów ({catalog.length})
+        {copy.openButton(catalog.length)}
       </Button>
       <AppModal
-        title='Katalog zapisanych motywów'
+        title={copy.modalTitle}
         isOpen={isCatalogOpen}
         onOpenChange={setIsCatalogOpen}
         onClose={() => setIsCatalogOpen(false)}
@@ -277,21 +260,21 @@ export function ThemeCatalogModal(): React.JSX.Element {
           <div className='flex items-end gap-3 rounded-xl border border-dashed p-4'>
             <div className='flex-1'>
               <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
-                Zapisz aktualny motyw jako nowy
+                {copy.saveCurrentAsNew}
               </p>
               <Input
-                placeholder='Nazwa motywu...'
+                placeholder={copy.themeNamePlaceholder}
                 value={newThemeName}
                 onChange={(e) => setNewThemeName(e.target.value)}
-                aria-label='Nazwa motywu...'
-                title='Nazwa motywu...'
+                aria-label={copy.themeNameAria}
+                title={copy.themeNameAria}
               />
             </div>
             <Button
               onClick={() => void handleCreateTheme()}
               disabled={isCreating || !newThemeName.trim()}
             >
-              Zapisz
+              {copy.save}
             </Button>
           </div>
 
@@ -299,36 +282,34 @@ export function ThemeCatalogModal(): React.JSX.Element {
             <div className='flex flex-col gap-3 sm:flex-row sm:items-end'>
               <div className='flex-1'>
                 <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
-                  Filtruj katalog
+                  {copy.filterCatalog}
                 </p>
                 <Input
-                  placeholder='Szukaj motywu po nazwie...'
+                  placeholder={copy.searchPlaceholder}
                   value={catalogSearchQuery}
                   onChange={(event) => setCatalogSearchQuery(event.target.value)}
-                  aria-label='Filtruj motywy w katalogu'
-                  title='Filtruj motywy w katalogu'
+                  aria-label={copy.searchAria}
+                  title={copy.searchAria}
                 />
               </div>
               <div className='w-full sm:w-64'>
                 <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
-                  Sortowanie
+                  {copy.sortLabel}
                 </p>
                 <SelectSimple
                   value={catalogSort}
-                  onValueChange={(value) => setCatalogSort(value as CatalogSortOption)}
-                  options={[...CATALOG_SORT_OPTIONS]}
-                  ariaLabel='Sortowanie katalogu motywów'
-                  title='Sortowanie katalogu motywów'
+                  onValueChange={(value) => setCatalogSort(value as AppearanceCatalogSortOption)}
+                  options={[...copy.sortOptions]}
+                  ariaLabel={copy.sortAria}
+                  title={copy.sortAria}
                   variant='subtle'
                   className='w-full'
                 />
               </div>
             </div>
             <div className='flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground'>
-              <span>
-                Pokazano {visibleCatalog.length} z {catalog.length} motywów
-              </span>
-              <span>Domyślnie: najnowsze motywy na górze</span>
+              <span>{copy.countSummary(visibleCatalog.length, catalog.length)}</span>
+              <span>{copy.defaultSortHint}</span>
             </div>
           </div>
 
@@ -358,20 +339,20 @@ export function ThemeCatalogModal(): React.JSX.Element {
                       {entry.name}
                     </span>
                     <Badge variant='secondary' className='text-[10px]'>
-                      Zapisany
+                      {copy.savedBadge}
                     </Badge>
                   </div>
                   <div className='mb-3 space-y-1 text-[11px] text-muted-foreground'>
                     <p>
-                      Utworzono:{' '}
+                      {copy.createdLabel}:{' '}
                       <span className='text-foreground/80'>
-                        {formatCatalogTimestamp(entry.createdAt)}
+                        {formatAppearanceCatalogTimestamp(locale, entry.createdAt)}
                       </span>
                     </p>
                     <p>
-                      Zaktualizowano:{' '}
+                      {copy.updatedLabel}:{' '}
                       <span className='text-foreground/80'>
-                        {formatCatalogTimestamp(entry.updatedAt)}
+                        {formatAppearanceCatalogTimestamp(locale, entry.updatedAt)}
                       </span>
                     </p>
                   </div>
@@ -385,7 +366,7 @@ export function ThemeCatalogModal(): React.JSX.Element {
                         setIsCatalogOpen(false);
                       }}
                     >
-                      {isSelected ? 'Wybrany' : 'Wczytaj'}
+                      {isSelected ? copy.selected : copy.load}
                     </Button>
                     <Button
                       size='sm'
@@ -394,13 +375,15 @@ export function ThemeCatalogModal(): React.JSX.Element {
                       disabled={isDuplicating}
                       onClick={() => void handleDuplicateTheme(entry)}
                     >
-                      {isDuplicating ? 'Duplikuję...' : 'Duplikuj'}
+                      {isDuplicating ? copy.duplicating : copy.duplicate}
                     </Button>
                     <Button
                       size='sm'
                       variant='ghost'
                       className='h-8 w-8 p-0 text-muted-foreground hover:text-destructive'
                       onClick={() => void handleDeleteFromCatalog(entry.id)}
+                      aria-label={copy.deleteAria}
+                      title={copy.deleteAria}
                     >
                       ✕
                     </Button>
@@ -413,12 +396,12 @@ export function ThemeCatalogModal(): React.JSX.Element {
 
         {catalog.length === 0 && (
           <div className='py-12 text-center text-sm text-muted-foreground'>
-            Brak zapisanych motywów w katalogu.
+            {copy.emptyCatalog}
           </div>
         )}
         {catalog.length > 0 && visibleCatalog.length === 0 && (
           <div className='py-12 text-center text-sm text-muted-foreground'>
-            Brak motywów pasujących do bieżących filtrów.
+            {copy.emptyFilters}
           </div>
         )}
         </div>

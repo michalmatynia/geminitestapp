@@ -47,6 +47,8 @@ const { kangurAppearanceMock } = vi.hoisted(() => ({
 }));
 
 const originalCustomCssEnv = process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'];
+const originalInnerHeight = window.innerHeight;
+const originalVisualViewport = window.visualViewport;
 const setEnvValue = (key: string, value: string | undefined) => {
   if (value === undefined) {
     delete process.env[key];
@@ -107,12 +109,39 @@ describe('KangurFeaturePage', () => {
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
     delete document.body.dataset.kangurShell;
     document.body.style.overflow = '';
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: 900,
+      writable: true,
+    });
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: {
+        height: 820,
+        offsetTop: 0,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
   });
 
   afterEach(() => {
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
     delete document.body.dataset.kangurShell;
     document.body.style.overflow = '';
+    document.documentElement.style.removeProperty('--kangur-shell-viewport-height');
+    document.documentElement.style.removeProperty('--kangur-mobile-bottom-clearance');
+    document.body.style.removeProperty('--kangur-shell-viewport-height');
+    document.body.style.removeProperty('--kangur-mobile-bottom-clearance');
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: originalInnerHeight,
+      writable: true,
+    });
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: originalVisualViewport,
+    });
   });
 
   it('does not lock body scroll when rendering an embedded page mount', () => {
@@ -183,7 +212,7 @@ describe('KangurFeaturePage', () => {
 
     expect(screen.getByTestId('kangur-feature-page-shell')).toHaveClass(
       'kangur-premium-bg',
-      'min-h-[100dvh]'
+      'kangur-shell-viewport-height'
     );
     expect(screen.getByTestId('kangur-feature-page-shell')).not.toHaveClass('text-slate-800');
     expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
@@ -217,6 +246,28 @@ describe('KangurFeaturePage', () => {
       basePath: '/kangur',
       embedded: false,
     });
+  });
+
+  it('syncs the shared mobile viewport vars onto the page chrome', () => {
+    const { unmount } = renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
+
+    expect(document.documentElement.style.getPropertyValue('--kangur-shell-viewport-height')).toBe(
+      '820px'
+    );
+    expect(document.body.style.getPropertyValue('--kangur-shell-viewport-height')).toBe('820px');
+    expect(
+      document.documentElement.style.getPropertyValue('--kangur-mobile-bottom-clearance')
+    ).toBe('calc(env(safe-area-inset-bottom) + 80px)');
+    expect(document.body.style.getPropertyValue('--kangur-mobile-bottom-clearance')).toBe(
+      'calc(env(safe-area-inset-bottom) + 80px)'
+    );
+
+    unmount();
+
+    expect(document.documentElement.style.getPropertyValue('--kangur-shell-viewport-height')).toBe(
+      ''
+    );
+    expect(document.body.style.getPropertyValue('--kangur-mobile-bottom-clearance')).toBe('');
   });
 
   it('keeps the embedded shell node mounted when the requested embedded page changes', () => {

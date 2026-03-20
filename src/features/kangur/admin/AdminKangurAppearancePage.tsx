@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import React from 'react';
+import { useMemo } from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -36,21 +37,29 @@ import {
   FACTORY_NIGHTLY_ID,
   PRESET_DAILY_CRYSTAL_ID,
   PRESET_NIGHTLY_CRYSTAL_ID,
-  SLOT_CONFIG,
   SLOT_ORDER,
-  THEME_SECTIONS,
 } from './appearance/AppearancePage.constants';
 import { ThemeCatalogModal } from './appearance/ThemeCatalogModal';
 import { AppearanceModeSelector } from './appearance/AppearanceModeSelector';
 import { ThemeImportExport } from './appearance/ThemeImportExport';
 import { ThemePreviewPanel } from './appearance/ThemePreviewPanel';
+import {
+  buildAppearanceThemeSections,
+  buildAppearanceThemeSelectorOptions,
+  getAppearancePageCopy,
+  getAppearanceSlotLabel,
+  getAppearanceThemeTypeLabel,
+  resolveAppearanceAdminLocale,
+} from './appearance/appearance.copy';
 
 function AdminKangurAppearancePageContent(): React.JSX.Element {
+  const locale = resolveAppearanceAdminLocale(useLocale());
+  const pageCopy = getAppearancePageCopy(locale);
   const breadcrumbs = [
-    { label: 'Admin', href: '/admin' },
-    { label: 'Kangur', href: '/admin/kangur' },
-    { label: 'Settings', href: '/admin/kangur/settings' },
-    { label: 'Appearance' },
+    { label: pageCopy.breadcrumbs[0], href: '/admin' },
+    { label: pageCopy.breadcrumbs[1], href: '/admin/kangur' },
+    { label: pageCopy.breadcrumbs[2], href: '/admin/kangur/settings' },
+    { label: pageCopy.breadcrumbs[3] },
   ];
   const {
     catalog,
@@ -88,33 +97,27 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
   ].includes(selectedId);
 
   const selectorOptions = useMemo(() => {
-    const opts: Array<LabeledOptionDto<string>> = [
-      { value: FACTORY_DAILY_ID, label: 'Motyw dzienny (fabryczny)' },
-      { value: FACTORY_DAWN_ID, label: 'Motyw świtowy (fabryczny)' },
-      { value: FACTORY_SUNSET_ID, label: 'Motyw zachodu (fabryczny)' },
-      { value: FACTORY_NIGHTLY_ID, label: 'Motyw nocny (fabryczny)' },
-      { value: BUILTIN_DAILY_ID, label: 'Motyw dzienny (wbudowany)' },
-      { value: BUILTIN_DAWN_ID, label: 'Motyw świtowy (wbudowany)' },
-      { value: BUILTIN_SUNSET_ID, label: 'Motyw zachodu (wbudowany)' },
-      { value: BUILTIN_NIGHTLY_ID, label: 'Motyw nocny (wbudowany)' },
-      { value: PRESET_DAILY_CRYSTAL_ID, label: 'Daily Crystal (preset)' },
-      { value: PRESET_NIGHTLY_CRYSTAL_ID, label: 'Nightly Crystal (preset)' },
-    ];
-    catalog.forEach((e) => opts.push({ value: e.id, label: e.name }));
-    return opts;
-  }, [catalog]);
+    return buildAppearanceThemeSelectorOptions(locale, catalog);
+  }, [catalog, locale]);
+  const localizedThemeSections = useMemo(
+    () => buildAppearanceThemeSections(locale),
+    [locale]
+  );
 
   const selectedLabel = selectorOptions.find((o) => o.value === selectedId)?.label ?? '';
-  const selectedThemeType = isFactory ? 'Factory' : isPreset ? 'Preset' : isBuiltin ? 'Built-in' : 'Custom';
+  const selectedThemeType = getAppearanceThemeTypeLabel(
+    locale,
+    isFactory ? 'factory' : isPreset ? 'preset' : isBuiltin ? 'builtin' : 'custom'
+  );
   const assignedSlotLabels = SLOT_ORDER.filter(
     (slot) => slotAssignments[slot]?.id === selectedId
-  ).map((slot) => SLOT_CONFIG[slot].label);
+  ).map((slot) => getAppearanceSlotLabel(locale, slot));
   const assignedSlotsSummary =
-    assignedSlotLabels.length > 0 ? assignedSlotLabels.join(', ') : 'Not assigned';
+    assignedSlotLabels.length > 0 ? assignedSlotLabels.join(', ') : pageCopy.notAssigned;
 
   return (
     <KangurAdminContentShell
-      title='Kangur Appearance'
+      title={pageCopy.shellTitle}
       description={
         <div className='flex flex-wrap items-center gap-3'>
           <AdminFavoriteBreadcrumbRow>
@@ -122,7 +125,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
           </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
-            Focused editing shell for lessons, tests, and content operations.
+            {pageCopy.shellDescription}
           </span>
         </div>
       }
@@ -135,14 +138,14 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
       headerActions={
         <>
           <Button asChild variant='outline' size='sm'>
-            <Link href='/admin/kangur/settings'>Back to Settings</Link>
+            <Link href='/admin/kangur/settings'>{pageCopy.backToSettings}</Link>
           </Button>
           <Button
             onClick={() => void handleSave()}
             disabled={!isDirty || isSaving || isReadOnly}
             size='sm'
           >
-            {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
+            {isSaving ? pageCopy.saving : pageCopy.saveTheme}
           </Button>
         </>
       }
@@ -153,21 +156,22 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
             <div className='flex flex-wrap items-end gap-3'>
               <div className='flex-1 min-w-[220px]'>
                 <div className='mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                  Wybrany motyw
+                  {pageCopy.selectedTheme}
                 </div>
                 <SelectSimple
                   value={selectedId}
                   onValueChange={handleSelect}
                   options={selectorOptions}
-                  ariaLabel='Wybrany motyw'
+                  ariaLabel={pageCopy.selectedThemeAria}
                   variant='subtle'
                   className='w-full'
-                 title='Select option'/>
+                  title={pageCopy.selectedThemeAria}
+                />
               </div>
               <ThemeCatalogModal />
               {isDirty && (
                 <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400'>
-                  Niezapisane zmiany
+                  {pageCopy.unsavedChanges}
                 </span>
               )}
             </div>
@@ -176,7 +180,7 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
           <Card variant='subtle' padding='md' className='border border-border/60 bg-card/20'>
             <div className={KANGUR_STACK_RELAXED_CLASSNAME}>
               <p className='text-sm font-medium text-foreground'>
-                Przypisz motyw <span className='text-muted-foreground'>„{selectedLabel}”</span> do slotu
+                {pageCopy.assignThemeToSlot(selectedLabel)}
               </p>
               <div className='flex flex-wrap gap-2'>
                 {SLOT_ORDER.map((slot) => {
@@ -190,7 +194,9 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
                       className='flex flex-col items-center gap-0.5 h-auto py-2'
                       onClick={() => void (isAssigned ? handleUnassignFromSlot(slot) : handleAssignToSlot(slot))}
                     >
-                      <span>{SLOT_CONFIG[slot].label} {isAssigned ? '\u2713' : ''}</span>
+                      <span>
+                        {getAppearanceSlotLabel(locale, slot)} {isAssigned ? '\u2713' : ''}
+                      </span>
                       <span className='text-[10px] font-normal opacity-70'>{currentTheme}</span>
                     </Button>
                   );
@@ -201,17 +207,15 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
 
           {isReadOnly && (
             <Alert variant='info'>
-              {isPreset
-                ? 'To preset Crystal. Jest tylko do odczytu, ale możesz go przypisać do slotu powyżej.'
-                : 'To fabryczny motyw Kangura. Jest tylko do odczytu.'}
+              {isPreset ? pageCopy.presetReadOnly : pageCopy.factoryReadOnly}
             </Alert>
           )}
 
           <AppearanceModeSelector />
 
-          {THEME_SECTIONS.map((section) => (
+          {localizedThemeSections.map((section) => (
             <FormSection
-              key={section.title}
+              key={section.id}
               title={section.title}
               subtitle={section.subtitle}
               variant='subtle'
@@ -238,13 +242,13 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
                 disabled={isSaving || isReadOnly}
                 onClick={handleResetToFactory}
               >
-                Przywróć domyślne
+                {pageCopy.restoreDefaults}
               </Button>
               <Button
                 onClick={() => void handleSave()}
                 disabled={!isDirty || isSaving || isReadOnly}
               >
-                {isSaving ? 'Zapisuję...' : 'Zapisz motyw'}
+                {isSaving ? pageCopy.saving : pageCopy.saveTheme}
               </Button>
             </div>
           </Card>
@@ -253,24 +257,28 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
         <div className='hidden lg:block lg:self-start'>
           <div className='space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:scrollbar-thin'>
             <KangurAdminStatusCard
-              title='Status'
+              title={pageCopy.statusTitle}
               sticky={false}
               statusBadge={
                 <Badge variant={isReadOnly ? 'outline' : isDirty ? 'warning' : 'secondary'}>
-                  {isReadOnly ? 'Read only' : isDirty ? 'Unsaved changes' : 'Saved'}
+                  {isReadOnly
+                    ? pageCopy.statusBadges.readOnly
+                    : isDirty
+                      ? pageCopy.statusBadges.unsaved
+                      : pageCopy.statusBadges.saved}
                 </Badge>
               }
               items={[
                 {
-                  label: 'Theme',
+                  label: pageCopy.statusItems.theme,
                   value: <Badge variant='outline'>{selectedLabel || '—'}</Badge>,
                 },
                 {
-                  label: 'Type',
+                  label: pageCopy.statusItems.type,
                   value: <Badge variant='outline'>{selectedThemeType}</Badge>,
                 },
                 {
-                  label: 'Assigned slots',
+                  label: pageCopy.statusItems.assignedSlots,
                   value: <span className='text-foreground'>{assignedSlotsSummary}</span>,
                 },
               ]}
@@ -287,8 +295,6 @@ function AdminKangurAppearancePageContent(): React.JSX.Element {
     </KangurAdminContentShell>
   );
 }
-
-import { useMemo } from 'react';
 
 export function AdminKangurAppearancePage(): React.JSX.Element {
   return (

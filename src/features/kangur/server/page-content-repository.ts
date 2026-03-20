@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { LRUCache } from 'lru-cache';
 import type { AnyBulkWriteOperation } from 'mongodb';
 
 import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
@@ -12,6 +13,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type KangurPageContentDoc = KangurPageContentEntry & {
   locale: string;
@@ -19,7 +21,37 @@ type KangurPageContentDoc = KangurPageContentEntry & {
   updatedAt: Date;
 };
 
+const PAGE_CONTENT_SERVER_CACHE_TTL_MS = 90_000;
+const pageContentServerCache = new LRUCache<string, KangurPageContentStore>({
+  max: 6,
+  ttl: PAGE_CONTENT_SERVER_CACHE_TTL_MS,
+  updateAgeOnGet: true,
+});
+const pageContentInflight = new Map<string, Promise<KangurPageContentStore>>();
+
 let indexesEnsured: Promise<void> | null = null;
+
+const getPageContentCacheKey = (locale: string): string =>
+  `kangur-page-content:${normalizeSiteLocale(locale)}`;
+
+const getCachedPageContentStore = (locale: string): KangurPageContentStore | null =>
+  pageContentServerCache.get(getPageContentCacheKey(locale)) ?? null;
+
+const setCachedPageContentStore = (store: KangurPageContentStore): void => {
+  pageContentServerCache.set(getPageContentCacheKey(store.locale), store);
+};
+
+const clearCachedPageContentStore = (locale?: string | null): void => {
+  if (locale) {
+    const cacheKey = getPageContentCacheKey(locale);
+    pageContentServerCache.delete(cacheKey);
+    pageContentInflight.delete(cacheKey);
+    return;
+  }
+
+  pageContentServerCache.clear();
+  pageContentInflight.clear();
+};
 
 const ensureIndexes = async (): Promise<void> => {
   if (!process.env['MONGODB_URI']) {
@@ -105,29 +137,50 @@ const storesDiffer = (left: KangurPageContentStore, right: KangurPageContentStor
   JSON.stringify(left) !== JSON.stringify(right);
 
 export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPageContentStore> {
-  const defaults = buildDefaultKangurPageContentStore(locale);
+  const normalizedLocale = normalizeSiteLocale(locale);
+  const defaults = buildDefaultKangurPageContentStore(normalizedLocale);
 
   if (!process.env['MONGODB_URI']) {
     return defaults;
   }
 
-  await ensureIndexes();
-  const collection = await readCollection();
-  const docs = await collection.find({ locale }).sort({ sortOrder: 1, id: 1 }).toArray();
-
-  if (docs.length === 0) {
-    await persistStore(defaults);
-    return defaults;
+  const cached = getCachedPageContentStore(normalizedLocale);
+  if (cached) {
+    return cached;
   }
 
-  const existing = toStoreFromDocs(docs, locale, defaults.version);
-  const merged = mergeKangurPageContentStore(defaults, repairKangurPolishCopy(existing));
-
-  if (storesDiffer(existing, merged)) {
-    await persistStore(merged);
+  const cacheKey = getPageContentCacheKey(normalizedLocale);
+  const inflight = pageContentInflight.get(cacheKey);
+  if (inflight) {
+    return inflight;
   }
 
-  return merged;
+  const loadPromise = (async (): Promise<KangurPageContentStore> => {
+    await ensureIndexes();
+    const collection = await readCollection();
+    const docs = await collection.find({ locale: normalizedLocale }).sort({ sortOrder: 1, id: 1 }).toArray();
+
+    if (docs.length === 0) {
+      await persistStore(defaults);
+      setCachedPageContentStore(defaults);
+      return defaults;
+    }
+
+    const existing = toStoreFromDocs(docs, normalizedLocale, defaults.version);
+    const merged = mergeKangurPageContentStore(defaults, repairKangurPolishCopy(existing));
+
+    if (storesDiffer(existing, merged)) {
+      await persistStore(merged);
+    }
+
+    setCachedPageContentStore(merged);
+    return merged;
+  })().finally(() => {
+    pageContentInflight.delete(cacheKey);
+  });
+
+  pageContentInflight.set(cacheKey, loadPromise);
+  return loadPromise;
 }
 
 export async function upsertKangurPageContentStore(
@@ -141,6 +194,7 @@ export async function upsertKangurPageContentStore(
 
   await ensureIndexes();
   await persistStore(parsed);
+  setCachedPageContentStore(parsed);
   return parsed;
 }
 
@@ -162,3 +216,7 @@ export async function getLatestKangurPageContentUpdateAt(locale = 'pl'): Promise
   const latest = await collection.find({ locale }).sort({ updatedAt: -1 }).limit(1).next();
   return latest?.updatedAt instanceof Date ? latest.updatedAt : null;
 }
+
+export const clearKangurPageContentServerCache = (locale?: string | null): void => {
+  clearCachedPageContentStore(locale);
+};

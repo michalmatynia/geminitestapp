@@ -98,6 +98,7 @@ const ROUTE_TRANSITION_MAX_ACKNOWLEDGE_MS = 400;
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
 const LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS = 1_200;
 const ROUTE_TRANSITION_REVEAL_MS = 220;
+const LOCALE_SWITCH_ROUTE_TRANSITION_REVEAL_MS = 120;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
 
 const normalizeTransitionKind = (
@@ -286,11 +287,16 @@ export function KangurRouteTransitionProvider({
       return;
     }
 
+    const revealMs =
+      transitionState.kind === 'locale-switch'
+        ? LOCALE_SWITCH_ROUTE_TRANSITION_REVEAL_MS
+        : ROUTE_TRANSITION_REVEAL_MS;
+
     const timeoutId = window.setTimeout(() => {
       updateTransitionState((currentState) =>
         currentState?.phase === 'revealing' ? null : currentState
       );
-    }, ROUTE_TRANSITION_REVEAL_MS);
+    }, revealMs);
 
     return () => {
       window.clearTimeout(timeoutId);

@@ -34,6 +34,7 @@ import {
   querySchema as pageContentQuerySchema,
 } from '@/app/api/kangur/ai-tutor/page-content/handler';
 import { getKangurAiTutorUsageHandler } from '@/app/api/kangur/ai-tutor/usage/handler';
+import { POST_handler as postKangurAiTutorFollowUpHandler } from '@/app/api/kangur/ai-tutor/follow-up/handler';
 import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '@/app/api/kangur/knowledge-graph/status/handler';
 import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '@/app/api/kangur/knowledge-graph/sync/handler';
 import { handleGetPost, methodNotAllowed, SimpleRouteHandler } from './routing.utils';
@@ -118,6 +119,12 @@ export const aiTutorUsageHandler: SimpleRouteHandler = apiHandler(getKangurAiTut
   service: 'kangur.api',
 });
 
+export const aiTutorFollowUpHandler: SimpleRouteHandler = apiHandler(postKangurAiTutorFollowUpHandler, {
+  source: 'kangur.ai-tutor.follow-up.POST',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
 export const knowledgeGraphStatusHandler: SimpleRouteHandler = apiHandler(
   getKangurKnowledgeGraphStatusHandler,
   {
@@ -164,6 +171,10 @@ export const handleAiTutorRouting = (request: NextRequest, segments: string[]): 
     if (sub === 'usage' && segments.length === 2) {
       if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
       return aiTutorUsageHandler(request);
+    }
+    if (sub === 'follow-up' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return aiTutorFollowUpHandler(request);
     }
   }
   if (segments[0] === 'knowledge-graph') {

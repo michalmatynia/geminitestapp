@@ -250,8 +250,10 @@ describe('Game branding', () => {
     renderGamePage();
 
     expect(screen.getByTestId('kangur-home-actions-shell')).toHaveClass(
-      'border-white/78',
-      'bg-white/58'
+      'glass-panel',
+      'kangur-panel-soft',
+      'kangur-glass-surface-mist',
+      'kangur-panel-shell'
     );
     const actionLabels = ['Lekcje', 'Grajmy!', 'Pojedynki', 'Kangur Matematyczny'];
 
@@ -273,8 +275,9 @@ describe('Game branding', () => {
     renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-game-operation-top-section')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
@@ -291,7 +294,7 @@ describe('Game branding', () => {
     renderGamePage();
 
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
-    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
     expect(
@@ -300,7 +303,7 @@ describe('Game branding', () => {
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z figurami/i }));
     expect(
@@ -309,6 +312,6 @@ describe('Game branding', () => {
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
-    expect(await screen.findByRole('heading', { name: 'Wybór rodzaju gry' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
   });
 });

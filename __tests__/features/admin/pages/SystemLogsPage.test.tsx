@@ -126,6 +126,20 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         {children}
       </div>
     ),
+    Tabs: ({ children, value }: { children: React.ReactNode; value: string }) => (
+      <div data-testid='mock-tabs' data-value={value}>
+        {children}
+      </div>
+    ),
+    TabsList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    TabsTrigger: ({ children, value }: { children: React.ReactNode; value: string }) => (
+      <button role='tab' data-value={value}>
+        {children}
+      </button>
+    ),
+    TabsContent: ({ children, value }: { children: React.ReactNode; value: string }) => (
+      <div data-testid={`tabs-content-${value}`}>{children}</div>
+    ),
     StandardDataTablePanel: ({
       data,
       columns,

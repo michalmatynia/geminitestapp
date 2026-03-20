@@ -35,6 +35,7 @@ import {
 } from '@/app/api/kangur/ai-tutor/page-content/handler';
 import { getKangurAiTutorUsageHandler } from '@/app/api/kangur/ai-tutor/usage/handler';
 import { POST_handler as postKangurAiTutorFollowUpHandler } from '@/app/api/kangur/ai-tutor/follow-up/handler';
+import { POST_handler as postKangurNativeGuideGenerationHandler } from '@/app/api/kangur/ai-tutor/admin/native-guide-generation/handler';
 import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '@/app/api/kangur/knowledge-graph/status/handler';
 import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '@/app/api/kangur/knowledge-graph/sync/handler';
 import { handleGetPost, methodNotAllowed, SimpleRouteHandler } from './routing.utils';
@@ -141,6 +142,12 @@ export const knowledgeGraphSyncHandler: SimpleRouteHandler = apiHandler(postKang
   bodySchema: kangurKnowledgeGraphSyncRequestSchema,
 });
 
+export const nativeGuideGenerationHandler: SimpleRouteHandler = apiHandler(postKangurNativeGuideGenerationHandler, {
+  source: 'kangur.ai-tutor.admin.native-guide-generation.POST',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
 export const handleAiTutorRouting = (request: NextRequest, segments: string[]): Promise<Response> | null => {
   if (segments[0] === 'ai-tutor') {
     const sub = segments[1];
@@ -175,6 +182,10 @@ export const handleAiTutorRouting = (request: NextRequest, segments: string[]): 
     if (sub === 'follow-up' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return aiTutorFollowUpHandler(request);
+    }
+    if (sub === 'admin' && segments[2] === 'native-guide-generation' && segments.length === 3) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return nativeGuideGenerationHandler(request);
     }
   }
   if (segments[0] === 'knowledge-graph') {

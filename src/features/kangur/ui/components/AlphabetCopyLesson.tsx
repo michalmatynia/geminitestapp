@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -21,6 +22,7 @@ import {
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import type { Point2d } from '@/shared/contracts/geometry';
+import type { TranslationValues } from 'use-intl';
 
 const CANVAS_WIDTH = 360;
 const CANVAS_HEIGHT = 260;
@@ -32,6 +34,8 @@ const MIDLINE_Y = 170;
 const BASELINE_Y = 210;
 const BASE_MIN_DRAWING_POINTS = 20;
 const BASE_MIN_DRAWING_LENGTH = 160;
+
+type Translate = ReturnType<typeof useTranslations>;
 
 type LetterRound = {
   id: string;
@@ -69,6 +73,16 @@ const LETTER_ROUNDS: LetterRound[] = [
   },
 ];
 
+const translateAlphabetCopy = (
+  translate: Translate,
+  key: string,
+  fallback: string,
+  values?: TranslationValues
+): string => {
+  const translated = translate(key, values);
+  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+};
+
 type FeedbackState = { kind: 'success' | 'error'; text: string } | null;
 
 const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
@@ -89,6 +103,7 @@ const computeStrokeLength = (stroke: Point2d[]): number => {
 const isPointInCopyZone = (point: Point2d): boolean => point.y >= COPY_ZONE_TOP;
 
 export default function AlphabetCopyLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.alphabetCopy');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
 
@@ -100,6 +115,11 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
 
   const currentRound = (LETTER_ROUNDS[roundIndex] ?? LETTER_ROUNDS[0]) as LetterRound;
   const totalRounds = LETTER_ROUNDS.length;
+  const currentWord = translateAlphabetCopy(
+    translations,
+    `rounds.${currentRound.id}.word`,
+    currentRound.word
+  );
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
   const strokeLength = useMemo(
     () => strokes.reduce((sum, stroke) => sum + computeStrokeLength(stroke), 0),
@@ -111,8 +131,16 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
   const minDrawingLength = isCoarsePointer ? 120 : BASE_MIN_DRAWING_LENGTH;
   const strokeWidth = isCoarsePointer ? 14 : 10;
   const drawHint = isCoarsePointer
-    ? 'Przepisuj litere palcem na dolnych liniach'
-    : 'Przepisuj litere na dolnych liniach';
+    ? translateAlphabetCopy(
+        translations,
+        'drawHint.coarse',
+        'Przepisuj litere palcem na dolnych liniach'
+      )
+    : translateAlphabetCopy(
+        translations,
+        'drawHint.fine',
+        'Przepisuj litere na dolnych liniach'
+      );
 
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
@@ -205,7 +233,11 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     if (!isPointInCopyZone(point)) {
       setFeedback({
         kind: 'error',
-        text: 'Rysuj pod litera, na dolnych liniach.',
+        text: translateAlphabetCopy(
+          translations,
+          'feedback.error.keepToLowerLines',
+          'Rysuj pod litera, na dolnych liniach.'
+        ),
       });
       return;
     }
@@ -248,18 +280,31 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     if (points.length < minDrawingPoints) {
       return {
         kind: 'error',
-        text: 'Przepisz litere na dole i sprobuj jeszcze raz.',
+        text: translateAlphabetCopy(
+          translations,
+          'feedback.error.copyMore',
+          'Przepisz litere na dole i sprobuj jeszcze raz.'
+        ),
       };
     }
     if (strokeLength < minDrawingLength) {
       return {
         kind: 'error',
-        text: 'Super start! Dorysuj jeszcze kawałek litery.',
+        text: translateAlphabetCopy(
+          translations,
+          'feedback.error.keepGoing',
+          'Super start! Dorysuj jeszcze kawalek litery.'
+        ),
       };
     }
     return {
       kind: 'success',
-      text: `Brawo! Litera ${currentRound.label} gotowa.`,
+      text: translateAlphabetCopy(
+        translations,
+        'feedback.success',
+        'Brawo! Litera {letter} gotowa.',
+        { letter: currentRound.label }
+      ),
     };
   };
 
@@ -279,15 +324,24 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         <div className='flex flex-wrap items-start justify-between gap-4'>
           <div className='min-w-0'>
             <KangurHeadline accent='amber' as='h2' size='sm'>
-              Alphabet
+              {translateAlphabetCopy(translations, 'header.title', 'Alphabet')}
             </KangurHeadline>
             <p className='mt-2 text-sm text-slate-600'>
-              Track: Przepisz litery. Ćwicz płynność pisania pod wzorem. To gra dla 6-latków.
+              {translateAlphabetCopy(
+                translations,
+                'header.description',
+                'Track: Przepisz litery. Cwicz plynnosc pisania pod wzorem. To gra dla 6-latkow.'
+              )}
             </p>
           </div>
           <div className='flex flex-col items-end gap-2'>
             <KangurStatusChip accent={currentRound.accent} size='sm'>
-              Litera {currentRound.label}
+              {translateAlphabetCopy(
+                translations,
+                'header.roundBadge',
+                'Litera {letter}',
+                { letter: currentRound.label }
+              )}
             </KangurStatusChip>
             <span className='text-xs text-slate-500'>
               {roundIndex + 1}/{totalRounds}
@@ -301,10 +355,15 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                Wzór litery
+                {translateAlphabetCopy(translations, 'guide.title', 'Wzor litery')}
               </div>
               <p className='mt-1 text-sm text-slate-600'>
-                Litera {currentRound.label} jak {currentRound.word}.
+                {translateAlphabetCopy(
+                  translations,
+                  'guide.description',
+                  'Litera {letter} jak {word}.',
+                  { letter: currentRound.label, word: currentWord }
+                )}
               </p>
             </div>
             <KangurStatusChip accent='indigo' size='sm'>
@@ -380,7 +439,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
                 fontWeight='600'
                 opacity='0.6'
               >
-                {currentRound.word}
+                {currentWord}
               </text>
               <text
                 x={CANVAS_WIDTH / 2}
@@ -391,7 +450,7 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
                 fontWeight='600'
                 opacity='0.35'
               >
-                Napisz tutaj
+                {translateAlphabetCopy(translations, 'guide.writeHere', 'Napisz tutaj')}
               </text>
             </svg>
 
@@ -408,13 +467,31 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
               onPointerLeave={handlePointerUp}
               data-drawing-active={isPointerDrawing ? 'true' : 'false'}
               className='kangur-drawing-canvas relative z-10 h-full w-full touch-none'
-              aria-label={`Przepisz litere ${currentRound.label} pod wzorem`}
+              aria-label={translateAlphabetCopy(
+                translations,
+                'canvasAria',
+                'Przepisz litere {letter} pod wzorem',
+                { letter: currentRound.label }
+              )}
             />
           </div>
 
           <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-            <span>Trzymaj sie linii i nie spiesz sie.</span>
-            <span>{points.length} punktow</span>
+            <span>
+              {translateAlphabetCopy(
+                translations,
+                'footer.traceHint',
+                'Trzymaj sie linii i nie spiesz sie.'
+              )}
+            </span>
+            <span>
+              {translateAlphabetCopy(
+                translations,
+                'footer.points',
+                '{count} punktow',
+                { count: points.length }
+              )}
+            </span>
           </div>
         </div>
       </KangurGlassPanel>
@@ -434,21 +511,27 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
               </p>
             ) : (
               <p className='text-sm text-slate-600'>
-                Kliknij Sprawdz, gdy skonczysz przepisywac.
+                {translateAlphabetCopy(
+                  translations,
+                  'footer.idlePrompt',
+                  'Kliknij Sprawdz, gdy skonczysz przepisywac.'
+                )}
               </p>
             )}
           </div>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             <KangurButton size='sm' type='button' variant='surface' onClick={clearDrawing}>
-              Wyczysc
+              {translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
             </KangurButton>
             {feedback?.kind === 'success' ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
-                {roundIndex + 1 >= totalRounds ? 'Zacznij od nowa' : 'Dalej'}
+                {roundIndex + 1 >= totalRounds
+                  ? translateAlphabetCopy(translations, 'actions.restart', 'Zacznij od nowa')
+                  : translateAlphabetCopy(translations, 'actions.next', 'Dalej')}
               </KangurButton>
             ) : (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck}>
-                Sprawdz
+                {translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
               </KangurButton>
             )}
           </div>

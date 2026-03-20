@@ -2,7 +2,7 @@
 
 import { QueryClientContext } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   useCallback,
@@ -207,6 +207,7 @@ export function KangurLanguageSwitcher({
   currentPage,
 }: KangurLanguageSwitcherProps): React.JSX.Element | null {
   const locale = useLocale();
+  const translations = useTranslations('KangurNavigation');
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const kangurAppearance = useKangurStorefrontAppearance();
@@ -248,20 +249,24 @@ export function KangurLanguageSwitcher({
     [currentHash, currentPathname, search]
   );
 
-  const isLanguageTransitionPending =
+  const isLanguageTransitionActive =
     (routeTransitionState?.activeTransitionKind === 'locale-switch' ||
       routeTransitionState?.activeTransitionSourceId === LANGUAGE_SWITCHER_SOURCE_ID) &&
     routeTransitionState?.transitionPhase !== 'idle';
+  const isLanguageTransitionPending =
+    isLanguageTransitionActive &&
+    (routeTransitionState?.transitionPhase === 'acknowledging' ||
+      routeTransitionState?.transitionPhase === 'pending');
 
   useEffect(() => {
     warmedLocaleTargetsRef.current.clear();
   }, [currentHash, currentPathname, search]);
 
   useEffect(() => {
-    if (isLanguageTransitionPending) {
+    if (isLanguageTransitionActive) {
       setOpen(false);
     }
-  }, [isLanguageTransitionPending]);
+  }, [isLanguageTransitionActive]);
 
   const warmLocaleTarget = useCallback(
     (target: { code: string; href: string } | null | undefined): void => {
@@ -295,12 +300,19 @@ export function KangurLanguageSwitcher({
     '--kangur-language-menu-shadow': palette.shadow,
     '--kangur-language-menu-text': palette.text,
   } as CSSProperties;
+  const currentLanguageLabel = currentLocaleEntry?.nativeLabel ?? currentLocale.toUpperCase();
+  const triggerAriaLabel = translations('languageSwitcher.triggerAriaLabel', {
+    language: currentLanguageLabel,
+  });
+  const triggerTitle = translations('languageSwitcher.triggerTitle', {
+    language: currentLanguageLabel,
+  });
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild disabled={isLanguageTransitionPending}>
         <KangurButton
-          aria-label={`Current language: ${currentLocaleEntry?.nativeLabel ?? currentLocale.toUpperCase()}. Open language menu.`}
+          aria-label={triggerAriaLabel}
           className={[
             'min-w-[8.75rem] max-w-full shrink-0 justify-start gap-2 overflow-hidden px-3 text-left',
             className,
@@ -309,7 +321,7 @@ export function KangurLanguageSwitcher({
             .join(' ')}
           data-testid='kangur-language-switcher-trigger'
           disabled={isLanguageTransitionPending}
-          title={`Language: ${currentLocaleEntry?.nativeLabel ?? currentLocale.toUpperCase()}`}
+          title={triggerTitle}
           type='button'
           variant='navigation'
         >
@@ -320,7 +332,7 @@ export function KangurLanguageSwitcher({
             <KangurLocaleFlag className='h-full w-full' locale={currentLocale} />
           </span>
           <span className='min-w-0 flex-1 truncate text-sm font-semibold'>
-            {currentLocaleEntry?.nativeLabel ?? currentLocale.toUpperCase()}
+            {currentLanguageLabel}
           </span>
           <ChevronDown
             aria-hidden='true'

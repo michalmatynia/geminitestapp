@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   KangurButton,
@@ -21,11 +22,14 @@ import {
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import type { Point2d } from '@/shared/contracts/geometry';
+import type { TranslationValues } from 'use-intl';
 
 const CANVAS_WIDTH = 360;
 const CANVAS_HEIGHT = 240;
 const BASE_MIN_DRAWING_POINTS = 24;
 const BASE_MIN_DRAWING_LENGTH = 180;
+
+type Translate = ReturnType<typeof useTranslations>;
 
 type LetterRound = {
   id: string;
@@ -70,6 +74,16 @@ const LETTER_ROUNDS: LetterRound[] = [
   },
 ];
 
+const translateAlphabetBasics = (
+  translate: Translate,
+  key: string,
+  fallback: string,
+  values?: TranslationValues
+): string => {
+  const translated = translate(key, values);
+  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+};
+
 type FeedbackState = { kind: 'success' | 'error'; text: string } | null;
 
 const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
@@ -88,6 +102,7 @@ const computeStrokeLength = (stroke: Point2d[]): number => {
 };
 
 export default function AlphabetBasicsLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.alphabetBasics');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
 
@@ -99,6 +114,11 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
 
   const currentRound = (LETTER_ROUNDS[roundIndex] ?? LETTER_ROUNDS[0]) as LetterRound;
   const totalRounds = LETTER_ROUNDS.length;
+  const currentWord = translateAlphabetBasics(
+    translations,
+    `rounds.${currentRound.id}.word`,
+    currentRound.word
+  );
   const points = useMemo(() => flattenPoints(strokes), [strokes]);
   const strokeLength = useMemo(
     () => strokes.reduce((sum, stroke) => sum + computeStrokeLength(stroke), 0),
@@ -111,7 +131,17 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   const strokeWidth = isCoarsePointer ? 14 : 10;
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
-  const drawHint = isCoarsePointer ? 'Rysuj palcem po śladzie' : 'Rysuj palcem lub myszką';
+  const drawHint = isCoarsePointer
+    ? translateAlphabetBasics(
+        translations,
+        'drawHint.coarse',
+        'Rysuj palcem po śladzie'
+      )
+    : translateAlphabetBasics(
+        translations,
+        'drawHint.fine',
+        'Rysuj palcem lub myszką'
+      );
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
       ({
@@ -232,18 +262,31 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     if (points.length < minDrawingPoints) {
       return {
         kind: 'error',
-        text: 'Rysuj po śladzie litery i spróbuj jeszcze raz.',
+        text: translateAlphabetBasics(
+          translations,
+          'feedback.error.traceMore',
+          'Rysuj po śladzie litery i spróbuj jeszcze raz.'
+        ),
       };
     }
     if (strokeLength < minDrawingLength) {
       return {
         kind: 'error',
-        text: 'Super start! Dorysuj jeszcze kawałek litery.',
+        text: translateAlphabetBasics(
+          translations,
+          'feedback.error.keepGoing',
+          'Super start! Dorysuj jeszcze kawałek litery.'
+        ),
       };
     }
     return {
       kind: 'success',
-      text: `Świetnie! Litera ${currentRound.label} gotowa.`,
+      text: translateAlphabetBasics(
+        translations,
+        'feedback.success',
+        'Świetnie! Litera {letter} gotowa.',
+        { letter: currentRound.label }
+      ),
     };
   };
 
@@ -267,15 +310,24 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         <div className='flex flex-wrap items-start justify-between gap-4'>
           <div className='min-w-0'>
             <KangurHeadline accent='amber' as='h2' size='sm'>
-              Alphabet
+              {translateAlphabetBasics(translations, 'header.title', 'Alphabet')}
             </KangurHeadline>
             <p className='mt-2 text-sm text-slate-600'>
-              Track: Rysuj litery po śladzie. Ćwicz precyzję ruchu na kolorowych śladach. To gra dla 6-latków.
+              {translateAlphabetBasics(
+                translations,
+                'header.description',
+                'Track: Rysuj litery po śladzie. Ćwicz precyzję ruchu na kolorowych śladach. To gra dla 6-latków.'
+              )}
             </p>
           </div>
           <div className='flex flex-col items-end gap-2'>
             <KangurStatusChip accent={currentRound.accent} size='sm'>
-              Litera {currentRound.label}
+              {translateAlphabetBasics(
+                translations,
+                'header.roundBadge',
+                'Litera {letter}',
+                { letter: currentRound.label }
+              )}
             </KangurStatusChip>
             <span className='text-xs text-slate-500'>
               {roundIndex + 1}/{totalRounds}
@@ -293,10 +345,15 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <div className='text-xs font-semibold uppercase tracking-[0.2em] text-slate-500'>
-                Ślad litery
+                {translateAlphabetBasics(translations, 'guide.title', 'Ślad litery')}
               </div>
               <p className='mt-1 text-sm text-slate-600'>
-                Litera {currentRound.label} jak {currentRound.word}.
+                {translateAlphabetBasics(
+                  translations,
+                  'guide.description',
+                  'Litera {letter} jak {word}.',
+                  { letter: currentRound.label, word: currentWord }
+                )}
               </p>
             </div>
             <KangurStatusChip accent='indigo' size='sm'>
@@ -363,13 +420,31 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               onPointerLeave={handlePointerUp}
               data-drawing-active={isPointerDrawing ? 'true' : 'false'}
               className='kangur-drawing-canvas relative z-10 h-full w-full touch-none'
-              aria-label={`Rysuj litere ${currentRound.label}`}
+              aria-label={translateAlphabetBasics(
+                translations,
+                'canvasAria',
+                'Rysuj litere {letter}',
+                { letter: currentRound.label }
+              )}
             />
           </div>
 
           <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-            <span>Rysuj po grubych liniach i nie spiesz się.</span>
-            <span>{points.length} punktów</span>
+            <span>
+              {translateAlphabetBasics(
+                translations,
+                'footer.traceHint',
+                'Rysuj po grubych liniach i nie spiesz się.'
+              )}
+            </span>
+            <span>
+              {translateAlphabetBasics(
+                translations,
+                'footer.points',
+                '{count} punktów',
+                { count: points.length }
+              )}
+            </span>
           </div>
         </div>
       </KangurGlassPanel>
@@ -393,21 +468,27 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
               </p>
             ) : (
               <p className='text-sm text-slate-600'>
-                Kliknij Sprawdź, gdy skończysz rysować.
+                {translateAlphabetBasics(
+                  translations,
+                  'footer.idlePrompt',
+                  'Kliknij Sprawdź, gdy skończysz rysować.'
+                )}
               </p>
             )}
           </div>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             <KangurButton size='sm' type='button' variant='surface' onClick={clearDrawing}>
-              Wyczyść
+              {translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
             </KangurButton>
             {feedback?.kind === 'success' ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
-                {roundIndex + 1 >= totalRounds ? 'Zacznij od nowa' : 'Dalej'}
+                {roundIndex + 1 >= totalRounds
+                  ? translateAlphabetBasics(translations, 'actions.restart', 'Zacznij od nowa')
+                  : translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
               </KangurButton>
             ) : (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck}>
-                Sprawdź
+                {translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
               </KangurButton>
             )}
           </div>

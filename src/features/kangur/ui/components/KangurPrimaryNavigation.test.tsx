@@ -13,6 +13,10 @@ const { startRouteTransitionMock } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
 }));
 
+const { routeTransitionStateMock } = vi.hoisted(() => ({
+  routeTransitionStateMock: vi.fn(),
+}));
+
 const {
   pathnameMock,
   prefetchMock,
@@ -268,7 +272,7 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
   useOptionalKangurRouteTransitionActions: () => ({
     startRouteTransition: startRouteTransitionMock,
   }),
-  useOptionalKangurRouteTransitionState: () => null,
+  useOptionalKangurRouteTransitionState: () => routeTransitionStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -378,6 +382,7 @@ import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTu
 describe('KangurPrimaryNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    routeTransitionStateMock.mockReturnValue(null);
     localeMock.mockReturnValue('pl');
     setViewport({ width: 1024, matches: false });
     pathnameMock.mockReturnValue('/kangur');
@@ -779,6 +784,35 @@ describe('KangurPrimaryNavigation', () => {
       sourceId: 'kangur-language-switcher',
       transitionKind: 'locale-switch',
     });
+  });
+
+  it('keeps the language trigger enabled after the locale route has committed', () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/lessons');
+    routeTransitionStateMock.mockReturnValue({
+      activeTransitionKind: 'locale-switch',
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionRequestedHref: '/lessons',
+      activeTransitionSkeletonVariant: 'lessons-library',
+      activeTransitionSourceId: 'kangur-language-switcher',
+      isRouteAcknowledging: false,
+      isRoutePending: false,
+      isRouteRevealing: false,
+      isRouteWaitingForReady: true,
+      pendingPageKey: null,
+      transitionPhase: 'waiting_for_ready',
+    });
+
+    render(
+      <KangurPrimaryNavigation
+        basePath='/en'
+        currentPage='Lessons'
+        isAuthenticated
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('kangur-language-switcher-trigger')).toBeEnabled();
   });
 
   it('translates the desktop section labels and chooser copy for English locale', () => {

@@ -104,12 +104,12 @@ describe('AssignmentPanel', () => {
 
     expect(screen.getByTestId('assignment-panel-shell')).toHaveClass(
       'glass-panel',
-      'border-slate-200/70',
-      'bg-white/88'
+      'kangur-panel-soft',
+      'kangur-glass-surface-neutral'
     );
-    expect(screen.getByText('heading')).toBeInTheDocument();
-    expect(screen.getByText('completion.progress')).toBeInTheDocument();
-    expect(screen.getByText('completion.progress')).toHaveClass(
+    expect(screen.getByText('Zadania')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 0/3')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 0/3')).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
@@ -117,14 +117,14 @@ describe('AssignmentPanel', () => {
     expect(screen.getByText('➗ Powtórka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeInTheDocument();
     expect(screen.getByText('Trening mieszany')).toBeInTheDocument();
-    expect(screen.getByText('priority.high')).toBeInTheDocument();
-    expect(screen.getByText('priority.medium')).toBeInTheDocument();
-    expect(screen.getByText('priority.low')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet sredni')).toBeInTheDocument();
+    expect(screen.getByText('Priorytet niski')).toBeInTheDocument();
     expect(screen.getByTestId('assignment-panel-card-lesson-retry-division')).toHaveClass(
       'soft-card',
       'border'
     );
-    expect(screen.getAllByText('target')[0]).toHaveClass(
+    expect(screen.getAllByText('Cel: 1 powtórka')[0]).toHaveClass(
       'inline-flex',
       'rounded-full',
       'border'
@@ -142,7 +142,7 @@ describe('AssignmentPanel', () => {
     );
 
     const completionToggle = screen.getAllByRole('button', {
-      name: 'toggle.markDone',
+      name: /Oznacz .* jako ukonczone/i,
     })[0];
 
     expect(completionToggle).toHaveClass('kangur-cta-pill', 'soft-cta');
@@ -163,7 +163,7 @@ describe('AssignmentPanel', () => {
       'border',
       'transition'
     );
-    expect(screen.getByText('completion.progress')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 1/3')).toBeInTheDocument();
   });
 
   it('builds embedded cms links when rendered inside a host page route', () => {
@@ -195,7 +195,9 @@ describe('AssignmentPanel', () => {
 
     render(<AssignmentPanel basePath='/kangur' progress={progress} />);
 
-    const emptyState = screen.getByText('empty');
+    const emptyState = screen.getByText(
+      'Brak proponowanych zadan. Zbierz najpierw troche postepu ucznia.'
+    );
 
     expect(emptyState).toBeInTheDocument();
     expect(emptyState.parentElement).toHaveClass(

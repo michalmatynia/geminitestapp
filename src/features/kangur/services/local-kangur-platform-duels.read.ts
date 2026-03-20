@@ -1,3 +1,14 @@
+import {
+  buildKangurDuelLeaderboardPath,
+  buildKangurDuelLobbyChatPath,
+  buildKangurDuelLobbyPath,
+  buildKangurDuelLobbyPresencePath,
+  buildKangurDuelOpponentsPath,
+  buildKangurDuelSearchPath,
+  buildKangurDuelSpectatePath,
+  buildKangurDuelStatePath,
+  createKangurApiClient,
+} from '@kangur/api-client';
 import type {
   KangurDuelLeaderboardResponse,
   KangurDuelLobbyResponse,
@@ -17,32 +28,28 @@ import {
   kangurDuelSearchResponseSchema,
   kangurDuelSpectatorStateResponseSchema,
   kangurDuelStateResponseSchema,
-} from '@/features/kangur/shared/contracts/kangur-duels';
-import { kangurDuelLobbyChatListResponseSchema } from '@/features/kangur/shared/contracts/kangur-duels-chat';
+  kangurDuelLobbyChatListResponseSchema,
+} from '@kangur/contracts';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 
-import {
-  KANGUR_DUELS_LEADERBOARD_ENDPOINT,
-  KANGUR_DUELS_LOBBY_CHAT_ENDPOINT,
-  KANGUR_DUELS_LOBBY_ENDPOINT,
-  KANGUR_DUELS_LOBBY_PRESENCE_ENDPOINT,
-  KANGUR_DUELS_OPPONENTS_ENDPOINT,
-  KANGUR_DUELS_SEARCH_ENDPOINT,
-  KANGUR_DUELS_SPECTATE_ENDPOINT,
-  KANGUR_DUELS_STATE_ENDPOINT,
-} from './local-kangur-platform-endpoints';
 import {
   createActorAwareHeaders,
   createKangurClientFallback,
   trackReadFailure,
 } from './local-kangur-platform-shared';
 
+const kangurDuelsApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
+
 export const requestDuelStateFromApi = async (
   sessionId: string,
   options?: { signal?: AbortSignal }
 ): Promise<KangurDuelStateResponse> => {
-  const endpoint = `${KANGUR_DUELS_STATE_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`;
+  const endpoint = buildKangurDuelStatePath(sessionId);
 
   return withKangurClientError(
     (error) => ({
@@ -57,23 +64,10 @@ export const requestDuelStateFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.getDuelState(sessionId, {
         cache: 'no-store',
         signal: options?.signal,
       });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel state request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
       const parsed = kangurDuelStateResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel state payload validation failed.');
@@ -104,11 +98,9 @@ export const requestDuelSpectatorStateFromApi = async (
   sessionId: string,
   options?: { spectatorId?: string; signal?: AbortSignal }
 ): Promise<KangurDuelSpectatorStateResponse> => {
-  const params = new URLSearchParams({ sessionId });
-  if (options?.spectatorId) {
-    params.set('spectatorId', options.spectatorId);
-  }
-  const endpoint = `${KANGUR_DUELS_SPECTATE_ENDPOINT}?${params.toString()}`;
+  const endpoint = buildKangurDuelSpectatePath(sessionId, {
+    spectatorId: options?.spectatorId,
+  });
 
   return withKangurClientError(
     (error) => ({
@@ -124,23 +116,14 @@ export const requestDuelSpectatorStateFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-        cache: 'no-store',
-        signal: options?.signal,
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel spectate request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurDuelsApiClient.getDuelSpectatorState(
+        sessionId,
+        { spectatorId: options?.spectatorId },
+        {
+          cache: 'no-store',
+          signal: options?.signal,
+        }
+      );
       const parsed = kangurDuelSpectatorStateResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel spectate payload validation failed.');
@@ -173,9 +156,7 @@ export const requestDuelLobbyFromApi = async (
   const limit = typeof options?.limit === 'number' && Number.isFinite(options.limit)
     ? Math.max(1, Math.floor(options.limit))
     : null;
-  const endpoint = limit
-    ? `${KANGUR_DUELS_LOBBY_ENDPOINT}?limit=${encodeURIComponent(limit)}`
-    : KANGUR_DUELS_LOBBY_ENDPOINT;
+  const endpoint = buildKangurDuelLobbyPath(limit ? { limit } : undefined);
 
   return withKangurClientError(
     (error) => ({
@@ -190,23 +171,10 @@ export const requestDuelLobbyFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.listDuelLobby(limit ? { limit } : undefined, {
         cache: 'no-store',
         signal: options?.signal,
       });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel lobby request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
       const parsed = kangurDuelLobbyResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel lobby payload validation failed.');
@@ -238,9 +206,7 @@ export const requestDuelLobbyPresenceFromApi = async (
   const limit = typeof options?.limit === 'number' && Number.isFinite(options.limit)
     ? Math.max(1, Math.floor(options.limit))
     : null;
-  const endpoint = limit
-    ? `${KANGUR_DUELS_LOBBY_PRESENCE_ENDPOINT}?limit=${encodeURIComponent(limit)}`
-    : KANGUR_DUELS_LOBBY_PRESENCE_ENDPOINT;
+  const endpoint = buildKangurDuelLobbyPresencePath(limit ? { limit } : undefined);
 
   return withKangurClientError(
     (error) => ({
@@ -255,23 +221,13 @@ export const requestDuelLobbyPresenceFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.listDuelLobbyPresence(
+        limit ? { limit } : undefined,
+        {
         cache: 'no-store',
         signal: options?.signal,
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel lobby presence request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+        }
+      );
       const parsed = kangurDuelLobbyPresenceResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel lobby presence payload validation failed.');
@@ -300,16 +256,14 @@ export const requestDuelLobbyPresenceFromApi = async (
 export const requestDuelLeaderboardFromApi = async (
   options?: { limit?: number; lookbackDays?: number; signal?: AbortSignal }
 ): Promise<KangurDuelLeaderboardResponse> => {
-  const params = new URLSearchParams();
-  if (typeof options?.limit === 'number' && Number.isFinite(options.limit)) {
-    params.set('limit', String(Math.max(1, Math.floor(options.limit))));
-  }
-  if (typeof options?.lookbackDays === 'number' && Number.isFinite(options.lookbackDays)) {
-    params.set('lookbackDays', String(Math.max(1, Math.floor(options.lookbackDays))));
-  }
-  const endpoint = params.size
-    ? `${KANGUR_DUELS_LEADERBOARD_ENDPOINT}?${params.toString()}`
-    : KANGUR_DUELS_LEADERBOARD_ENDPOINT;
+  const limit = typeof options?.limit === 'number' && Number.isFinite(options.limit)
+    ? Math.max(1, Math.floor(options.limit))
+    : undefined;
+  const lookbackDays =
+    typeof options?.lookbackDays === 'number' && Number.isFinite(options.lookbackDays)
+      ? Math.max(1, Math.floor(options.lookbackDays))
+      : undefined;
+  const endpoint = buildKangurDuelLeaderboardPath({ limit, lookbackDays });
 
   return withKangurClientError(
     (error) => ({
@@ -323,23 +277,13 @@ export const requestDuelLeaderboardFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.getDuelLeaderboard(
+        { limit, lookbackDays },
+        {
         cache: 'no-store',
         signal: options?.signal,
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel leaderboard request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+        }
+      );
       const parsed = kangurDuelLeaderboardResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel leaderboard payload validation failed.');
@@ -382,9 +326,10 @@ export const requestDuelLobbyChatFromApi = async (
   if (before) {
     query.set('before', before);
   }
-  const endpoint = query.size > 0
-    ? `${KANGUR_DUELS_LOBBY_CHAT_ENDPOINT}?${query.toString()}`
-    : KANGUR_DUELS_LOBBY_CHAT_ENDPOINT;
+  const endpoint = buildKangurDuelLobbyChatPath({
+    ...(limit ? { limit } : {}),
+    ...(before ? { before } : {}),
+  });
 
   return withKangurClientError(
     (error) => ({
@@ -400,23 +345,16 @@ export const requestDuelLobbyChatFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.listDuelLobbyChat(
+        {
+          ...(limit ? { limit } : {}),
+          ...(before ? { before } : {}),
+        },
+        {
         cache: 'no-store',
         signal: options?.signal,
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel lobby chat request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+        }
+      );
       const parsed = kangurDuelLobbyChatListResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel lobby chat payload validation failed.');
@@ -448,9 +386,7 @@ export const requestDuelOpponentsFromApi = async (
   const limit = typeof options?.limit === 'number' && Number.isFinite(options.limit)
     ? Math.max(1, Math.floor(options.limit))
     : null;
-  const endpoint = limit
-    ? `${KANGUR_DUELS_OPPONENTS_ENDPOINT}?limit=${encodeURIComponent(limit)}`
-    : KANGUR_DUELS_OPPONENTS_ENDPOINT;
+  const endpoint = buildKangurDuelOpponentsPath(limit ? { limit } : undefined);
 
   return withKangurClientError(
     (error) => ({
@@ -465,23 +401,13 @@ export const requestDuelOpponentsFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.listDuelOpponents(
+        limit ? { limit } : undefined,
+        {
         cache: 'no-store',
         signal: options?.signal,
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel opponents request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+        }
+      );
       const parsed = kangurDuelOpponentsResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel opponents payload validation failed.');
@@ -515,12 +441,7 @@ export const requestDuelSearchFromApi = async (
   const limit = typeof options?.limit === 'number' && Number.isFinite(options.limit)
     ? Math.max(1, Math.floor(options.limit))
     : null;
-  const searchParams = new URLSearchParams();
-  searchParams.set('q', trimmed);
-  if (limit) {
-    searchParams.set('limit', String(limit));
-  }
-  const endpoint = `${KANGUR_DUELS_SEARCH_ENDPOINT}?${searchParams.toString()}`;
+  const endpoint = buildKangurDuelSearchPath(trimmed, limit ? { limit } : undefined);
 
   return withKangurClientError(
     (error) => ({
@@ -536,23 +457,10 @@ export const requestDuelSearchFromApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurDuelsApiClient.searchDuels(trimmed, limit ? { limit } : undefined, {
         cache: 'no-store',
         signal: options?.signal,
       });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur duel search request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
       const parsed = kangurDuelSearchResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel search payload validation failed.');

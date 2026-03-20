@@ -60,8 +60,8 @@ describe('KangurPriorityAssignments', () => {
 
     expect(screen.getByTestId('kangur-priority-assignments-loading')).toHaveClass(
       'glass-panel',
-      'border-slate-200/70',
-      'bg-white/88'
+      'kangur-panel-soft',
+      'kangur-glass-surface-neutral'
     );
   });
 
@@ -155,9 +155,9 @@ describe('KangurPriorityAssignments', () => {
 
     expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveClass(
       'glass-panel',
-      'border-white/78',
-      'bg-white/58'
+      'kangur-panel-soft',
+      'kangur-glass-surface-mist'
     );
-    expect(screen.getByText('Brak aktywnych zadań od rodzica.')).toBeInTheDocument();
+    expect(screen.getByText('Brak aktywnych zadan od rodzica.')).toBeInTheDocument();
   });
 });

@@ -6,3 +6,5 @@ export * from './kangur-ai-tutor-mood';
 export * from './kangur-settings-keys';
 export * from './system';
 export * from './kangur';
+export * from './kangur-duels';
+export * from './kangur-duels-chat';

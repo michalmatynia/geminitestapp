@@ -51,11 +51,15 @@ describe('GeometryDrawingGame', () => {
       'aria-valuetext',
       'Runda 1 z 4'
     );
-    expect(difficultyShell).toHaveClass('glass-panel', 'border-white/88', 'bg-white/94');
+    expect(difficultyShell).toHaveClass(
+      'glass-panel',
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
+    );
     expect(screen.getByTestId('geometry-drawing-round-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(starterButton).toHaveClass('kangur-cta-pill', 'surface-cta');
     expect(proButton).toHaveClass('kangur-cta-pill', 'soft-cta');

@@ -45,6 +45,7 @@ import {
 import {
   clearSessionUserCache,
   prepareLoginHref,
+  requestKangurLogout,
   resolveSessionUser,
 } from './local-kangur-platform-auth';
 import {
@@ -67,7 +68,6 @@ import {
 } from './local-kangur-platform-duels';
 import {
   KANGUR_LEARNER_ACTIVITY_ENDPOINT,
-  KANGUR_LOGOUT_ENDPOINT,
   KANGUR_PROGRESS_CTA_HEADER,
   KANGUR_PROGRESS_CTA_SOURCE,
   KANGUR_PROGRESS_ENDPOINT,
@@ -95,6 +95,11 @@ const progressResponseSchema = kangurProgressStateSchema;
 const learnerActivityStatusSchema = kangurLearnerActivityStatusSchema;
 
 const kangurProgressApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
+const kangurLearnerActivityApiClient = createKangurApiClient({
   fetchImpl: fetch,
   credentials: 'same-origin',
   getHeaders: () => createActorAwareHeaders(),
@@ -239,22 +244,9 @@ const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStat
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_LEARNER_ACTIVITY_ENDPOINT, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
+      const payload = await kangurLearnerActivityApiClient.getLearnerActivity({
         cache: 'no-store',
       });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur learner activity request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
       const parsed = learnerActivityStatusSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner activity payload validation failed.');
@@ -295,24 +287,7 @@ const updateLearnerActivityViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_LEARNER_ACTIVITY_ENDPOINT, {
-        method: 'POST',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur learner activity update failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurLearnerActivityApiClient.updateLearnerActivity(input);
       const parsed = kangurLearnerActivitySnapshotSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner activity update payload validation failed.');
@@ -352,10 +327,8 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
         clearScoreQueryCache();
         clearStoredActiveLearnerId();
         resetGuestKangurScoreSession();
-        await fetch(KANGUR_LOGOUT_ENDPOINT, {
-          method: 'POST',
+        await requestKangurLogout({
           headers: withCsrfHeaders(),
-          credentials: 'same-origin',
         }).catch((error) => {
           void ErrorSystem.captureException(error);
         });

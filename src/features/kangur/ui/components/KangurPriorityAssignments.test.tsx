@@ -83,19 +83,19 @@ describe('KangurPriorityAssignments', () => {
     render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveTextContent(
-      'priorityAssignments.title'
+      'Priorytetowe zadania'
     );
-    expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveTextContent('count.one');
+    expect(screen.getByTestId('kangur-assignments-list-shell')).toHaveTextContent('1 zadanie');
   });
 
   it('renders the default empty-state copy', () => {
     render(<KangurPriorityAssignments basePath='/kangur' enabled />);
 
     expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveTextContent(
-      'priorityAssignments.title'
+      'Priorytetowe zadania'
     );
     expect(screen.getByTestId('kangur-priority-assignments-empty')).toHaveTextContent(
-      'priorityAssignments.emptyDescription'
+      'Brak aktywnych zadan od rodzica.'
     );
   });
 });

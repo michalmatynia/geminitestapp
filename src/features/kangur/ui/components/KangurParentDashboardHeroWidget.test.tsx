@@ -4,6 +4,7 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import plMessages from '@/i18n/messages/pl.json';
 
 const {
   routeNavigatorPushMock,
@@ -83,6 +84,8 @@ vi.mock('@/features/kangur/ui/components/KangurParentDashboardLearnerManagementW
 }));
 
 import { KangurParentDashboardHeroWidget } from '@/features/kangur/ui/components/KangurParentDashboardHeroWidget';
+
+const heroMessages = plMessages.KangurParentDashboard.hero;
 
 describe('KangurParentDashboardHeroWidget', () => {
   beforeEach(() => {
@@ -167,18 +170,18 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass(
       'glass-panel',
-      'border-white/78',
-      'bg-white/68',
+      'kangur-panel-soft',
+      'kangur-glass-surface-mist-strong',
       'text-center'
     );
     expect(screen.getByTestId('kangur-parent-dashboard-heading-art')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'hero.unauthenticated.title' })).toHaveClass(
+    expect(screen.getByRole('heading', { name: heroMessages.unauthenticated.title })).toHaveClass(
       'text-2xl',
       'sm:text-3xl'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'hero.signIn' }));
-    fireEvent.click(screen.getByRole('button', { name: 'hero.createParentAccountAria' }));
+    fireEvent.click(screen.getByRole('button', { name: heroMessages.signIn }));
+    fireEvent.click(screen.getByRole('button', { name: heroMessages.createParentAccountAria }));
 
     expect(openLoginModal).toHaveBeenCalledTimes(2);
     expect(openLoginModal).toHaveBeenLastCalledWith(null, {
@@ -231,7 +234,7 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-parent-dashboard-hero')).toHaveClass('text-center');
     expect(screen.getByTestId('kangur-parent-dashboard-heading-art')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'hero.parentTitle' })).toHaveClass(
+    expect(screen.getByRole('heading', { name: heroMessages.parentTitle })).toHaveClass(
       'text-2xl',
       'sm:text-3xl'
     );
@@ -278,7 +281,7 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     render(<KangurParentDashboardHeroWidget showActions={false} showLearnerManagement />);
 
-    const addButton = screen.getByRole('button', { name: 'hero.addLearner' });
+    const addButton = screen.getByRole('button', { name: heroMessages.addLearner });
     fireEvent.click(addButton);
 
     expect(setCreateLearnerModalOpen).toHaveBeenCalledWith(true);
@@ -396,8 +399,8 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
-    expect(screen.getByText('hero.activity.status.online')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'hero.openActivity' })).toHaveAttribute(
+    expect(screen.getByText(heroMessages.activity.status.online)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: heroMessages.openActivity })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=clock'
     );
@@ -454,8 +457,8 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
-    expect(screen.getByText('hero.activity.status.online')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'hero.openActivity' })).toHaveAttribute(
+    expect(screen.getByText(heroMessages.activity.status.online)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: heroMessages.openActivity })).toHaveAttribute(
       'href',
       '/kangur/lessons?focus=adding'
     );
@@ -514,7 +517,7 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
-    expect(screen.getByText('hero.activity.status.recent')).toBeInTheDocument();
+    expect(screen.getByText(heroMessages.activity.status.recent)).toBeInTheDocument();
 
     vi.useRealTimers();
   });
@@ -558,7 +561,7 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     render(<KangurParentDashboardHeroWidget showActions={false} />);
 
-    expect(screen.getByText('hero.activity.status.offline')).toBeInTheDocument();
+    expect(screen.getByText(heroMessages.activity.status.offline)).toBeInTheDocument();
   });
 
   it('hides learner progress details when no active learner is selected', () => {
@@ -596,6 +599,6 @@ describe('KangurParentDashboardHeroWidget', () => {
 
     expect(screen.queryByTestId('kangur-parent-dashboard-daily-quest')).toBeNull();
     expect(screen.queryByTestId('kangur-parent-dashboard-track-summary')).toBeNull();
-    expect(screen.getByText('hero.noLearnerTitle')).toBeInTheDocument();
+    expect(screen.getByText(heroMessages.noLearnerTitle)).toBeInTheDocument();
   });
 });

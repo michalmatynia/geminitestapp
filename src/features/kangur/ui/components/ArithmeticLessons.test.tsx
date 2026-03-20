@@ -112,8 +112,9 @@ describe('Arithmetic lessons shared surfaces', () => {
 
     expect(screen.getByTestId('adding-lesson-game-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid',
+      'kangur-panel-shell'
     );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
@@ -146,8 +147,9 @@ describe('Arithmetic lessons shared surfaces', () => {
 
     expect(screen.getByTestId('subtracting-lesson-game-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid',
+      'kangur-panel-shell'
     );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
@@ -179,8 +181,9 @@ describe('Arithmetic lessons shared surfaces', () => {
 
     expect(screen.getByTestId('division-lesson-game-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid',
+      'kangur-panel-shell'
     );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',
@@ -217,8 +220,9 @@ describe('Arithmetic lessons shared surfaces', () => {
 
     expect(screen.getByTestId('multiplication-lesson-game-array-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid',
+      'kangur-panel-shell'
     );
     expect(screen.getByRole('button', { name: /wróć do tematów/i })).toHaveClass(
       'kangur-cta-pill',

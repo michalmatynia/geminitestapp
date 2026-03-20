@@ -57,10 +57,10 @@ describe('DuelsLobbyChatPanel', () => {
       />
     );
 
-    expect(screen.getByText('heading')).toBeInTheDocument();
-    expect(screen.getByText('you')).toBeInTheDocument();
+    expect(screen.getByText('Czat lobby')).toBeInTheDocument();
+    expect(screen.getByText('Ty')).toBeInTheDocument();
     expect(screen.getByText('Cześć!')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'send' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wyslij' })).toBeInTheDocument();
   });
 
   it('shows login prompt when posting is disabled', () => {
@@ -91,7 +91,7 @@ describe('DuelsLobbyChatPanel', () => {
       />
     );
 
-    const loginButton = screen.getByRole('button', { name: 'loginButton' });
+    const loginButton = screen.getByRole('button', { name: 'Zaloguj sie' });
     fireEvent.click(loginButton);
     expect(onRequireLogin).toHaveBeenCalledTimes(1);
   });

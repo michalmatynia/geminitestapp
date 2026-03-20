@@ -193,7 +193,7 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
     );
 
     const loadMoreButton = screen.getByRole('button', {
-      name: 'widgets.monitoring.history.loadMore',
+      name: 'Pokaż starsze',
     });
     fireEvent.click(loadMoreButton);
 
@@ -271,7 +271,7 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('tab', { name: 'widgets.monitoring.filters.openedTask' })
+      screen.getByRole('tab', { name: 'Zadania' })
     );
 
     await waitFor(() =>
@@ -334,7 +334,7 @@ describe('KangurParentDashboardAssignmentsMonitoringWidget', () => {
       ).toBeInTheDocument()
     );
 
-    fireEvent.change(screen.getByLabelText('widgets.monitoring.filters.dateFromLabel'), {
+    fireEvent.change(screen.getByLabelText('Data od'), {
       target: { value: '2026-03-15' },
     });
 

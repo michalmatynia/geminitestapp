@@ -1,3 +1,8 @@
+import {
+  buildKangurLearnerInteractionsPath,
+  buildKangurLearnerSessionsPath,
+  createKangurApiClient,
+} from '@kangur/api-client';
 import type {
   KangurLearnerCreateInput,
   KangurLearnerProfile,
@@ -13,10 +18,8 @@ import {
   kangurLearnerInteractionHistorySchema,
 } from '@kangur/contracts';
 import {
-  reportKangurClientError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
-import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
@@ -24,8 +27,6 @@ import {
 
 import {
   KANGUR_LEARNERS_ENDPOINT,
-  KANGUR_LEARNER_INTERACTIONS_ENDPOINT,
-  KANGUR_LEARNER_SESSIONS_ENDPOINT,
 } from './local-kangur-platform-endpoints';
 import { clearSessionUserCache, resolveSessionUser } from './local-kangur-platform-auth';
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
@@ -37,7 +38,11 @@ import {
   trackWriteSuccess,
 } from './local-kangur-platform-shared';
 
-const looksLikeHtml = (value: string): boolean => /<!doctype|<html|<head|<body/i.test(value);
+const kangurLearnersApiClient = createKangurApiClient({
+  fetchImpl: fetch,
+  credentials: 'same-origin',
+  getHeaders: () => createActorAwareHeaders(),
+});
 
 export const createLearnerViaApi = async (
   input: KangurLearnerCreateInput
@@ -54,78 +59,7 @@ export const createLearnerViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(KANGUR_LEARNERS_ENDPOINT, {
-        method: 'POST',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Kangur learner create request failed with ${response.status}`;
-        let errorDetails: unknown = null;
-        const errorId = response.headers.get('x-error-id');
-
-        try {
-          const responseText = await response.text();
-          if (responseText.trim().length > 0) {
-            try {
-              const payload = JSON.parse(responseText) as Record<string, unknown>;
-              if (typeof payload['error'] === 'string') {
-                errorMessage = payload['error'];
-              } else if (!looksLikeHtml(responseText)) {
-                errorMessage = responseText.trim().slice(0, 240);
-              }
-              if (payload['details'] !== undefined) {
-                errorDetails = payload['details'];
-              }
-            } catch (error) {
-              void ErrorSystem.captureException(error);
-              reportKangurClientError(error, {
-                source: 'kangur.local-platform',
-                action: 'learners.create',
-                description: 'Parse learner create error payload.',
-                context: {
-                  endpoint: KANGUR_LEARNERS_ENDPOINT,
-                },
-              });
-              if (!looksLikeHtml(responseText)) {
-                errorMessage = responseText.trim().slice(0, 240);
-              }
-            }
-          }
-        } catch (error) {
-          void ErrorSystem.captureException(error);
-          reportKangurClientError(error, {
-            source: 'kangur.local-platform',
-            action: 'learners.create',
-            description: 'Read learner create error response body.',
-            context: {
-              endpoint: KANGUR_LEARNERS_ENDPOINT,
-            },
-          });
-
-          // Ignore response body parsing failures.
-        }
-
-        const error = new Error(errorMessage) as Error & {
-          status: number;
-          details?: unknown;
-          errorId?: string;
-        };
-        error.status = response.status;
-        if (errorDetails) {
-          error.details = errorDetails;
-        }
-        if (errorId) {
-          error.errorId = errorId;
-        }
-        throw error;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurLearnersApiClient.createLearner(input);
       const parsed = kangurLearnerProfileSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner create payload validation failed.');
@@ -170,26 +104,7 @@ export const updateLearnerViaApi = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: createActorAwareHeaders({
-          'Content-Type': 'application/json',
-        }),
-        credentials: 'same-origin',
-        body: JSON.stringify(input),
-      });
-
-      if (!response.ok) {
-        const error = new Error(
-          `Kangur learner update request failed with ${response.status}`
-        ) as Error & {
-          status: number;
-        };
-        error.status = response.status;
-        throw error;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurLearnersApiClient.updateLearner(id, input);
       const parsed = kangurLearnerProfileSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner update payload validation failed.');
@@ -232,23 +147,7 @@ export const deleteLearnerViaApi = async (id: string): Promise<KangurLearnerProf
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const error = new Error(
-          `Kangur learner delete request failed with ${response.status}`
-        ) as Error & {
-          status: number;
-        };
-        error.status = response.status;
-        throw error;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurLearnersApiClient.deleteLearner(id);
       const parsed = kangurLearnerProfileSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner delete payload validation failed.');
@@ -316,18 +215,7 @@ export const selectLearner = async (learnerId: string): Promise<KangurUser> => {
 const buildLearnerSessionsUrl = (
   learnerId: string,
   options?: { limit?: number; offset?: number }
-): string => {
-  const base = `${KANGUR_LEARNER_SESSIONS_ENDPOINT}/${encodeURIComponent(learnerId)}/sessions`;
-  const params = new URLSearchParams();
-  if (typeof options?.limit === 'number' && Number.isFinite(options.limit)) {
-    params.set('limit', String(Math.max(1, Math.floor(options.limit))));
-  }
-  if (typeof options?.offset === 'number' && Number.isFinite(options.offset)) {
-    params.set('offset', String(Math.max(0, Math.floor(options.offset))));
-  }
-  const query = params.toString();
-  return query ? `${base}?${query}` : base;
-};
+): string => buildKangurLearnerSessionsPath(learnerId, options);
 
 export const requestLearnerSessions = async (
   learnerId: string,
@@ -348,21 +236,7 @@ export const requestLearnerSessions = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur learner sessions request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurLearnersApiClient.listLearnerSessions(learnerId, options);
       const parsed = kangurLearnerSessionHistorySchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner sessions payload validation failed.');
@@ -391,20 +265,7 @@ export const requestLearnerSessions = async (
 const buildLearnerInteractionsUrl = (
   learnerId: string,
   options?: { limit?: number; offset?: number }
-): string => {
-  const base = `${KANGUR_LEARNER_INTERACTIONS_ENDPOINT}/${encodeURIComponent(
-    learnerId
-  )}/interactions`;
-  const params = new URLSearchParams();
-  if (typeof options?.limit === 'number' && Number.isFinite(options.limit)) {
-    params.set('limit', String(Math.max(1, Math.floor(options.limit))));
-  }
-  if (typeof options?.offset === 'number' && Number.isFinite(options.offset)) {
-    params.set('offset', String(Math.max(0, Math.floor(options.offset))));
-  }
-  const query = params.toString();
-  return query ? `${base}?${query}` : base;
-};
+): string => buildKangurLearnerInteractionsPath(learnerId, options);
 
 export const requestLearnerInteractions = async (
   learnerId: string,
@@ -425,21 +286,7 @@ export const requestLearnerInteractions = async (
       },
     }),
     async () => {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: createActorAwareHeaders(),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const requestError = new Error(
-          `Kangur learner interactions request failed with ${response.status}`
-        ) as Error & { status: number };
-        requestError.status = response.status;
-        throw requestError;
-      }
-
-      const payload = (await response.json()) as unknown;
+      const payload = await kangurLearnersApiClient.listLearnerInteractions(learnerId, options);
       const parsed = kangurLearnerInteractionHistorySchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur learner interactions payload validation failed.');

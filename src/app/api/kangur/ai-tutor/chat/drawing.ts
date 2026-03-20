@@ -19,6 +19,31 @@ const KANGUR_TUTOR_DRAWING_ALT_PATTERN = /<alt>([\s\S]*?)<\/alt>/i;
 const KANGUR_TUTOR_DRAWING_REQUEST_PATTERN =
   /\b(narysuj|rysuj|rysunek|szkic|schemat|diagram|pokaz .*rysun|pokaz .*schemat)\b/i;
 
+// JSON schema for structured drawing output (when model supports JSON mode)
+export const KANGUR_TUTOR_DRAWING_JSON_SCHEMA = {
+  type: 'object',
+  properties: {
+    message: {
+      type: 'string',
+      description: 'Main tutor response text in Polish',
+    },
+    drawing: {
+      type: 'object',
+      description: 'Optional drawing with SVG',
+      properties: {
+        title: { type: 'string', description: 'Short title in Polish (max 120 chars)' },
+        caption: { type: 'string', description: 'Brief explanation in Polish (max 240 chars)' },
+        alt: { type: 'string', description: 'Accessibility description in Polish (max 160 chars)' },
+        svg: { type: 'string', description: 'SVG XML content (no script/style/external refs)' },
+      },
+      required: ['svg'],
+      additionalProperties: false,
+    },
+  },
+  required: ['message'],
+  additionalProperties: false,
+};
+
 // ---------------------------------------------------------------------------
 // Text normalization
 // ---------------------------------------------------------------------------
@@ -169,6 +194,53 @@ export const analyzeLearnerDrawingWithBrain = async (input: {
   });
 
   return normalizeDrawingText(response.text, 320) ?? null;
+};
+
+// ---------------------------------------------------------------------------
+// JSON mode extraction
+// ---------------------------------------------------------------------------
+
+interface TutorDrawingJsonResponse {
+  message: string;
+  drawing?: {
+    title?: string;
+    caption?: string;
+    alt?: string;
+    svg: string;
+  };
+}
+
+export const extractTutorDrawingArtifactsFromJson = (
+  jsonText: string
+): {
+  message: string;
+  artifacts: KangurAiTutorMessageArtifact[];
+} => {
+  try {
+    const parsed: TutorDrawingJsonResponse = JSON.parse(jsonText);
+    const artifacts: KangurAiTutorMessageArtifact[] = [];
+
+    if (parsed.drawing?.svg) {
+      const sanitizedSvg = sanitizeSvg(parsed.drawing.svg, { viewBox: '0 0 320 200' }).trim();
+      if (sanitizedSvg) {
+        artifacts.push({
+          type: 'assistant_drawing',
+          svgContent: sanitizedSvg,
+          ...(parsed.drawing.title ? { title: normalizeDrawingText(parsed.drawing.title, 120) } : {}),
+          ...(parsed.drawing.caption ? { caption: normalizeDrawingText(parsed.drawing.caption, 240) } : {}),
+          ...(parsed.drawing.alt ? { alt: normalizeDrawingText(parsed.drawing.alt, 160) } : {}),
+        });
+      }
+    }
+
+    return {
+      message: normalizeDrawingText(parsed.message, 4000) || 'Sprawdź szkic poniżej.',
+      artifacts,
+    };
+  } catch {
+    // JSON parsing failed: fall back to empty response
+    return { message: '', artifacts: [] };
+  }
 };
 
 // ---------------------------------------------------------------------------

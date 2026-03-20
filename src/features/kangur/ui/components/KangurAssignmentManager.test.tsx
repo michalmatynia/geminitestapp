@@ -5,6 +5,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import plMessages from '@/i18n/messages/pl.json';
 
 const useKangurProgressStateMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
@@ -124,6 +125,8 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
 
 import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
 
+const assignmentManagerMessages = plMessages.KangurAssignmentManager;
+
 const progress = {
   totalXp: 480,
   gamesPlayed: 4,
@@ -176,20 +179,20 @@ describe('KangurAssignmentManager', () => {
   it('renders active and completed assignment lists', () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
-    expect(screen.getByTestId('assignment-list-lists.activeTitle')).toBeInTheDocument();
-    expect(screen.getByTestId('assignment-list-lists.completedTitle')).toBeInTheDocument();
+    expect(screen.getByText(assignmentManagerMessages.lists.activeTitle)).toBeInTheDocument();
+    expect(screen.getByText(assignmentManagerMessages.lists.completedTitle)).toBeInTheDocument();
   });
 
   it('toggles between active and completed lists in catalogWithLists view', () => {
     render(<KangurAssignmentManager basePath='/kangur' view='catalogWithLists' />);
 
-    expect(screen.getByTestId('assignment-list-lists.activeTitle')).toBeInTheDocument();
-    expect(screen.queryByTestId('assignment-list-lists.completedTitle')).toBeNull();
+    expect(screen.getByText(assignmentManagerMessages.lists.activeTitle)).toBeInTheDocument();
+    expect(screen.queryByText(assignmentManagerMessages.lists.completedTitle)).toBeNull();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'lists.completedTab' }));
+    fireEvent.click(screen.getByRole('tab', { name: /Ukonczone/i }));
 
-    expect(screen.getByTestId('assignment-list-lists.completedTitle')).toBeInTheDocument();
-    expect(screen.queryByTestId('assignment-list-lists.activeTitle')).toBeNull();
+    expect(screen.getByText(assignmentManagerMessages.lists.completedTitle)).toBeInTheDocument();
+    expect(screen.queryByText(assignmentManagerMessages.lists.activeTitle)).toBeNull();
   });
 
   it('opens the time limit modal and saves the update', async () => {
@@ -239,10 +242,10 @@ describe('KangurAssignmentManager', () => {
     fireEvent.click(screen.getByTestId('open-time-limit-assignment-1'));
     expect(screen.getByTestId('assignment-time-limit-modal')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('timeLimitModal.inputAriaLabel'), {
+    fireEvent.change(screen.getByLabelText(assignmentManagerMessages.timeLimitModal.inputAriaLabel), {
       target: { value: '25' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'actions.save' }));
+    fireEvent.click(screen.getByRole('button', { name: assignmentManagerMessages.actions.save }));
 
     await waitFor(() =>
       expect(updateAssignment).toHaveBeenCalledWith('assignment-1', {
@@ -318,7 +321,9 @@ describe('KangurAssignmentManager', () => {
 
     render(<KangurAssignmentManager basePath='/kangur' view='catalog' />);
 
-    const unassignButton = screen.getByRole('button', { name: 'actions.unassign' });
+    const unassignButton = screen.getByRole('button', {
+      name: assignmentManagerMessages.actions.unassign,
+    });
     fireEvent.click(unassignButton);
     expect(updateAssignment).toHaveBeenCalledWith('assignment-1', { archived: true });
   });

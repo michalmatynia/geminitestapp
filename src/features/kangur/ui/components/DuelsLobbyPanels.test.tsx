@@ -99,27 +99,27 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('filters.mode.aria'), {
+    fireEvent.change(screen.getByLabelText('Filtruj lobby po trybie pojedynku'), {
       target: { value: 'challenge' },
     });
     expect(setLobbyModeFilter).toHaveBeenCalledWith('challenge');
 
-    fireEvent.change(screen.getByLabelText('filters.operation.aria'), {
+    fireEvent.change(screen.getByLabelText('Filtruj lobby po dzialaniu'), {
       target: { value: 'multiplication' },
     });
     expect(setLobbyOperationFilter).toHaveBeenCalledWith('multiplication');
 
-    fireEvent.change(screen.getByLabelText('filters.difficulty.aria'), {
+    fireEvent.change(screen.getByLabelText('Filtruj lobby po poziomie'), {
       target: { value: 'hard' },
     });
     expect(setLobbyDifficultyFilter).toHaveBeenCalledWith('hard');
 
-    fireEvent.change(screen.getByLabelText('filters.sort.aria'), {
+    fireEvent.change(screen.getByLabelText('Sortuj publiczne pojedynki'), {
       target: { value: 'time_fast' },
     });
     expect(setLobbySort).toHaveBeenCalledWith('time_fast');
 
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.refreshAria' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Odswiez lobby pojedynkow' }));
     expect(loadLobby).toHaveBeenCalledWith({ showLoading: true });
   });
 
@@ -170,7 +170,7 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    expect(screen.getAllByText('chips.fresh').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Nowe').length).toBeGreaterThan(0);
   });
 
   it('prompts guests to log in and tracks the click', () => {
@@ -219,7 +219,7 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.loginToPlay' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie, aby zagrac' }));
     expect(onRequireLogin).toHaveBeenCalledTimes(1);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_duels_lobby_login_clicked',
@@ -274,7 +274,7 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'publicJoinAria' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dolacz do pojedynku z Ada' }));
     expect(handleJoinLobbySession).toHaveBeenCalledWith('duel-join');
   });
 
@@ -327,7 +327,7 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.showAll' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pokaz wszystkie' }));
     expect(setLobbyModeFilter).toHaveBeenCalledWith('all');
     expect(setLobbyOperationFilter).toHaveBeenCalledWith('all');
     expect(setLobbyDifficultyFilter).toHaveBeenCalledWith('all');
@@ -380,7 +380,7 @@ describe('DuelsLobbyPanels', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.createChallenge' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stworz wlasne wyzwanie' }));
     expect(handleCreateChallenge).toHaveBeenCalledTimes(1);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_duels_lobby_create_clicked',

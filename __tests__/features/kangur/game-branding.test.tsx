@@ -296,22 +296,18 @@ describe('Game branding', () => {
     fireEvent.click(getFeaturedHomeAction('Grajmy!'));
     expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z kalendarzem/i }));
-    expect(
-      await screen.findByRole('heading', { name: 'Ćwiczenia z Kalendarzem' })
-    ).toBeInTheDocument();
-    expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
+    fireEvent.click(await screen.findByTestId('kangur-quick-practice-card-calendar_quiz'));
+    expect(await screen.findByTestId('kangur-calendar-training-top-section')).toBeInTheDocument();
+    expect(await screen.findByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
     expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /ćwiczenia z figurami/i }));
-    expect(
-      await screen.findByRole('heading', { name: 'Ćwiczenia z Figurami' })
-    ).toBeInTheDocument();
-    expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
+    fireEvent.click(await screen.findByTestId('kangur-quick-practice-card-geometry_quiz'));
+    expect(await screen.findByTestId('kangur-geometry-training-top-section')).toBeInTheDocument();
+    expect(await screen.findByTestId('mock-geometry-training-game')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
     expect(await screen.findByRole('heading', { name: 'Grajmy!' })).toBeInTheDocument();
   });
 });

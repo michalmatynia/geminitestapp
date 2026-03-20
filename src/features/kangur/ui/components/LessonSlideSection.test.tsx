@@ -101,8 +101,8 @@ describe('LessonSlideSection', () => {
 
     expect(screen.getByTestId('lesson-slide-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(firstIndicator).toHaveClass('kangur-cta-pill', 'bg-orange-400');
     expect(firstIndicator).toHaveClass('cursor-pointer');

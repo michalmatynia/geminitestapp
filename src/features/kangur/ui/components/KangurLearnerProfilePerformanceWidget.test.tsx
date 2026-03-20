@@ -4,6 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import plMessages from '@/i18n/messages/pl.json';
 
 const { useKangurLearnerProfileRuntimeMock, useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurLearnerProfileRuntimeMock: vi.fn(),
@@ -21,6 +22,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 }));
 
 let KangurLearnerProfilePerformanceWidget: typeof import('./KangurLearnerProfilePerformanceWidget').KangurLearnerProfilePerformanceWidget;
+
+const performanceMessages = plMessages.KangurLearnerProfileWidgets.performance;
 
 const buildRuntimeValue = (overrides?: Record<string, unknown>) => ({
   basePath: '/kangur',
@@ -124,25 +127,27 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     render(<KangurLearnerProfilePerformanceWidget />);
 
     expect(screen.getByTestId('learner-profile-xp-summary-today')).toHaveTextContent(
-      'todayChip'
+      'Dzis: +28 XP'
     );
     expect(screen.getByTestId('learner-profile-xp-summary-weekly')).toHaveTextContent(
-      'weeklyChip'
+      '7 dni: +112 XP'
     );
     expect(screen.getByTestId('learner-profile-xp-summary-average')).toHaveTextContent(
-      'averageChip'
+      'Srednio: 120 XP na sesje'
     );
     expect(screen.queryByTestId('learner-profile-xp-summary-guided')).toBeNull();
     expect(screen.getByTestId('learner-profile-weekly-activity-2026-03-08')).toHaveAttribute(
       'title',
-      'activityBarTitle'
+      '1 gier, srednia 100%'
     );
     expect(screen.getByTestId('learner-profile-operation-progress-clock')).toHaveAttribute(
       'aria-valuenow',
       '83'
     );
-    expect(screen.getByText('operationStats')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'train' })).toHaveAttribute(
+    expect(
+      screen.getByText('Proby: 3 · XP na sesje: 28 · Lacznie: 84 XP · Najlepsza skutecznosc: 100%')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: performanceMessages.train })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=clock'
     );
@@ -164,7 +169,7 @@ describe('KangurLearnerProfilePerformanceWidget', () => {
     render(<KangurLearnerProfilePerformanceWidget />);
 
     expect(screen.getByTestId('learner-profile-xp-summary-guided')).toHaveTextContent(
-      'guidedChipPrefix'
+      'Polecone: 2 · Trzymam kierunek 2/3 rundy'
     );
   });
 

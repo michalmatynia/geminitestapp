@@ -137,10 +137,10 @@ describe('ProgressOverview lesson mastery insights', () => {
     expect(
       screen.getByText(
         (_, element) =>
-          element?.textContent === 'Śledzone: 2 · opanowane: 1 · do powtórki: 1'
+          element?.textContent === 'Sledzone: 2 · opanowane: 1 · do powtorki: 1'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Do powtórki')).toBeInTheDocument();
+    expect(screen.getByText('Do powtorki')).toBeInTheDocument();
     expect(screen.getByText('Najmocniejsze lekcje')).toBeInTheDocument();
     expect(screen.getByTestId('progress-overview-activity-training:clock:hours')).toHaveTextContent(
       'Trening zegara: Godziny'
@@ -176,7 +176,7 @@ describe('ProgressOverview lesson mastery insights', () => {
       '2 polecone rundy'
     );
     expect(screen.getByTestId('progress-overview-guided-momentum')).toHaveTextContent(
-      'Do odznaki Trzymam kierunek: 2/3 rundy'
+      'Do odznaki Trzymam kierunek: 2/3'
     );
     expect(screen.getByTestId('progress-overview-guided-momentum-bar')).toHaveAttribute(
       'aria-valuenow',

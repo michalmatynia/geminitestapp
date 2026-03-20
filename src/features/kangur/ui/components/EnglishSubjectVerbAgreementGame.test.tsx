@@ -6,6 +6,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
+import plMessages from '@/i18n/messages/pl.json';
 
 describe('EnglishSubjectVerbAgreementGame', () => {
   beforeEach(() => {
@@ -46,10 +47,16 @@ describe('EnglishSubjectVerbAgreementGame', () => {
     }
 
     expect(screen.getByTestId('english-agreement-summary-title')).toHaveTextContent(
-      'shared.scoreLabel: 6/6'
+      `${plMessages.KangurMiniGames.shared.scoreLabel}: 6/6`
     );
-    expect(screen.getByText('englishSubjectVerbAgreement.summary.perfect')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'shared.restart' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'shared.finish.topics' })).toBeInTheDocument();
+    expect(
+      screen.getByText(plMessages.KangurMiniGames.englishSubjectVerbAgreement.summary.perfect)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: plMessages.KangurMiniGames.shared.restart })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: plMessages.KangurMiniGames.shared.finish.topics })
+    ).toBeInTheDocument();
   });
 });

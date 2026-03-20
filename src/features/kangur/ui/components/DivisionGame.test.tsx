@@ -17,8 +17,8 @@ describe('DivisionGame', () => {
 
     expect(screen.getByTestId('division-game-round-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByTestId('division-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('division-game-equation')).toHaveClass('text-3xl', 'text-blue-600');

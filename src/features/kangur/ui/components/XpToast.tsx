@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
@@ -8,6 +9,11 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { BADGES } from '@/features/kangur/ui/services/progress';
+import {
+  getLocalizedKangurBadgeDescription,
+  getLocalizedKangurBadgeName,
+  translateKangurProgressWithFallback,
+} from '@/features/kangur/ui/services/progress-i18n';
 import type { KangurXpToastState } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -22,12 +28,27 @@ export default function XpToast({
   dailyQuest = null,
   recommendation = null,
 }: XpToastProps): React.JSX.Element {
+  const resultTranslations = useTranslations('KangurGameResult');
+  const progressTranslations = useTranslations('KangurProgressRuntime');
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
   const rewardBreakdown = breakdown;
   const badgeDetails = (newBadges ?? [])
     .map((badgeId) => BADGES.find((badge) => badge.id === badgeId))
-    .filter((badge): badge is (typeof BADGES)[number] => Boolean(badge));
+    .filter((badge): badge is (typeof BADGES)[number] => Boolean(badge))
+    .map((badge) => ({
+      ...badge,
+      name: getLocalizedKangurBadgeName({
+        badgeId: badge.id,
+        fallback: badge.name,
+        translate: progressTranslations,
+      }),
+      desc: getLocalizedKangurBadgeDescription({
+        badgeId: badge.id,
+        fallback: badge.desc,
+        translate: progressTranslations,
+      }),
+    }));
 
   return (
     <AnimatePresence>
@@ -56,8 +77,16 @@ export default function XpToast({
                 </KangurStatusChip>
                 <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
                   {recommendation
-                    ? 'Świetnie, trzymasz polecany kierunek'
-                    : 'Świetnie, zdobywasz kolejne punkty'}
+                    ? translateKangurProgressWithFallback(
+                        resultTranslations,
+                        'xpToast.recommendationLead',
+                        'Świetnie, trzymasz polecany kierunek'
+                      )
+                    : translateKangurProgressWithFallback(
+                        resultTranslations,
+                        'xpToast.defaultLead',
+                        'Świetnie, zdobywasz kolejne punkty'
+                      )}
                 </span>
               </div>
               <KangurRewardBreakdownChips
@@ -73,7 +102,12 @@ export default function XpToast({
                   className='mt-2 text-xs font-medium [color:var(--kangur-page-muted-text)]'
                   data-testid='xp-toast-next-badge'
                 >
-                  Następna odznaka: {nextBadge.emoji} {nextBadge.name} · {nextBadge.summary}
+                  {translateKangurProgressWithFallback(
+                    resultTranslations,
+                    'xpToast.nextBadgePrefix',
+                    'Następna odznaka:'
+                  )}{' '}
+                  {nextBadge.emoji} {nextBadge.name} · {nextBadge.summary}
                 </p>
               ) : null}
               {dailyQuest ? (
@@ -81,7 +115,12 @@ export default function XpToast({
                   className='mt-1 text-xs font-semibold text-emerald-700'
                   data-testid='xp-toast-daily-quest'
                 >
-                  Misja dnia ukończona: {dailyQuest.title} · {dailyQuest.summary} · +{dailyQuest.xpAwarded} XP
+                  {translateKangurProgressWithFallback(
+                    resultTranslations,
+                    'xpToast.dailyQuestPrefix',
+                    'Misja dnia ukończona:'
+                  )}{' '}
+                  {dailyQuest.title} · {dailyQuest.summary} · +{dailyQuest.xpAwarded} XP
                 </p>
               ) : null}
               {recommendation ? (
@@ -89,7 +128,12 @@ export default function XpToast({
                   className='mt-1 text-xs font-semibold text-violet-700'
                   data-testid='xp-toast-recommendation'
                 >
-                  Polecony kierunek: {recommendation.title} · {recommendation.summary}
+                  {translateKangurProgressWithFallback(
+                    resultTranslations,
+                    'xpToast.recommendationPrefix',
+                    'Polecony kierunek:'
+                  )}{' '}
+                  {recommendation.title} · {recommendation.summary}
                 </p>
               ) : null}
             </KangurSurfacePanel>
@@ -104,7 +148,12 @@ export default function XpToast({
               <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
                 <div className='flex items-center kangur-panel-gap'>
                   <KangurStatusChip accent='amber' className='text-sm font-bold'>
-                    {badge.emoji} Nowa odznaka
+                    {badge.emoji}{' '}
+                    {translateKangurProgressWithFallback(
+                      resultTranslations,
+                      'xpToast.newBadgeLabel',
+                      'Nowa odznaka'
+                    )}
                   </KangurStatusChip>
                   <span className='text-sm font-bold [color:var(--kangur-page-text)]'>
                     {badge.name}

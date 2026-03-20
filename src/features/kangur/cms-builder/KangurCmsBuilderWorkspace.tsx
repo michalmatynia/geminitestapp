@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale } from 'next-intl';
 import { PanelLeftClose, PanelRightClose } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -237,14 +238,18 @@ function KangurCmsBuilderInner({
 }
 
 export function KangurCmsBuilderWorkspace(): React.JSX.Element {
+  const locale = useLocale();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const settingsReady = !settingsStore.isLoading;
   const rawProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const persistedProject = useMemo(
-    () => (settingsReady ? parseKangurCmsProject(rawProject, { fallbackToDefault: true }) : null),
-    [rawProject, settingsReady]
+    () =>
+      (settingsReady
+        ? parseKangurCmsProject(rawProject, { fallbackToDefault: true, locale })
+        : null),
+    [locale, rawProject, settingsReady]
   );
   const [savedProject, setSavedProject] = useState<KangurCmsProject | null>(null);
   const [draftProject, setDraftProject] = useState<KangurCmsProject | null>(null);
@@ -315,8 +320,8 @@ export function KangurCmsBuilderWorkspace(): React.JSX.Element {
 
   const initialState = useMemo(() => {
     if (!draftProject) return null;
-    return buildKangurCmsBuilderState(draftProject, activeScreenKey);
-  }, [activeScreenKey, draftProject]);
+    return buildKangurCmsBuilderState(draftProject, activeScreenKey, locale);
+  }, [activeScreenKey, draftProject, locale]);
 
   if (!settingsReady || !draftProject || !savedProject || !initialState) {
     return <PageBuilderPageSkeleton />;

@@ -14,6 +14,8 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api';
 
+const PAGE_CONTENT_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=300';
+
 export const querySchema = z.object({
   locale: z.preprocess((value) => normalizeOptionalQueryString(value) ?? 'pl', z.string()),
 });
@@ -27,7 +29,7 @@ export async function getKangurPageContentHandler(
 
   return NextResponse.json(store, {
     headers: {
-      'Cache-Control': 'no-store',
+      'Cache-Control': PAGE_CONTENT_CACHE_CONTROL,
     },
   });
 }

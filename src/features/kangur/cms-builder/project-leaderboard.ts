@@ -8,7 +8,13 @@ import {
 } from './project-factories';
 import { makeRuntimeVisibilitySettings } from './project-sections';
 
-export const makeLeaderboardSection = (input: { id: string }): PageComponentInput =>
+export const makeLeaderboardSection = (input: {
+  id: string;
+  title?: string;
+  description?: string;
+  playerFallback?: string;
+  metaFallback?: string;
+}): PageComponentInput =>
   makeBlockSection({
     id: input.id,
     paddingTop: 0,
@@ -21,12 +27,12 @@ export const makeLeaderboardSection = (input: { id: string }): PageComponentInpu
           blockGap: 4,
         },
         blocks: [
-          makeHeadingBlock(`${input.id}-title`, 'Ranking', 24, {
+          makeHeadingBlock(`${input.id}-title`, input.title ?? 'Ranking', 24, {
             textColor: '#1e293b',
           }),
           makeTextBlock(
             `${input.id}-description`,
-            'Najlepsze wyniki uczniów z ostatnich 7 dni.',
+            input.description ?? 'Najlepsze wyniki uczniow z ostatnich 7 dni.',
             {
               fontSize: 14,
               textColor: '#64748b',
@@ -103,14 +109,14 @@ export const makeLeaderboardSection = (input: { id: string }): PageComponentInpu
                       blockGap: 2,
                     },
                     blocks: [
-                      makeHeadingBlock(`${input.id}-row-name`, 'Gracz', 16, {
+                      makeHeadingBlock(`${input.id}-row-name`, input.playerFallback ?? 'Gracz', 16, {
                         headingSize: 'small',
                         textColor: '#0f172a',
                         connection: {
                           enabled: true,
                           source: 'item',
                           path: 'displayName',
-                          fallback: 'Gracz',
+                          fallback: input.playerFallback ?? 'Gracz',
                         },
                       }),
                       makeContainerBlock({
@@ -127,7 +133,7 @@ export const makeLeaderboardSection = (input: { id: string }): PageComponentInpu
                               enabled: true,
                               source: 'item',
                               path: 'metaLabel',
-                              fallback: '🎲 Mieszane · Anonim',
+                              fallback: input.metaFallback ?? '🎲 Mieszane · Anonim',
                             },
                           }),
                         ],

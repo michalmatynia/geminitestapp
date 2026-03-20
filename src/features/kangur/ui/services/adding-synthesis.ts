@@ -1,3 +1,10 @@
+import type { TranslationValues } from 'use-intl';
+
+import {
+  type KangurMiniGameTranslate,
+  translateKangurMiniGameWithFallback,
+} from '@/features/kangur/ui/constants/mini-game-i18n';
+
 export const ADDING_SYNTHESIS_NOTE_DURATION_MS = 4_200;
 export const ADDING_SYNTHESIS_FEEDBACK_PAUSE_MS = 950;
 export const ADDING_SYNTHESIS_HIT_LINE_RATIO = 0.82;
@@ -34,8 +41,16 @@ export const ADDING_SYNTHESIS_STAGES = [
   },
 ] as const;
 
-export type AddingSynthesisStage = (typeof ADDING_SYNTHESIS_STAGES)[number];
-export type AddingSynthesisStageId = AddingSynthesisStage['id'];
+export type AddingSynthesisStageId = (typeof ADDING_SYNTHESIS_STAGES)[number]['id'];
+export type AddingSynthesisStage = {
+  id: AddingSynthesisStageId;
+  icon: string;
+  title: string;
+  description: string;
+  coachingTip: string;
+  accent: (typeof ADDING_SYNTHESIS_STAGES)[number]['accent'];
+  noteCount: number;
+};
 export type AddingSynthesisTimingGrade = 'perfect' | 'great' | 'good';
 
 export type AddingSynthesisNote = {
@@ -51,8 +66,56 @@ export type AddingSynthesisNote = {
 
 type RandomSource = () => number;
 
+type AddingSynthesisTranslate = KangurMiniGameTranslate;
+
+const translateAddingSynthesisWithFallback = (
+  translate: AddingSynthesisTranslate | undefined,
+  key: string,
+  fallback: string,
+  values?: TranslationValues
+): string =>
+  translateKangurMiniGameWithFallback(
+    translate,
+    `addingSynthesis.${key}`,
+    fallback,
+    values
+  );
+
 export const getAddingSynthesisStage = (stageId: AddingSynthesisStageId): AddingSynthesisStage =>
   ADDING_SYNTHESIS_STAGES.find((stage) => stage.id === stageId) ?? ADDING_SYNTHESIS_STAGES[0];
+
+export const getLocalizedAddingSynthesisStage = (
+  stageId: AddingSynthesisStageId,
+  translate?: AddingSynthesisTranslate
+): AddingSynthesisStage => {
+  const stage = getAddingSynthesisStage(stageId);
+
+  return {
+    ...stage,
+    title: translateAddingSynthesisWithFallback(
+      translate,
+      `stages.${stageId}.title`,
+      stage.title
+    ),
+    description: translateAddingSynthesisWithFallback(
+      translate,
+      `stages.${stageId}.description`,
+      stage.description
+    ),
+    coachingTip: translateAddingSynthesisWithFallback(
+      translate,
+      `stages.${stageId}.coachingTip`,
+      stage.coachingTip
+    ),
+  };
+};
+
+export const getLocalizedAddingSynthesisStages = (
+  translate?: AddingSynthesisTranslate
+): AddingSynthesisStage[] =>
+  ADDING_SYNTHESIS_STAGES.map((stage) =>
+    getLocalizedAddingSynthesisStage(stage.id, translate)
+  );
 
 const randomInt = (min: number, max: number, random: RandomSource): number =>
   Math.floor(random() * (max - min + 1)) + min;
@@ -90,6 +153,191 @@ const buildDoubleDigitHint = (left: number, right: number): string => {
   }
 
   return `Dziesiątki dają ${tens}, jedności dają ${ones}. Razem ${left + right}.`;
+};
+
+const getAddingSynthesisCarry = (note: Pick<AddingSynthesisNote, 'left' | 'right'>): boolean =>
+  (note.left % 10) + (note.right % 10) >= 10;
+
+export const getLocalizedAddingSynthesisNoteHint = (
+  note: AddingSynthesisNote,
+  translate?: AddingSynthesisTranslate
+): string => {
+  if (note.stageId === 'warmup') {
+    const larger = Math.max(note.left, note.right);
+    const smaller = Math.min(note.left, note.right);
+    const steps = Array.from({ length: smaller }, (_, index) => larger + index + 1).join(', ');
+
+    return translateAddingSynthesisWithFallback(
+      translate,
+      'hints.warmup',
+      buildCountUpHint(note.left, note.right),
+      { larger, smaller, steps }
+    );
+  }
+
+  if (note.stageId === 'bridge_ten') {
+    const toTen = 10 - note.left;
+    const leftover = note.right - toTen;
+
+    return translateAddingSynthesisWithFallback(
+      translate,
+      'hints.bridgeTen',
+      buildBridgeTenHint(note.left, note.right),
+      {
+        left: note.left,
+        right: note.right,
+        toTen,
+        leftover,
+        answer: note.answer,
+      }
+    );
+  }
+
+  const tens = Math.floor(note.left / 10) * 10 + Math.floor(note.right / 10) * 10;
+  const ones = (note.left % 10) + (note.right % 10);
+  const carryOnes = Math.max(0, ones - 10);
+
+  return getAddingSynthesisCarry(note)
+    ? translateAddingSynthesisWithFallback(
+        translate,
+        'hints.doubleDigitsCarry',
+        buildDoubleDigitHint(note.left, note.right),
+        { tens, ones, carryOnes, answer: note.answer }
+      )
+    : translateAddingSynthesisWithFallback(
+        translate,
+        'hints.doubleDigits',
+        buildDoubleDigitHint(note.left, note.right),
+        { tens, ones, answer: note.answer }
+      );
+};
+
+export const getLocalizedAddingSynthesisNoteFocus = (
+  note: AddingSynthesisNote,
+  translate?: AddingSynthesisTranslate
+): string => {
+  if (note.stageId === 'warmup') {
+    return translateAddingSynthesisWithFallback(
+      translate,
+      'focus.warmup',
+      note.focus
+    );
+  }
+
+  if (note.stageId === 'bridge_ten') {
+    return translateAddingSynthesisWithFallback(
+      translate,
+      'focus.bridgeTen',
+      note.focus
+    );
+  }
+
+  return getAddingSynthesisCarry(note)
+    ? translateAddingSynthesisWithFallback(
+        translate,
+        'focus.doubleDigitsCarry',
+        note.focus
+      )
+    : translateAddingSynthesisWithFallback(
+        translate,
+        'focus.doubleDigits',
+        note.focus
+      );
+};
+
+export const getLocalizedAddingSynthesisFeedback = ({
+  kind,
+  note,
+  chosenValue,
+  translate,
+}: {
+  kind: AddingSynthesisTimingGrade | 'wrong' | 'miss';
+  note: AddingSynthesisNote;
+  chosenValue?: number | null;
+  translate?: AddingSynthesisTranslate;
+}): { title: string; description: string } => {
+  if (kind === 'perfect') {
+    return {
+      title: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.perfect.title',
+        'Idealne trafienie'
+      ),
+      description: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.perfect.description',
+        `${note.left} + ${note.right} = ${note.answer}. Uderzyłeś dokładnie przy linii.`,
+        { left: note.left, right: note.right, answer: note.answer }
+      ),
+    };
+  }
+
+  if (kind === 'great') {
+    return {
+      title: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.great.title',
+        'Super timing'
+      ),
+      description: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.great.description',
+        `${note.left} + ${note.right} = ${note.answer}. Dobra odpowiedź i dobry rytm.`,
+        { left: note.left, right: note.right, answer: note.answer }
+      ),
+    };
+  }
+
+  if (kind === 'good') {
+    return {
+      title: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.good.title',
+        'Dobra odpowiedź'
+      ),
+      description: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.good.description',
+        `${note.left} + ${note.right} = ${note.answer}. Następnym razem spróbuj trafić bliżej linii.`,
+        { left: note.left, right: note.right, answer: note.answer }
+      ),
+    };
+  }
+
+  if (kind === 'wrong') {
+    return {
+      title: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.wrong.title',
+        'To nie ten tor'
+      ),
+      description: translateAddingSynthesisWithFallback(
+        translate,
+        'feedback.wrong.description',
+        `${note.left} + ${note.right} daje ${note.answer}, nie ${chosenValue ?? 'ten wynik'}.`,
+        {
+          left: note.left,
+          right: note.right,
+          answer: note.answer,
+          chosen: chosenValue ?? 'ten wynik',
+        }
+      ),
+    };
+  }
+
+  return {
+    title: translateAddingSynthesisWithFallback(
+      translate,
+      'feedback.miss.title',
+      'Nuta minęła linię'
+    ),
+    description: translateAddingSynthesisWithFallback(
+      translate,
+      'feedback.miss.description',
+      `Poprawny wynik to ${note.answer}. Złap kolejną nutę szybciej.`,
+      { answer: note.answer }
+    ),
+  };
 };
 
 const buildChoices = (

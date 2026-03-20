@@ -11,6 +11,15 @@ export type KangurProgressLocalizer = {
   translate?: KangurProgressTranslate;
 };
 
+const interpolateFallbackTemplate = (
+  template: string,
+  values?: Record<string, KangurProgressTranslationValue>
+): string =>
+  template.replace(/\{(\w+)\}/g, (match, token) => {
+    const value = values?.[token];
+    return value === undefined ? match : String(value);
+  });
+
 const ACTIVITY_LABEL_KEYS: Record<string, string> = {
   alphabet: 'activityLabels.alphabet',
   alphabet_basics: 'activityLabels.alphabet',
@@ -19,6 +28,7 @@ const ACTIVITY_LABEL_KEYS: Record<string, string> = {
   alphabet_words: 'activityLabels.alphabetWords',
   alphabet_matching: 'activityLabels.alphabetMatching',
   alphabet_sequence: 'activityLabels.alphabetSequence',
+  geometry: 'activityLabels.geometry',
   geometry_shape_recognition: 'activityLabels.geometryShapeRecognition',
   addition: 'activityLabels.addition',
   subtraction: 'activityLabels.subtraction',
@@ -130,6 +140,23 @@ const BADGE_DESC_KEYS: Record<string, string> = {
   english_mastery_builder: 'badges.english_mastery_builder.desc',
 };
 
+const REWARD_BREAKDOWN_LABEL_KEYS: Record<string, string> = {
+  base: 'rewardBreakdown.base',
+  accuracy: 'rewardBreakdown.accuracy',
+  difficulty: 'rewardBreakdown.difficulty',
+  speed: 'rewardBreakdown.speed',
+  streak: 'rewardBreakdown.streak',
+  first_activity: 'rewardBreakdown.firstActivity',
+  improvement: 'rewardBreakdown.improvement',
+  mastery: 'rewardBreakdown.mastery',
+  variety: 'rewardBreakdown.variety',
+  guided_focus: 'rewardBreakdown.guidedFocus',
+  perfect: 'rewardBreakdown.perfect',
+  anti_repeat: 'rewardBreakdown.antiRepeat',
+  minimum_floor: 'rewardBreakdown.minimumFloor',
+  daily_quest: 'rewardBreakdown.dailyQuest',
+};
+
 export const translateKangurProgressWithFallback = (
   translate: KangurProgressTranslate | undefined,
   key: string,
@@ -137,11 +164,13 @@ export const translateKangurProgressWithFallback = (
   values?: Record<string, KangurProgressTranslationValue>
 ): string => {
   if (!translate) {
-    return fallback;
+    return interpolateFallbackTemplate(fallback, values);
   }
 
   const translated = translate(key, values);
-  return translated === key ? fallback : translated;
+  return translated === key
+    ? interpolateFallbackTemplate(fallback, values)
+    : interpolateFallbackTemplate(translated, values);
 };
 
 export const getLocalizedKangurProgressTokenLabel = ({
@@ -237,6 +266,23 @@ export const getLocalizedKangurBadgeDescription = ({
   translate?: KangurProgressTranslate;
 }): string => {
   const key = BADGE_DESC_KEYS[badgeId];
+  if (!key) {
+    return fallback;
+  }
+
+  return translateKangurProgressWithFallback(translate, key, fallback);
+};
+
+export const getLocalizedKangurRewardBreakdownLabel = ({
+  kind,
+  fallback,
+  translate,
+}: {
+  kind: string;
+  fallback: string;
+  translate?: KangurProgressTranslate;
+}): string => {
+  const key = REWARD_BREAKDOWN_LABEL_KEYS[kind];
   if (!key) {
     return fallback;
   }

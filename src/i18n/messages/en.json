@@ -237,7 +237,22 @@
     "tryAgain": "Try again",
     "backToHome": "Back to Kangur",
     "loadingApp": "Loading Kangur app",
-    "loadingPage": "Loading Kangur page"
+    "loadingPage": "Loading Kangur page",
+    "loadingLanguage": "Switching Kangur language",
+    "accessibility": {
+      "pageAnnouncement": "View: {label}",
+      "languageSwitchAnnouncement": "Switching language: {label}",
+      "pages": {
+        "Competition": "Mathematical Kangaroo",
+        "Game": "Home",
+        "Lessons": "Lessons",
+        "Tests": "Tests",
+        "LearnerProfile": "Learner profile",
+        "ParentDashboard": "Parent dashboard",
+        "Duels": "Duels",
+        "default": "Kangur page"
+      }
+    }
   },
   "KangurShell": {
     "creatorCredentials": "Creator credentials: {name} · created {year} ·",
@@ -251,7 +266,12 @@
     "emptyTitle": "No active lessons",
     "emptyDescription": "No active lessons for the {ageGroup} group.",
     "groupTypeLabel": "Group",
-    "subsectionTypeLabel": "Subsection"
+    "subsectionTypeLabel": "Subsection",
+    "mobileControls": {
+      "backToTopics": "Back to topics",
+      "scrollUp": "Scroll up",
+      "scrollDown": "Scroll down"
+    }
   },
   "KangurLearnerProfilePage": {
     "tabs": {
@@ -270,6 +290,10 @@
     "resultProgress": "Result {score}/{total}",
     "activityTitle": "Game: {title}",
     "statusAnnouncement": "View: {label}",
+    "phoneSimulation": {
+      "scrollUp": "Scroll up",
+      "scrollDown": "Scroll down"
+    },
     "screens": {
       "home": {
         "label": "Start screen",
@@ -1381,6 +1405,111 @@
         "retry": "Don't give up!"
       }
     },
+    "addingSynthesis": {
+      "intro": {
+        "newGame": "New game",
+        "style": "Synthesia-style",
+        "title": "Addition synthesis",
+        "description": "Calculate in your head, watch the expression fall toward the line, and hit the lane with the correct answer. You start with simple sums, then cross 10, and finish with two-digit addition.",
+        "rhythmLabel": "Game rhythm",
+        "rhythmValue": "{notes} notes • {lanes} lanes • quick feedback",
+        "howToPlayLabel": "How to play",
+        "howToPlay": {
+          "chooseLane": "Click the correct lane or press 1, 2, 3, 4.",
+          "timing": "The closer you hit the line, the better the rhythm grade.",
+          "feedback": "After every mistake you get a quick hint."
+        },
+        "start": "Start synthesis"
+      },
+      "shared": {
+        "backToAdding": "Back to Addition"
+      },
+      "stages": {
+        "warmup": {
+          "title": "Warm-up",
+          "description": "Sums to 10. Find the larger number first and count on the rest.",
+          "coachingTip": "Start with the larger number and watch the sum drop toward the line."
+        },
+        "bridge_ten": {
+          "title": "Bridge to 10",
+          "description": "Cross 10 by splitting the second number into the part that makes 10 and the part that stays.",
+          "coachingTip": "See how much is missing to 10, then add what is left."
+        },
+        "double_digits": {
+          "title": "Two digits",
+          "description": "Add tens and ones separately, and when you carry, turn 10 ones into one new ten.",
+          "coachingTip": "First the tens, then the ones. If you get 10 or more, carry one ten."
+        }
+      },
+      "hints": {
+        "warmup": "Start at {larger} and count on {smaller}: {steps}.",
+        "bridgeTen": "{left} needs {toTen} more to make 10. Split {right} into {toTen} and {leftover}, then count 10 + {leftover} = {answer}.",
+        "doubleDigits": "Tens make {tens}, ones make {ones}. Together that makes {answer}.",
+        "doubleDigitsCarry": "Tens make {tens}. Ones make {ones}, so that is {carryOnes} and one new ten. Together that makes {answer}."
+      },
+      "focus": {
+        "warmup": "Start with the larger number and count on in small steps.",
+        "bridgeTen": "Make 10 first, then add what is left.",
+        "doubleDigits": "Split tens and ones, then join both results.",
+        "doubleDigitsCarry": "Watch the ones. When you collect 10, carry one ten."
+      },
+      "feedback": {
+        "perfect": {
+          "title": "Perfect hit",
+          "description": "{left} + {right} = {answer}. You hit exactly on the line."
+        },
+        "great": {
+          "title": "Great timing",
+          "description": "{left} + {right} = {answer}. Correct answer and strong rhythm."
+        },
+        "good": {
+          "title": "Correct answer",
+          "description": "{left} + {right} = {answer}. Next time try to hit a bit closer to the line."
+        },
+        "wrong": {
+          "title": "Not that lane",
+          "description": "{left} + {right} equals {answer}, not {chosen}."
+        },
+        "miss": {
+          "title": "The note passed the line",
+          "description": "The correct answer is {answer}. Catch the next note a bit faster."
+        }
+      },
+      "summary": {
+        "sessionComplete": "Session complete",
+        "score": "Score {score}/{total}",
+        "messages": {
+          "strong": "Very strong session. Addition kept its rhythm and pace.",
+          "good": "Good result. A few more rounds and these sums will feel automatic.",
+          "retry": "You already have the base. Repeat the session and focus on the hints for the tougher notes."
+        },
+        "stats": {
+          "accuracy": "Accuracy",
+          "perfectHits": "Perfect hits",
+          "bestStreak": "Best streak",
+          "round": "Round"
+        },
+        "playAgain": "Play again"
+      },
+      "playing": {
+        "noteCount": "Note {current}/{total}",
+        "stats": {
+          "streak": "Streak",
+          "perfect": "Perfect",
+          "hit": "Hit"
+        },
+        "laneLabel": "Lane {index}",
+        "laneAria": "Lane {index}: {choice}",
+        "hitLine": "Line at {percent}%",
+        "hitPrompt": "Hit the correct lane",
+        "chooseLane": "Choose lane",
+        "accuracy": "Accuracy {accuracy}%",
+        "hintTitle": "Hint for this note",
+        "keyboardHint": "If you prefer the keyboard, press 1, 2, 3 or 4.",
+        "sessionProgress": "Session progress",
+        "endAttempt": "End attempt"
+      }
+    },
     "subtraction": {
       "summary": {
         "perfect": "Perfect! Subtraction master!",
@@ -1553,6 +1682,138 @@
         "perfect": "Perfect! You recognise relationships in every context.",
         "good": "Great! You have an eye for relationships.",
         "retry": "Good try! Compare the differences and try again."
+      },
+      "game": {
+        "fallbackTitle": "Relations",
+        "fallbackPrompt": "No game data available.",
+        "rushModeChip": "Bridge Rush ⏱",
+        "quietMode": "Calm mode",
+        "rushMode": "Bridge Rush",
+        "rushModeHint": "Bridge Rush mode: beat the clock. Changing the mode restarts the game.",
+        "modeResetHint": "Changing the mode restarts the game.",
+        "stageTitle": "Relationship bridge",
+        "roundLabel": "Round {current}/{total}",
+        "timeExpired": "Time is up",
+        "instructions": "Drag a relationship onto a pair card, or click a relationship and then click a pair. The icons hint at the relation type.",
+        "relationIconsLabel": "Relation icons",
+        "relationHintPrefix": "Hint: {hint}",
+        "relationHintIdle": "Hover or tap an icon to see a hint.",
+        "relationsHeading": "Relations",
+        "poolCount": "{count} in the pool",
+        "poolAriaLabel": "Pool of relations to drag",
+        "emptyPool": "All relations are already used.",
+        "relationAriaLabel": "Relation: {label}",
+        "clearRound": "Clear round",
+        "hitsLabel": "{correct}/{total} matches",
+        "targetsHeading": "Pairs to match",
+        "relationBadge": "relation",
+        "dropHint": "Use this slot to match a relation to the pair.",
+        "dropZoneCta": "Drop relation",
+        "correctRelation": "Correct: {label}",
+        "oneToOneHint": "Each relation matches only one pair.",
+        "check": "Check",
+        "seeResult": "See result",
+        "next": "Next",
+        "tokens": {
+          "part_whole": {
+            "label": "part -> whole",
+            "hint": "an element belongs to a bigger whole"
+          },
+          "opposite": {
+            "label": "opposite",
+            "hint": "words with opposite meaning"
+          },
+          "tool_action": {
+            "label": "tool -> action",
+            "hint": "a tool is used to do something"
+          },
+          "cause_effect": {
+            "label": "cause -> effect",
+            "hint": "one event causes another"
+          },
+          "category_example": {
+            "label": "category -> example",
+            "hint": "a general group and its example"
+          },
+          "place_inhabitants": {
+            "label": "place -> inhabitants",
+            "hint": "who or what lives in a place"
+          },
+          "material_object": {
+            "label": "material -> object",
+            "hint": "what something is made of"
+          },
+          "sequence": {
+            "label": "sequence -> next step",
+            "hint": "what comes next"
+          },
+          "creator_work": {
+            "label": "creator -> work",
+            "hint": "who creates and what gets created"
+          }
+        },
+        "rounds": {
+          "rozgrzewka": {
+            "title": "Warm-up: two simple relations",
+            "prompt": "Start with opposites and categories.",
+            "targets": {
+              "r1-1": {
+                "pair": "Hot -> cold"
+              },
+              "r1-2": {
+                "pair": "Fruit -> apple"
+              }
+            }
+          },
+          "codzienne": {
+            "title": "Everyday relations",
+            "prompt": "Match part to whole, tool to action, and place to inhabitants.",
+            "targets": {
+              "r2-1": {
+                "pair": "Petal -> flower"
+              },
+              "r2-2": {
+                "pair": "Brush -> painting"
+              },
+              "r2-3": {
+                "pair": "Hive -> bees"
+              }
+            }
+          },
+          "przyczyny": {
+            "title": "Cause, material, and sequence",
+            "prompt": "A harder set: what causes an effect and what comes from what.",
+            "targets": {
+              "r3-1": {
+                "pair": "Rain -> puddle"
+              },
+              "r3-2": {
+                "pair": "Wool -> sweater"
+              },
+              "r3-3": {
+                "pair": "Seed -> plant"
+              }
+            }
+          },
+          "mieszanka": {
+            "title": "Relationship bridge: mixed set",
+            "prompt": "Match four different types of relations in one layout.",
+            "targets": {
+              "r4-1": {
+                "pair": "Author -> book"
+              },
+              "r4-2": {
+                "pair": "Tall -> short"
+              },
+              "r4-3": {
+                "pair": "Wheel -> bicycle"
+              },
+              "r4-4": {
+                "pair": "Instrument -> guitar"
+              }
+            }
+          }
+        }
       }
     },
     "logicalClassification": {
@@ -1567,8 +1828,14 @@
       }
     },
     "englishPronouns": {
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "modeLabel": "Click",
+        "check": "Check ✓"
+      },
       "feedback": {
-        "correct": "Great! Correct choice."
+        "correct": "Great! Correct choice.",
+        "incorrect": "Correct answer: {answer}."
       },
       "summary": {
         "perfect": "Perfect! Pronouns on point.",
@@ -1577,8 +1844,28 @@
       }
     },
     "englishPronounsWarmup": {
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "modeLabel": "Warm-up",
+        "check": "Check ✓",
+        "rounds": {
+          "warmup-graph": {
+            "prompt": "Choose the correct possessive form.",
+            "hint": "We are talking about our graph - our + noun."
+          },
+          "warmup-calculator": {
+            "prompt": "Choose the correct possessive form.",
+            "hint": "After \"is\" we use the possessive pronoun: mine."
+          },
+          "warmup-solution": {
+            "prompt": "Choose the correct possessive form.",
+            "hint": "Before a noun we use your."
+          }
+        }
+      },
       "feedback": {
-        "correct": "Great! Correct choice."
+        "correct": "Great! Correct choice.",
+        "incorrect": "Correct answer: {answer}."
       },
       "summary": {
         "perfect": "Perfect! Warm-up complete.",
@@ -1586,9 +1873,242 @@
         "retry": "One more warm-up round and it will click."
       }
     },
+    "calendar": {
+      "lessonTitle": "Learning the calendar",
+      "labels": {
+        "schoolTag": "School",
+        "weekendTag": "Weekend",
+        "daysSuffix": "days",
+        "howToWriteDate": "How do we write the date?",
+        "shortDatePrefix": "Or:",
+        "datePattern": "Day / Month / Year"
+      },
+      "sections": {
+        "intro": {
+          "title": "What is a calendar?",
+          "description": "Year, months, and days"
+        },
+        "dni": {
+          "title": "Weekdays",
+          "description": "From Monday to Sunday"
+        },
+        "miesiace": {
+          "title": "Months and seasons",
+          "description": "12 months and four seasons"
+        },
+        "data": {
+          "title": "How do we read a date?",
+          "description": "Day / Month / Year"
+        },
+        "gameDays": {
+          "title": "Practice: Weekdays",
+          "description": "Weekends, weekdays, and calendar columns"
+        },
+        "gameMonths": {
+          "title": "Practice: Months",
+          "description": "Months, order, and seasons"
+        },
+        "gameDates": {
+          "title": "Practice: Dates",
+          "description": "Find the correct date on the calendar"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "What is a calendar?",
+            "tts": "A calendar helps us organise time. A year has 12 months and 365 days. A week has 7 days.",
+            "body": "A calendar helps us organise time.",
+            "yearStat": "A year has 12 months and 365 days.",
+            "weekStat": "A week has 7 days."
+          },
+          "yearLoop": {
+            "title": "The year in a loop",
+            "tts": "The months come back every year in the same order.",
+            "caption": "After December, January starts again."
+          },
+          "seasons": {
+            "title": "Seasons",
+            "tts": "There are four seasons, and they repeat in a cycle.",
+            "caption": "Spring, summer, autumn, winter."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Days of the week",
+            "tts": "A week has 7 days: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."
+          },
+          "rhythm": {
+            "title": "Week in rhythm",
+            "tts": "The days of the week always follow the same order.",
+            "caption": "After Sunday, Monday begins again."
+          },
+          "weekend": {
+            "title": "Weekend",
+            "tts": "Saturday and Sunday make up the weekend.",
+            "caption": "The weekend stands out with its colour."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 months of the year",
+            "tts": "A year has 12 months grouped into four seasons."
+          },
+          "monthLength": {
+            "title": "How many days are in a month?",
+            "tts": "Most months have 30 or 31 days. February has only 28 days."
+          },
+          "monthsWheel": {
+            "title": "Month wheel",
+            "tts": "The months line up in a circle and repeat every year.",
+            "caption": "The months keep going round and round."
+          },
+          "lengthAnimation": {
+            "title": "Month lengths",
+            "tts": "Some months have 31 days, some 30, and February has 28.",
+            "caption": "Remember how long each month is."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "How do we read a date?",
+            "tts": "We write the date as day, month, year. For example: 15 March 2025.",
+            "longExample": "15 March 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Date format",
+            "tts": "We write the date as day, month, and year, for example 15 slash 03 slash 2025.",
+            "caption": "Day / Month / Year."
+          },
+          "findDay": {
+            "title": "Find the day",
+            "tts": "On a calendar, we choose one specific day.",
+            "caption": "Point to the correct date."
+          }
+        }
+      }
+    },
+    "calendar": {
+      "lessonTitle": "Learning the calendar",
+      "labels": {
+        "schoolTag": "School",
+        "weekendTag": "Weekend",
+        "daysSuffix": "days",
+        "howToWriteDate": "How do we write the date?",
+        "shortDatePrefix": "Or:",
+        "datePattern": "Day / Month / Year"
+      },
+      "sections": {
+        "intro": {
+          "title": "What is a calendar?",
+          "description": "Year, months, and days"
+        },
+        "dni": {
+          "title": "Weekdays",
+          "description": "From Monday to Sunday"
+        },
+        "miesiace": {
+          "title": "Months and seasons",
+          "description": "12 months and four seasons"
+        },
+        "data": {
+          "title": "How do we read a date?",
+          "description": "Day / Month / Year"
+        },
+        "gameDays": {
+          "title": "Practice: Weekdays",
+          "description": "Weekends, weekdays, and calendar columns"
+        },
+        "gameMonths": {
+          "title": "Practice: Months",
+          "description": "Months, order, and seasons"
+        },
+        "gameDates": {
+          "title": "Practice: Dates",
+          "description": "Find the correct date on the calendar"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "What is a calendar?",
+            "tts": "A calendar helps us organise time. A year has 12 months and 365 days. A week has 7 days.",
+            "body": "A calendar helps us organise time.",
+            "yearStat": "A year has 12 months and 365 days.",
+            "weekStat": "A week has 7 days."
+          },
+          "yearLoop": {
+            "title": "The year in a loop",
+            "tts": "The months come back every year in the same order.",
+            "caption": "After December, January starts again."
+          },
+          "seasons": {
+            "title": "Seasons",
+            "tts": "There are four seasons, and they repeat in a cycle.",
+            "caption": "Spring, summer, autumn, winter."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Days of the week",
+            "tts": "A week has 7 days: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."
+          },
+          "rhythm": {
+            "title": "Week in rhythm",
+            "tts": "The days of the week always follow the same order.",
+            "caption": "After Sunday, Monday begins again."
+          },
+          "weekend": {
+            "title": "Weekend",
+            "tts": "Saturday and Sunday make up the weekend.",
+            "caption": "The weekend stands out with its colour."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 months of the year",
+            "tts": "A year has 12 months grouped into four seasons."
+          },
+          "monthLength": {
+            "title": "How many days are in a month?",
+            "tts": "Most months have 30 or 31 days. February has only 28 days."
+          },
+          "monthsWheel": {
+            "title": "Month wheel",
+            "tts": "The months line up in a circle and repeat every year.",
+            "caption": "The months keep going round and round."
+          },
+          "lengthAnimation": {
+            "title": "Month lengths",
+            "tts": "Some months have 31 days, some 30, and February has 28.",
+            "caption": "Remember how long each month is."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "How do we read a date?",
+            "tts": "We write the date as day, month, year. For example: 15 March 2025.",
+            "longExample": "15 March 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Date format",
+            "tts": "We write the date as day, month, and year, for example 15 slash 03 slash 2025.",
+            "caption": "Day / Month / Year."
+          },
+          "findDay": {
+            "title": "Find the day",
+            "tts": "On a calendar, we choose one specific day.",
+            "caption": "Point to the correct date."
+          }
+        }
+      }
+    },
     "englishPrepositions": {
       "feedback": {
-        "correct": "Great! Correct choice."
+        "correct": "Great! Correct choice.",
+        "incorrect": "Correct answer: {answer}."
       },
       "summary": {
         "perfect": "Perfect! Prepositions mastered.",
@@ -1601,6 +2121,47 @@
         "check": "Check",
         "next": "Next",
         "seeResult": "See result",
+        "click": {
+          "topicLabel": "Prepositions",
+          "rounds": {
+            "time-at": {
+              "prompt": "Choose the time preposition.",
+              "hint": "Exact time -> at."
+            },
+            "time-on": {
+              "prompt": "Choose the time preposition.",
+              "hint": "Day of the week -> on."
+            },
+            "time-in": {
+              "prompt": "Choose the time preposition.",
+              "hint": "Month -> in."
+            },
+            "time-before": {
+              "prompt": "Choose the time preposition.",
+              "hint": "Before class -> before."
+            },
+            "place-on": {
+              "prompt": "Choose the place preposition.",
+              "hint": "Surface -> on."
+            },
+            "place-at": {
+              "prompt": "Choose the place preposition.",
+              "hint": "Point or meeting place -> at."
+            },
+            "relation-between": {
+              "prompt": "Choose the relation preposition.",
+              "hint": "P lies in the space separating A and B."
+            },
+            "relation-above": {
+              "prompt": "Choose the relation preposition.",
+              "hint": "The lamp is higher than the table."
+            },
+            "relation-below": {
+              "prompt": "Choose the relation preposition.",
+              "hint": "The box is lower than the desk."
+            }
+          }
+        },
         "order": {
           "modeLabel": "Word order",
           "buildLabel": "Build: {sentence}",
@@ -1796,12 +2357,66 @@
     },
     "englishPartsOfSpeech": {
       "feedback": {
-        "roundPerfect": "Perfect! Every word is in the right place."
+        "roundPerfect": "Perfect! Every word is in the right place.",
+        "roundProgress": "You got {correct}/{total} correct. Check the colours and keep going."
       },
       "summary": {
         "perfect": "Perfect! You recognise parts of speech flawlessly.",
         "good": "Great! You are very close to a perfect round.",
         "retry": "Good job! Try once more and improve the score."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "modeLabel": "Drag and drop",
+        "poolLabel": "Pool of words",
+        "poolAria": "Pool of words to sort",
+        "poolEmpty": "Pool empty",
+        "binAria": "{label} bin",
+        "missingWords": "Missing words",
+        "clearRound": "Clear round",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "rounds": {
+          "math-core": {
+            "title": "Math starter pack",
+            "prompt": "Sort the words into the correct part of speech.",
+            "hint": "Noun = thing, Verb = action, Adjective = quality."
+          },
+          "positions": {
+            "title": "Geometry positions",
+            "prompt": "Sort the words about place and action.",
+            "hint": "Prepositions show relations: between, above."
+          },
+          "speed": {
+            "title": "Adverbs in action",
+            "prompt": "Add tempo and style to the action.",
+            "hint": "Adverbs describe how: quickly, carefully."
+          }
+        },
+        "parts": {
+          "noun": {
+            "label": "Noun",
+            "description": "Person, thing, idea"
+          },
+          "verb": {
+            "label": "Verb",
+            "description": "Action or movement"
+          },
+          "adjective": {
+            "label": "Adjective",
+            "description": "Describes a quality"
+          },
+          "preposition": {
+            "label": "Preposition",
+            "description": "Place or relation"
+          },
+          "adverb": {
+            "label": "Adverb",
+            "description": "How? when? how often?"
+          }
+        }
       }
     },
     "geometryDrawing": {
@@ -2909,6 +3524,7 @@
       "alphabetWords": "First words",
       "alphabetMatching": "Match the letters",
       "alphabetSequence": "Letter order",
+      "geometry": "Geometry",
       "geometryShapeRecognition": "Geometry",
       "addition": "Addition",
       "subtraction": "Subtraction",
@@ -2943,6 +3559,22 @@
       "training": "Training: {label}",
       "clockTraining": "Clock training: {label}",
       "lessonCompletion": "Lesson: {label}"
+    },
+    "rewardBreakdown": {
+      "base": "Round completed",
+      "accuracy": "Accuracy",
+      "difficulty": "Difficulty",
+      "speed": "Speed",
+      "streak": "Streak",
+      "firstActivity": "First strong attempt",
+      "improvement": "Improved result",
+      "mastery": "Mastery progress",
+      "variety": "New path",
+      "guidedFocus": "Recommended path",
+      "perfect": "Perfect score",
+      "antiRepeat": "Repeated activity",
+      "minimumFloor": "Minimum reward",
+      "dailyQuest": "Daily mission"
     },
     "badgeTracks": {
       "onboarding": "Start",
@@ -3148,6 +3780,32 @@
       "operationsHeading": "Practised operations",
       "topActivitiesHeading": "Most practised activities",
       "topActivityDescription": "{sessions} sessions · {xp} XP / game · average {accuracy}% · best score {best}%"
+    }
+  },
+  "KangurGameResult": {
+    "xpToast": {
+      "defaultLead": "Great job, you are earning more points",
+      "recommendationLead": "Great job, you stayed on the recommended path",
+      "nextBadgePrefix": "Next badge:",
+      "dailyQuestPrefix": "Daily mission completed:",
+      "recommendationPrefix": "Recommended path:",
+      "recommendationSummaryWithQuest": "This move closed both the recommended path and the daily mission.",
+      "recommendationSummaryWithBadge": "This move brings the {badge} badge closest.",
+      "recommendationSummaryDefault": "This was the strongest move for the current progress.",
+      "newBadgeLabel": "New badge"
+    },
+    "resultWidget": {
+      "rewardChip": "Reward for the round",
+      "rewardTitleDefault": "This round moved your progress forward.",
+      "rewardTitleRecommended": "This round matched the recommended path and moved your progress forward.",
+      "nextBadgePrefix": "Next badge:",
+      "recommendationPrefix": "Recommended path:",
+      "recommendationPlayedChip": "Played with the recommendation",
+      "newBadgesChip": "New badges",
+      "dailyQuestCompletedChip": "Daily mission completed",
+      "dailyQuestBonus": "Bonus +{xp} XP",
+      "nextBadgeChip": "Next badge",
+      "nextBadgeRemaining": "Remaining to unlock: {summary}"
     }
   },
   "KangurStaticLessons": {
@@ -3757,6 +4415,1934 @@
         "stay": "Stay",
         "leaveChallenge": "Leave challenge"
       }
+    },
+    "geometryBasics": {
+      "lessonTitle": "Geometry basics",
+      "terms": {
+        "point": "Point",
+        "segment": "Segment"
+      },
+      "sections": {
+        "punkt": {
+          "title": "Point and segment",
+          "description": "The simplest geometry elements"
+        },
+        "bok": {
+          "title": "Side and vertex",
+          "description": "Parts of polygon shapes"
+        },
+        "kat": {
+          "title": "Angle",
+          "description": "Acute, right, and obtuse"
+        },
+        "podsumowanie": {
+          "title": "Summary",
+          "description": "Everything together"
+        },
+        "game": {
+          "title": "Game: Geo mission",
+          "description": "Point, segment, side, and angle in practice"
+        }
+      },
+      "slides": {
+        "punkt": {
+          "segment": {
+            "title": "Point and segment",
+            "pointLead": "is one place on the page.",
+            "segmentLead": "connects two points.",
+            "segmentLabel": "Segment AB",
+            "caption": "A segment has a start and an end — two points."
+          },
+          "pointOnSegment": {
+            "title": "Point on a segment",
+            "lead": "A point can lie anywhere on a segment.",
+            "caption": "It is still the same segment, only the point moves."
+          }
+        },
+        "bok": {
+          "sideAndVertex": {
+            "title": "Side and vertex",
+            "lead": "In polygon shapes we have sides and vertices (corners).",
+            "caption": "A square has 4 sides and 4 vertices.",
+            "note": "Sides are segments. Vertices are the points where sides meet."
+          },
+          "countSides": {
+            "title": "Count the sides",
+            "lead": "Trace around the shape and count each side.",
+            "caption": "Each highlight is one side."
+          }
+        },
+        "kat": {
+          "whatIsAngle": {
+            "title": "What is an angle?",
+            "lead": "An angle appears where two segments meet.",
+            "rightAngleCaption": "This is a right angle (90°).",
+            "chips": {
+              "acute": "Acute < 90°",
+              "right": "Right = 90°",
+              "obtuse": "Obtuse > 90°"
+            }
+          },
+          "angleTypes": {
+            "title": "Types of angles",
+            "lead": "A small, right, and obtuse angle look different.",
+            "caption": "Compare how wide the arms of the angle open."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Summary",
+            "items": {
+              "point": {
+                "term": "Point",
+                "definition": "a single place"
+              },
+              "segment": {
+                "term": "Segment",
+                "definition": "connects two points"
+              },
+              "sideAndVertex": {
+                "term": "Side and vertex",
+                "definition": "parts of a shape"
+              },
+              "angle": {
+                "term": "Angle",
+                "definition": "the place where two segments meet"
+              }
+            }
+          },
+          "pointAndSegment": {
+            "title": "Point and segment",
+            "caption": "Point and segment."
+          },
+          "pointOnSegment": {
+            "title": "Point on a segment",
+            "caption": "Point on a segment."
+          },
+          "sidesAndVertices": {
+            "title": "Sides and vertices",
+            "caption": "Sides and vertices."
+          },
+          "countSides": {
+            "title": "Count the sides",
+            "caption": "Count the sides."
+          },
+          "angleTypes": {
+            "title": "Types of angles",
+            "caption": "Types of angles."
+          },
+          "angleKinds": {
+            "title": "Acute, right, obtuse",
+            "caption": "Acute, right, obtuse."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Geo mission"
+      }
+    },
+    "geometryShapes": {
+      "lessonTitle": "Geometric shapes",
+      "shapeCards": {
+        "circle": {
+          "name": "Circle",
+          "details": "0 sides and 0 corners"
+        },
+        "triangle": {
+          "name": "Triangle",
+          "details": "3 sides and 3 corners"
+        },
+        "square": {
+          "name": "Square",
+          "details": "4 equal sides and 4 corners"
+        },
+        "rectangle": {
+          "name": "Rectangle",
+          "details": "4 sides and 4 corners"
+        },
+        "pentagon": {
+          "name": "Pentagon",
+          "details": "5 sides and 5 corners"
+        },
+        "hexagon": {
+          "name": "Hexagon",
+          "details": "6 sides and 6 corners"
+        }
+      },
+      "sections": {
+        "podstawowe": {
+          "title": "Basic shapes",
+          "description": "Circle, triangle, square, rectangle"
+        },
+        "ileBokow": {
+          "title": "Sides and corners",
+          "description": "Each shape under a magnifying glass"
+        },
+        "podsumowanie": {
+          "title": "Summary",
+          "description": "Most important facts"
+        },
+        "game": {
+          "title": "Draw shapes",
+          "description": "Draw a shape and earn XP"
+        }
+      },
+      "slides": {
+        "podstawowe": {
+          "intro": {
+            "title": "Meet the shapes",
+            "orbitCaption": "Shapes can rotate and still stay the same shape."
+          },
+          "outline": {
+            "title": "Shape outline",
+            "caption": "A closed outline forms the shape."
+          },
+          "build": {
+            "title": "Building a shape",
+            "caption": "We connect segments until the shape closes."
+          }
+        },
+        "ileBokow": {
+          "count": {
+            "title": "How many sides and corners?"
+          },
+          "countSides": {
+            "title": "Count the sides",
+            "caption": "The sides light up one by one — each one is a segment."
+          },
+          "corners": {
+            "title": "Corners of a shape",
+            "caption": "Vertices are the corners where sides meet."
+          },
+          "segmentSide": {
+            "title": "A segment is a side",
+            "caption": "A side of a shape is a segment between two points."
+          },
+          "drawSide": {
+            "title": "Drawing a side",
+            "caption": "The point moves and leaves a segment behind."
+          }
+        },
+        "podsumowanie": {
+          "rotate": {
+            "title": "Summary in motion: rotation",
+            "caption": "Rotation does not change the shape."
+          },
+          "sides": {
+            "title": "Summary in motion: sides",
+            "caption": "Sides and corners describe the shape."
+          },
+          "interior": {
+            "title": "Summary in motion: inside",
+            "caption": "The inside of a shape is its area."
+          },
+          "build": {
+            "title": "Summary in motion: building",
+            "caption": "Connect segments until the shape closes."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Draw shapes"
+      }
+    },
+    "calendar": {
+      "lessonTitle": "Learning the calendar",
+      "labels": {
+        "schoolTag": "School",
+        "weekendTag": "Weekend",
+        "daysSuffix": "days",
+        "howToWriteDate": "How do we write the date?",
+        "shortDatePrefix": "Or:",
+        "datePattern": "Day / Month / Year"
+      },
+      "sections": {
+        "intro": {
+          "title": "What is a calendar?",
+          "description": "Year, months, and days"
+        },
+        "dni": {
+          "title": "Weekdays",
+          "description": "From Monday to Sunday"
+        },
+        "miesiace": {
+          "title": "Months and seasons",
+          "description": "12 months and four seasons"
+        },
+        "data": {
+          "title": "How do we read a date?",
+          "description": "Day / Month / Year"
+        },
+        "gameDays": {
+          "title": "Practice: Weekdays",
+          "description": "Weekends, weekdays, and calendar columns"
+        },
+        "gameMonths": {
+          "title": "Practice: Months",
+          "description": "Months, order, and seasons"
+        },
+        "gameDates": {
+          "title": "Practice: Dates",
+          "description": "Find the correct date on the calendar"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsCalendar": {
+            "title": "What is a calendar?",
+            "tts": "A calendar helps us organise time. A year has 12 months and 365 days. A week has 7 days.",
+            "body": "A calendar helps us organise time.",
+            "yearStat": "A year has 12 months and 365 days.",
+            "weekStat": "A week has 7 days."
+          },
+          "yearLoop": {
+            "title": "The year in a loop",
+            "tts": "The months come back every year in the same order.",
+            "caption": "After December, January starts again."
+          },
+          "seasons": {
+            "title": "Seasons",
+            "tts": "There are four seasons, and they repeat in a cycle.",
+            "caption": "Spring, summer, autumn, winter."
+          }
+        },
+        "dni": {
+          "weekdays": {
+            "title": "Days of the week",
+            "tts": "A week has 7 days: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."
+          },
+          "rhythm": {
+            "title": "Week in rhythm",
+            "tts": "The days of the week always follow the same order.",
+            "caption": "After Sunday, Monday begins again."
+          },
+          "weekend": {
+            "title": "Weekend",
+            "tts": "Saturday and Sunday make up the weekend.",
+            "caption": "The weekend stands out with its colour."
+          }
+        },
+        "miesiace": {
+          "monthsOfYear": {
+            "title": "12 months of the year",
+            "tts": "A year has 12 months grouped into four seasons."
+          },
+          "monthLength": {
+            "title": "How many days are in a month?",
+            "tts": "Most months have 30 or 31 days. February has only 28 days."
+          },
+          "monthsWheel": {
+            "title": "Month wheel",
+            "tts": "The months line up in a circle and repeat every year.",
+            "caption": "The months keep going round and round."
+          },
+          "lengthAnimation": {
+            "title": "Month lengths",
+            "tts": "Some months have 31 days, some 30, and February has 28.",
+            "caption": "Remember how long each month is."
+          }
+        },
+        "data": {
+          "readDate": {
+            "title": "How do we read a date?",
+            "tts": "We write the date as day, month, year. For example: 15 March 2025.",
+            "longExample": "15 March 2025",
+            "shortExample": "15/03/2025"
+          },
+          "format": {
+            "title": "Date format",
+            "tts": "We write the date as day, month, and year, for example 15 slash 03 slash 2025.",
+            "caption": "Day / Month / Year."
+          },
+          "findDay": {
+            "title": "Find the day",
+            "tts": "On a calendar, we choose one specific day.",
+            "caption": "Point to the correct date."
+          }
+        }
+      }
+    },
+    "englishPrepositions": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Prepositions at a glance",
+            "lead": "Prepositions show when and where something happens. They appear all the time in tasks and lesson instructions.",
+            "caption": "Time and place in one sentence."
+          }
+        },
+        "time": {
+          "core": {
+            "title": "At / On / In for time",
+            "lead": "The core rule is simple: at = an exact point in time, on = a day or date, in = a month, year, or part of the day.",
+            "caption": "at 7:30 · on Tuesday · in July"
+          },
+          "sequence": {
+            "title": "Before / During / After",
+            "lead": "When you describe order, use before, during, and after. For time limits, add until and since.",
+            "caption": "before class · during the test · after school"
+          },
+          "cheatsheet": {
+            "title": "Time cheatsheet",
+            "lead": "A quick cheat sheet for moments when you hesitate in a task."
+          }
+        },
+        "place": {
+          "core": {
+            "title": "At / In / On for place",
+            "lead": "Place also has three levels: at = a point, in = inside, on = a surface.",
+            "caption": "at school · in the classroom · on the board"
+          },
+          "schoolMap": {
+            "title": "School as a map",
+            "lead": "One place, three perspectives:",
+            "items": {
+              "atSchool": "meeting point / institution",
+              "inClassroom": "you are inside",
+              "onDesk": "something rests on the surface"
+            }
+          }
+        },
+        "relations": {
+          "core": {
+            "title": "Relations in space",
+            "lead": "When you describe positions of points or shapes, you use relation prepositions.",
+            "caption": "between · above · below"
+          }
+        },
+        "traps": {
+          "common": {
+            "title": "Common traps",
+            "lead": "These phrases are often confusing. Learn them as ready-made chunks.",
+            "notes": {
+              "atNight": "night as a point in time",
+              "inTheNight": "rare in this meaning",
+              "onTheBus": "public transport",
+              "inTheCar": "small vehicle, interior",
+              "atSchool": "institution / point",
+              "inTheClassroom": "specific interior"
+            }
+          }
+        },
+        "practice": {
+          "quick": {
+            "title": "Quick warm-up",
+            "lead": "The warm-up now lives in the word-order game.",
+            "examplesLabel": "Example jumbles:",
+            "caption": "Go to the Word Order Warm-up game in the games section."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Summary",
+            "lead": "The key rules at a glance:",
+            "items": {
+              "at": "at = exact time / point (at 6:00, at the bus stop)",
+              "on": "on = day, date, or surface (on Monday, on the board)",
+              "in": "in = month, year, or inside (in July, in the room)",
+              "between": "between = between (between A and B)",
+              "questions": "Ask: when, where, on what, in what?"
+            }
+          }
+        }
+      }
+    },
+    "englishPrepositionsShell": {
+      "lessonTitle": "English: Prepositions",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "Why prepositions matter"
+        },
+        "time": {
+          "title": "Time",
+          "description": "At / On / In for time"
+        },
+        "place": {
+          "title": "Place",
+          "description": "At / In / On for place"
+        },
+        "relations": {
+          "title": "Relations",
+          "description": "Between, above, below"
+        },
+        "traps": {
+          "title": "Traps",
+          "description": "Most common mistakes"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Quick warm-up"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Rules cheat sheet"
+        },
+        "gamePrepositions": {
+          "title": "Prepositions Sprint",
+          "description": "Short multiple-choice game"
+        },
+        "gamePrepositionsSort": {
+          "title": "Sort: Time + Place + Relations",
+          "description": "Drag the phrases to the correct relations"
+        },
+        "gamePrepositionsOrder": {
+          "title": "Word Order Warm-up",
+          "description": "Arrange sentences with prepositions"
+        }
+      }
+    },
+    "englishPartsOfSpeech": {
+      "slides": {
+        "subjectPronouns": {
+          "overview": {
+            "title": "Subject pronouns",
+            "lead": "Subject pronouns show who performs the action. In math tasks that is often a student, a teacher, or a team.",
+            "caption": "Focus on who does the task: solve, check, graph, explain.",
+            "items": {
+              "i": { "meaning": "I" },
+              "you": { "meaning": "you" },
+              "he": { "meaning": "he" },
+              "she": { "meaning": "she" },
+              "it": { "meaning": "it" },
+              "we": { "meaning": "we" },
+              "they": { "meaning": "they" }
+            }
+          },
+          "heSheIt": {
+            "title": "He/She/It + -s",
+            "lead": "With he, she, and it, the verb usually gets the ending -s.",
+            "caption": "Maya solves… → She solves…"
+          }
+        },
+        "possessiveAdjectives": {
+          "overview": {
+            "title": "Possessive adjectives",
+            "lead": "Possessive adjectives stand before a noun. They show who something belongs to.",
+            "caption": "my solution, your calculator, their graph"
+          },
+          "classroomCommands": {
+            "title": "Lesson commands",
+            "lead": "Pay special attention to your and our in instructions."
+          }
+        },
+        "possessivePronouns": {
+          "overview": {
+            "title": "Possessive pronouns",
+            "lead": "Possessive pronouns replace the noun. Nothing follows them.",
+            "labels": {
+              "withNoun": "With noun",
+              "pronoun": "Pronoun"
+            },
+            "caption": "my → mine, your → yours, our → ours."
+          },
+          "compare": {
+            "title": "Mine vs yours",
+            "lead": "When you compare solutions, the pronoun shows whose one it is.",
+            "caption": "mine / yours / theirs"
+          }
+        },
+        "practice": {
+          "warmup": {
+            "title": "Quick warm-up",
+            "lead": "The warm-up moved into the mini-game for choosing pronouns.",
+            "caption": "Enter the Pronoun Warm-up game and complete the sentences."
+          },
+          "dialogue": {
+            "title": "Mini dialogue",
+            "lead": "See how pronouns mix together in a short conversation.",
+            "aTranslation": "I solved the system. Is this your graph?",
+            "bTranslation": "Yes, it's mine. Your answer matches ours."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Summary",
+            "lead": "This gives you the basics for talking about tasks, solutions, and teamwork.",
+            "items": {
+              "subjectPronouns": "Subject pronouns: I / you / he / she / it / we / they",
+              "possessiveAdjectives": "Possessive adjectives: my, your, his, her, its, our, their + noun",
+              "possessivePronouns": "Possessive pronouns: mine, yours, his, hers, ours, theirs (without a noun)",
+              "examples": "Examples: solutions, graphs, proofs, calculators"
+            }
+          }
+        }
+      }
+    },
+    "englishPartsOfSpeechShell": {
+      "lessonTitle": "English: Pronouns",
+      "sections": {
+        "subjectPronouns": {
+          "title": "Subject Pronouns",
+          "description": "Who performs the action in the task"
+        },
+        "possessiveAdjectives": {
+          "title": "Possessive Adjectives",
+          "description": "my/your/his/her + noun"
+        },
+        "possessivePronouns": {
+          "title": "Possessive Pronouns",
+          "description": "mine/yours/hers without a noun"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Quick warm-up with examples"
+        },
+        "gamePronounsWarmup": {
+          "title": "Pronoun Warm-up",
+          "description": "Quick warm-up with pronouns in math sentences"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Quick guide to the key forms"
+        },
+        "gamePartsOfSpeech": {
+          "title": "Parts of Speech Game",
+          "description": "Drag the words into the correct categories"
+        }
+      }
+    },
+    "englishSubjectVerbAgreement": {
+      "slides": {
+        "core": {
+          "match": {
+            "title": "Subject + verb = a match",
+            "lead": "Subject-verb agreement is a simple rule: the verb must match the number of the subject. In Present Simple this often means the ending -s.",
+            "caption": "Singular → verb + -s. Plural → base verb.",
+            "labels": {
+              "singular": "Singular",
+              "plural": "Plural"
+            },
+            "notes": {
+              "singular": "Coach = one person",
+              "plural": "Coaches = several people"
+            }
+          },
+          "findSubject": {
+            "title": "Find the real subject",
+            "lead": "Most mistakes happen when the sentence contains many extras. Find who or what does the action and match the verb only to that word.",
+            "steps": {
+              "crossOut": "Mentally cross out extra phrases after of, with, or in.",
+              "askQuestion": "Ask Who? or What?.",
+              "matchVerb": "Match the verb only to that subject."
+            },
+            "exampleNote": "Subject = list (singular), not tasks."
+          }
+        },
+        "thirdPerson": {
+          "endings": {
+            "title": "He/She/It + -s",
+            "lead": "With he, she, and it, we usually add -s or -es to the verb.",
+            "caption": "She plays, he watches, it goes.",
+            "ruleTitle": "When do we use -es and -ies?"
+          },
+          "auxiliaries": {
+            "title": "Do/Does and Have/Has",
+            "lead": "In questions and negatives, the forms do/does and have/has are especially important.",
+            "labels": {
+              "thirdPerson": "Third person",
+              "others": "Others"
+            }
+          }
+        },
+        "beVerbs": {
+          "forms": {
+            "title": "Am / Is / Are",
+            "lead": "The verb be has three Present Simple forms. You need to remember them.",
+            "caption": "I am • he/she/it is • we/you/they are"
+          },
+          "thereIs": {
+            "title": "There is / There are",
+            "lead": "When a sentence starts with there, the verb agrees with what comes after it.",
+            "notes": {
+              "singular": "One event.",
+              "plural": "Several events."
+            }
+          }
+        },
+        "tricky": {
+          "everyone": {
+            "title": "Everyone = singular",
+            "lead": "Words like everyone, everybody, each, and someone are grammatically singular.",
+            "notes": {
+              "everyone": "Everyone = singular",
+              "each": "Each = singular"
+            }
+          },
+          "eitherOr": {
+            "title": "Either/or, neither/nor",
+            "lead": "In either/or and neither/nor structures, the verb agrees with the nearest subject.",
+            "chip": "Closest subject rule"
+          },
+          "collective": {
+            "title": "Collective nouns",
+            "lead": "Team, class, and family describe a group, but in school English they are usually treated as singular.",
+            "caption": "In British texts you may sometimes see a plural form, but in class stick to singular."
+          }
+        },
+        "interruptions": {
+          "middle": {
+            "title": "Phrases in the middle",
+            "lead": "Extra phrases between the subject and the verb do not change agreement.",
+            "chip": "Ignore the middle"
+          }
+        },
+        "practice": {
+          "quick": {
+            "title": "Quick check",
+            "lead": "Choose the correct verb form.",
+            "answersCaption": "Answers: play · is · gives · are"
+          },
+          "fix": {
+            "title": "Fix the sentence",
+            "lead": "Correct the sentences so the verb matches the subject.",
+            "labels": {
+              "before": "Before",
+              "after": "After"
+            }
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Summary",
+            "lead": "Now you have the full set of rules that prevents the most common mistakes.",
+            "items": {
+              "singular": "Singular subject → verb + -s (he/she/it).",
+              "plural": "Plural subject → base verb (they/we/you).",
+              "beForms": "Am/is/are plus have/has and do/does.",
+              "everyone": "Everyone/each/somebody = singular.",
+              "eitherOr": "Either/or → the verb agrees with the closest subject."
+            }
+          }
+        }
+      }
+    },
+    "englishSubjectVerbAgreementShell": {
+      "lessonTitle": "English: Subject-verb agreement",
+      "sections": {
+        "core": {
+          "title": "Agreement Basics",
+          "description": "Subject + verb on the same line"
+        },
+        "thirdPerson": {
+          "title": "Third Person -s",
+          "description": "He/She/It and the -s ending"
+        },
+        "beVerbs": {
+          "title": "Be Verbs",
+          "description": "Am / is / are and there is/are"
+        },
+        "tricky": {
+          "title": "Tricky Subjects",
+          "description": "Everyone, either/or, collective nouns"
+        },
+        "interruptions": {
+          "title": "Extra Phrases",
+          "description": "Do not get misled by additions in the sentence"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Quick drills and corrections"
+        },
+        "gameAgreement": {
+          "title": "Subject-verb agreement game",
+          "description": "Click the correct verb form in each sentence"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Short rules cheat sheet"
+        }
+      }
+    },
+    "englishSentenceStructure": {
+      "slides": {
+        "blueprint": {
+          "core": {
+            "title": "SVO blueprint",
+            "lead": "The most common sentence order is Subject → Verb → Object.",
+            "caption": "Subject + Verb + Object"
+          }
+        },
+        "order": {
+          "additions": {
+            "title": "Order with additions",
+            "lead": "Extra parts such as time, place, or manner usually come after the object.",
+            "caption": "We solve the equation today in class."
+          }
+        },
+        "questions": {
+          "doDoes": {
+            "title": "Questions with do/does",
+            "lead": "In Present Simple we make questions with Do/Does + subject + verb.",
+            "caption": "Do you? / Does she?"
+          }
+        },
+        "connectors": {
+          "linking": {
+            "title": "Linking sentences",
+            "lead": "Use connectors to join ideas into one sentence.",
+            "caption": "and / but / so / because"
+          }
+        },
+        "practice": {
+          "buildSentence": {
+            "title": "Build the sentence",
+            "lead": "Put the words in the correct order.",
+            "answersCaption": "Answers: She solves the equation. / We practice geometry today. / He checks the graph after class."
+          },
+          "makeQuestion": {
+            "title": "Turn it into a question",
+            "lead": "Change the sentence into a question with do or does.",
+            "answersCaption": "Answers: Do you understand the formula? / Does she explain the proof? / Do they use the graph?"
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Summary",
+            "lead": "The most important sentence structure rules:",
+            "items": {
+              "svo": "SVO: Subject + Verb + Object",
+              "timePlace": "Time and place usually come at the end.",
+              "questions": "Questions: Do/Does + subject + verb",
+              "connectors": "Connectors: and, but, so, because"
+            }
+          }
+        }
+      }
+    },
+    "englishSentenceStructureShell": {
+      "lessonTitle": "English: Sentence structure",
+      "sections": {
+        "blueprint": {
+          "title": "Blueprint",
+          "description": "SVO and the basic sentence pattern"
+        },
+        "order": {
+          "title": "Order",
+          "description": "Time and place additions"
+        },
+        "questions": {
+          "title": "Questions",
+          "description": "Do/Does in practice"
+        },
+        "connectors": {
+          "title": "Connectors",
+          "description": "Joining sentences with linking words"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Quick warm-up"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Most important rules"
+        }
+      }
+    },
+    "englishArticles": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Articles at a glance",
+            "lead": "Articles are short words before a noun. They show whether we mean any example, one specific thing, or no article at all.",
+            "caption": "a/an = any example, the = a specific one, zero article = no article"
+          }
+        },
+        "aAn": {
+          "overview": {
+            "title": "A / An in practice",
+            "lead": "Use a or an when you mention something for the first time or when it is one example from many.",
+            "caption": "a before a consonant sound, an before a vowel sound",
+            "items": {
+              "unit": "a unit circle",
+              "angle": "an angle",
+              "xIntercept": "an x-intercept",
+              "variable": "a variable"
+            }
+          },
+          "taskExample": {
+            "title": "Task example",
+            "lead": "Listen to the sound at the start of the word, not only the spelling.",
+            "caption": "We say an equation because equation starts with a vowel sound."
+          }
+        },
+        "the": {
+          "focus": {
+            "title": "The for something specific",
+            "lead": "Use the when both people know exactly which object you mean.",
+            "caption": "The article points to one exact graph, solution, or angle."
+          }
+        },
+        "zero": {
+          "overview": {
+            "title": "Zero article",
+            "lead": "Sometimes English uses no article, especially with school subjects, general statements, and general plurals.",
+            "caption": "No article before general subjects or general plural nouns"
+          }
+        },
+        "practice": {
+          "quick": {
+            "title": "Quick practice",
+            "lead": "Fill the gap with a, an, the, or no article.",
+            "answersCaption": "Answers: an, the, —, the, a"
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Rule recap",
+            "lead": "Remember these four quick checks before you choose an article.",
+            "items": {
+              "aAn": "a/an for a non-specific example",
+              "the": "the for something concrete or already known",
+              "zero": "no article for general statements or some plural forms",
+              "sound": "Listen to the first sound, not only the letters"
+            }
+          }
+        }
+      }
+    },
+    "englishArticlesShell": {
+      "lessonTitle": "English: Articles",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "Why articles matter in tasks"
+        },
+        "aAn": {
+          "title": "A / An",
+          "description": "Non-specific examples"
+        },
+        "the": {
+          "title": "The",
+          "description": "A specific object from the context"
+        },
+        "zero": {
+          "title": "Zero Article",
+          "description": "No article"
+        },
+        "practice": {
+          "title": "Practice",
+          "description": "Quick gap filling"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Rule summary"
+        }
+      }
+    },
+    "englishBasics": {
+      "slides": {
+        "greetings": {
+          "hello": {
+            "title": "Hello and goodbye",
+            "lead": "We begin with the simplest phrases you can use every day.",
+            "captions": {
+              "hello": "Hello / Good day",
+              "goodbye": "Goodbye / See you",
+              "please": "Please",
+              "thankYou": "Thank you"
+            }
+          },
+          "introduce": {
+            "title": "Introducing yourself",
+            "lead": "With two short sentences you can say your name and age.",
+            "captions": {
+              "name": "My name is ...",
+              "age": "I am ... years old."
+            }
+          }
+        },
+        "phrases": {
+          "questions": {
+            "title": "Useful questions",
+            "lead": "You hear these questions often at school or when you meet someone new.",
+            "repeatCaption": "Say them out loud once."
+          },
+          "answers": {
+            "title": "Simple answers",
+            "lead": "Short answers help you keep the conversation friendly.",
+            "captions": {
+              "fine": "I'm fine, thank you.",
+              "name": "My name is ..."
+            }
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "These phrases are already enough for a short conversation in English.",
+            "items": {
+              "greetings": "Greet someone with Hello or Goodbye.",
+              "questions": "Ask about a name, where someone is from, or how they feel."
+            }
+          }
+        },
+        "pronounRemix": {
+          "rules": {
+            "title": "Pronoun remix",
+            "lead": "Before the game, it helps to quickly review the four most important pronoun groups.",
+            "caption": "Each color shows a different role of the pronoun in the sentence.",
+            "items": {
+              "subject": "Subject pronouns: I, you, he, she, it, we, they",
+              "object": "Object pronouns: me, you, him, her, it, us, them",
+              "possessive": "Possessive forms show ownership: my, your, his ...",
+              "reflexive": "Reflexive pronouns point back to the subject: myself, yourself ..."
+            }
+          }
+        }
+      }
+    },
+    "englishBasicsShell": {
+      "lessonTitle": "English: Basics",
+      "sections": {
+        "greetings": {
+          "title": "Greetings",
+          "description": "Greetings and introducing yourself"
+        },
+        "phrases": {
+          "title": "Phrases",
+          "description": "Simple questions and answers"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Quick recap of the most important phrases"
+        },
+        "pronounRemix": {
+          "title": "Pronoun Remix: Rules",
+          "description": "How to recognise the type of pronoun in a sentence"
+        }
+      }
+    },
+    "logicalAnalogies": {
+      "lessonTitle": "Analogies",
+      "sections": {
+        "intro": {
+          "title": "Analogy: intro and verbal",
+          "description": "What is an analogy? Relationships between words"
+        },
+        "liczby_ksztalty": {
+          "title": "Number and shape analogies",
+          "description": "Math operations and shape transformations"
+        },
+        "relacje": {
+          "title": "Part-whole and cause-effect",
+          "description": "Two important kinds of relational analogies"
+        },
+        "podsumowanie": {
+          "title": "Summary",
+          "description": "All analogy types together"
+        },
+        "game_relacje": {
+          "title": "Relationship bridge",
+          "description": "Drag or click the relations to match the pairs"
+        }
+      },
+      "slides": {
+        "intro": {
+          "introQuestion": {
+            "title": "What is an analogy?",
+            "lead": "An analogy is the same relationship between different pairs. Instead of thinking about concrete things, you look for the pattern of connection.",
+            "notationLabel": "Analogy notation:",
+            "notationCaption": "\"A is to B as C is to D\"",
+            "examplePair": "Bird : to fly = fish : ❓",
+            "exampleHint": "Relation: creature -> way of moving",
+            "exampleAnswer": "Answer: to swim 🐟"
+          },
+          "relationBridge": {
+            "title": "Relationship A:B = C:D",
+            "lead": "In an analogy you compare two pairs that share the same relationship.",
+            "caption": "First recognise the relation A -> B, then apply it to C -> D."
+          },
+          "verbalAnalogies": {
+            "title": "Verbal analogies",
+            "lead": "Verbal analogies use relationships between words: category, opposite, part-whole, action, and more.",
+            "examples": {
+              "dogCat": {
+                "pair": "Dog : to bark = cat : ❓",
+                "hint": "Animal -> sound it makes",
+                "answer": "to meow 🐈"
+              },
+              "hotCold": {
+                "pair": "Hot : cold = day : ❓",
+                "hint": "Opposite",
+                "answer": "night 🌙"
+              },
+              "fingerHand": {
+                "pair": "Finger : hand = leaf : ❓",
+                "hint": "Part -> whole",
+                "answer": "tree 🌳"
+              },
+              "scissorsPencil": {
+                "pair": "Scissors : cutting = pencil : ❓",
+                "hint": "Tool -> its function",
+                "answer": "writing ✏️"
+              }
+            }
+          }
+        },
+        "liczby_ksztalty": {
+          "numericAnalogies": {
+            "title": "Number analogies",
+            "lead": "In number analogies you look for the same math operation in both pairs.",
+            "examples": {
+              "double": {
+                "pair": "2 : 4 = 5 : ❓",
+                "hint": "Relation: ×2",
+                "answer": "10",
+                "workings": "2×2=4, 5×2=10"
+              },
+              "half": {
+                "pair": "10 : 5 = 8 : ❓",
+                "hint": "Relation: ÷2",
+                "answer": "4",
+                "workings": "10÷2=5, 8÷2=4"
+              },
+              "square": {
+                "pair": "3 : 9 = 4 : ❓",
+                "hint": "Relation: squared (× itself)",
+                "answer": "16",
+                "workings": "3²=9, 4²=16"
+              },
+              "triple": {
+                "pair": "1 : 3 = 4 : ❓",
+                "hint": "Relation: ×3",
+                "answer": "12",
+                "workings": "1×3=3, 4×3=12"
+              }
+            }
+          },
+          "shapeAnalogies": {
+            "title": "Shape analogies",
+            "lead": "Shape analogies change size, orientation, color, or the number of elements by the same rule.",
+            "rules": {
+              "rotate": {
+                "rule": "Rule: rotate 90° to the right",
+                "sequence": "➡️ : ⬇️ = ⬆️ : ➡️"
+              },
+              "addOne": {
+                "rule": "Rule: add one element",
+                "sequence": "⭐ : ⭐⭐ = 🔵 : 🔵🔵"
+              }
+            }
+          },
+          "numberMotion": {
+            "title": "A number relation in motion",
+            "lead": "The operation has to be the same on both sides of the analogy.",
+            "caption": "The same operation carries over to the second pair."
+          },
+          "shapeTransform": {
+            "title": "Shape transformation",
+            "lead": "If one shape rotates, the other has to change in the same way.",
+            "caption": "The rule of rotation or scale works on both sides."
+          }
+        },
+        "relacje": {
+          "partWhole": {
+            "title": "Part-whole analogies",
+            "lead": "Part-whole is one of the most common relationships in analogies.",
+            "examples": {
+              "pageBook": {
+                "pair": "Page : book = brick : ❓",
+                "answer": "wall / building 🧱"
+              },
+              "noteMelody": {
+                "pair": "Note : melody = letter : ❓",
+                "answer": "word / sentence 🔤"
+              },
+              "petalFlower": {
+                "pair": "Petal : flower = pixel : ❓",
+                "answer": "image / picture 🖼️"
+              },
+              "dropOcean": {
+                "pair": "Drop : ocean = grain : ❓",
+                "answer": "beach / sand 🏖️"
+              }
+            }
+          },
+          "partWholeAnimation": {
+            "title": "Part and whole - animation",
+            "lead": "Parts join into one whole, just like in an analogy.",
+            "caption": "Elements create a bigger object."
+          },
+          "causeEffect": {
+            "title": "Cause-effect analogies",
+            "lead": "A cause creates an effect. The analogy carries the same dependency to another pair.",
+            "examples": {
+              "rainSun": {
+                "pair": "Rain : wet ground = sun : ❓",
+                "answer": "dry ground / suntan ☀️"
+              },
+              "exerciseReading": {
+                "pair": "Exercise : stronger muscles = reading : ❓",
+                "answer": "more knowledge / wisdom 📚"
+              },
+              "winterSpring": {
+                "pair": "Winter : snow = spring : ❓",
+                "answer": "flowers / rain 🌸"
+              }
+            }
+          },
+          "causeEffectAnimation": {
+            "title": "Cause and effect - animation",
+            "lead": "What happens first triggers the next event.",
+            "caption": "The chain of cause -> effect appears in the analogy."
+          }
+        },
+        "podsumowanie": {
+          "recap": {
+            "title": "Summary",
+            "items": {
+              "analogy": "🔗 Analogy - A:B = C:D, the same relation in a new pair",
+              "verbal": "🗣️ Verbal - category, opposite, action, feature",
+              "numeric": "🔢 Number - +, -, ×, ÷, powers - look for the operation",
+              "shapes": "🔷 Shape - rotation, color, number, size",
+              "partWhole": "🧩 Part-whole - an element and the group it belongs to",
+              "causeEffect": "⚡ Cause-effect - what causes what?"
+            },
+            "closing": "Analogies let you transfer knowledge into completely new situations!"
+          },
+          "map": {
+            "title": "Relationship map",
+            "lead": "See how an analogy connects two pairs into one rule.",
+            "caption": "The relationship repeats in the new pair."
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Relationship bridge"
+      },
+      "animations": {
+        "analogyBridge": "Animation: relationship A:B = C:D.",
+        "numberOperation": "Animation: a number relation with the same operation.",
+        "shapeTransform": "Animation: a shape rotates by the same rule.",
+        "partWhole": "Animation: parts join into a whole.",
+        "causeEffect": "Animation: a cause leads to an effect."
+      }
+    },
+    "logicalPatterns": {
+      "lessonTitle": "Patterns and sequences",
+      "sections": {
+        "intro": {
+          "title": "Patterns - introduction",
+          "description": "What is a pattern? Colors and shapes"
+        },
+        "ciagi_arytm": {
+          "title": "Arithmetic sequences",
+          "description": "A constant difference each step"
+        },
+        "ciagi_geom": {
+          "title": "Geometric sequences and Fibonacci",
+          "description": "Multiplication and special sequences"
+        },
+        "strategie": {
+          "title": "How do you find the rule?",
+          "description": "Strategy + summary"
+        },
+        "game_warsztat": {
+          "title": "Game: Pattern workshop",
+          "description": "Complete sequences and discover the rules"
+        }
+      },
+      "slides": {
+        "intro": {
+          "whatIsPattern": {
+            "title": "What is a pattern?",
+            "lead": "A pattern is an arrangement that repeats according to a rule. Once you find it, you can predict what comes next!",
+            "everywhereLabel": "Patterns are everywhere:",
+            "examples": {
+              "alternatingColors": "🔴🔵🔴🔵 - alternating colors",
+              "increasingNumbers": "1, 2, 3, 4, 5 - each number is 1 bigger",
+              "repeatingShape": "♦️🔷♦️🔷 - a repeating shape",
+              "weekdays": "Mon., Tue., Wed., Thu. - days of the week"
+            }
+          },
+          "colorsAndShapes": {
+            "title": "Color and shape patterns",
+            "lead": "Patterns can use colors, shapes, or both at once. Look at the repeating group - that is the pattern unit.",
+            "answerLabel": "Answer:",
+            "examples": {
+              "ab": {
+                "label": "Pattern AB",
+                "seq": "🔴 🔵 🔴 🔵 🔴 ❓",
+                "answer": "🔵"
+              },
+              "aab": {
+                "label": "Pattern AAB",
+                "seq": "⭐ ⭐ 🌙 ⭐ ⭐ ❓",
+                "answer": "🌙"
+              },
+              "abbc": {
+                "label": "Pattern ABBC",
+                "seq": "🟥 🟦 🟦 🟩 🟥 🟦 ❓",
+                "answer": "🟦"
+              }
+            }
+          },
+          "patternUnit": {
+            "title": "Pattern unit",
+            "lead": "A pattern unit is the smallest fragment that repeats.",
+            "caption": "We highlight the repeating pair and move forward."
+          },
+          "missingElement": {
+            "title": "Fill in the missing element",
+            "lead": "When you know the unit, you can quickly fill in the missing spot.",
+            "caption": "The AAB pattern repeats in the same order."
+          },
+          "threeElementPattern": {
+            "title": "Three-element pattern",
+            "lead": "Sometimes a pattern has three elements that repeat in the same order.",
+            "caption": "Mark the A-B-C cycle and watch how it repeats."
+          }
+        },
+        "ciagi_arytm": {
+          "addition": {
+            "title": "Number sequences - addition",
+            "lead": "In a number sequence, each number comes from the previous one according to the same rule. Most often we add the same value.",
+            "answerLabel": "Answer:",
+            "examples": {
+              "plusTwo": {
+                "hint": "+2 each step",
+                "seq": "2, 4, 6, 8, 10, ❓",
+                "answer": "12"
+              },
+              "plusFive": {
+                "hint": "+5 each step",
+                "seq": "5, 10, 15, 20, ❓",
+                "answer": "25"
+              },
+              "decreasingStep": {
+                "hint": "+10, +9, +8... (decreasing step)",
+                "seq": "1, 11, 20, 28, ❓",
+                "answer": "35 (the step decreases by 1)"
+              }
+            }
+          },
+          "constantStep": {
+            "title": "Constant step",
+            "lead": "In an arithmetic sequence we add the same number at every step.",
+            "caption": "The same step repeats in every place."
+          },
+          "decreasing": {
+            "title": "Decreasing sequence",
+            "lead": "In an arithmetic sequence we can also subtract a constant number.",
+            "caption": "Each step is the same decrease."
+          }
+        },
+        "ciagi_geom": {
+          "multiplicationFibonacci": {
+            "title": "Number sequences - multiplication and Fibonacci",
+            "lead": "When each number is a multiple of the previous one, the sequence grows very quickly! That is a geometric sequence.",
+            "answerLabel": "Answer:",
+            "examples": {
+              "timesTwo": {
+                "hint": "×2 each step",
+                "seq": "1, 2, 4, 8, 16, ❓",
+                "answer": "32"
+              },
+              "timesThree": {
+                "hint": "×3 each step",
+                "seq": "2, 6, 18, 54, ❓",
+                "answer": "162"
+              },
+              "fibonacci": {
+                "hint": "Fibonacci sequence (a+b=c)",
+                "seq": "1, 1, 2, 3, 5, 8, ❓",
+                "answer": "13 (5+8=13)"
+              }
+            }
+          },
+          "geometricGrowth": {
+            "title": "Geometric growth",
+            "lead": "When the ratio is constant, each term grows faster than the previous one.",
+            "caption": "Doubling creates taller and taller bars."
+          },
+          "fibonacciMotion": {
+            "title": "Fibonacci in motion",
+            "lead": "Each term is the sum of the two previous ones.",
+            "caption": "3 + 5 makes 8."
+          },
+          "doublingDots": {
+            "title": "Doubling with dots",
+            "lead": "The geometry of numbers can be visible as a growing number of dots.",
+            "caption": "Each stage has twice as many elements."
+          }
+        },
+        "strategie": {
+          "howToLookForRule": {
+            "title": "How do you find the rule?",
+            "steps": {
+              "countUnit": "Count the elements in the unit - how many appear before it repeats?",
+              "checkDifference": "Check the difference - subtract neighboring numbers. Is it constant?",
+              "checkRatio": "Check the ratio - divide neighboring numbers. Is it constant?",
+              "previousRelation": "Look for a relation between the two previous terms - like Fibonacci.",
+              "verifyRule": "Verify the rule - test it on all known elements!"
+            },
+            "exerciseLabel": "Exercise:",
+            "exerciseSequence": "3, 6, 12, 24, ❓",
+            "exerciseAnswer": "Ratio: 2, 2, 2 - constant! Rule: ×2 -> 48"
+          },
+          "checkDifferenceAndRatio": {
+            "title": "Check the difference and the ratio",
+            "lead": "First check the difference, and if that does not work, look for a constant ratio.",
+            "caption": "Two quick checks help you find the rule."
+          },
+          "checklist": {
+            "title": "Checklist",
+            "lead": "Go through the same steps every time and the rule will reveal itself quickly.",
+            "caption": "Tick off each idea until you find the right one."
+          },
+          "summary": {
+            "title": "Summary",
+            "items": {
+              "repeatingUnit": "🔁 AB/AAB pattern - a repeating unit",
+              "arithmetic": "➕ Arithmetic sequence - a constant difference between elements",
+              "geometric": "✖️ Geometric sequence - a constant ratio between elements",
+              "fibonacci": "🌀 Fibonacci - the sum of the two previous terms",
+              "strategy": "🔍 Strategy - look for the difference, ratio, or relation"
+            },
+            "closing": "Patterns and sequences are a foundation of mathematics and computer science!"
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Pattern workshop"
+      }
+    },
+    "logicalClassification": {
+      "lessonTitle": "Classification",
+      "sections": {
+        "intro": {
+          "title": "Classification - introduction",
+          "description": "What is classification? Grouping by features"
+        },
+        "diagram": {
+          "title": "Multiple features and the Venn diagram",
+          "description": "Multi-criteria grouping and set intersections"
+        },
+        "intruz": {
+          "title": "Find the odd one out",
+          "description": "Level 1, 2, and 3 - what does not fit?"
+        },
+        "podsumowanie": {
+          "title": "Summary",
+          "description": "All rules together"
+        },
+        "game": {
+          "title": "Classification lab",
+          "description": "Sort and find the odd one out"
+        }
+      },
+      "slides": {
+        "intro": {
+          "basics": {
+            "title": "What is classification?",
+            "lead": "Classification is arranging things into groups according to a shared feature. It is the basis of order in thinking and in everyday life!",
+            "caption": "First notice the feature, then assign the item to the right group.",
+            "criteriaLabel": "We classify by:",
+            "criteria": {
+              "color": "🎨 Color - red vs. blue",
+              "shape": "🔷 Shape - round vs. square",
+              "size": "📏 Size - big vs. small",
+              "category": "📂 Category - fruit vs. vegetables",
+              "number": "🔢 Number - even vs. odd"
+            }
+          },
+          "grouping": {
+            "title": "Grouping by features",
+            "lead": "Look at all the features and choose the one that is shared by the whole group.",
+            "caption": "Size is a simple feature - large and small elements create different sets.",
+            "cards": {
+              "flyingAnimals": {
+                "title": "Flying animals",
+                "items": "🦅 🦆 🐝 🦋",
+                "note": "Feature: they have wings"
+              },
+              "waterAnimals": {
+                "title": "Water animals",
+                "items": "🐟 🐬 🦈 🐙",
+                "note": "Feature: they live in water"
+              },
+              "evenNumbers": {
+                "title": "Even numbers",
+                "items": "2 4 6 8",
+                "note": "Feature: they are divisible by 2"
+              },
+              "oddNumbers": {
+                "title": "Odd numbers",
+                "items": "1 3 5 7",
+                "note": "Feature: they are not divisible by 2"
+              }
+            }
+          },
+          "shapeSorting": {
+            "title": "Sorting by shape",
+            "lead": "Shape is a feature that is easy to recognize - just look at the edges and angles.",
+            "caption": "Circles and squares go into different containers.",
+            "cards": {
+              "circles": {
+                "title": "Circles",
+                "items": "⚪ ⚪ ⚪",
+                "note": "Feature: no angles"
+              },
+              "squares": {
+                "title": "Squares",
+                "items": "⬜ ⬜ ⬜",
+                "note": "Feature: four equal sides"
+              }
+            }
+          },
+          "categories": {
+            "title": "Categories and sorting",
+            "lead": "Categories are bigger \"boxes\" for things. They make it easy to keep order.",
+            "caption": "Each item lands in the correct basket.",
+            "examplesLabel": "Examples of categories:",
+            "examples": {
+              "fruit": "🍎 Fruit",
+              "vegetables": "🥕 Vegetables",
+              "toys": "🧸 Toys"
+            }
+          }
+        },
+        "diagram": {
+          "multiCriteria": {
+            "title": "Many features at once",
+            "lead": "Sometimes you need to consider two features at the same time. It is harder, but it gives a more precise grouping.",
+            "gridCaption": "Two features create a 2×2 grid - each square is a separate group.",
+            "axesCaption": "First choose the feature axes, then assign the elements to a field.",
+            "exampleLabel": "Shapes: big/small × red/blue",
+            "items": {
+              "bigRed": {
+                "label": "Big red",
+                "icons": "🔴🔴"
+              },
+              "bigBlue": {
+                "label": "Big blue",
+                "icons": "🔵🔵"
+              },
+              "smallRed": {
+                "label": "Small red",
+                "icons": "🔴"
+              },
+              "smallBlue": {
+                "label": "Small blue",
+                "icons": "🔵"
+              }
+            },
+            "summary": "2 features × 2 values = 4 different groups"
+          },
+          "venn": {
+            "title": "Venn diagram",
+            "lead": "A Venn diagram shows what belongs to one group, to the other, or to both at the same time - that is the shared part (the intersection).",
+            "overlapCaption": "The middle of the diagram is the shared part - elements that belong to both groups.",
+            "unionCaption": "The union is everything that is in set A or in set B.",
+            "exampleLabel": "Loves sport vs. loves music",
+            "zones": {
+              "onlySport": {
+                "label": "Only sport",
+                "icons": "⚽ 🏀"
+              },
+              "both": {
+                "label": "Both!",
+                "icons": "🤸"
+              },
+              "onlyMusic": {
+                "label": "Only music",
+                "icons": "🎸 🎹"
+              }
+            }
+          },
+          "switchCriteria": {
+            "title": "Changing the criterion",
+            "lead": "The same elements can be sorted in different ways - it depends on which criterion you choose.",
+            "caption": "First color, then shape - the arrangement of groups changes.",
+            "pickLabel": "Choose a criterion:",
+            "tips": {
+              "first": "Start with the simplest feature first (for example color).",
+              "second": "Then move to a more precise one (for example shape)."
+            }
+          }
+        },
+        "intruz": {
+          "level1": {
+            "title": "Find the odd one out - level 1",
+            "lead": "One element does not fit the group. Find it and explain why it breaks the rule.",
+            "caption": "The odd one out breaks the rule, so it stands out from the group.",
+            "examples": {
+              "fruits": {
+                "items": "🍎 🍌 🥕 🍇 🍓",
+                "answer": "🥕 - it is a vegetable, the rest are fruit"
+              },
+              "numbers": {
+                "items": "2, 4, 7, 8, 10",
+                "answer": "7 - it is the only odd one"
+              },
+              "animals": {
+                "items": "🐦 🦅 🐝 🐈 🦋",
+                "answer": "🐈 - the cat does not fly, the rest have wings"
+              }
+            }
+          },
+          "level2": {
+            "title": "Find the odd one out - level 2",
+            "lead": "Harder puzzles - the odd one out can be hidden behind a less obvious feature.",
+            "caption": "First find the rule, then the element that does not satisfy it.",
+            "examples": {
+              "multiples": {
+                "items": "3, 6, 9, 12, 16",
+                "answer": "16 - it is not a multiple of 3"
+              },
+              "space": {
+                "items": "🌍 🌙 ☀️ ⭐ 🪐",
+                "answer": "🌙 - only the moon does not shine with its own light"
+              },
+              "shapes": {
+                "items": "square, triangle, circle, rhombus",
+                "answer": "Circle - the only shape without angles and straight sides"
+              }
+            }
+          },
+          "level3": {
+            "title": "Find the odd one out - level 3",
+            "lead": "The odd one out can disturb a pattern or order. Check what repeats.",
+            "caption": "The pattern repeats, but one element breaks it.",
+            "examples": {
+              "shape": {
+                "items": "⚪ ⬜ ⚪ 🔺 ⚪ ⬜",
+                "answer": "🔺 - a different shape than the rest"
+              },
+              "color": {
+                "items": "🔴 🔵 🔴 🔵 🟢 🔴",
+                "answer": "🟢 - a different color in the middle of the pattern"
+              }
+            }
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Summary",
+            "caption": "Remember: feature, grouping, intersection, and the odd one out.",
+            "items": {
+              "classification": "🗂️ Classification - group by one shared feature",
+              "manyCriteria": "🔀 Many features - precise grouping needs several criteria",
+              "venn": "🔵🟡 Venn diagram - the shared part is the intersection of two sets",
+              "oddOneOut1": "🔎 Odd one out level 1 - an obvious feature broken by one element",
+              "oddOneOut2": "🧩 Odd one out level 2 - less obvious features hidden deeper",
+              "oddOneOut3": "🎯 Odd one out level 3 - a disturbed pattern or sequence"
+            },
+            "closing": "Classification is the key to order in the world and in your mind!"
+          },
+          "color": {
+            "title": "Color",
+            "caption": "Color"
+          },
+          "shape": {
+            "title": "Shape",
+            "caption": "Shape"
+          },
+          "parity": {
+            "title": "Even and odd",
+            "caption": "Even and odd"
+          },
+          "twoCriteria": {
+            "title": "Two features at once",
+            "caption": "Two features at once"
+          },
+          "intersection": {
+            "title": "Intersection of sets",
+            "caption": "Intersection of sets"
+          },
+          "oddOneOut": {
+            "title": "Odd one out",
+            "caption": "Odd one out"
+          }
+        }
+      },
+      "game": {
+        "stageTitle": "Classification lab"
+      }
+    },
+    "logicalReasoning": {
+      "lessonTitle": "Reasoning",
+      "sections": {
+        "wnioskowanie": {
+          "title": "Reasoning and If...then...",
+          "description": "Deduction, induction, and the logical condition"
+        },
+        "kwantyfikatory": {
+          "title": "All / Some / None",
+          "description": "Scope of claims and true/false"
+        },
+        "zagadki": {
+          "title": "Logic puzzles",
+          "description": "Solving puzzles step by step"
+        },
+        "podsumowanie": {
+          "title": "Summary",
+          "description": "All rules together"
+        },
+        "gra": {
+          "title": "Game: Conclusion",
+          "description": "Judge whether the conclusion follows"
+        }
+      },
+      "slides": {
+        "wnioskowanie": {
+          "basics": {
+            "title": "What is reasoning?",
+            "lead": "Reasoning means drawing new conclusions from what we already know. We move from known facts to a new truth.",
+            "typesLabel": "Two kinds of reasoning:",
+            "types": {
+              "deduction": {
+                "title": "Deduction (from general to specific)",
+                "example": "All dogs bark. Rex is a dog. → Rex barks."
+              },
+              "induction": {
+                "title": "Induction (from specific to general)",
+                "example": "I observe 100 swans - all of them are white. → (Probably) all swans are white."
+              }
+            }
+          },
+          "ifThen": {
+            "title": "If... then...",
+            "lead": "The statement \"If P, then Q\" means that when P is true, Q also has to be true.",
+            "examples": [
+              {
+                "rule": "If it rains → I will take an umbrella.",
+                "note": "It is raining? → I will take an umbrella. ✅"
+              },
+              {
+                "rule": "If a number is even → it is divisible by 2.",
+                "note": "8 is even → 8 ÷ 2 = 4 ✅"
+              }
+            ],
+            "warning": {
+              "title": "Watch out for the reverse!",
+              "note": "\"If P, then Q\" does NOT mean \"If Q, then P\"! I take an umbrella → it does not have to be raining. ❌"
+            }
+          },
+          "deductionPractice": {
+            "title": "Deduction in practice",
+            "lead": "Deduction leads from a general rule to a specific conclusion.",
+            "caption": "Rule + fact = a certain conclusion."
+          },
+          "induction": {
+            "title": "Induction - looking for the rule",
+            "lead": "Induction gathers observations and builds a likely rule.",
+            "caption": "The more examples you have, the more certain the rule becomes."
+          },
+          "condition": {
+            "title": "Logical condition",
+            "lead": "A condition shows a relation: when P is true, Q must be true.",
+            "caption": "The arrow shows the direction of the conclusion."
+          }
+        },
+        "kwantyfikatory": {
+          "quantifiers": {
+            "title": "All, some, none",
+            "lead": "Quantifiers talk about the scope of a claim.",
+            "cards": [
+              {
+                "icon": "✅",
+                "label": "All",
+                "accent": "emerald",
+                "text": "All people breathe. → If you are a human, you breathe."
+              },
+              {
+                "icon": "⚠️",
+                "label": "Some",
+                "accent": "amber",
+                "text": "Some cats are ginger. → You cannot say that YOUR cat is ginger!"
+              },
+              {
+                "icon": "❌",
+                "label": "None",
+                "accent": "rose",
+                "text": "No bird is a mammal. → An eagle is a bird → An eagle is not a mammal."
+              }
+            ]
+          },
+          "trueFalse": {
+            "title": "True or false?",
+            "lead": "A logical statement must be either true or false. Check each claim separately!",
+            "examples": [
+              {
+                "stmt": "4 + 3 = 7",
+                "answer": true,
+                "explain": "The calculation is correct."
+              },
+              {
+                "stmt": "A triangle has 4 sides.",
+                "answer": false,
+                "explain": "A triangle has 3 sides."
+              },
+              {
+                "stmt": "If 5>3 and 3>1, then 5>1.",
+                "answer": true,
+                "explain": "Transitivity: 5>3>1."
+              },
+              {
+                "stmt": "The number 9 is even.",
+                "answer": false,
+                "explain": "9÷2=4 remainder 1 - odd."
+              }
+            ]
+          },
+          "scope": {
+            "title": "Scope of quantifiers",
+            "lead": "Check whether the statement applies to all, only some, or none of the elements.",
+            "caption": "Changing the quantifier can completely change the meaning of the sentence."
+          }
+        },
+        "zagadki": {
+          "puzzle": {
+            "title": "Logic puzzle",
+            "lead": "Logic puzzles require you to connect several pieces of information at once.",
+            "titleLabel": "Puzzle: Who lives in which house?",
+            "clues": [
+              "🏠 There are three houses: red, blue, and green.",
+              "👧 Anna does not live in the red house.",
+              "👦 Ben lives in the blue house.",
+              "👩 Celia does not live in the green house."
+            ],
+            "solutionLabel": "Solution:",
+            "solution": "Ben → blue ✅\nCelia → not green, not blue → red ✅\nAnna → green ✅"
+          },
+          "steps": {
+            "title": "Solve it step by step",
+            "items": [
+              "Read all the clues - do not rush.",
+              "Write down what is certain - start with direct facts.",
+              "Eliminate impossible options - this narrows the field.",
+              "Reason from the known facts - apply \"If... then...\".",
+              "Check the answer - does it fit all the clues?"
+            ],
+            "closing": "A good logician never guesses - they justify every step!"
+          },
+          "eliminate": {
+            "title": "Eliminate the impossible",
+            "lead": "Cross out the options that do not fit the clues until the correct answer remains.",
+            "caption": "Elimination is the shortest path to the correct solution."
+          }
+        },
+        "podsumowanie": {
+          "overview": {
+            "title": "Summary",
+            "items": [
+              "💡 Reasoning - from facts to new conclusions",
+              "➡️ If... then... - a condition and its consequence",
+              "🔢 All/Some/None - the scope of a claim",
+              "✅❌ True/false - every sentence has one value",
+              "🧩 Puzzles - connect the clues and eliminate mistakes",
+              "🪜 Step by step - patience and a plan are the key"
+            ],
+            "closing": "Reasoning is a detective's superpower - use it every day!"
+          }
+        },
+        "gra": {
+          "interactive": {
+            "title": "Game: Does the conclusion follow?",
+            "lead": "Drag the cards into the \"Follows\" or \"Does not follow\" area and check your answer."
+          }
+        }
+      },
+      "game": {
+        "cases": [
+          {
+            "id": "case-umbrella",
+            "rule": "If it rains, I take an umbrella.",
+            "fact": "It is raining.",
+            "conclusion": "I take an umbrella.",
+            "valid": true,
+            "explanation": "The condition is fulfilled, so the conclusion follows."
+          },
+          {
+            "id": "case-even",
+            "rule": "If a number is even, it is divisible by 2.",
+            "fact": "8 is even.",
+            "conclusion": "8 ÷ 2 = 4.",
+            "valid": true,
+            "explanation": "Evenness implies divisibility by 2."
+          },
+          {
+            "id": "case-reverse",
+            "rule": "If I am a cat, then I have whiskers.",
+            "fact": "I have whiskers.",
+            "conclusion": "I am a cat.",
+            "valid": false,
+            "explanation": "That is the reverse. Whiskers do not guarantee that it is a cat."
+          },
+          {
+            "id": "case-contrary",
+            "rule": "If I have a ticket, I can enter.",
+            "fact": "I do not have a ticket.",
+            "conclusion": "I cannot enter.",
+            "valid": false,
+            "explanation": "That negates the condition. Having no ticket does not tell you anything certain."
+          },
+          {
+            "id": "case-sun",
+            "rule": "If the sun is shining, it is bright.",
+            "fact": "The sun is shining.",
+            "conclusion": "It is bright.",
+            "valid": true,
+            "explanation": "When P is true, Q also must be true."
+          }
+        ],
+        "ui": {
+          "header": {
+            "eyebrow": "Logic game",
+            "title": "If... then... does the conclusion follow?",
+            "description": "Drag each card to the area where the conclusion follows or does not follow from the rule.",
+            "placedTemplate": "Placed: {placed}/{total}"
+          },
+          "zones": {
+            "pool": {
+              "title": "Cards",
+              "hint": "Drag a card to the correct area.",
+              "ariaLabel": "Zone: unassigned"
+            },
+            "valid": {
+              "title": "Follows",
+              "hint": "The conclusion follows from the rule and the fact.",
+              "ariaLabel": "Zone: conclusion follows"
+            },
+            "invalid": {
+              "title": "Does not follow",
+              "hint": "The conclusion does not follow from the rule.",
+              "ariaLabel": "Zone: conclusion does not follow"
+            }
+          },
+          "card": {
+            "ifLabel": "If...",
+            "factLabel": "Fact:",
+            "conclusionLabel": "Conclusion:",
+            "selectAriaTemplate": "Select card: {conclusion}"
+          },
+          "status": {
+            "correct": "Correct",
+            "wrong": "Wrong"
+          },
+          "selection": {
+            "selectedTemplate": "Selected card: {conclusion}",
+            "idle": "Select a card to move it with the keyboard."
+          },
+          "moveButtons": {
+            "toValid": "Move to \"follows\"",
+            "toInvalid": "Move to \"does not follow\"",
+            "toPool": "Move to pool"
+          },
+          "actions": {
+            "check": "Check",
+            "reset": "Reset"
+          },
+          "summary": {
+            "perfect": "Great! Everything is correct.",
+            "good": "Good job! Fix the mistakes.",
+            "retry": "Try again and check the hints.",
+            "resultTemplate": "Score: {score}/{total}"
+          }
+        }
+      }
     }
   },
   "KangurLessonChrome": {
@@ -4031,6 +6617,147 @@
         "great": "Amazing work! Keep it up.",
         "good": "Good work! Practice makes progress.",
         "tryAgain": "Keep trying. You can do it."
+      }
+    }
+  },
+  "KangurCmsBuilder": {
+    "previewPanel": {
+      "toggleViewing": {
+        "showSidePanels": "Show side panels",
+        "showCanvasOnly": "Show canvas only"
+      },
+      "toolbar": {
+        "backToKangur": "Back to Kangur",
+        "status": {
+          "saved": "Saved",
+          "unsaved": "Unsaved"
+        },
+        "screenLabels": {
+          "Game": "Game",
+          "Lessons": "Lessons",
+          "LearnerProfile": "Learner Profile",
+          "ParentDashboard": "Parent Dashboard"
+        },
+        "previewModes": {
+          "desktop": "Desktop",
+          "mobile": "Mobile"
+        },
+        "openRuntime": "Open Runtime",
+        "toggleStatusSidebar": "Toggle status sidebar",
+        "statusSidebar": "Status",
+        "undo": "Undo",
+        "redo": "Redo",
+        "saving": "Saving...",
+        "saveProject": "Save project"
+      },
+      "empty": {
+        "selectScreen": "Select a Kangur screen to edit.",
+        "noSections": "No sections yet. Use the structure panel to add sections."
+      }
+    },
+    "rightPanel": {
+      "title": "Inspector",
+      "empty": {
+        "selectTarget": "Select a section, grid column, or block to edit it.",
+        "toolbarHint": "Screen switching, project save, and preview mode controls live in the builder toolbar."
+      }
+    },
+    "themePreview": {
+      "title": "Theme Preview",
+      "editing": "Editing: {section}",
+      "modes": {
+        "daily": "Daily",
+        "dawn": "Dawn",
+        "sunset": "Sunset",
+        "nightly": "Nightly"
+      },
+      "sections": {
+        "corePalette": "Core Palette",
+        "textOverrides": "Text Overrides",
+        "logoLoader": "Logo & Loader",
+        "backgroundsSurfaces": "Backgrounds & Surfaces",
+        "buttons": "Buttons",
+        "navigationPills": "Navigation Pills",
+        "gradients": "Gradients",
+        "homeActions": "Home Actions",
+        "progressBars": "Progress Bars",
+        "inputs": "Inputs",
+        "typographyLayout": "Typography & Layout",
+        "shapeSpacing": "Shape & Spacing",
+        "shadowsDepth": "Shadows & Depth"
+      },
+      "corePalette": {
+        "swatches": {
+          "primary": "Primary",
+          "secondary": "Secondary",
+          "accent": "Accent",
+          "success": "Success",
+          "text": "Text",
+          "muted": "Muted"
+        }
+      },
+      "textOverrides": {
+        "nav": {
+          "home": "Home",
+          "library": "Library",
+          "hover": "Hover"
+        },
+        "cardHeadline": "Card headline",
+        "helperText": "Muted helper text preview."
+      },
+      "backgroundsSurfaces": {
+        "glassPanelSurface": "Glass panel surface",
+        "softCardSurface": "Soft card surface",
+        "page": "Page",
+        "card": "Card"
+      },
+      "buttons": {
+        "primary": "Primary",
+        "hover": "Hover",
+        "secondary": "Secondary",
+        "surface": "Surface",
+        "warning": "Warning",
+        "success": "Success"
+      },
+      "navigationPills": {
+        "active": "Active",
+        "library": "Library",
+        "hover": "Hover"
+      },
+      "gradients": {
+        "indigo": "Indigo",
+        "violet": "Violet",
+        "emerald": "Emerald",
+        "sky": "Sky",
+        "amber": "Amber",
+        "rose": "Rose",
+        "teal": "Teal",
+        "slate": "Slate"
+      },
+      "homeActions": {
+        "items": {
+          "lessons": "Lessons",
+          "play": "Play",
+          "training": "Training",
+          "kangur": "Kangur"
+        }
+      },
+      "inputs": {
+        "searchPlaceholder": "Search prompt...",
+        "ariaLabel": "Input preview"
+      },
+      "typography": {
+        "heading": "Kangur Heading",
+        "bodySample": "Body text sample with the current base size and line height.",
+        "layout": "Layout"
+      },
+      "shape": {
+        "panel": "Panel",
+        "card": "Card"
+      },
+      "shadows": {
+        "glassPanel": "Glass panel",
+        "softCard": "Soft card"
       }
     }
   }

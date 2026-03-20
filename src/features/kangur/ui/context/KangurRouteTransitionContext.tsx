@@ -26,10 +26,13 @@ type KangurRouteTransitionPhase =
   | 'waiting_for_ready'
   | 'revealing';
 
+export type KangurRouteTransitionKind = 'navigation' | 'locale-switch';
+
 type KangurRouteTransitionState = {
   href: string | null;
   pageKey: string | null;
   sourceId: string | null;
+  kind: KangurRouteTransitionKind;
   skeletonVariant: KangurRouteTransitionSkeletonVariant;
   committedRequestedHref: string | null;
   startedAt: number;
@@ -42,6 +45,7 @@ type KangurRouteTransitionStartInput = {
   sourceId?: string | null;
   acknowledgeMs?: number;
   skeletonVariant?: KangurRouteTransitionSkeletonVariant | null;
+  transitionKind?: KangurRouteTransitionKind | null;
 };
 
 type KangurRouteTransitionReadyInput = {
@@ -61,6 +65,7 @@ type KangurRouteTransitionContextValue = {
   isRouteRevealing: boolean;
   transitionPhase: 'idle' | KangurRouteTransitionState['phase'];
   activeTransitionSourceId: string | null;
+  activeTransitionKind: KangurRouteTransitionKind | null;
   activeTransitionPageKey: string | null;
   activeTransitionRequestedHref: string | null;
   activeTransitionSkeletonVariant: KangurRouteTransitionSkeletonVariant | null;
@@ -77,6 +82,7 @@ type KangurRouteTransitionStateContextValue = Pick<
   | 'isRouteRevealing'
   | 'transitionPhase'
   | 'activeTransitionSourceId'
+  | 'activeTransitionKind'
   | 'activeTransitionPageKey'
   | 'activeTransitionRequestedHref'
   | 'activeTransitionSkeletonVariant'
@@ -90,8 +96,13 @@ type KangurRouteTransitionActionsContextValue = Pick<
 
 const ROUTE_TRANSITION_MAX_ACKNOWLEDGE_MS = 400;
 const ROUTE_TRANSITION_TIMEOUT_MS = 4_000;
+const LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS = 1_200;
 const ROUTE_TRANSITION_REVEAL_MS = 220;
 const ROUTE_TRANSITION_SCROLL_RESET_FRAME_COUNT = 2;
+
+const normalizeTransitionKind = (
+  value: KangurRouteTransitionKind | null | undefined
+): KangurRouteTransitionKind => (value === 'locale-switch' ? 'locale-switch' : 'navigation');
 
 const KangurRouteTransitionStateContext =
   createContext<KangurRouteTransitionStateContextValue | null>(null);
@@ -184,7 +195,12 @@ export function KangurRouteTransitionProvider({
     const commitTransition = (): void => {
       clearAcknowledgementTimeout();
 
-      if (shouldResetScrollOnCommitRef.current && typeof window !== 'undefined') {
+      const currentTransitionKind =
+        transitionStateRef.current?.kind ?? transitionState?.kind ?? null;
+      const shouldResetScrollPosition =
+        shouldResetScrollOnCommitRef.current && currentTransitionKind !== 'locale-switch';
+
+      if (shouldResetScrollPosition && typeof window !== 'undefined') {
         const resetScrollPosition = (): void => {
           window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
           remainingFrameCount -= 1;
@@ -236,6 +252,12 @@ export function KangurRouteTransitionProvider({
       return;
     }
 
+    const timeoutMs =
+      transitionState.phase === 'waiting_for_ready' &&
+      transitionState.kind === 'locale-switch'
+        ? LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS
+        : ROUTE_TRANSITION_TIMEOUT_MS;
+
     const timeoutId = window.setTimeout(() => {
       shouldResetScrollOnCommitRef.current = false;
 
@@ -252,7 +274,7 @@ export function KangurRouteTransitionProvider({
       }
 
       setNextTransitionState(null);
-    }, ROUTE_TRANSITION_TIMEOUT_MS);
+    }, timeoutMs);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -281,6 +303,7 @@ export function KangurRouteTransitionProvider({
       const normalizedRequestedHref = normalizeTransitionHref(currentRequestedHref);
       const nextPageKey = input.pageKey?.trim() || null;
       const nextSourceId = input.sourceId?.trim() || null;
+      const nextTransitionKind = normalizeTransitionKind(input.transitionKind);
       const requestedAcknowledgeMs = Number.isFinite(input.acknowledgeMs)
         ? Math.max(
             0,
@@ -308,13 +331,15 @@ export function KangurRouteTransitionProvider({
         };
       }
 
-      shouldResetScrollOnCommitRef.current = true;
+      shouldResetScrollOnCommitRef.current =
+        nextTransitionKind !== 'locale-switch' && nextPageKey !== pageKey;
       clearAcknowledgementTimeout();
 
       const nextState: KangurRouteTransitionState = {
         href: normalizedHref,
         pageKey: nextPageKey,
         sourceId: nextSourceId,
+        kind: nextTransitionKind,
         skeletonVariant:
           input.skeletonVariant ??
           resolveKangurRouteTransitionSkeletonVariant({
@@ -393,6 +418,7 @@ export function KangurRouteTransitionProvider({
       isRouteRevealing: transitionState?.phase === 'revealing',
       transitionPhase: transitionState?.phase ?? 'idle',
       activeTransitionSourceId: transitionState?.sourceId ?? null,
+      activeTransitionKind: transitionState?.kind ?? null,
       activeTransitionPageKey: transitionState?.pageKey ?? null,
       activeTransitionRequestedHref:
         transitionState?.committedRequestedHref ?? transitionState?.href ?? null,

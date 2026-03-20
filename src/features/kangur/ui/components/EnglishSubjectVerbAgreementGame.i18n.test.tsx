@@ -50,11 +50,15 @@ describe('EnglishSubjectVerbAgreementGame i18n', () => {
 
     advanceAgreementRound('goes');
     advanceAgreementRound('try');
+
+    expect(screen.getByText('„Everyone“ = Singular.')).toBeInTheDocument();
+    expect(screen.queryByText('Everyone = singular.')).not.toBeInTheDocument();
+
     advanceAgreementRound('arrives');
     advanceAgreementRound('are');
 
     expect(
-      screen.getByText('Das nähere Subjekt ist players (Plural).')
+      screen.getByText('Das nähere Subjekt ist „players“ (Plural).')
     ).toBeInTheDocument();
     expect(
       screen.queryByText('Closest subject = players (plural).')
@@ -62,7 +66,7 @@ describe('EnglishSubjectVerbAgreementGame i18n', () => {
 
     advanceAgreementRound('choose');
 
-    expect(screen.getByText('Pair = eine Einheit.')).toBeInTheDocument();
+    expect(screen.getByText('„Pair“ = eine Einheit.')).toBeInTheDocument();
     expect(screen.queryByText('Pair = one set.')).not.toBeInTheDocument();
   });
 });

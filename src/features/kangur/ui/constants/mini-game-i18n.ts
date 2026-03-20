@@ -5,6 +5,15 @@ export type KangurMiniGameTranslate = (
   values?: TranslationValues
 ) => string;
 
+const interpolateMiniGameTemplate = (
+  template: string,
+  values?: TranslationValues
+): string =>
+  template.replace(/\{(\w+)\}/g, (match, token) => {
+    const value = values?.[token];
+    return value === undefined ? match : String(value);
+  });
+
 export const translateKangurMiniGameWithFallback = (
   translate: KangurMiniGameTranslate | undefined,
   key: string,
@@ -12,11 +21,13 @@ export const translateKangurMiniGameWithFallback = (
   values?: TranslationValues
 ): string => {
   if (!translate) {
-    return fallback;
+    return interpolateMiniGameTemplate(fallback, values);
   }
 
   const translated = translate(key, values);
-  return translated === key ? fallback : translated;
+  return translated === key
+    ? interpolateMiniGameTemplate(fallback, values)
+    : interpolateMiniGameTemplate(translated, values);
 };
 
 export const getKangurMiniGameFinishLabel = (

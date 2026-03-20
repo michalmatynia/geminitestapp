@@ -17,11 +17,13 @@ function RouteTransitionProbe({
   sourceId,
   targetHref,
   targetPageKey,
+  transitionKind,
 }: {
   acknowledgeMs?: number;
   sourceId?: string;
   targetHref: string;
   targetPageKey: string;
+  transitionKind?: 'navigation' | 'locale-switch';
 }): React.JSX.Element {
   const {
     isRouteAcknowledging,
@@ -30,6 +32,7 @@ function RouteTransitionProbe({
     isRouteRevealing,
     transitionPhase,
     activeTransitionSourceId,
+    activeTransitionKind,
     activeTransitionPageKey,
     activeTransitionRequestedHref,
     activeTransitionSkeletonVariant,
@@ -46,6 +49,7 @@ function RouteTransitionProbe({
       <div data-testid='route-transition-revealing'>{String(isRouteRevealing)}</div>
       <div data-testid='route-transition-phase'>{transitionPhase}</div>
       <div data-testid='route-transition-source-id'>{activeTransitionSourceId ?? 'none'}</div>
+      <div data-testid='route-transition-kind'>{activeTransitionKind ?? 'none'}</div>
       <div data-testid='route-transition-active-page-key'>{activeTransitionPageKey ?? 'none'}</div>
       <div data-testid='route-transition-active-href'>{activeTransitionRequestedHref ?? 'none'}</div>
       <div data-testid='route-transition-skeleton-variant'>
@@ -58,6 +62,7 @@ function RouteTransitionProbe({
           startRouteTransition({
             ...(typeof acknowledgeMs === 'number' ? { acknowledgeMs } : {}),
             ...(sourceId ? { sourceId } : {}),
+            ...(transitionKind ? { transitionKind } : {}),
             href: targetHref,
             pageKey: targetPageKey,
           })
@@ -88,6 +93,7 @@ function renderRouteTransitionHarness({
   sourceId,
   targetHref = '/kangur/lessons',
   targetPageKey = 'Lessons',
+  transitionKind,
 }: {
   acknowledgeMs?: number;
   pageKey: string;
@@ -96,6 +102,7 @@ function renderRouteTransitionHarness({
   sourceId?: string;
   targetHref?: string;
   targetPageKey?: string;
+  transitionKind?: 'navigation' | 'locale-switch';
 }) {
   return render(
     <KangurRoutingProvider
@@ -110,6 +117,7 @@ function renderRouteTransitionHarness({
           sourceId={sourceId}
           targetHref={targetHref}
           targetPageKey={targetPageKey}
+          transitionKind={transitionKind}
         />
       </KangurRouteTransitionProvider>
     </KangurRoutingProvider>
@@ -197,6 +205,102 @@ describe('KangurRouteTransitionProvider', () => {
 
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
+  });
+
+  it('keeps locale-switch transitions on the same page and marks them distinctly', async () => {
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback): number => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
+
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Lessons',
+      requestedPath: '/pl/lessons',
+      requestedHref: '/pl/lessons',
+      targetHref: '/en/lessons',
+      targetPageKey: 'Lessons',
+      transitionKind: 'locale-switch',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-kind')).toHaveTextContent('locale-switch');
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/en/lessons'
+          requestedHref='/en/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe targetHref='/en/lessons' targetPageKey='Lessons' />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('route-transition-active-page-key')).toHaveTextContent('Lessons');
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+  });
+
+  it('reveals a locale-switch to the default Polish route sooner when page ready is delayed', async () => {
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Lessons',
+      requestedPath: '/en/lessons',
+      requestedHref: '/en/lessons',
+      targetHref: '/lessons',
+      targetPageKey: 'Lessons',
+      transitionKind: 'locale-switch',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/lessons'
+          requestedHref='/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe
+              targetHref='/lessons'
+              targetPageKey='Lessons'
+              transitionKind='locale-switch'
+            />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+
+    act(() => {
+      vi.advanceTimersByTime(1_199);
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
   });
 
   it('clears a pending transition if the navigation takes too long', () => {

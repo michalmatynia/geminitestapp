@@ -39,7 +39,7 @@ export const KangurPageShell = ({
     <div
       className={cn(
         'relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)]',
-        embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
+        embedded ? 'min-h-full' : null,
         KANGUR_PAGE_TONE_CLASSNAMES[tone],
         className
       )}
@@ -57,8 +57,8 @@ export const KangurPageShell = ({
       ) : null}
       <div
         className={cn(
-          'relative z-10 flex w-full flex-col items-center',
-          embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]'
+          'relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height',
+          embedded ? 'min-h-full' : null
         )}
       >
         {children}

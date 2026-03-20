@@ -113,4 +113,26 @@ describe('KangurPageTransitionSkeleton', () => {
       'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
     );
   });
+
+  it('uses a softer blurred overlay for locale-switch skeletons', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(
+      <KangurPageTransitionSkeleton
+        pageKey='Lessons'
+        reason='locale-switch'
+        variant='lessons-library'
+      />
+    );
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-kangur-skeleton-reason',
+      'locale-switch'
+    );
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('backdrop-blur-md');
+    expect(screen.getByRole('status')).not.toHaveTextContent(/^$/);
+  });
 });

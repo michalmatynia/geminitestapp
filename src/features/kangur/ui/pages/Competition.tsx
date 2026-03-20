@@ -75,8 +75,10 @@ function CompetitionContent(): React.JSX.Element {
   }, [basePath, routeNavigator]);
 
   const isCompetitionPageReady =
-    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-    routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
+    routeTransitionState?.activeTransitionKind === 'locale-switch'
+      ? true
+      : routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+        routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
       ? screen !== 'home'
       : true;
 

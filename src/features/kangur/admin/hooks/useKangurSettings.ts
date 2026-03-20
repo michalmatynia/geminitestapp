@@ -2,10 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KANGUR_NARRATOR_SETTINGS_KEY,
+  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
   parseKangurParentVerificationEmailSettings,
+  parseKangurPhoneSimulationSettings,
   parseKangurNarratorSettings,
   type KangurNarratorEngine,
+  type KangurPhoneSimulationSettings,
   type KangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import {
@@ -97,6 +100,7 @@ export function useKangurSettings() {
   const rawAiTutorAppSettings = settingsStore.get(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
   const rawParentVerificationEmailSettings =
     settingsStore.get(KANGUR_PARENT_VERIFICATION_SETTINGS_KEY);
+  const rawPhoneSimulationSettings = settingsStore.get(KANGUR_PHONE_SIMULATION_SETTINGS_KEY);
 
   const persistedNarratorSettings = useMemo(
     () => parseKangurNarratorSettings(rawNarratorSettings),
@@ -113,6 +117,10 @@ export function useKangurSettings() {
   const persistedParentVerificationEmailSettings = useMemo(
     () => parseKangurParentVerificationEmailSettings(rawParentVerificationEmailSettings),
     [rawParentVerificationEmailSettings]
+  );
+  const persistedPhoneSimulationSettings = useMemo(
+    () => parseKangurPhoneSimulationSettings(rawPhoneSimulationSettings),
+    [rawPhoneSimulationSettings]
   );
 
   const [engine, setEngine] = useState<KangurNarratorEngine>(persistedNarratorSettings.engine);
@@ -147,6 +155,9 @@ export function useKangurSettings() {
     formatParentVerificationDisabledUntilInput(
       persistedParentVerificationEmailSettings.notificationsDisabledUntil
     )
+  );
+  const [phoneSimulationEnabled, setPhoneSimulationEnabled] = useState(
+    persistedPhoneSimulationSettings.enabled
   );
   const [guestIntroMode, setGuestIntroMode] = useState<KangurAiTutorGuestIntroMode>(
     persistedAiTutorSettings.guestIntroMode
@@ -197,6 +208,10 @@ export function useKangurSettings() {
       )
     );
   }, [persistedParentVerificationEmailSettings]);
+
+  useEffect(() => {
+    setPhoneSimulationEnabled(persistedPhoneSimulationSettings.enabled);
+  }, [persistedPhoneSimulationSettings.enabled]);
 
   useEffect(
     () => () => {
@@ -367,8 +382,19 @@ export function useKangurSettings() {
     }
     return value;
   }, [parentVerificationEmailDraft.notificationsDisabledUntil]);
+  const phoneSimulationDraft = useMemo<KangurPhoneSimulationSettings>(
+    () => ({
+      enabled: phoneSimulationEnabled,
+    }),
+    [phoneSimulationEnabled]
+  );
+  const phoneSimulationSettingsDirty =
+    phoneSimulationDraft.enabled !== persistedPhoneSimulationSettings.enabled;
   const isDirty =
-    narratorDirty || aiTutorSettingsDirty || parentVerificationEmailSettingsDirty;
+    narratorDirty ||
+    aiTutorSettingsDirty ||
+    parentVerificationEmailSettingsDirty ||
+    phoneSimulationSettingsDirty;
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
@@ -379,7 +405,9 @@ export function useKangurSettings() {
         description: 'Saves Kangur settings sections.',
       },
       async () => {
-        const savedSections: Array<'narrator' | 'ai-tutor' | 'parent-verification'> = [];
+        const savedSections: Array<
+          'narrator' | 'ai-tutor' | 'parent-verification' | 'phone-simulation'
+        > = [];
 
         if (narratorDirty) {
           await updateSetting.mutateAsync({
@@ -405,6 +433,14 @@ export function useKangurSettings() {
           savedSections.push('parent-verification');
         }
 
+        if (phoneSimulationSettingsDirty) {
+          await updateSetting.mutateAsync({
+            key: KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
+            value: serializeSetting(phoneSimulationDraft),
+          });
+          savedSections.push('phone-simulation');
+        }
+
         return savedSections;
       },
       {
@@ -426,6 +462,10 @@ export function useKangurSettings() {
         toast('Kangur AI Tutor settings saved.', { variant: 'success' });
       } else if (saveResult[0] === 'parent-verification') {
         toast('Kangur parent verification email settings saved.', {
+          variant: 'success',
+        });
+      } else if (saveResult[0] === 'phone-simulation') {
+        toast('Kangur phone simulation settings saved.', {
           variant: 'success',
         });
       }
@@ -458,6 +498,8 @@ export function useKangurSettings() {
     setParentVerificationRequireCaptcha,
     parentVerificationNotificationsDisabledUntilInput,
     setParentVerificationNotificationsDisabledUntilInput,
+    phoneSimulationEnabled,
+    setPhoneSimulationEnabled,
     copyStatus,
     narratorProbe,
     isProbingNarrator,
@@ -470,5 +512,6 @@ export function useKangurSettings() {
     persistedNarratorSettings,
     parentVerificationNotificationsPausedUntil,
     persistedParentVerificationEmailSettings,
+    persistedPhoneSimulationSettings,
   };
 }

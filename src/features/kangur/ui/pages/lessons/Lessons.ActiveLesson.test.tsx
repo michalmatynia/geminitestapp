@@ -139,6 +139,9 @@ describe('ActiveLessonView mobile scroll controls', () => {
     await act(async () => {});
 
     const scrollContainer = screen.getByTestId('kangur-lesson-scroll-container') as HTMLDivElement;
+    expect(scrollContainer.parentElement?.className).toContain(
+      'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
+    );
     Object.defineProperty(scrollContainer, 'clientHeight', { value: 100, configurable: true });
     Object.defineProperty(scrollContainer, 'scrollHeight', { value: 400, configurable: true });
     scrollContainer.scrollTop = 0;
@@ -153,6 +156,9 @@ describe('ActiveLessonView mobile scroll controls', () => {
     scrollContainer.scrollTo = scrollToMock;
 
     const downButton = screen.getByRole('button', { name: 'Przewiń w dół' });
+    expect(downButton.className).toContain(
+      'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))'
+    );
 
     fireEvent.click(downButton);
 

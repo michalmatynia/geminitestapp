@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+
 import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
@@ -37,55 +40,63 @@ type SectionId =
 
 type SlideSectionId = Exclude<SectionId, 'game_agreement'>;
 
-const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
+const buildEnglishSubjectVerbAgreementSlides = (
+  translations: ReturnType<typeof useTranslations>
+): Record<SlideSectionId, LessonSlide[]> => ({
   core: [
     {
-      title: 'Subject + verb = match',
+      title: translations('slides.core.match.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Subject-verb agreement to prosta zasada: <strong>czasownik zgadza się z liczbą
-            podmiotu</strong>. W Present Simple najczęściej chodzi o końcówkę <strong>-s</strong>.
+            {translations('slides.core.match.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='teal'
-            caption='Singular → verb + -s. Plural → base verb.'
+            caption={translations('slides.core.match.caption')}
           >
             <EnglishAgreementBalanceAnimation />
           </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm w-full`}>
             <KangurLessonInset accent='teal' className='text-left'>
-              <p className='text-xs uppercase tracking-wide text-teal-600'>Singular</p>
+              <p className='text-xs uppercase tracking-wide text-teal-600'>
+                {translations('slides.core.match.labels.singular')}
+              </p>
               <p className='font-semibold text-slate-900'>
                 The coach <span className='text-teal-700'>talks</span> before the match.
               </p>
-              <p className='text-xs text-slate-500'>Coach = jedna osoba</p>
+              <p className='text-xs text-slate-500'>
+                {translations('slides.core.match.notes.singular')}
+              </p>
             </KangurLessonInset>
             <KangurLessonInset accent='teal' className='text-left'>
-              <p className='text-xs uppercase tracking-wide text-teal-600'>Plural</p>
+              <p className='text-xs uppercase tracking-wide text-teal-600'>
+                {translations('slides.core.match.labels.plural')}
+              </p>
               <p className='font-semibold text-slate-900'>
                 The coaches <span className='text-teal-700'>talk</span> before the match.
               </p>
-              <p className='text-xs text-slate-500'>Coaches = kilka osób</p>
+              <p className='text-xs text-slate-500'>
+                {translations('slides.core.match.notes.plural')}
+              </p>
             </KangurLessonInset>
           </div>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Find the real subject',
+      title: translations('slides.core.findSubject.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Najwięcej błędów bierze się z tego, że w zdaniu jest dużo dodatków. Znajdź <strong>kto/co
-            robi</strong> i dopasuj czasownik tylko do tego słowa.
+            {translations('slides.core.findSubject.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' padding='sm'>
             <div className={`${KANGUR_GRID_SPACED_CLASSNAME} sm:grid-cols-3 text-sm text-slate-700`}>
               {[
-                'Skreśl dodatkowe frazy po “of”, “with”, “in”.',
-                'Zadaj pytanie “Who/What?”.',
-                'Dopasuj czasownik do podmiotu.',
+                translations('slides.core.findSubject.steps.crossOut'),
+                translations('slides.core.findSubject.steps.askQuestion'),
+                translations('slides.core.findSubject.steps.matchVerb'),
               ].map((item, index) => (
                 <div key={item} className='flex gap-2'>
                   <KangurIconBadge accent='slate' size='sm'>
@@ -100,7 +111,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                 The list of tasks <span className='font-semibold text-teal-700'>is</span> long.
               </p>
               <KangurLessonCaption className='mt-1' align='left'>
-                Podmiot = list (singular), nie tasks.
+                {translations('slides.core.findSubject.exampleNote')}
               </KangurLessonCaption>
             </div>
             <div className='mt-4'>
@@ -129,15 +140,15 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   third_person: [
     {
-      title: 'He/She/It + -s',
+      title: translations('slides.thirdPerson.endings.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Dla <strong>he / she / it</strong> dodajemy końcówkę <strong>-s</strong> lub <strong>-es</strong>.
+            {translations('slides.thirdPerson.endings.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='teal'
-            caption='She plays, he watches, it goes.'
+            caption={translations('slides.thirdPerson.endings.caption')}
           >
             <EnglishThirdPersonSAnimation />
           </KangurLessonVisual>
@@ -147,7 +158,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
             <KangurLessonChip accent='teal'>They play</KangurLessonChip>
           </div>
           <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
-            <p className='font-semibold text-slate-700'>Kiedy -es i -ies?</p>
+            <p className='font-semibold text-slate-700'>
+              {translations('slides.thirdPerson.endings.ruleTitle')}
+            </p>
             <div className={`mt-2 ${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-slate-600`}>
               <span>go → go<strong>es</strong></span>
               <span>watch → watch<strong>es</strong></span>
@@ -159,21 +172,25 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Do/Does i Have/Has',
+      title: translations('slides.thirdPerson.auxiliaries.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            W pytaniach i przeczeniach ważne są formy <strong>do/does</strong> oraz <strong>have/has</strong>.
+            {translations('slides.thirdPerson.auxiliaries.lead')}
           </KangurLessonLead>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             <KangurLessonInset accent='teal' className='text-left'>
-              <p className='text-xs uppercase tracking-wide text-teal-600'>Third person</p>
+              <p className='text-xs uppercase tracking-wide text-teal-600'>
+                {translations('slides.thirdPerson.auxiliaries.labels.thirdPerson')}
+              </p>
               <p className='font-semibold text-slate-900'>Does she play?</p>
               <p className='font-semibold text-slate-900'>He doesn&apos;t play.</p>
               <p className='font-semibold text-slate-900'>She has a plan.</p>
             </KangurLessonInset>
             <KangurLessonInset accent='teal' className='text-left'>
-              <p className='text-xs uppercase tracking-wide text-teal-600'>Others</p>
+              <p className='text-xs uppercase tracking-wide text-teal-600'>
+                {translations('slides.thirdPerson.auxiliaries.labels.others')}
+              </p>
               <p className='font-semibold text-slate-900'>Do they play?</p>
               <p className='font-semibold text-slate-900'>We don&apos;t play.</p>
               <p className='font-semibold text-slate-900'>They have a plan.</p>
@@ -185,15 +202,15 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   be_verbs: [
     {
-      title: 'Am / Is / Are',
+      title: translations('slides.beVerbs.forms.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Czasownik <strong>be</strong> ma trzy formy w Present Simple. Trzeba je zapamiętać.
+            {translations('slides.beVerbs.forms.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='teal'
-            caption='I am • he/she/it is • we/you/they are'
+            caption={translations('slides.beVerbs.forms.caption')}
           >
             <EnglishBeVerbSwitchAnimation />
           </KangurLessonVisual>
@@ -201,22 +218,25 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'There is / There are',
+      title: translations('slides.beVerbs.thereIs.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Gdy zdanie zaczyna się od <strong>there</strong>, czasownik zgadza się z tym, co jest
-            po nim.
+            {translations('slides.beVerbs.thereIs.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
             <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
               <KangurLessonInset accent='amber' className='text-left'>
                 <p className='font-semibold'>There is a tournament tonight.</p>
-                <KangurLessonCaption align='left'>Jedno wydarzenie.</KangurLessonCaption>
+                <KangurLessonCaption align='left'>
+                  {translations('slides.beVerbs.thereIs.notes.singular')}
+                </KangurLessonCaption>
               </KangurLessonInset>
               <KangurLessonInset accent='amber' className='text-left'>
                 <p className='font-semibold'>There are two tournaments this week.</p>
-                <KangurLessonCaption align='left'>Wiele wydarzeń.</KangurLessonCaption>
+                <KangurLessonCaption align='left'>
+                  {translations('slides.beVerbs.thereIs.notes.plural')}
+                </KangurLessonCaption>
               </KangurLessonInset>
             </div>
           </KangurLessonCallout>
@@ -226,11 +246,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   tricky: [
     {
-      title: 'Everyone = singular',
+      title: translations('slides.tricky.everyone.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Słowa <strong>everyone, everybody, each, someone</strong> są gramatycznie pojedyncze.
+            {translations('slides.tricky.everyone.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' className='text-sm' padding='sm'>
             <div className='space-y-2 text-slate-700'>
@@ -240,7 +260,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                 </KangurIconBadge>
                 <div>
                   <p className='font-semibold'>Everyone in the class is ready.</p>
-                  <p className='text-xs text-slate-500'>Everyone = singular</p>
+                  <p className='text-xs text-slate-500'>
+                    {translations('slides.tricky.everyone.notes.everyone')}
+                  </p>
                 </div>
               </div>
               <div className={KANGUR_START_ROW_CLASSNAME}>
@@ -249,7 +271,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
                 </KangurIconBadge>
                 <div>
                   <p className='font-semibold'>Each of the players has a jersey.</p>
-                  <p className='text-xs text-slate-500'>Each = singular</p>
+                  <p className='text-xs text-slate-500'>
+                    {translations('slides.tricky.everyone.notes.each')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -258,12 +282,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Either/or, neither/nor',
+      title: translations('slides.tricky.eitherOr.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            W konstrukcjach <strong>either/or</strong> i <strong>neither/nor</strong> czasownik
-            zgadza się z najbliższym podmiotem.
+            {translations('slides.tricky.eitherOr.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' className='text-sm' padding='sm'>
             <div className='space-y-2 text-slate-700'>
@@ -275,19 +298,20 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               </p>
             </div>
             <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-              <KangurLessonChip accent='amber'>Closest subject rule</KangurLessonChip>
+              <KangurLessonChip accent='amber'>
+                {translations('slides.tricky.eitherOr.chip')}
+              </KangurLessonChip>
             </div>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Collective nouns',
+      title: translations('slides.tricky.collective.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            <strong>Team, class, family</strong> to grupa, ale w szkolnym angielskim zwykle
-            traktujemy ją jako <strong>singular</strong>.
+            {translations('slides.tricky.collective.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
             <div className='space-y-2 text-slate-700'>
@@ -295,7 +319,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               <p className='font-semibold'>The class is focused today.</p>
             </div>
             <KangurLessonCaption className='mt-2' align='left'>
-              W tekstach brytyjskich czasem spotkasz plural, ale na lekcjach trzymaj się singular.
+              {translations('slides.tricky.collective.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -304,11 +328,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   interruptions: [
     {
-      title: 'Phrases in the middle',
+      title: translations('slides.interruptions.middle.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Dodatkowe frazy pomiędzy podmiotem a czasownikiem nie zmieniają zgody.
+            {translations('slides.interruptions.middle.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
             <div className='space-y-2 text-slate-700'>
@@ -326,7 +350,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               </p>
             </div>
             <div className={`mt-3 ${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-              <KangurLessonChip accent='slate'>Ignore the middle</KangurLessonChip>
+              <KangurLessonChip accent='slate'>
+                {translations('slides.interruptions.middle.chip')}
+              </KangurLessonChip>
             </div>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -335,11 +361,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Quick check',
+      title: translations('slides.practice.quick.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Wybierz poprawną formę czasownika.
+            {translations('slides.practice.quick.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='teal' className='text-sm' padding='sm'>
             <div className='space-y-2 text-slate-700'>
@@ -349,18 +375,18 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               <p>4) There ___ (is/are) two levels in this game.</p>
             </div>
             <KangurLessonCaption className='mt-3' align='left'>
-              Odpowiedzi: play · is · gives · are
+              {translations('slides.practice.quick.answersCaption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Fix the sentence',
+      title: translations('slides.practice.fix.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Popraw zdania tak, aby czasownik pasował do podmiotu.
+            {translations('slides.practice.fix.lead')}
           </KangurLessonLead>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
             {[
@@ -382,9 +408,13 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               },
             ].map((item) => (
               <KangurLessonInset key={item.wrong} accent='teal' className='text-left'>
-                <p className='text-xs uppercase tracking-wide text-slate-500'>Before</p>
+                <p className='text-xs uppercase tracking-wide text-slate-500'>
+                  {translations('slides.practice.fix.labels.before')}
+                </p>
                 <p className='font-semibold text-slate-700'>{item.wrong}</p>
-                <p className='mt-2 text-xs uppercase tracking-wide text-slate-500'>After</p>
+                <p className='mt-2 text-xs uppercase tracking-wide text-slate-500'>
+                  {translations('slides.practice.fix.labels.after')}
+                </p>
                 <p className='font-semibold text-teal-700'>{item.fixed}</p>
               </KangurLessonInset>
             ))}
@@ -395,88 +425,85 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Summary',
+      title: translations('slides.summary.recap.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Masz już pełen zestaw reguł, które chronią przed najczęstszymi błędami.
+            {translations('slides.summary.recap.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='teal' padding='sm'>
             <ul className='space-y-2 text-sm text-slate-700'>
-              <li>Singular subject → verb + -s (he/she/it).</li>
-              <li>Plural subject → base verb (they/we/you).</li>
-              <li>Am/is/are oraz have/has, do/does.</li>
-              <li>Everyone/each/somebody = singular.</li>
-              <li>Either/or → verb agrees with the closest subject.</li>
+              <li>{translations('slides.summary.recap.items.singular')}</li>
+              <li>{translations('slides.summary.recap.items.plural')}</li>
+              <li>{translations('slides.summary.recap.items.beForms')}</li>
+              <li>{translations('slides.summary.recap.items.everyone')}</li>
+              <li>{translations('slides.summary.recap.items.eitherOr')}</li>
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-const HUB_SECTIONS = [
-  {
-    id: 'core',
-    emoji: '⚖️',
-    title: 'Agreement Basics',
-    description: 'Podmiot + czasownik w jednej linii',
-  },
-  {
-    id: 'third_person',
-    emoji: '🎯',
-    title: 'Third Person -s',
-    description: 'He/She/It i końcówka -s',
-  },
-  {
-    id: 'be_verbs',
-    emoji: '🔁',
-    title: 'Be Verbs',
-    description: 'Am / is / are oraz there is/are',
-  },
-  {
-    id: 'tricky',
-    emoji: '⚠️',
-    title: 'Tricky Subjects',
-    description: 'Everyone, either/or, collective nouns',
-  },
-  {
-    id: 'interruptions',
-    emoji: '🧩',
-    title: 'Extra Phrases',
-    description: 'Nie daj się zmylić dodatkom w zdaniu',
-  },
-  {
-    id: 'practice',
-    emoji: '✅',
-    title: 'Practice',
-    description: 'Szybki trening i korekty',
-  },
-  {
-    id: 'game_agreement',
-    emoji: '🎮',
-    title: 'Agreement Game',
-    description: 'Kliknij właściwy czasownik w zdaniach',
-    isGame: true,
-  },
-  {
-    id: 'summary',
-    emoji: '🧠',
-    title: 'Summary',
-    description: 'Krótka ściąga z reguł',
-  },
+const AGREEMENT_SECTION_META: Array<{
+  id: SectionId;
+  emoji: string;
+  key: string;
+  isGame?: boolean;
+}> = [
+  { id: 'core', emoji: '⚖️', key: 'core' },
+  { id: 'third_person', emoji: '🎯', key: 'thirdPerson' },
+  { id: 'be_verbs', emoji: '🔁', key: 'beVerbs' },
+  { id: 'tricky', emoji: '⚠️', key: 'tricky' },
+  { id: 'interruptions', emoji: '🧩', key: 'interruptions' },
+  { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'game_agreement', emoji: '🎮', key: 'gameAgreement', isGame: true },
+  { id: 'summary', emoji: '🧠', key: 'summary' },
 ];
 
 export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
+  const shellTranslations = useTranslations('KangurStaticLessons.englishSubjectVerbAgreementShell');
+  const contentTranslations = useTranslations('KangurStaticLessons.englishSubjectVerbAgreement');
+  const localizedSections = useMemo(
+    () =>
+      AGREEMENT_SECTION_META.map((section) => ({
+        id: section.id,
+        emoji: section.emoji,
+        title: shellTranslations(`sections.${section.key}.title`),
+        description: shellTranslations(`sections.${section.key}.description`),
+        isGame: section.isGame,
+      })),
+    [shellTranslations]
+  );
+  const localizedSlides = useMemo(
+    () => buildEnglishSubjectVerbAgreementSlides(contentTranslations),
+    [contentTranslations]
+  );
+  const sectionTitles = useMemo(
+    () =>
+      Object.fromEntries(localizedSections.map((section) => [section.id, section.title])) as Record<
+        SectionId,
+        string
+      >,
+    [localizedSections]
+  );
+  const sectionDescriptions = useMemo(
+    () =>
+      Object.fromEntries(
+        localizedSections.map((section) => [section.id, section.description ?? ''])
+      ) as Record<SectionId, string>,
+    [localizedSections]
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='english_subject_verb_agreement'
       lessonEmoji='⚖️'
-      lessonTitle='Angielski: subject-verb agreement'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={shellTranslations('lessonTitle')}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
       dotActiveClass='bg-teal-500'
@@ -489,9 +516,9 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
           sectionId: 'game_agreement',
           stage: {
             accent: 'teal',
-            title: 'Gra: Subject-verb agreement',
+            title: sectionTitles.game_agreement,
             icon: '🎮',
-            description: 'Kliknij poprawną formę czasownika w zdaniach.',
+            description: sectionDescriptions.game_agreement,
             headerTestId: 'english-agreement-game-header',
             shellTestId: 'english-agreement-game-shell',
           },

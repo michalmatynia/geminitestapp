@@ -218,14 +218,18 @@ export function useLessonsLogic() {
     (activeLesson.contentMode === 'document' && !hasActiveLessonDocContent) ||
     !ActiveLessonComponent ||
     isActiveLessonComponentReady;
+  const isLocaleSwitchTransition =
+    routeTransitionState?.activeTransitionKind === 'locale-switch';
 
   const expectsFocusedLesson =
     routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
     routeTransitionState.activeTransitionSkeletonVariant === 'lessons-focus';
-  
+  const isLessonsShellReady = expectsFocusedLesson
+    ? Boolean(activeLesson) && isActiveLessonSurfaceReady
+    : isActiveLessonSurfaceReady;
+
   const isLessonsPageReady =
-    isDeferredContentReady &&
-    (expectsFocusedLesson ? Boolean(activeLesson) && isActiveLessonSurfaceReady : isActiveLessonSurfaceReady);
+    (isLocaleSwitchTransition || isDeferredContentReady) && isLessonsShellReady;
 
   useKangurRoutePageReady({
     pageKey: 'Lessons',

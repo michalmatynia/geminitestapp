@@ -18,7 +18,6 @@ import { KangurMainRoleProvider } from '@/features/kangur/ui/design/primitives';
 import {
   getKangurSlugFromPathname,
 } from '@/features/kangur/ui/routing/managed-paths';
-import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -40,8 +39,6 @@ export function KangurFeatureRouteShell({
   const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
-  const classOverrides = useKangurClassOverrides();
-  const routeShellClassOverride = classOverrides.components['kangur-feature-route-shell']?.['root'];
   const slug = useMemo(
     () => getKangurSlugFromPathname(pathname, normalizedBasePath),
     [normalizedBasePath, pathname]
@@ -83,8 +80,7 @@ export function KangurFeatureRouteShell({
   return (
     <div
       className={cn(
-        'relative min-h-screen min-h-[100svh] min-h-[100dvh] w-full min-w-0 overflow-x-hidden kangur-premium-bg',
-        routeShellClassOverride
+        'relative w-full min-w-0 overflow-x-hidden kangur-premium-bg kangur-shell-viewport-height'
       )}
       data-appearance-mode={appearanceMode}
       data-kangur-appearance={appearanceMode}

@@ -86,7 +86,7 @@ describe('KangurFeatureRouteShell', () => {
     render(<KangurFeatureRouteShell />);
 
     expect(screen.getByTestId('kangur-route-shell')).toHaveClass(
-      'min-h-[100dvh]',
+      'kangur-shell-viewport-height',
       'kangur-premium-bg'
     );
     expect(screen.getByTestId('kangur-route-shell')).not.toHaveClass('text-slate-800');

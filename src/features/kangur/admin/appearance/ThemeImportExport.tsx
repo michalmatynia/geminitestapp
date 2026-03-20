@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLocale } from 'next-intl';
 import {
   Button,
   FormSection,
@@ -11,9 +12,15 @@ import { parseJsonSetting } from '@/features/kangur/shared/utils/settings-json';
 import { KANGUR_DEFAULT_DAILY_THEME, normalizeKangurThemeSettings } from '@/features/kangur/theme-settings';
 import { useAppearancePage } from './AppearancePage.context';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  getAppearanceImportExportCopy,
+  resolveAppearanceAdminLocale,
+} from './appearance.copy';
 
 
 export function ThemeImportExport(): React.JSX.Element {
+  const locale = resolveAppearanceAdminLocale(useLocale());
+  const copy = getAppearanceImportExportCopy(locale);
   const { toast } = useToast();
   const { draft, setDraft } = useAppearancePage();
   const [isExporting, setIsExporting] = useState(false);
@@ -34,13 +41,13 @@ export function ThemeImportExport(): React.JSX.Element {
       {
         fallback: false,
         onError: () => {
-          toast('Nie udało się skopiować konfiguracji.', { variant: 'error' });
+          toast(copy.exportError, { variant: 'error' });
         },
       }
     );
 
     if (didExport) {
-      toast('Konfiguracja motywu skopiowana do schowka.', { variant: 'success' });
+      toast(copy.exportSuccess, { variant: 'success' });
     }
     setIsExporting(false);
   };
@@ -56,7 +63,7 @@ export function ThemeImportExport(): React.JSX.Element {
         const text = await navigator.clipboard.readText();
         const parsed = parseJsonSetting<Partial<ThemeSettings> | null>(text, null);
         if (!parsed) {
-          toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
+          toast(copy.importError, { variant: 'error' });
           return false;
         }
         const normalized = normalizeKangurThemeSettings(parsed, KANGUR_DEFAULT_DAILY_THEME);
@@ -66,27 +73,27 @@ export function ThemeImportExport(): React.JSX.Element {
       {
         fallback: false,
         onError: () => {
-          toast('Nieprawidłowy format danych w schowku.', { variant: 'error' });
+          toast(copy.importError, { variant: 'error' });
         },
       }
     );
 
     if (didImport) {
-      toast('Motyw wczytany ze schowka. Pamiętaj o zapisaniu zmian.', { variant: 'success' });
+      toast(copy.importSuccess, { variant: 'success' });
     }
   };
 
   return (
     <FormSection
-      title='Import / Eksport'
-      description='Przenoś konfigurację motywu między środowiskami za pomocą schowka.'
+      title={copy.title}
+      description={copy.description}
     >
       <div className='flex gap-3'>
         <Button variant='outline' size='sm' onClick={() => void handleExport()} disabled={isExporting}>
-          Eksportuj do schowka
+          {copy.exportButton}
         </Button>
         <Button variant='outline' size='sm' onClick={() => void handleImport()}>
-          Importuj ze schowka
+          {copy.importButton}
         </Button>
       </div>
     </FormSection>

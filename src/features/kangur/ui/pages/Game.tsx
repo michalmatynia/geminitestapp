@@ -1,9 +1,10 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
@@ -49,9 +50,15 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, KANGUR_TIGHT_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKangurLearnerActivity';
+import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
+import { useKangurPhoneSimulation } from '@/features/kangur/ui/hooks/useKangurPhoneSimulation';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import {
+  lockKangurPageVerticalScroll,
+  unlockKangurPageVerticalScroll,
+} from '@/features/kangur/ui/scroll/kangur-page-scroll-lock';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { cn } from '@/features/kangur/shared/utils';
@@ -120,6 +127,7 @@ function GameContent(): React.JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousScreenRef = useRef<KangurGameScreen | null>(null);
+  const gameScrollRef = useRef<HTMLDivElement | null>(null);
   const homeActionsRef = useRef<HTMLDivElement | null>(null);
   const homeQuestRef = useRef<HTMLElement | null>(null);
   const homeAssignmentsRef = useRef<HTMLElement | null>(null);
@@ -143,10 +151,17 @@ function GameContent(): React.JSX.Element {
   const operationSelectorRef = useRef<HTMLDivElement | null>(null);
   const resultSummaryRef = useRef<HTMLDivElement | null>(null);
   const resultLeaderboardRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useKangurMobileBreakpoint();
+  const { enabled: phoneSimulationEnabled } = useKangurPhoneSimulation();
+  const shouldUsePhoneSimulation = isMobile && phoneSimulationEnabled;
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
   const getScreenLabel = (screenKey: KangurGameScreen): string =>
     translations(`screens.${screenKey}.label`);
   const getScreenDescription = (screenKey: KangurGameScreen): string =>
     translations(`screens.${screenKey}.description`);
+  const scrollUpLabel = translations('phoneSimulation.scrollUp');
+  const scrollDownLabel = translations('phoneSimulation.scrollDown');
   const currentScreenLabel = getScreenLabel(screen);
   const learnerId = user?.activeLearner?.id ?? null;
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
@@ -279,8 +294,10 @@ function GameContent(): React.JSX.Element {
     [prefersReducedMotion]
   );
   const isGamePageReady =
-    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-    routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
+    routeTransitionState?.activeTransitionKind === 'locale-switch'
+      ? true
+      : routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+        routeTransitionState.activeTransitionSkeletonVariant === 'game-session'
       ? screen !== 'home'
       : true;
 
@@ -568,6 +585,122 @@ function GameContent(): React.JSX.Element {
   });
 
   useEffect(() => {
+    if (!shouldUsePhoneSimulation || typeof window === 'undefined') {
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [shouldUsePhoneSimulation]);
+
+  useEffect(() => {
+    if (!shouldUsePhoneSimulation) {
+      unlockKangurPageVerticalScroll();
+      return;
+    }
+
+    lockKangurPageVerticalScroll();
+    return () => {
+      unlockKangurPageVerticalScroll();
+    };
+  }, [shouldUsePhoneSimulation]);
+
+  useEffect(() => {
+    if (!shouldUsePhoneSimulation) {
+      return undefined;
+    }
+
+    const node = gameScrollRef.current;
+    if (!node) {
+      return undefined;
+    }
+
+    const preventScroll = (event: Event): void => {
+      event.preventDefault();
+    };
+
+    node.addEventListener('wheel', preventScroll, { passive: false });
+    node.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      node.removeEventListener('wheel', preventScroll);
+      node.removeEventListener('touchmove', preventScroll);
+    };
+  }, [screen, shouldUsePhoneSimulation]);
+
+  const updateScrollButtons = useCallback((): void => {
+    const container = gameScrollRef.current;
+    if (!container) {
+      setCanScrollUp(false);
+      setCanScrollDown(false);
+      return;
+    }
+
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    const nextCanScrollUp = container.scrollTop > 0;
+    const nextCanScrollDown = container.scrollTop < maxScrollTop - 1;
+    setCanScrollUp((prev) => (prev === nextCanScrollUp ? prev : nextCanScrollUp));
+    setCanScrollDown((prev) => (prev === nextCanScrollDown ? prev : nextCanScrollDown));
+  }, []);
+
+  useEffect(() => {
+    if (!shouldUsePhoneSimulation) {
+      setCanScrollUp(false);
+      setCanScrollDown(false);
+      return;
+    }
+
+    const container = gameScrollRef.current;
+    if (!container) {
+      return;
+    }
+
+    const handleUpdate = (): void => {
+      updateScrollButtons();
+    };
+
+    handleUpdate();
+    container.addEventListener('scroll', handleUpdate, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => handleUpdate());
+      resizeObserver.observe(container);
+    }
+
+    let mutationObserver: MutationObserver | null = null;
+    if (typeof MutationObserver !== 'undefined') {
+      mutationObserver = new MutationObserver(() => {
+        window.requestAnimationFrame(handleUpdate);
+      });
+      mutationObserver.observe(container, { childList: true, subtree: true });
+    }
+
+    const frameId = window.requestAnimationFrame(handleUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      container.removeEventListener('scroll', handleUpdate);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+    };
+  }, [screen, shouldUsePhoneSimulation, updateScrollButtons]);
+
+  const handleScrollBy = useCallback(
+    (direction: 'up' | 'down'): void => {
+      const container = gameScrollRef.current;
+      if (!container) {
+        return;
+      }
+
+      const step = Math.max(240, Math.round(container.clientHeight * 0.7));
+      const delta = direction === 'up' ? -step : step;
+      container.scrollBy({ top: delta, left: 0, behavior: 'smooth' });
+      window.requestAnimationFrame(updateScrollButtons);
+    },
+    [updateScrollButtons]
+  );
+
+  useEffect(() => {
     if (previousScreenRef.current === null) {
       previousScreenRef.current = screen;
       return;
@@ -580,7 +713,12 @@ function GameContent(): React.JSX.Element {
 
     const frameId = window.requestAnimationFrame(() => {
       if (GAME_TOP_RESET_SCREENS.has(screen)) {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        if (shouldUsePhoneSimulation && gameScrollRef.current) {
+          gameScrollRef.current.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+          updateScrollButtons();
+        } else {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        }
       }
 
       focusGameScreenHeading(screenHeadingRef.current);
@@ -588,7 +726,7 @@ function GameContent(): React.JSX.Element {
 
     previousScreenRef.current = screen;
     return () => window.cancelAnimationFrame(frameId);
-  }, [screen]);
+  }, [screen, shouldUsePhoneSimulation, updateScrollButtons]);
 
   const renderScreen = (
     screenKey: KangurGameScreen,
@@ -641,9 +779,43 @@ function GameContent(): React.JSX.Element {
           'data-kangur-route-main': true,
           id: GAME_MAIN_ID,
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
-          className: `flex flex-col items-center pb-[calc(env(safe-area-inset-bottom)+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+          className: shouldUsePhoneSimulation
+            ? `flex h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))] min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
+            : `flex flex-col items-center pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
         }}
       >
+        <div
+          className={cn(
+            shouldUsePhoneSimulation
+              ? 'flex h-full min-h-0 w-full flex-1 flex-col gap-3'
+              : 'w-full'
+          )}
+        >
+          {shouldUsePhoneSimulation && canScrollUp ? (
+            <KangurButton
+              fullWidth
+              size='sm'
+              variant='surface'
+              className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+              data-testid='kangur-game-phone-simulation-scroll-up'
+              onClick={() => handleScrollBy('up')}
+              aria-label={scrollUpLabel}
+            >
+              <ChevronUp className='h-4 w-4' aria-hidden='true' />
+              {scrollUpLabel}
+            </KangurButton>
+          ) : null}
+          <div
+            ref={shouldUsePhoneSimulation ? gameScrollRef : undefined}
+            className={cn(
+              shouldUsePhoneSimulation
+                ? `flex-1 min-h-0 w-full overflow-y-auto overscroll-contain touch-none ${KANGUR_PANEL_GAP_CLASSNAME}`
+                : undefined
+            )}
+            data-testid={
+              shouldUsePhoneSimulation ? 'kangur-game-phone-simulation-scroll-container' : undefined
+            }
+          >
           <h1 id={GAME_TITLE_ID} className='sr-only'>
             {GAME_BRAND_NAME}
           </h1>
@@ -940,6 +1112,22 @@ function GameContent(): React.JSX.Element {
               )
             ) : null}
           </AnimatePresence>
+          </div>
+          {shouldUsePhoneSimulation && canScrollDown ? (
+            <KangurButton
+              fullWidth
+              size='sm'
+              variant='surface'
+              className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)] pb-[calc(10px+var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom)))]'
+              data-testid='kangur-game-phone-simulation-scroll-down'
+              onClick={() => handleScrollBy('down')}
+              aria-label={scrollDownLabel}
+            >
+              <ChevronDown className='h-4 w-4' aria-hidden='true' />
+              {scrollDownLabel}
+            </KangurButton>
+          ) : null}
+        </div>
       </KangurStandardPageLayout>
     </>
   );

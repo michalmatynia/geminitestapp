@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
+import plMessages from '@/i18n/messages/pl.json';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 import {
@@ -15,8 +18,8 @@ import {
   ClassificationSortByShapeAnimation,
   ClassificationSortBySizeAnimation,
   ClassificationTwoCriteriaGridAnimation,
-  ClassificationVennUnionAnimation,
   ClassificationVennOverlapAnimation,
+  ClassificationVennUnionAnimation,
 } from '@/features/kangur/ui/components/LogicalLessonAnimations';
 import {
   KangurLessonCallout,
@@ -28,150 +31,197 @@ import {
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie' | 'game';
-type SlideSectionId = Exclude<SectionId, 'game'>;
+type LogicalClassificationTranslate = (key: string) => string;
 
-export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
+const createStaticTranslator =
+  (messages: Record<string, unknown>): LogicalClassificationTranslate =>
+  (key) => {
+    const resolved = key.split('.').reduce<unknown>(
+      (current, segment) =>
+        typeof current === 'object' && current !== null
+          ? (current as Record<string, unknown>)[segment]
+          : undefined,
+      messages
+    );
+
+    return typeof resolved === 'string' ? resolved : key;
+  };
+
+const buildLogicalClassificationSlides = (
+  translate: LogicalClassificationTranslate
+): Record<Exclude<SectionId, 'game'>, LessonSlide[]> => ({
   intro: [
     {
-      title: 'Co to jest klasyfikacja?',
+      title: translate('slides.intro.basics.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Klasyfikacja to układanie rzeczy w grupy według wspólnej cechy. To podstawa porządku w
-            myśleniu i w życiu!
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intro.basics.lead')}</KangurLessonLead>
           <KangurLessonInset accent='teal' className='w-full' padding='sm'>
             <ClassificationSortByColorAnimation />
             <KangurLessonCaption className='mt-2'>
-              Najpierw zauważ cechę — potem przyporządkuj do właściwej grupy.
+              {translate('slides.intro.basics.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout
             accent='teal'
             className='w-full text-sm [color:var(--kangur-page-muted-text)]'
           >
-            <p className='font-semibold text-teal-700 mb-2'>Klasyfikujemy według:</p>
+            <p className='mb-2 font-semibold text-teal-700'>
+              {translate('slides.intro.basics.criteriaLabel')}
+            </p>
             <ul className='space-y-1'>
-              <li>
-                🎨 <b>Koloru</b> — czerwone vs. niebieskie
-              </li>
-              <li>
-                🔷 <b>Kształtu</b> — okrągłe vs. kwadratowe
-              </li>
-              <li>
-                📏 <b>Rozmiaru</b> — duże vs. małe
-              </li>
-              <li>
-                📂 <b>Kategorii</b> — owoce vs. warzywa
-              </li>
-              <li>
-                🔢 <b>Liczby</b> — parzyste vs. nieparzyste
-              </li>
+              {[
+                'slides.intro.basics.criteria.color',
+                'slides.intro.basics.criteria.shape',
+                'slides.intro.basics.criteria.size',
+                'slides.intro.basics.criteria.category',
+                'slides.intro.basics.criteria.number',
+              ].map((key) => (
+                <li key={key}>{translate(key)}</li>
+              ))}
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Grupowanie według cech',
+      title: translate('slides.intro.grouping.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Patrz na wszystkie cechy i wybierz te, która jest wspólna dla całej grupy.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intro.grouping.lead')}</KangurLessonLead>
           <KangurLessonInset accent='emerald' className='w-full' padding='sm'>
             <ClassificationSortBySizeAnimation />
             <KangurLessonCaption className='mt-2'>
-              Rozmiar to prosta cecha — duże i małe elementy tworzą różne zbiory.
+              {translate('slides.intro.grouping.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-            <KangurLessonCallout accent='emerald' className='text-center' padding='sm'>
-              <p className='font-bold text-green-700 text-xs mb-1'>Zwierzęta latające</p>
-              <p className='text-2xl'>🦅 🦆 🐝 🦋</p>
-              <KangurLessonCaption className='mt-1'>
-                Cecha: mają skrzydła
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-            <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
-              <p className='font-bold text-blue-700 text-xs mb-1'>Zwierzęta wodne</p>
-              <p className='text-2xl'>🐟 🐬 🦈 🐙</p>
-              <KangurLessonCaption className='mt-1'>
-                Cecha: żyją w wodzie
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-            <KangurLessonCallout accent='amber' className='text-center' padding='sm'>
-              <p className='font-bold text-orange-700 text-xs mb-1'>Liczby parzyste</p>
-              <p className='text-2xl font-extrabold text-orange-600'>2 4 6 8</p>
-              <KangurLessonCaption className='mt-1'>
-                Cecha: dzielą się przez 2
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-            <KangurLessonCallout accent='rose' className='text-center' padding='sm'>
-              <p className='font-bold text-rose-700 text-xs mb-1'>Liczby nieparzyste</p>
-              <p className='text-2xl font-extrabold text-rose-600'>1 3 5 7</p>
-              <KangurLessonCaption className='mt-1'>
-                Cecha: nie dzielą się przez 2
-              </KangurLessonCaption>
-            </KangurLessonCallout>
+            {[
+              {
+                accent: 'emerald' as const,
+                titleKey: 'slides.intro.grouping.cards.flyingAnimals.title',
+                itemsKey: 'slides.intro.grouping.cards.flyingAnimals.items',
+                noteKey: 'slides.intro.grouping.cards.flyingAnimals.note',
+                titleClassName: 'text-green-700',
+                itemsClassName: '',
+              },
+              {
+                accent: 'sky' as const,
+                titleKey: 'slides.intro.grouping.cards.waterAnimals.title',
+                itemsKey: 'slides.intro.grouping.cards.waterAnimals.items',
+                noteKey: 'slides.intro.grouping.cards.waterAnimals.note',
+                titleClassName: 'text-blue-700',
+                itemsClassName: '',
+              },
+              {
+                accent: 'amber' as const,
+                titleKey: 'slides.intro.grouping.cards.evenNumbers.title',
+                itemsKey: 'slides.intro.grouping.cards.evenNumbers.items',
+                noteKey: 'slides.intro.grouping.cards.evenNumbers.note',
+                titleClassName: 'text-orange-700',
+                itemsClassName: 'font-extrabold text-orange-600',
+              },
+              {
+                accent: 'rose' as const,
+                titleKey: 'slides.intro.grouping.cards.oddNumbers.title',
+                itemsKey: 'slides.intro.grouping.cards.oddNumbers.items',
+                noteKey: 'slides.intro.grouping.cards.oddNumbers.note',
+                titleClassName: 'text-rose-700',
+                itemsClassName: 'font-extrabold text-rose-600',
+              },
+            ].map((card) => (
+              <KangurLessonCallout
+                key={card.titleKey}
+                accent={card.accent}
+                className='text-center'
+                padding='sm'
+              >
+                <p className={`mb-1 text-xs font-bold ${card.titleClassName}`}>
+                  {translate(card.titleKey)}
+                </p>
+                <p className={`text-2xl ${card.itemsClassName}`}>{translate(card.itemsKey)}</p>
+                <KangurLessonCaption className='mt-1'>
+                  {translate(card.noteKey)}
+                </KangurLessonCaption>
+              </KangurLessonCallout>
+            ))}
           </div>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Sortowanie według kształtu',
+      title: translate('slides.intro.shapeSorting.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Kształt to cecha, którą łatwo rozpoznać — wystarczy spojrzeć na krawędzie i kąty.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intro.shapeSorting.lead')}</KangurLessonLead>
           <KangurLessonInset accent='sky' className='w-full' padding='sm'>
             <ClassificationSortByShapeAnimation />
             <KangurLessonCaption className='mt-2'>
-              Koła i kwadraty trafiają do różnych pojemników.
+              {translate('slides.intro.shapeSorting.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-            <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-              <p className='font-bold text-violet-700 text-xs mb-1'>Koła</p>
-              <p className='text-2xl'>⚪ ⚪ ⚪</p>
-              <KangurLessonCaption className='mt-1'>
-                Cecha: brak kątów
-              </KangurLessonCaption>
-            </KangurLessonCallout>
-            <KangurLessonCallout accent='sky' className='text-center' padding='sm'>
-              <p className='font-bold text-blue-700 text-xs mb-1'>Kwadraty</p>
-              <p className='text-2xl'>⬜ ⬜ ⬜</p>
-              <KangurLessonCaption className='mt-1'>
-                Cecha: cztery równe boki
-              </KangurLessonCaption>
-            </KangurLessonCallout>
+            {[
+              {
+                accent: 'violet' as const,
+                titleKey: 'slides.intro.shapeSorting.cards.circles.title',
+                itemsKey: 'slides.intro.shapeSorting.cards.circles.items',
+                noteKey: 'slides.intro.shapeSorting.cards.circles.note',
+                titleClassName: 'text-violet-700',
+              },
+              {
+                accent: 'sky' as const,
+                titleKey: 'slides.intro.shapeSorting.cards.squares.title',
+                itemsKey: 'slides.intro.shapeSorting.cards.squares.items',
+                noteKey: 'slides.intro.shapeSorting.cards.squares.note',
+                titleClassName: 'text-blue-700',
+              },
+            ].map((card) => (
+              <KangurLessonCallout
+                key={card.titleKey}
+                accent={card.accent}
+                className='text-center'
+                padding='sm'
+              >
+                <p className={`mb-1 text-xs font-bold ${card.titleClassName}`}>
+                  {translate(card.titleKey)}
+                </p>
+                <p className='text-2xl'>{translate(card.itemsKey)}</p>
+                <KangurLessonCaption className='mt-1'>
+                  {translate(card.noteKey)}
+                </KangurLessonCaption>
+              </KangurLessonCallout>
+            ))}
           </div>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Kategorie i sortowanie',
+      title: translate('slides.intro.categories.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Kategorie to większe „pudełka” na rzeczy. Dzięki nim łatwo utrzymasz porządek.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intro.categories.lead')}</KangurLessonLead>
           <KangurLessonInset accent='amber' className='w-full' padding='sm'>
             <ClassificationCategoryBinsAnimation />
             <KangurLessonCaption className='mt-2'>
-              Każdy element ląduje w odpowiednim koszyku.
+              {translate('slides.intro.categories.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout
             accent='amber'
             className='w-full text-sm [color:var(--kangur-page-muted-text)]'
           >
-            <p className='font-semibold text-amber-700 mb-2'>Przykłady kategorii:</p>
+            <p className='mb-2 font-semibold text-amber-700'>
+              {translate('slides.intro.categories.examplesLabel')}
+            </p>
             <ul className='space-y-1'>
-              <li>🍎 Owoce</li>
-              <li>🥕 Warzywa</li>
-              <li>🧸 Zabawki</li>
+              {[
+                'slides.intro.categories.examples.fruit',
+                'slides.intro.categories.examples.vegetables',
+                'slides.intro.categories.examples.toys',
+              ].map((key) => (
+                <li key={key}>{translate(key)}</li>
+              ))}
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -180,85 +230,99 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   diagram: [
     {
-      title: 'Wiele cech naraz',
+      title: translate('slides.diagram.multiCriteria.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Czasem trzeba wziąć pod uwagę dwie cechy jednocześnie. To trudniejsze, ale daje
-            precyzyjniejszy podział.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.diagram.multiCriteria.lead')}</KangurLessonLead>
           <KangurLessonInset accent='teal' className='w-full' padding='sm'>
             <ClassificationTwoCriteriaGridAnimation />
             <KangurLessonCaption className='mt-2'>
-              Dwie cechy tworzą siatkę 2×2 — każda kratka to osobna grupa.
+              {translate('slides.diagram.multiCriteria.gridCaption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonInset accent='teal' className='w-full' padding='sm'>
             <ClassificationCriteriaAxesAnimation />
             <KangurLessonCaption className='mt-2'>
-              Najpierw wybierz osie kryteriów, a potem przypisz elementy do pola.
+              {translate('slides.diagram.multiCriteria.axesCaption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout accent='teal' className='w-full'>
-            <p className='text-sm font-semibold text-teal-700 mb-3 text-center'>
-              Figury: duże/małe × czerwone/niebieskie
+            <p className='mb-3 text-center text-sm font-semibold text-teal-700'>
+              {translate('slides.diagram.multiCriteria.exampleLabel')}
             </p>
             <div className='grid grid-cols-1 gap-2 text-center text-sm min-[420px]:grid-cols-2'>
               {[
-                ['Duże czerwone', '🔴🔴'],
-                ['Duże niebieskie', '🔵🔵'],
-                ['Małe czerwone', '🔴'],
-                ['Małe niebieskie', '🔵'],
-              ].map(([label, icon]) => (
-                <KangurLessonInset key={label} accent='teal' padding='sm'>
-                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>{label}</p>
-                  <p className='text-2xl'>{icon}</p>
+                'bigRed',
+                'bigBlue',
+                'smallRed',
+                'smallBlue',
+              ].map((key) => (
+                <KangurLessonInset
+                  key={key}
+                  accent='teal'
+                  padding='sm'
+                >
+                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+                    {translate(`slides.diagram.multiCriteria.items.${key}.label`)}
+                  </p>
+                  <p className='text-2xl'>
+                    {translate(`slides.diagram.multiCriteria.items.${key}.icons`)}
+                  </p>
                 </KangurLessonInset>
               ))}
             </div>
             <KangurLessonCaption className='mt-2'>
-              2 cechy × 2 wartości = 4 różne grupy
+              {translate('slides.diagram.multiCriteria.summary')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Diagram Venna',
+      title: translate('slides.diagram.venn.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Diagram Venna pokazuje, co należy do jednej grupy, do drugiej, lub do obu jednocześnie —
-            to część wspólna (przecięcie).
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.diagram.venn.lead')}</KangurLessonLead>
           <KangurLessonInset accent='sky' className='w-full' padding='sm'>
             <ClassificationVennOverlapAnimation />
             <KangurLessonCaption className='mt-2'>
-              Środek diagramu to część wspólna — elementy należące do obu grup.
+              {translate('slides.diagram.venn.overlapCaption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonInset accent='sky' className='w-full' padding='sm'>
             <ClassificationVennUnionAnimation />
             <KangurLessonCaption className='mt-2'>
-              Unia to wszystko, co jest w zbiorze A lub w zbiorze B.
+              {translate('slides.diagram.venn.unionCaption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout accent='sky' className='w-full'>
             <KangurLessonCaption className='mb-3'>
-              Kocha sport vs. kocha muzykę
+              {translate('slides.diagram.venn.exampleLabel')}
             </KangurLessonCaption>
-            <div className='flex justify-center items-center gap-0'>
-              <div className='w-32 h-24 rounded-full bg-sky-200/70 border-2 border-sky-400 flex flex-col items-start justify-center pl-3'>
-                <p className='text-xs font-bold text-sky-700'>Tylko sport</p>
-                <p className='text-lg'>⚽ 🏀</p>
+            <div className='flex items-center justify-center gap-0'>
+              <div className='flex h-24 w-32 flex-col items-start justify-center rounded-full border-2 border-sky-400 bg-sky-200/70 pl-3'>
+                <p className='text-xs font-bold text-sky-700'>
+                  {translate('slides.diagram.venn.zones.onlySport.label')}
+                </p>
+                <p className='text-lg'>
+                  {translate('slides.diagram.venn.zones.onlySport.icons')}
+                </p>
               </div>
-              <div className='w-16 h-24 rounded-none bg-teal-200/80 border-y-2 border-teal-400 flex flex-col items-center justify-center -mx-4 z-10'>
-                <p className='text-xs font-bold text-teal-700 text-center'>Oba!</p>
-                <p className='text-lg'>🤸</p>
+              <div className='z-10 -mx-4 flex h-24 w-16 flex-col items-center justify-center rounded-none border-y-2 border-teal-400 bg-teal-200/80'>
+                <p className='text-center text-xs font-bold text-teal-700'>
+                  {translate('slides.diagram.venn.zones.both.label')}
+                </p>
+                <p className='text-lg'>
+                  {translate('slides.diagram.venn.zones.both.icons')}
+                </p>
               </div>
-              <div className='w-32 h-24 rounded-full bg-yellow-200/70 border-2 border-yellow-400 flex flex-col items-end justify-center pr-3'>
-                <p className='text-xs font-bold text-yellow-700'>Tylko muzyka</p>
-                <p className='text-lg'>🎸 🎹</p>
+              <div className='flex h-24 w-32 flex-col items-end justify-center rounded-full border-2 border-yellow-400 bg-yellow-200/70 pr-3'>
+                <p className='text-xs font-bold text-yellow-700'>
+                  {translate('slides.diagram.venn.zones.onlyMusic.label')}
+                </p>
+                <p className='text-lg'>
+                  {translate('slides.diagram.venn.zones.onlyMusic.icons')}
+                </p>
               </div>
             </div>
           </KangurLessonCallout>
@@ -266,27 +330,30 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Zmiana kryterium',
+      title: translate('slides.diagram.switchCriteria.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Te same elementy można posortować na różne sposoby — zależy od tego, jakie kryterium
-            wybierzesz.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.diagram.switchCriteria.lead')}</KangurLessonLead>
           <KangurLessonInset accent='teal' className='w-full' padding='sm'>
             <ClassificationCriteriaSwitchAnimation />
             <KangurLessonCaption className='mt-2'>
-              Najpierw kolor, potem kształt — układ grup się zmienia.
+              {translate('slides.diagram.switchCriteria.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout
             accent='teal'
             className='w-full text-sm [color:var(--kangur-page-muted-text)]'
           >
-            <p className='font-semibold text-teal-700 mb-2'>Wybierz kryterium:</p>
+            <p className='mb-2 font-semibold text-teal-700'>
+              {translate('slides.diagram.switchCriteria.pickLabel')}
+            </p>
             <ul className='space-y-1'>
-              <li>Najpierw najprostsza cecha (np. kolor).</li>
-              <li>Potem dokładniejsza (np. kształt).</li>
+              {[
+                'slides.diagram.switchCriteria.tips.first',
+                'slides.diagram.switchCriteria.tips.second',
+              ].map((key) => (
+                <li key={key}>{translate(key)}</li>
+              ))}
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -295,27 +362,30 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   intruz: [
     {
-      title: 'Znajdź intruza — poziom 1',
+      title: translate('slides.intruz.level1.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Jeden element nie pasuje do grupy. Znajdź go i wyjaśnij, dlaczego wyłamuje się z reguły.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intruz.level1.lead')}</KangurLessonLead>
           <KangurLessonInset accent='rose' className='w-full' padding='sm'>
             <ClassificationOddOneOutAnimation />
             <KangurLessonCaption className='mt-2'>
-              Intruz łamie regułę — dlatego wyróżnia się na tle grupy.
+              {translate('slides.intruz.level1.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='flex flex-col kangur-panel-gap w-full'>
-            {[
-              { items: '🍎 🍌 🥕 🍇 🍓', answer: '🥕 — to warzywo, reszta to owoce' },
-              { items: '2, 4, 7, 8, 10', answer: '7 — tylko ona jest nieparzysta' },
-              { items: '🐦 🦅 🐝 🐈 🦋', answer: '🐈 — kot nie lata, reszta ma skrzydła' },
-            ].map(({ items, answer }) => (
-              <KangurLessonCallout key={items} accent='rose' className='text-center' padding='sm'>
-                <p className='text-2xl mb-1'>{items}</p>
-                <p className='text-rose-600 font-bold text-sm mt-1'>{answer}</p>
+          <div className='flex w-full flex-col kangur-panel-gap'>
+            {['fruits', 'numbers', 'animals'].map((key) => (
+              <KangurLessonCallout
+                key={key}
+                accent='rose'
+                className='text-center'
+                padding='sm'
+              >
+                <p className='mb-1 text-2xl'>
+                  {translate(`slides.intruz.level1.examples.${key}.items`)}
+                </p>
+                <p className='mt-1 text-sm font-bold text-rose-600'>
+                  {translate(`slides.intruz.level1.examples.${key}.answer`)}
+                </p>
               </KangurLessonCallout>
             ))}
           </div>
@@ -323,33 +393,30 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Znajdź intruza — poziom 2',
+      title: translate('slides.intruz.level2.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Trudniejsze zagadki — intruz może być ukryty pod nieoczywistą cechą.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intruz.level2.lead')}</KangurLessonLead>
           <KangurLessonInset accent='amber' className='w-full' padding='sm'>
             <ClassificationHiddenRuleAnimation />
             <KangurLessonCaption className='mt-2'>
-              Najpierw znajdź regułę, a potem element, który jej nie spełnia.
+              {translate('slides.intruz.level2.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='flex flex-col kangur-panel-gap w-full'>
-            {[
-              { items: '3, 6, 9, 12, 16', answer: '16 — nie jest wielokrotnością 3' },
-              {
-                items: '🌍 🌙 ☀️ ⭐ 🪐',
-                answer: '🌙 — tylko księżyc nie świeci własnym światłem',
-              },
-              {
-                items: 'kwadrat, trójkąt, koło, romb',
-                answer: 'Koło — jedyna figura bez kątów i prostych boków',
-              },
-            ].map(({ items, answer }) => (
-              <KangurLessonCallout key={items} accent='amber' className='text-center' padding='sm'>
-                <p className='mb-1 text-lg font-bold [color:var(--kangur-page-text)]'>{items}</p>
-                <p className='text-amber-700 font-bold text-sm mt-1'>{answer}</p>
+          <div className='flex w-full flex-col kangur-panel-gap'>
+            {['multiples', 'space', 'shapes'].map((key) => (
+              <KangurLessonCallout
+                key={key}
+                accent='amber'
+                className='text-center'
+                padding='sm'
+              >
+                <p className='mb-1 text-lg font-bold [color:var(--kangur-page-text)]'>
+                  {translate(`slides.intruz.level2.examples.${key}.items`)}
+                </p>
+                <p className='mt-1 text-sm font-bold text-amber-700'>
+                  {translate(`slides.intruz.level2.examples.${key}.answer`)}
+                </p>
               </KangurLessonCallout>
             ))}
           </div>
@@ -357,26 +424,30 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Znajdź intruza — poziom 3',
+      title: translate('slides.intruz.level3.title'),
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Intruz może zaburzać wzór lub kolejność. Sprawdź, co się powtarza.
-          </KangurLessonLead>
+          <KangurLessonLead>{translate('slides.intruz.level3.lead')}</KangurLessonLead>
           <KangurLessonInset accent='rose' className='w-full' padding='sm'>
             <ClassificationOddOneOutPatternAnimation />
             <KangurLessonCaption className='mt-2'>
-              Wzór się powtarza, ale jeden element go psuje.
+              {translate('slides.intruz.level3.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
-          <div className='flex flex-col kangur-panel-gap w-full'>
-            {[
-              { items: '⚪ ⬜ ⚪ 🔺 ⚪ ⬜', answer: '🔺 — inny kształt niż reszta' },
-              { items: '🔴 🔵 🔴 🔵 🟢 🔴', answer: '🟢 — inny kolor w środku wzoru' },
-            ].map(({ items, answer }) => (
-              <KangurLessonCallout key={items} accent='rose' className='text-center' padding='sm'>
-                <p className='text-2xl mb-1'>{items}</p>
-                <p className='text-rose-600 font-bold text-sm mt-1'>{answer}</p>
+          <div className='flex w-full flex-col kangur-panel-gap'>
+            {['shape', 'color'].map((key) => (
+              <KangurLessonCallout
+                key={key}
+                accent='rose'
+                className='text-center'
+                padding='sm'
+              >
+                <p className='mb-1 text-2xl'>
+                  {translate(`slides.intruz.level3.examples.${key}.items`)}
+                </p>
+                <p className='mt-1 text-sm font-bold text-rose-600'>
+                  {translate(`slides.intruz.level3.examples.${key}.answer`)}
+                </p>
               </KangurLessonCallout>
             ))}
           </div>
@@ -386,162 +457,172 @@ export const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   podsumowanie: [
     {
-      title: 'Podsumowanie',
+      title: translate('slides.podsumowanie.overview.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='teal' className='w-full' padding='sm'>
             <ClassificationRecapSequenceAnimation />
             <KangurLessonCaption className='mt-2'>
-              Pamiętaj: cecha, grupowanie, przecięcie i intruz.
+              {translate('slides.podsumowanie.overview.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
           <KangurLessonCallout accent='amber' className='w-full'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
-              <li>
-                🗂️ <b>Klasyfikacja</b> — grupuj według jednej wspólnej cechy
-              </li>
-              <li>
-                🔀 <b>Wiele cech</b> — precyzyjny podział wymaga kilku kryteriów
-              </li>
-              <li>
-                🔵🟡 <b>Diagram Venna</b> — część wspólna to przecięcie dwóch zbiorów
-              </li>
-              <li>
-                🔎 <b>Intruz poz. 1</b> — oczywista cecha łamana przez jeden element
-              </li>
-              <li>
-                🧩 <b>Intruz poz. 2</b> — nieoczywiste cechy ukryte głębiej
-              </li>
-              <li>
-                🎯 <b>Intruz poz. 3</b> — zaburzony wzór lub sekwencja
-              </li>
+              {[
+                'classification',
+                'manyCriteria',
+                'venn',
+                'oddOneOut1',
+                'oddOneOut2',
+                'oddOneOut3',
+              ].map((key) => (
+                <li key={key}>{translate(`slides.podsumowanie.overview.items.${key}`)}</li>
+              ))}
             </ul>
           </KangurLessonCallout>
-          <p className='text-teal-600 font-bold text-center'>
-            Klasyfikacja to klucz do porządku w świecie i w głowie!
+          <p className='text-center font-bold text-teal-600'>
+            {translate('slides.podsumowanie.overview.closing')}
           </p>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Kolor',
+      title: translate('slides.podsumowanie.color.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='teal' className='w-full text-center' padding='sm'>
             <ClassificationSortByColorAnimation />
             <KangurLessonCaption className='mt-2 text-center'>
-              Kolor
+              {translate('slides.podsumowanie.color.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Kształt',
+      title: translate('slides.podsumowanie.shape.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='sky' className='w-full text-center' padding='sm'>
             <ClassificationSortByShapeAnimation />
             <KangurLessonCaption className='mt-2 text-center'>
-              Kształt
+              {translate('slides.podsumowanie.shape.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Parzyste i nieparzyste',
+      title: translate('slides.podsumowanie.parity.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='amber' className='w-full text-center' padding='sm'>
             <ClassificationParityAnimation />
             <KangurLessonCaption className='mt-2 text-center'>
-              Parzyste i nieparzyste
+              {translate('slides.podsumowanie.parity.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Dwie cechy naraz',
+      title: translate('slides.podsumowanie.twoCriteria.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='emerald' className='w-full text-center' padding='sm'>
             <ClassificationTwoCriteriaGridAnimation />
             <KangurLessonCaption className='mt-2 text-center'>
-              Dwie cechy naraz
+              {translate('slides.podsumowanie.twoCriteria.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Przecięcie zbiorów',
+      title: translate('slides.podsumowanie.intersection.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='slate' className='w-full text-center' padding='sm'>
             <ClassificationVennOverlapAnimation />
             <KangurLessonCaption className='mt-2 text-center'>
-              Przecięcie zbiorów
+              {translate('slides.podsumowanie.intersection.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Intruz',
+      title: translate('slides.podsumowanie.oddOneOut.title'),
       content: (
         <KangurLessonStack>
           <KangurLessonInset accent='rose' className='w-full text-center' padding='sm'>
             <ClassificationOddOneOutPatternAnimation />
             <KangurLessonCaption className='mt-2 text-center'>
-              Intruz
+              {translate('slides.podsumowanie.oddOneOut.caption')}
             </KangurLessonCaption>
           </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-export const HUB_SECTIONS = [
-  {
-    id: 'intro',
-    emoji: '📦',
-    title: 'Klasyfikacja — wstęp',
-    description: 'Co to klasyfikacja? Grupowanie według cech',
-  },
-  {
-    id: 'diagram',
-    emoji: '🔵🟡',
-    title: 'Wiele cech i diagram Venna',
-    description: 'Wielokryteriowe grupowanie i przecięcia zbiorów',
-  },
-  {
-    id: 'intruz',
-    emoji: '🔎',
-    title: 'Znajdź intruza',
-    description: 'Poziom 1, 2 i 3 — co nie pasuje?',
-  },
-  { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Wszystkie zasady razem' },
-  {
-    id: 'game',
-    emoji: '🎯',
-    title: 'Laboratorium klasyfikacji',
-    description: 'Sortuj i znajdź intruza',
-    isGame: true,
-  },
-];
+const buildLogicalClassificationSections = (translate: LogicalClassificationTranslate) =>
+  [
+    {
+      id: 'intro',
+      emoji: '📦',
+      title: translate('sections.intro.title'),
+      description: translate('sections.intro.description'),
+    },
+    {
+      id: 'diagram',
+      emoji: '🔵🟡',
+      title: translate('sections.diagram.title'),
+      description: translate('sections.diagram.description'),
+    },
+    {
+      id: 'intruz',
+      emoji: '🔎',
+      title: translate('sections.intruz.title'),
+      description: translate('sections.intruz.description'),
+    },
+    {
+      id: 'podsumowanie',
+      emoji: '📋',
+      title: translate('sections.podsumowanie.title'),
+      description: translate('sections.podsumowanie.description'),
+    },
+    {
+      id: 'game',
+      emoji: '🎯',
+      title: translate('sections.game.title'),
+      description: translate('sections.game.description'),
+      isGame: true,
+    },
+  ] as const;
+
+const translateStaticLogicalClassification = createStaticTranslator(
+  plMessages.KangurStaticLessons.logicalClassification as Record<string, unknown>
+);
+
+export const SLIDES = buildLogicalClassificationSlides(translateStaticLogicalClassification);
+export const HUB_SECTIONS = buildLogicalClassificationSections(translateStaticLogicalClassification);
 
 export default function LogicalClassificationLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.logicalClassification');
+  const translate = (key: string): string => translations(key as never);
+  const sections = buildLogicalClassificationSections(translate);
+  const slides = buildLogicalClassificationSlides(translate);
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='logical_classification'
       lessonEmoji='📦'
-      lessonTitle='Klasyfikacja'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={translate('lessonTitle')}
+      sections={sections}
+      slides={slides}
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-teal-300'
       dotActiveClass='bg-teal-500'
@@ -555,7 +636,7 @@ export default function LogicalClassificationLesson(): React.JSX.Element {
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'logical-classification-game-shell',
-            title: 'Laboratorium klasyfikacji',
+            title: translate('game.stageTitle'),
           },
           render: ({ onFinish }) => <LogicalClassificationGame onFinish={onFinish} />,
         },

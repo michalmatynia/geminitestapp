@@ -10,6 +10,7 @@ import {
   type JSX,
   type ReactNode,
 } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
@@ -68,6 +69,8 @@ export function KangurGameRuntimeProvider({
 }: {
   children: ReactNode;
 }): JSX.Element {
+  const progressTranslations = useTranslations('KangurProgressRuntime');
+  const resultTranslations = useTranslations('KangurGameResult');
   const { basePath } = useKangurRouting();
   const auth = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
@@ -265,6 +268,8 @@ export function KangurGameRuntimeProvider({
         taken,
         totalQuestions,
         allowRewards: canEarnRewards,
+        progressTranslate: progressTranslations,
+        resultTranslate: resultTranslations,
       });
 
       if (canEarnRewards) {

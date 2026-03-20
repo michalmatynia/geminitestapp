@@ -923,7 +923,7 @@ export function KangurPrimaryNavigation({
         aria-modal='true'
         aria-labelledby={mobileMenuTitleId}
         id={mobileMenuId}
-        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
+        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
           isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
         }`}
         style={{ backgroundColor: kangurAppearance.tone.background, color: kangurAppearance.tone.text }}

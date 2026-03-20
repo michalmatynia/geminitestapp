@@ -3,64 +3,20 @@ import * as React from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 
-import {
-  KANGUR_ACCENT_THEME_VARS,
-  KANGUR_SURFACE_CARD_CLASSNAME,
-  type KangurAccent,
-} from '../tokens';
-
-const buildMediaFrameAccentClassName = (
-  accent: keyof typeof KANGUR_ACCENT_THEME_VARS,
-  legacyBorderClassName: string,
-  gradientClassName: string
-): string =>
-  cn(
-    legacyBorderClassName,
-    `[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_58%,${KANGUR_ACCENT_THEME_VARS[accent].end})]`,
-    'bg-gradient-to-br',
-    gradientClassName
-  );
+import { KANGUR_SURFACE_CARD_CLASSNAME, type KangurAccent } from '../tokens';
 
 export const kangurMediaFrameVariants = cva(`${KANGUR_SURFACE_CARD_CLASSNAME}`, {
   variants: {
     accent: {
-      indigo: buildMediaFrameAccentClassName(
-        'indigo',
-        'border-indigo-100',
-        'kangur-gradient-accent-soft-indigo'
-      ),
-      violet: buildMediaFrameAccentClassName(
-        'violet',
-        'border-violet-100',
-        'kangur-gradient-accent-soft-violet'
-      ),
-      emerald: buildMediaFrameAccentClassName(
-        'emerald',
-        'border-emerald-100',
-        'kangur-gradient-accent-soft-emerald'
-      ),
-      sky: buildMediaFrameAccentClassName(
-        'sky',
-        'border-sky-100',
-        'kangur-gradient-accent-soft-sky'
-      ),
-      amber: buildMediaFrameAccentClassName(
-        'amber',
-        'border-amber-100',
-        'kangur-gradient-accent-soft-amber'
-      ),
-      rose: buildMediaFrameAccentClassName(
-        'rose',
-        'border-rose-100',
-        'kangur-gradient-accent-soft-rose'
-      ),
-      teal: buildMediaFrameAccentClassName(
-        'teal',
-        'border-teal-100',
-        'kangur-gradient-accent-soft-teal'
-      ),
-      slate:
-        'border-slate-200/85 bg-gradient-to-br kangur-gradient-accent-soft-slate [border-color:var(--kangur-soft-card-border)]',
+      indigo: 'kangur-media-frame-accent-indigo bg-gradient-to-br kangur-gradient-accent-soft-indigo',
+      violet: 'kangur-media-frame-accent-violet bg-gradient-to-br kangur-gradient-accent-soft-violet',
+      emerald:
+        'kangur-media-frame-accent-emerald bg-gradient-to-br kangur-gradient-accent-soft-emerald',
+      sky: 'kangur-media-frame-accent-sky bg-gradient-to-br kangur-gradient-accent-soft-sky',
+      amber: 'kangur-media-frame-accent-amber bg-gradient-to-br kangur-gradient-accent-soft-amber',
+      rose: 'kangur-media-frame-accent-rose bg-gradient-to-br kangur-gradient-accent-soft-rose',
+      teal: 'kangur-media-frame-accent-teal bg-gradient-to-br kangur-gradient-accent-soft-teal',
+      slate: 'kangur-media-frame-accent-slate bg-gradient-to-br kangur-gradient-accent-soft-slate',
     },
     padding: {
       sm: 'kangur-media-padding-sm',

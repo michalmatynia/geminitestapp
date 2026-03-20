@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
@@ -157,7 +157,7 @@ const ENTRY_SCREEN_CASES: EntryScreenCase[] = [
   },
   {
     artTestId: 'kangur-kangur-heading-art',
-    heading: 'Kangur',
+    heading: 'Konfiguracja sesji Kangura Matematycznego',
     screen: 'kangur_setup',
     topSectionTestId: 'kangur-game-kangur-setup-top-section',
     widgetTestId: 'mock-kangur-setup',
@@ -209,11 +209,12 @@ describe('Game page entry shells', () => {
       const topSection = await screen.findByTestId(topSectionTestId);
       expect(topSection).toHaveClass(
         'glass-panel',
-        'border-white/78',
-        'bg-white/68',
+        'kangur-panel-soft',
+        'kangur-glass-surface-mist-strong',
+        'kangur-panel-shell',
         'text-center'
       );
-      expect(await screen.findByRole('heading', { name: heading })).toHaveClass(
+      expect(within(topSection).getByRole('heading', { name: heading })).toHaveClass(
         'text-2xl',
         'sm:text-3xl'
       );

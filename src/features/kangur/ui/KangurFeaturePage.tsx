@@ -22,12 +22,9 @@ import {
 } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { KangurFeatureApp } from '@/features/kangur/ui/KangurFeatureApp';
 import { KANGUR_MAIN_CONTENT_ID } from '@/features/kangur/ui/design/primitives/KangurPageContainer';
-import { useKangurClassOverrides } from '@/features/kangur/ui/useKangurClassOverrides';
+import { useKangurMobileViewportVars } from '@/features/kangur/ui/hooks/useKangurMobileViewportVars';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import {
-  buildKangurScopedCustomCss,
-  resolveKangurCustomCssScopeSelector,
-} from '@/features/kangur/utils/custom-css';
+import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 import { cn } from '@/features/kangur/shared/utils';
 
@@ -44,6 +41,8 @@ type KangurFeaturePageShellProps = {
   forceBodyScrollLock?: boolean;
 };
 
+const KANGUR_CUSTOM_CSS_SCOPE_SELECTOR = '[data-kangur-custom-css-scope="true"]';
+
 export function KangurFeaturePageShell({
   forceBodyScrollLock = false,
 }: KangurFeaturePageShellProps): JSX.Element {
@@ -55,28 +54,6 @@ export function KangurFeaturePageShell({
   const appearanceMode = appearance?.mode ?? 'default';
   const showFooter = !embedded && pageKey === KANGUR_MAIN_PAGE_KEY;
   const kangurAppearance = useKangurStorefrontAppearance();
-  const classOverrides = useKangurClassOverrides();
-  const customCssEnabled = useMemo(() => {
-    const raw = process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'];
-    if (process.env['NODE_ENV'] !== 'production') {
-      return raw !== 'false';
-    }
-    return raw === 'true';
-  }, []);
-  const shellClassOverride = cn(
-    classOverrides.globals.shell,
-    classOverrides.components['kangur-feature-page-shell']?.['root']
-  );
-  const customCssSelectors = customCssEnabled
-    ? (kangurAppearance.theme?.customCssSelectors ?? '')
-    : '';
-  const customCssScope = useMemo(
-    () => resolveKangurCustomCssScopeSelector(customCssSelectors),
-    [customCssSelectors]
-  );
-  const customCss = customCssEnabled
-    ? buildKangurScopedCustomCss(kangurAppearance.theme?.customCss, customCssSelectors)
-    : '';
   const debugRef = useRef<string | null>(null);
   const focusSkipTarget = useCallback((event: { preventDefault: () => void }): void => {
     if (typeof document === 'undefined') return;
@@ -99,21 +76,29 @@ export function KangurFeaturePageShell({
     color: kangurAppearance.tone.text,
     ...kangurAppearance.vars,
   };
+  const scopedCustomCss = useMemo(() => {
+    if (process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'] !== 'true') {
+      return null;
+    }
+
+    return buildKangurScopedCustomCss(
+      kangurAppearance.theme?.customCss,
+      kangurAppearance.theme?.customCssSelectors,
+      KANGUR_CUSTOM_CSS_SCOPE_SELECTOR
+    );
+  }, [kangurAppearance.theme?.customCss, kangurAppearance.theme?.customCssSelectors]);
 
   useEffect(() => {
     if (!isKangurThemeDebugEnabled()) return;
     const payload = {
       mode: appearanceMode,
-      customCssScope,
-      customCssSelectors: customCssSelectors || null,
-      hasCustomCss: Boolean(customCss),
-      customCssEnabled,
+      themePreset: kangurAppearance.theme?.themePreset ?? null,
     };
     const signature = JSON.stringify(payload);
     if (debugRef.current === signature) return;
     debugRef.current = signature;
     console.info('[KangurThemeDebug]', payload);
-  }, [appearanceMode, customCss, customCssEnabled, customCssScope, customCssSelectors]);
+  }, [appearanceMode, kangurAppearance.theme?.themePreset]);
 
   useEffect(() => {
     setKangurClientObservabilityContext({
@@ -126,6 +111,8 @@ export function KangurFeaturePageShell({
   }, [pageKey, requestedPath]);
 
   const shouldLockBodyScroll = forceBodyScrollLock || !embedded;
+
+  useKangurMobileViewportVars();
 
   useLayoutEffect(() => {
     if (!shouldLockBodyScroll || typeof document === 'undefined') {
@@ -145,17 +132,17 @@ export function KangurFeaturePageShell({
   return (
     <div
       className={cn(
-        'relative flex w-full min-w-0 flex-col overflow-x-hidden kangur-premium-bg',
-        embedded ? 'min-h-full' : 'min-h-screen min-h-[100svh] min-h-[100dvh]',
-        shellClassOverride
+        'relative flex w-full min-w-0 flex-col overflow-x-hidden kangur-premium-bg kangur-shell-viewport-height',
+        embedded ? 'min-h-full' : null
       )}
       data-appearance-mode={appearanceMode}
+      data-kangur-custom-css-scope='true'
       data-kangur-appearance={appearanceMode}
       data-testid='kangur-feature-page-shell'
       lang={locale}
       style={shellStyle}
     >
-      {customCss ? <style data-kangur-custom-css>{customCss}</style> : null}
+      {scopedCustomCss ? <style data-kangur-custom-css='true'>{scopedCustomCss}</style> : null}
       <a
         href={`#${KANGUR_MAIN_CONTENT_ID}`}
         aria-label={commonTranslations('skipToMainContent')}

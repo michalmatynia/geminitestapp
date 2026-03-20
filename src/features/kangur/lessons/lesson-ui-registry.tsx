@@ -107,9 +107,6 @@ const AlphabetMatchingLesson = loadLessonComponent(
 const AlphabetSequenceLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/AlphabetSequenceLesson')
 );
-const GeometryShapeRecognitionLesson = loadLessonComponent(
-  () => import('@/features/kangur/ui/components/GeometryShapeRecognitionLesson')
-);
 const ClockLesson = loadLessonComponent(() => import('@/features/kangur/ui/components/ClockLesson'));
 const CalendarLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/CalendarLesson')
@@ -135,6 +132,9 @@ const GeometrySymmetryLesson = loadLessonComponent(
 );
 const GeometryPerimeterLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/GeometryPerimeterLesson')
+);
+const GeometryShapeRecognitionLesson = loadLessonComponent(
+  () => import('@/features/kangur/ui/components/GeometryShapeRecognitionLesson')
 );
 const LogicalThinkingLesson = loadLessonComponent(
   () => import('@/features/kangur/ui/components/LogicalThinkingLesson')

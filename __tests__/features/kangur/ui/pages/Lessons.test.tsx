@@ -54,13 +54,20 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
 const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
   useKangurAgeGroupFocusMock: vi.fn(),
 }));
-
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
   }),
   usePathname: () => '/kangur/lessons',
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+  useSelectedLayoutSegment: vi.fn(() => null),
+  useSelectedLayoutSegments: vi.fn(() => []),
   redirect: vi.fn(),
+  notFound: vi.fn(),
   permanentRedirect: vi.fn(),
 }));
 
@@ -396,7 +403,7 @@ describe('Lessons', () => {
       'soft-card'
     );
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -630,17 +637,13 @@ describe('Lessons', () => {
 
     const headerActions = screen.getByTestId('active-lesson-header-icon-actions');
 
-    expect(screen.getByTestId('active-lesson-header')).toHaveClass(
-      'glass-panel',
-      'border-white/78',
-      'bg-white/68'
-    );
+    expect(screen.getByTestId('active-lesson-header')).toHaveClass('glass-panel', 'kangur-panel-soft', 'kangur-panel-padding-md');
     expect(headerActions.firstElementChild).toBe(
-      screen.getByRole('button', { name: 'Wróć do listy lekcji' })
+      screen.getByRole('button', { name: 'Wroc do listy lekcji' })
     );
     expect(headerActions).toContainElement(screen.getByTestId('active-lesson-icon-clock-component'));
     expect(headerActions).toContainElement(screen.getByTestId('kangur-lesson-narrator'));
-    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -694,7 +697,7 @@ describe('Lessons', () => {
     await renderLessonsPage();
 
     fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Wróć do listy lekcji' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wroc do listy lekcji' }));
 
     expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
@@ -784,7 +787,7 @@ describe('Lessons', () => {
     expect(screen.getByText('Lesson document')).toHaveClass('rounded-full', 'border');
     expect(screen.queryByTestId('legacy-lesson')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lesson-document-renderer')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Wroc do listy lekcji' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );
@@ -891,7 +894,7 @@ describe('Lessons', () => {
       'border'
     );
     expect(screen.getByTestId('active-lesson-parent-priority-chip')).toHaveTextContent(
-      'Priorytet Rodzica'
+      'Priorytet rodzica'
     );
     expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
     expect(screen.queryByText('Skup się na odczytywaniu godzin.')).toBeNull();
@@ -958,7 +961,7 @@ describe('Lessons', () => {
       'border'
     );
     expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
-      'Ukończone dla rodzica'
+      'Ukonczone dla rodzica'
     );
     expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
     expect(screen.queryByText('Wykonane wczoraj.')).toBeNull();
@@ -1002,7 +1005,7 @@ describe('Lessons', () => {
     await renderLessonsPage();
 
     expect(screen.queryByText('Priorytet rodzica')).toBeNull();
-    expect(screen.queryByText('Ukończone dla rodzica')).toBeNull();
+    expect(screen.queryByText('Ukonczone dla rodzica')).toBeNull();
     expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
   });
 

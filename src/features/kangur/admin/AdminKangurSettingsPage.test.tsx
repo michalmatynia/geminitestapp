@@ -118,6 +118,7 @@ import { DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE } from '@/features/kangur/sh
 import {
   KANGUR_HELP_SETTINGS_KEY,
   KANGUR_NARRATOR_SETTINGS_KEY,
+  KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
   KANGUR_PARENT_VERIFICATION_SETTINGS_KEY,
 } from '@/features/kangur/settings';
 import {
@@ -155,10 +156,10 @@ describe('AdminKangurSettingsPage', () => {
       isError: false,
     });
     apiGetMock.mockImplementation(async (path: string) => {
-      if (path === '/api/kangur/ai-tutor/page-content?locale=pl') {
+      if (path.startsWith('/api/kangur/ai-tutor/page-content?locale=')) {
         return DEFAULT_KANGUR_PAGE_CONTENT_STORE;
       }
-      if (path === '/api/kangur/ai-tutor/native-guide?locale=pl') {
+      if (path.startsWith('/api/kangur/ai-tutor/native-guide?locale=')) {
         return DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE;
       }
       throw new Error(`Unexpected GET ${path}`);
@@ -274,21 +275,49 @@ describe('AdminKangurSettingsPage', () => {
     });
   });
 
-  it('renders the storefront theme editor shortcut alongside class overrides', async () => {
+  it('saves the phone simulation toggle', async () => {
+    render(<AdminKangurSettingsPage />);
+    await expectInitialNarratorProbe();
+
+    const phoneSimulationSwitch = screen.getByRole('switch', {
+      name: 'Phone simulation',
+    });
+
+    expect(phoneSimulationSwitch).toHaveAttribute('data-state', 'checked');
+
+    fireEvent.click(phoneSimulationSwitch);
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    await waitFor(() =>
+      expect(mutateAsyncMock).toHaveBeenCalledWith({
+        key: KANGUR_PHONE_SIMULATION_SETTINGS_KEY,
+        value: JSON.stringify({ enabled: false }),
+      })
+    );
+
+    expect(toastMock).toHaveBeenCalledWith('Kangur phone simulation settings saved.', {
+      variant: 'success',
+    });
+  });
+
+  it('renders the storefront theme editor shortcut and phone simulation section', async () => {
     render(<AdminKangurSettingsPage />);
     await expectInitialNarratorProbe();
 
     expect(screen.getByText('Storefront Theme')).toBeInTheDocument();
     expect(
-      screen.getByText(/changes auto-save to mongo and apply immediately/i)
+      screen.getByText(/only active kangur styling source at runtime/i)
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /open theme editor/i })).toHaveAttribute(
       'href',
       '/admin/kangur/appearance'
     );
-
-    expect(screen.getByText('Class Overrides')).toBeInTheDocument();
-    expect(screen.getByLabelText(/class overrides json/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('switch', { name: 'Phone simulation' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/full-width controls appear above and below the game viewport/i)
+    ).toBeInTheDocument();
   });
 
   it(

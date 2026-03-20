@@ -204,6 +204,7 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   alphabet_words: 'Pierwsze slowa',
   alphabet_matching: 'Dopasuj litery',
   alphabet_sequence: 'Kolejnosc liter',
+  geometry: 'Geometria',
   geometry_shape_recognition: 'Geometria',
   addition: 'Dodawanie',
   subtraction: 'Odejmowanie',

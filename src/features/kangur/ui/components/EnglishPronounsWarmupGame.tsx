@@ -18,6 +18,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -107,10 +108,11 @@ type EnglishPronounsWarmupGameProps = {
 };
 
 export default function EnglishPronounsWarmupGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: EnglishPronounsWarmupGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -139,7 +141,12 @@ export default function EnglishPronounsWarmupGame({
     const nextScore = isCorrect ? score + 1 : score;
     const feedbackText = isCorrect
       ? translations('englishPronounsWarmup.feedback.correct')
-      : `Prawidłowa odpowiedź: ${round.answer}.`;
+      : translateKangurMiniGameWithFallback(
+          translations,
+          'englishPronounsWarmup.feedback.incorrect',
+          'Correct answer: {answer}.',
+          { answer: round.answer }
+        );
 
     setScore(nextScore);
     setFeedback({ kind: isCorrect ? 'success' : 'error', text: feedbackText });
@@ -216,11 +223,7 @@ export default function EnglishPronounsWarmupGame({
               : translations('englishPronounsWarmup.summary.retry')}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel={
-            finishLabel === 'Wróć do tematów'
-              ? getKangurMiniGameFinishLabel(translations, 'topics')
-              : finishLabel
-          }
+          finishLabel={resolvedFinishLabel}
           onFinish={onFinish}
           restartLabel={translations('shared.restart')}
           onRestart={handleRestart}
@@ -246,10 +249,22 @@ export default function EnglishPronounsWarmupGame({
       >
         <div className='flex items-center justify-between gap-2'>
           <KangurStatusChip accent={round.accent} className='text-[10px] uppercase tracking-[0.16em]'>
-            Round {roundIndex + 1}/{TOTAL_ROUNDS}
+            {translateKangurMiniGameWithFallback(
+              translations,
+              'englishPronounsWarmup.inRound.roundLabel',
+              'Round {current}/{total}',
+              {
+                current: roundIndex + 1,
+                total: TOTAL_ROUNDS,
+              }
+            )}
           </KangurStatusChip>
           <KangurStatusChip accent='slate' className='text-[10px] uppercase tracking-[0.16em]'>
-            Warm-up
+            {translateKangurMiniGameWithFallback(
+              translations,
+              'englishPronounsWarmup.inRound.modeLabel',
+              'Warm-up'
+            )}
           </KangurStatusChip>
         </div>
 
@@ -258,8 +273,20 @@ export default function EnglishPronounsWarmupGame({
         </div>
 
         <KangurInfoCard accent={round.accent} tone='accent' padding='sm' className='text-sm'>
-          <p className='font-semibold'>{round.prompt}</p>
-          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>{round.hint}</p>
+          <p className='font-semibold'>
+            {translateKangurMiniGameWithFallback(
+              translations,
+              `englishPronounsWarmup.inRound.rounds.${round.id}.prompt`,
+              round.prompt
+            )}
+          </p>
+          <p className='mt-1 text-xs [color:var(--kangur-page-muted-text)]'>
+            {translateKangurMiniGameWithFallback(
+              translations,
+              `englishPronounsWarmup.inRound.rounds.${round.id}.hint`,
+              round.hint
+            )}
+          </p>
         </KangurInfoCard>
 
         <div className={KANGUR_STACK_SPACED_CLASSNAME}>
@@ -307,7 +334,11 @@ export default function EnglishPronounsWarmupGame({
           onClick={handleCheck}
           data-testid='english-pronouns-warmup-check'
         >
-          Sprawdź ✓
+          {translateKangurMiniGameWithFallback(
+            translations,
+            'englishPronounsWarmup.inRound.check',
+            'Check ✓'
+          )}
         </KangurButton>
       </KangurGlassPanel>
     </KangurPracticeGameStage>

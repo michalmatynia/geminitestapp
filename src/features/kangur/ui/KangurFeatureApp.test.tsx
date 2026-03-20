@@ -190,6 +190,7 @@ describe('KangurFeatureApp', () => {
       isRouteRevealing: false,
       transitionPhase: 'idle',
       activeTransitionSourceId: null,
+      activeTransitionKind: null,
       activeTransitionPageKey: null,
       activeTransitionRequestedHref: null,
       activeTransitionSkeletonVariant: null,
@@ -349,6 +350,7 @@ describe('KangurFeatureApp', () => {
       isRouteRevealing: false,
       transitionPhase: 'acknowledging',
       activeTransitionSourceId: 'kangur-language-switcher',
+      activeTransitionKind: 'locale-switch',
       activeTransitionPageKey: 'Lessons',
       activeTransitionRequestedHref: '/en/lessons',
       activeTransitionSkeletonVariant: 'lessons-library',
@@ -362,7 +364,8 @@ describe('KangurFeatureApp', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveTextContent(
       'Lessons:lessons-library'
     );
-    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none', 'opacity-0');
+    expect(screen.getByTestId('kangur-route-content')).toHaveClass('pointer-events-none');
+    expect(screen.getByTestId('kangur-route-content')).not.toHaveClass('opacity-0');
   });
 
   it('shows the page skeleton immediately once a button-led route handoff becomes pending', () => {

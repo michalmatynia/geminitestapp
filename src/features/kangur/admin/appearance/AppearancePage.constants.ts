@@ -231,13 +231,30 @@ export const HOME_ACTION_FIELDS: SettingsPanelField<ThemeSettings>[] = HOME_ACTI
     }))
 );
 
-export const THEME_SECTIONS: Array<{
+export type AppearanceThemeSectionId =
+  | 'corePalette'
+  | 'textOverrides'
+  | 'logoLoader'
+  | 'layoutRadii'
+  | 'gradientsTransparency'
+  | 'typography'
+  | 'buttonsGlobal'
+  | 'buttonShadows'
+  | 'gelGlassEffects'
+  | 'homeActionButtons'
+  | 'dropShadows';
+
+export type AppearanceThemeSection = {
+  id: AppearanceThemeSectionId;
   title: string;
   subtitle: string;
   fields: SettingsPanelField<ThemeSettings>[];
-}> = [
+};
+
+export const THEME_SECTIONS: AppearanceThemeSection[] = [
   // ── Colors ──────────────────────────────────────────────────────────────────
   {
+    id: 'corePalette',
     title: 'Core Palette',
     subtitle: 'Brand colors, text tones, and feedback states across Kangur.',
     fields: [
@@ -251,6 +268,7 @@ export const THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'textOverrides',
     title: 'Text Overrides',
     subtitle: 'Optional overrides for page, cards, and navigation text colors.',
     fields: [
@@ -299,6 +317,7 @@ export const THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'logoLoader',
     title: 'Logo & Loader',
     subtitle: 'Fine-tune the Kangur logo gradients used on the loader and navigation.',
     fields: [
@@ -317,6 +336,7 @@ export const THEME_SECTIONS: Array<{
   },
   // ── Layout & Surfaces ───────────────────────────────────────────────────────
   {
+    id: 'layoutRadii',
     title: 'Layout & Radii',
     subtitle: 'Page spacing, corner rounding, and panel alignment.',
     fields: [
@@ -329,6 +349,7 @@ export const THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'gradientsTransparency',
     title: 'Gradients & Transparency',
     subtitle: 'Fine-tune panel backgrounds and navigation transparency.',
     fields: [
@@ -376,6 +397,7 @@ export const THEME_SECTIONS: Array<{
   },
   // ── Typography ─────────────────────────────────────────────────────────────
   {
+    id: 'typography',
     title: 'Typography',
     subtitle: 'Fonts used for headings and body text.',
     fields: [
@@ -431,6 +453,7 @@ export const THEME_SECTIONS: Array<{
   },
   // ── Components ─────────────────────────────────────────────────────────────
   {
+    id: 'buttonsGlobal',
     title: 'Buttons (Global)',
     subtitle: 'Shared settings for primary and secondary buttons.',
     fields: [
@@ -460,6 +483,7 @@ export const THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'buttonShadows',
     title: 'Button Shadows',
     subtitle: 'Drop shadows for primary and secondary buttons.',
     fields: [
@@ -470,6 +494,7 @@ export const THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'gelGlassEffects',
     title: 'Gel & Glass Effects',
     subtitle: 'Settings for modern glass and gel styles.',
     fields: [
@@ -490,12 +515,14 @@ export const THEME_SECTIONS: Array<{
     ],
   },
   {
+    id: 'homeActionButtons',
     title: 'Home Action Buttons',
     subtitle: 'Highly specialized overrides for the main game-home action cards.',
     fields: HOME_ACTION_FIELDS,
   },
   // ── Shadows ────────────────────────────────────────────────────────────────
   {
+    id: 'dropShadows',
     title: 'Drop Shadows',
     subtitle: 'Shared shadow configurations for containers and cards.',
     fields: [

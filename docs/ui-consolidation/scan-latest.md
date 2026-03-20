@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-15'
+last_reviewed: '2026-03-19'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # UI Consolidation Scan
 
-Generated at: 2026-03-15T07:04:58.479Z
+Generated at: 2026-03-19T23:03:30.159Z
 
 ## Snapshot
 
-- Scanned UI files: 1563
+- Scanned UI files: 1825
 - Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
-- Thin re-export wrappers ignored: 6
+- Thin re-export wrappers ignored: 8
 - Total consolidation opportunities: 0
 - High-priority opportunities (score >= 2000): 0
 
@@ -24,30 +24,30 @@ Generated at: 2026-03-15T07:04:58.479Z
 
 | Domain | Files |
 | --- | ---: |
-| `feature` | 1191 |
-| `app` | 181 |
-| `shared-ui` | 151 |
-| `shared` | 40 |
+| `feature` | 1435 |
+| `app` | 194 |
+| `shared-ui` | 161 |
+| `shared` | 35 |
 
 ## Top Families
 
 | Family | Files |
 | --- | ---: |
-| `Unknown` | 943 |
-| `Page` | 151 |
-| `Section` | 136 |
-| `Panel` | 99 |
-| `Modal` | 59 |
-| `Tab` | 38 |
-| `Card` | 35 |
-| `Header` | 21 |
-| `Settings` | 18 |
-| `List` | 17 |
+| `Unknown` | 1203 |
+| `Page` | 162 |
+| `Section` | 129 |
+| `Panel` | 93 |
+| `Modal` | 61 |
+| `Tab` | 35 |
+| `Card` | 33 |
+| `Header` | 23 |
+| `Settings` | 21 |
+| `List` | 18 |
 | `Form` | 15 |
-| `Toolbar` | 7 |
+| `Dialog` | 7 |
 | `Picker` | 7 |
-| `Sidebar` | 6 |
-| `Dialog` | 5 |
+| `Toolbar` | 6 |
+| `Sidebar` | 5 |
 
 ## Ranked Backlog
 

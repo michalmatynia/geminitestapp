@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+
 import EnglishPrepositionsGame from '@/features/kangur/ui/components/EnglishPrepositionsGame';
 import EnglishPrepositionsOrderGame from '@/features/kangur/ui/components/EnglishPrepositionsOrderGame';
 import EnglishPrepositionsSortGame from '@/features/kangur/ui/components/EnglishPrepositionsSortGame';
@@ -44,15 +47,16 @@ type SlideSectionId = Exclude<
   'game_prepositions' | 'game_prepositions_sort' | 'game_prepositions_order'
 >;
 
-const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
+const buildEnglishPrepositionsSlides = (
+  translations: ReturnType<typeof useTranslations>
+): Record<SlideSectionId, LessonSlide[]> => ({
   intro: [
     {
-      title: 'Prepositions w skrócie',
+      title: translations('slides.intro.overview.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Przyimki mówią <strong>kiedy</strong> i <strong>gdzie</strong> coś się dzieje. W
-            poleceniach z lekcji pojawiają się cały czas.
+            {translations('slides.intro.overview.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
             <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
@@ -63,7 +67,9 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               <KangurLessonChip accent='rose'>📦 in the classroom</KangurLessonChip>
               <KangurLessonChip accent='rose'>🧩 on the board</KangurLessonChip>
             </div>
-            <KangurLessonCaption className='mt-3'>Czas i miejsce w jednym zdaniu.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-3'>
+              {translations('slides.intro.overview.caption')}
+            </KangurLessonCaption>
           </KangurLessonCallout>
           <KangurLessonInset accent='rose' className='text-left'>
             <p className='text-sm font-semibold text-rose-700'>
@@ -76,14 +82,16 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   time: [
     {
-      title: 'At / On / In = czas',
+      title: translations('slides.time.core.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Zasada jest prosta: <strong>at</strong> = punkt w czasie, <strong>on</strong> =
-            dzień/data, <strong>in</strong> = miesiąc/rok/pora dnia.
+            {translations('slides.time.core.lead')}
           </KangurLessonLead>
-          <KangurLessonVisual accent='rose' caption='at 7:30 · on Tuesday · in July'>
+          <KangurLessonVisual
+            accent='rose'
+            caption={translations('slides.time.core.caption')}
+          >
             <EnglishPrepositionsTimeAnimation />
           </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
@@ -106,17 +114,15 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Before / During / After',
+      title: translations('slides.time.sequence.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Kiedy opisujesz kolejność, używaj <strong>before</strong>, <strong>during</strong> i
-            <strong>after</strong>. Do granic czasu dodaj <strong>until</strong> i
-            <strong>since</strong>.
+            {translations('slides.time.sequence.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='rose'
-            caption='before class · during the test · after school'
+            caption={translations('slides.time.sequence.caption')}
           >
             <EnglishPrepositionsTimelineAnimation />
           </KangurLessonVisual>
@@ -137,11 +143,11 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Time cheatsheet',
+      title: translations('slides.time.cheatsheet.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Szybka ściąga, gdy masz wątpliwość w zadaniu.
+            {translations('slides.time.cheatsheet.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
             <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
@@ -163,16 +169,15 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   place: [
     {
-      title: 'At / In / On = miejsce',
+      title: translations('slides.place.core.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Miejsce też ma trzy poziomy: <strong>at</strong> = punkt, <strong>in</strong> =
-            wnętrze, <strong>on</strong> = powierzchnia.
+            {translations('slides.place.core.lead')}
           </KangurLessonLead>
           <KangurLessonVisual
             accent='rose'
-            caption='at school · in the classroom · on the board'
+            caption={translations('slides.place.core.caption')}
           >
             <EnglishPrepositionsPlaceAnimation />
           </KangurLessonVisual>
@@ -191,17 +196,26 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Szkoła jako mapa',
+      title: translations('slides.place.schoolMap.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Jedno miejsce, trzy perspektywy:
+            {translations('slides.place.schoolMap.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
             <div className='space-y-2 text-sm text-slate-700'>
-              <p><strong>at school</strong> = punkt spotkania / instytucja</p>
-              <p><strong>in the classroom</strong> = jesteś w środku</p>
-              <p><strong>on the desk</strong> = coś leży na powierzchni</p>
+              <p>
+                <strong>at school</strong> ={' '}
+                {translations('slides.place.schoolMap.items.atSchool')}
+              </p>
+              <p>
+                <strong>in the classroom</strong> ={' '}
+                {translations('slides.place.schoolMap.items.inClassroom')}
+              </p>
+              <p>
+                <strong>on the desk</strong> ={' '}
+                {translations('slides.place.schoolMap.items.onDesk')}
+              </p>
             </div>
           </KangurLessonCallout>
           <KangurLessonInset accent='rose' className='text-left'>
@@ -215,13 +229,16 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   relations: [
     {
-      title: 'Relacje w przestrzeni',
+      title: translations('slides.relations.core.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Gdy opisujesz położenie punktów lub kształtów, używaj przyimków relacji.
+            {translations('slides.relations.core.lead')}
           </KangurLessonLead>
-          <KangurLessonVisual accent='violet' caption='between · above · below'>
+          <KangurLessonVisual
+            accent='violet'
+            caption={translations('slides.relations.core.caption')}
+          >
             <EnglishPrepositionsRelationsDiagram />
           </KangurLessonVisual>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
@@ -243,37 +260,49 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   traps: [
     {
-      title: 'Najczęstsze pułapki',
+      title: translations('slides.traps.common.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Te zwroty często mylą. Zapamiętaj je jako gotowe bloki.
+            {translations('slides.traps.common.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='amber' padding='sm'>
             <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm`}>
               <KangurLessonInset accent='emerald' className='text-left'>
                 <p className='font-semibold text-emerald-700'>at night</p>
-                <p className='text-xs text-slate-500'>noc jako moment</p>
+                <p className='text-xs text-slate-500'>
+                  {translations('slides.traps.common.notes.atNight')}
+                </p>
               </KangurLessonInset>
               <KangurLessonInset accent='rose' className='text-left'>
                 <p className='font-semibold text-rose-600 line-through'>in the night</p>
-                <p className='text-xs text-slate-500'>rzadko w tym znaczeniu</p>
+                <p className='text-xs text-slate-500'>
+                  {translations('slides.traps.common.notes.inTheNight')}
+                </p>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald' className='text-left'>
                 <p className='font-semibold text-emerald-700'>on the bus</p>
-                <p className='text-xs text-slate-500'>publiczny transport</p>
+                <p className='text-xs text-slate-500'>
+                  {translations('slides.traps.common.notes.onTheBus')}
+                </p>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald' className='text-left'>
                 <p className='font-semibold text-emerald-700'>in the car</p>
-                <p className='text-xs text-slate-500'>mały pojazd, wnętrze</p>
+                <p className='text-xs text-slate-500'>
+                  {translations('slides.traps.common.notes.inTheCar')}
+                </p>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald' className='text-left'>
                 <p className='font-semibold text-emerald-700'>at school</p>
-                <p className='text-xs text-slate-500'>instytucja / punkt</p>
+                <p className='text-xs text-slate-500'>
+                  {translations('slides.traps.common.notes.atSchool')}
+                </p>
               </KangurLessonInset>
               <KangurLessonInset accent='emerald' className='text-left'>
                 <p className='font-semibold text-emerald-700'>in the classroom</p>
-                <p className='text-xs text-slate-500'>konkretne wnętrze</p>
+                <p className='text-xs text-slate-500'>
+                  {translations('slides.traps.common.notes.inTheClassroom')}
+                </p>
               </KangurLessonInset>
             </div>
           </KangurLessonCallout>
@@ -283,15 +312,15 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   practice: [
     {
-      title: 'Szybka rozgrzewka',
+      title: translations('slides.practice.quick.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Rozgrzewkę przenieśliśmy do gry z układaniem słów.
+            {translations('slides.practice.quick.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
             <div className='space-y-3 text-sm text-slate-700'>
-              <p>Przykładowe rozsypanki:</p>
+              <p>{translations('slides.practice.quick.examplesLabel')}</p>
               <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
                 <KangurLessonChip accent='rose'>at · We · 8:00 · start</KangurLessonChip>
                 <KangurLessonChip accent='amber'>desk · the · notes · are · on · The</KangurLessonChip>
@@ -299,7 +328,7 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
               </div>
             </div>
             <KangurLessonCaption className='mt-3'>
-              Wejdź do gry <strong>Word Order Warm-up</strong> w sekcji gier.
+              {translations('slides.practice.quick.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -308,19 +337,19 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
   ],
   summary: [
     {
-      title: 'Podsumowanie',
+      title: translations('slides.summary.recap.title'),
       content: (
         <KangurLessonStack align='start'>
           <KangurLessonLead align='left'>
-            Najważniejsze reguły w pigułce:
+            {translations('slides.summary.recap.lead')}
           </KangurLessonLead>
           <KangurLessonCallout accent='rose' padding='sm'>
             <ul className='space-y-2 text-sm text-slate-700'>
-              <li><strong>at</strong> = exact time / point (at 6:00, at the bus stop)</li>
-              <li><strong>on</strong> = day/date / surface (on Monday, on the board)</li>
-              <li><strong>in</strong> = month/year / inside (in July, in the room)</li>
-              <li><strong>between</strong> = pomiędzy (between A and B)</li>
-              <li>Pytaj: kiedy? gdzie? na czym? w czym?</li>
+              <li>{translations('slides.summary.recap.items.at')}</li>
+              <li>{translations('slides.summary.recap.items.on')}</li>
+              <li>{translations('slides.summary.recap.items.in')}</li>
+              <li>{translations('slides.summary.recap.items.between')}</li>
+              <li>{translations('slides.summary.recap.items.questions')}</li>
             </ul>
           </KangurLessonCallout>
           <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
@@ -333,83 +362,78 @@ const SLIDES: Record<SlideSectionId, LessonSlide[]> = {
       ),
     },
   ],
-};
+});
 
-const HUB_SECTIONS = [
-  {
-    id: 'intro',
-    emoji: '🧭',
-    title: 'Intro',
-    description: 'Po co są prepositions',
-  },
-  {
-    id: 'time',
-    emoji: '⏰',
-    title: 'Time',
-    description: 'At / On / In w czasie',
-  },
-  {
-    id: 'place',
-    emoji: '📍',
-    title: 'Place',
-    description: 'At / In / On w miejscu',
-  },
-  {
-    id: 'relations',
-    emoji: '🧩',
-    title: 'Relations',
-    description: 'Between, above, below',
-  },
-  {
-    id: 'traps',
-    emoji: '⚠️',
-    title: 'Traps',
-    description: 'Najczęstsze błędy',
-  },
-  {
-    id: 'practice',
-    emoji: '✅',
-    title: 'Practice',
-    description: 'Szybka rozgrzewka',
-  },
-  {
-    id: 'summary',
-    emoji: '🧠',
-    title: 'Summary',
-    description: 'Ściąga zasad',
-  },
-  {
-    id: 'game_prepositions',
-    emoji: '🎯',
-    title: 'Prepositions Sprint',
-    description: 'Krótka gra z wyborem',
-    isGame: true,
-  },
+const PREPOSITIONS_SECTION_META: Array<{
+  id: SectionId;
+  emoji: string;
+  key: string;
+  isGame?: boolean;
+}> = [
+  { id: 'intro', emoji: '🧭', key: 'intro' },
+  { id: 'time', emoji: '⏰', key: 'time' },
+  { id: 'place', emoji: '📍', key: 'place' },
+  { id: 'relations', emoji: '🧩', key: 'relations' },
+  { id: 'traps', emoji: '⚠️', key: 'traps' },
+  { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'summary', emoji: '🧠', key: 'summary' },
+  { id: 'game_prepositions', emoji: '🎯', key: 'gamePrepositions', isGame: true },
   {
     id: 'game_prepositions_sort',
     emoji: '🧲',
-    title: 'Sort: Time + Place + Relations',
-    description: 'Przeciągnij zwroty do właściwych relacji',
+    key: 'gamePrepositionsSort',
     isGame: true,
   },
   {
     id: 'game_prepositions_order',
     emoji: '🧩',
-    title: 'Word Order Warm-up',
-    description: 'Układanie zdań z przyimkami',
+    key: 'gamePrepositionsOrder',
     isGame: true,
   },
 ];
 
 export default function EnglishPrepositionsLesson(): React.JSX.Element {
+  const shellTranslations = useTranslations('KangurStaticLessons.englishPrepositionsShell');
+  const contentTranslations = useTranslations('KangurStaticLessons.englishPrepositions');
+  const localizedSections = useMemo(
+    () =>
+      PREPOSITIONS_SECTION_META.map((section) => ({
+        id: section.id,
+        emoji: section.emoji,
+        title: shellTranslations(`sections.${section.key}.title`),
+        description: shellTranslations(`sections.${section.key}.description`),
+        isGame: section.isGame,
+      })),
+    [shellTranslations]
+  );
+  const localizedSlides = useMemo(
+    () => buildEnglishPrepositionsSlides(contentTranslations),
+    [contentTranslations]
+  );
+  const sectionTitles = useMemo(
+    () =>
+      Object.fromEntries(localizedSections.map((section) => [section.id, section.title])) as Record<
+        SectionId,
+        string
+      >,
+    [localizedSections]
+  );
+  const sectionDescriptions = useMemo(
+    () =>
+      Object.fromEntries(
+        localizedSections.map((section) => [section.id, section.description ?? ''])
+      ) as Record<SectionId, string>,
+    [localizedSections]
+  );
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId={LESSON_KEY}
       lessonEmoji='🧭'
-      lessonTitle='English: Prepositions'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={shellTranslations('lessonTitle')}
+      sections={localizedSections}
+      slides={localizedSlides}
       gradientClass='kangur-gradient-accent-rose'
       progressDotClassName='bg-rose-300'
       dotActiveClass='bg-rose-500'
@@ -427,8 +451,9 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
           sectionId: 'game_prepositions',
           stage: {
             accent: 'rose',
-            title: 'Prepositions Sprint',
+            title: sectionTitles.game_prepositions,
             icon: '🎯',
+            description: sectionDescriptions.game_prepositions,
             shellTestId: 'english-prepositions-game-shell',
           },
           render: ({ onFinish }) => <EnglishPrepositionsGame onFinish={onFinish} />,
@@ -437,8 +462,9 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
           sectionId: 'game_prepositions_sort',
           stage: {
             accent: 'rose',
-            title: 'Sort: Time + Place + Relations',
+            title: sectionTitles.game_prepositions_sort,
             icon: '🧲',
+            description: sectionDescriptions.game_prepositions_sort,
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-prepositions-sort-game-shell',
           },
@@ -448,8 +474,9 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
           sectionId: 'game_prepositions_order',
           stage: {
             accent: 'rose',
-            title: 'Word Order Warm-up',
+            title: sectionTitles.game_prepositions_order,
             icon: '🧩',
+            description: sectionDescriptions.game_prepositions_order,
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-prepositions-order-game-shell',
           },

@@ -3,10 +3,10 @@ import { cn } from '@/features/kangur/shared/utils';
 export type KangurPageTone = 'play' | 'learn' | 'profile' | 'dashboard';
 
 export const KANGUR_PAGE_TONE_CLASSNAMES: Record<KangurPageTone, string> = {
-  play: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
-  learn: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
-  profile: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
-  dashboard: 'min-h-screen min-h-[100svh] min-h-[100dvh] kangur-premium-bg',
+  play: 'kangur-shell-viewport-height kangur-premium-bg',
+  learn: 'kangur-shell-viewport-height kangur-premium-bg',
+  profile: 'kangur-shell-viewport-height kangur-premium-bg',
+  dashboard: 'kangur-shell-viewport-height kangur-premium-bg',
 };
 
 export const KANGUR_TOP_BAR_CLASSNAME =

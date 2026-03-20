@@ -104,6 +104,9 @@ describe('kangur page content handler', () => {
 
     expect(getKangurPageContentStoreMock).toHaveBeenCalledWith('pl');
     expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe(
+      'public, max-age=60, stale-while-revalidate=300'
+    );
     await expect(response.json()).resolves.toEqual(DEFAULT_STORE);
   });
 

@@ -10,13 +10,13 @@ import {
   Button,
   Card,
   FormSection,
+  Switch,
 } from '@/features/kangur/shared/ui';
 
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurAiTutorSettingsPanel } from './components/KangurAiTutorSettingsPanel';
-import { KangurClassOverridesSettingsPanel } from './components/KangurClassOverridesSettingsPanel';
 import { KangurNarratorSettingsPanel } from './components/KangurNarratorSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
 import { KangurParentVerificationSettingsPanel } from './components/KangurParentVerificationSettingsPanel';
@@ -56,6 +56,8 @@ export function AdminKangurSettingsPage(): ReactElement {
     setParentVerificationRequireCaptcha,
     parentVerificationNotificationsDisabledUntilInput,
     setParentVerificationNotificationsDisabledUntilInput,
+    phoneSimulationEnabled,
+    setPhoneSimulationEnabled,
     copyStatus,
     narratorProbe,
     isProbingNarrator,
@@ -85,8 +87,8 @@ export function AdminKangurSettingsPage(): ReactElement {
           </AdminFavoriteBreadcrumbRow>
           <span className='hidden h-4 w-px bg-white/12 md:block' />
           <span className='text-xs text-slate-300/80'>
-            Manage storefront theme, class overrides, AI Tutor, narration, and parent verification
-            behavior across Kangur.
+            Manage storefront theme, AI Tutor, narration, and parent verification behavior across
+            Kangur.
           </span>
         </div>
       }
@@ -115,7 +117,7 @@ export function AdminKangurSettingsPage(): ReactElement {
         <div className={`${KANGUR_GRID_ROOMY_CLASSNAME} xl:grid-cols-2`}>
           <FormSection
             title='Storefront Theme'
-            description='Edit daily and nightly Kangur themes. Changes auto-save to Mongo and apply immediately to the live app.'
+            description='Edit daily and nightly Kangur themes. Mongo-backed theme settings are the only active Kangur styling source at runtime.'
             className={SETTINGS_SECTION_CLASS_NAME}
           >
             <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
@@ -125,8 +127,9 @@ export function AdminKangurSettingsPage(): ReactElement {
                     Daily &amp; nightly themes
                   </div>
                   <p className='mt-1 text-sm text-muted-foreground'>
-                    Customise colours, typography, and spacing for both the day and night variants of
-                    the Kangur storefront. Includes a reset-to-default option per theme.
+                    Customise colours, typography, spacing, and surface tokens for the Kangur
+                    storefront. Runtime class overrides are disabled; the Styling Engine theme in
+                    Mongo is now the canonical source.
                   </p>
                 </div>
                 <Button asChild variant='outline' size='sm' className='shrink-0'>
@@ -137,13 +140,33 @@ export function AdminKangurSettingsPage(): ReactElement {
           </FormSection>
 
           <FormSection
-            title='Class Overrides'
-            description='Attach extra Tailwind classes to Kangur shells and root surfaces through Mongo.'
+            title='Phone simulation'
+            description='Mobile Game mode can replace direct vertical scrolling with explicit top and bottom scroll controls.'
             className={SETTINGS_SECTION_CLASS_NAME}
           >
-            <Suspense fallback={<KangurAppLoader visible={true} />}>
-              <KangurClassOverridesSettingsPanel />
-            </Suspense>
+            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <div className='flex items-center justify-between gap-4'>
+                <div>
+                  <div className='flex items-center gap-2'>
+                    <div className='text-sm font-semibold text-foreground'>Phone simulation</div>
+                    <Badge variant={phoneSimulationEnabled ? 'secondary' : 'outline'}>
+                      {phoneSimulationEnabled ? 'Enabled' : 'Disabled'}
+                    </Badge>
+                  </div>
+                  <p className='mt-1 text-sm text-muted-foreground'>
+                    When enabled, mobile users on the Game page cannot vertically scroll with
+                    touch. Instead, full-width controls appear above and below the game viewport to
+                    scroll the content step by step.
+                  </p>
+                </div>
+                <Switch
+                  checked={phoneSimulationEnabled}
+                  onCheckedChange={setPhoneSimulationEnabled}
+                  aria-label='Phone simulation'
+                  data-doc-id='settings_phone_simulation_toggle'
+                />
+              </div>
+            </Card>
           </FormSection>
         </div>
 

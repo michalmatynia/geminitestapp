@@ -1,9 +1,26 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
+const translateLogicalAnalogiesAnimation = (
+  translate: (key: string) => string,
+  key: string,
+  fallback: string
+): string => {
+  const translated = translate(key);
+  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+};
+
 export function AnalogyBridgeAnimation(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
+
   return (
     <svg
-      aria-label='Animacja: relacja A:B = C:D.'
+      aria-label={translateLogicalAnalogiesAnimation(
+        translations,
+        'analogyBridge',
+        'Animacja: relacja A:B = C:D.'
+      )}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 120'
@@ -42,9 +59,15 @@ export function AnalogyBridgeAnimation(): React.JSX.Element {
 }
 
 export function NumberOperationAnimation(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
+
   return (
     <svg
-      aria-label='Animacja: relacja liczbowa z tą samą operacją.'
+      aria-label={translateLogicalAnalogiesAnimation(
+        translations,
+        'numberOperation',
+        'Animacja: relacja liczbowa z tą samą operacją.'
+      )}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'
@@ -80,9 +103,15 @@ export function NumberOperationAnimation(): React.JSX.Element {
 }
 
 export function ShapeTransformAnimation(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
+
   return (
     <svg
-      aria-label='Animacja: kształt obraca się według tej samej reguły.'
+      aria-label={translateLogicalAnalogiesAnimation(
+        translations,
+        'shapeTransform',
+        'Animacja: kształt obraca się według tej samej reguły.'
+      )}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'
@@ -115,9 +144,15 @@ export function ShapeTransformAnimation(): React.JSX.Element {
 }
 
 export function PartWholeAnimation(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
+
   return (
     <svg
-      aria-label='Animacja: części łączą się w całość.'
+      aria-label={translateLogicalAnalogiesAnimation(
+        translations,
+        'partWhole',
+        'Animacja: części łączą się w całość.'
+      )}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'
@@ -155,9 +190,15 @@ export function PartWholeAnimation(): React.JSX.Element {
 }
 
 export function CauseEffectAnimation(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.logicalAnalogies.animations');
+
   return (
     <svg
-      aria-label='Animacja: przyczyna prowadzi do skutku.'
+      aria-label={translateLogicalAnalogiesAnimation(
+        translations,
+        'causeEffect',
+        'Animacja: przyczyna prowadzi do skutku.'
+      )}
       className='h-auto w-full'
       role='img'
       viewBox='0 0 320 140'

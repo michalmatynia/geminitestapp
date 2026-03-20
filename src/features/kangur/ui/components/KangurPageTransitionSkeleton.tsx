@@ -392,12 +392,13 @@ export function KangurPageTransitionSkeleton({
   variant,
 }: {
   pageKey?: string | null;
-  reason?: 'boot' | 'navigation';
+  reason?: 'boot' | 'navigation' | 'locale-switch';
   variant?: KangurRouteTransitionSkeletonVariant | null;
 }): React.JSX.Element {
   const translations = useTranslations('KangurPublic');
   const routing = useOptionalKangurRouting();
   const embedded = routing?.embedded ?? false;
+  const isLocaleSwitch = reason === 'locale-switch';
   const resolvedVariant =
     variant ??
     resolveKangurRouteTransitionSkeletonVariant({
@@ -410,17 +411,26 @@ export function KangurPageTransitionSkeleton({
     <div
       className={cn(
         embedded ? 'absolute' : 'fixed',
-        'inset-0 z-30 cursor-progress overflow-hidden'
+        'inset-0 z-30 cursor-progress overflow-hidden',
+        isLocaleSwitch ? 'backdrop-blur-md' : null
       )}
+      data-kangur-skeleton-reason={reason}
       data-kangur-skeleton-variant={resolvedVariant}
       data-testid='kangur-page-transition-skeleton'
       style={{
-        background:
-          'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+        background: isLocaleSwitch
+          ? 'color-mix(in srgb, var(--kangur-page-background, #f8fafc) 68%, transparent)'
+          : 'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+        WebkitBackdropFilter: isLocaleSwitch ? 'blur(14px) saturate(1.08)' : undefined,
+        backdropFilter: isLocaleSwitch ? 'blur(14px) saturate(1.08)' : undefined,
       }}
     >
       <div className='sr-only' role='status' aria-live='polite'>
-        {reason === 'boot' ? translations('loadingApp') : translations('loadingPage')}
+        {reason === 'boot'
+          ? translations('loadingApp')
+          : reason === 'locale-switch'
+            ? translations('loadingLanguage')
+            : translations('loadingPage')}
       </div>
       <KangurStandardPageLayout
         tone={SKELETON_TONE_BY_PAGE[resolvedPageKey]}

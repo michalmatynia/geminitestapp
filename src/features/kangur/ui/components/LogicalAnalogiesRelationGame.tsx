@@ -22,6 +22,7 @@ import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswer
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -45,8 +46,9 @@ import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import {
+  getLocalizedLogicalAnalogyRelationTokens,
+  getLocalizedLogicalAnalogiesRelationRounds,
   LOGICAL_ANALOGIES_RELATION_ROUNDS,
-  LOGICAL_ANALOGY_RELATION_TOKENS,
   type LogicalAnalogyRelationId,
   type LogicalAnalogyRelationRound,
   type LogicalAnalogyRelationToken,
@@ -69,16 +71,6 @@ const TOTAL_TARGETS = LOGICAL_ANALOGIES_RELATION_ROUNDS.reduce(
   (sum, round) => sum + round.targets.length,
   0
 );
-const FALLBACK_ROUND: LogicalAnalogyRelationRound = {
-  id: 'fallback',
-  title: 'Relacje',
-  prompt: 'Brak danych do gry.',
-  relationIds: [],
-  targets: [],
-};
-const FIRST_ROUND = LOGICAL_ANALOGIES_RELATION_ROUNDS[0] ?? FALLBACK_ROUND;
-
-const EMPTY_POOL_MESSAGE = 'Wszystkie relacje są już użyte.';
 const RUSH_TIME_MIN = 24;
 const RUSH_TIME_BASE = 8;
 const RUSH_TIME_PER_TARGET = 10;
@@ -89,8 +81,11 @@ const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0
 const getRushTimeLimit = (targetCount: number): number =>
   Math.max(RUSH_TIME_MIN, RUSH_TIME_BASE + targetCount * RUSH_TIME_PER_TARGET);
 
-const buildRoundState = (round: LogicalAnalogyRelationRound): RoundState => {
-  const pool = shuffle(round.relationIds.map((relationId) => LOGICAL_ANALOGY_RELATION_TOKENS[relationId]));
+const buildRoundState = (
+  round: LogicalAnalogyRelationRound,
+  relationTokensById: Record<LogicalAnalogyRelationId, LogicalAnalogyRelationToken>
+): RoundState => {
+  const pool = shuffle(round.relationIds.map((relationId) => relationTokensById[relationId]));
   const slots = round.targets.reduce<Record<string, LogicalAnalogyRelationToken[]>>((acc, target) => {
     acc[target.id] = [];
     return acc;
@@ -136,18 +131,45 @@ const buildTokenClassName = ({
   );
 
 export default function LogicalAnalogiesRelationGame({
-  finishLabel = 'Wróć do tematów',
+  finishLabel,
   onFinish,
 }: LogicalAnalogiesRelationGameProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
-  const summaryFinishLabel =
-    finishLabel === 'Wróć do tematów'
-      ? getKangurMiniGameFinishLabel(translations, 'topics')
-      : finishLabel;
+  const t = (
+    key: string,
+    fallback: string,
+    values?: Record<string, string | number>
+  ): string =>
+    translateKangurMiniGameWithFallback(
+      translations,
+      `logicalAnalogies.game.${key}`,
+      fallback,
+      values
+    );
+  const localizedTokens = useMemo(
+    () => getLocalizedLogicalAnalogyRelationTokens(translations),
+    [translations]
+  );
+  const localizedRounds = useMemo(
+    () => getLocalizedLogicalAnalogiesRelationRounds(translations),
+    [translations]
+  );
+  const fallbackRound = useMemo<LogicalAnalogyRelationRound>(
+    () => ({
+      id: 'fallback',
+      title: t('fallbackTitle', 'Relacje'),
+      prompt: t('fallbackPrompt', 'Brak danych do gry.'),
+      relationIds: [],
+      targets: [],
+    }),
+    [translations]
+  );
+  const firstRound = localizedRounds[0] ?? fallbackRound;
+  const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const handleFinish = onFinish;
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
-    buildRoundState(FIRST_ROUND)
+    buildRoundState(firstRound, localizedTokens)
   );
   const [selectedTokenId, setSelectedTokenId] = useState<LogicalAnalogyRelationId | null>(null);
   const [hoveredRelationId, setHoveredRelationId] = useState<LogicalAnalogyRelationId | null>(null);
@@ -167,24 +189,24 @@ export default function LogicalAnalogiesRelationGame({
   const hintId = `${idPrefix}-hint`;
   const timerId = `${idPrefix}-timer`;
 
-  const round = LOGICAL_ANALOGIES_RELATION_ROUNDS[roundIndex] ?? FIRST_ROUND;
+  const round = localizedRounds[roundIndex] ?? firstRound;
 
   const roundTargets = round.targets;
   const relationTokens = useMemo(
     () =>
       round.relationIds
-        .map((relationId) => LOGICAL_ANALOGY_RELATION_TOKENS[relationId])
+        .map((relationId) => localizedTokens[relationId])
         .filter(Boolean),
-    [round.relationIds]
+    [localizedTokens, round.relationIds]
   );
   const isRoundComplete = roundTargets.every((target) => roundState.slots[target.id]?.length);
   const activeRelationId = hoveredRelationId ?? selectedTokenId;
   const activeRelationHint = activeRelationId
-    ? LOGICAL_ANALOGY_RELATION_TOKENS[activeRelationId]
+    ? localizedTokens[activeRelationId]
     : null;
 
   const resetRound = (): void => {
-    setRoundState(buildRoundState(round));
+    setRoundState(buildRoundState(round, localizedTokens));
     setSelectedTokenId(null);
     setHoveredRelationId(null);
     setChecked(false);
@@ -269,9 +291,9 @@ export default function LogicalAnalogiesRelationGame({
       return;
     }
     const nextIndex = roundIndex + 1;
-    const nextRound = LOGICAL_ANALOGIES_RELATION_ROUNDS[nextIndex] ?? FIRST_ROUND;
+    const nextRound = localizedRounds[nextIndex] ?? firstRound;
     setRoundIndex(nextIndex);
-    setRoundState(buildRoundState(nextRound));
+    setRoundState(buildRoundState(nextRound, localizedTokens));
     setSelectedTokenId(null);
     setHoveredRelationId(null);
     setChecked(false);
@@ -281,7 +303,7 @@ export default function LogicalAnalogiesRelationGame({
 
   const restart = (): void => {
     setRoundIndex(0);
-    setRoundState(buildRoundState(FIRST_ROUND));
+    setRoundState(buildRoundState(firstRound, localizedTokens));
     setSelectedTokenId(null);
     setHoveredRelationId(null);
     setChecked(false);
@@ -393,7 +415,7 @@ export default function LogicalAnalogiesRelationGame({
         />
         {isRushMode ? (
           <KangurStatusChip accent='amber' className='mx-auto'>
-            Bridge Rush ⏱
+            {t('rushModeChip', 'Bridge Rush ⏱')}
           </KangurStatusChip>
         ) : null}
         <KangurPracticeGameSummaryProgress
@@ -447,7 +469,7 @@ export default function LogicalAnalogiesRelationGame({
                 onClick={() => handleModeToggle(false)}
                 aria-pressed={!isRushMode}
               >
-                Tryb spokojny
+                {t('quietMode', 'Tryb spokojny')}
               </KangurButton>
               <KangurButton
                 size='sm'
@@ -456,7 +478,7 @@ export default function LogicalAnalogiesRelationGame({
                 onClick={() => handleModeToggle(true)}
                 aria-pressed={isRushMode}
               >
-                Bridge Rush
+                {t('rushMode', 'Bridge Rush')}
               </KangurButton>
             </div>
             {isRushMode ? (
@@ -476,25 +498,31 @@ export default function LogicalAnalogiesRelationGame({
           </div>
           <p className='text-[11px] [color:var(--kangur-page-muted-text)]'>
             {isRushMode
-              ? 'Tryb Bridge Rush: zdąż przed końcem czasu. Zmiana trybu restartuje grę.'
-              : 'Zmiana trybu restartuje grę.'}
+              ? t(
+                  'rushModeHint',
+                  'Tryb Bridge Rush: zdąż przed końcem czasu. Zmiana trybu restartuje grę.'
+                )
+              : t('modeResetHint', 'Zmiana trybu restartuje grę.')}
           </p>
         </div>
 
         <KangurInfoCard accent='rose' className='w-full' padding='sm' tone='accent'>
           <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} justify-between`}>
             <div>
-              <p className='text-sm font-bold'>Most relacji</p>
+              <p className='text-sm font-bold'>{t('stageTitle', 'Most relacji')}</p>
               <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
             </div>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurStatusChip accent='rose' size='sm'>
-                Runda {roundIndex + 1}/{TOTAL_ROUNDS}
+                {t('roundLabel', 'Runda {current}/{total}', {
+                  current: roundIndex + 1,
+                  total: TOTAL_ROUNDS,
+                })}
               </KangurStatusChip>
               {timeExpired ? (
                 <div aria-live='polite' role='status'>
                   <KangurStatusChip accent='rose' size='sm'>
-                    Czas minął
+                    {t('timeExpired', 'Czas minął')}
                   </KangurStatusChip>
                 </div>
               ) : null}
@@ -504,12 +532,14 @@ export default function LogicalAnalogiesRelationGame({
             className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'
             id={instructionsId}
           >
-            Przeciągnij relację na kartę pary albo kliknij relację i potem kliknij parę. Ikony
-            relacji podpowiadają typy zależności.
+            {t(
+              'instructions',
+              'Przeciągnij relację na kartę pary albo kliknij relację i potem kliknij parę. Ikony relacji podpowiadają typy zależności.'
+            )}
           </p>
           <div className={`mt-3 ${KANGUR_STACK_TIGHT_CLASSNAME}`}>
             <p className='text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-600'>
-              Ikony relacji
+              {t('relationIconsLabel', 'Ikony relacji')}
             </p>
             <div className={KANGUR_WRAP_ROW_CLASSNAME}>
               {relationTokens.map((token) => {
@@ -548,8 +578,8 @@ export default function LogicalAnalogiesRelationGame({
               aria-live='polite'
             >
               {activeRelationHint
-                ? `Podpowiedź: ${activeRelationHint.hint}`
-                : 'Najedź lub dotknij ikonę, aby zobaczyć podpowiedź.'}
+                ? t('relationHintPrefix', 'Podpowiedź: {hint}', { hint: activeRelationHint.hint })
+                : t('relationHintIdle', 'Najedź lub dotknij ikonę, aby zobaczyć podpowiedź.')}
             </p>
           </div>
         </KangurInfoCard>
@@ -558,10 +588,10 @@ export default function LogicalAnalogiesRelationGame({
           <div className='flex flex-col kangur-panel-gap'>
             <div className='flex items-center justify-between'>
               <p className='text-xs font-semibold uppercase tracking-[0.16em] text-rose-700'>
-                Relacje
+                {t('relationsHeading', 'Relacje')}
               </p>
               <KangurStatusChip accent='slate' size='sm'>
-                {roundState.pool.length} w puli
+                {t('poolCount', '{count} w puli', { count: roundState.pool.length })}
               </KangurStatusChip>
             </div>
             <Droppable droppableId='pool' direction='horizontal'>
@@ -570,7 +600,7 @@ export default function LogicalAnalogiesRelationGame({
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   aria-describedby={`${instructionsId} ${hintId}`}
-                  aria-label='Pula relacji do przeciągania'
+                  aria-label={t('poolAriaLabel', 'Pula relacji do przeciągania')}
                   role='list'
                   className={cn(
                     'flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-dashed px-3 py-3 text-center text-xs',
@@ -580,7 +610,7 @@ export default function LogicalAnalogiesRelationGame({
                   )}
                 >
                   {roundState.pool.length === 0 ? (
-                    <span>{EMPTY_POOL_MESSAGE}</span>
+                    <span>{t('emptyPool', 'Wszystkie relacje są już użyte.')}</span>
                   ) : null}
                   {roundState.pool.map((token, index) => (
                     <Draggable
@@ -605,7 +635,9 @@ export default function LogicalAnalogiesRelationGame({
                             })}
                             disabled={checked}
                             aria-pressed={selectedTokenId === token.id}
-                            aria-label={`Relacja: ${token.label}`}
+                            aria-label={t('relationAriaLabel', 'Relacja: {label}', {
+                              label: token.label,
+                            })}
                             aria-describedby={`${instructionsId} ${hintId}`}
                             role='listitem'
                             onMouseEnter={() => setHoveredRelationId(token.id)}
@@ -645,11 +677,14 @@ export default function LogicalAnalogiesRelationGame({
                 onClick={resetRound}
                 disabled={checked}
               >
-                Wyczyść rundę
+                {t('clearRound', 'Wyczyść rundę')}
               </KangurButton>
               {checked ? (
                 <KangurStatusChip accent={roundCorrect === roundTargets.length ? 'emerald' : 'rose'}>
-                  {roundCorrect}/{roundTargets.length} trafień
+                  {t('hitsLabel', '{correct}/{total} trafień', {
+                    correct: roundCorrect,
+                    total: roundTargets.length,
+                  })}
                 </KangurStatusChip>
               ) : null}
             </div>
@@ -658,7 +693,7 @@ export default function LogicalAnalogiesRelationGame({
           <div className='flex flex-col kangur-panel-gap'>
             <div className='flex items-center justify-between'>
               <p className='text-xs font-semibold uppercase tracking-[0.16em] text-rose-700'>
-                Pary do dopasowania
+                {t('targetsHeading', 'Pary do dopasowania')}
               </p>
               <span className='text-xs [color:var(--kangur-page-muted-text)]'>
                 {round.title}
@@ -668,7 +703,7 @@ export default function LogicalAnalogiesRelationGame({
               {roundTargets.map((target) => {
                 const assigned = roundState.slots[target.id]?.[0] ?? null;
                 const isCorrect = assigned?.id === target.relationId;
-                const relationLabel = LOGICAL_ANALOGY_RELATION_TOKENS[target.relationId]?.label;
+                const relationLabel = localizedTokens[target.relationId]?.label;
                 const targetLabelId = `${idPrefix}-${target.id}-label`;
                 const slotHintId = `${idPrefix}-${target.id}-slot-hint`;
                 return (
@@ -705,7 +740,7 @@ export default function LogicalAnalogiesRelationGame({
                               {target.pair}
                             </p>
                             <span className='text-[11px] uppercase tracking-[0.18em] text-rose-600/80'>
-                              relacja
+                              {t('relationBadge', 'relacja')}
                             </span>
                           </div>
                           <div
@@ -718,7 +753,7 @@ export default function LogicalAnalogiesRelationGame({
                             )}
                           >
                             <span className='sr-only' id={slotHintId}>
-                              Użyj tego miejsca, aby dopasować relację do pary.
+                              {t('dropHint', 'Użyj tego miejsca, aby dopasować relację do pary.')}
                             </span>
                             {assigned ? (
                               <Draggable
@@ -757,14 +792,16 @@ export default function LogicalAnalogiesRelationGame({
                               </Draggable>
                             ) : (
                               <div className='flex h-full items-center justify-center text-[11px] font-semibold text-rose-600/70'>
-                                Upuść relację
+                                {t('dropZoneCta', 'Upuść relację')}
                               </div>
                             )}
                             {provided.placeholder}
                           </div>
                           {checked && !isCorrect ? (
                             <p className='text-[11px] text-rose-600'>
-                              Poprawnie: {relationLabel}
+                              {t('correctRelation', 'Poprawnie: {label}', {
+                                label: relationLabel ?? '',
+                              })}
                             </p>
                           ) : null}
                         </KangurAnswerChoiceCard>
@@ -779,7 +816,7 @@ export default function LogicalAnalogiesRelationGame({
 
         <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
           <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-            Każda relacja pasuje tylko do jednej pary.
+            {t('oneToOneHint', 'Każda relacja pasuje tylko do jednej pary.')}
           </p>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
             {!checked ? (
@@ -790,11 +827,13 @@ export default function LogicalAnalogiesRelationGame({
                 onClick={handleCheck}
                 disabled={!isRoundComplete}
               >
-                Sprawdź
+                {t('check', 'Sprawdź')}
               </KangurButton>
             ) : (
               <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
-                {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
+                {roundIndex + 1 >= TOTAL_ROUNDS
+                  ? t('seeResult', 'Zobacz wynik')
+                  : t('next', 'Dalej')}
               </KangurButton>
             )}
           </div>

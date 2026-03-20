@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Eye,
   EyeOff,
@@ -60,7 +61,6 @@ import { useKangurCmsBuilderRuntime } from './KangurCmsBuilderRuntimeContext';
 import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
   KANGUR_CMS_SCREEN_KEYS,
-  KANGUR_CMS_SCREEN_LABELS,
   serializeKangurCmsSections,
   type KangurCmsScreenKey,
 } from './project';
@@ -126,6 +126,7 @@ export function KangurCmsPreviewPanel({
   statusSidebarOpen = true,
   onToggleStatusSidebar,
 }: KangurCmsPreviewPanelProps): React.ReactNode {
+  const t = useTranslations('KangurCmsBuilder.previewPanel');
   const { draftProject, savedProject, activeScreenKey, onSwitchScreen, onSave, isSaving } =
     useKangurCmsBuilderRuntime();
   const state = usePageBuilderState();
@@ -472,6 +473,9 @@ export function KangurCmsPreviewPanel({
   }, [canvasScale, isDesktopPreview, previewWidthClass, state.sections]);
 
   const isVectorOverlayOpen = Boolean(vectorOverlay);
+  const viewingToggleLabel = isViewing
+    ? t('toggleViewing.showSidePanels')
+    : t('toggleViewing.showCanvasOnly');
 
   return (
     <div className='relative flex min-w-0 flex-1 flex-col bg-gray-950'>
@@ -481,8 +485,8 @@ export function KangurCmsPreviewPanel({
         variant='outline'
         onClick={handleToggleViewing}
         disabled={!state.currentPage}
-        title={isViewing ? 'Show side panels' : 'Show canvas only'}
-        aria-label={isViewing ? 'Show side panels' : 'Show canvas only'}
+        title={viewingToggleLabel}
+        aria-label={viewingToggleLabel}
         className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm'
       >
         {isViewing ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
@@ -498,10 +502,10 @@ export function KangurCmsPreviewPanel({
         <div className='flex flex-wrap items-center justify-between gap-3 px-5 py-3'>
           <div className='flex min-w-0 items-center gap-2'>
             <Link href='/admin/kangur' className='text-sm text-blue-300 hover:text-blue-200'>
-              Back to Kangur
+              {t('toolbar.backToKangur')}
             </Link>
             <Badge variant={isDirty ? 'warning' : 'neutral'} className='h-7 px-2 py-1 text-[10px] uppercase tracking-wide'>
-              {isDirty ? 'Unsaved' : 'Saved'}
+              {isDirty ? t('toolbar.status.unsaved') : t('toolbar.status.saved')}
             </Badge>
           </div>
 
@@ -516,7 +520,7 @@ export function KangurCmsPreviewPanel({
                   className='h-8 px-3 text-xs'
                   onClick={() => onSwitchScreen(screenKey, orderedSections)}
                 >
-                  {KANGUR_CMS_SCREEN_LABELS[screenKey]}
+                  {t(`toolbar.screenLabels.${screenKey}`)}
                 </Button>
               ))}
             </div>
@@ -529,7 +533,7 @@ export function KangurCmsPreviewPanel({
               onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })}
             >
               <Monitor className='mr-2 size-3.5' />
-              Desktop
+              {t('toolbar.previewModes.desktop')}
             </Button>
             <Button
               type='button'
@@ -539,7 +543,7 @@ export function KangurCmsPreviewPanel({
               onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })}
             >
               <Smartphone className='mr-2 size-3.5' />
-              Mobile
+              {t('toolbar.previewModes.mobile')}
             </Button>
             <Button
               type='button'
@@ -548,7 +552,7 @@ export function KangurCmsPreviewPanel({
               className='h-8 px-3 text-xs'
               onClick={() => window.open(runtimeHref, '_blank', 'noopener,noreferrer')}
             >
-              Open Runtime
+              {t('toolbar.openRuntime')}
             </Button>
             {onToggleStatusSidebar ? (
               <Button
@@ -557,14 +561,14 @@ export function KangurCmsPreviewPanel({
                 variant='outline'
                 className='h-8 px-3 text-xs'
                 onClick={handleToggleStatusSidebar}
-                aria-label='Toggle status sidebar'
+                aria-label={t('toolbar.toggleStatusSidebar')}
               >
                 {statusSidebarOpen ? (
                   <PanelRightClose className='mr-2 size-4' />
                 ) : (
                   <PanelRightOpen className='mr-2 size-4' />
                 )}
-                Status
+                {t('toolbar.statusSidebar')}
               </Button>
             ) : null}
             <Button
@@ -573,8 +577,8 @@ export function KangurCmsPreviewPanel({
               variant='ghost'
               className='text-gray-400 hover:text-white'
               disabled={state.history.past.length === 0}
-              aria-label='Undo'
-              title={'Undo'}>
+              aria-label={t('toolbar.undo')}
+              title={t('toolbar.undo')}>
               <Undo2 className='size-4' />
             </Button>
             <Button
@@ -583,8 +587,8 @@ export function KangurCmsPreviewPanel({
               variant='ghost'
               className='text-gray-400 hover:text-white'
               disabled={state.history.future.length === 0}
-              aria-label='Redo'
-              title={'Redo'}>
+              aria-label={t('toolbar.redo')}
+              title={t('toolbar.redo')}>
               <Redo2 className='size-4' />
             </Button>
             <Button
@@ -596,7 +600,7 @@ export function KangurCmsPreviewPanel({
               disabled={!state.currentPage || isSaving}
             >
               <Save className='mr-2 size-4' />
-              {isSaving ? 'Saving...' : 'Save project'}
+              {isSaving ? t('toolbar.saving') : t('toolbar.saveProject')}
             </Button>
           </div>
         </div>
@@ -609,11 +613,11 @@ export function KangurCmsPreviewPanel({
       >
         {!state.currentPage ? (
           <div className='flex h-full items-center justify-center p-6 text-gray-500'>
-            Select a Kangur screen to edit.
+            {t('empty.selectScreen')}
           </div>
         ) : !hasSections ? (
           <div className='flex h-full items-center justify-center p-6 text-gray-500'>
-            No sections yet. Use the structure panel to add sections.
+            {t('empty.noSections')}
           </div>
         ) : (
           <div className='p-0' style={scaledCanvasWrapperStyle}>

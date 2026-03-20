@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
+import plMessages from '@/i18n/messages/pl.json';
 import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
 import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
@@ -25,6 +27,29 @@ import {
 } from '@/features/kangur/ui/services/progress';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
+type ShapeCardId = 'circle' | 'triangle' | 'square' | 'rectangle' | 'pentagon' | 'hexagon';
+type GeometryShapesTranslate = (key: string) => string;
+
+const createStaticTranslator = (messages: Record<string, unknown>): GeometryShapesTranslate => (key) => {
+  const resolved = key.split('.').reduce<unknown>(
+    (current, segment) =>
+      typeof current === 'object' && current !== null
+        ? (current as Record<string, unknown>)[segment]
+        : undefined,
+    messages
+  );
+
+  return typeof resolved === 'string' ? resolved : key;
+};
+
+const SHAPE_CARD_IDS = [
+  { id: 'circle', emoji: '⚪' },
+  { id: 'triangle', emoji: '🔺' },
+  { id: 'square', emoji: '🟦' },
+  { id: 'rectangle', emoji: '▭' },
+  { id: 'pentagon', emoji: '⬟' },
+  { id: 'hexagon', emoji: '⬢' },
+] as const satisfies ReadonlyArray<{ id: ShapeCardId; emoji: string }>;
 
 function GeometryShapesGameStage({
   onFinish,
@@ -40,220 +65,256 @@ function GeometryShapesGameStage({
   return <GeometryDrawingGame onFinish={onFinish} />;
 }
 
-const SHAPE_CARDS = [
-  { emoji: '⚪', name: 'Koło', details: '0 boków i 0 rogów' },
-  { emoji: '🔺', name: 'Trójkąt', details: '3 boki i 3 rogi' },
-  { emoji: '🟦', name: 'Kwadrat', details: '4 równe boki i 4 rogi' },
-  { emoji: '▭', name: 'Prostokąt', details: '4 boki i 4 rogi' },
-  { emoji: '⬟', name: 'Pieciokąt', details: '5 boków i 5 rogów' },
-  { emoji: '⬢', name: 'Szesciokąt', details: '6 boków i 6 rogów' },
-] as const;
+const buildShapeCards = (translations: GeometryShapesTranslate) =>
+  SHAPE_CARD_IDS.map((shape) => ({
+    ...shape,
+    name: translations(`shapeCards.${shape.id}.name`),
+    details: translations(`shapeCards.${shape.id}.details`),
+  }));
 
-export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
-  podstawowe: [
-    {
-      title: 'Poznaj figury',
-      content: (
-        <div className='space-y-3'>
-          <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
-            {SHAPE_CARDS.slice(0, 4).map((shape) => (
+const buildGeometryShapesSlides = (
+  translations: GeometryShapesTranslate
+): Record<Exclude<SectionId, 'game'>, LessonSlide[]> => {
+  const shapeCards = buildShapeCards(translations);
+
+  return {
+    podstawowe: [
+      {
+        title: translations('slides.podstawowe.intro.title'),
+        content: (
+          <div className='space-y-3'>
+            <div className='grid grid-cols-1 gap-2 min-[420px]:grid-cols-2'>
+              {shapeCards.slice(0, 4).map((shape) => (
+                <KangurLessonCallout
+                  key={shape.id}
+                  accent='violet'
+                  className='text-center'
+                  padding='sm'
+                >
+                  <div className='text-3xl'>{shape.emoji}</div>
+                  <div className='mt-1 text-sm font-bold text-fuchsia-700'>{shape.name}</div>
+                  <div className='text-xs text-fuchsia-600'>{shape.details}</div>
+                </KangurLessonCallout>
+              ))}
+            </div>
+            <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+              <div className='mx-auto h-28 w-28 max-w-full'>
+                <GeometryShapesOrbitAnimation />
+              </div>
+              <div className='text-xs text-fuchsia-600'>
+                {translations('slides.podstawowe.intro.orbitCaption')}
+              </div>
+            </KangurLessonCallout>
+          </div>
+        ),
+      },
+      {
+        title: translations('slides.podstawowe.outline.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-28 w-40 max-w-full'>
+              <GeometryPerimeterTraceAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.podstawowe.outline.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+      {
+        title: translations('slides.podstawowe.build.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-28 w-36 max-w-full'>
+              <GeometryShapeBuildAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.podstawowe.build.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+    ],
+    ile_bokow: [
+      {
+        title: translations('slides.ileBokow.count.title'),
+        content: (
+          <div className='space-y-2'>
+            {shapeCards.map((shape) => (
               <KangurLessonCallout
-                key={shape.name}
-                accent='violet'
-                className='text-center'
+                key={shape.id}
+                accent='slate'
+                className='border-fuchsia-200/85'
                 padding='sm'
               >
-                <div className='text-3xl'>{shape.emoji}</div>
-                <div className='mt-1 text-sm font-bold text-fuchsia-700'>{shape.name}</div>
-                <div className='text-xs text-fuchsia-600'>{shape.details}</div>
+                <div className={KANGUR_CENTER_ROW_CLASSNAME}>
+                  <span className='text-2xl'>{shape.emoji}</span>
+                  <div>
+                    <p className='text-sm font-bold [color:var(--kangur-page-text)]'>
+                      {shape.name}
+                    </p>
+                    <p className='text-xs [color:var(--kangur-page-muted-text)]'>
+                      {shape.details}
+                    </p>
+                  </div>
+                </div>
               </KangurLessonCallout>
             ))}
           </div>
+        ),
+      },
+      {
+        title: translations('slides.ileBokow.countSides.title'),
+        content: (
           <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-            <div className='mx-auto h-28 w-28 max-w-full'>
+            <div className='mx-auto h-28 w-36 max-w-full'>
+              <GeometrySideHighlightAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.ileBokow.countSides.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+      {
+        title: translations('slides.ileBokow.corners.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-28 w-32 max-w-full'>
+              <GeometryVerticesAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.ileBokow.corners.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+      {
+        title: translations('slides.ileBokow.segmentSide.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-24 w-36 max-w-full'>
+              <GeometryPointSegmentAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.ileBokow.segmentSide.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+      {
+        title: translations('slides.ileBokow.drawSide.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-24 w-36 max-w-full'>
+              <GeometryMovingPointAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.ileBokow.drawSide.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+    ],
+    podsumowanie: [
+      {
+        title: translations('slides.podsumowanie.rotate.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-32 w-40 max-w-full'>
               <GeometryShapesOrbitAnimation />
             </div>
-            <div className='text-xs text-fuchsia-600'>Figury mogą się obracać i nadal są tym samym kształtem.</div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.podsumowanie.rotate.caption')}
+            </div>
           </KangurLessonCallout>
-        </div>
-      ),
-    },
-    {
-      title: 'Obrys figury',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-40 max-w-full'>
-            <GeometryPerimeterTraceAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Zamknięty obrys tworzy kształt figury.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Budowanie figury',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-36 max-w-full'>
-            <GeometryShapeBuildAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Laczymy odcinki, az figura się domknie.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-  ],
-  ile_bokow: [
-    {
-      title: 'Ile boków i rogów?',
-      content: (
-        <div className='space-y-2'>
-          {SHAPE_CARDS.map((shape) => (
-            <KangurLessonCallout
-              key={shape.name}
-              accent='slate'
-              className='border-fuchsia-200/85'
-              padding='sm'
-            >
-              <div className={KANGUR_CENTER_ROW_CLASSNAME}>
-                <span className='text-2xl'>{shape.emoji}</span>
-                <div>
-                  <p className='text-sm font-bold [color:var(--kangur-page-text)]'>
-                    {shape.name}
-                  </p>
-                  <p className='text-xs [color:var(--kangur-page-muted-text)]'>
-                    {shape.details}
-                  </p>
-                </div>
-              </div>
-            </KangurLessonCallout>
-          ))}
-        </div>
-      ),
-    },
-    {
-      title: 'Policz boki',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-36 max-w-full'>
-            <GeometrySideHighlightAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Boki zapalają się po kolei — każdy to odcinek.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Rogi figury',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-28 w-32 max-w-full'>
-            <GeometryVerticesAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Wierzchołki to rogi, w których spotykają się boki.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Odcinek to bok',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-24 w-36 max-w-full'>
-            <GeometryPointSegmentAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Bok figury to odcinek między dwoma punktami.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Rysowanie boku',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-24 w-36 max-w-full'>
-            <GeometryMovingPointAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>
-            Punkt porusza się i zostawia odcinek.
-          </div>
-        </KangurLessonCallout>
-      ),
-    },
-  ],
-  podsumowanie: [
-    {
-      title: 'Podsumowanie w ruchu: obrót',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryShapesOrbitAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Obrót nie zmienia figury.</div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Podsumowanie w ruchu: boki',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryPolygonSidesAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Boki i rogi opisują kształt.</div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Podsumowanie w ruchu: wnętrze',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryShapeFillAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Wnętrze figury to jej pole.</div>
-        </KangurLessonCallout>
-      ),
-    },
-    {
-      title: 'Podsumowanie w ruchu: budowa',
-      content: (
-        <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
-          <div className='mx-auto h-32 w-40 max-w-full'>
-            <GeometryShapeBuildAnimation />
-          </div>
-          <div className='text-xs text-fuchsia-600'>Łącz odcinki, aż figura się domknie.</div>
-        </KangurLessonCallout>
-      ),
-    },
-  ],
+        ),
+      },
+      {
+        title: translations('slides.podsumowanie.sides.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-32 w-40 max-w-full'>
+              <GeometryPolygonSidesAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.podsumowanie.sides.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+      {
+        title: translations('slides.podsumowanie.interior.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-32 w-40 max-w-full'>
+              <GeometryShapeFillAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.podsumowanie.interior.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+      {
+        title: translations('slides.podsumowanie.build.title'),
+        content: (
+          <KangurLessonCallout accent='violet' className='text-center' padding='sm'>
+            <div className='mx-auto h-32 w-40 max-w-full'>
+              <GeometryShapeBuildAnimation />
+            </div>
+            <div className='text-xs text-fuchsia-600'>
+              {translations('slides.podsumowanie.build.caption')}
+            </div>
+          </KangurLessonCallout>
+        ),
+      },
+    ],
+  };
 };
 
-export const HUB_SECTIONS = [
+const buildGeometryShapesSections = (translations: GeometryShapesTranslate) => [
   {
     id: 'podstawowe',
     emoji: '🔺',
-    title: 'Podstawowe figury',
-    description: 'Koło, trójkąt, kwadrat, prostokąt',
+    title: translations('sections.podstawowe.title'),
+    description: translations('sections.podstawowe.description'),
   },
-  { id: 'ile_bokow', emoji: '🔢', title: 'Boki i rogi', description: 'Każda figura pod lupą' },
-  { id: 'podsumowanie', emoji: '📋', title: 'Podsumowanie', description: 'Najważniejsze informacje' },
+  {
+    id: 'ile_bokow',
+    emoji: '🔢',
+    title: translations('sections.ileBokow.title'),
+    description: translations('sections.ileBokow.description'),
+  },
+  {
+    id: 'podsumowanie',
+    emoji: '📋',
+    title: translations('sections.podsumowanie.title'),
+    description: translations('sections.podsumowanie.description'),
+  },
   {
     id: 'game',
     emoji: '✍️',
-    title: 'Rysuj figury',
-    description: 'Narysuj kształt i zdobadz XP',
+    title: translations('sections.game.title'),
+    description: translations('sections.game.description'),
     isGame: true,
   },
-];
+] as const;
+
+const translateStaticGeometryShapes = createStaticTranslator(
+  plMessages.KangurStaticLessons.geometryShapes as Record<string, unknown>
+);
+
+export const SLIDES = buildGeometryShapesSlides(translateStaticGeometryShapes);
+export const HUB_SECTIONS = buildGeometryShapesSections(translateStaticGeometryShapes);
 
 export default function GeometryShapesLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.geometryShapes');
   const [rewarded, setRewarded] = useState(false);
+  const translate = (key: string): string => translations(key as never);
+  const sections = buildGeometryShapesSections(translate);
+  const slides = buildGeometryShapesSlides(translate);
+
   const handleGameStart = useCallback((): void => {
     if (rewarded) return;
     const progress = loadProgress();
@@ -267,9 +328,9 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       progressMode='panel'
       lessonId='geometry_shapes'
       lessonEmoji='🔷'
-      lessonTitle='Figury geometryczne'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={translate('lessonTitle')}
+      sections={sections}
+      slides={slides}
       gradientClass='kangur-gradient-accent-violet-reverse'
       progressDotClassName='bg-fuchsia-300'
       dotActiveClass='bg-fuchsia-500'
@@ -282,7 +343,7 @@ export default function GeometryShapesLesson(): React.JSX.Element {
             accent: 'violet',
             icon: '✍️',
             shellTestId: 'geometry-shapes-game-shell',
-            title: 'Rysuj figury',
+            title: translate('game.stageTitle'),
           },
           render: ({ onFinish }) => (
             <GeometryShapesGameStage onFinish={onFinish} onStart={handleGameStart} />

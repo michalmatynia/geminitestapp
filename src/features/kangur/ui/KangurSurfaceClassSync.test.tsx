@@ -1,8 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
-import { KANGUR_CLASS_OVERRIDES_SETTING_KEY } from '@/features/kangur/class-overrides';
 import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/theme-settings';
 import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
 import { DEFAULT_THEME } from '@/shared/contracts/cms-theme';
@@ -11,15 +10,6 @@ import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 const settingsStoreMock = vi.hoisted(() => ({
   get: vi.fn<(key: string) => string | undefined>(),
 }));
-
-const originalOverridesEnv = process.env['NEXT_PUBLIC_KANGUR_CLASS_OVERRIDES_ENABLED'];
-const setEnvValue = (key: string, value: string | undefined) => {
-  if (value === undefined) {
-    delete process.env[key];
-  } else {
-    process.env[key] = value;
-  }
-};
 
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
@@ -38,11 +28,6 @@ describe('KangurSurfaceClassSync', () => {
     const appContent = document.createElement('main');
     appContent.id = 'app-content';
     document.body.appendChild(appContent);
-    setEnvValue('NEXT_PUBLIC_KANGUR_CLASS_OVERRIDES_ENABLED', originalOverridesEnv);
-  });
-
-  afterEach(() => {
-    setEnvValue('NEXT_PUBLIC_KANGUR_CLASS_OVERRIDES_ENABLED', originalOverridesEnv);
   });
 
   it('applies the Kangur surface class to the page chrome while mounted', () => {
@@ -97,77 +82,6 @@ describe('KangurSurfaceClassSync', () => {
     expect(document.body.style.getPropertyValue('--kangur-button-surface-hover-background')).toContain(
       'linear-gradient'
     );
-  });
-
-  it('applies stored class overrides to the Kangur surface targets', () => {
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key !== KANGUR_CLASS_OVERRIDES_SETTING_KEY) {
-        return undefined;
-      }
-
-      return serializeSetting({
-        version: 1,
-        globals: {
-          html: 'kangur-html-override',
-          body: 'kangur-body-override',
-          app: 'kangur-app-override',
-          shell: '',
-        },
-        components: {},
-      });
-    });
-
-    const appContent = document.getElementById('app-content');
-    expect(appContent).not.toBeNull();
-
-    const { unmount } = render(
-      <KangurSurfaceClassSync>
-        <div>Surface</div>
-      </KangurSurfaceClassSync>
-    );
-
-    expect(document.documentElement).toHaveClass('kangur-html-override');
-    expect(document.body).toHaveClass('kangur-body-override');
-    expect(appContent).toHaveClass('kangur-app-override');
-
-    unmount();
-
-    expect(document.documentElement).not.toHaveClass('kangur-html-override');
-    expect(document.body).not.toHaveClass('kangur-body-override');
-    expect(appContent).not.toHaveClass('kangur-app-override');
-  });
-
-  it('skips class overrides when disabled via env', () => {
-    setEnvValue('NEXT_PUBLIC_KANGUR_CLASS_OVERRIDES_ENABLED', 'false');
-    settingsStoreMock.get.mockImplementation((key: string) => {
-      if (key !== KANGUR_CLASS_OVERRIDES_SETTING_KEY) {
-        return undefined;
-      }
-
-      return serializeSetting({
-        version: 1,
-        globals: {
-          html: 'kangur-html-override',
-          body: 'kangur-body-override',
-          app: 'kangur-app-override',
-          shell: '',
-        },
-        components: {},
-      });
-    });
-
-    const appContent = document.getElementById('app-content');
-    expect(appContent).not.toBeNull();
-
-    render(
-      <KangurSurfaceClassSync>
-        <div>Surface</div>
-      </KangurSurfaceClassSync>
-    );
-
-    expect(document.documentElement).not.toHaveClass('kangur-html-override');
-    expect(document.body).not.toHaveClass('kangur-body-override');
-    expect(appContent).not.toHaveClass('kangur-app-override');
   });
 
   it('applies a stored Kangur theme document to the page chrome', async () => {

@@ -5,20 +5,22 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import type { KangurAccent } from './tokens';
 
+const KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES = {
+  indigo: 'kangur-border-accent-indigo',
+  violet: 'kangur-border-accent-violet',
+  emerald: 'kangur-border-accent-emerald',
+  sky: 'kangur-border-accent-sky',
+  amber: 'kangur-border-accent-amber',
+  rose: 'kangur-border-accent-rose',
+  teal: 'kangur-border-accent-teal',
+  slate: 'kangur-border-accent-slate',
+} satisfies Record<KangurAccent, string>;
+
 const kangurLessonCalloutVariants = cva(
   'soft-card kangur-lesson-callout w-full border shadow-[0_18px_44px_-36px_rgba(15,23,42,0.24)] [color:var(--kangur-page-text)]',
   {
     variants: {
-      accent: {
-        indigo: 'border-indigo-200/80',
-        violet: 'border-violet-200/80',
-        emerald: 'border-emerald-200/80',
-        sky: 'border-sky-200/80',
-        amber: 'border-amber-200/80',
-        rose: 'border-rose-200/80',
-        teal: 'border-teal-200/80',
-        slate: 'border-slate-200/85',
-      },
+      accent: KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES,
       padding: {
         sm: 'kangur-card-padding-sm',
         md: 'kangur-card-padding-md',
@@ -70,14 +72,14 @@ const kangurLessonChipVariants = cva(
   {
     variants: {
       accent: {
-        indigo: 'border-indigo-200/80 text-indigo-700',
-        violet: 'border-violet-200/80 text-violet-700',
-        emerald: 'border-emerald-200/80 text-emerald-700',
-        sky: 'border-sky-200/80 text-sky-700',
-        amber: 'border-amber-200/80 text-amber-700',
-        rose: 'border-rose-200/80 text-rose-700',
-        teal: 'border-teal-200/80 text-teal-700',
-        slate: 'border-slate-200/85 [color:var(--kangur-page-text)]',
+        indigo: 'kangur-border-accent-indigo text-indigo-700',
+        violet: 'kangur-border-accent-violet text-violet-700',
+        emerald: 'kangur-border-accent-emerald text-emerald-700',
+        sky: 'kangur-border-accent-sky text-sky-700',
+        amber: 'kangur-border-accent-amber text-amber-700',
+        rose: 'kangur-border-accent-rose text-rose-700',
+        teal: 'kangur-border-accent-teal text-teal-700',
+        slate: 'kangur-border-accent-slate [color:var(--kangur-page-text)]',
       },
     },
     defaultVariants: {
@@ -123,16 +125,7 @@ const kangurLessonInsetVariants = cva(
   'soft-card kangur-lesson-inset w-full border shadow-[0_16px_32px_-28px_rgba(15,23,42,0.28)] [color:var(--kangur-page-text)]',
   {
     variants: {
-      accent: {
-        indigo: 'border-indigo-100/90',
-        violet: 'border-violet-100/90',
-        emerald: 'border-emerald-100/90',
-        sky: 'border-sky-100/90',
-        amber: 'border-amber-100/90',
-        rose: 'border-rose-100/90',
-        teal: 'border-teal-100/90',
-        slate: 'border-slate-200/85',
-      } satisfies Record<KangurAccent, string>,
+      accent: KANGUR_LESSON_BORDER_ACCENT_CLASSNAMES,
       padding: {
         sm: 'kangur-card-padding-sm',
         md: 'kangur-card-padding-md',

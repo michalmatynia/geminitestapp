@@ -60,8 +60,8 @@ describe('KangurGame', () => {
     expect(screen.getByTestId('kangur-game-progress-bar')).toHaveAttribute('aria-valuenow', '0');
     expect(screen.getByTestId('kangur-game-question-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-panel-padding-lg'
     );
     expect(screen.getByText('Ile to jest 2 + 2?')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(screen.getByTestId('kangur-game-illustration-shell')).toHaveClass(
@@ -85,11 +85,7 @@ describe('KangurGame', () => {
       vi.advanceTimersByTime(1400);
     });
 
-    expect(screen.getByTestId('kangur-game-summary-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
+    expect(screen.getByTestId('kangur-game-summary-shell')).toHaveClass('glass-panel', 'kangur-panel-soft', 'kangur-panel-padding-xl');
     expect(screen.getByText('0% poprawnych odpowiedzi')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );

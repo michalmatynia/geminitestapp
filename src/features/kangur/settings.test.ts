@@ -4,9 +4,11 @@ import {
   appendMissingGeometryKangurLessons,
   appendMissingLogicalThinkingKangurLessons,
   createDefaultKangurLessons,
+  KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
   KANGUR_LESSON_LIBRARY,
   KANGUR_PARENT_VERIFICATION_DEFAULT_RESEND_COOLDOWN_SECONDS,
   parseKangurNarratorSettings,
+  parseKangurPhoneSimulationSettings,
   parseKangurParentVerificationEmailSettings,
   normalizeKangurLessons,
 } from '@/features/kangur/settings';
@@ -221,6 +223,21 @@ describe('kangur lesson settings', () => {
       notificationsDisabledUntil: '2026-03-20T10:00:00.000Z',
       requireEmailVerification: true,
       requireCaptcha: true,
+    });
+  });
+
+  it('defaults phone simulation settings to enabled', () => {
+    expect(parseKangurPhoneSimulationSettings(undefined)).toEqual({
+      enabled: KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
+    });
+    expect(parseKangurPhoneSimulationSettings(JSON.stringify({}))).toEqual({
+      enabled: KANGUR_PHONE_SIMULATION_DEFAULT_ENABLED,
+    });
+  });
+
+  it('parses persisted phone simulation settings', () => {
+    expect(parseKangurPhoneSimulationSettings(JSON.stringify({ enabled: false }))).toEqual({
+      enabled: false,
     });
   });
 

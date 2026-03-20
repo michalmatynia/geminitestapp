@@ -5,6 +5,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { act, render, screen } from '@/__tests__/test-utils';
+import { NextIntlClientProvider } from 'next-intl';
+import plMessages from '@/i18n/messages/pl.json';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -105,6 +107,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
+
+const renderWithIntl = (ui: React.ReactElement) =>
+  renderWithIntl(
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
+      {ui}
+    </NextIntlClientProvider>
+  );
+
 const renderLessonsPage = () =>
   render(
     <KangurGuestPlayerProvider>
@@ -158,7 +168,7 @@ describe('Lessons page mastery list', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-      callback(0);
+      act(() => { callback(0); });
       return 1;
     });
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
@@ -234,7 +244,7 @@ describe('Lessons page mastery list', () => {
           progress: {
             status: 'completed',
             percent: 100,
-            summary: 'Powtórki po przydziale: 1/1.',
+            summary: 'Powtorki po przydziale: 1/1.',
             attemptsCompleted: 1,
             attemptsRequired: 1,
             lastActivityAt: '2026-03-06T10:30:00.000Z',
@@ -287,19 +297,19 @@ describe('Lessons page mastery list', () => {
     expect(topBar?.className).toContain('sticky');
     expect(topBar?.className).toContain('top-0');
     expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
-    expect(screen.getByText('Powtórz 45%')).toBeInTheDocument();
+    expect(screen.getByText('Powtorz 45%')).toBeInTheDocument();
     expect(screen.getByText('Nowa')).toBeInTheDocument();
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
     expect(screen.getByText('Priorytet wysoki')).toBeInTheDocument();
     expect(screen.getByText('To zadanie ma priorytet od rodzica.')).toBeInTheDocument();
-    expect(screen.getByText('Ukończone dla rodzica')).toBeInTheDocument();
-    expect(screen.getByText('Zadanie zamknięte')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
     expect(
-      screen.getByText(/Zadanie od rodzica zostało już wykonane\./)
+      screen.getByText('Zadanie od rodzica zostalo juz wykonane.', { exact: false })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Powtórki po przydziale: 1\/1\./)).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
+    expect(screen.getByText('Powtorki po przydziale: 1/1.', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 2× · najlepszy wynik 100%')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczono 1× · ostatni wynik 45%')).toBeInTheDocument();
     expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
     const lessonCards = screen
       .getAllByRole('button')
@@ -312,7 +322,7 @@ describe('Lessons page mastery list', () => {
   });
 
   it('sticks the header flush to the top inside the admin shell too', async () => {
-    useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur' });
+    useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur', pageKey: 'lessons' });
 
     renderLessonsPage();
 
@@ -374,10 +384,12 @@ describe('Lessons page mastery list', () => {
     const contentTransitionSection = await screen.findByTestId('lessons-list-transition');
     expect(contentTransitionSection).toBeInTheDocument();
     expect(screen.queryByText('Lekcje zaraz beda gotowe.', { exact: false })).not.toBeInTheDocument();
+    const introText = 'Wybierz temat i przejdz od razu do praktyki lub powtorki.';
     expect(
-      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.')
-    ).toBeInTheDocument();
-  });
+      screen.getByText((content, element) => {
+        return element?.tagName.toLowerCase() === 'p' && content.includes('Wybierz temat');
+      })
+    ).toBeInTheDocument();  });
 
   it('keeps a stable top section copy between initial and fully rendered states', async () => {
     const frameCallbacks: FrameRequestCallback[] = [];

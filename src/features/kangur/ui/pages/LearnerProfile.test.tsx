@@ -156,10 +156,10 @@ describe('LearnerProfile page', () => {
   it('renders translated learner profile headings and tabs', () => {
     render(<LearnerProfilePage />);
 
-    expect(screen.getByText('statsHeading')).toBeInTheDocument();
-    expect(screen.getByRole('tablist', { name: 'tabListLabel' })).toBeInTheDocument();
-    expect(screen.getByText('tabs.overview')).toBeInTheDocument();
-    expect(screen.getByText('tabs.aiMood')).toBeInTheDocument();
+    expect(screen.getByText('Statystyki ucznia')).toBeInTheDocument();
+    expect(screen.getByRole('tablist', { name: 'Profil ucznia' })).toBeInTheDocument();
+    expect(screen.getByText('Profil ucznia')).toBeInTheDocument();
+    expect(screen.getByText('Relacja z AI Tutorem')).toBeInTheDocument();
   });
 
   it('routes back to the localized base path when the learner profile fails to load', () => {
@@ -170,9 +170,9 @@ describe('LearnerProfile page', () => {
 
     render(<LearnerProfilePage />);
 
-    expect(screen.getByText('loadError')).toBeInTheDocument();
+    expect(screen.getByText('Nie udalo sie zaladowac profilu.')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'backToHome' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wroc do strony glownej' }));
 
     expect(pushMock).toHaveBeenCalledWith('/pl/kangur');
   });

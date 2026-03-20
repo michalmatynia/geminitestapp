@@ -22,19 +22,21 @@ describe('ResultScreen', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: 'resultScreen.heading, Maja!' })
+      screen.getByRole('heading', { name: 'Świetna robota, Maja!' })
     ).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-title')).toHaveClass(
       'text-2xl',
       'sm:text-3xl',
       '[color:var(--kangur-page-text)]'
     );
-    expect(screen.getByText('resultScreen.operations.addition')).toBeInTheDocument();
+    expect(screen.getByText('Dodawanie')).toBeInTheDocument();
     expect(screen.getByTestId('result-screen-emoji')).toHaveClass('inline-flex', 'text-6xl');
     expect(screen.getByTestId('result-screen-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-panel-padding-xl',
+      'kangur-glass-surface-solid',
+      'kangur-panel-shell'
     );
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute('aria-valuenow', '75');
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute(

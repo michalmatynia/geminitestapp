@@ -96,7 +96,8 @@ describe('AddingSynthesisGame', () => {
 
     expect(screen.getByTestId('adding-synthesis-intro-shell')).toHaveClass(
       'glass-panel',
-      'border-amber-200/70'
+      'kangur-panel-elevated',
+      'kangur-glass-surface-warm-glow'
     );
     expect(screen.getByText('Synteza dodawania')).toHaveClass('[color:var(--kangur-page-text)]');
     expect(
@@ -123,26 +124,28 @@ describe('AddingSynthesisGame', () => {
 
     expect(screen.getByTestId('adding-synthesis-board-shell')).toHaveClass(
       'glass-panel',
-      'border-indigo-200/70'
+      'kangur-panel-elevated',
+      'kangur-glass-surface-play-glow'
     );
     expect(screen.getByTestId('adding-synthesis-board-shell').parentElement).toHaveClass(
       'lg:grid-cols-[minmax(0,1fr)_280px]'
     );
     expect(screen.getByTestId('adding-synthesis-stage-shell')).toHaveClass(
       'glass-panel',
-      'border-white/80'
+      'kangur-panel-soft',
+      'kangur-glass-surface-play-field'
     );
     expect(screen.getByTestId('adding-synthesis-hud')).toHaveClass(
       'glass-panel',
-      'border-white/75',
-      'bg-white/88'
+      'kangur-panel-soft',
+      'kangur-glass-surface-frost'
     );
     expect(screen.getByText('2 + 3')).toBeInTheDocument();
     expect(screen.getByText('Nuta 1/1')).toHaveClass('inline-flex', 'rounded-full', 'border');
     expect(screen.getByTestId('adding-synthesis-note-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByTestId('adding-synthesis-note-stage')).toHaveClass(
       'inline-flex',
@@ -176,7 +179,8 @@ describe('AddingSynthesisGame', () => {
     expect(screen.getByTestId('adding-synthesis-summary')).toBeInTheDocument();
     expect(screen.getByTestId('adding-synthesis-summary')).toHaveClass(
       'glass-panel',
-      'border-emerald-200/70'
+      'kangur-panel-elevated',
+      'kangur-glass-surface-success-glow'
     );
     expect(screen.getByText('Wynik 1/1')).toBeInTheDocument();
     expect(screen.getByText('Sesja zakończona')).toHaveClass(

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
 import {
@@ -45,34 +46,136 @@ type CalendarLiveHubSection = {
   isGame?: boolean;
 };
 
-const MONTHS = [
-  { name: 'Styczen', days: 31, num: 1 },
-  { name: 'Luty', days: 28, num: 2 },
-  { name: 'Marzec', days: 31, num: 3 },
-  { name: 'Kwiecien', days: 30, num: 4 },
-  { name: 'Maj', days: 31, num: 5 },
-  { name: 'Czerwiec', days: 30, num: 6 },
-  { name: 'Lipiec', days: 31, num: 7 },
-  { name: 'Sierpien', days: 31, num: 8 },
-  { name: 'Wrzesien', days: 30, num: 9 },
-  { name: 'Pazdziernik', days: 31, num: 10 },
-  { name: 'Listopad', days: 30, num: 11 },
-  { name: 'Grudzien', days: 31, num: 12 },
-] as const;
+type Translate = ReturnType<typeof useTranslations>;
+type CalendarMonthId =
+  | 'january'
+  | 'february'
+  | 'march'
+  | 'april'
+  | 'may'
+  | 'june'
+  | 'july'
+  | 'august'
+  | 'september'
+  | 'october'
+  | 'november'
+  | 'december';
+type WeekdayFullKey =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+type WeekdayAbbrKey =
+  | 'mondayAbbr'
+  | 'tuesdayAbbr'
+  | 'wednesdayAbbr'
+  | 'thursdayAbbr'
+  | 'fridayAbbr'
+  | 'saturdayAbbr'
+  | 'sundayAbbr';
+type SeasonId = 'spring' | 'summer' | 'autumn' | 'winter';
 
-const DAYS = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Nd'] as const;
+const MONTHS = [
+  { id: 'january', days: 31, num: 1 },
+  { id: 'february', days: 28, num: 2 },
+  { id: 'march', days: 31, num: 3 },
+  { id: 'april', days: 30, num: 4 },
+  { id: 'may', days: 31, num: 5 },
+  { id: 'june', days: 30, num: 6 },
+  { id: 'july', days: 31, num: 7 },
+  { id: 'august', days: 31, num: 8 },
+  { id: 'september', days: 30, num: 9 },
+  { id: 'october', days: 31, num: 10 },
+  { id: 'november', days: 30, num: 11 },
+  { id: 'december', days: 31, num: 12 },
+] as const satisfies ReadonlyArray<{
+  id: CalendarMonthId;
+  days: number;
+  num: number;
+}>;
+
+const WEEKDAYS = [
+  { fullKey: 'monday', abbrKey: 'mondayAbbr' },
+  { fullKey: 'tuesday', abbrKey: 'tuesdayAbbr' },
+  { fullKey: 'wednesday', abbrKey: 'wednesdayAbbr' },
+  { fullKey: 'thursday', abbrKey: 'thursdayAbbr' },
+  { fullKey: 'friday', abbrKey: 'fridayAbbr' },
+  { fullKey: 'saturday', abbrKey: 'saturdayAbbr' },
+  { fullKey: 'sunday', abbrKey: 'sundayAbbr' },
+] as const satisfies ReadonlyArray<{
+  fullKey: WeekdayFullKey;
+  abbrKey: WeekdayAbbrKey;
+}>;
+
+const SEASON_GROUPS = [
+  {
+    id: 'spring',
+    emoji: '🌸',
+    months: [MONTHS[2], MONTHS[3], MONTHS[4]],
+    accent: 'emerald' as const,
+  },
+  {
+    id: 'summer',
+    emoji: '☀️',
+    months: [MONTHS[5], MONTHS[6], MONTHS[7]],
+    accent: 'amber' as const,
+  },
+  {
+    id: 'autumn',
+    emoji: '🍂',
+    months: [MONTHS[8], MONTHS[9], MONTHS[10]],
+    accent: 'rose' as const,
+  },
+  {
+    id: 'winter',
+    emoji: '❄️',
+    months: [MONTHS[11], MONTHS[0], MONTHS[1]],
+    accent: 'sky' as const,
+  },
+] as const satisfies ReadonlyArray<{
+  id: SeasonId;
+  emoji: string;
+  months: ReadonlyArray<(typeof MONTHS)[number]>;
+  accent: 'emerald' | 'amber' | 'rose' | 'sky';
+}>;
+
+const translateMonthName = (
+  miniGameTranslations: Translate,
+  monthId: CalendarMonthId
+): string => miniGameTranslations(`calendarInteractive.months.${monthId}`);
+
+const translateWeekdayAbbr = (
+  miniGameTranslations: Translate,
+  abbrKey: WeekdayAbbrKey
+): string => miniGameTranslations(`calendarInteractive.weekdays.abbr.${abbrKey}`);
+
+const translateWeekdayFull = (
+  miniGameTranslations: Translate,
+  fullKey: WeekdayFullKey
+): string => miniGameTranslations(`calendarInteractive.weekdays.full.${fullKey}`);
+
+const translateSeasonName = (
+  miniGameTranslations: Translate,
+  seasonId: SeasonId
+): string => miniGameTranslations(`calendarInteractive.seasons.${seasonId}`);
 
 function MiniCalendar({
   month = 2,
   year = 2025,
   highlightDay,
+  miniGameTranslations,
 }: {
   month?: number;
   year?: number;
   highlightDay?: number;
+  miniGameTranslations: Translate;
 }): React.JSX.Element {
   const firstDay = new Date(year, month - 1, 1).getDay();
   const monthData = MONTHS[month - 1] ?? MONTHS[0];
+  const monthLabel = translateMonthName(miniGameTranslations, monthData.id);
   const startOffset = (firstDay + 6) % 7;
   const cells: Array<number | null> = [];
 
@@ -86,19 +189,19 @@ function MiniCalendar({
   return (
     <KangurLessonCallout accent='slate' className='mx-auto max-w-xs' padding='sm'>
       <p className='mb-2 text-center font-extrabold text-indigo-700'>
-        {monthData.name} {year}
+        {monthLabel} {year}
       </p>
       <div className='grid grid-cols-7 gap-0.5 text-center text-xs'>
-        {DAYS.map((dayLabel, index) => (
+        {WEEKDAYS.map((weekday, index) => (
           <div
-            key={dayLabel}
+            key={weekday.fullKey}
             className={`py-1 font-bold ${
               index >= 5
                 ? 'text-red-500'
                 : '[color:color-mix(in_srgb,var(--kangur-page-muted-text)_92%,white)]'
             }`}
           >
-            {dayLabel}
+            {translateWeekdayAbbr(miniGameTranslations, weekday.abbrKey)}
           </div>
         ))}
         {cells.map((day, index) => (
@@ -122,30 +225,33 @@ function MiniCalendar({
   );
 }
 
-export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
+const buildCalendarSectionSlides = (
+  translations: Translate,
+  miniGameTranslations: Translate
+): Record<LessonSectionId, LessonSlide[]> => ({
   intro: [
     {
-      title: 'Czym jest kalendarz?',
-      tts: 'Kalendarz to sposób organizowania czasu. Rok ma 12 miesięcy i 365 dni. Tydzień ma 7 dni.',
+      title: translations('slides.intro.whatIsCalendar.title'),
+      tts: translations('slides.intro.whatIsCalendar.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurDisplayEmoji data-testid='calendar-lesson-intro-emoji' size='lg'>
             📅
           </KangurDisplayEmoji>
           <KangurLessonCaption className='max-w-xs leading-relaxed'>
-            Kalendarz to sposób organizowania czasu.
+            {translations('slides.intro.whatIsCalendar.body')}
             <br />
             <br />
-            📆 Rok ma <strong>12 miesięcy</strong> i <strong>365 dni</strong>.
+            📆 <strong>{translations('slides.intro.whatIsCalendar.yearStat')}</strong>
             <br />
-            🗓️ Tydzień ma <strong>7 dni</strong>.
+            🗓️ <strong>{translations('slides.intro.whatIsCalendar.weekStat')}</strong>
           </KangurLessonCaption>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Rok w pętli',
-      tts: 'Miesiące wracają co roku w tej samej kolejności.',
+      title: translations('slides.intro.yearLoop.title'),
+      tts: translations('slides.intro.yearLoop.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='emerald' className='max-w-xs'>
@@ -153,15 +259,15 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarMonthsLoopAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Styczeń po grudniu znów wraca.
+              {translations('slides.intro.yearLoop.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Pory roku',
-      tts: 'Mamy cztery pory roku, które powtarzają się cyklicznie.',
+      title: translations('slides.intro.seasons.title'),
+      tts: translations('slides.intro.seasons.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='emerald' className='max-w-xs'>
@@ -169,7 +275,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarSeasonsCycleAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Wiosna, lato, jesień, zima.
+              {translations('slides.intro.seasons.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -178,40 +284,48 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
   dni: [
     {
-      title: 'Dni tygodnia',
-      tts: 'Tydzień ma 7 dni: Poniedziałek, Wtorek, Środa, Czwartek, Piątek, Sobota, Niedziela.',
+      title: translations('slides.dni.weekdays.title'),
+      tts: translations('slides.dni.weekdays.tts'),
       content: (
         <div className='mx-auto flex w-full max-w-xs flex-col gap-2 text-center'>
-          {['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'].map((dayLabel, index) => (
+          {WEEKDAYS.slice(0, 5).map((weekday, index) => (
             <KangurLessonCallout
-              key={dayLabel}
+              key={weekday.fullKey}
               accent='indigo'
               className='flex w-full items-center kangur-panel-gap'
               padding='sm'
             >
               <span className='w-5 font-bold text-indigo-500'>{index + 1}.</span>
-              <span className='font-semibold [color:var(--kangur-page-text)]'>{dayLabel}</span>
-              <span className='ml-auto text-xs text-indigo-400'>📚 Szkoła</span>
+              <span className='font-semibold [color:var(--kangur-page-text)]'>
+                {translateWeekdayFull(miniGameTranslations, weekday.fullKey)}
+              </span>
+              <span className='ml-auto text-xs text-indigo-400'>
+                📚 {translations('labels.schoolTag')}
+              </span>
             </KangurLessonCallout>
           ))}
-          {['Sobota', 'Niedziela'].map((dayLabel, index) => (
+          {WEEKDAYS.slice(5).map((weekday, index) => (
             <KangurLessonCallout
-              key={dayLabel}
+              key={weekday.fullKey}
               accent='rose'
               className='flex w-full items-center kangur-panel-gap'
               padding='sm'
             >
               <span className='w-5 font-bold text-pink-500'>{index + 6}.</span>
-              <span className='font-semibold [color:var(--kangur-page-text)]'>{dayLabel}</span>
-              <span className='ml-auto text-xs text-pink-400'>🎉 Weekend</span>
+              <span className='font-semibold [color:var(--kangur-page-text)]'>
+                {translateWeekdayFull(miniGameTranslations, weekday.fullKey)}
+              </span>
+              <span className='ml-auto text-xs text-pink-400'>
+                🎉 {translations('labels.weekendTag')}
+              </span>
             </KangurLessonCallout>
           ))}
         </div>
       ),
     },
     {
-      title: 'Tydzień w rytmie',
-      tts: 'Dni tygodnia następują po sobie w stałej kolejności.',
+      title: translations('slides.dni.rhythm.title'),
+      tts: translations('slides.dni.rhythm.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='indigo' className='max-w-xs'>
@@ -219,15 +333,15 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarDaysStripAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Po niedzieli znowu jest poniedziałek.
+              {translations('slides.dni.rhythm.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Weekend',
-      tts: 'Sobota i niedziela to weekend.',
+      title: translations('slides.dni.weekend.title'),
+      tts: translations('slides.dni.weekend.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='rose' className='max-w-xs'>
@@ -235,7 +349,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarWeekendPulseAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Weekend wyróżnia się kolorem.
+              {translations('slides.dni.weekend.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -244,41 +358,23 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
   miesiace: [
     {
-      title: '12 miesięcy roku',
-      tts: 'Rok ma 12 miesięcy podzielonych na cztery pory roku.',
+      title: translations('slides.miesiace.monthsOfYear.title'),
+      tts: translations('slides.miesiace.monthsOfYear.tts'),
       content: (
         <KangurLessonStack className='w-full max-w-sm text-center' gap='sm'>
           <div className='grid w-full grid-cols-1 kangur-panel-gap min-[420px]:grid-cols-2'>
-            {[
-              {
-                season: '🌸 Wiosna',
-                months: [MONTHS[2], MONTHS[3], MONTHS[4]],
-                accent: 'emerald' as const,
-              },
-              {
-                season: '☀️ Lato',
-                months: [MONTHS[5], MONTHS[6], MONTHS[7]],
-                accent: 'amber' as const,
-              },
-              {
-                season: '🍂 Jesień',
-                months: [MONTHS[8], MONTHS[9], MONTHS[10]],
-                accent: 'rose' as const,
-              },
-              {
-                season: '❄️ Zima',
-                months: [MONTHS[11], MONTHS[0], MONTHS[1]],
-                accent: 'sky' as const,
-              },
-            ].map((group) => (
-              <KangurLessonCallout key={group.season} accent={group.accent} padding='sm'>
+            {SEASON_GROUPS.map((group) => (
+              <KangurLessonCallout key={group.id} accent={group.accent} padding='sm'>
                 <p className='mb-1 text-sm font-bold [color:var(--kangur-page-text)]'>
-                  {group.season}
+                  {group.emoji} {translateSeasonName(miniGameTranslations, group.id)}
                 </p>
                 {group.months.map((month) => (
-                  <p key={month.name} className='text-sm [color:var(--kangur-page-text)]'>
-                    <span className='font-bold'>{month.num}.</span> {month.name}{' '}
-                    <span className='[color:var(--kangur-page-muted-text)]'>({month.days}d)</span>
+                  <p key={month.id} className='text-sm [color:var(--kangur-page-text)]'>
+                    <span className='font-bold'>{month.num}.</span>{' '}
+                    {translateMonthName(miniGameTranslations, month.id)}{' '}
+                    <span className='[color:var(--kangur-page-muted-text)]'>
+                      ({month.days} {translations('labels.daysSuffix')})
+                    </span>
                   </p>
                 ))}
               </KangurLessonCallout>
@@ -288,20 +384,24 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Ile dni ma miesiąc?',
-      tts: 'Większość miesięcy ma 30 lub 31 dni. Luty ma tylko 28 dni.',
+      title: translations('slides.miesiace.monthLength.title'),
+      tts: translations('slides.miesiace.monthLength.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <div className='grid w-full max-w-sm grid-cols-2 gap-2 min-[420px]:grid-cols-3'>
             {MONTHS.map((month) => (
               <KangurLessonCallout
-                key={month.name}
+                key={month.id}
                 accent={month.days === 31 ? 'indigo' : month.days === 30 ? 'teal' : 'rose'}
                 className='rounded-xl text-center text-sm font-semibold'
                 padding='sm'
               >
-                <div className='font-bold'>{month.name}</div>
-                <div className='text-xs'>{month.days} dni</div>
+                <div className='font-bold'>
+                  {translateMonthName(miniGameTranslations, month.id)}
+                </div>
+                <div className='text-xs'>
+                  {month.days} {translations('labels.daysSuffix')}
+                </div>
               </KangurLessonCallout>
             ))}
           </div>
@@ -309,8 +409,8 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Koło miesięcy',
-      tts: 'Miesiące ustawiają się w kole i powtarzają co roku.',
+      title: translations('slides.miesiace.monthsWheel.title'),
+      tts: translations('slides.miesiace.monthsWheel.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='emerald' className='max-w-xs'>
@@ -318,15 +418,15 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarMonthsLoopAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Miesiące krążą bez końca.
+              {translations('slides.miesiace.monthsWheel.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Długość miesięcy',
-      tts: 'Niektóre miesiące mają 31 dni, inne 30, a luty 28.',
+      title: translations('slides.miesiace.lengthAnimation.title'),
+      tts: translations('slides.miesiace.lengthAnimation.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='emerald' className='max-w-xs'>
@@ -334,7 +434,7 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarMonthLengthAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Zapamiętaj długości miesięcy.
+              {translations('slides.miesiace.lengthAnimation.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -343,27 +443,30 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
   ],
   data: [
     {
-      title: 'Jak czytać datę?',
-      tts: 'Datę zapisujemy jako dzień, miesiąc, rok. Na przykład 15 marca 2025.',
+      title: translations('slides.data.readDate.title'),
+      tts: translations('slides.data.readDate.tts'),
       content: (
         <KangurLessonStack className='text-center'>
-          <MiniCalendar month={3} year={2025} highlightDay={15} />
+          <MiniCalendar miniGameTranslations={miniGameTranslations} month={3} year={2025} highlightDay={15} />
           <KangurLessonCallout accent='indigo' className='max-w-xs space-y-2 text-left'>
-            <p className='font-semibold [color:var(--kangur-page-text)]'>Jak zapisać datę?</p>
+            <p className='font-semibold [color:var(--kangur-page-text)]'>
+              {translations('labels.howToWriteDate')}
+            </p>
             <KangurLessonCaption align='left'>
-              📅 <strong>15 marca 2025</strong>
+              📅 <strong>{translations('slides.data.readDate.longExample')}</strong>
             </KangurLessonCaption>
             <KangurLessonCaption align='left'>
-              📝 Lub: <strong>15/03/2025</strong>
+              📝 {translations('labels.shortDatePrefix')}{' '}
+              <strong>{translations('slides.data.readDate.shortExample')}</strong>
             </KangurLessonCaption>
-            <p className='mt-1 font-bold text-indigo-700'>Dzień / Miesiąc / Rok</p>
+            <p className='mt-1 font-bold text-indigo-700'>{translations('labels.datePattern')}</p>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Zapis daty',
-      tts: 'Datę zapisujemy jako dzień, miesiąc i rok, na przykład 15/03/2025.',
+      title: translations('slides.data.format.title'),
+      tts: translations('slides.data.format.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='indigo' className='max-w-xs'>
@@ -371,15 +474,15 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarDateFormatAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Dzień / Miesiąc / Rok.
+              {translations('slides.data.format.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Znajdź dzień',
-      tts: 'W kalendarzu wybieramy konkretny dzień.',
+      title: translations('slides.data.findDay.title'),
+      tts: translations('slides.data.findDay.tts'),
       content: (
         <KangurLessonStack className='text-center'>
           <KangurLessonCallout accent='indigo' className='max-w-xs'>
@@ -387,51 +490,62 @@ export const SECTION_SLIDES: Record<LessonSectionId, LessonSlide[]> = {
               <CalendarDateHighlightAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Wskaż właściwą datę.
+              {translations('slides.data.findDay.caption')}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-export const HUB_SECTIONS: CalendarLiveHubSection[] = [
-  { id: 'intro', emoji: '📅', title: 'Czym jest kalendarz?', description: 'Rok, miesiące i dni' },
-  { id: 'dni', emoji: '🗓️', title: 'Dni tygodnia', description: 'Od poniedzialku do niedzieli' },
+const buildCalendarHubSections = (translations: Translate): CalendarLiveHubSection[] => [
+  {
+    id: 'intro',
+    emoji: '📅',
+    title: translations('sections.intro.title'),
+    description: translations('sections.intro.description'),
+  },
+  {
+    id: 'dni',
+    emoji: '🗓️',
+    title: translations('sections.dni.title'),
+    description: translations('sections.dni.description'),
+  },
   {
     id: 'miesiace',
     emoji: '🌸',
-    title: 'Miesiące i pory roku',
-    description: '12 miesięcy i ich pory roku',
+    title: translations('sections.miesiace.title'),
+    description: translations('sections.miesiace.description'),
   },
-  { id: 'data', emoji: '📝', title: 'Jak czytać datę?', description: 'Dzień / miesiąc / rok' },
+  {
+    id: 'data',
+    emoji: '📝',
+    title: translations('sections.data.title'),
+    description: translations('sections.data.description'),
+  },
   {
     id: 'game_days',
     emoji: '🗓️',
-    title: 'Ćwiczenie: Dni tygodnia',
-    description: 'Weekend, dni tygodnia i układ kolumn',
+    title: translations('sections.gameDays.title'),
+    description: translations('sections.gameDays.description'),
     isGame: true,
   },
   {
     id: 'game_months',
     emoji: '🌸',
-    title: 'Ćwiczenie: Miesiące',
-    description: 'Miesiące, kolejność i pory roku',
+    title: translations('sections.gameMonths.title'),
+    description: translations('sections.gameMonths.description'),
     isGame: true,
   },
   {
     id: 'game_dates',
     emoji: '📝',
-    title: 'Ćwiczenie: Daty',
-    description: 'Wyszukuj właściwe daty w kalendarzu',
+    title: translations('sections.gameDates.title'),
+    description: translations('sections.gameDates.description'),
     isGame: true,
   },
 ];
-
-const TRAINING_SECTIONS: Array<CalendarLiveHubSection & { isGame: true }> = HUB_SECTIONS.filter(
-  (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
-);
 
 const CALENDAR_GAME_SECTION_MAP: Record<TrainingCardId, CalendarInteractiveSectionId> = {
   game_days: 'dni',
@@ -456,7 +570,10 @@ const CalendarGameBody = ({
 };
 
 export default function CalendarLesson(): React.JSX.Element {
+  const translations = useTranslations('KangurStaticLessons.calendar');
+  const miniGameTranslations = useTranslations('KangurMiniGames');
   const lessonCompletionAwardedRef = useRef(false);
+
   const awardLessonCompletionOnce = useCallback(() => {
     if (lessonCompletionAwardedRef.current) {
       return;
@@ -468,7 +585,13 @@ export default function CalendarLesson(): React.JSX.Element {
     lessonCompletionAwardedRef.current = true;
   }, []);
 
-  const games = TRAINING_SECTIONS.map((section) => {
+  const sections = buildCalendarHubSections(translations);
+  const slides = buildCalendarSectionSlides(translations, miniGameTranslations);
+  const trainingSections = sections.filter(
+    (section): section is CalendarLiveHubSection & { isGame: true } => section.isGame === true
+  );
+
+  const games = trainingSections.map((section) => {
     const trainingId = section.id as TrainingCardId;
     const interactiveSection = CALENDAR_GAME_SECTION_MAP[trainingId];
 
@@ -498,9 +621,9 @@ export default function CalendarLesson(): React.JSX.Element {
       progressMode='panel'
       lessonId='calendar'
       lessonEmoji='📅'
-      lessonTitle='Nauka kalendarza'
-      sections={HUB_SECTIONS}
-      slides={SECTION_SLIDES}
+      lessonTitle={translations('lessonTitle')}
+      sections={sections}
+      slides={slides}
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-200'
       dotActiveClass='bg-emerald-500'

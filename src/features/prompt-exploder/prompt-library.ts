@@ -6,17 +6,13 @@ import type {
 } from '@/shared/contracts/prompt-exploder';
 import { promptExploderDocumentSchema } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { promptLibraryItemBaseSchema } from '@/shared/contracts/prompts';
 
 
 export const PROMPT_EXPLODER_LIBRARY_KEY = 'image_studio_prompt_exploder_library';
 
-export const promptExploderLibraryItemSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  prompt: z.string(),
+export const promptExploderLibraryItemSchema = promptLibraryItemBaseSchema.extend({
   document: promptExploderDocumentSchema.nullable().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
 });
 
 export type PromptExploderLibraryItem = z.infer<typeof promptExploderLibraryItemSchema>;

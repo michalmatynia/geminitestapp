@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+import deMessages from '@/i18n/messages/de.json';
 
 let buildLessonMasteryUpdate: typeof import('./progress').buildLessonMasteryUpdate;
 let createGameSessionReward: typeof import('./progress').createGameSessionReward;
 let createLessonPracticeReward: typeof import('./progress').createLessonPracticeReward;
 let createLessonCompletionReward: typeof import('./progress').createLessonCompletionReward;
 let createTrainingReward: typeof import('./progress').createTrainingReward;
+let formatKangurProgressActivityLabel: typeof import('./progress').formatKangurProgressActivityLabel;
 let getNextLockedBadge: typeof import('./progress').getNextLockedBadge;
 let getKangurProgressServerSnapshot: typeof import('./progress').getKangurProgressServerSnapshot;
 let getProgressBadges: typeof import('./progress').getProgressBadges;
@@ -18,6 +20,32 @@ let getVisibleProgressBadges: typeof import('./progress').getVisibleProgressBadg
 let getMasteredLessonCount: typeof import('./progress').getMasteredLessonCount;
 let mergeProgressStates: typeof import('./progress').mergeProgressStates;
 
+const resolveNestedMessage = (root: unknown, key: string): unknown =>
+  key.split('.').reduce<unknown>((current, segment) => {
+    if (!current || typeof current !== 'object') {
+      return undefined;
+    }
+
+    return (current as Record<string, unknown>)[segment];
+  }, root);
+
+const interpolateMessage = (
+  template: string,
+  values?: Record<string, string | number>
+): string =>
+  template.replace(/\{(\w+)\}/g, (match, key) => {
+    const value = values?.[key];
+    return value === undefined ? match : String(value);
+  });
+
+const translateDeProgressMessage = (
+  key: string,
+  values?: Record<string, string | number>
+): string => {
+  const resolved = resolveNestedMessage(deMessages.KangurProgressRuntime, key);
+  return typeof resolved === 'string' ? interpolateMessage(resolved, values) : key;
+};
+
 describe('kangur progress mastery helpers', () => {
   beforeEach(async () => {
     vi.resetModules();
@@ -27,6 +55,7 @@ describe('kangur progress mastery helpers', () => {
       createLessonPracticeReward,
       createLessonCompletionReward,
       createTrainingReward,
+      formatKangurProgressActivityLabel,
       getNextLockedBadge,
       getKangurProgressServerSnapshot,
       getProgressBadges,
@@ -61,6 +90,14 @@ describe('kangur progress mastery helpers', () => {
       lastScorePercent: 60,
       lastCompletedAt: '2026-03-06T10:00:00.000Z',
     });
+  });
+
+  it('localizes geometry activity labels through the progress runtime translator', () => {
+    expect(
+      formatKangurProgressActivityLabel('game:geometry', {
+        translate: translateDeProgressMessage,
+      })
+    ).toBe('Spiel: Geometrie');
   });
 
   it('creates a standard lesson practice reward with mastery and lesson completion updates', () => {
@@ -407,6 +444,29 @@ describe('kangur progress mastery helpers', () => {
     expect(projected.projected.summary).toBe('All goals completed!');
     expect(topActivity?.label).toBe('Clock training: Hours');
     expect(tracks[0]?.label).toBe('XP');
+  });
+
+  it('uses polished German locale copy for English badge labels and descriptions', () => {
+    const badges = getProgressBadges(createDefaultKangurProgressState(), {
+      translate: translateDeProgressMessage,
+    });
+
+    expect(badges.find((badge) => badge.id === 'english_pronoun_pro')).toMatchObject({
+      name: 'Pronomen-Profi',
+      desc: 'Erreiche 2 perfekte Ergebnisse bei Pronomen',
+    });
+    expect(badges.find((badge) => badge.id === 'english_sentence_builder')).toMatchObject({
+      name: 'Satzarchitekt',
+      desc: 'Erreiche 80%+ und spiele 3 Sitzungen zu Satzbau',
+    });
+    expect(badges.find((badge) => badge.id === 'english_agreement_guardian')).toMatchObject({
+      name: 'Übereinstimmungs-Wächter',
+      desc: 'Erreiche ein perfektes Ergebnis bei der Subjekt-Verb-Ubereinstimmung',
+    });
+    expect(badges.find((badge) => badge.id === 'english_mastery_builder')).toMatchObject({
+      name: 'Englisch-Baumeister',
+      desc: 'Bringe 3 Englisch-Lektionen auf mindestens 75% Meisterschaft',
+    });
   });
 
   it('projects guided-session momentum for the active recommended round', () => {

@@ -49,6 +49,7 @@ import {
 } from '@/shared/lib/ai-brain/server';
 import {
   runBrainChatCompletion,
+  supportsBrainJsonMode,
   type BrainChatMessage,
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -62,9 +63,11 @@ import {
 import {
   analyzeLearnerDrawingWithBrain,
   buildTutorDrawingInstructions,
+  extractTutorDrawingArtifactsFromJson,
   extractTutorDrawingArtifactsFromResponse,
   shouldEnableTutorDrawingSupport,
 } from './drawing';
+import { buildLearnerSegmentation } from './segmentation';
 import {
   buildPersonaChatMemoryContext,
   persistAgentPersonaExchangeMemory,
@@ -776,10 +779,12 @@ export async function postKangurAiTutorChatHandler(
       .filter(Boolean)
       .join('\n\n');
 
+    const useJsonMode = supportsBrainJsonMode(brainConfig.modelId) && drawingSupportEnabled;
     const res = await runBrainChatCompletion({
       modelId: brainConfig.modelId,
       temperature: brainConfig.temperature,
       maxTokens: brainConfig.maxTokens,
+      ...(useJsonMode ? { jsonMode: true } : {}),
       messages: [
         { role: 'system', content: combinedSystemPrompt },
         ...(chatMessages
@@ -787,10 +792,12 @@ export async function postKangurAiTutorChatHandler(
           .map((m) => ({
             role: m.role === 'assistant' ? 'assistant' : 'user',
             content: m.content,
-        })) as BrainChatMessage[]),
+          })) as BrainChatMessage[]),
       ],
     });
-    const parsedTutorResponse = extractTutorDrawingArtifactsFromResponse(res.text);
+    const parsedTutorResponse = useJsonMode
+      ? extractTutorDrawingArtifactsFromJson(res.text)
+      : extractTutorDrawingArtifactsFromResponse(res.text);
     const usage = await consumeKangurAiTutorDailyUsage({
       learnerId,
       dailyMessageLimit: tutorSettings.dailyMessageLimit,
@@ -917,6 +924,11 @@ export async function postKangurAiTutorChatHandler(
       ctx,
     });
 
+    const learnerSegmentation = buildLearnerSegmentation(
+      context,
+      adaptiveCoachingMode,
+      drawingSupportEnabled
+    );
     await logKangurServerEvent({
       source: 'kangur.ai-tutor.chat.completed',
       service: 'kangur.ai-tutor',
@@ -926,11 +938,8 @@ export async function postKangurAiTutorChatHandler(
       actor,
       statusCode: 200,
       context: {
-        surface: context?.surface ?? null,
-        contentId: context?.contentId ?? null,
-        promptMode: resolvedPromptMode,
-        focusKind: context?.focusKind ?? null,
-        interactionIntent: context?.interactionIntent ?? null,
+        // Learner segmentation dimensions for analytics aggregation
+        ...learnerSegmentation,
         brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
         retrievedSourceCount: resolvedSources.length,
         returnedSourceCount: responseSources.length,
@@ -945,7 +954,6 @@ export async function postKangurAiTutorChatHandler(
         hasBridgeFollowUpAction: followUpReporting.hasBridgeFollowUpAction,
         bridgeFollowUpActionCount: followUpReporting.bridgeFollowUpActionCount,
         bridgeFollowUpDirection: followUpReporting.bridgeFollowUpDirection,
-        coachingMode: adaptiveCoachingMode,
         hasLearnerMemory: Boolean(memory),
         personaId: tutorSettings.agentPersonaId,
         suggestedPersonaMoodId,

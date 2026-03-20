@@ -224,8 +224,8 @@ export const requestDuelLobbyPresenceFromApi = async (
       const payload = await kangurDuelsApiClient.listDuelLobbyPresence(
         limit ? { limit } : undefined,
         {
-        cache: 'no-store',
-        signal: options?.signal,
+          cache: 'no-store',
+          signal: options?.signal,
         }
       );
       const parsed = kangurDuelLobbyPresenceResponseSchema.safeParse(payload);
@@ -280,8 +280,8 @@ export const requestDuelLeaderboardFromApi = async (
       const payload = await kangurDuelsApiClient.getDuelLeaderboard(
         { limit, lookbackDays },
         {
-        cache: 'no-store',
-        signal: options?.signal,
+          cache: 'no-store',
+          signal: options?.signal,
         }
       );
       const parsed = kangurDuelLeaderboardResponseSchema.safeParse(payload);
@@ -319,17 +319,11 @@ export const requestDuelLobbyChatFromApi = async (
     typeof options?.before === 'string' && options.before.trim().length > 0
       ? options.before.trim()
       : null;
-  const query = new URLSearchParams();
-  if (limit) {
-    query.set('limit', String(limit));
-  }
-  if (before) {
-    query.set('before', before);
-  }
-  const endpoint = buildKangurDuelLobbyChatPath({
+  const requestQuery = {
     ...(limit ? { limit } : {}),
     ...(before ? { before } : {}),
-  });
+  };
+  const endpoint = buildKangurDuelLobbyChatPath(requestQuery);
 
   return withKangurClientError(
     (error) => ({
@@ -345,16 +339,10 @@ export const requestDuelLobbyChatFromApi = async (
       },
     }),
     async () => {
-      const payload = await kangurDuelsApiClient.listDuelLobbyChat(
-        {
-          ...(limit ? { limit } : {}),
-          ...(before ? { before } : {}),
-        },
-        {
+      const payload = await kangurDuelsApiClient.listDuelLobbyChat(requestQuery, {
         cache: 'no-store',
         signal: options?.signal,
-        }
-      );
+      });
       const parsed = kangurDuelLobbyChatListResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel lobby chat payload validation failed.');
@@ -404,8 +392,8 @@ export const requestDuelOpponentsFromApi = async (
       const payload = await kangurDuelsApiClient.listDuelOpponents(
         limit ? { limit } : undefined,
         {
-        cache: 'no-store',
-        signal: options?.signal,
+          cache: 'no-store',
+          signal: options?.signal,
         }
       );
       const parsed = kangurDuelOpponentsResponseSchema.safeParse(payload);
@@ -457,10 +445,14 @@ export const requestDuelSearchFromApi = async (
       },
     }),
     async () => {
-      const payload = await kangurDuelsApiClient.searchDuels(trimmed, limit ? { limit } : undefined, {
-        cache: 'no-store',
-        signal: options?.signal,
-      });
+      const payload = await kangurDuelsApiClient.searchDuels(
+        trimmed,
+        limit ? { limit } : undefined,
+        {
+          cache: 'no-store',
+          signal: options?.signal,
+        }
+      );
       const parsed = kangurDuelSearchResponseSchema.safeParse(payload);
       if (!parsed.success) {
         throw new Error('Kangur duel search payload validation failed.');

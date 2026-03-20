@@ -41,13 +41,13 @@ describe('ResultScreen', () => {
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute('aria-valuenow', '75');
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveAttribute(
       'aria-valuetext',
-      '75% shared.correctAnswersSuffix'
+      '75% poprawnych odpowiedzi'
     );
     expect(screen.getByTestId('result-screen-progress-bar')).toHaveClass(
       'rounded-full',
       '[background:var(--kangur-progress-track)]'
     );
-    expect(screen.getByRole('button', { name: /resultScreen\.actions\.home/i })).toHaveClass(
+    expect(screen.getByRole('button', { name: 'Strona główna' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'
     );

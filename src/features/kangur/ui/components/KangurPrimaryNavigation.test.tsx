@@ -4,7 +4,7 @@
 
 import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -747,6 +747,37 @@ describe('KangurPrimaryNavigation', () => {
       transitionKind: 'locale-switch',
     });
     expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
+  });
+
+  it('warms the default locale target when opening the menu from a non-default locale', async () => {
+    localeMock.mockReturnValue('en');
+    pathnameMock.mockReturnValue('/en/lessons');
+    const queryClient = { prefetchQuery: vi.fn() };
+
+    render(
+      <QueryClientContext.Provider value={queryClient as never}>
+        <KangurPrimaryNavigation
+          basePath='/en'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </QueryClientContext.Provider>
+    );
+
+    prefetchMock.mockClear();
+    prefetchKangurPageContentStoreMock.mockClear();
+
+    openLanguageMenu();
+    await screen.findByRole('menu');
+
+    await waitFor(() => {
+      expect(prefetchMock).toHaveBeenCalledTimes(1);
+      expect(prefetchMock).toHaveBeenCalledWith('/lessons');
+    });
+
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'pl');
   });
 
   it('warms the locale route and page content only once before switching', async () => {

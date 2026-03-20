@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Kangur Mobile",
+    "slug": "kangur-mobile",
+    "scheme": "kangur",
+    "plugins": ["expo-router"],
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

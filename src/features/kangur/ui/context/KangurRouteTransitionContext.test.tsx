@@ -355,6 +355,52 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
   });
 
+  it('allows a locale-switch to supersede an in-flight locale-switch before reveal', async () => {
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Lessons',
+      requestedPath: '/en/lessons',
+      requestedHref: '/en/lessons',
+      targetHref: '/lessons',
+      targetPageKey: 'Lessons',
+      transitionKind: 'locale-switch',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/lessons'
+          requestedHref='/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe
+              targetHref='/de/lessons'
+              targetPageKey='Lessons'
+              transitionKind='locale-switch'
+            />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-active-href')).toHaveTextContent('/lessons');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-kind')).toHaveTextContent('locale-switch');
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-active-href')).toHaveTextContent('/de/lessons');
+  });
+
   it('clears a pending transition if the navigation takes too long', () => {
     renderRouteTransitionHarness({
       pageKey: 'Game',

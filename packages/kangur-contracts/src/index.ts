@@ -1,2 +1,1 @@
-export * from './kangur';
-export * from './kangur-ai-tutor-mood';
+export * from '../../../src/shared/contracts/kangur';

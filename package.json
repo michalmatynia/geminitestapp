@@ -4,9 +4,15 @@
   "private": true,
   "type": "module",
   "packageManager": "npm@11.7.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "predev": "node scripts/runtime/check-node-version.cjs",
     "dev": "node --max-old-space-size=8192 server.cjs",
+    "dev:web": "node --max-old-space-size=8192 server.cjs",
+    "dev:mobile": "npm run dev --workspace @kangur/mobile",
     "predev:playwright-broker": "node scripts/runtime/check-node-version.cjs",
     "dev:playwright-broker": "node --max-old-space-size=16384 server.cjs",
     "dev:heap": "node --max-old-space-size=8192 --heapsnapshot-near-heap-limit=2 --trace-gc server.cjs",

@@ -45,11 +45,7 @@ describe('QuestionCard', () => {
       'aria-valuetext',
       '30 sekund pozostało'
     );
-    expect(screen.getByTestId('question-card-shell')).toHaveClass(
-      'glass-panel',
-      'border-white/88',
-      'bg-white/94'
-    );
+    expect(screen.getByTestId('question-card-shell')).toHaveClass('glass-panel', 'kangur-panel-soft');
     expect(screen.getByRole('group', { name: '6 + 1' })).toBeInTheDocument();
     expect(correctChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');
     expect(wrongChoice).toHaveClass('soft-card', 'border', 'kangur-card-surface', 'kangur-card-padding-md');

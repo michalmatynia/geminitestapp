@@ -1,0 +1,9 @@
+{
+  "name": "@kangur/mobile-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Scaffold only. Add Expo web or React Native Web dependencies before building apps/mobile-web.' && exit 1"
+  }
+}

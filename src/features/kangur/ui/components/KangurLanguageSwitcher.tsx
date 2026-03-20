@@ -40,6 +40,7 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
 const LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+const DEFAULT_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
 
 const ENABLED_LOCALES = DEFAULT_SITE_I18N_CONFIG.locales.filter((locale) => locale.enabled);
 
@@ -248,6 +249,7 @@ export function KangurLanguageSwitcher({
       }),
     [currentHash, currentPathname, search]
   );
+  const defaultLocaleOption = localeOptions.find((option) => option.code === DEFAULT_LOCALE) ?? null;
 
   const isLanguageTransitionActive =
     (routeTransitionState?.activeTransitionKind === 'locale-switch' ||
@@ -284,6 +286,14 @@ export function KangurLanguageSwitcher({
     },
     [currentLocale, queryClient, routeNavigator]
   );
+
+  useEffect(() => {
+    if (!open || currentLocale === DEFAULT_LOCALE) {
+      return;
+    }
+
+    warmLocaleTarget(defaultLocaleOption);
+  }, [currentLocale, defaultLocaleOption, open, warmLocaleTarget]);
 
   if (ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath)) {
     return null;

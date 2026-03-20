@@ -310,6 +310,7 @@ export function KangurRouteTransitionProvider({
       const nextPageKey = input.pageKey?.trim() || null;
       const nextSourceId = input.sourceId?.trim() || null;
       const nextTransitionKind = normalizeTransitionKind(input.transitionKind);
+      const activeTransition = transitionStateRef.current;
       const requestedAcknowledgeMs = Number.isFinite(input.acknowledgeMs)
         ? Math.max(
             0,
@@ -327,10 +328,12 @@ export function KangurRouteTransitionProvider({
         };
       }
 
-      if (
-        transitionStateRef.current &&
-        transitionStateRef.current.phase !== 'revealing'
-      ) {
+      const canSupersedeLocaleSwitch =
+        activeTransition?.kind === 'locale-switch' &&
+        nextTransitionKind === 'locale-switch' &&
+        activeTransition.href !== normalizedHref;
+
+      if (activeTransition && activeTransition.phase !== 'revealing' && !canSupersedeLocaleSwitch) {
         return {
           started: false,
           acknowledgeMs: 0,

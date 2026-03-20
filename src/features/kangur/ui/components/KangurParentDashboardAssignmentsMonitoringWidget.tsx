@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurLearnerInteractionHistory } from '@/features/kangur/services/ports';
+import type { KangurLearnerInteractionHistory } from '@kangur/platform';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import {

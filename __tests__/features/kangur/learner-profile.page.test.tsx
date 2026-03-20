@@ -5,7 +5,7 @@
 import { render, screen, waitFor } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 const {

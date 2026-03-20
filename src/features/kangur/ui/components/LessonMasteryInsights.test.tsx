@@ -43,16 +43,16 @@ describe('LessonMasteryInsights', () => {
     render(<LessonMasteryInsights progress={progress} />);
 
     expect(screen.getByText('2 lekcji z zapisem')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-indigo-start,#a855f7))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-indigo-start,#a855f7))]'
     );
     expect(screen.getAllByText('45%')[0]).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(255_228_230))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(255_228_230))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-rose-start,#f87171))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-rose-start,#f87171))]'
     );
     expect(screen.getByText('92%')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(209_250_229))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(209_250_229))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-emerald-start,#10b981))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-emerald-start,#10b981))]'
     );
   });
 
@@ -68,7 +68,7 @@ describe('LessonMasteryInsights', () => {
 
     expect(
       screen.getByText(
-        'Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i obszary do powtórki.'
+        'Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i obszary do powtorki.'
       ).parentElement
     ).toHaveClass('soft-card', 'border-dashed', 'border');
   });

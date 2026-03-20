@@ -64,26 +64,26 @@ describe('LessonHub', () => {
     expect(lessonCard).toHaveClass('soft-card');
     expect(gameCard).toHaveClass(
       'soft-card',
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,rgb(224_231_255))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,rgb(224_231_255))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_46%,var(--kangur-accent-indigo-end,#6366f1))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_86%,var(--kangur-accent-indigo-start,#a855f7))]'
     );
     expect(within(lessonCard).getByTestId('lesson-hub-icon-days')).toHaveClass(
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(226_232_240))]',
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(71_85_105))]'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,var(--kangur-accent-slate-start,#94a3b8))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-slate-end,#475569))]'
     );
     expect(within(gameCard).getByTestId('lesson-hub-icon-game')).toHaveClass(
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,rgb(224_231_255))]',
-      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,rgb(79_70_229))]'
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_76%,var(--kangur-accent-indigo-start,#a855f7))]',
+      '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-indigo-end,#6366f1))]'
     );
     expect(screen.queryByText('Nauka kalendarza')).not.toBeInTheDocument();
     expect(screen.queryByText('Wybierz temat')).not.toBeInTheDocument();
     expect(within(lessonCard).getByText('Lekcja')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(226_232_240))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-slate-start,#94a3b8))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-slate-start,#94a3b8))]'
     );
     expect(within(gameCard).getByText('Gra')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_231_255))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_231_255))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-indigo-start,#a855f7))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-indigo-start,#a855f7))]'
     );
     expect(within(gameCard).getByTestId('lesson-hub-progress-game')).toBeInTheDocument();
     expect(within(gameCard).getByTestId('lesson-hub-progress-dot-game-0')).toHaveClass(

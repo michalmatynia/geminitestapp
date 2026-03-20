@@ -1,4 +1,4 @@
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 
 export const FILTER_OPTION_VALUES = [
   'all',

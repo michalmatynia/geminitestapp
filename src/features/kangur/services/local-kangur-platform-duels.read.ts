@@ -18,7 +18,7 @@ import type {
   KangurDuelSearchResponse,
   KangurDuelSpectatorStateResponse,
   KangurDuelStateResponse,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import {
   kangurDuelLeaderboardResponseSchema,

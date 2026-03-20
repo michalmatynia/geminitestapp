@@ -17,7 +17,7 @@ import {
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
 import { hasKangurLessonDocumentContent } from '@/features/kangur/lesson-documents';
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';

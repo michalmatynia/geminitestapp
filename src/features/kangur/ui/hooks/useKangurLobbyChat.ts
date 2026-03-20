@@ -13,7 +13,7 @@ import type {
   KangurDuelLobbyChatCreateInput,
   KangurDuelLobbyChatMessage,
   KangurDuelLobbyChatSendResponse,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
 import {

@@ -40,7 +40,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 }));
 
 import enMessages from '@/i18n/messages/en.json';
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 
 import ScoreHistory from './ScoreHistory';
 

@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 
 import KangurAssignmentsList from './KangurAssignmentsList';

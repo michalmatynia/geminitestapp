@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';

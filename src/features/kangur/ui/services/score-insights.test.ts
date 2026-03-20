@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 
 import { SCORE_INSIGHT_WINDOW_DAYS, buildKangurScoreInsights } from './score-insights';
 

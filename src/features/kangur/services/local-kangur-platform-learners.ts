@@ -5,12 +5,12 @@ import {
 } from '@kangur/api-client';
 import type {
   KangurLearnerCreateInput,
-  KangurLearnerProfile,
-  KangurLearnerUpdateInput,
-  KangurLearnerSessionHistory,
   KangurLearnerInteractionHistory,
+  KangurLearnerProfile,
+  KangurLearnerSessionHistory,
+  KangurLearnerUpdateInput,
   KangurUser,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import {
   kangurLearnerProfileSchema,

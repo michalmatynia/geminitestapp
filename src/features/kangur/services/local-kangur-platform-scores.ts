@@ -11,7 +11,7 @@ import {
   syncGuestKangurScores,
 } from '@/features/kangur/services/guest-kangur-scores';
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
-import type { KangurScoreCreateInput, KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreCreateInput, KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurScoreSchema, type KangurLessonSubject } from '@kangur/contracts';
 import { reportKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';

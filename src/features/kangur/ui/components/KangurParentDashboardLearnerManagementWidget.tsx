@@ -8,7 +8,7 @@ import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialog
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurLearnerSessionHistory } from '@/features/kangur/services/ports';
+import type { KangurLearnerSessionHistory } from '@kangur/platform';
 import { useKangurParentDashboardRuntime } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
 import {
   KangurButton,

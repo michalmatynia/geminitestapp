@@ -4,7 +4,7 @@ import {
 } from '@/features/kangur/observability/client';
 import { createGuestKangurScore } from '@/features/kangur/services/guest-kangur-scores';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurUser } from '@/features/kangur/services/ports';
+import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 

@@ -68,7 +68,8 @@ describe('KangurLessonActivityBlock', () => {
     );
     expect(screen.getByTestId('lesson-activity-block-shell')).toHaveClass(
       'glass-panel',
-      'border-emerald-200/80'
+      'kangur-panel-soft',
+      'kangur-surface-panel-accent-emerald'
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'ClockTrainingGame' }));
@@ -102,7 +103,8 @@ describe('KangurLessonActivityBlock', () => {
     expect(screen.getByText('Ball activity')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-activity-block-editor-shell')).toHaveClass(
       'glass-panel',
-      'border-emerald-200/80'
+      'kangur-panel-soft',
+      'kangur-surface-panel-accent-emerald'
     );
     expect(screen.getByText(/live game widget is hidden in editor preview/i)).toBeInTheDocument();
     expect(screen.getByText(/live game widget is hidden in editor preview/i).parentElement).toHaveClass(

@@ -40,11 +40,11 @@ describe('KangurBadgeTrackSection', () => {
       />
     );
 
-    expect(screen.getByText('badgeTracksHeading')).toHaveClass(
+    expect(screen.getByText('Sciezki odznak')).toHaveClass(
       'text-xs',
       'tracking-wide'
     );
-    expect(screen.getByText('badgeTracksHeading').parentElement).toHaveClass(
+    expect(screen.getByText('Sciezki odznak').parentElement).toHaveClass(
       'flex',
       'flex-col',
       'kangur-panel-gap'

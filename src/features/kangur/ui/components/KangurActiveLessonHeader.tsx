@@ -7,7 +7,7 @@ import {
   getLocalizedKangurLessonDescription,
   getLocalizedKangurLessonTitle,
 } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import { KangurLessonNarrator } from '@/features/kangur/ui/components/KangurLessonNarrator';
 import {
   useKangurLessonSubsectionSummary,

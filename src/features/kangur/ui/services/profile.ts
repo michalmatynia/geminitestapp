@@ -1,4 +1,4 @@
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import type {

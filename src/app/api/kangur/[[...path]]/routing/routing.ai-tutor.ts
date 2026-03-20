@@ -36,6 +36,7 @@ import {
 import { getKangurAiTutorUsageHandler } from '@/app/api/kangur/ai-tutor/usage/handler';
 import { POST_handler as postKangurAiTutorFollowUpHandler } from '@/app/api/kangur/ai-tutor/follow-up/handler';
 import { POST_handler as postKangurNativeGuideGenerationHandler } from '@/app/api/kangur/ai-tutor/admin/native-guide-generation/handler';
+import { GET_handler as getKangurAiTutorExperimentsHandler, PUT_handler as putKangurAiTutorExperimentsHandler } from '@/app/api/kangur/ai-tutor/experiments/handler';
 import { GET_handler as getKangurKnowledgeGraphStatusHandler, querySchema as knowledgeGraphQuerySchema } from '@/app/api/kangur/knowledge-graph/status/handler';
 import { POST_handler as postKangurKnowledgeGraphSyncHandler } from '@/app/api/kangur/knowledge-graph/sync/handler';
 import { handleGetPost, methodNotAllowed, SimpleRouteHandler } from './routing.utils';
@@ -148,6 +149,17 @@ export const nativeGuideGenerationHandler: SimpleRouteHandler = apiHandler(postK
   parseJsonBody: true,
 });
 
+export const aiTutorExperimentsGetHandler: SimpleRouteHandler = apiHandler(getKangurAiTutorExperimentsHandler, {
+  source: 'kangur.ai-tutor.experiments.GET',
+  service: 'kangur.api',
+});
+
+export const aiTutorExperimentsPutHandler: SimpleRouteHandler = apiHandler(putKangurAiTutorExperimentsHandler, {
+  source: 'kangur.ai-tutor.experiments.PUT',
+  service: 'kangur.api',
+  parseJsonBody: true,
+});
+
 export const handleAiTutorRouting = (request: NextRequest, segments: string[]): Promise<Response> | null => {
   if (segments[0] === 'ai-tutor') {
     const sub = segments[1];
@@ -182,6 +194,11 @@ export const handleAiTutorRouting = (request: NextRequest, segments: string[]): 
     if (sub === 'follow-up' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return aiTutorFollowUpHandler(request);
+    }
+    if (sub === 'experiments' && segments.length === 2) {
+      if (request.method === 'GET') return aiTutorExperimentsGetHandler(request);
+      if (request.method === 'PUT') return aiTutorExperimentsPutHandler(request);
+      return methodNotAllowed(request, ['GET', 'PUT'], request.method);
     }
     if (sub === 'admin' && segments[2] === 'native-guide-generation' && segments.length === 3) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);

@@ -22,8 +22,8 @@ describe('MultiplicationGame', () => {
 
     expect(screen.getByTestId('multiplication-game-round-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByTestId('multiplication-game-progress-bar')).toHaveAttribute(
       'aria-valuenow',

@@ -1,4 +1,4 @@
-import type { KangurAssignmentSnapshot, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot, KangurUser } from '@kangur/platform';
 import type {
   KangurDifficulty,
   KangurGameScreen,

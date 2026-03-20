@@ -26,7 +26,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 
 import { KangurPriorityAssignments } from './KangurPriorityAssignments';
 

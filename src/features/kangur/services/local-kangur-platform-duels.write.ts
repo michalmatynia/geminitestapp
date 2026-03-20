@@ -21,7 +21,7 @@ import type {
   KangurDuelReactionInput,
   KangurDuelReactionResponse,
   KangurDuelStateResponse,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import {
   kangurDuelLobbyChatSendResponseSchema,
@@ -68,8 +68,8 @@ export const pingDuelLobbyPresenceViaApi = async (
       const payload = await kangurDuelsApiClient.pingDuelLobbyPresence(
         limit ? { limit } : undefined,
         {
-        cache: 'no-store',
-        signal: options?.signal,
+          cache: 'no-store',
+          signal: options?.signal,
         }
       );
       const parsed = kangurDuelLobbyPresenceResponseSchema.safeParse(payload);

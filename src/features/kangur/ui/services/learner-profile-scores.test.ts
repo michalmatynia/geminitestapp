@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { KangurScorePort, KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScorePort, KangurScoreRecord } from '@kangur/platform';
 
 import {
   LEARNER_PROFILE_SCORE_FETCH_LIMIT,

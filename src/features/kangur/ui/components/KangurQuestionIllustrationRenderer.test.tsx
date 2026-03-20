@@ -25,7 +25,8 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(container.querySelector('circle')).not.toBeNull();
     expect(screen.getByTestId('kangur-illustration-single-frame')).toHaveClass(
       'soft-card',
-      'border-slate-200/85'
+      'kangur-media-frame-accent-slate',
+      'kangur-gradient-accent-soft-slate'
     );
   });
 
@@ -52,12 +53,13 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(container.innerHTML).not.toContain('image.png');
     expect(container.querySelector('rect')).not.toBeNull();
     expect(screen.getByTestId('kangur-illustration-panel-label-panel-1')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(226_232_240))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-slate-start,#94a3b8))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-slate-start,#94a3b8))]'
     );
     expect(screen.getByTestId('kangur-illustration-panel-frame-panel-1')).toHaveClass(
       'soft-card',
-      'border-slate-200/85'
+      'kangur-media-frame-accent-slate',
+      'kangur-gradient-accent-soft-slate'
     );
   });
 
@@ -82,11 +84,12 @@ describe('KangurQuestionIllustrationRenderer', () => {
     expect(screen.getByTestId('kangur-illustration-panel-placeholder-panel-empty')).toHaveClass(
       'soft-card',
       'border-dashed',
-      'border-slate-200/85'
+      'kangur-media-frame-accent-slate',
+      'kangur-gradient-accent-soft-slate'
     );
     expect(screen.getByTestId('kangur-illustration-panel-label-panel-empty')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(226_232_240))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(226_232_240))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-slate-start,#94a3b8))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-slate-start,#94a3b8))]'
     );
   });
 

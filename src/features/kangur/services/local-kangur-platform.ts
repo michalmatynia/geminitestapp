@@ -25,7 +25,7 @@ import type {
   KangurProgressUpdateContext,
   KangurScoreCreateInput,
   KangurScoreRecord,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import {
   kangurLearnerActivitySnapshotSchema,

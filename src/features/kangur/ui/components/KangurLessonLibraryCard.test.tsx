@@ -80,8 +80,8 @@ describe('KangurLessonLibraryCard', () => {
 
     expect(screen.getByTestId('lesson-library-item')).toHaveClass('soft-card', 'border');
     expect(screen.getByTestId('lesson-library-icon')).toHaveClass('kangur-gradient-icon-tile-lg');
-    expect(screen.getByText('customContent')).toHaveClass('rounded-full', 'border');
-    expect(screen.getAllByText('parentPriority')[0]).toHaveClass('rounded-full', 'border');
+    expect(screen.getByText('Wlasna zawartosc')).toHaveClass('rounded-full', 'border');
+    expect(screen.getAllByText('Priorytet rodzica')[0]).toHaveClass('rounded-full', 'border');
     expect(screen.getByText('Priorytet wysoki')).toHaveTextContent('Priorytet wysoki');
     expect(screen.getByText('Skup się na odczytywaniu pełnych godzin.')).toBeInTheDocument();
 
@@ -111,8 +111,8 @@ describe('KangurLessonLibraryCard', () => {
       />
     );
 
-    expect(screen.getByText('completedForParent')).toBeInTheDocument();
-    expect(screen.getByText('closedAssignment')).toBeInTheDocument();
-    expect(screen.getByText('completedAssignmentSummary')).toBeInTheDocument();
+    expect(screen.getByText('Ukonczone dla rodzica')).toBeInTheDocument();
+    expect(screen.getByText('Zadanie zamkniete')).toBeInTheDocument();
+    expect(screen.getByText('Zadanie od rodzica zostalo juz wykonane. Powtórki: 1/1')).toBeInTheDocument();
   });
 });

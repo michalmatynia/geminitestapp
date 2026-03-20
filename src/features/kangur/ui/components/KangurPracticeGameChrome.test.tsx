@@ -51,8 +51,8 @@ describe('KangurPracticeGameChrome', () => {
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={12} />
         <KangurPracticeGameSummaryBreakdown
           breakdown={[
-            { kind: 'accuracy', label: 'Za celność', xp: 8 },
-            { kind: 'streak', label: 'Za serię', xp: 4 },
+            { kind: 'accuracy', label: 'Skuteczność', xp: 8 },
+            { kind: 'streak', label: 'Seria', xp: 4 },
           ]}
           dataTestId='practice-summary-breakdown'
           itemDataTestIdPrefix='practice-summary-breakdown'
@@ -73,14 +73,14 @@ describe('KangurPracticeGameChrome', () => {
 
     expect(screen.getByTestId('practice-summary-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByTestId('practice-summary-emoji')).toHaveClass('text-6xl');
     expect(screen.getByTestId('practice-summary-title')).toHaveTextContent('Wynik: 6/6');
     expect(screen.getByTestId('practice-summary-progress')).toHaveAttribute('aria-valuenow', '100');
     expect(screen.getByText('+12 XP ✨')).toHaveClass('rounded-full', 'border');
-    expect(screen.getByTestId('practice-summary-breakdown')).toHaveTextContent('Za celność');
+    expect(screen.getByTestId('practice-summary-breakdown')).toHaveTextContent('Skuteczność');
     expect(screen.getByRole('button', { name: /jeszcze raz/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta'

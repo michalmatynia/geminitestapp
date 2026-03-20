@@ -128,13 +128,13 @@ describe('KangurAssignmentSpotlight', () => {
     expect(screen.getByText('Powtórka dzielenia')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-assignment-spotlight-shell')).toHaveClass(
       'glass-panel',
-      'border-white/78',
-      'bg-white/58'
+      'kangur-panel-elevated',
+      'kangur-glass-surface-mist'
     );
     expect(screen.getByTestId('kangur-assignment-spotlight-inner-shell')).toHaveClass(
       'soft-card',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-subtle',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByText('Priorytet wysoki')).toHaveClass(
       'inline-flex',

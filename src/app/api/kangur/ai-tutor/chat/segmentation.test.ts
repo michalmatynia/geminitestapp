@@ -14,6 +14,8 @@ describe('buildLearnerSegmentation', () => {
       questionId: null,
       hasDrawing: false,
       coachingMode: null,
+      experimentCoachingMode: null,
+      experimentContextStrategy: null,
     });
   });
 
@@ -37,6 +39,8 @@ describe('buildLearnerSegmentation', () => {
       questionId: 'q-456',
       hasDrawing: true,
       coachingMode: 'socratic_method',
+      experimentCoachingMode: null,
+      experimentContextStrategy: null,
     });
   });
 

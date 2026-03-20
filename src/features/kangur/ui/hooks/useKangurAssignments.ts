@@ -9,7 +9,7 @@ import type {
   KangurAssignmentListQuery,
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
 

@@ -42,17 +42,17 @@ describe('Kangur game training widgets', () => {
 
     expect(screen.getByTestId('kangur-calendar-training-top-section')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
-    expect(screen.getByRole('heading', { name: 'screens.calendar_quiz.label' })).toHaveClass(
+    expect(screen.getByRole('heading', { name: 'Cwiczenia z kalendarzem' })).toHaveClass(
       'text-lg',
       'sm:text-xl'
     );
-    expect(screen.getByRole('button', { name: 'quizBackButton' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-calendar-training-game')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'quizBackButton' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
 
     expect(setScreen).toHaveBeenCalledWith('operation');
   });
@@ -80,17 +80,17 @@ describe('Kangur game training widgets', () => {
 
     expect(screen.getByTestId('kangur-geometry-training-top-section')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
-    expect(screen.getByRole('heading', { name: 'screens.geometry_quiz.label' })).toHaveClass(
+    expect(screen.getByRole('heading', { name: 'Cwiczenia z figurami' })).toHaveClass(
       'text-lg',
       'sm:text-xl'
     );
-    expect(screen.getByRole('button', { name: 'quizBackButton' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do tematów' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-geometry-training-game')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'quizBackButton' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do tematów' }));
 
     expect(setScreen).toHaveBeenCalledWith('operation');
   });

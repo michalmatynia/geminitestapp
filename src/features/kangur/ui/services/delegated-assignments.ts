@@ -8,7 +8,7 @@ import { KANGUR_LESSON_LIBRARY, getKangurSubjectLabel } from '@/features/kangur/
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentSnapshot,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
 import type {

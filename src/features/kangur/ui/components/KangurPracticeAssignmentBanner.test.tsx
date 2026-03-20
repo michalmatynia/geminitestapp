@@ -70,7 +70,8 @@ describe('KangurPracticeAssignmentBanner', () => {
 
     expect(screen.getByTestId('kangur-practice-assignment-shell')).toHaveClass(
       'glass-panel',
-      'border-amber-200/80'
+      'kangur-panel-soft',
+      'kangur-surface-panel-accent-amber'
     );
     expect(screen.getByText('Priorytet rodzica')).toHaveClass(
       'text-[11px]',

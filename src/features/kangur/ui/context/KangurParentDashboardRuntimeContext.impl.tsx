@@ -12,7 +12,7 @@ import {
 } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurLearnerProfile, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurLearnerProfile, KangurUser } from '@kangur/platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';

@@ -3,13 +3,13 @@ import {
   buildKangurAssignmentsPath,
   createKangurApiClient,
 } from '@kangur/api-client';
-
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentListQuery,
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
+
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurAssignmentSnapshotSchema } from '@kangur/contracts';
 import { withKangurClientError } from '@/features/kangur/observability/client';

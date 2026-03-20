@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 
 const { logKangurClientErrorMock, withKangurClientError, withKangurClientErrorSync } =
   globalThis.__kangurClientErrorMocks();

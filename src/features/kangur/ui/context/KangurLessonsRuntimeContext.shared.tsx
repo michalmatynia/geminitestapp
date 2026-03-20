@@ -1,6 +1,6 @@
 'use client';
 
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type {
   KangurLesson,

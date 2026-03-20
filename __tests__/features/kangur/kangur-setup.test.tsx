@@ -38,8 +38,8 @@ describe('KangurSetup', () => {
     expect(screen.getByRole('list', { name: 'Wybierz edycję konkursu' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-setup-editions-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     const editionsHeading = screen.getByTestId('kangur-setup-editions-heading');
     expect(editionsHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
@@ -65,8 +65,8 @@ describe('KangurSetup', () => {
     const selectedEditionHeading = screen.getByTestId('kangur-setup-selected-edition-heading');
     expect(screen.getByTestId('kangur-setup-selected-edition-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(selectedEditionHeading).toHaveClass('flex', 'flex-col', 'items-center', 'text-center');
     expect(within(selectedEditionHeading).getByText('🦘')).toHaveClass('rounded-full');

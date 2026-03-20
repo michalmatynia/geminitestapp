@@ -1,7 +1,7 @@
 import React, { type AriaAttributes, type ComponentProps } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import {
   getLocalizedKangurLessonDescription,
   getLocalizedKangurLessonTitle,

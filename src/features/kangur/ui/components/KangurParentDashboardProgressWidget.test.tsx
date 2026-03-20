@@ -165,12 +165,12 @@ describe('KangurParentDashboardProgressWidget', () => {
     expect(screen.getAllByTestId('assignments-list-stub')).toHaveLength(2);
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'widgets.progress.assignments.recentTitle',
+        title: 'Ostatnie aktywne zadania',
       })
     );
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'widgets.progress.assignments.activeTitle',
+        title: 'Aktywne zadania',
       })
     );
     expect(screen.getByTestId('assignment-manager-stub')).toBeInTheDocument();
@@ -238,12 +238,12 @@ describe('KangurParentDashboardProgressWidget', () => {
     ).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'widgets.progress.assignments.recentTitle',
+        title: 'Ostatnie aktywne zadania',
       })
     );
     expect(assignmentsListMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'widgets.progress.assignments.activeTitle',
+        title: 'Aktywne zadania',
       })
     );
     expect(assignmentManagerMock).toHaveBeenCalled();

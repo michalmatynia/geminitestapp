@@ -1,5 +1,5 @@
 import { createLocalKangurPlatform } from '@/features/kangur/services/local-kangur-platform';
-import type { KangurPlatform } from '@/features/kangur/services/ports';
+import type { KangurPlatform } from '@kangur/platform';
 
 let cachedPlatform: KangurPlatform | null = null;
 

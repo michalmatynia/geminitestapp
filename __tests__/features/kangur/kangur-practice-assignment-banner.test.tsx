@@ -46,7 +46,8 @@ describe('KangurPracticeAssignmentBanner', () => {
     expect(screen.getByText('Priorytet rodzica')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-practice-assignment-shell')).toHaveClass(
       'glass-panel',
-      'border-amber-200/80'
+      'kangur-panel-soft',
+      'kangur-surface-panel-accent-amber'
     );
     expect(screen.getByText('Priorytet rodzica')).toHaveClass(
       'inline-flex',
@@ -56,8 +57,8 @@ describe('KangurPracticeAssignmentBanner', () => {
     expect(screen.getByText('Najbliższy priorytet w praktyce: Dzielenie.')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-practice-assignment-inner-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByText('Praktyka: Dzielenie')).toBeInTheDocument();
     expect(screen.getByText('Priorytet wysoki')).toHaveClass(

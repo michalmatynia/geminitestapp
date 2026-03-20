@@ -1,4 +1,5 @@
 import { createKangurApiClient } from '@kangur/api-client';
+import type { KangurUser } from '@kangur/platform';
 import {
   getKangurLoginHref,
   resolveKangurPublicBasePathFromHref,
@@ -7,7 +8,6 @@ import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
-import type { KangurUser } from '@/features/kangur/services/ports';
 import { kangurAuthUserSchema } from '@kangur/contracts';
 
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';

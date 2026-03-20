@@ -1,4 +1,4 @@
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 
 type ScoreCacheEntry = {
   rows: KangurScoreRecord[];

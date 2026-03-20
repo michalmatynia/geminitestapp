@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DIFFICULTY_CONFIG } from '@kangur/core';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type {

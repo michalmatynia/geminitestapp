@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurProgressUpdateContext } from '@/features/kangur/services/ports';
+import type { KangurProgressUpdateContext } from '@kangur/platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { loadProgress } from '@/features/kangur/ui/services/progress';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';

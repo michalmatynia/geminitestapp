@@ -76,8 +76,8 @@ describe('KangurLearnerProfileHeroWidget', () => {
 
     expect(screen.getByTestId('kangur-learner-profile-hero')).toHaveClass(
       'glass-panel',
-      'border-white/78',
-      'bg-white/68',
+      'kangur-panel-soft',
+      'kangur-glass-surface-mist-strong',
       'text-center'
     );
     expect(
@@ -89,15 +89,15 @@ describe('KangurLearnerProfileHeroWidget', () => {
       )
     ).toBeNull();
     expect(
-      screen.getByRole('button', { name: 'signIn' })
+      screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'createParentAccount' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Utworz konto rodzica' })).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'signIn' }));
-    fireEvent.click(screen.getByRole('button', { name: 'createParentAccount' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Utworz konto rodzica' }));
 
     expect(openLoginModal).toHaveBeenCalledTimes(2);
     expect(openLoginModal).toHaveBeenLastCalledWith(null, {
@@ -161,7 +161,7 @@ describe('KangurLearnerProfileHeroWidget', () => {
       screen.getByTestId('kangur-learner-profile-hero-milestone-track-mastery')
     ).toHaveTextContent('Mistrzostwo');
     expect(
-      screen.queryByRole('button', { name: 'signIn' })
+      screen.queryByRole('button', { name: 'Zaloguj sie, aby synchronizowac postep' })
     ).not.toBeInTheDocument();
   });
 });

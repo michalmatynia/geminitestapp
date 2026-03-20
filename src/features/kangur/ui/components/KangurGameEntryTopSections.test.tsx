@@ -195,8 +195,8 @@ describe('Kangur game entry top sections', () => {
 
     expect(screen.getByTestId('kangur-game-operation-top-section')).toHaveClass(
       'glass-panel',
-      'border-white/78',
-      'bg-white/68',
+      'kangur-panel-soft',
+      'kangur-glass-surface-mist-strong',
       'text-center'
     );
     expect(screen.getByRole('heading', { name: 'Grajmy!' })).toHaveClass(
@@ -205,11 +205,11 @@ describe('Kangur game entry top sections', () => {
     );
     expect(screen.getByTestId('kangur-grajmy-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Wybierz rodzaj gry i przejdź od razu do matematycznej zabawy.')
+      screen.getByText('Wybierz rodzaj gry i przejdz od razu do matematycznej zabawy.')
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Wróć do poprzedniej strony' })).toBeInTheDocument();
     expect(screen.getByTestId('mock-operation-selector')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Szybkie ćwiczenia' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Szybkie cwiczenia' })).toBeInTheDocument();
     expect(screen.getByTestId('kangur-game-training-top-section')).toBeInTheDocument();
     expect(screen.getByTestId('mock-training-setup')).toBeInTheDocument();
     expect(screen.queryByText(/Cześć,/i)).not.toBeInTheDocument();
@@ -262,7 +262,7 @@ describe('Kangur game entry top sections', () => {
       {
         recommendation: {
           description:
-            'Łagodny start z dwiema kategoriami pomoże złapać rytm bez przeciążenia na pierwszej sesji.',
+            'Lagodny start z dwiema kategoriami pomoze zlapac rytm bez przeciazenia na pierwszej sesji.',
           label: 'Start',
           source: 'training_setup',
           title: 'Polecany trening na start',
@@ -285,25 +285,27 @@ describe('Kangur game entry top sections', () => {
 
     expect(screen.getByTestId('kangur-game-kangur-setup-top-section')).toHaveClass(
       'glass-panel',
-      'border-white/78',
-      'bg-white/68',
+      'kangur-panel-soft',
+      'kangur-glass-surface-mist-strong',
       'text-center'
     );
-    expect(screen.getByRole('heading', { name: 'Kangur' })).toHaveClass(
+    expect(
+      screen.getByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })
+    ).toHaveClass(
       'text-2xl',
       'sm:text-3xl'
     );
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Wybierz edycję konkursu i zestaw zadań do rozwiązania.')
+      screen.getByText('Przygotuj sesje Kangura Matematycznego.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-kangur')).toBeInTheDocument();
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();
     expect(kangurSetupPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        recommendedLabel: 'Łagodny start',
+        recommendedLabel: 'Lagodny start',
         recommendedMode: 'training_3pt',
-        recommendedTitle: 'Polecamy zacząć od treningu 3-punktowego',
+        recommendedTitle: 'Polecamy zaczac od treningu 3-punktowego',
       })
     );
 
@@ -314,10 +316,10 @@ describe('Kangur game entry top sections', () => {
       {
         recommendation: {
           description:
-            'Łatwiejszy zestaw treningowy pozwoli wejść w formule Kangura bez zbyt ostrego progu trudności.',
-          label: 'Łagodny start',
+            'Latwiejszy zestaw treningowy pozwoli wejsc w formule Kangura bez zbyt ostrego progu trudnosci.',
+          label: 'Lagodny start',
           source: 'kangur_setup',
-          title: 'Polecamy zacząć od treningu 3-punktowego',
+          title: 'Polecamy zaczac od treningu 3-punktowego',
         },
       }
     );

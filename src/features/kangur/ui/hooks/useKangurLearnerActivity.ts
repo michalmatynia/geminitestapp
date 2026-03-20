@@ -11,7 +11,7 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type {
   KangurLearnerActivityStatus,
   KangurLearnerActivityUpdateInput,
-} from '@/features/kangur/services/ports';
+} from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { recordKangurOpenedTask } from '@/features/kangur/ui/services/progress';
 import { kangurLearnerActivityStatusSchema } from '@/features/kangur/shared/contracts/kangur';

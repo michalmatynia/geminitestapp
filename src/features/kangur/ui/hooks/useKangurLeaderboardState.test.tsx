@@ -4,7 +4,7 @@
 
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 
 const {
   logKangurClientErrorMock,

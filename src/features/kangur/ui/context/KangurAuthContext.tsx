@@ -17,7 +17,7 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurUser } from '@/features/kangur/services/ports';
+import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { getKangurLoginHref, KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';

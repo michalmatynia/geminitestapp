@@ -35,6 +35,12 @@ export interface LearnerSegmentation {
 
   // Coaching mode if adaptive guidance applied
   coachingMode: string | null;
+
+  // A/B experiment variant for coaching strategy (if assigned)
+  experimentCoachingMode: string | null;
+
+  // A/B experiment variant for context/KG strategy (if assigned)
+  experimentContextStrategy: string | null;
 }
 
 /**
@@ -43,7 +49,7 @@ export interface LearnerSegmentation {
  *
  * **Usage in telemetry:**
  * ```typescript
- * const segmentation = buildLearnerSegmentation(context, coachingMode, hasDrawing);
+ * const segmentation = buildLearnerSegmentation(context, coachingMode, hasDrawing, experimentFlags);
  * await logKangurServerEvent({
  *   ...otherFields,
  *   context: {
@@ -58,11 +64,15 @@ export interface LearnerSegmentation {
  * - `Group by focusKind` → see which math topics get most help-seeking
  * - `Group by interactionIntent` → see explain vs. solve request ratios
  * - `Group by coachingMode` → see effectiveness of different coaching strategies
+ * - `Group by experimentCoachingMode` → A/B test coaching strategy variants
+ * - `Group by experimentContextStrategy` → A/B test context/KG strategy variants
  */
 export const buildLearnerSegmentation = (
   context: KangurAiTutorConversationContext | undefined,
   coachingMode: string | null,
-  hasDrawing: boolean
+  hasDrawing: boolean,
+  experimentCoachingMode?: string | null,
+  experimentContextStrategy?: string | null
 ): LearnerSegmentation => ({
   surface: context?.surface ?? null,
   focusKind: context?.focusKind ?? null,
@@ -72,6 +82,8 @@ export const buildLearnerSegmentation = (
   questionId: context?.questionId ?? null,
   hasDrawing,
   coachingMode,
+  experimentCoachingMode: experimentCoachingMode ?? null,
+  experimentContextStrategy: experimentContextStrategy ?? null,
 });
 
 /**

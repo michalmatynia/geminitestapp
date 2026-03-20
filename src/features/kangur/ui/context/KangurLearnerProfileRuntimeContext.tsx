@@ -17,7 +17,7 @@ import {
 } from '@/features/kangur/config/routing';
 import { logKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurScoreRecord, KangurUser } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';

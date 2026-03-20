@@ -7,7 +7,7 @@ import {
   resolveKangurActor,
   requireActiveLearner,
 } from '@/features/kangur/server';
-import type { KangurLearnerProfile } from '@/features/kangur/services/ports';
+import type { KangurLearnerProfile } from '@kangur/platform';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

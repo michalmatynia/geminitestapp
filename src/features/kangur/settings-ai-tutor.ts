@@ -1,6 +1,7 @@
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   type KangurAiTutorConversationContext,
+  type KangurAiTutorCoachingMode,
   type KangurAiTutorMotionPresetKind,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
@@ -15,6 +16,11 @@ export type KangurAiTutorHintDepth = 'brief' | 'guided' | 'step_by_step';
 export type KangurAiTutorProactiveNudges = 'off' | 'gentle' | 'coach';
 export type KangurAiTutorGuestIntroMode = 'first_visit' | 'every_visit';
 export type KangurAiTutorHomeOnboardingMode = 'off' | 'first_visit' | 'every_visit';
+
+export type KangurAiTutorExperimentFlags = {
+  coachingMode?: KangurAiTutorCoachingMode | null;
+  contextStrategy?: 'default' | 'no_kg' | 'native_guide_only' | null;
+};
 
 export const KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS: Array<
   IdLabelOptionDto<Exclude<KangurAiTutorMotionPresetKind, 'default'>> & { description: string }
@@ -59,6 +65,7 @@ export type KangurAiTutorLearnerGuardrails = {
   allowSelectedTextSupport: boolean;
   hintDepth: KangurAiTutorHintDepth;
   proactiveNudges: KangurAiTutorProactiveNudges;
+  experimentFlags: KangurAiTutorExperimentFlags;
 };
 
 export type KangurAiTutorLearnerSettings = KangurAiTutorLearnerGuardrails &
@@ -93,6 +100,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS: Readonly<KangurAiTutorL
     allowSelectedTextSupport: true,
     hintDepth: 'guided',
     proactiveNudges: 'gentle',
+    experimentFlags: { coachingMode: null, contextStrategy: null },
   });
 
 export const DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS: Readonly<KangurAiTutorLearnerSettings> =
@@ -158,6 +166,45 @@ const normalizeProactiveNudges = (value: unknown): KangurAiTutorProactiveNudges 
     default:
       return DEFAULT_KANGUR_AI_TUTOR_LEARNER_SETTINGS.proactiveNudges;
   }
+};
+
+const normalizeCoachingModeVariant = (value: unknown): KangurAiTutorCoachingMode | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'hint_ladder':
+    case 'misconception_check':
+    case 'review_reflection':
+    case 'next_best_action':
+      return normalized as KangurAiTutorCoachingMode;
+    default:
+      return null;
+  }
+};
+
+const normalizeContextStrategy = (value: unknown): 'default' | 'no_kg' | 'native_guide_only' | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'default':
+    case 'no_kg':
+    case 'native_guide_only':
+      return normalized as 'default' | 'no_kg' | 'native_guide_only';
+    default:
+      return null;
+  }
+};
+
+const normalizeKangurAiTutorExperimentFlags = (value: unknown): KangurAiTutorExperimentFlags => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.experimentFlags;
+  }
+
+  const input = value as Record<string, unknown>;
+  return {
+    coachingMode: normalizeCoachingModeVariant(input['coachingMode']),
+    contextStrategy: normalizeContextStrategy(input['contextStrategy']),
+  };
 };
 
 export function resolveKangurAiTutorMotionPresetKind(
@@ -398,6 +445,7 @@ export function normalizeKangurAiTutorLearnerSettings(
         : DEFAULT_KANGUR_AI_TUTOR_LEARNER_GUARDRAILS.allowSelectedTextSupport,
     hintDepth: normalizeHintDepth(input['hintDepth']),
     proactiveNudges: normalizeProactiveNudges(input['proactiveNudges']),
+    experimentFlags: normalizeKangurAiTutorExperimentFlags(input['experimentFlags']),
     ...normalizeKangurAiTutorAppSettingsFields(input),
   };
 }

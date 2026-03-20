@@ -351,6 +351,7 @@ function AiTutorConfigPanel(): React.JSX.Element | null {
       allowSelectedTextSupport,
       hintDepth,
       proactiveNudges,
+      experimentFlags: { coachingMode: null, contextStrategy: null },
     };
 
     const nextStore = {

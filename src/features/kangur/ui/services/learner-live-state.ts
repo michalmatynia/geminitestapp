@@ -1,5 +1,5 @@
 import { appendKangurUrlParams, getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
-import type { KangurLearnerActivityStatus } from '@/features/kangur/services/ports';
+import type { KangurLearnerActivityStatus } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 

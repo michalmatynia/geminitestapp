@@ -4,7 +4,7 @@ import {
   buildKangurLearnerProfileSnapshot,
   buildLessonMasteryInsights,
 } from '@/features/kangur/ui/services/profile';
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord => ({

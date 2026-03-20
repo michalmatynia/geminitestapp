@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 
 import {
   buildKangurAssignmentCatalog,

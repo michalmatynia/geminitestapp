@@ -193,41 +193,42 @@ describe('KangurLessonDocumentRenderer', () => {
       />
     );
 
-    expect(screen.getAllByText('pageLabel')).toHaveLength(2);
+    expect(screen.getAllByText(/Strona [12]/)).toHaveLength(2);
     expect(screen.getByTestId('lesson-page-shell-page-1')).toHaveClass(
       'glass-panel',
-      'border-white/70',
-      'bg-white/45'
+      'kangur-panel-elevated',
+      'kangur-glass-surface-mist-soft'
     );
-    expect(screen.getAllByText('sectionLabel')).toHaveLength(2);
+    expect(screen.getAllByText('Sekcja')).toHaveLength(2);
     expect(screen.getByText('Introduction')).toBeInTheDocument();
     expect(screen.getByText('Get oriented before the lesson starts')).toBeInTheDocument();
     expect(screen.getByText('Intro')).toBeInTheDocument();
     expect(screen.getByText('Lesson heading')).toBeInTheDocument();
     expect(screen.getByText('Image caption')).toBeInTheDocument();
     expect(screen.getByText('Photo reference')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-amber-start,#fb923c))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-amber-start,#fb923c))]'
     );
     expect(screen.getByTestId('lesson-text-block-text-1')).toHaveClass(
       'glass-panel',
-      'border-indigo-200/70'
+      'kangur-panel-soft',
+      'kangur-surface-panel-accent-indigo'
     );
     expect(screen.getByTestId('lesson-image-frame-image-1')).toHaveClass(
       'soft-card',
       'kangur-card-surface',
       'kangur-media-padding-md',
-      'border-amber-100',
+      'kangur-media-frame-accent-amber',
       'kangur-gradient-accent-soft-amber'
     );
     expect(screen.getByText('Triangle')).toBeInTheDocument();
     expect(screen.getByText('Triangle')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(224_242_254))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(224_242_254))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-sky-start,#38bdf8))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-sky-start,#38bdf8))]'
     );
     expect(screen.getByTestId('lesson-svg-frame-svg-1')).toHaveClass(
       'soft-card',
-      'border-sky-100',
+      'kangur-media-frame-accent-sky',
       'kangur-gradient-accent-soft-sky'
     );
     expect(screen.getByText('Clock practice')).toBeInTheDocument();
@@ -236,7 +237,8 @@ describe('KangurLessonDocumentRenderer', () => {
     expect(screen.getByText('Grid copy')).toBeInTheDocument();
     expect(screen.getByTestId('lesson-grid-block-grid-1')).toHaveClass(
       'glass-panel',
-      'border-violet-200/80'
+      'kangur-panel-soft',
+      'kangur-surface-panel-accent-violet'
     );
     expect(container.querySelector('img')).not.toBeNull();
     expect(container.querySelectorAll('svg').length).toBeGreaterThanOrEqual(2);
@@ -297,31 +299,31 @@ describe('KangurLessonDocumentRenderer', () => {
 
     expect(screen.getByTestId('lesson-page-shell-page-empty')).toHaveClass(
       'glass-panel',
-      'border-white/70',
-      'bg-white/45',
+      'kangur-panel-elevated',
+      'kangur-glass-surface-mist-soft',
       'border-dashed'
     );
-    expect(screen.getAllByText('sectionLabel')[0].parentElement).toHaveClass(
+    expect(screen.getAllByText('Sekcja')[0].parentElement).toHaveClass(
       'soft-card',
       'border'
     );
     expect(screen.getByText('Missing image')).toHaveClass(
-      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,rgb(254_243_199))]',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,rgb(254_243_199))]'
+      '[border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-amber-start,#fb923c))]',
+      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-amber-start,#fb923c))]'
     );
     expect(screen.getByTestId('lesson-image-frame-image-empty')).toHaveClass(
       'soft-card',
       'kangur-card-surface',
       'kangur-media-padding-md',
-      'border-amber-100',
+      'kangur-media-frame-accent-amber',
       'kangur-gradient-accent-soft-amber'
     );
-    expect(screen.getByText('noBlocksTitle').parentElement).toHaveClass(
+    expect(screen.getByText('Ta strona nie ma jeszcze blokow.').parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
       'border'
     );
-    expect(screen.getByText('imageMissingSource').parentElement).toHaveClass(
+    expect(screen.getByText('Blok obrazu nie ma jeszcze zrodla.').parentElement).toHaveClass(
       'soft-card',
       'border-dashed',
       '[border-color:var(--kangur-soft-card-border)]'

@@ -3,7 +3,7 @@
 import { useLocale } from 'next-intl';
 import { useId, useMemo } from 'react';
 
-import type { KangurAssignmentSnapshot } from '@/features/kangur/services/ports';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/KangurAssignmentPriorityChip';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';

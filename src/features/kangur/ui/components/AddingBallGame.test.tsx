@@ -86,8 +86,8 @@ describe('AddingBallGame', () => {
     expect(screen.getByText('1/6')).toHaveClass('[color:var(--kangur-page-muted-text)]');
     expect(screen.getByTestId('adding-ball-round-shell')).toHaveClass(
       'glass-panel',
-      'border-white/88',
-      'bg-white/94'
+      'kangur-panel-soft',
+      'kangur-glass-surface-solid'
     );
     expect(screen.getByRole('button', { name: /sprawdź/i })).toHaveClass(
       'kangur-cta-pill',

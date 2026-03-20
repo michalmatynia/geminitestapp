@@ -10,7 +10,7 @@ import {
 } from '@/features/kangur/config/routing';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurSessionHistoryRow } from '@/features/kangur/ui/components/KangurSessionHistoryRow';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';

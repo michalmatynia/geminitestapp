@@ -7,7 +7,7 @@ import {
   readKangurUrlParam,
   type KangurInternalQueryParamKey,
 } from '@/features/kangur/config/routing';
-import type { KangurUser } from '@/features/kangur/services/ports';
+import type { KangurUser } from '@kangur/platform';
 import {
   claimCurrentKangurDailyQuestReward,
   getCurrentKangurDailyQuest,

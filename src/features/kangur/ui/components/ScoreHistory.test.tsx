@@ -5,7 +5,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';
-import type { KangurScoreRecord } from '@/features/kangur/services/ports';
+import type { KangurScoreRecord } from '@kangur/platform';
 import { buildKangurScoreInsights } from '@/features/kangur/ui/services/score-insights';
 
 const {

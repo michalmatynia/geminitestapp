@@ -960,6 +960,10 @@
     "lessons": "Lekcje",
     "duels": "Pojedynki",
     "parent": "Rodzic",
+    "languageSwitcher": {
+      "triggerAriaLabel": "Aktualny język: {language}. Otwórz menu zmiany języka.",
+      "triggerTitle": "Język: {language}"
+    },
     "subject": {
       "label": "Wybierz przedmiot",
       "currentTitle": "Aktualny przedmiot: {subject}",
@@ -1871,122 +1875,6 @@
         "perfect": "Perfekcyjnie! Rozgrzewka zaliczona.",
         "good": "Dobra robota!",
         "retry": "Jeszcze jedna runda i będzie super."
-      }
-    },
-    "calendar": {
-      "lessonTitle": "Nauka kalendarza",
-      "labels": {
-        "schoolTag": "Szkoła",
-        "weekendTag": "Weekend",
-        "daysSuffix": "dni",
-        "howToWriteDate": "Jak zapisać datę?",
-        "shortDatePrefix": "Lub:",
-        "datePattern": "Dzień / Miesiąc / Rok"
-      },
-      "sections": {
-        "intro": {
-          "title": "Czym jest kalendarz?",
-          "description": "Rok, miesiące i dni"
-        },
-        "dni": {
-          "title": "Dni tygodnia",
-          "description": "Od poniedziałku do niedzieli"
-        },
-        "miesiace": {
-          "title": "Miesiące i pory roku",
-          "description": "12 miesięcy i cztery pory roku"
-        },
-        "data": {
-          "title": "Jak czytać datę?",
-          "description": "Dzień / Miesiąc / Rok"
-        },
-        "gameDays": {
-          "title": "Ćwiczenie: Dni tygodnia",
-          "description": "Weekend, dni tygodnia i układ kolumn"
-        },
-        "gameMonths": {
-          "title": "Ćwiczenie: Miesiące",
-          "description": "Miesiące, kolejność i pory roku"
-        },
-        "gameDates": {
-          "title": "Ćwiczenie: Daty",
-          "description": "Wyszukuj właściwe daty w kalendarzu"
-        }
-      },
-      "slides": {
-        "intro": {
-          "whatIsCalendar": {
-            "title": "Czym jest kalendarz?",
-            "tts": "Kalendarz to sposób organizowania czasu. Rok ma 12 miesięcy i 365 dni. Tydzień ma 7 dni.",
-            "body": "Kalendarz to sposób organizowania czasu.",
-            "yearStat": "Rok ma 12 miesięcy i 365 dni.",
-            "weekStat": "Tydzień ma 7 dni."
-          },
-          "yearLoop": {
-            "title": "Rok w pętli",
-            "tts": "Miesiące wracają co roku w tej samej kolejności.",
-            "caption": "Po grudniu znów zaczyna się styczeń."
-          },
-          "seasons": {
-            "title": "Pory roku",
-            "tts": "Mamy cztery pory roku, które powtarzają się cyklicznie.",
-            "caption": "Wiosna, lato, jesień, zima."
-          }
-        },
-        "dni": {
-          "weekdays": {
-            "title": "Dni tygodnia",
-            "tts": "Tydzień ma 7 dni: poniedziałek, wtorek, środa, czwartek, piątek, sobota, niedziela."
-          },
-          "rhythm": {
-            "title": "Tydzień w rytmie",
-            "tts": "Dni tygodnia następują po sobie w stałej kolejności.",
-            "caption": "Po niedzieli znowu jest poniedziałek."
-          },
-          "weekend": {
-            "title": "Weekend",
-            "tts": "Sobota i niedziela to weekend.",
-            "caption": "Weekend wyróżnia się kolorem."
-          }
-        },
-        "miesiace": {
-          "monthsOfYear": {
-            "title": "12 miesięcy roku",
-            "tts": "Rok ma 12 miesięcy podzielonych na cztery pory roku."
-          },
-          "monthLength": {
-            "title": "Ile dni ma miesiąc?",
-            "tts": "Większość miesięcy ma 30 lub 31 dni. Luty ma tylko 28 dni."
-          },
-          "monthsWheel": {
-            "title": "Koło miesięcy",
-            "tts": "Miesiące ustawiają się w kole i powtarzają co roku.",
-            "caption": "Miesiące krążą bez końca."
-          },
-          "lengthAnimation": {
-            "title": "Długość miesięcy",
-            "tts": "Niektóre miesiące mają 31 dni, inne 30, a luty 28.",
-            "caption": "Zapamiętaj długości miesięcy."
-          }
-        },
-        "data": {
-          "readDate": {
-            "title": "Jak czytać datę?",
-            "tts": "Datę zapisujemy jako dzień, miesiąc, rok. Na przykład: 15 marca 2025.",
-            "longExample": "15 marca 2025",
-            "shortExample": "15/03/2025"
-          },
-          "format": {
-            "title": "Zapis daty",
-            "tts": "Datę zapisujemy jako dzień, miesiąc i rok, na przykład 15 przez 03 przez 2025.",
-            "caption": "Dzień / Miesiąc / Rok."
-          },
-          "findDay": {
-            "title": "Znajdź dzień",
-            "tts": "W kalendarzu wybieramy konkretny dzień.",
-            "caption": "Wskaż właściwą datę."
-          }
-        }
       }
     },
     "calendar": {
@@ -4900,13 +4788,27 @@
             "lead": "Subject pronouns pokazują, kto wykonuje działanie. W zadaniach matematycznych to często uczeń, nauczyciel albo zespół.",
             "caption": "Skup się na tym, kto robi zadanie: solve, check, graph, explain.",
             "items": {
-              "i": { "meaning": "ja" },
-              "you": { "meaning": "ty / wy" },
-              "he": { "meaning": "on" },
-              "she": { "meaning": "ona" },
-              "it": { "meaning": "ono / to" },
-              "we": { "meaning": "my" },
-              "they": { "meaning": "oni / one" }
+              "i": {
+                "meaning": "ja"
+              },
+              "you": {
+                "meaning": "ty / wy"
+              },
+              "he": {
+                "meaning": "on"
+              },
+              "she": {
+                "meaning": "ona"
+              },
+              "it": {
+                "meaning": "ono / to"
+              },
+              "we": {
+                "meaning": "my"
+              },
+              "they": {
+                "meaning": "oni / one"
+              }
             }
           },
           "heSheIt": {
@@ -6697,6 +6599,98 @@
               "finish": "Zakończ"
             }
           }
+        }
+      }
+    },
+    "alphabetBasics": {
+      "header": {
+        "title": "Alfabet",
+        "description": "Rysuj litery po sladzie. Cwicz precyzje ruchu na kolorowych sladach. To gra dla szesciolatkow.",
+        "roundBadge": "Litera {letter}"
+      },
+      "guide": {
+        "title": "Slad litery",
+        "description": "Litera {letter} jak {word}."
+      },
+      "drawHint": {
+        "coarse": "Rysuj palcem po sladzie",
+        "fine": "Rysuj palcem lub myszka"
+      },
+      "canvasAria": "Rysuj litere {letter}",
+      "footer": {
+        "traceHint": "Rysuj po grubych liniach i nie spiesz sie.",
+        "points": "{count} punktow",
+        "idlePrompt": "Kliknij Sprawdz, gdy skonczysz rysowac."
+      },
+      "actions": {
+        "clear": "Wyczysc",
+        "check": "Sprawdz",
+        "next": "Dalej",
+        "restart": "Zacznij od nowa"
+      },
+      "feedback": {
+        "error": {
+          "traceMore": "Rysuj po sladzie litery i sprobuj jeszcze raz.",
+          "keepGoing": "Super start! Dorysuj jeszcze kawalek litery."
+        },
+        "success": "Swietnie! Litera {letter} gotowa."
+      },
+      "rounds": {
+        "A": {
+          "word": "auto"
+        },
+        "B": {
+          "word": "balon"
+        },
+        "C": {
+          "word": "cytryna"
+        }
+      }
+    },
+    "alphabetCopy": {
+      "header": {
+        "title": "Alfabet",
+        "description": "Track: Przepisz litery. Cwicz plynnosc pisania pod wzorem. To gra dla 6-latkow.",
+        "roundBadge": "Litera {letter}"
+      },
+      "guide": {
+        "title": "Wzor litery",
+        "description": "Litera {letter} jak {word}.",
+        "writeHere": "Napisz tutaj"
+      },
+      "drawHint": {
+        "coarse": "Przepisuj litere palcem na dolnych liniach",
+        "fine": "Przepisuj litere na dolnych liniach"
+      },
+      "canvasAria": "Przepisz litere {letter} pod wzorem",
+      "footer": {
+        "traceHint": "Trzymaj sie linii i nie spiesz sie.",
+        "points": "{count} punktow",
+        "idlePrompt": "Kliknij Sprawdz, gdy skonczysz przepisywac."
+      },
+      "actions": {
+        "clear": "Wyczysc",
+        "check": "Sprawdz",
+        "next": "Dalej",
+        "restart": "Zacznij od nowa"
+      },
+      "feedback": {
+        "error": {
+          "keepToLowerLines": "Rysuj pod litera, na dolnych liniach.",
+          "copyMore": "Przepisz litere na dole i sprobuj jeszcze raz.",
+          "keepGoing": "Super start! Dorysuj jeszcze kawalek litery."
+        },
+        "success": "Brawo! Litera {letter} gotowa."
+      },
+      "rounds": {
+        "L": {
+          "word": "lew"
+        },
+        "O": {
+          "word": "oko"
+        },
+        "M": {
+          "word": "mis"
         }
       }
     }

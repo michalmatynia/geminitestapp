@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 
+import { QueryClientContext } from '@tanstack/react-query';
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -46,6 +47,10 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Lekcje',
         duels: 'Pojedynki',
         parent: 'Rodzic',
+        languageSwitcher: {
+          triggerAriaLabel: 'Aktualny język: {language}. Otwórz menu zmiany języka.',
+          triggerTitle: 'Język: {language}',
+        },
         subject: {
           label: 'Wybierz przedmiot',
           currentTitle: 'Aktualny przedmiot: {subject}',
@@ -68,6 +73,10 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Lessons',
         duels: 'Duels',
         parent: 'Parent',
+        languageSwitcher: {
+          triggerAriaLabel: 'Current language: {language}. Open language menu.',
+          triggerTitle: 'Language: {language}',
+        },
         subject: {
           label: 'Choose subject',
           currentTitle: 'Current subject: {subject}',
@@ -90,6 +99,10 @@ const { translationMessages } = vi.hoisted(() => ({
         lessons: 'Lektionen',
         duels: 'Duelle',
         parent: 'Eltern',
+        languageSwitcher: {
+          triggerAriaLabel: 'Aktuelle Sprache: {language}. Sprachmenü öffnen.',
+          triggerTitle: 'Sprache: {language}',
+        },
         subject: {
           label: 'Fach auswahlen',
           currentTitle: 'Aktuelles Fach: {subject}',
@@ -111,6 +124,10 @@ const { translationMessages } = vi.hoisted(() => ({
 
 const { useKangurPageContentEntryMock } = vi.hoisted(() => ({
   useKangurPageContentEntryMock: vi.fn(),
+}));
+
+const { prefetchKangurPageContentStoreMock } = vi.hoisted(() => ({
+  prefetchKangurPageContentStoreMock: vi.fn(),
 }));
 
 const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
@@ -267,7 +284,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  prefetchKangurPageContentStore: vi.fn().mockResolvedValue(undefined),
+  prefetchKangurPageContentStore: prefetchKangurPageContentStoreMock,
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
@@ -398,6 +415,8 @@ describe('KangurPrimaryNavigation', () => {
       refetch: vi.fn(),
       status: 'success',
     });
+    prefetchKangurPageContentStoreMock.mockReset();
+    prefetchKangurPageContentStoreMock.mockResolvedValue(undefined);
     window.sessionStorage.clear();
     document.cookie = 'NEXT_LOCALE=; Max-Age=0; Path=/';
   });
@@ -725,6 +744,43 @@ describe('KangurPrimaryNavigation', () => {
     expect(replaceMock).toHaveBeenCalledWith('/duels', { scroll: false });
   });
 
+  it('warms the locale route and page content only once before switching', async () => {
+    localeMock.mockReturnValue('pl');
+    pathnameMock.mockReturnValue('/lessons');
+    const queryClient = { prefetchQuery: vi.fn() };
+
+    render(
+      <QueryClientContext.Provider value={queryClient as never}>
+        <KangurPrimaryNavigation
+          basePath='/'
+          currentPage='Lessons'
+          isAuthenticated
+          onLogout={vi.fn()}
+        />
+      </QueryClientContext.Provider>
+    );
+
+    openLanguageMenu();
+    const englishOption = await screen.findByTestId('kangur-language-switcher-option-en');
+    prefetchMock.mockClear();
+    prefetchKangurPageContentStoreMock.mockClear();
+
+    fireEvent.mouseEnter(englishOption);
+    fireEvent.focus(englishOption);
+    fireEvent.click(englishOption);
+
+    expect(prefetchMock).toHaveBeenCalledTimes(1);
+    expect(prefetchMock).toHaveBeenCalledWith('/en/lessons');
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledTimes(1);
+    expect(prefetchKangurPageContentStoreMock).toHaveBeenCalledWith(queryClient, 'en');
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons',
+      pageKey: 'Lessons',
+      sourceId: 'kangur-language-switcher',
+      transitionKind: 'locale-switch',
+    });
+  });
+
   it('translates the desktop section labels and chooser copy for English locale', () => {
     localeMock.mockReturnValue('en');
     pathnameMock.mockReturnValue('/en/lessons');
@@ -854,7 +910,7 @@ describe('KangurPrimaryNavigation', () => {
       'px-3'
     );
     expect(trigger.className).not.toContain('sm:w-[11rem]');
-    expect(trigger).toHaveAttribute('title', 'Language: Polski');
+    expect(trigger).toHaveAttribute('title', 'Język: Polski');
     expect(triggerLabel).toHaveClass('flex-1', 'truncate', 'text-sm', 'font-semibold');
     expect(triggerFlagShell).not.toBeNull();
     expect(triggerFlagShell).toHaveClass('h-[1.15rem]', 'w-[1.7rem]', 'rounded-[6px]');

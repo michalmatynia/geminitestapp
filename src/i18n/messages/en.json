@@ -960,6 +960,10 @@
     "lessons": "Lessons",
     "duels": "Duels",
     "parent": "Parent",
+    "languageSwitcher": {
+      "triggerAriaLabel": "Current language: {language}. Open language menu.",
+      "triggerTitle": "Language: {language}"
+    },
     "subject": {
       "label": "Choose subject",
       "currentTitle": "Current subject: {subject}",
@@ -1871,122 +1875,6 @@
         "perfect": "Perfect! Warm-up complete.",
         "good": "Good job!",
         "retry": "One more warm-up round and it will click."
-      }
-    },
-    "calendar": {
-      "lessonTitle": "Learning the calendar",
-      "labels": {
-        "schoolTag": "School",
-        "weekendTag": "Weekend",
-        "daysSuffix": "days",
-        "howToWriteDate": "How do we write the date?",
-        "shortDatePrefix": "Or:",
-        "datePattern": "Day / Month / Year"
-      },
-      "sections": {
-        "intro": {
-          "title": "What is a calendar?",
-          "description": "Year, months, and days"
-        },
-        "dni": {
-          "title": "Weekdays",
-          "description": "From Monday to Sunday"
-        },
-        "miesiace": {
-          "title": "Months and seasons",
-          "description": "12 months and four seasons"
-        },
-        "data": {
-          "title": "How do we read a date?",
-          "description": "Day / Month / Year"
-        },
-        "gameDays": {
-          "title": "Practice: Weekdays",
-          "description": "Weekends, weekdays, and calendar columns"
-        },
-        "gameMonths": {
-          "title": "Practice: Months",
-          "description": "Months, order, and seasons"
-        },
-        "gameDates": {
-          "title": "Practice: Dates",
-          "description": "Find the correct date on the calendar"
-        }
-      },
-      "slides": {
-        "intro": {
-          "whatIsCalendar": {
-            "title": "What is a calendar?",
-            "tts": "A calendar helps us organise time. A year has 12 months and 365 days. A week has 7 days.",
-            "body": "A calendar helps us organise time.",
-            "yearStat": "A year has 12 months and 365 days.",
-            "weekStat": "A week has 7 days."
-          },
-          "yearLoop": {
-            "title": "The year in a loop",
-            "tts": "The months come back every year in the same order.",
-            "caption": "After December, January starts again."
-          },
-          "seasons": {
-            "title": "Seasons",
-            "tts": "There are four seasons, and they repeat in a cycle.",
-            "caption": "Spring, summer, autumn, winter."
-          }
-        },
-        "dni": {
-          "weekdays": {
-            "title": "Days of the week",
-            "tts": "A week has 7 days: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."
-          },
-          "rhythm": {
-            "title": "Week in rhythm",
-            "tts": "The days of the week always follow the same order.",
-            "caption": "After Sunday, Monday begins again."
-          },
-          "weekend": {
-            "title": "Weekend",
-            "tts": "Saturday and Sunday make up the weekend.",
-            "caption": "The weekend stands out with its colour."
-          }
-        },
-        "miesiace": {
-          "monthsOfYear": {
-            "title": "12 months of the year",
-            "tts": "A year has 12 months grouped into four seasons."
-          },
-          "monthLength": {
-            "title": "How many days are in a month?",
-            "tts": "Most months have 30 or 31 days. February has only 28 days."
-          },
-          "monthsWheel": {
-            "title": "Month wheel",
-            "tts": "The months line up in a circle and repeat every year.",
-            "caption": "The months keep going round and round."
-          },
-          "lengthAnimation": {
-            "title": "Month lengths",
-            "tts": "Some months have 31 days, some 30, and February has 28.",
-            "caption": "Remember how long each month is."
-          }
-        },
-        "data": {
-          "readDate": {
-            "title": "How do we read a date?",
-            "tts": "We write the date as day, month, year. For example: 15 March 2025.",
-            "longExample": "15 March 2025",
-            "shortExample": "15/03/2025"
-          },
-          "format": {
-            "title": "Date format",
-            "tts": "We write the date as day, month, and year, for example 15 slash 03 slash 2025.",
-            "caption": "Day / Month / Year."
-          },
-          "findDay": {
-            "title": "Find the day",
-            "tts": "On a calendar, we choose one specific day.",
-            "caption": "Point to the correct date."
-          }
-        }
       }
     },
     "calendar": {
@@ -4900,13 +4788,27 @@
             "lead": "Subject pronouns show who performs the action. In math tasks that is often a student, a teacher, or a team.",
             "caption": "Focus on who does the task: solve, check, graph, explain.",
             "items": {
-              "i": { "meaning": "I" },
-              "you": { "meaning": "you" },
-              "he": { "meaning": "he" },
-              "she": { "meaning": "she" },
-              "it": { "meaning": "it" },
-              "we": { "meaning": "we" },
-              "they": { "meaning": "they" }
+              "i": {
+                "meaning": "I"
+              },
+              "you": {
+                "meaning": "you"
+              },
+              "he": {
+                "meaning": "he"
+              },
+              "she": {
+                "meaning": "she"
+              },
+              "it": {
+                "meaning": "it"
+              },
+              "we": {
+                "meaning": "we"
+              },
+              "they": {
+                "meaning": "they"
+              }
             }
           },
           "heSheIt": {
@@ -6341,6 +6243,454 @@
             "retry": "Try again and check the hints.",
             "resultTemplate": "Score: {score}/{total}"
           }
+        }
+      }
+    },
+    "logicalThinking": {
+      "lessonTitle": "Logical Thinking",
+      "sections": {
+        "wprowadzenie": {
+          "title": "Introduction",
+          "description": "What is logical thinking?"
+        },
+        "wzorce": {
+          "title": "Patterns and Sequences",
+          "description": "Repeating arrangements and prediction"
+        },
+        "klasyfikacja": {
+          "title": "Classification",
+          "description": "Grouping and finding the odd one out"
+        },
+        "wnioskowanie": {
+          "title": "Reasoning",
+          "description": "Step-by-step thinking: if... then..."
+        },
+        "analogie": {
+          "title": "Analogies",
+          "description": "The same relation in a new example"
+        },
+        "zapamietaj": {
+          "title": "Remember",
+          "description": "The most important rules of logical thinking"
+        },
+        "wnioskowanie_gra": {
+          "title": "Game: If... then...",
+          "description": "Arrange the fact, rule, and conclusion"
+        },
+        "laboratorium_gra": {
+          "title": "Game: Logic Lab 🧪",
+          "description": "Pattern, classification, and analogy"
+        }
+      },
+      "slides": {
+        "wprowadzenie": {
+          "basics": {
+            "title": "What Is Logical Thinking? 🧠",
+            "lead": "Logical thinking is the ability to notice rules, organize information, and draw conclusions step by step.",
+            "caption": "First you observe, then you connect facts, and finally you draw a conclusion.",
+            "helpTitle": "Logical thinking helps you:",
+            "helpItems": [
+              "🔍 Find patterns and sequences",
+              "📦 Organize and group things",
+              "💡 Solve riddles and puzzles",
+              "✅ Check whether something makes sense"
+            ]
+          },
+          "steps": {
+            "title": "Three Steps of Logic 🧩",
+            "lead": "First you observe, then you connect facts, and at the end you check the conclusion.",
+            "caption": "Observe → connect → conclusion.",
+            "exampleLabel": "Try to find the rule:",
+            "exampleSequence": "🔺 🔺 🔵 🔺 🔺 🔵 ❓",
+            "exampleAnswer": "Answer: 🔺 🔺 🔵 (the pattern repeats)."
+          }
+        },
+        "wzorce": {
+          "basics": {
+            "title": "Patterns and Sequences 🔢",
+            "lead": "A pattern is a repeating arrangement. Once you find it, you can predict what comes next!",
+            "caption": "The pattern repeats in a steady rhythm.",
+            "shapePrompt": "What comes next?",
+            "shapeSequence": "🔴 🔵 🔴 🔵 🔴 ❓",
+            "shapeAnswer": "Answer: 🔵 (pattern: red – blue)",
+            "numberPrompt": "Number sequence – what comes next?",
+            "numberSequence": "2, 4, 6, 8, ❓",
+            "numberAnswer": "Answer: 10 (go up by 2)"
+          },
+          "growth": {
+            "title": "The Pattern Grows 📈",
+            "lead": "A pattern can repeat and grow at the same time. That is also a rule!",
+            "caption": "Each next element is bigger.",
+            "examplePrompt": "Growing sequence – what comes next?",
+            "exampleSequence": "1, 2, 4, 8, ❓",
+            "exampleAnswer": "Answer: 16 (×2)"
+          }
+        },
+        "klasyfikacja": {
+          "grouping": {
+            "title": "Classification – Grouping 📦",
+            "lead": "Classification means putting things into groups according to a shared feature.",
+            "caption": "The same feature leads to the same group.",
+            "cards": {
+              "fruits": {
+                "title": "Fruit",
+                "items": "🍎 🍌 🍇 🍓"
+              },
+              "vegetables": {
+                "title": "Vegetables",
+                "items": "🥕 🥦 🧅 🌽"
+              },
+              "seaAnimals": {
+                "title": "Sea animals",
+                "items": "🐠 🐙 🦈 🐚"
+              },
+              "landAnimals": {
+                "title": "Land animals",
+                "items": "🐘 🦁 🐄 🐇"
+              }
+            },
+            "closing": "A shared feature is the key to grouping!"
+          },
+          "key": {
+            "title": "Classification Key 🗝️",
+            "lead": "First you choose a feature, and then the elements go into the right group.",
+            "caption": "One feature = one decision.",
+            "exampleLabel": "Feature: has wings",
+            "exampleItems": "🕊️ 🐝 🐟 🐶",
+            "exampleAnswer": "Group \"yes\": 🕊️ 🐝"
+          },
+          "oddOneOut": {
+            "title": "Find the Odd One Out 🔎",
+            "lead": "In every group, one element does not belong. Find it and explain why!",
+            "itemsPrompt": "Which one does not fit?",
+            "itemsSequence": "🍎 🍌 🥕 🍇",
+            "itemsAnswer": "🥕 – it is a vegetable, the rest are fruit",
+            "numberPrompt": "Which number does not fit?",
+            "numberSequence": "2, 4, 7, 8, 10",
+            "numberAnswer": "7 – it is the only odd number"
+          }
+        },
+        "wnioskowanie": {
+          "basics": {
+            "title": "Reasoning: If... Then... 💡",
+            "lead": "Reasoning means drawing conclusions from what we know. We use the pattern: if... then...",
+            "caption": "If the condition is met, the conclusion appears.",
+            "examples": [
+              "If it is raining, then I will take an umbrella. ☔",
+              "If all cats have four paws and Whiskers is a cat, then Whiskers has four paws. 🐱",
+              "If a number is even, then it is divisible by 2. Is 6 even? Yes! 6 ÷ 2 = 3 ✓"
+            ]
+          }
+        },
+        "wnioskowanie_gra": {
+          "interactive": {
+            "title": "Game: If... then... Step by Step",
+            "lead": "Arrange the fact, the rule, and the conclusion in the correct order."
+          }
+        },
+        "analogie": {
+          "basics": {
+            "title": "Analogies – What Fits? 🔗",
+            "lead": "An analogy is a similar relation between different pairs. Fill in the missing link!",
+            "caption": "We look for the same relation in two pairs.",
+            "examples": [
+              "A bird flies, a fish... swims 🐟",
+              "Day is to the sun as night is to... the moon 🌙",
+              "2 is to 4 as 3 is to... 6 (×2)"
+            ]
+          },
+          "map": {
+            "title": "Analogy Map 🧭",
+            "lead": "Check the relation in the first pair and move it to the second.",
+            "caption": "Relation A → B repeats in C → D.",
+            "example": "Knife : cuts = brush : paints 🎨"
+          }
+        },
+        "laboratorium_gra": {
+          "interactive": {
+            "title": "Game: Logic Lab 🧪",
+            "lead": "Complete three missions: pattern, classification, and analogy. Drag and click!"
+          }
+        },
+        "zapamietaj": {
+          "overview": {
+            "title": "Remember! 🌟",
+            "caption": "Remember the most important ideas and come back to them often.",
+            "items": [
+              "🔁 Pattern – find the rule and predict what comes next",
+              "📦 Classification – group by a shared feature",
+              "🔎 Odd one out – one element breaks the group's rule",
+              "💡 If... then... – draw conclusions step by step",
+              "🔗 Analogy – the same relation, another example"
+            ],
+            "closing": "Logical thinking is a superpower! Practice it every day. 🧠✨"
+          }
+        }
+      },
+      "games": {
+        "ifThen": {
+          "rounds": [
+            {
+              "id": "birds",
+              "fact": "The canary is a bird.",
+              "rule": "If something is a bird, then it has wings.",
+              "conclusion": "The canary has wings.",
+              "distractors": [
+                "The canary swims.",
+                "The canary is a fish."
+              ],
+              "explanation": "The fact meets the condition, so the conclusion must be true."
+            },
+            {
+              "id": "rain",
+              "fact": "It is raining today.",
+              "rule": "If it is raining, then we take an umbrella.",
+              "conclusion": "We take an umbrella.",
+              "distractors": [
+                "We put on sunglasses.",
+                "The sky is cloudless."
+              ],
+              "explanation": "When the condition is met, we perform the action from the rule."
+            },
+            {
+              "id": "even",
+              "fact": "The number 8 is even.",
+              "rule": "If a number is even, then it is divisible by 2.",
+              "conclusion": "8 is divisible by 2.",
+              "distractors": [
+                "8 is a prime number.",
+                "8 is divisible by 3."
+              ],
+              "explanation": "Being even means being divisible by 2, so the conclusion is correct."
+            }
+          ],
+          "ui": {
+            "completion": {
+              "title": "Well done! 🧠",
+              "description": "You can already build conclusions step by step.",
+              "restart": "Play again"
+            },
+            "header": {
+              "stepTemplate": "Step {current} / {total}",
+              "instruction": "Click the cards and arrange: fact → rule → conclusion"
+            },
+            "slots": {
+              "fact": {
+                "label": "Fact",
+                "hint": "What do we already know?"
+              },
+              "rule": {
+                "label": "If... then...",
+                "hint": "What rule connects the facts?"
+              },
+              "conclusion": {
+                "label": "Conclusion",
+                "hint": "What follows from this?"
+              }
+            },
+            "deckTitle": "Cards",
+            "cardAriaTemplate": "Card: {text}",
+            "feedback": {
+              "fillAll": "Fill in all the steps to check the conclusion.",
+              "successTemplate": "Great! {explanation}",
+              "error": "Try again — swap the cards into the correct places."
+            },
+            "actions": {
+              "check": "Check",
+              "retry": "Try again",
+              "next": "Next"
+            }
+          }
+        },
+        "lab": {
+          "analogyRounds": [
+            {
+              "id": "bird",
+              "prompt": "Bird : flies = Fish : ?",
+              "options": [
+                {
+                  "id": "swims",
+                  "label": "swims"
+                },
+                {
+                  "id": "runs",
+                  "label": "runs"
+                },
+                {
+                  "id": "sleeps",
+                  "label": "sleeps"
+                }
+              ],
+              "correctId": "swims",
+              "explanation": "Fish move in water, so \"swims\" matches the relation."
+            },
+            {
+              "id": "day",
+              "prompt": "Day : sun = Night : ?",
+              "options": [
+                {
+                  "id": "moon",
+                  "label": "moon"
+                },
+                {
+                  "id": "rain",
+                  "label": "rain"
+                },
+                {
+                  "id": "cloud",
+                  "label": "cloud"
+                }
+              ],
+              "correctId": "moon",
+              "explanation": "At night, we associate light with the moon."
+            }
+          ],
+          "ui": {
+            "completion": {
+              "title": "Well done! 🧠",
+              "description": "You solved every task in the logic lab.",
+              "restart": "Play again"
+            },
+            "header": {
+              "stageTemplate": "Stage {current} / {total}",
+              "instruction": "Drag and click to complete the mission."
+            },
+            "pattern": {
+              "prompt": "Complete the pattern: find the next two shapes.",
+              "slotLabels": {
+                "first": "Slot 1",
+                "second": "Slot 2"
+              },
+              "filledSlotAriaTemplate": "{slot}: {token}",
+              "emptySlotAriaTemplate": "{slot}: empty",
+              "selectTokenAriaTemplate": "Select symbol {token}",
+              "selectedTemplate": "Selected tile: {token}",
+              "idle": "Select a tile to move it with the keyboard.",
+              "moveToFirst": "To slot 1",
+              "moveToSecond": "To slot 2",
+              "moveToPool": "To pool"
+            },
+            "classify": {
+              "prompt": "Sort the pictures by the feature: has wings.",
+              "yesZoneLabel": "Has wings",
+              "noZoneLabel": "Does not have wings",
+              "yesZoneAriaLabel": "Zone: has wings",
+              "noZoneAriaLabel": "Zone: does not have wings",
+              "selectItemAriaTemplate": "Select picture {item}",
+              "selectedTemplate": "Selected picture: {item}",
+              "idle": "Select a picture to move it with the keyboard.",
+              "moveToYes": "To \"has wings\"",
+              "moveToNo": "To \"does not have wings\"",
+              "moveToPool": "To pool"
+            },
+            "analogy": {
+              "prompt": "Complete the analogy.",
+              "optionAriaTemplate": "Option: {option}"
+            },
+            "feedback": {
+              "info": "Complete the task to check the answer.",
+              "success": "Great! Keep it up.",
+              "error": "Oops, try again."
+            },
+            "actions": {
+              "check": "Check",
+              "retry": "Try again",
+              "next": "Next",
+              "finish": "Finish"
+            }
+          }
+        }
+      }
+    },
+    "alphabetBasics": {
+      "header": {
+        "title": "Alphabet",
+        "description": "Trace the letters on the guide. Practise precise movement on colourful paths. This game is for six-year-olds.",
+        "roundBadge": "Letter {letter}"
+      },
+      "guide": {
+        "title": "Letter guide",
+        "description": "Letter {letter} like {word}."
+      },
+      "drawHint": {
+        "coarse": "Trace with your finger on the guide",
+        "fine": "Trace with your finger or the mouse"
+      },
+      "canvasAria": "Trace the letter {letter}",
+      "footer": {
+        "traceHint": "Draw over the thick lines and take your time.",
+        "points": "{count} points",
+        "idlePrompt": "Click Check when you finish tracing."
+      },
+      "actions": {
+        "clear": "Clear",
+        "check": "Check",
+        "next": "Next",
+        "restart": "Start again"
+      },
+      "feedback": {
+        "error": {
+          "traceMore": "Trace the letter guide and try again.",
+          "keepGoing": "Good start. Draw a bit more of the letter."
+        },
+        "success": "Great. Letter {letter} is ready."
+      },
+      "rounds": {
+        "A": {
+          "word": "apple"
+        },
+        "B": {
+          "word": "balloon"
+        },
+        "C": {
+          "word": "cat"
+        }
+      }
+    },
+    "alphabetCopy": {
+      "header": {
+        "title": "Alphabet",
+        "description": "Track: Copy the letters. Practise fluent handwriting below the model. This game is for six-year-olds.",
+        "roundBadge": "Letter {letter}"
+      },
+      "guide": {
+        "title": "Letter model",
+        "description": "Letter {letter} like {word}.",
+        "writeHere": "Write here"
+      },
+      "drawHint": {
+        "coarse": "Copy the letter with your finger on the lower lines",
+        "fine": "Copy the letter on the lower lines"
+      },
+      "canvasAria": "Copy the letter {letter} below the model",
+      "footer": {
+        "traceHint": "Stay on the lines and do not rush.",
+        "points": "{count} points",
+        "idlePrompt": "Click Check when you finish copying."
+      },
+      "actions": {
+        "clear": "Clear",
+        "check": "Check",
+        "next": "Next",
+        "restart": "Start again"
+      },
+      "feedback": {
+        "error": {
+          "keepToLowerLines": "Draw below the letter, on the lower lines.",
+          "copyMore": "Copy the letter at the bottom and try again.",
+          "keepGoing": "Good start. Add a bit more of the letter."
+        },
+        "success": "Great job. Letter {letter} is ready."
+      },
+      "rounds": {
+        "L": {
+          "word": "lion"
+        },
+        "O": {
+          "word": "eye"
+        },
+        "M": {
+          "word": "bear"
         }
       }
     }

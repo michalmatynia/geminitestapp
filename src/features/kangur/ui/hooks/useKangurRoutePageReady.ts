@@ -23,9 +23,12 @@ export const useKangurRoutePageReady = ({
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const reportedTransitionRef = useRef<string | null>(null);
+  const shouldFastTrackLocaleSwitchReady =
+    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+    routeTransitionState.activeTransitionKind === 'locale-switch';
 
   useEffect(() => {
-    if (!ready || !routeTransitionActions || !routeTransitionState) {
+    if ((!ready && !shouldFastTrackLocaleSwitchReady) || !routeTransitionActions || !routeTransitionState) {
       return;
     }
 
@@ -76,6 +79,7 @@ export const useKangurRoutePageReady = ({
     requestedPath,
     routeTransitionActions,
     routeTransitionState,
+    shouldFastTrackLocaleSwitchReady,
   ]);
 
   useEffect(() => {

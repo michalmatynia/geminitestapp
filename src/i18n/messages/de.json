@@ -960,6 +960,10 @@
     "lessons": "Lektionen",
     "duels": "Duelle",
     "parent": "Eltern",
+    "languageSwitcher": {
+      "triggerAriaLabel": "Aktuelle Sprache: {language}. Sprachmenü öffnen.",
+      "triggerTitle": "Sprache: {language}"
+    },
     "subject": {
       "label": "Fach auswahlen",
       "currentTitle": "Aktuelles Fach: {subject}",
@@ -1871,122 +1875,6 @@
         "perfect": "Perfekt! Aufwärmrunde geschafft.",
         "good": "Gute Arbeit!",
         "retry": "Noch eine Aufwärmrunde und es sitzt."
-      }
-    },
-    "calendar": {
-      "lessonTitle": "Kalender lernen",
-      "labels": {
-        "schoolTag": "Schule",
-        "weekendTag": "Wochenende",
-        "daysSuffix": "Tage",
-        "howToWriteDate": "Wie schreibt man das Datum?",
-        "shortDatePrefix": "Oder:",
-        "datePattern": "Tag / Monat / Jahr"
-      },
-      "sections": {
-        "intro": {
-          "title": "Was ist ein Kalender?",
-          "description": "Jahr, Monate und Tage"
-        },
-        "dni": {
-          "title": "Wochentage",
-          "description": "Von Montag bis Sonntag"
-        },
-        "miesiace": {
-          "title": "Monate und Jahreszeiten",
-          "description": "12 Monate und vier Jahreszeiten"
-        },
-        "data": {
-          "title": "Wie liest man ein Datum?",
-          "description": "Tag / Monat / Jahr"
-        },
-        "gameDays": {
-          "title": "Übung: Wochentage",
-          "description": "Wochenende, Wochentage und Kalenderspalten"
-        },
-        "gameMonths": {
-          "title": "Übung: Monate",
-          "description": "Monate, Reihenfolge und Jahreszeiten"
-        },
-        "gameDates": {
-          "title": "Übung: Daten finden",
-          "description": "Finde das richtige Datum im Kalender"
-        }
-      },
-      "slides": {
-        "intro": {
-          "whatIsCalendar": {
-            "title": "Was ist ein Kalender?",
-            "tts": "Ein Kalender hilft uns, Zeit zu ordnen. Ein Jahr hat 12 Monate und 365 Tage. Eine Woche hat 7 Tage.",
-            "body": "Ein Kalender hilft dir, Zeit zu ordnen.",
-            "yearStat": "Das Jahr hat 12 Monate und 365 Tage.",
-            "weekStat": "Die Woche hat 7 Tage."
-          },
-          "yearLoop": {
-            "title": "Das Jahr im Kreis",
-            "tts": "Die Monate kommen jedes Jahr in derselben Reihenfolge wieder.",
-            "caption": "Nach dem Dezember beginnt der Januar wieder."
-          },
-          "seasons": {
-            "title": "Jahreszeiten",
-            "tts": "Es gibt vier Jahreszeiten, die sich immer wiederholen.",
-            "caption": "Frühling, Sommer, Herbst, Winter."
-          }
-        },
-        "dni": {
-          "weekdays": {
-            "title": "Wochentage",
-            "tts": "Eine Woche hat 7 Tage: Montag, Dienstag, Mittwoch, Donnerstag, Freitag, Samstag und Sonntag."
-          },
-          "rhythm": {
-            "title": "Die Woche im Rhythmus",
-            "tts": "Die Wochentage folgen immer in derselben Reihenfolge.",
-            "caption": "Nach dem Sonntag beginnt wieder der Montag."
-          },
-          "weekend": {
-            "title": "Wochenende",
-            "tts": "Samstag und Sonntag bilden das Wochenende.",
-            "caption": "Das Wochenende fällt durch seine Farbe auf."
-          }
-        },
-        "miesiace": {
-          "monthsOfYear": {
-            "title": "12 Monate im Jahr",
-            "tts": "Ein Jahr hat 12 Monate, aufgeteilt in vier Jahreszeiten."
-          },
-          "monthLength": {
-            "title": "Wie viele Tage hat ein Monat?",
-            "tts": "Die meisten Monate haben 30 oder 31 Tage. Der Februar hat nur 28 Tage."
-          },
-          "monthsWheel": {
-            "title": "Monatsrad",
-            "tts": "Die Monate stehen im Kreis und wiederholen sich jedes Jahr.",
-            "caption": "Die Monate drehen sich ohne Ende weiter."
-          },
-          "lengthAnimation": {
-            "title": "Monatslängen",
-            "tts": "Manche Monate haben 31 Tage, andere 30, und der Februar hat 28.",
-            "caption": "Merke dir, wie lang die Monate sind."
-          }
-        },
-        "data": {
-          "readDate": {
-            "title": "Wie liest man ein Datum?",
-            "tts": "Wir schreiben das Datum als Tag, Monat, Jahr. Zum Beispiel: 15. März 2025.",
-            "longExample": "15. März 2025",
-            "shortExample": "15.03.2025"
-          },
-          "format": {
-            "title": "Datumsformat",
-            "tts": "Wir schreiben das Datum als Tag, Monat und Jahr, zum Beispiel 15 Punkt 03 Punkt 2025.",
-            "caption": "Tag / Monat / Jahr."
-          },
-          "findDay": {
-            "title": "Finde den Tag",
-            "tts": "Im Kalender wählen wir einen ganz bestimmten Tag aus.",
-            "caption": "Zeige auf das richtige Datum."
-          }
-        }
       }
     },
     "calendar": {
@@ -4900,13 +4788,27 @@
             "lead": "Subjektpronomen zeigen, wer die Handlung ausführt. In Matheaufgaben ist das oft ein Kind, eine Lehrkraft oder ein Team.",
             "caption": "Achte darauf, wer etwas tut: solve, check, graph, explain.",
             "items": {
-              "i": { "meaning": "ich" },
-              "you": { "meaning": "du / ihr" },
-              "he": { "meaning": "er" },
-              "she": { "meaning": "sie" },
-              "it": { "meaning": "es / das" },
-              "we": { "meaning": "wir" },
-              "they": { "meaning": "sie" }
+              "i": {
+                "meaning": "ich"
+              },
+              "you": {
+                "meaning": "du / ihr"
+              },
+              "he": {
+                "meaning": "er"
+              },
+              "she": {
+                "meaning": "sie"
+              },
+              "it": {
+                "meaning": "es / das"
+              },
+              "we": {
+                "meaning": "wir"
+              },
+              "they": {
+                "meaning": "sie"
+              }
             }
           },
           "heSheIt": {
@@ -6341,6 +6243,454 @@
             "retry": "Versuche es noch einmal und pruefe die Hinweise.",
             "resultTemplate": "Ergebnis: {score}/{total}"
           }
+        }
+      }
+    },
+    "logicalThinking": {
+      "lessonTitle": "Logisches Denken",
+      "sections": {
+        "wprowadzenie": {
+          "title": "Einführung",
+          "description": "Was ist logisches Denken?"
+        },
+        "wzorce": {
+          "title": "Muster und Reihen",
+          "description": "Sich wiederholende Anordnungen und Vorhersagen"
+        },
+        "klasyfikacja": {
+          "title": "Klassifikation",
+          "description": "Gruppieren und den Ausreißer finden"
+        },
+        "wnioskowanie": {
+          "title": "Schlussfolgern",
+          "description": "Schrittweises Denken: wenn... dann..."
+        },
+        "analogie": {
+          "title": "Analogien",
+          "description": "Dieselbe Beziehung in einem neuen Beispiel"
+        },
+        "zapamietaj": {
+          "title": "Merke dir",
+          "description": "Die wichtigsten Regeln des logischen Denkens"
+        },
+        "wnioskowanie_gra": {
+          "title": "Spiel: Wenn... dann...",
+          "description": "Ordne Tatsache, Regel und Schlussfolgerung"
+        },
+        "laboratorium_gra": {
+          "title": "Spiel: Logiklabor 🧪",
+          "description": "Muster, Klassifikation und Analogie"
+        }
+      },
+      "slides": {
+        "wprowadzenie": {
+          "basics": {
+            "title": "Was ist logisches Denken? 🧠",
+            "lead": "Logisches Denken ist die Fähigkeit, Regeln zu erkennen, Informationen zu ordnen und Schritt für Schritt Schlussfolgerungen zu ziehen.",
+            "caption": "Zuerst beobachtest du, dann verbindest du Fakten und ziehst eine Schlussfolgerung.",
+            "helpTitle": "Logisches Denken hilft dir:",
+            "helpItems": [
+              "🔍 Muster und Reihen zu finden",
+              "📦 Dinge zu ordnen und zu gruppieren",
+              "💡 Rätsel und Knobeleien zu lösen",
+              "✅ Zu prüfen, ob etwas Sinn ergibt"
+            ]
+          },
+          "steps": {
+            "title": "Drei Schritte der Logik 🧩",
+            "lead": "Zuerst beobachtest du, dann verbindest du Fakten, und am Ende überprüfst du die Schlussfolgerung.",
+            "caption": "Beobachten → verbinden → Schlussfolgerung.",
+            "exampleLabel": "Versuche, die Regel zu finden:",
+            "exampleSequence": "🔺 🔺 🔵 🔺 🔺 🔵 ❓",
+            "exampleAnswer": "Antwort: 🔺 🔺 🔵 (das Muster wiederholt sich)."
+          }
+        },
+        "wzorce": {
+          "basics": {
+            "title": "Muster und Reihen 🔢",
+            "lead": "Ein Muster ist eine sich wiederholende Anordnung. Wenn du es erkennst, kannst du vorhersagen, was als Nächstes kommt!",
+            "caption": "Das Muster wiederholt sich in einem festen Rhythmus.",
+            "shapePrompt": "Was kommt als Nächstes?",
+            "shapeSequence": "🔴 🔵 🔴 🔵 🔴 ❓",
+            "shapeAnswer": "Antwort: 🔵 (Muster: rot – blau)",
+            "numberPrompt": "Zahlenreihe – was kommt als Nächstes?",
+            "numberSequence": "2, 4, 6, 8, ❓",
+            "numberAnswer": "Antwort: 10 (immer +2)"
+          },
+          "growth": {
+            "title": "Das Muster wächst 📈",
+            "lead": "Ein Muster kann sich wiederholen und gleichzeitig wachsen. Auch das ist eine Regel!",
+            "caption": "Jedes nächste Element ist größer.",
+            "examplePrompt": "Wachsende Reihe – was kommt als Nächstes?",
+            "exampleSequence": "1, 2, 4, 8, ❓",
+            "exampleAnswer": "Antwort: 16 (×2)"
+          }
+        },
+        "klasyfikacja": {
+          "grouping": {
+            "title": "Klassifikation – Gruppieren 📦",
+            "lead": "Klassifikation bedeutet, Dinge nach einem gemeinsamen Merkmal in Gruppen einzuordnen.",
+            "caption": "Dasselbe Merkmal führt zur selben Gruppe.",
+            "cards": {
+              "fruits": {
+                "title": "Obst",
+                "items": "🍎 🍌 🍇 🍓"
+              },
+              "vegetables": {
+                "title": "Gemüse",
+                "items": "🥕 🥦 🧅 🌽"
+              },
+              "seaAnimals": {
+                "title": "Meerestiere",
+                "items": "🐠 🐙 🦈 🐚"
+              },
+              "landAnimals": {
+                "title": "Landtiere",
+                "items": "🐘 🦁 🐄 🐇"
+              }
+            },
+            "closing": "Ein gemeinsames Merkmal ist der Schlüssel zum Gruppieren!"
+          },
+          "key": {
+            "title": "Klassifikationsschlüssel 🗝️",
+            "lead": "Zuerst wählst du ein Merkmal aus, danach kommen die Elemente in die richtige Gruppe.",
+            "caption": "Ein Merkmal = eine Entscheidung.",
+            "exampleLabel": "Merkmal: hat Flügel",
+            "exampleItems": "🕊️ 🐝 🐟 🐶",
+            "exampleAnswer": "Gruppe \"ja\": 🕊️ 🐝"
+          },
+          "oddOneOut": {
+            "title": "Finde den Ausreißer 🔎",
+            "lead": "In jeder Gruppe passt ein Element nicht dazu. Finde es und erkläre warum!",
+            "itemsPrompt": "Welches passt nicht?",
+            "itemsSequence": "🍎 🍌 🥕 🍇",
+            "itemsAnswer": "🥕 – das ist ein Gemüse, der Rest ist Obst",
+            "numberPrompt": "Welche Zahl passt nicht?",
+            "numberSequence": "2, 4, 7, 8, 10",
+            "numberAnswer": "7 – sie ist die einzige ungerade Zahl"
+          }
+        },
+        "wnioskowanie": {
+          "basics": {
+            "title": "Schlussfolgern: wenn... dann... 💡",
+            "lead": "Schlussfolgern bedeutet, aus dem, was wir wissen, neue Schlüsse zu ziehen. Wir benutzen das Muster: wenn... dann...",
+            "caption": "Wenn die Bedingung erfüllt ist, erscheint die Schlussfolgerung.",
+            "examples": [
+              "Wenn es regnet, nehme ich einen Regenschirm. ☔",
+              "Wenn alle Katzen vier Pfoten haben und Mieze eine Katze ist, dann hat Mieze vier Pfoten. 🐱",
+              "Wenn eine Zahl gerade ist, dann ist sie durch 2 teilbar. Ist 6 gerade? Ja! 6 ÷ 2 = 3 ✓"
+            ]
+          }
+        },
+        "wnioskowanie_gra": {
+          "interactive": {
+            "title": "Spiel: Wenn... dann... Schritt für Schritt",
+            "lead": "Ordne Tatsache, Regel und Schlussfolgerung in die richtige Reihenfolge."
+          }
+        },
+        "analogie": {
+          "basics": {
+            "title": "Analogien – Was passt? 🔗",
+            "lead": "Eine Analogie ist eine ähnliche Beziehung zwischen verschiedenen Paaren. Ergänze das fehlende Glied!",
+            "caption": "Wir suchen dieselbe Beziehung in zwei Paaren.",
+            "examples": [
+              "Ein Vogel fliegt, ein Fisch... schwimmt 🐟",
+              "Der Tag ist zur Sonne wie die Nacht zum... Mond 🌙",
+              "2 verhält sich zu 4 wie 3 zu... 6 (×2)"
+            ]
+          },
+          "map": {
+            "title": "Analogie-Karte 🧭",
+            "lead": "Prüfe die Beziehung im ersten Paar und übertrage sie auf das zweite.",
+            "caption": "Die Beziehung A → B wiederholt sich in C → D.",
+            "example": "Messer : schneidet = Pinsel : malt 🎨"
+          }
+        },
+        "laboratorium_gra": {
+          "interactive": {
+            "title": "Spiel: Logiklabor 🧪",
+            "lead": "Erledige drei Missionen: Muster, Klassifikation und Analogie. Ziehe und klicke!"
+          }
+        },
+        "zapamietaj": {
+          "overview": {
+            "title": "Merke dir! 🌟",
+            "caption": "Merke dir die wichtigsten Begriffe und kehre oft zu ihnen zurück.",
+            "items": [
+              "🔁 Muster – finde die Regel und sage voraus, was als Nächstes kommt",
+              "📦 Klassifikation – gruppiere nach einem gemeinsamen Merkmal",
+              "🔎 Ausreißer – ein Element bricht die Regel der Gruppe",
+              "💡 Wenn... dann... – ziehe Schritt für Schritt Schlussfolgerungen",
+              "🔗 Analogie – dieselbe Beziehung, ein anderes Beispiel"
+            ],
+            "closing": "Logisches Denken ist eine Superkraft! Übe sie jeden Tag. 🧠✨"
+          }
+        }
+      },
+      "games": {
+        "ifThen": {
+          "rounds": [
+            {
+              "id": "birds",
+              "fact": "Der Kanarienvogel ist ein Vogel.",
+              "rule": "Wenn etwas ein Vogel ist, dann hat es Flügel.",
+              "conclusion": "Der Kanarienvogel hat Flügel.",
+              "distractors": [
+                "Der Kanarienvogel schwimmt.",
+                "Der Kanarienvogel ist ein Fisch."
+              ],
+              "explanation": "Die Tatsache erfüllt die Bedingung, also muss die Schlussfolgerung wahr sein."
+            },
+            {
+              "id": "rain",
+              "fact": "Heute regnet es.",
+              "rule": "Wenn es regnet, dann nehmen wir einen Regenschirm.",
+              "conclusion": "Wir nehmen einen Regenschirm.",
+              "distractors": [
+                "Wir setzen eine Sonnenbrille auf.",
+                "Der Himmel ist wolkenlos."
+              ],
+              "explanation": "Wenn die Bedingung erfüllt ist, führen wir die Handlung aus der Regel aus."
+            },
+            {
+              "id": "even",
+              "fact": "Die Zahl 8 ist gerade.",
+              "rule": "Wenn eine Zahl gerade ist, dann ist sie durch 2 teilbar.",
+              "conclusion": "8 ist durch 2 teilbar.",
+              "distractors": [
+                "8 ist eine Primzahl.",
+                "8 ist durch 3 teilbar."
+              ],
+              "explanation": "Gerade Zahlen sind durch 2 teilbar, deshalb ist die Schlussfolgerung richtig."
+            }
+          ],
+          "ui": {
+            "completion": {
+              "title": "Gut gemacht! 🧠",
+              "description": "Du kannst schon Schritt für Schritt Schlussfolgerungen aufbauen.",
+              "restart": "Noch einmal spielen"
+            },
+            "header": {
+              "stepTemplate": "Schritt {current} / {total}",
+              "instruction": "Klicke auf die Karten und ordne: Tatsache → Regel → Schlussfolgerung"
+            },
+            "slots": {
+              "fact": {
+                "label": "Tatsache",
+                "hint": "Was wissen wir schon?"
+              },
+              "rule": {
+                "label": "Wenn... dann...",
+                "hint": "Welche Regel verbindet die Fakten?"
+              },
+              "conclusion": {
+                "label": "Schlussfolgerung",
+                "hint": "Was folgt daraus?"
+              }
+            },
+            "deckTitle": "Karten",
+            "cardAriaTemplate": "Karte: {text}",
+            "feedback": {
+              "fillAll": "Fülle alle Schritte aus, um die Schlussfolgerung zu prüfen.",
+              "successTemplate": "Super! {explanation}",
+              "error": "Versuche es noch einmal — tausche die Karten an die richtigen Plätze."
+            },
+            "actions": {
+              "check": "Prüfen",
+              "retry": "Noch einmal",
+              "next": "Weiter"
+            }
+          }
+        },
+        "lab": {
+          "analogyRounds": [
+            {
+              "id": "bird",
+              "prompt": "Vogel : fliegt = Fisch : ?",
+              "options": [
+                {
+                  "id": "swims",
+                  "label": "schwimmt"
+                },
+                {
+                  "id": "runs",
+                  "label": "läuft"
+                },
+                {
+                  "id": "sleeps",
+                  "label": "schläft"
+                }
+              ],
+              "correctId": "swims",
+              "explanation": "Fische bewegen sich im Wasser, daher passt „schwimmt“ zu dieser Beziehung."
+            },
+            {
+              "id": "day",
+              "prompt": "Tag : Sonne = Nacht : ?",
+              "options": [
+                {
+                  "id": "moon",
+                  "label": "Mond"
+                },
+                {
+                  "id": "rain",
+                  "label": "Regen"
+                },
+                {
+                  "id": "cloud",
+                  "label": "Wolke"
+                }
+              ],
+              "correctId": "moon",
+              "explanation": "In der Nacht verbinden wir Licht mit dem Mond."
+            }
+          ],
+          "ui": {
+            "completion": {
+              "title": "Gut gemacht! 🧠",
+              "description": "Du hast alle Aufgaben im Logiklabor gelöst.",
+              "restart": "Noch einmal spielen"
+            },
+            "header": {
+              "stageTemplate": "Etappe {current} / {total}",
+              "instruction": "Ziehe und klicke, um die Mission abzuschließen."
+            },
+            "pattern": {
+              "prompt": "Ergänze das Muster: finde die nächsten zwei Formen.",
+              "slotLabels": {
+                "first": "Feld 1",
+                "second": "Feld 2"
+              },
+              "filledSlotAriaTemplate": "{slot}: {token}",
+              "emptySlotAriaTemplate": "{slot}: leer",
+              "selectTokenAriaTemplate": "Wähle Symbol {token}",
+              "selectedTemplate": "Ausgewähltes Plättchen: {token}",
+              "idle": "Wähle ein Plättchen aus, um es mit der Tastatur zu verschieben.",
+              "moveToFirst": "Zu Feld 1",
+              "moveToSecond": "Zu Feld 2",
+              "moveToPool": "In den Vorrat"
+            },
+            "classify": {
+              "prompt": "Sortiere die Bilder nach dem Merkmal: hat Flügel.",
+              "yesZoneLabel": "Hat Flügel",
+              "noZoneLabel": "Hat keine Flügel",
+              "yesZoneAriaLabel": "Bereich: hat Flügel",
+              "noZoneAriaLabel": "Bereich: hat keine Flügel",
+              "selectItemAriaTemplate": "Wähle Bild {item}",
+              "selectedTemplate": "Ausgewähltes Bild: {item}",
+              "idle": "Wähle ein Bild aus, um es mit der Tastatur zu verschieben.",
+              "moveToYes": "Zu „hat Flügel”",
+              "moveToNo": "Zu „hat keine Flügel”",
+              "moveToPool": "In den Vorrat"
+            },
+            "analogy": {
+              "prompt": "Ergänze die Analogie.",
+              "optionAriaTemplate": "Option: {option}"
+            },
+            "feedback": {
+              "info": "Ergänze die Aufgabe, um die Antwort zu prüfen.",
+              "success": "Super! Weiter so.",
+              "error": "Ups, versuche es noch einmal."
+            },
+            "actions": {
+              "check": "Prüfen",
+              "retry": "Noch einmal",
+              "next": "Weiter",
+              "finish": "Beenden"
+            }
+          }
+        }
+      }
+    },
+    "alphabetBasics": {
+      "header": {
+        "title": "Alphabet",
+        "description": "Fahre die Buchstaben auf der Spur nach. Uebe praezise Bewegungen auf bunten Leitlinien. Dieses Spiel ist fuer sechsjaehrige Kinder.",
+        "roundBadge": "Buchstabe {letter}"
+      },
+      "guide": {
+        "title": "Buchstabenspur",
+        "description": "Buchstabe {letter} wie {word}."
+      },
+      "drawHint": {
+        "coarse": "Fahre mit dem Finger auf der Spur nach",
+        "fine": "Fahre mit dem Finger oder der Maus nach"
+      },
+      "canvasAria": "Zeichne den Buchstaben {letter} nach",
+      "footer": {
+        "traceHint": "Fahre die dicken Linien nach und lass dir Zeit.",
+        "points": "{count} Punkte",
+        "idlePrompt": "Klicke auf Pruefen, wenn du mit dem Nachzeichnen fertig bist."
+      },
+      "actions": {
+        "clear": "Loeschen",
+        "check": "Pruefen",
+        "next": "Weiter",
+        "restart": "Von vorn"
+      },
+      "feedback": {
+        "error": {
+          "traceMore": "Fahre die Buchstabenspur nach und versuche es noch einmal.",
+          "keepGoing": "Guter Start. Zeichne noch ein kleines Stueck vom Buchstaben."
+        },
+        "success": "Super. Buchstabe {letter} ist fertig."
+      },
+      "rounds": {
+        "A": {
+          "word": "Apfel"
+        },
+        "B": {
+          "word": "Ballon"
+        },
+        "C": {
+          "word": "Clown"
+        }
+      }
+    },
+    "alphabetCopy": {
+      "header": {
+        "title": "Alphabet",
+        "description": "Spur: Schreibe die Buchstaben ab. Uebe fluessiges Schreiben unter dem Vorbild. Dieses Spiel ist fuer sechsjaehrige Kinder.",
+        "roundBadge": "Buchstabe {letter}"
+      },
+      "guide": {
+        "title": "Buchstabenvorlage",
+        "description": "Buchstabe {letter} wie {word}.",
+        "writeHere": "Schreibe hier"
+      },
+      "drawHint": {
+        "coarse": "Schreibe den Buchstaben mit dem Finger auf den unteren Linien nach",
+        "fine": "Schreibe den Buchstaben auf den unteren Linien nach"
+      },
+      "canvasAria": "Schreibe den Buchstaben {letter} unter der Vorlage nach",
+      "footer": {
+        "traceHint": "Bleib auf den Linien und lass dir Zeit.",
+        "points": "{count} Punkte",
+        "idlePrompt": "Klicke auf Pruefen, wenn du mit dem Abschreiben fertig bist."
+      },
+      "actions": {
+        "clear": "Loeschen",
+        "check": "Pruefen",
+        "next": "Weiter",
+        "restart": "Von vorn"
+      },
+      "feedback": {
+        "error": {
+          "keepToLowerLines": "Zeichne unter dem Buchstaben auf den unteren Linien.",
+          "copyMore": "Schreibe den Buchstaben unten nach und versuche es noch einmal.",
+          "keepGoing": "Guter Start. Fuege noch ein Stueck vom Buchstaben hinzu."
+        },
+        "success": "Gut gemacht. Buchstabe {letter} ist fertig."
+      },
+      "rounds": {
+        "L": {
+          "word": "Loewe"
+        },
+        "O": {
+          "word": "Ohr"
+        },
+        "M": {
+          "word": "Mond"
         }
       }
     }

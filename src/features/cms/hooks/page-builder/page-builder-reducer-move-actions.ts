@@ -98,6 +98,7 @@ export function reducePageBuilderMoveActions(
         );
       }
       if (!removal.moved) return state;
+      const movedBlock = removal.moved;
       // Insert into target (column direct or inside a parent block in a column)
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
         if (s.id !== action.toSectionId) return s;
@@ -105,7 +106,7 @@ export function reducePageBuilderMoveActions(
           insertBlockIntoColumnBlocks(
             s.blocks,
             action.toColumnId,
-            removal.moved!,
+            movedBlock,
             action.toIndex,
             action.toParentBlockId
           );
@@ -118,7 +119,7 @@ export function reducePageBuilderMoveActions(
                   blocks,
                 },
               ],
-              removal.moved!.id
+              movedBlock.id
             )
           );
         const requestedBlocks = insertInRequestedTarget();
@@ -128,7 +129,7 @@ export function reducePageBuilderMoveActions(
             blocks: insertBlockIntoColumnBlocks(
               s.blocks,
               action.toColumnId,
-              removal.moved!,
+              movedBlock,
               action.toIndex
             ),
           };
@@ -211,6 +212,7 @@ export function reducePageBuilderMoveActions(
         );
       }
       if (!removal.moved) return state;
+      const movedBlock = removal.moved;
 
       // Insert into target row
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
@@ -226,7 +228,7 @@ export function reducePageBuilderMoveActions(
                   (parent: BlockInstance) => {
                     nestedInserted = true;
                     const nextBlocks = [...(parent.blocks ?? [])];
-                    nextBlocks.splice(action.toIndex, 0, removal.moved!);
+                    nextBlocks.splice(action.toIndex, 0, movedBlock);
                     return { ...parent, blocks: nextBlocks };
                   }
                 );
@@ -235,7 +237,7 @@ export function reducePageBuilderMoveActions(
                 }
               }
               const nextBlocks = [...(b.blocks ?? [])];
-              nextBlocks.splice(action.toIndex, 0, removal.moved!);
+              nextBlocks.splice(action.toIndex, 0, movedBlock);
               return { ...b, blocks: nextBlocks };
             }
             if (b.blocks) {
@@ -318,6 +320,7 @@ export function reducePageBuilderMoveActions(
         );
       }
       if (!removal.moved) return state;
+      const movedBlock = removal.moved;
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
         if (s.id !== action.toSectionId) return s;
         if (action.toParentBlockId) {
@@ -328,7 +331,7 @@ export function reducePageBuilderMoveActions(
             (parent: BlockInstance) => {
               nestedInserted = true;
               const childBlocks = [...(parent.blocks ?? [])];
-              childBlocks.splice(action.toIndex, 0, removal.moved!);
+              childBlocks.splice(action.toIndex, 0, movedBlock);
               return { ...parent, blocks: childBlocks };
             }
           );
@@ -337,7 +340,7 @@ export function reducePageBuilderMoveActions(
           }
         }
         const nextBlocks = [...s.blocks];
-        nextBlocks.splice(action.toIndex, 0, removal.moved!);
+        nextBlocks.splice(action.toIndex, 0, movedBlock);
         return { ...s, blocks: nextBlocks };
       });
       return { ...state, sections: sectionsAfterInsert };
@@ -411,6 +414,7 @@ export function reducePageBuilderMoveActions(
         );
       }
       if (!removal.moved) return state;
+      const movedBlock = removal.moved;
 
       // Insert into target SlideshowFrame
       const sectionsAfterInsert = removal.sections.map((s: SectionInstance) => {
@@ -420,7 +424,7 @@ export function reducePageBuilderMoveActions(
           blocks: s.blocks.map((b: BlockInstance) => {
             if (b.id !== action.toFrameId) return b;
             const frameBlocks = [...(b.blocks ?? [])];
-            frameBlocks.splice(action.toIndex, 0, removal.moved!);
+            frameBlocks.splice(action.toIndex, 0, movedBlock);
             return { ...b, blocks: frameBlocks };
           }),
         };
@@ -507,8 +511,9 @@ export function reducePageBuilderMoveActions(
         }
         // Handle blocks inside a Row (but not in a Column)
         if (located.parentRow) {
+          const parentRowId = located.parentRow.id;
           const updatedBlocks = s.blocks.map((block: BlockInstance) => {
-            if (block.id !== located.parentRow!.id) return block;
+            if (block.id !== parentRowId) return block;
             const hasBlockInRow = (block.blocks ?? []).some(
               (b: BlockInstance) => b.id === action.blockId
             );
@@ -522,8 +527,9 @@ export function reducePageBuilderMoveActions(
         }
         // Handle blocks inside a parent block (e.g., SlideshowFrame, Carousel, etc.)
         if (located.parentBlock) {
+          const parentBlockId = located.parentBlock.id;
           const updatedBlocks = s.blocks.map((block: BlockInstance) => {
-            if (block.id !== located.parentBlock!.id) return block;
+            if (block.id !== parentBlockId) return block;
             const hasBlockInParent = (block.blocks ?? []).some(
               (b: BlockInstance) => b.id === action.blockId
             );

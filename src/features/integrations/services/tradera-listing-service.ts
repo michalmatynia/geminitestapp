@@ -1,11 +1,5 @@
 import 'server-only';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 /**
  * Tradera Listing Service
  *
@@ -63,8 +57,8 @@ export const runTraderaListing = async (
   const action = input.action ?? 'list';
 
   try {
-    const listing = await findProductListingByIdAcrossProviders(listingId);
-    if (!listing) {
+    const resolvedListing = await findProductListingByIdAcrossProviders(listingId);
+    if (!resolvedListing) {
       return {
         ok: false,
         externalListingId: null,
@@ -75,9 +69,10 @@ export const runTraderaListing = async (
         errorCategory: 'NOT_FOUND',
       };
     }
+    const { listing } = resolvedListing;
 
     const integrationRepo = await getIntegrationRepository();
-    const connection = await integrationRepo.getConnectionById((listing as any).connectionId);
+    const connection = await integrationRepo.getConnectionById(listing.connectionId);
     if (!connection) {
       return {
         ok: false,
@@ -85,7 +80,7 @@ export const runTraderaListing = async (
         listingUrl: null,
         expiresAt: null,
         nextRelistAt: null,
-        error: `Connection not found: ${(listing as any).connectionId}`,
+        error: `Connection not found: ${listing.connectionId}`,
         errorCategory: 'NOT_FOUND',
       };
     }
@@ -107,8 +102,8 @@ export const runTraderaListing = async (
     const useApi = isTraderaApiIntegrationSlug(integrationSlug);
 
     if (useApi) {
-      const result = await runTraderaApiListing({ listing: listing as any, connection });
-      const settings = resolveEffectiveListingSettings(listing as any, connection, systemSettings);
+      const result = await runTraderaApiListing({ listing, connection });
+      const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
       const expiresAt = resolveExpiry(settings.durationHours);
       const nextRelistAt = resolveNextRelistAt(
         expiresAt,
@@ -132,14 +127,14 @@ export const runTraderaListing = async (
     }
 
     const result = await runTraderaBrowserListing({
-      listing: listing as any,
+      listing,
       connection,
       systemSettings,
       source,
       action,
     });
 
-    const settings = resolveEffectiveListingSettings(listing as any, connection, systemSettings);
+    const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
     const expiresAt = resolveExpiry(settings.durationHours);
     const nextRelistAt = resolveNextRelistAt(
       expiresAt,
@@ -156,7 +151,7 @@ export const runTraderaListing = async (
       error: null,
       errorCategory: null,
       metadata: {
-        simulated: (result as any).simulated ?? false,
+        simulated: result.simulated ?? false,
         relistPolicy: buildRelistPolicy(settings),
       },
     };

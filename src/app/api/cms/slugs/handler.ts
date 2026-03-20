@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   ensureDomainSlug,
@@ -13,12 +14,24 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import {
+  normalizeOptionalQueryString,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 
-import type { z } from 'zod';
+export const querySchema = z.object({
+  domainId: optionalTrimmedQueryString(),
+  scope: z.preprocess(
+    (value) => (normalizeOptionalQueryString(value) === 'all' ? 'all' : undefined),
+    z.literal('all').optional()
+  ),
+});
 
-const resolveDomainFromRequest = async (req: NextRequest) => {
-  const searchParams = req.nextUrl?.searchParams ?? new URL(req.url).searchParams;
-  const domainId = searchParams.get('domainId');
+const resolveDomainFromRequest = async (
+  req: NextRequest,
+  query?: z.infer<typeof querySchema>
+) => {
+  const domainId = query?.domainId ?? null;
   if (domainId) {
     const domain = await resolveCmsDomainScopeById(domainId);
     if (!domain) {
@@ -59,15 +72,14 @@ export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<NextResponse | Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const cmsRepository = await getCmsRepository();
-  const scope =
-    req.nextUrl?.searchParams.get('scope') ?? new URL(req.url).searchParams.get('scope');
-  if (scope === 'all') {
+  if (query.scope === 'all') {
     await resolveCmsDomainFromRequest(req);
     const slugs = await cmsRepository.getSlugs();
     return NextResponse.json(slugs);
   }
-  const domain = await resolveDomainFromRequest(req);
+  const domain = await resolveDomainFromRequest(req, query);
   const slugs = await getSlugsForDomain(domain.id, cmsRepository);
   return NextResponse.json(slugs);
 }
@@ -77,13 +89,14 @@ export async function GET_handler(
  * Creates a new slug.
  */
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
   }
   const { slug } = parsed.data;
   const cmsRepository = await getCmsRepository();
-  const domain = await resolveDomainFromRequest(req);
+  const domain = await resolveDomainFromRequest(req, query);
   const existing = await cmsRepository.getSlugByValue(slug);
   const record = existing ?? (await cmsRepository.createSlug({ slug, isDefault: false }));
   if (typeof ensureDomainSlug === 'function') {

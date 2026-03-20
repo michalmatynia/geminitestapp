@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
@@ -12,6 +13,10 @@ import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import {
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
@@ -291,6 +296,16 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
   return { $and: [{ $nor: heavyOr }, aiPathsFilter] };
 };
 
+export const querySchema = z.object({
+  scope: optionalTrimmedQueryString(),
+  key: optionalTrimmedQueryString(),
+  caseResolverFileId: optionalTrimmedQueryString(),
+  fresh: z.preprocess((value) => value === '1', z.boolean()).default(false),
+  debug: z.preprocess((value) => value === '1', z.boolean()).default(false),
+  meta: z.preprocess((value) => value === '1', z.boolean()).default(false),
+  ifRevisionGt: optionalIntegerQuerySchema(z.number().int().min(0)),
+});
+
 const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];
   await ensureSettingsIndexes();
@@ -412,7 +427,7 @@ const fetchAndCacheSettings = async (
 };
 
 export async function GET_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   scopeOverride?: SettingsScope
 ): Promise<Response> {
@@ -420,16 +435,16 @@ export async function GET_handler(
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
   }
-  const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
-  const requestedKey = req.nextUrl.searchParams.get('key')?.trim() ?? '';
-  const requestedCaseResolverFileId =
-    req.nextUrl.searchParams.get('caseResolverFileId')?.trim() ?? '';
-  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const scope = scopeOverride ?? normalizeScope(query.scope);
+  const requestedKey = query.key ?? '';
+  const requestedCaseResolverFileId = query.caseResolverFileId ?? '';
+  const forceFresh = query.fresh;
 
   // Use no-store for settings to ensure freshness
   const SETTINGS_CACHE_CONTROL = 'no-store';
 
-  if (req.nextUrl.searchParams.get('debug') === '1' && isSettingsCacheDebugEnabled()) {
+  if (query.debug && isSettingsCacheDebugEnabled()) {
     const response = NextResponse.json(getSettingsCacheStats(), {
       headers: { 'Cache-Control': 'no-store' },
     });
@@ -440,8 +455,7 @@ export async function GET_handler(
 
   if (requestedKey.length > 0) {
     const timings: Record<string, number | null | undefined> = {};
-    const returnMetadataOnly =
-      requestedKey === CASE_RESOLVER_WORKSPACE_KEY && req.nextUrl.searchParams.get('meta') === '1';
+    const returnMetadataOnly = requestedKey === CASE_RESOLVER_WORKSPACE_KEY && query.meta;
     const providerStart = performance.now();
     const provider = await getAppDbProvider();
     timings['provider'] = performance.now() - providerStart;
@@ -474,8 +488,7 @@ export async function GET_handler(
     }
     // Conditional fetch: if client provides its current revision, return upToDate signal instead
     // of the full value when the stored revision has not advanced beyond what the client has.
-    const ifRevisionGtParam = req.nextUrl.searchParams.get('ifRevisionGt');
-    const ifRevisionGt = ifRevisionGtParam !== null ? Number.parseInt(ifRevisionGtParam, 10) : null;
+    const ifRevisionGt = query.ifRevisionGt ?? null;
     if (
       requestedKey === CASE_RESOLVER_WORKSPACE_KEY &&
       ifRevisionGt !== null &&

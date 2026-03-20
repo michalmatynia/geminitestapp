@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
@@ -28,6 +30,13 @@ const toErrorRedirect = (origin: string, reason: string): string => {
   return url.toString();
 };
 
+export const querySchema = z.object({
+  error: optionalTrimmedQueryString(),
+  error_description: optionalTrimmedQueryString(),
+  code: optionalTrimmedQueryString(),
+  state: optionalTrimmedQueryString(),
+});
+
 export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -36,20 +45,21 @@ export async function GET_handler(
   let integrationId: string | null = null;
   let connectionId: string | null = null;
   const requestUrl = new URL(req.url);
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   try {
     const { id, connectionId: connId } = params;
     integrationId = id;
     connectionId = connId;
 
-    const errorParam = requestUrl.searchParams.get('error');
+    const errorParam = query.error ?? null;
     if (errorParam) {
-      const description = requestUrl.searchParams.get('error_description') || errorParam;
+      const description = query.error_description ?? errorParam;
       return NextResponse.redirect(toErrorRedirect(requestUrl.origin, description));
     }
 
-    const code = requestUrl.searchParams.get('code');
-    const state = requestUrl.searchParams.get('state');
+    const code = query.code ?? null;
+    const state = query.state ?? null;
     if (!code || !state) {
       return NextResponse.redirect(
         toErrorRedirect(requestUrl.origin, 'Missing authorization code.')

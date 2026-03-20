@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import type {
   FieldInfo,
@@ -10,6 +11,10 @@ import type {
   SchemaResponse,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  normalizeOptionalQueryString,
+  optionalBooleanQuerySchema,
+} from '@/shared/lib/api/query-schema';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -41,6 +46,14 @@ const PROJECT_ROOT = process.cwd();
 const PRISMA_ROOT_DIR = path.join(PROJECT_ROOT, 'prisma');
 const PRISMA_SCHEMA_ENV_PATH = process.env['PRISMA_SCHEMA_PATH'];
 const PRISMA_SCHEMA_DEFAULT_PATH = path.join(PRISMA_ROOT_DIR, 'schema.prisma');
+
+export const querySchema = z.object({
+  provider: z.preprocess(
+    (value: unknown) => normalizeOptionalQueryString(value)?.toLowerCase(),
+    z.enum(['auto', 'all', 'mongodb', 'prisma']).optional()
+  ),
+  includeCounts: optionalBooleanQuerySchema(),
+});
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -344,12 +357,12 @@ const enrichCollections = (
 };
 
 export async function getDatabasesSchemaHandler(
-  request: NextRequest,
+  _request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const { searchParams } = new URL(request.url);
-  const providerParam = (searchParams.get('provider') ?? 'auto').toLowerCase();
-  const includeCounts = searchParams.get('includeCounts') === 'true';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const providerParam = query.provider ?? 'auto';
+  const includeCounts = query.includeCounts === true;
 
   if (providerParam === 'mongodb') {
     const schema = await getMongoSchema(includeCounts);

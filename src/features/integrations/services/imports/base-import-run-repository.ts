@@ -285,7 +285,7 @@ export const createBaseImportRun = async (input: {
     createdAt: timestamp,
     updatedAt: timestamp,
     summaryMessage: input.summaryMessage ?? null,
-  } as unknown as BaseImportRunRecord;
+  } as BaseImportRunRecord;
   await writeSettingValue(runKey(record.id), JSON.stringify(record));
   return normalizeRunRecord(record);
 };

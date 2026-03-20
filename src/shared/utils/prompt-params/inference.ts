@@ -1,10 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { ParamSpec, ParamLeaf } from '@/shared/contracts/prompt-engine';
 import {
   flattenParams,
@@ -40,7 +33,7 @@ export function extractConstraintHintsByPath(rawObjectText: string): Record<stri
     const codeTrim = code.trim();
     if (!codeTrim) return;
 
-    const closeCount = ((codeTrim as any).match(/\}/g) ?? []).length;
+    const closeCount = (codeTrim.match(/\}/g) ?? []).length;
     for (let i = 0; i < closeCount; i += 1) {
       if (stack.length > 0) stack.pop();
     }
@@ -60,7 +53,7 @@ export function extractConstraintHintsByPath(rawObjectText: string): Record<stri
       list.push(hint);
     }
 
-    const afterColon = (codeTrim as any).slice((keyMatch.index ?? 0) + keyMatch[0].length).trim();
+    const afterColon = codeTrim.slice((keyMatch.index ?? 0) + keyMatch[0].length).trim();
     if (afterColon.startsWith('{')) {
       stack.push(key);
     }

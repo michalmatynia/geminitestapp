@@ -84,7 +84,7 @@ export function NoteDetailActions(): React.JSX.Element | null {
           location='note_modal'
           entityType='note'
           entityId={selectedNote.id}
-          getEntityJson={() => selectedNote as unknown as Record<string, unknown>}
+          getEntityJson={() => selectedNote as Record<string, unknown>}
         />
       </div>
     </div>

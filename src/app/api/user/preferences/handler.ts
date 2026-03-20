@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getUserPreferences,
@@ -11,6 +12,7 @@ import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { UpdateUserPreferencesInput as UserPreferencesData } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 
 // For now, we'll use a hardcoded user ID
@@ -97,6 +99,10 @@ const mergeUserPreferencesFallback = (
   ...(updates ?? {}),
 });
 
+export const getQuerySchema = z.object({
+  include: optionalCsvQueryStringArray(),
+});
+
 /**
  * GET /api/user/preferences
  * Get current user preferences
@@ -115,11 +121,8 @@ export async function getUserPreferencesHandler(
     return result;
   };
 
-  const include = _req.nextUrl.searchParams.get('include') ?? '';
-  const includeAdminMenu = include
-    .split(',')
-    .map((value: string) => value.trim())
-    .includes('admin-menu');
+  const query = (_ctx.query ?? {}) as z.infer<typeof getQuerySchema>;
+  const includeAdminMenu = (query.include ?? []).includes('admin-menu');
   const session = await withTiming('auth', () => auth());
   const userId = session?.user?.id ?? DEFAULT_USER_ID;
   if (!isDatabaseConfigured) {

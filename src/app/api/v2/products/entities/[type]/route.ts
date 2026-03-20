@@ -8,9 +8,9 @@ import {
 } from '@/app/api/v2/products/entities/handler';
 
 export const GET = apiHandlerWithParams(GET_products_entities_handler, {
-  source: 'products-entities.GET',
+  source: 'v2.products.entities.[type].GET',
 });
 
 export const POST = apiHandlerWithParams(POST_products_entities_handler, {
-  source: 'products-entities.POST',
+  source: 'v2.products.entities.[type].POST',
 });

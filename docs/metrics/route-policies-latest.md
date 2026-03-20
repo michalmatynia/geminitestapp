@@ -1,0 +1,344 @@
+# Route Policy Report
+
+Generated at: 2026-03-08T11:16:42.232Z
+
+## Summary
+
+- Status: WARN
+- Routes scanned: 339
+- Method exports scanned: 479
+- Errors: 0
+- Warnings: 234
+- CSRF exemptions: 71
+
+## Rule Breakdown
+
+| Rule | Errors | Warnings | Info |
+| --- | ---: | ---: | ---: |
+| route-source-mismatch | 0 | 177 | 0 |
+| route-csrf-optout-safe-method | 0 | 26 | 0 |
+| route-dynamic-params-type-missing | 0 | 15 | 0 |
+| route-dynamic-wrapper-mismatch | 0 | 10 | 0 |
+| route-export-none-detected | 0 | 4 | 0 |
+| route-parsejson-without-bodyschema | 0 | 2 | 0 |
+
+## Issues
+
+| Severity | Rule | Location | Message |
+| --- | --- | --- | --- |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/agents/[agentId]/route.ts:7:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/agents/[agentId]/route.ts:7:14 | Route export PATCH uses source "agentcreator.teaching.agents.PATCH" but expected "agentcreator.teaching.agents.[agentId].PATCH". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/agents/[agentId]/route.ts:11:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/agents/[agentId]/route.ts:11:14 | Route export DELETE uses source "agentcreator.teaching.agents.DELETE" but expected "agentcreator.teaching.agents.[agentId].DELETE". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/[documentId]/route.ts:7:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/[documentId]/route.ts:7:14 | Route export DELETE uses source "agentcreator.teaching.documents.DELETE" but expected "agentcreator.teaching.collections.[collectionId].documents.[documentId].DELETE". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/route.ts:7:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/route.ts:7:14 | Route export GET uses source "agentcreator.teaching.documents.GET" but expected "agentcreator.teaching.collections.[collectionId].documents.GET". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/route.ts:10:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/documents/route.ts:10:14 | Route export POST uses source "agentcreator.teaching.documents.POST" but expected "agentcreator.teaching.collections.[collectionId].documents.POST". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/route.ts:7:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/route.ts:7:14 | Route export PATCH uses source "agentcreator.teaching.collections.PATCH" but expected "agentcreator.teaching.collections.[collectionId].PATCH". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/route.ts:11:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/route.ts:11:14 | Route export DELETE uses source "agentcreator.teaching.collections.DELETE" but expected "agentcreator.teaching.collections.[collectionId].DELETE". |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/search/route.ts:7:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-source-mismatch | src/app/api/agentcreator/teaching/collections/[collectionId]/search/route.ts:7:14 | Route export POST uses source "agentcreator.teaching.collections.search.POST" but expected "agentcreator.teaching.collections.[collectionId].search.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/db-action/route.ts:7:14 | Route export POST uses source "ai-paths.db-action" but expected "ai-paths.db-action.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/playwright/[runId]/artifacts/[file]/route.ts:7:14 | Route export GET uses source "ai-paths.playwright.artifacts.file" but expected "ai-paths.playwright.[runId].artifacts.[file].GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/playwright/[runId]/route.ts:7:14 | Route export GET uses source "ai-paths.playwright.poll" but expected "ai-paths.playwright.[runId].GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/playwright/route.ts:7:14 | Route export POST uses source "ai-paths.playwright.enqueue" but expected "ai-paths.playwright.POST". |
+| WARN | route-parsejson-without-bodyschema | src/app/api/ai-paths/portable-engine/remediation-dead-letters/route.ts:11:14 | POST parses JSON without a bodySchema guard. |
+| WARN | route-source-mismatch | src/app/api/ai-paths/portable-engine/schema/diff/route.ts:7:14 | Route export GET uses source "ai-paths.portable-engine.schema-diff.GET" but expected "ai-paths.portable-engine.schema.diff.GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/[runId]/cancel/route.ts:7:14 | Route export POST uses source "ai-paths.runs.cancel" but expected "ai-paths.runs.[runId].cancel.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/[runId]/resume/route.ts:7:14 | Route export POST uses source "ai-paths.runs.resume" but expected "ai-paths.runs.[runId].resume.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/[runId]/retry-node/route.ts:7:14 | Route export POST uses source "ai-paths.runs.retry-node" but expected "ai-paths.runs.[runId].retry-node.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/[runId]/route.ts:7:14 | Route export GET uses source "ai-paths.runs.detail" but expected "ai-paths.runs.[runId].GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/[runId]/route.ts:10:14 | Route export DELETE uses source "ai-paths.runs.delete" but expected "ai-paths.runs.[runId].DELETE". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/[runId]/stream/route.ts:7:14 | Route export GET uses source "ai-paths.runs.stream" but expected "ai-paths.runs.[runId].stream.GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/dead-letter/requeue/route.ts:7:14 | Route export POST uses source "ai-paths.runs.dead-letter.requeue" but expected "ai-paths.runs.dead-letter.requeue.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/enqueue/route.ts:7:14 | Route export POST uses source "ai-paths.runs.enqueue" but expected "ai-paths.runs.enqueue.POST". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/queue-status/route.ts:7:14 | Route export GET uses source "ai-paths.runs.queue-status" but expected "ai-paths.runs.queue-status.GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/route.ts:8:14 | Route export GET uses source "ai-paths.runs.list" but expected "ai-paths.runs.GET". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/runs/route.ts:13:14 | Route export DELETE uses source "ai-paths.runs.clear" but expected "ai-paths.runs.DELETE". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/trigger-buttons/[id]/route.ts:7:14 | Route export PATCH uses source "ai-paths.trigger-buttons.PATCH" but expected "ai-paths.trigger-buttons.[id].PATCH". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/trigger-buttons/[id]/route.ts:11:14 | Route export DELETE uses source "ai-paths.trigger-buttons.DELETE" but expected "ai-paths.trigger-buttons.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/ai-paths/update/route.ts:7:14 | Route export POST uses source "ai-paths.update" but expected "ai-paths.update.POST". |
+| WARN | route-source-mismatch | src/app/api/assets3d/[id]/file/route.ts:7:14 | Route export GET uses source "assets3d.file.GET" but expected "assets3d.[id].file.GET". |
+| WARN | route-source-mismatch | src/app/api/assets3d/[id]/route.ts:8:14 | Route export GET uses source "assets3d/[id].GET" but expected "assets3d.[id].GET". |
+| WARN | route-source-mismatch | src/app/api/assets3d/[id]/route.ts:12:14 | Route export PATCH uses source "assets3d/[id].PATCH" but expected "assets3d.[id].PATCH". |
+| WARN | route-source-mismatch | src/app/api/assets3d/[id]/route.ts:16:14 | Route export DELETE uses source "assets3d/[id].DELETE" but expected "assets3d.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/assets3d/categories/route.ts:7:14 | Route export GET uses source "assets3d/categories.GET" but expected "assets3d.categories.GET". |
+| WARN | route-source-mismatch | src/app/api/assets3d/reindex/route.ts:7:14 | Route export POST uses source "assets3d/reindex.POST" but expected "assets3d.reindex.POST". |
+| WARN | route-source-mismatch | src/app/api/assets3d/tags/route.ts:7:14 | Route export GET uses source "assets3d/tags.GET" but expected "assets3d.tags.GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/auth/[...nextauth]/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/auth/[...nextauth]/route.ts:7:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-dynamic-wrapper-mismatch | src/app/api/auth/[...nextauth]/route.ts:11:14 | Dynamic route exports must use apiHandlerWithParams. |
+| WARN | route-csrf-optout-safe-method | src/app/api/auth/users/[id]/security/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-csrf-optout-safe-method | src/app/api/auth/users/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/brain/operations/overview/route.ts:7:14 | Route export GET uses source "brain.operationsOverview.GET" but expected "brain.operations.overview.GET". |
+| WARN | route-export-none-detected | src/app/api/chatbot/agent/[runId]/assets/[file]/route.ts | Route file did not expose any HTTP method exports. |
+| WARN | route-export-none-detected | src/app/api/chatbot/agent/[runId]/route.ts | Route file did not expose any HTTP method exports. |
+| WARN | route-export-none-detected | src/app/api/chatbot/agent/route.ts | Route file did not expose any HTTP method exports. |
+| WARN | route-source-mismatch | src/app/api/databases/schema/route.ts:8:14 | Route export GET uses source "database.schema.GET" but expected "databases.schema.GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/drafts/[id]/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/health/route.ts:7:14 | Route export GET uses source "api.health" but expected "health.GET". |
+| WARN | route-source-mismatch | src/app/api/image-studio/projects/[projectId]/route.ts:7:14 | Route export DELETE uses source "image-studio.projects.DELETE" but expected "image-studio.projects.[projectId].DELETE". |
+| WARN | route-source-mismatch | src/app/api/image-studio/runs/[runId]/stream/route.ts:7:14 | Route export GET uses source "image-studio.runs.stream.GET" but expected "image-studio.runs.[runId].stream.GET". |
+| WARN | route-source-mismatch | src/app/api/kangur/assignments/[id]/route.ts:8:14 | Route export PATCH uses source "kangur.assignments.PATCH" but expected "kangur.assignments.[id].PATCH". |
+| WARN | route-source-mismatch | src/app/api/kangur/auth/learner-signin/route.ts:8:14 | Route export POST uses source "kangur.auth.learnerSignIn.POST" but expected "kangur.auth.learner-signin.POST". |
+| WARN | route-source-mismatch | src/app/api/kangur/auth/learner-signout/route.ts:8:14 | Route export POST uses source "kangur.auth.learnerSignOut.POST" but expected "kangur.auth.learner-signout.POST". |
+| WARN | route-source-mismatch | src/app/api/kangur/learners/[id]/route.ts:8:14 | Route export PATCH uses source "kangur.learners.PATCH" but expected "kangur.learners.[id].PATCH". |
+| WARN | route-source-mismatch | src/app/api/marketplace/[resource]/route.ts:29:14 | Route export GET uses source "marketplace.resource.GET" but expected "marketplace.[resource].GET". |
+| WARN | route-parsejson-without-bodyschema | src/app/api/query-telemetry/route.ts:7:14 | POST parses JSON without a bodySchema guard. |
+| WARN | route-source-mismatch | src/app/api/settings/heavy/route.ts:8:14 | Route export GET uses source "settings.GET.heavy" but expected "settings.heavy.GET". |
+| WARN | route-source-mismatch | src/app/api/settings/lite/route.ts:10:14 | Route export GET uses source "settings.GET.lite" but expected "settings.lite.GET". |
+| WARN | route-source-mismatch | src/app/api/system/diagnostics/mongo-indexes/route.ts:7:14 | Route export GET uses source "system.diagnostics.mongo-indexes" but expected "system.diagnostics.mongo-indexes.GET". |
+| WARN | route-source-mismatch | src/app/api/system/diagnostics/mongo-indexes/route.ts:12:14 | Route export POST uses source "system.diagnostics.mongo-indexes.rebuild" but expected "system.diagnostics.mongo-indexes.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts:7:14 | Route export GET uses source "integrations.[id].connections.[connectionId].allegro.authorize.GET" but expected "v2.integrations.[id].connections.[connectionId].allegro.authorize.GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts:7:14 | Route export GET uses source "integrations.[id].connections.[connectionId].allegro.callback.GET" but expected "v2.integrations.[id].connections.[connectionId].allegro.callback.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts:7:14 | Route export POST uses source "integrations.[id].connections.[connectionId].allegro.disconnect.POST" but expected "v2.integrations.[id].connections.[connectionId].allegro.disconnect.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/request/route.ts:7:14 | Route export POST uses source "integrations.[id].connections.[connectionId].allegro.request.POST" but expected "v2.integrations.[id].connections.[connectionId].allegro.request.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/allegro/test/route.ts:7:14 | Route export POST uses source "integrations.[id].connections.[connectionId].allegro.test.POST" but expected "v2.integrations.[id].connections.[connectionId].allegro.test.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/[id]/connections/[connectionId]/base/inventories/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/base/inventories/route.ts:7:14 | Route export GET uses source "integrations.[id].connections.[connectionId].base.inventories.GET" but expected "v2.integrations.[id].connections.[connectionId].base.inventories.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/base/products/route.ts:7:14 | Route export POST uses source "integrations.[id].connections.[connectionId].base.products.POST" but expected "v2.integrations.[id].connections.[connectionId].base.products.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/base/request/route.ts:7:14 | Route export POST uses source "integrations.[id].connections.[connectionId].base.request.POST" but expected "v2.integrations.[id].connections.[connectionId].base.request.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/base/test/route.ts:7:14 | Route export POST uses source "integrations.[id].connections.[connectionId].base.test.POST" but expected "v2.integrations.[id].connections.[connectionId].base.test.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/[connectionId]/test/route.ts:8:14 | Route export POST uses source "integrations.[id].connections.[connectionId].test.POST" but expected "v2.integrations.[id].connections.[connectionId].test.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/[id]/connections/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/route.ts:7:14 | Route export GET uses source "integrations.[id].connections.GET" but expected "v2.integrations.[id].connections.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/[id]/connections/route.ts:12:14 | Route export POST uses source "integrations.[id].connections.POST" but expected "v2.integrations.[id].connections.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/connections/[id]/route.ts:7:14 | Route export PUT uses source "integrations.connections.[id].PUT" but expected "v2.integrations.connections.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/connections/[id]/route.ts:12:14 | Route export DELETE uses source "integrations.connections.[id].DELETE" but expected "v2.integrations.connections.[id].DELETE". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/connections/[id]/session/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/connections/[id]/session/route.ts:7:14 | Route export GET uses source "integrations.connections.[id].session.GET" but expected "v2.integrations.connections.[id].session.GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/exports/base/[setting]/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/exports/base/[setting]/route.ts:7:14 | Route export GET uses source "products.exports.base.setting.GET" but expected "v2.integrations.exports.base.[setting].GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/exports/base/[setting]/route.ts:12:14 | Route export POST uses source "products.exports.base.setting.POST" but expected "v2.integrations.exports.base.[setting].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/images/sync-base/all/route.ts:7:14 | Route export POST uses source "integrations.images.sync-base.all.POST" but expected "v2.integrations.images.sync-base.all.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/imports/base/[setting]/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/[setting]/route.ts:7:14 | Route export GET uses source "products.imports.base.setting.GET" but expected "v2.integrations.imports.base.[setting].GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/[setting]/route.ts:12:14 | Route export POST uses source "products.imports.base.setting.POST" but expected "v2.integrations.imports.base.[setting].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/parameters/route.ts:7:14 | Route export POST uses source "products.imports.base.parameters.POST" but expected "v2.integrations.imports.base.parameters.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/imports/base/parameters/route.ts:12:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/parameters/route.ts:12:14 | Route export GET uses source "products.imports.base.parameters.GET" but expected "v2.integrations.imports.base.parameters.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/route.ts:8:14 | Route export POST uses source "integrations.imports.base.POST" but expected "v2.integrations.imports.base.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/runs/[runId]/cancel/route.ts:7:14 | Route export POST uses source "integrations.imports.base.runs.[runId].cancel.POST" but expected "v2.integrations.imports.base.runs.[runId].cancel.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/runs/[runId]/report/route.ts:8:14 | Route export GET uses source "integrations.imports.base.runs.[runId].report.GET" but expected "v2.integrations.imports.base.runs.[runId].report.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/runs/[runId]/resume/route.ts:7:14 | Route export POST uses source "integrations.imports.base.runs.[runId].resume.POST" but expected "v2.integrations.imports.base.runs.[runId].resume.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/runs/[runId]/route.ts:8:14 | Route export GET uses source "integrations.imports.base.runs.[runId].GET" but expected "v2.integrations.imports.base.runs.[runId].GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/imports/base/runs/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/runs/route.ts:8:14 | Route export GET uses source "integrations.imports.base.runs.GET" but expected "v2.integrations.imports.base.runs.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/runs/route.ts:14:14 | Route export POST uses source "integrations.imports.base.runs.POST" but expected "v2.integrations.imports.base.runs.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/imports/base/sample-product/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/sample-product/route.ts:7:14 | Route export GET uses source "products.imports.base.sample-product.GET" but expected "v2.integrations.imports.base.sample-product.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/imports/base/sample-product/route.ts:12:14 | Route export POST uses source "products.imports.base.sample-product.POST" but expected "v2.integrations.imports.base.sample-product.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/jobs/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/jobs/route.ts:8:14 | Route export GET uses source "integrations.jobs.GET" but expected "v2.integrations.jobs.GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/product-listings/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/product-listings/route.ts:8:14 | Route export GET uses source "products.listings.GET" but expected "v2.integrations.product-listings.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/product-listings/route.ts:14:14 | Route export POST uses source "products.listings.POST" but expected "v2.integrations.product-listings.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/base/link-existing/route.ts:7:14 | Route export POST uses source "integrations.products.[id].base.link-existing.POST" but expected "v2.integrations.products.[id].base.link-existing.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/base/sku-check/route.ts:7:14 | Route export POST uses source "integrations.products.[id].base.sku-check.POST" but expected "v2.integrations.products.[id].base.sku-check.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/export-to-base/route.ts:8:14 | Route export POST uses source "integrations.products.[id].export-to-base.POST" but expected "v2.integrations.products.[id].export-to-base.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/[listingId]/delete-from-base/route.ts:7:14 | Route export POST uses source "integrations.products.[id].listings.[listingId].delete-from-base.POST" but expected "v2.integrations.products.[id].listings.[listingId].delete-from-base.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/[listingId]/purge/route.ts:7:14 | Route export DELETE uses source "integrations.products.[id].listings.[listingId].purge.DELETE" but expected "v2.integrations.products.[id].listings.[listingId].purge.DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/[listingId]/relist/route.ts:7:14 | Route export POST uses source "integrations.products.[id].listings.[listingId].relist.POST" but expected "v2.integrations.products.[id].listings.[listingId].relist.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/[listingId]/route.ts:7:14 | Route export DELETE uses source "integrations.products.[id].listings.[listingId].DELETE" but expected "v2.integrations.products.[id].listings.[listingId].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/[listingId]/route.ts:12:14 | Route export PATCH uses source "integrations.products.[id].listings.[listingId].PATCH" but expected "v2.integrations.products.[id].listings.[listingId].PATCH". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/[listingId]/sync-base-images/route.ts:7:14 | Route export POST uses source "integrations.products.[id].listings.[listingId].sync-base-images.POST" but expected "v2.integrations.products.[id].listings.[listingId].sync-base-images.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/products/[id]/listings/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/route.ts:7:14 | Route export GET uses source "integrations.products.[id].listings.GET" but expected "v2.integrations.products.[id].listings.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/products/[id]/listings/route.ts:12:14 | Route export POST uses source "integrations.products.[id].listings.POST" but expected "v2.integrations.products.[id].listings.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/queues/tradera/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/queues/tradera/route.ts:8:14 | Route export GET uses source "integrations.queues.tradera.GET" but expected "v2.integrations.queues.tradera.GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/route.ts:8:14 | Route export GET uses source "integrations.GET" but expected "v2.integrations.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/route.ts:13:14 | Route export POST uses source "integrations.POST" but expected "v2.integrations.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/integrations/with-connections/route.ts:7:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/integrations/with-connections/route.ts:7:14 | Route export GET uses source "integrations.with-connections.GET" but expected "v2.integrations.with-connections.GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/metadata/[type]/[id]/route.ts:11:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/metadata/[type]/[id]/route.ts:11:14 | Route export GET uses source "metadata-id.GET" but expected "v2.metadata.[type].[id].GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/metadata/[type]/[id]/route.ts:15:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/metadata/[type]/[id]/route.ts:15:14 | Route export PUT uses source "metadata-id.PUT" but expected "v2.metadata.[type].[id].PUT". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/metadata/[type]/[id]/route.ts:19:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/metadata/[type]/[id]/route.ts:19:14 | Route export DELETE uses source "metadata-id.DELETE" but expected "v2.metadata.[type].[id].DELETE". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/metadata/[type]/route.ts:8:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/metadata/[type]/route.ts:8:14 | Route export GET uses source "metadata.GET" but expected "v2.metadata.[type].GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/metadata/[type]/route.ts:13:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/metadata/[type]/route.ts:13:14 | Route export POST uses source "metadata.POST" but expected "v2.metadata.[type].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/duplicate/route.ts:7:14 | Route export POST uses source "products.[id].duplicate.POST" but expected "v2.products.[id].duplicate.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/images/[imageFileId]/route.ts:7:14 | Route export DELETE uses source "products.[id].images.[imageFileId].DELETE" but expected "v2.products.[id].images.[imageFileId].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/images/base64/route.ts:8:14 | Route export POST uses source "products.[id].images.base64.POST" but expected "v2.products.[id].images.base64.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/images/link-to-file/route.ts:7:14 | Route export POST uses source "products.[id].images.link-to-file.POST" but expected "v2.products.[id].images.link-to-file.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/studio/[action]/route.ts:16:14 | Route export GET uses source "products.[id].studio.[action].GET" but expected "v2.products.[id].studio.[action].GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/studio/[action]/route.ts:28:14 | Route export POST uses source "products.[id].studio.[action].POST" but expected "v2.products.[id].studio.[action].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/studio/route.ts:8:14 | Route export GET uses source "products.[id].studio.GET" but expected "v2.products.[id].studio.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/[id]/studio/route.ts:13:14 | Route export PUT uses source "products.[id].studio.PUT" but expected "v2.products.[id].studio.PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/ai-jobs/[jobId]/route.ts:11:14 | Route export GET uses source "products.ai-jobs.[jobId].GET" but expected "v2.products.ai-jobs.[jobId].GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/ai-jobs/[jobId]/route.ts:14:14 | Route export POST uses source "products.ai-jobs.[jobId].POST" but expected "v2.products.ai-jobs.[jobId].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/ai-jobs/[jobId]/route.ts:17:14 | Route export DELETE uses source "products.ai-jobs.[jobId].DELETE" but expected "v2.products.ai-jobs.[jobId].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/ai-jobs/bulk/route.ts:8:14 | Route export POST uses source "products.ai-jobs.bulk.POST" but expected "v2.products.ai-jobs.bulk.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/ai-jobs/enqueue/route.ts:7:14 | Route export POST uses source "products.ai-jobs.enqueue.POST" but expected "v2.products.ai-jobs.enqueue.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/ai-paths/description-context/route.ts:9:14 | Route export GET uses source "products.ai-paths.description-context.GET" but expected "v2.products.ai-paths.description-context.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/[id]/route.ts:12:14 | Route export GET uses source "products.categories.[id].GET" but expected "v2.products.categories.[id].GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/[id]/route.ts:16:14 | Route export PUT uses source "products.categories.[id].PUT" but expected "v2.products.categories.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/[id]/route.ts:22:14 | Route export DELETE uses source "products.categories.[id].DELETE" but expected "v2.products.categories.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/migrate/route.ts:7:14 | Route export POST uses source "products.categories.migrate.POST" but expected "v2.products.categories.migrate.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/reorder/route.ts:10:14 | Route export POST uses source "products.categories.reorder.POST" but expected "v2.products.categories.reorder.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/route.ts:12:14 | Route export GET uses source "products.categories.GET" but expected "v2.products.categories.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/categories/route.ts:19:14 | Route export POST uses source "products.categories.POST" but expected "v2.products.categories.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/count/route.ts:9:14 | Route export GET uses source "products.count.GET" but expected "v2.products.count.GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/products/entities/[type]/[id]/route.ts:11:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/products/entities/[type]/[id]/route.ts:11:14 | Route export GET uses source "products-entity.GET" but expected "v2.products.entities.[type].[id].GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/products/entities/[type]/[id]/route.ts:15:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/products/entities/[type]/[id]/route.ts:15:14 | Route export PUT uses source "products-entity.PUT" but expected "v2.products.entities.[type].[id].PUT". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/products/entities/[type]/[id]/route.ts:19:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/products/entities/[type]/[id]/route.ts:19:14 | Route export DELETE uses source "products-entity.DELETE" but expected "v2.products.entities.[type].[id].DELETE". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/products/entities/[type]/route.ts:10:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/products/entities/[type]/route.ts:10:14 | Route export GET uses source "products-entities.GET" but expected "v2.products.entities.[type].GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/products/entities/[type]/route.ts:14:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/products/entities/[type]/route.ts:14:14 | Route export POST uses source "products-entities.POST" but expected "v2.products.entities.[type].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/entities/catalogs/assign/route.ts:7:14 | Route export POST uses source "products.entities.catalogs.assign.POST" but expected "v2.products.entities.catalogs.assign.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/images/base64/all/route.ts:7:14 | Route export POST uses source "products.images.base64.all.POST" but expected "v2.products.images.base64.all.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/images/base64/route.ts:7:14 | Route export POST uses source "products.images.base64.bulk.POST" but expected "v2.products.images.base64.POST". |
+| WARN | route-export-none-detected | src/app/api/v2/products/images/upload/route.ts | Route file did not expose any HTTP method exports. |
+| WARN | route-source-mismatch | src/app/api/v2/products/import/csv/route.ts:8:14 | Route export POST uses source "products.import.csv.POST" but expected "v2.products.import.csv.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/paged/route.ts:9:14 | Route export GET uses source "products.paged.GET" but expected "v2.products.paged.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/parameters/[id]/route.ts:11:14 | Route export PUT uses source "products.parameters.[id].PUT" but expected "v2.products.parameters.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/parameters/[id]/route.ts:17:14 | Route export DELETE uses source "products.parameters.[id].DELETE" but expected "v2.products.parameters.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/parameters/route.ts:12:14 | Route export GET uses source "products.parameters.GET" but expected "v2.products.parameters.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/parameters/route.ts:19:14 | Route export POST uses source "products.parameters.POST" but expected "v2.products.parameters.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/producers/[id]/route.ts:11:14 | Route export PUT uses source "products.producers.[id].PUT" but expected "v2.products.producers.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/producers/[id]/route.ts:17:14 | Route export DELETE uses source "products.producers.[id].DELETE" but expected "v2.products.producers.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/producers/route.ts:12:14 | Route export GET uses source "products.producers.GET" but expected "v2.products.producers.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/producers/route.ts:14:14 | Route export POST uses source "products.producers.POST" but expected "v2.products.producers.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/route.ts:8:14 | Route export GET uses source "products.GET" but expected "v2.products.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/route.ts:14:14 | Route export POST uses source "products.POST" but expected "v2.products.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/simple-parameters/route.ts:7:14 | Route export GET uses source "products.v2.simple-parameters.GET" but expected "v2.products.simple-parameters.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/simple-parameters/route.ts:12:14 | Route export POST uses source "products.v2.simple-parameters.POST" but expected "v2.products.simple-parameters.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/products/sync/profiles/[id]/route.ts:13:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/profiles/[id]/route.ts:13:14 | Route export GET uses source "products.sync.profiles.[id].GET" but expected "v2.products.sync.profiles.[id].GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/profiles/[id]/route.ts:19:14 | Route export PUT uses source "products.sync.profiles.[id].PUT" but expected "v2.products.sync.profiles.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/profiles/[id]/route.ts:25:14 | Route export DELETE uses source "products.sync.profiles.[id].DELETE" but expected "v2.products.sync.profiles.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/profiles/[id]/run/route.ts:7:14 | Route export POST uses source "products.sync.profiles.[id].run.POST" but expected "v2.products.sync.profiles.[id].run.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/products/sync/profiles/route.ts:12:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/profiles/route.ts:12:14 | Route export GET uses source "products.sync.profiles.GET" but expected "v2.products.sync.profiles.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/profiles/route.ts:18:14 | Route export POST uses source "products.sync.profiles.POST" but expected "v2.products.sync.profiles.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/relink/route.ts:7:14 | Route export POST uses source "products.sync.relink.POST" but expected "v2.products.sync.relink.POST". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/products/sync/runs/[runId]/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/runs/[runId]/route.ts:8:14 | Route export GET uses source "products.sync.runs.[runId].GET" but expected "v2.products.sync.runs.[runId].GET". |
+| WARN | route-csrf-optout-safe-method | src/app/api/v2/products/sync/runs/route.ts:8:14 | GET explicitly disables CSRF even though safe methods already skip CSRF checks. |
+| WARN | route-source-mismatch | src/app/api/v2/products/sync/runs/route.ts:8:14 | Route export GET uses source "products.sync.runs.GET" but expected "v2.products.sync.runs.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/tags/[id]/route.ts:11:14 | Route export PUT uses source "products.tags.[id].PUT" but expected "v2.products.tags.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/tags/[id]/route.ts:17:14 | Route export DELETE uses source "products.tags.[id].DELETE" but expected "v2.products.tags.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/tags/all/route.ts:7:14 | Route export GET uses source "products.tags.all.GET" but expected "v2.products.tags.all.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validation/route.ts:7:14 | Route export POST uses source "products.validation.POST" but expected "v2.products.validation.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validation/route.ts:11:14 | Route export GET uses source "products.validation.GET" but expected "v2.products.validation.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-decisions/route.ts:10:14 | Route export POST uses source "products.validator-decisions.POST" but expected "v2.products.validator-decisions.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/[id]/route.ts:11:14 | Route export PUT uses source "products.validator-patterns.[id].PUT" but expected "v2.products.validator-patterns.[id].PUT". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/[id]/route.ts:17:14 | Route export DELETE uses source "products.validator-patterns.[id].DELETE" but expected "v2.products.validator-patterns.[id].DELETE". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/import/route.ts:10:14 | Route export POST uses source "products.validator-patterns.import.POST" but expected "v2.products.validator-patterns.import.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/reorder/route.ts:10:14 | Route export POST uses source "products.validator-patterns.reorder.POST" but expected "v2.products.validator-patterns.reorder.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/route.ts:11:14 | Route export GET uses source "products.validator-patterns.GET" but expected "v2.products.validator-patterns.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/route.ts:16:14 | Route export POST uses source "products.validator-patterns.POST" but expected "v2.products.validator-patterns.POST". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/products/validator-patterns/templates/[type]/route.ts:7:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/templates/[type]/route.ts:7:14 | Route export POST uses source "products.validator-patterns.templates.POST" but expected "v2.products.validator-patterns.templates.[type].POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/templates/name-segment-category/route.ts:7:14 | Route export POST uses source "products.v2.validator-patterns.templates.name-segment-category.POST" but expected "v2.products.validator-patterns.templates.name-segment-category.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-patterns/templates/name-segment-dimensions/route.ts:7:14 | Route export POST uses source "products.v2.validator-patterns.templates.name-segment-dimensions.POST" but expected "v2.products.validator-patterns.templates.name-segment-dimensions.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-runtime/evaluate/route.ts:11:14 | Route export POST uses source "products.validator-runtime.evaluate.POST" but expected "v2.products.validator-runtime.evaluate.POST". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-settings/route.ts:11:14 | Route export GET uses source "products.validator-settings.GET" but expected "v2.products.validator-settings.GET". |
+| WARN | route-source-mismatch | src/app/api/v2/products/validator-settings/route.ts:16:14 | Route export PUT uses source "products.validator-settings.PUT" but expected "v2.products.validator-settings.PUT". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/templates/[type]/[id]/route.ts:7:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/templates/[type]/[id]/route.ts:7:14 | Route export PUT uses source "templates.item.PUT" but expected "v2.templates.[type].[id].PUT". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/templates/[type]/[id]/route.ts:11:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/templates/[type]/[id]/route.ts:11:14 | Route export DELETE uses source "templates.item.DELETE" but expected "v2.templates.[type].[id].DELETE". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/templates/[type]/route.ts:7:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/templates/[type]/route.ts:7:14 | Route export GET uses source "templates.GET" but expected "v2.templates.[type].GET". |
+| WARN | route-dynamic-params-type-missing | src/app/api/v2/templates/[type]/route.ts:11:14 | Dynamic route export is missing explicit params type arguments. |
+| WARN | route-source-mismatch | src/app/api/v2/templates/[type]/route.ts:11:14 | Route export POST uses source "templates.POST" but expected "v2.templates.[type].POST". |
+
+## CSRF Exemption Inventory
+
+| Route | Method | Policy | Reason |
+| --- | --- | --- | --- |
+| ai-paths/portable-engine/remediation-webhook | POST | webhook-ingest | Webhook-style endpoints must accept third-party callbacks. |
+| analytics/events | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |
+| auth/[...nextauth] | GET | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/[...nextauth] | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/mfa/disable | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/mfa/setup | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/mfa/verify | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/mock-signin | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/register | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/users/[id] | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/users/[id] | DELETE | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/users/[id]/security | GET | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/users/[id]/security | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/users | GET | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| auth/verify-credentials | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
+| client-errors | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |
+| drafts/[id] | GET | draft-autosave | Draft autosave routes support editor flows that may bypass standard fetch wrappers. |
+| query-telemetry | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |
+| v2/integrations/[id]/connections/[connectionId]/allegro/authorize | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/allegro/callback | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/allegro/disconnect | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/allegro/request | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/allegro/test | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/base/inventories | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/base/products | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/base/request | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/base/test | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections/[connectionId]/test | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/[id]/connections | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/connections/[id] | PUT | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/connections/[id] | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/connections/[id]/session | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/exports/base/[setting] | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/exports/base/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/images/sync-base/all | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/[setting] | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/[setting] | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/parameters | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/parameters | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/runs/[runId]/cancel | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/runs/[runId]/report | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/runs/[runId]/resume | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/runs/[runId] | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/runs | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/runs | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/sample-product | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/imports/base/sample-product | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/jobs | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/product-listings | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/product-listings | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/base/link-existing | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/base/sku-check | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/export-to-base | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId]/delete-from-base | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId]/purge | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId]/relist | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId] | DELETE | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId] | PATCH | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings/[listingId]/sync-base-images | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/products/[id]/listings | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/queues/tradera | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations | POST | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/integrations/with-connections | GET | external-integrations | Integration routes accept external callbacks, requests, and connection flows. |
+| v2/products/sync/profiles/[id] | GET | sync-automation | Background sync routes may be invoked by non-browser automation flows. |
+| v2/products/sync/profiles | GET | sync-automation | Background sync routes may be invoked by non-browser automation flows. |
+| v2/products/sync/runs/[runId] | GET | sync-automation | Background sync routes may be invoked by non-browser automation flows. |
+| v2/products/sync/runs | GET | sync-automation | Background sync routes may be invoked by non-browser automation flows. |
+
+## Notes
+
+- App API routes should use apiHandler/apiHandlerWithParams consistently.
+- Source naming mismatches and dynamic wrapper mismatches are reported as warnings while legacy route conventions remain in place.
+- Strict mode fails on route policy errors. Add --fail-on-warnings to promote warnings into a gate.

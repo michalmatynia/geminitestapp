@@ -1,13 +1,25 @@
 import { type QueryKey } from '@tanstack/react-query';
-import { QueryOptionsWithoutCore, InfiniteQueryOptionsWithoutCore } from './types';
+import {
+  QueryOptionsWithoutCore,
+  InfiniteQueryOptionsWithoutCore,
+  SuspenseInfiniteQueryOptionsWithoutCore,
+  SuspenseQueryOptionsWithoutCore,
+} from './types';
 
 export const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
 const MIN_REFETCH_INTERVAL_MS = 1;
 
-export type AnyRefetchIntervalOption =
+export type AnyRefetchIntervalOption<TQuery = unknown> =
   | number
   | false
-  | ((query: unknown) => number | false | undefined);
+  | ((query: TQuery) => number | false | undefined);
+
+type RefetchIntervalQuery<TOption> =
+  Extract<TOption, (query: never) => number | false | undefined> extends (
+    query: infer TQuery
+  ) => number | false | undefined
+    ? TQuery
+    : unknown;
 
 type QueryLikeWithEnabledOption = {
   options?: {
@@ -40,18 +52,19 @@ export const isRefetchEnabledForQuery = (query: unknown): boolean => {
   return enabled !== false;
 };
 
-export const guardRefetchInterval = <TOption extends AnyRefetchIntervalOption | undefined>(
-  option: TOption
-): TOption => {
+export const guardRefetchInterval = <
+  TOption extends AnyRefetchIntervalOption | undefined,
+>(option: TOption): TOption => {
   if (option === undefined) return option;
 
   if (typeof option === 'function') {
-    const wrapped = ((query: unknown): number | false | undefined => {
+    const callback = option as (query: RefetchIntervalQuery<TOption>) => number | false | undefined;
+    const wrapped = ((query: RefetchIntervalQuery<TOption>): number | false | undefined => {
       if (!isRefetchEnabledForQuery(query)) return false;
 
       let nextValue: number | false | undefined;
       try {
-        nextValue = option(query);
+        nextValue = callback(query);
       } catch {
         return false;
       }
@@ -64,16 +77,14 @@ export const guardRefetchInterval = <TOption extends AnyRefetchIntervalOption | 
   return sanitizeRefetchIntervalValue(option) as TOption;
 };
 
-export const applyQueryRuntimeGuards = <TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
+export function applyQueryRuntimeGuards<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
   options: QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey>
-): QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> => {
+): QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> {
   const { refetchInterval, ...rest } = options;
-  const guardedRefetchInterval = guardRefetchInterval(
-    refetchInterval as unknown as AnyRefetchIntervalOption | undefined
-  ) as QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey>['refetchInterval'];
+  const guardedRefetchInterval = guardRefetchInterval(refetchInterval);
   const isStaticallyDisabled = options['enabled'] === false;
 
-  const base = {
+  const base: QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> = {
     ...rest,
     staleTime: options['staleTime'] ?? DEFAULT_STALE_TIME_MS,
     refetchOnMount: options['refetchOnMount'] ?? false,
@@ -97,30 +108,52 @@ export const applyQueryRuntimeGuards = <TQueryFnData, TError, TData, TQueryKey e
   }
 
   return base;
-};
+}
 
-export const applyInfiniteQueryRuntimeGuards = <
+export function applySuspenseQueryRuntimeGuards<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey extends QueryKey,
+>(
+  options: SuspenseQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey>
+): SuspenseQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> {
+  const { refetchInterval, ...rest } = options;
+  const guardedRefetchInterval = guardRefetchInterval(refetchInterval);
+
+  const base: SuspenseQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> = {
+    ...rest,
+    staleTime: options['staleTime'] ?? DEFAULT_STALE_TIME_MS,
+    refetchOnMount: options['refetchOnMount'] ?? false,
+    refetchOnWindowFocus: options['refetchOnWindowFocus'] ?? false,
+    refetchOnReconnect: options['refetchOnReconnect'] ?? false,
+    refetchIntervalInBackground: options['refetchIntervalInBackground'] ?? false,
+  };
+
+  if (guardedRefetchInterval !== undefined) {
+    return {
+      ...base,
+      refetchInterval: guardedRefetchInterval,
+    };
+  }
+
+  return base;
+}
+
+export function applyInfiniteQueryRuntimeGuards<
   TQueryFnData,
   TError,
   TData,
   TQueryKey extends QueryKey,
   TPageParam,
 >(
-    options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
-  ): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> => {
+  options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
+): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> {
   const { refetchInterval, ...rest } = options;
-  const guardedRefetchInterval = guardRefetchInterval(
-    refetchInterval as unknown as AnyRefetchIntervalOption | undefined
-  ) as InfiniteQueryOptionsWithoutCore<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryKey,
-    TPageParam
-  >['refetchInterval'];
+  const guardedRefetchInterval = guardRefetchInterval(refetchInterval);
   const isStaticallyDisabled = options['enabled'] === false;
 
-  const base = {
+  const base: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> = {
     ...rest,
     staleTime: options['staleTime'] ?? DEFAULT_STALE_TIME_MS,
     refetchOnMount: options['refetchOnMount'] ?? false,
@@ -144,4 +177,47 @@ export const applyInfiniteQueryRuntimeGuards = <
   }
 
   return base;
-};
+}
+
+export function applySuspenseInfiniteQueryRuntimeGuards<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey extends QueryKey,
+  TPageParam,
+>(
+  options: SuspenseInfiniteQueryOptionsWithoutCore<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryKey,
+    TPageParam
+  >
+): SuspenseInfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> {
+  const { refetchInterval, ...rest } = options;
+  const guardedRefetchInterval = guardRefetchInterval(refetchInterval);
+
+  const base: SuspenseInfiniteQueryOptionsWithoutCore<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryKey,
+    TPageParam
+  > = {
+    ...rest,
+    staleTime: options['staleTime'] ?? DEFAULT_STALE_TIME_MS,
+    refetchOnMount: options['refetchOnMount'] ?? false,
+    refetchOnWindowFocus: options['refetchOnWindowFocus'] ?? false,
+    refetchOnReconnect: options['refetchOnReconnect'] ?? false,
+    refetchIntervalInBackground: options['refetchIntervalInBackground'] ?? false,
+  };
+
+  if (guardedRefetchInterval !== undefined) {
+    return {
+      ...base,
+      refetchInterval: guardedRefetchInterval,
+    };
+  }
+
+  return base;
+}

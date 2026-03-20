@@ -9,27 +9,29 @@ import {
   GET_handler,
   PATCH_handler,
   PUT_handler,
+  getQuerySchema,
 } from '@/app/api/v2/products/[id]/handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: 'products.[id].GET',
+  source: 'v2.products.[id].GET',
   paramsSchema: idParamSchema,
+  querySchema: getQuerySchema,
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: 'products.[id].PUT',
+  source: 'v2.products.[id].PUT',
   paramsSchema: idParamSchema,
   logSuccess: true,
 });
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
-  source: 'products.[id].PATCH',
+  source: 'v2.products.[id].PATCH',
   paramsSchema: idParamSchema,
   logSuccess: true,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: 'products.[id].DELETE',
+  source: 'v2.products.[id].DELETE',
   paramsSchema: idParamSchema,
   logSuccess: true,
 });

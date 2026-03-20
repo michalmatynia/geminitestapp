@@ -7,12 +7,16 @@ import {
   GET_handler,
   POST_handler,
   productTagCreateSchema,
+  querySchema,
 } from '@/app/api/v2/products/tags/handler';
 
-export const GET = apiHandler(GET_handler, { source: 'products.tags.GET' });
+export const GET = apiHandler(GET_handler, {
+  source: 'v2.products.tags.GET',
+  querySchema,
+});
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.tags.POST',
+  source: 'v2.products.tags.POST',
   parseJsonBody: true,
   bodySchema: productTagCreateSchema,
 });

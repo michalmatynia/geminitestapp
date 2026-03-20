@@ -6,8 +6,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { GET_handler, querySchema } from '@/app/api/v2/products/sync/runs/handler';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'products.sync.runs.GET',
-  requireCsrf: false,
+  source: 'v2.products.sync.runs.GET',
   querySchema,
   cacheControl: 'no-store',
 });

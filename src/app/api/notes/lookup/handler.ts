@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { noteService } from '@/features/notesapp/server';
 import type { RelatedNote } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
+
+export const querySchema = z.object({
+  ids: optionalCsvQueryStringArray(),
+});
 
 /**
  * GET /api/notes/lookup
@@ -11,16 +17,12 @@ import { badRequestError } from '@/shared/errors/app-error';
  * Query params:
  * - ids: comma-separated note ids (required)
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const idsParam = searchParams.get('ids');
-  if (!idsParam) {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  if (!query.ids) {
     throw badRequestError('ids query parameter is required');
   }
-  const ids = idsParam
-    .split(',')
-    .map((id: string) => id.trim())
-    .filter((id: string) => id.length > 0);
+  const ids = query.ids;
   if (ids.length === 0) {
     throw badRequestError('ids query parameter is empty');
   }

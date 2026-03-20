@@ -1,8 +1,5 @@
 import 'server-only';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 /**
  * AI Path Runtime Analytics Service
  *
@@ -114,7 +111,7 @@ export const getRuntimeAnalyticsSummary = async (
         'ai-paths runtime analytics redis query'
       );
 
-      const parsedDurations = (durations as any[])
+      const parsedDurations = durations
         .map(parseDurationMember)
         .filter((d): d is number => d !== null);
       parsedDurations.sort((a, b) => a - b);
@@ -168,7 +165,7 @@ export const getRuntimeAnalyticsSummary = async (
           warningReports: brainWarning,
           errorReports: brainError,
         },
-        traces: traces as any,
+        traces,
         generatedAt: new Date().toISOString(),
       };
 

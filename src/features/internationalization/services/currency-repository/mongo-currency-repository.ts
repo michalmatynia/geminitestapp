@@ -21,6 +21,11 @@ interface CurrencyDoc extends Document {
   updatedAt: Date;
 }
 
+interface CountryCurrencyDoc extends Document {
+  currencyIds?: string[];
+  updatedAt?: Date;
+}
+
 const PRICE_GROUPS_COLLECTION = 'price_groups';
 const COUNTRIES_COLLECTION = 'countries';
 
@@ -94,15 +99,37 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     const now = new Date();
 
     if (data.code && data.code !== id) {
+      const nextCode = data.code;
       // Update related collections
       await db
         .collection(PRICE_GROUPS_COLLECTION)
-        .updateMany({ currencyId: id }, { $set: { currencyId: data.code } });
-      await db.collection(COUNTRIES_COLLECTION).updateMany({ currencyIds: id }, {
-        $pull: { currencyIds: id },
-        $addToSet: { currencyIds: data.code },
-        $set: { updatedAt: now },
-      } as unknown as UpdateFilter<Document>);
+        .updateMany({ currencyId: id }, { $set: { currencyId: nextCode } });
+      const countriesCollection = db.collection<CountryCurrencyDoc>(COUNTRIES_COLLECTION);
+      const countries = await countriesCollection
+        .find({ currencyIds: id }, { projection: { _id: 1, currencyIds: 1 } })
+        .toArray();
+      const operations: AnyBulkWriteOperation<CountryCurrencyDoc>[] = countries.map((country) => {
+        const existingCurrencyIds = Array.isArray(country.currencyIds)
+          ? country.currencyIds.filter(
+            (currencyId): currencyId is string =>
+              typeof currencyId === 'string' && currencyId !== id
+          )
+          : [];
+        return {
+          updateOne: {
+            filter: { _id: country._id },
+            update: {
+              $set: {
+                currencyIds: Array.from(new Set([...existingCurrencyIds, nextCode])),
+                updatedAt: now,
+              },
+            } satisfies UpdateFilter<CountryCurrencyDoc>,
+          },
+        };
+      });
+      if (operations.length > 0) {
+        await countriesCollection.bulkWrite(operations, { ordered: false });
+      }
     }
 
     const set: Partial<CurrencyDoc> = { updatedAt: now };

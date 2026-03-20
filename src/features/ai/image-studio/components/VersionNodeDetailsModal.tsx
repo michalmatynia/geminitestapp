@@ -320,7 +320,6 @@ export function VersionNodeDetailsModal(
             </Hint>
             <div className='mt-2 aspect-square overflow-hidden rounded border border-border/50 bg-black/30'>
               {imageSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={imageSrc} alt={node.label} className='h-full w-full object-cover' />
               ) : (
                 <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>

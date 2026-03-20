@@ -4,6 +4,8 @@ import { NextRequest } from 'next/server';
 
 import { badRequestError } from '@/shared/errors/app-error';
 
+const CONTROL_CHARACTERS_PATTERN = new RegExp('[\\x00-\\x1f\\x80-\\x9f]', 'g');
+
 type FileValidationResult = {
   isValid: boolean;
   errors: string[];
@@ -186,8 +188,7 @@ export class SecureFileUpload {
     let sanitized = fileName.replace(/[/\\:*?"<>|]/g, '');
 
     // Remove null bytes and control characters
-    // eslint-disable-next-line no-control-regex
-    sanitized = sanitized.replace(/[\x00-\x1f\x80-\x9f]/g, '');
+    sanitized = sanitized.replace(CONTROL_CHARACTERS_PATTERN, '');
 
     // Limit length
     if (sanitized.length > 255) {

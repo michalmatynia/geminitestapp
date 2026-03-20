@@ -293,8 +293,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
 
   const prevOutputs = state.outputs[node.id] ?? null;
   const cachedOutputs = nodeHash ? state.effectiveCache?.get(nodeHash) : null;
+  const seedOutputs = options.seedOutputs?.[node.id] ?? null;
   const isSeedMatch = Boolean(
-    nodeHash && seedHashes[node.id] === nodeHash && options.seedOutputs?.[node.id]
+    nodeHash && seedHashes[node.id] === nodeHash && seedOutputs
   );
 
   const isEntryNode = node.id === options.triggerNodeId;
@@ -315,8 +316,8 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   let cacheSource: RuntimePortValues | null = null;
 
   if (!isEntryNode && !isImplicitTriggerNode && !isCacheDisabled) {
-    if (isSeedMatch) {
-      cacheSource = options.seedOutputs![node.id]!;
+    if (isSeedMatch && seedOutputs) {
+      cacheSource = seedOutputs;
       validCacheHit = true;
     } else if (cachedOutputs) {
       cacheSource = cachedOutputs;

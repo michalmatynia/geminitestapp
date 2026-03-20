@@ -195,7 +195,6 @@ export function InlineImagePreviewCanvas({
       {imageSrc ? (
         <>
           <div className='absolute inset-0 flex items-center justify-center overflow-hidden'>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageSrc}
               alt={imageAlt}

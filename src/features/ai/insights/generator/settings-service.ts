@@ -1,20 +1,34 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 
-const canUsePrismaSettings = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in (prisma as any);
+type PrismaSettingClient = {
+  setting?: {
+    findUnique: (input: {
+      where: { key: string };
+      select: { value: true };
+    }) => Promise<{ value: string | null } | null>;
+  };
+};
+
+type PrismaSettingDelegate = NonNullable<PrismaSettingClient['setting']>;
+
+const isPrismaSettingDelegate = (value: unknown): value is PrismaSettingDelegate => {
+  if (!value || typeof value !== 'object') return false;
+  return typeof Reflect.get(value, 'findUnique') === 'function';
+};
+
+const getPrismaSettingDelegate = (): PrismaSettingDelegate | null => {
+  if (!process.env['DATABASE_URL']) return null;
+  const setting = Reflect.get(prisma, 'setting');
+  return isPrismaSettingDelegate(setting) ? setting : null;
+};
 
 const readPrismaSettingValue = async (key: string): Promise<string | null> => {
-  if (!canUsePrismaSettings()) return null;
-  const setting = await (prisma as any).setting.findUnique({
+  const prismaSetting = getPrismaSettingDelegate();
+  if (!prismaSetting) return null;
+  const setting = await prismaSetting.findUnique({
     where: { key },
     select: { value: true },
   });

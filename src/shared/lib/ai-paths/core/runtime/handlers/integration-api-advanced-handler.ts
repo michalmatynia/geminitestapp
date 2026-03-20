@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import type { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 import {
@@ -80,22 +76,40 @@ export const handleAdvancedApi: NodeHandler = async ({
   }
 
   const parsedPathParams = toStringRecord(
-    (parseJsonWithTemplates as any)(config.pathParamsJson, nodeInputs, {}, reportAiPathsError, {
-      action: 'parseAdvancedApiPathParams',
-      nodeId: node.id,
-    })
+    parseJsonWithTemplates<Record<string, unknown>>(
+      config.pathParamsJson,
+      nodeInputs,
+      {},
+      reportAiPathsError,
+      {
+        action: 'parseAdvancedApiPathParams',
+        nodeId: node.id,
+      }
+    )
   );
   const parsedQueryParams = toStringRecord(
-    (parseJsonWithTemplates as any)(config.queryParamsJson, nodeInputs, {}, reportAiPathsError, {
-      action: 'parseAdvancedApiQueryParams',
-      nodeId: node.id,
-    })
+    parseJsonWithTemplates<Record<string, unknown>>(
+      config.queryParamsJson,
+      nodeInputs,
+      {},
+      reportAiPathsError,
+      {
+        action: 'parseAdvancedApiQueryParams',
+        nodeId: node.id,
+      }
+    )
   );
   const parsedHeaders = toStringRecord(
-    (parseJsonWithTemplates as any)(config.headersJson, nodeInputs, {}, reportAiPathsError, {
-      action: 'parseAdvancedApiHeaders',
-      nodeId: node.id,
-    })
+    parseJsonWithTemplates<Record<string, unknown>>(
+      config.headersJson,
+      nodeInputs,
+      {},
+      reportAiPathsError,
+      {
+        action: 'parseAdvancedApiHeaders',
+        nodeId: node.id,
+      }
+    )
   );
   const outputMappings = parseOutputMappings(config, nodeInputs, reportAiPathsError, node.id);
   const retryStatuses = resolveRetryStatuses(config, nodeInputs, reportAiPathsError, node.id);

@@ -48,7 +48,7 @@ export const normalizeKangurSort = (
 };
 
 const extractValidationIssues = (error: z.ZodError): Record<string, unknown> =>
-  error.flatten() as unknown as Record<string, unknown>;
+  error.flatten() as Record<string, unknown>;
 
 export const parseKangurScoreCreatePayload = (payload: unknown): KangurScoreCreateInput => {
   const parsed = kangurScoreCreateInputSchema.safeParse(payload);

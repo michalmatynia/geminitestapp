@@ -6,5 +6,5 @@ import { POST_validator_template_handler } from '../handler';
 
 export const POST = apiHandler(
   (req, ctx) => POST_validator_template_handler(req, ctx, { type: 'name-segment-category' }),
-  { source: 'products.v2.validator-patterns.templates.name-segment-category.POST' }
+  { source: 'v2.products.validator-patterns.templates.name-segment-category.POST' }
 );

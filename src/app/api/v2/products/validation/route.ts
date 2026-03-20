@@ -5,9 +5,9 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import { GET_handler, POST_handler } from '@/app/api/v2/products/validation/handler';
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.validation.POST',
+  source: 'v2.products.validation.POST',
 });
 
 export const GET = apiHandler(GET_handler, {
-  source: 'products.validation.GET',
+  source: 'v2.products.validation.GET',
 });

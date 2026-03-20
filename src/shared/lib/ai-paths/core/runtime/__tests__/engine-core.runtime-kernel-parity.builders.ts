@@ -162,7 +162,7 @@ const runPath = async (
     profile: {
       onEvent: (event): void => {
         if (event.type === 'node' && event.status === 'executed') {
-          profileNodeEvents.push(event as unknown as Record<string, unknown>);
+          profileNodeEvents.push(event as Record<string, unknown>);
         }
       },
     },

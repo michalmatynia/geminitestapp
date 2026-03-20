@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { auth } from '@/features/auth/server';
 import type { AnalyticsScope } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import { authError } from '@/shared/errors/app-error';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 const RANGE_VALUES = ['24h', '7d', '30d'] as const;
 type AnalyticsRange = (typeof RANGE_VALUES)[number];
+
+export const querySchema = z.object({
+  range: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? '24h',
+    z.enum(RANGE_VALUES)
+  ),
+  scope: z.preprocess(
+    (value) => normalizeOptionalQueryString(value) ?? 'all',
+    z.enum(['all', 'public', 'admin'])
+  ),
+});
 
 const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   const to = new Date();
@@ -21,23 +33,14 @@ const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   return { from, to };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
-  const searchParams = getQueryParams(req);
-
-  const rangeRaw = searchParams.get('range') ?? '24h';
-  if (!RANGE_VALUES.includes(rangeRaw as AnalyticsRange)) {
-    throw badRequestError('Invalid range');
-  }
-  const range = rangeRaw as AnalyticsRange;
-
-  const scopeRaw = searchParams.get('scope') ?? 'all';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const range = query.range as AnalyticsRange;
+  const scopeRaw = query.scope;
   const scope = scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
-  if (scopeRaw !== 'all' && scope !== 'public' && scope !== 'admin') {
-    throw badRequestError('Invalid scope');
-  }
 
   const { from, to } = getRangeWindow(range);
   const summary = await getAnalyticsSummary({

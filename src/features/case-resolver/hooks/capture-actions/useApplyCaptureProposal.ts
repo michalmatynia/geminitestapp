@@ -100,6 +100,7 @@ export function useApplyCaptureProposal(args: {
       args.setIsPromptExploderPartyProposalOpen(false);
       return;
     }
+    const proposalDraft = args.promptExploderProposalDraft;
     captureApplyInFlightRef.current = true;
     args.captureMappingDismissedRef.current = false;
 
@@ -109,7 +110,7 @@ export function useApplyCaptureProposal(args: {
         const applyStartedAtMs = readCaptureApplyNowMs();
         let cleanupDurationMs: number | null = null;
         let mutationDurationMs: number | null = null;
-        const requestedTargetFileId = args.promptExploderProposalDraft!.targetFileId;
+        const requestedTargetFileId = proposalDraft.targetFileId;
         const workspaceSnapshot = args.workspaceRef.current;
 
         const targetResolution = resolveCaptureTargetFile({
@@ -140,7 +141,7 @@ export function useApplyCaptureProposal(args: {
             action: 'capture_target_missing_precheck',
             message: JSON.stringify({
               requestedTargetFileId,
-              proposalTargetFileId: args.promptExploderProposalDraft!.targetFileId,
+              proposalTargetFileId: proposalDraft.targetFileId,
               editingDraftFileId: args.editingDocumentDraft?.id ?? null,
               activeFileId: workspaceSnapshot.activeFileId ?? null,
               workspaceRevision: precheckRevision,
@@ -176,27 +177,27 @@ export function useApplyCaptureProposal(args: {
         let shouldPersistFilemakerDatabase = false;
         let nextProposalState: CaseResolverCaptureProposalState = {
           targetFileId,
-          addresser: args.promptExploderProposalDraft!.addresser
+          addresser: proposalDraft.addresser
             ? ({
-              ...args.promptExploderProposalDraft!.addresser,
-              candidate: { ...args.promptExploderProposalDraft!.addresser.candidate },
-              existingReference: args.promptExploderProposalDraft!.addresser.existingReference
+              ...proposalDraft.addresser,
+              candidate: { ...proposalDraft.addresser.candidate },
+              existingReference: proposalDraft.addresser.existingReference
                 ? { ...(args.promptExploderPartyProposal?.addresser?.existingReference ?? null) }
                 : null,
             } as CaseResolverCaptureProposal)
             : null,
-          addressee: args.promptExploderProposalDraft!.addressee
+          addressee: proposalDraft.addressee
             ? ({
-              ...args.promptExploderProposalDraft!.addressee,
-              candidate: { ...args.promptExploderProposalDraft!.addressee.candidate },
-              existingReference: args.promptExploderProposalDraft!.addressee.existingReference
+              ...proposalDraft.addressee,
+              candidate: { ...proposalDraft.addressee.candidate },
+              existingReference: proposalDraft.addressee.existingReference
                 ? { ...(args.promptExploderPartyProposal?.addressee?.existingReference ?? null) }
                 : null,
             } as CaseResolverCaptureProposal)
             : null,
-          documentDate: args.promptExploderProposalDraft!.documentDate
+          documentDate: proposalDraft.documentDate
             ? {
-              ...args.promptExploderProposalDraft!.documentDate,
+              ...proposalDraft.documentDate,
             }
             : null,
         };

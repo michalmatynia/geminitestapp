@@ -113,14 +113,14 @@ export function useNotes(
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<NoteWithRelations[]> => {
-      const queryParams = params as unknown as Record<
+      const queryParams = params as Record<
         string,
         string | number | boolean | undefined
       >;
       const data = await api.get<NoteWithRelations[]>('/api/notes', {
         params: queryParams,
       });
-      return z.array(noteWithRelationsSchema).parse(data) as unknown as NoteWithRelations[];
+      return z.array(noteWithRelationsSchema).parse(data) as NoteWithRelations[];
     },
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
@@ -146,7 +146,7 @@ export function useNote(
     queryFn: async (): Promise<NoteWithRelations | null> => {
       if (!noteId) return null;
       const data = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
-      return noteWithRelationsSchema.nullable().parse(data) as unknown as NoteWithRelations | null;
+      return noteWithRelationsSchema.nullable().parse(data) as NoteWithRelations | null;
     },
     staleTime: NOTES_STALE_MS,
     enabled: (options?.enabled ?? true) && !!noteId,

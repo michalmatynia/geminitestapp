@@ -131,7 +131,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       diagnostics: CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY,
     };
   }
-  const workspaceRecord = workspace as Record<string, unknown>;
+  const workspaceRecord: Record<string, unknown> = { ...workspace };
   const now = new Date().toISOString();
   const workspaceRevision = normalizeWorkspaceRevision(workspaceRecord['workspaceRevision']);
   const lastMutationId = sanitizeOptionalId(workspaceRecord['lastMutationId']);
@@ -152,7 +152,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
         return null;
       }
       fileIds.add(id);
-      const fileRecord = file as Record<string, unknown>;
+      const fileRecord: Record<string, unknown> = { ...file };
       const rawFileType = fileRecord['fileType'];
       const normalizedFileType: CaseResolverFileType = normalizeCaseResolverFileType(rawFileType);
       const normalizedCreatedAt = normalizeTimestamp(

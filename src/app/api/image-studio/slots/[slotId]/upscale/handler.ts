@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -391,6 +390,17 @@ export async function postUpscaleSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
+    const errorMeta =
+      isAppError(error) &&
+      error.meta &&
+      typeof error.meta === 'object' &&
+      !Array.isArray(error.meta)
+        ? error.meta
+        : null;
+    const upscaleErrorCode =
+      typeof errorMeta?.['upscaleErrorCode'] === 'string'
+        ? errorMeta['upscaleErrorCode']
+        : undefined;
     void logSystemEvent({
       level: 'warn',
       source: 'image-studio.upscale',
@@ -408,7 +418,7 @@ export async function postUpscaleSlotHandler(
         targetHeight: resolvedRequest.targetHeight,
         requestId: idempotencyKey,
         fingerprint,
-        upscaleErrorCode: isAppError(error) ? (error.meta as any)?.['upscaleErrorCode'] : undefined,
+        upscaleErrorCode,
         durationMs: Date.now() - startedAt,
       },
     });

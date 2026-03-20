@@ -11,6 +11,7 @@ import {
   Route,
   Map as MapIcon,
 } from 'lucide-react';
+import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
 import { Button, Tooltip, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
@@ -45,6 +46,11 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
     svgPerf,
     className,
   } = props;
+  const resolveTooltip = React.useCallback(
+    (docId: string, fallback: string): string =>
+      getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.aiPaths, docId) ?? fallback,
+    []
+  );
 
   return (
     <div
@@ -54,8 +60,7 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
       )}
     >
       <div className='flex items-center gap-1 px-1'>
-        {/* eslint-disable-next-line no-restricted-syntax */}
-        <Tooltip content='Zoom In'>
+        <Tooltip content={resolveTooltip('canvas_zoom_in', 'Zoom In')}>
           <Button
             data-doc-id='canvas_zoom_in'
             variant='ghost'
@@ -69,8 +74,7 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
         <div className='min-w-[42px] text-center text-[11px] font-bold tabular-nums text-foreground/90'>
           {Math.round(viewScale * 100)}%
         </div>
-        {/* eslint-disable-next-line no-restricted-syntax */}
-        <Tooltip content='Zoom Out'>
+        <Tooltip content={resolveTooltip('canvas_zoom_out', 'Zoom Out')}>
           <Button
             data-doc-id='canvas_zoom_out'
             variant='ghost'
@@ -86,8 +90,7 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
       <div className='h-4 w-px bg-border/40' />
 
       <div className='flex items-center gap-1'>
-        {/* eslint-disable-next-line no-restricted-syntax */}
-        <Tooltip content='Fit all nodes'>
+        <Tooltip content={resolveTooltip('canvas_fit_nodes', 'Fit all nodes')}>
           <Button
             data-doc-id='canvas_fit_nodes'
             variant='ghost'
@@ -98,8 +101,7 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
             <Maximize className='size-4' />
           </Button>
         </Tooltip>
-        {/* eslint-disable-next-line no-restricted-syntax */}
-        <Tooltip content='Fit selection'>
+        <Tooltip content={resolveTooltip('canvas_fit_selection', 'Fit selection')}>
           <Button
             data-doc-id='canvas_fit_selection'
             variant='ghost'
@@ -110,8 +112,7 @@ export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.El
             <Crosshair className='size-4' />
           </Button>
         </Tooltip>
-        {/* eslint-disable-next-line no-restricted-syntax */}
-        <Tooltip content='Reset view'>
+        <Tooltip content={resolveTooltip('canvas_reset_view', 'Reset view')}>
           <Button
             data-doc-id='canvas_reset_view'
             variant='ghost'

@@ -73,18 +73,17 @@ const insertMongoSystemLog = async (payload: SystemLogRecord): Promise<void> => 
   });
 };
 
-const isMissingPrismaTable = (error: unknown): boolean =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2021' || error.code === 'P2022');
+const isMissingPrismaTable = (error: unknown): boolean => {
+  const errorCode =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? (error as { code?: unknown }).code
+      : undefined;
+  return errorCode === 'P2021' || errorCode === 'P2022';
+};
 
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
-  createdAt:
-    (record.createdAt as unknown) instanceof Date
-      ? (record.createdAt as unknown as Date).toISOString()
-      : typeof record.createdAt === 'string'
-        ? record.createdAt
-        : new Date(record.createdAt || Date.now()).toISOString(),
+  createdAt: record.createdAt ?? new Date().toISOString(),
 });
 
 const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({

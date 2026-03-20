@@ -274,13 +274,11 @@ export async function updateImageStudioRun(
     $set: patch,
   };
   if (nextHistoryEvents.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     updateDocument.$push = {
       historyEvents: {
         $each: nextHistoryEvents,
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+    } as NonNullable<UpdateFilter<ImageStudioRunDocument>['$push']>;
   }
 
   const result = await collection.findOneAndUpdate({ _id: runId }, updateDocument, {
@@ -352,13 +350,11 @@ export async function removeImageStudioRunOutputs(
   if (runId) query['_id'] = runId;
 
   const result = await collection.updateMany(query, {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     $pull: {
       outputs: {
         $or: outputSelectors,
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
+    } as NonNullable<UpdateFilter<ImageStudioRunDocument>['$pull']>,
     $set: {
       updatedAt: now,
     },

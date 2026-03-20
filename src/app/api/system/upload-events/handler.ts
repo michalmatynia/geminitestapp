@@ -33,8 +33,8 @@ export const querySchema = z.object({
   to: optionalTrimmedQueryString(),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const query = (req ? _ctx.query ?? {} : {}) as z.infer<typeof querySchema>;
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const from = parseDateParam(query.from ?? null);
   const to = parseDateParam(query.to ?? null, true);
 

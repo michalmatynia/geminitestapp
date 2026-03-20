@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import { getProductAiJobs, getQueueStatus } from '@/features/jobs/server';
@@ -8,12 +9,11 @@ import type {
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError } from '@/shared/errors/app-error';
+import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 
-const parseLimit = (raw: string | null): number => {
-  const parsed = Number.parseInt(raw ?? '', 10);
-  if (!Number.isFinite(parsed)) return 30;
-  return Math.min(200, Math.max(1, parsed));
-};
+export const querySchema = z.object({
+  limit: optionalIntegerQuerySchema(z.number().int().min(1).max(200)),
+});
 
 type DatabaseEngineOperationJobRecord = Awaited<ReturnType<typeof getProductAiJobs>>[number];
 
@@ -75,7 +75,7 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
   };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
@@ -83,8 +83,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw authError('Unauthorized.');
   }
 
-  const { searchParams } = new URL(req.url);
-  const limit = parseLimit(searchParams.get('limit'));
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const limit = query.limit ?? 30;
   const [jobsResponse, queueStatus] = await Promise.all([
     getProductAiJobs('system'),
     getQueueStatus(),

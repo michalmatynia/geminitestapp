@@ -3,8 +3,19 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, GET_handler } from '@/app/api/v2/products/ai-jobs/handler';
+import {
+  DELETE_handler,
+  GET_handler,
+  deleteQuerySchema,
+  listQuerySchema,
+} from '@/app/api/v2/products/ai-jobs/handler';
 
-export const GET = apiHandler(GET_handler, { source: 'products.ai-jobs.GET' });
+export const GET = apiHandler(GET_handler, {
+  source: 'v2.products.ai-jobs.GET',
+  querySchema: listQuerySchema,
+});
 
-export const DELETE = apiHandler(DELETE_handler, { source: 'products.ai-jobs.DELETE' });
+export const DELETE = apiHandler(DELETE_handler, {
+  source: 'v2.products.ai-jobs.DELETE',
+  querySchema: deleteQuerySchema,
+});

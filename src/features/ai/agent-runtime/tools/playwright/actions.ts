@@ -84,30 +84,30 @@ export const inferLoginCandidates = async (
         }
         const parts: string[] = [];
         let node: Element | null = el;
-        while (node?.nodeType === 1 && node !== document.documentElement) {
-          let part = node.tagName.toLowerCase();
-          const name = node.getAttribute('name');
+        while (node && node.nodeType === 1 && node !== document.documentElement) {
+          const currentNode = node as Element;
+          let part = currentNode.tagName.toLowerCase();
+          const name = currentNode.getAttribute('name');
           const dataTest =
-            node.getAttribute('data-testid') ||
-            node.getAttribute('data-test') ||
-            node.getAttribute('data-qa');
+            currentNode.getAttribute('data-testid') ||
+            currentNode.getAttribute('data-test') ||
+            currentNode.getAttribute('data-qa');
           if (name) {
             part += `[name="${name.replace(/"/g, '"')}"]`;
           } else if (dataTest) {
             part += `[data-testid="${dataTest.replace(/"/g, '"')}"]`;
           }
-          const parent = node.parentElement;
+          const parent = currentNode.parentElement;
           if (parent) {
-            const siblings = Array.from(parent.children).filter(
-              (child: Element) => child.tagName === node!.tagName
-            );
-            if (siblings.length > 1) {
-              const index = siblings.indexOf(node) + 1;
+            const siblings = Array.from(parent.children, (child) => child as Element);
+            const matchingSiblings = siblings.filter((child) => child.tagName === currentNode.tagName);
+            if (matchingSiblings.length > 1) {
+              const index = matchingSiblings.indexOf(currentNode) + 1;
               part += `:nth-of-type(${index})`;
             }
           }
           parts.unshift(part);
-          node = node.parentElement;
+          node = currentNode.parentElement;
         }
         return parts.join(' > ');
       };

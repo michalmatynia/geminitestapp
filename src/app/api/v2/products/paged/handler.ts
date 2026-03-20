@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/performance';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { productService } from '@/shared/lib/products/services/productService';
-import type { ProductFiltersParsed } from '@/shared/lib/products/validations';
+import { productFilterSchema, type ProductFiltersParsed } from '@/shared/lib/products/validations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { env } from '@/shared/lib/env';
 
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
+
+const freshQuerySchema = z.preprocess(
+  (value: unknown) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+      return true;
+    }
+    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+      return false;
+    }
+    return value;
+  },
+  z.boolean().optional()
+);
+
+export const querySchema = productFilterSchema.extend({
+  fresh: freshQuerySchema,
+});
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
@@ -36,12 +58,13 @@ const attachTimingHeaders = (
  */
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
-  const filters = ctx.query as ProductFiltersParsed;
-  const forceFresh = _req.nextUrl?.searchParams.get('fresh') === '1';
+  const query = ctx.query as ProductFiltersParsed & { fresh?: boolean };
+  const { fresh, ...filters } = query;
+  const forceFresh = fresh === true;
   const serviceStart = performance.now();
   const result = forceFresh
-    ? await productService.getProductsWithCount(filters)
-    : await CachedProductService.getProductsWithCount(filters);
+    ? await productService.getProductsWithCount(filters as ProductFiltersParsed)
+    : await CachedProductService.getProductsWithCount(filters as ProductFiltersParsed);
   timings['service'] = performance.now() - serviceStart;
   timings['total'] = ctx.getElapsedMs();
 

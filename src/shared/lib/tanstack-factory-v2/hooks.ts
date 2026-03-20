@@ -1,11 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import {
   type QueryKey,
   type QueryFunctionContext,
@@ -13,7 +7,6 @@ import {
   type UseQueryResult,
   useSuspenseQuery,
   type UseSuspenseQueryResult,
-  type UseSuspenseQueryOptions,
 } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -27,10 +20,11 @@ import {
   BaseQueryFactoryV2Config,
   QueryDescriptorV2,
   QueryOptionsWithoutCore,
+  SuspenseQueryOptionsWithoutCore,
   SuspenseQueryDescriptorV2,
 } from './types';
 import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
-import { applyQueryRuntimeGuards } from './guards';
+import { applyQueryRuntimeGuards, applySuspenseQueryRuntimeGuards } from './guards';
 import { invokeQueryFactoryFn } from './executors';
 
 const createTelemetrizedQueryFnInternal = <
@@ -167,10 +161,7 @@ export function useTelemetrizedSuspenseMultiQueryOptionsV2<
   TQueryKey extends QueryKey = QueryKey,
 >(
   config: SuspenseQueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
-): Omit<
-  UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-  'queryKey' | 'queryFn' | 'meta'
-> & {
+): SuspenseQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> & {
   queryKey: TQueryKey;
   queryFn: (context: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>;
   meta: ReturnType<typeof attachTanstackFactoryMeta>;
@@ -178,7 +169,7 @@ export function useTelemetrizedSuspenseMultiQueryOptionsV2<
   const { queryKey, queryFn, meta, telemetryContext, transformError, ...options } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
-  const guardedOptions = applyQueryRuntimeGuards(options as any);
+  const guardedOptions = applySuspenseQueryRuntimeGuards(options);
   const telemetrizedQueryFn = createTelemetrizedQueryFnInternal(
     {
       meta,
@@ -192,7 +183,7 @@ export function useTelemetrizedSuspenseMultiQueryOptionsV2<
   );
 
   return {
-    ...(guardedOptions as any),
+    ...guardedOptions,
     queryKey: normalizedQueryKey,
     meta: attachTanstackFactoryMeta(resolvedMeta),
     queryFn: telemetrizedQueryFn,
@@ -241,7 +232,7 @@ export function useSuspenseQueryFactoryV2<
   const { meta, queryFn, telemetryContext, queryKey, transformError, ...options } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
-  const guardedOptions = applyQueryRuntimeGuards(options as any);
+  const guardedOptions = applySuspenseQueryRuntimeGuards(options);
 
   const telemetrizedQueryFn = useTelemetrizedQueryFn(
     {
@@ -254,7 +245,7 @@ export function useSuspenseQueryFactoryV2<
   );
 
   return useSuspenseQuery({
-    ...(guardedOptions as any),
+    ...guardedOptions,
     queryKey: normalizedQueryKey,
     meta: attachTanstackFactoryMeta(resolvedMeta),
     queryFn: telemetrizedQueryFn,

@@ -29,6 +29,10 @@ export type CaseResolverWorkspaceDetachedHistoryPayload = CaseResolverWorkspaceD
   CaseResolverWorkspaceDetachedHistoryFileEntry
 >;
 
+const coerceDetachedWorkspaceFile = (
+  value: unknown
+): CaseResolverWorkspace['files'][number] => value as CaseResolverWorkspace['files'][number];
+
 const isCaseResolverDocumentHistoryEntry = (
   entry: unknown
 ): entry is CaseResolverWorkspace['files'][number]['documentHistory'][number] => {
@@ -117,9 +121,9 @@ export const stripCaseResolverWorkspaceDetachedHistory = (
   return {
     ...workspace,
     files: workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
-      const fileRecord = { ...file } as Record<string, unknown>;
+      const fileRecord: Record<string, unknown> = { ...file };
       delete fileRecord['documentHistory'];
-      return fileRecord as CaseResolverWorkspace['files'][number];
+      return coerceDetachedWorkspaceFile(fileRecord);
     }),
   };
 };

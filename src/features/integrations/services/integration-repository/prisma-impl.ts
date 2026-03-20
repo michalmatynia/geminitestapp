@@ -268,7 +268,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
         username: String(input['username'] || ''),
         password: String(input['password'] || ''),
         ...input,
-      } as unknown as Prisma.IntegrationConnectionCreateInput;
+      } as Prisma.IntegrationConnectionCreateInput;
       const doc = await prisma.integrationConnection.create({ data });
       return toConnectionRecord(doc);
     },
@@ -283,7 +283,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
 
       const doc = await prisma.integrationConnection.update({
         where: { id },
-        data: updateData as unknown as Prisma.IntegrationConnectionUpdateInput,
+        data: updateData as Prisma.IntegrationConnectionUpdateInput,
       });
       return toConnectionRecord(doc);
     },

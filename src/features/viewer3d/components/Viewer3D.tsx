@@ -500,7 +500,7 @@ export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
 
         {/* HDR Environment */}
         {environment !== 'none' && environment !== 'gym' && (
-          <Environment preset={environment as unknown as 'studio'} background={false} />
+          <Environment preset={environment as 'studio'} background={false} />
         )}
 
         <Suspense fallback={<Loader />}>

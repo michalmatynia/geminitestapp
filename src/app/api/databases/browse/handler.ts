@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
@@ -8,6 +9,10 @@ import type {
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import {
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -32,6 +37,14 @@ const isPrismaBrowseModel = (value: unknown): value is PrismaBrowseModel => {
 };
 
 const toBrowseDocument = (value: unknown): Record<string, unknown> => asRecord(value) ?? { value };
+
+export const querySchema = z.object({
+  collection: optionalTrimmedQueryString(),
+  limit: optionalIntegerQuerySchema(z.number().int().min(1)).default(20),
+  skip: optionalIntegerQuerySchema(z.number().int().min(0)).default(0),
+  query: optionalTrimmedQueryString(),
+  provider: optionalTrimmedQueryString(),
+});
 
 async function browseMongoCollection(params: BrowseParams): Promise<BrowseResponse> {
   const db = await getMongoDb();
@@ -162,15 +175,12 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 }
 
 export async function GET_handler(
-  request: NextRequest,
+  _request: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const { searchParams } = new URL(request.url);
-  const collection = searchParams.get('collection');
-  const limit = parseInt(searchParams.get('limit') ?? '20', 10);
-  const skip = parseInt(searchParams.get('skip') ?? '0', 10);
-  const query = searchParams.get('query') ?? undefined;
-  const providerParam = (searchParams.get('provider') ?? '').toLowerCase();
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const collection = query.collection ?? null;
+  const providerParam = query.provider?.toLowerCase() ?? '';
 
   if (!collection) {
     throw badRequestError('Collection parameter is required');
@@ -181,9 +191,9 @@ export async function GET_handler(
     providerParam === 'mongodb' || providerParam === 'prisma' ? providerParam : 'auto'
   );
 
-  const params: BrowseParams = { collection, limit, skip };
-  if (query !== undefined) {
-    params.query = query;
+  const params: BrowseParams = { collection, limit: query.limit, skip: query.skip };
+  if (query.query !== undefined) {
+    params.query = query.query;
   }
 
   if (provider === 'mongodb') {

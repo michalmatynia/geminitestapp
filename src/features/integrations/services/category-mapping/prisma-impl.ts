@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { Prisma } from '@/shared/lib/db/prisma-client';
 import prisma from '@/shared/lib/db/prisma';
 import {
@@ -8,7 +5,9 @@ import {
   CategoryMappingWithDetails,
   CategoryMappingCreateInput,
   CategoryMappingUpdateInput,
+  ExternalCategory,
 } from '@/shared/contracts/integrations';
+import type { ProductCategory } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
 import { normalizeInternalCategoryId, UniqueInternalCategoryScope } from './types';
 
@@ -33,6 +32,47 @@ function mapToRecord(record: {
     updatedAt: record.updatedAt?.toISOString() ?? null,
   };
 }
+
+const toExternalCategoryMetadata = (
+  value: Prisma.JsonValue | null
+): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null;
+
+const buildMissingExternalCategory = (record: {
+  externalCategoryId: string;
+  connectionId: string;
+  updatedAt: Date;
+  createdAt: Date;
+}): ExternalCategory => ({
+  id: record.externalCategoryId,
+  connectionId: record.connectionId,
+  externalId: record.externalCategoryId,
+  name: `[Missing external category: ${record.externalCategoryId}]`,
+  parentExternalId: null,
+  path: null,
+  depth: 0,
+  isLeaf: true,
+  metadata: null,
+  fetchedAt: record.updatedAt.toISOString(),
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
+});
+
+const buildMissingInternalCategory = (record: {
+  internalCategoryId: string | null;
+  catalogId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): ProductCategory => ({
+  id: record.internalCategoryId || '',
+  name: `[Missing internal category: ${record.internalCategoryId}]`,
+  description: null,
+  color: null,
+  parentId: null,
+  catalogId: record.catalogId,
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
+});
 
 const buildPrismaUniquenessWhere = (
   scope: UniqueInternalCategoryScope
@@ -164,40 +204,19 @@ export const prismaCategoryMappingImpl = {
       externalCategory: record.externalCategory
         ? {
           ...record.externalCategory,
+          metadata: toExternalCategoryMetadata(record.externalCategory.metadata),
           fetchedAt: record.externalCategory.fetchedAt.toISOString(),
           createdAt: record.externalCategory.createdAt.toISOString(),
           updatedAt: record.externalCategory.updatedAt.toISOString(),
         }
-        : ({
-          id: record.externalCategoryId,
-          connectionId: record.connectionId,
-          externalId: record.externalCategoryId,
-          name: `[Missing external category: ${record.externalCategoryId}]`,
-          parentExternalId: null,
-          path: null,
-          depth: 0,
-          isLeaf: true,
-          metadata: null,
-          fetchedAt: record.updatedAt.toISOString(),
-          createdAt: record.createdAt.toISOString(),
-          updatedAt: record.updatedAt.toISOString(),
-        } as any),
+        : buildMissingExternalCategory(record),
       internalCategory: record.internalCategory
         ? {
           ...record.internalCategory,
           createdAt: record.internalCategory.createdAt.toISOString(),
           updatedAt: record.internalCategory.updatedAt.toISOString(),
         }
-        : ({
-          id: record.internalCategoryId || '',
-          name: `[Missing internal category: ${record.internalCategoryId}]`,
-          description: null,
-          color: null,
-          parentId: null,
-          catalogId: record.catalogId,
-          createdAt: record.createdAt.toISOString(),
-          updatedAt: record.updatedAt.toISOString(),
-        } as any),
+        : buildMissingInternalCategory(record),
     }));
   },
 

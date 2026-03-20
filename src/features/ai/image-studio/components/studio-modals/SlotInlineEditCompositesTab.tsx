@@ -26,7 +26,6 @@ export function SlotInlineEditCompositesTab(): React.JSX.Element {
           <div className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'>
             <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
               {sourceCompositeImage.imageSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={sourceCompositeImage.imageSrc}
                   alt={sourceCompositeImage.name}
@@ -97,7 +96,6 @@ export function SlotInlineEditCompositesTab(): React.JSX.Element {
               >
                 <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
                   {entry.imageSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={entry.imageSrc}
                       alt={entry.name}

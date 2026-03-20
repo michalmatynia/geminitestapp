@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
-import type { BrainModelFamily, BrainModelModality } from '@/shared/contracts/ai-brain';
+import {
+  brainModelFamilySchema,
+  brainModelModalitySchema,
+} from '@/shared/contracts/ai-brain';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  optionalBooleanQuerySchema,
+  normalizeOptionalQueryString,
+} from '@/shared/lib/api/query-schema';
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const url = 'nextUrl' in req && req.nextUrl ? req.nextUrl : new URL(req.url);
-  const family = url.searchParams.get('family') as BrainModelFamily | null;
-  const modality = url.searchParams.get('modality') as BrainModelModality | null;
-  const streamingParam = url.searchParams.get('streaming');
-  const streaming =
-    streamingParam === 'true' ? true : streamingParam === 'false' ? false : undefined;
+export const querySchema = z.object({
+  family: z.preprocess(normalizeOptionalQueryString, brainModelFamilySchema.optional()),
+  modality: z.preprocess(normalizeOptionalQueryString, brainModelModalitySchema.optional()),
+  streaming: optionalBooleanQuerySchema(),
+});
+
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const payload = await listBrainModels({
-    ...(family ? { family } : {}),
-    ...(modality ? { modality } : {}),
-    ...(typeof streaming === 'boolean' ? { streaming } : {}),
+    ...(query.family ? { family: query.family } : {}),
+    ...(query.modality ? { modality: query.modality } : {}),
+    ...(typeof query.streaming === 'boolean' ? { streaming: query.streaming } : {}),
   });
   return NextResponse.json(payload);
 }

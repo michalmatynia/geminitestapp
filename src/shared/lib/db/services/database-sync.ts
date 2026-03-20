@@ -286,7 +286,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('auth_login_challenges').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as unknown as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,
@@ -312,7 +312,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('auth_security_attempts').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc as unknown as Record<string, unknown>);
+        const id = normalizeId(doc);
         if (!id) return null;
         return {
           id,

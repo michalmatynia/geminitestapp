@@ -60,6 +60,15 @@ export type PersistWorkspaceInput = {
   source: string;
 };
 
+type PersistedWorkspaceFile = CaseResolverWorkspace['files'][number];
+type PersistedHistoryEntry = PersistedWorkspaceFile['documentHistory'][number];
+
+const coercePersistedWorkspaceFile = (value: unknown): PersistedWorkspaceFile =>
+  value as PersistedWorkspaceFile;
+
+const coercePersistedHistoryEntry = (value: unknown): PersistedHistoryEntry =>
+  value as PersistedHistoryEntry;
+
 const summarizeWorkspacePersistPayload = (
   workspace: CaseResolverWorkspace
 ): {
@@ -136,12 +145,10 @@ const summarizeWorkspacePersistPayload = (
 export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {
-  type PersistedHistoryEntry = CaseResolverWorkspace['files'][number]['documentHistory'][number];
   const compactedFiles = Array.isArray(workspace.files)
     ? workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
-      const fileRecord = file as Record<string, unknown>;
       const isScanFile = file.fileType === 'scanfile';
-      const rawHistory = fileRecord['documentHistory'];
+      const rawHistory = Array.isArray(file.documentHistory) ? file.documentHistory : [];
       const compactedHistory: PersistedHistoryEntry[] = Array.isArray(rawHistory)
         ? rawHistory
           .slice(0, CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT)
@@ -150,29 +157,38 @@ export const compactCaseResolverWorkspaceForPersist = (
               Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
           )
           .map((entryRecord): PersistedHistoryEntry => {
-            const rest = { ...entryRecord };
-            // Keep history snapshots lightweight in persisted workspace.
-            delete rest['changes'];
-            delete rest['timestamp'];
-            delete rest['documentId'];
-            delete rest['userId'];
-            delete rest['action'];
+            const {
+              changes: _changes,
+              timestamp: _timestamp,
+              documentId: _documentId,
+              userId: _userId,
+              action: _action,
+              ...entryBase
+            } = entryRecord;
             if (isScanFile) {
-              delete rest['documentContent'];
-              delete rest['documentContentHtml'];
-              delete rest['documentContentPlainText'];
-            } else {
-              const htmlValue =
-                    typeof rest['documentContentHtml'] === 'string'
-                      ? rest['documentContentHtml']
-                      : '';
-              if (htmlValue.trim().length > 0) {
-                delete rest['documentContent'];
-              }
-              delete rest['documentContentMarkdown'];
-              delete rest['documentContentPlainText'];
+              const {
+                documentContent: _documentContent,
+                documentContentHtml: _documentContentHtml,
+                documentContentPlainText: _documentContentPlainText,
+                ...scanRest
+              } = entryBase;
+              return coercePersistedHistoryEntry(scanRest);
             }
-            return rest as PersistedHistoryEntry;
+
+            const {
+              documentContentMarkdown: _documentContentMarkdown,
+              documentContentPlainText: _documentContentPlainText,
+              ...contentRest
+            } = entryBase;
+            const htmlValue =
+              typeof contentRest['documentContentHtml'] === 'string'
+                ? contentRest['documentContentHtml']
+                : '';
+            if (htmlValue.trim().length > 0) {
+              const { documentContent: _documentContent, ...htmlRest } = contentRest;
+              return coercePersistedHistoryEntry(htmlRest);
+            }
+            return coercePersistedHistoryEntry(contentRest);
           })
         : [];
       if (isScanFile) {
@@ -184,49 +200,40 @@ export const compactCaseResolverWorkspaceForPersist = (
           explodedDocumentContent: _exploded,
           ...fileRest
         } = file;
-        const compactedFile = {
-          ...fileRest,
-        } as CaseResolverWorkspace['files'][number];
+        const compactedFileRecord: Record<string, unknown> = { ...fileRest };
         if (compactedHistory.length > 0) {
-          compactedFile.documentHistory = compactedHistory;
+          compactedFileRecord['documentHistory'] = compactedHistory;
         }
         if (
-          Array.isArray(compactedFile.documentConversionWarnings) &&
-            compactedFile.documentConversionWarnings.length === 0
+          Array.isArray(file.documentConversionWarnings) &&
+          file.documentConversionWarnings.length === 0
         ) {
-          delete (compactedFile as Record<string, unknown>)[
-            'documentConversionWarnings'
-          ];
+          delete compactedFileRecord['documentConversionWarnings'];
         }
-        return compactedFile;
+        return coercePersistedWorkspaceFile(compactedFileRecord);
       }
       const {
         documentContentMarkdown: _markdown,
         documentContentPlainText: _plainText,
         ...fileRest
       } = file;
+      const compactedFileRecord: Record<string, unknown> = { ...fileRest };
       if (
         typeof file.documentContentHtml === 'string' &&
-          file.documentContentHtml.trim().length > 0 &&
-          'documentContent' in fileRest
+        file.documentContentHtml.trim().length > 0
       ) {
-        delete (fileRest as Record<string, unknown>)['documentContent'];
+        delete compactedFileRecord['documentContent'];
       }
-      const compactedFile = {
-        ...fileRest,
-      } as CaseResolverWorkspace['files'][number];
       if (compactedHistory.length > 0) {
-        compactedFile.documentHistory = compactedHistory;
+        compactedFileRecord['documentHistory'] = compactedHistory;
       }
       if (
-        Array.isArray(compactedFile.documentConversionWarnings) &&
-          compactedFile.documentConversionWarnings.length === 0
+        Array.isArray(file.documentConversionWarnings) &&
+        file.documentConversionWarnings.length === 0
       ) {
-        delete (compactedFile as Record<string, unknown>)[
-          'documentConversionWarnings'
-        ];
+        delete compactedFileRecord['documentConversionWarnings'];
       }
-      return compactedFile;
+      return coercePersistedWorkspaceFile(compactedFileRecord);
     })
     : workspace.files;
 

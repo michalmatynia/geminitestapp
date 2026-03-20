@@ -293,9 +293,33 @@ module.exports = tseslint.config(
     },
   },
   {
-    files: ['src/shared/lib/query-factories-v2.ts'],
+    files: [
+      'src/shared/lib/query-factories-v2.ts',
+      'src/shared/lib/tanstack-factory-v2/executors.ts',
+    ],
     rules: {
       'no-restricted-syntax': 'off',
+    },
+  },
+  {
+    files: [
+      'src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx',
+      'src/features/ai/image-studio/components/studio-modals/InlineImagePreviewCanvas.tsx',
+      'src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx',
+      'src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx',
+      'src/features/ai/image-studio/components/studio-modals/SlotInlineEditMasksTab.tsx',
+      'src/features/ai/image-studio/components/VersionGraphComparePanel.tsx',
+      'src/features/ai/image-studio/components/VersionGraphInspector.tsx',
+      'src/features/ai/image-studio/components/VersionNodeDetailsModal.tsx',
+      'src/features/case-resolver/components/CaseResolverFileViewer.tsx',
+      'src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx',
+      'src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx',
+      'src/features/products/components/form/studio/StudioPreviewCanvas.tsx',
+      'src/features/products/components/ProductImageSlot.tsx',
+      'src/shared/ui/vector-canvas/components/CanvasImageLayer.tsx',
+    ],
+    rules: {
+      '@next/next/no-img-element': 'off',
     },
   },
   {

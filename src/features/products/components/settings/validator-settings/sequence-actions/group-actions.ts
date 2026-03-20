@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
 import {
@@ -95,7 +91,7 @@ export const handleMoveGroup = async (args: {
   notifyError: (message: string) => void;
 }): Promise<void> => {
   const { groupId, targetIndex, patterns, updatePattern, notifyError } = args;
-  const ordered = sortRuleDraftsBySequence(patterns as any);
+  const ordered = sortRuleDraftsBySequence(patterns);
   const groupPatternIds = new Set(
     patterns.filter((p) => getSequenceGroupId(p) === groupId).map((p) => p.id)
   );
@@ -138,7 +134,7 @@ export const handleReorderInGroup = async (args: {
   const groupId = getSequenceGroupId(pattern);
   if (!groupId) return;
 
-  const ordered = sortRuleDraftsBySequence(patterns as any);
+  const ordered = sortRuleDraftsBySequence(patterns);
   const groupMembers = ordered.filter((p) => getSequenceGroupId(p) === groupId);
 
   const movedIndex = groupMembers.findIndex((p) => p.id === patternId);

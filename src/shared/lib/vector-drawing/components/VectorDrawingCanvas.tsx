@@ -111,7 +111,7 @@ export function VectorDrawingCanvas(props: Partial<VectorCanvasProps>): React.JS
     backgroundColor,
     className,
     // Note: internal state and handlers will be populated by VectorCanvasInner
-  } as unknown as VectorCanvasContextValue;
+  } as VectorCanvasContextValue;
 
   return (
     <VectorCanvasProvider value={contextValue}>

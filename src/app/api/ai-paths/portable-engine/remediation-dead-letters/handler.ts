@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import {
+  normalizeOptionalQueryString,
+  optionalIntegerQuerySchema,
+  optionalTrimmedQueryString,
+} from '@/shared/lib/api/query-schema';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import {
   loadPortablePathAuditSinkAutoRemediationDeadLetters,
@@ -29,6 +34,15 @@ const DEFAULT_DEAD_LETTER_REPLAY_LIMIT = 20;
 const MAX_DEAD_LETTER_REPLAY_LIMIT = 200;
 const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
 const DEFAULT_DEAD_LETTER_REPLAY_WINDOW_SECONDS = 7 * 24 * 60 * 60;
+
+export const querySchema = z.object({
+  limit: optionalIntegerQuerySchema(z.number().int().min(1).max(MAX_DEAD_LETTER_LIMIT)),
+  channel: z.preprocess(
+    (value: unknown) => normalizeOptionalQueryString(value)?.toLowerCase(),
+    z.enum(['webhook', 'email']).optional()
+  ),
+  endpoint: optionalTrimmedQueryString(),
+});
 
 const parseDeadLetterLimit = (value: string | null): number => {
   if (!value) return DEFAULT_DEAD_LETTER_LIMIT;
@@ -126,13 +140,13 @@ const parseReplayRequestBody = (
   };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const searchParams = getQueryParams(req);
-  const limit = parseDeadLetterLimit(searchParams.get('limit'));
-  const channel = parseDeadLetterChannel(searchParams.get('channel'));
-  const endpoint = parseDeadLetterEndpoint(searchParams.get('endpoint'));
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const limit = query.limit ?? DEFAULT_DEAD_LETTER_LIMIT;
+  const channel = parseDeadLetterChannel(query.channel);
+  const endpoint = parseDeadLetterEndpoint(query.endpoint);
   const deadLetterMaxEntries =
     resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
     DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;

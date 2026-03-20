@@ -9,7 +9,7 @@ import {
 } from '@/app/api/v2/products/validator-runtime/evaluate/handler';
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.validator-runtime.evaluate.POST',
+  source: 'v2.products.validator-runtime.evaluate.POST',
   parseJsonBody: true,
   bodySchema: evaluateRuntimeSchema,
   cacheControl: 'no-store',

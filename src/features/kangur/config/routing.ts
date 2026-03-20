@@ -64,7 +64,7 @@ const parseKangurEmbeddedBasePath = (
     return null;
   }
 
-  const rawEmbeddedValue = basePath!.trim().slice(KANGUR_EMBED_BASE_PATH_PREFIX.length);
+  const rawEmbeddedValue = basePath.trim().slice(KANGUR_EMBED_BASE_PATH_PREFIX.length);
   const scopeDelimiterIndex = rawEmbeddedValue.indexOf(KANGUR_EMBED_SCOPE_DELIMITER);
 
   if (scopeDelimiterIndex === -1) {
@@ -131,7 +131,9 @@ export const buildKangurEmbeddedBasePath = (hostPath: string, scopeKey?: string 
   return `${KANGUR_EMBED_BASE_PATH_PREFIX}${normalizedScopeKey}${KANGUR_EMBED_SCOPE_DELIMITER}${normalizedHostPath}`;
 };
 
-export const isKangurEmbeddedBasePath = (basePath: string | null | undefined): boolean =>
+export const isKangurEmbeddedBasePath = (
+  basePath: string | null | undefined
+): basePath is string =>
   typeof basePath === 'string' && basePath.trim().startsWith(KANGUR_EMBED_BASE_PATH_PREFIX);
 
 export const getKangurEmbeddedScopeKey = (basePath: string | null | undefined): string | null =>

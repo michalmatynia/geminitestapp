@@ -101,8 +101,7 @@ const parsePrismaModelNamesFromSchema = (): string[] => {
 const getKnownPrismaCollections = (): string[] => {
   if (!process.env['DATABASE_URL']) return [];
   try {
-    const datamodel = (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf
-      ?.datamodel;
+    const datamodel = (prisma as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel;
     const modelNames = datamodel?.models?.map((model) => model.name) ?? [];
     if (modelNames.length > 0) {
       return Array.from(new Set(modelNames)).sort((a, b) => a.localeCompare(b));

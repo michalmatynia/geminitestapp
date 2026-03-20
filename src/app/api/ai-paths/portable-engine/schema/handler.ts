@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
@@ -17,8 +17,12 @@ const SCHEMA_KIND_VALUES = ['all', ...PORTABLE_PATH_JSON_SCHEMA_KINDS] as const;
 type SchemaKindQueryValue = (typeof SCHEMA_KIND_VALUES)[number];
 const SCHEMA_CACHE_CONTROL = 'private, max-age=300, stale-while-revalidate=900';
 
-const isSchemaKindQueryValue = (value: string): value is SchemaKindQueryValue =>
-  SCHEMA_KIND_VALUES.includes(value as SchemaKindQueryValue);
+export const querySchema = z.object({
+  kind: z.preprocess(
+    (value: unknown) => normalizeOptionalQueryString(value)?.toLowerCase(),
+    z.enum(SCHEMA_KIND_VALUES).optional()
+  ),
+});
 
 const buildSchemaEtag = (payload: unknown): string => {
   const serialized = JSON.stringify(payload);
@@ -45,11 +49,8 @@ const matchesIfNoneMatch = (headerValue: string | null, etag: string): boolean =
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
 
-  const searchParams = getQueryParams(req);
-  const kindRaw = (searchParams.get('kind') ?? 'all').trim().toLowerCase();
-  if (!isSchemaKindQueryValue(kindRaw)) {
-    throw badRequestError('Invalid portable schema kind.');
-  }
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const kindRaw: SchemaKindQueryValue = query.kind ?? 'all';
 
   const schemas = buildPortablePathJsonSchemaCatalog();
   const payload =

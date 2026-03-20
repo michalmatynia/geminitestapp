@@ -8,7 +8,6 @@ export const CanvasImageLayer = forwardRef<HTMLImageElement>(
     if (!src) return null;
 
     return (
-      /* eslint-disable @next/next/no-img-element */
       <img
         ref={ref}
         src={src}

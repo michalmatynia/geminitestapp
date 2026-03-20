@@ -423,7 +423,7 @@ function isNetworkError(error: unknown): boolean {
 function isClientError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   if ('status' in error) {
-    const status = (error as unknown as { status: unknown }).status;
+    const status = (error as { status: unknown }).status;
     return typeof status === 'number' && status >= 400 && status < 500;
   }
   return false;

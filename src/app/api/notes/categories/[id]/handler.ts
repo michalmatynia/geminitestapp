@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { categoryUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { CategoryUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { removeUndefined } from '@/shared/utils';
+
+export const querySchema = z.object({
+  recursive: optionalBooleanQuerySchema().default(false),
+});
 
 /**
  * PATCH /api/notes/categories/[id]
@@ -38,13 +44,12 @@ export async function PATCH_handler(
  * - recursive=true: Delete all subfolders and notes within the category
  */
 export async function DELETE_handler(
-  req: NextRequest,
+  _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const recursive = searchParams.get('recursive') === 'true';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
-  await noteService.deleteCategory(params.id, recursive);
+  await noteService.deleteCategory(params.id, query.recursive);
   return NextResponse.json({ success: true });
 }

@@ -19,7 +19,7 @@ export const querySchema = z.object({
   limit: optionalIntegerQuerySchema(z.number().int().positive().max(100)).default(50),
 });
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('agentLongTermMemory' in prisma)) {
     throw internalError('Long-term memory table not initialized. Run prisma generate/db push.');

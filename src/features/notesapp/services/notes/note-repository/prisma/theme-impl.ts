@@ -7,6 +7,9 @@ import prisma from '@/shared/lib/db/prisma';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 
+const readThemeIsDefault = (theme: Theme): boolean =>
+  (theme as Theme & { isDefault?: boolean }).isDefault ?? false;
+
 export const getAllThemes = async (notebookId?: string | null): Promise<ThemeRecord[]> => {
   const resolvedNotebookId = notebookId ?? (await getOrCreateDefaultNotebook()).id;
   const themes = await prisma.theme.findMany({
@@ -15,7 +18,7 @@ export const getAllThemes = async (notebookId?: string | null): Promise<ThemeRec
   });
   return themes.map((theme: Theme) => ({
     ...theme,
-    isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+    isDefault: readThemeIsDefault(theme),
     createdAt: theme.createdAt.toISOString(),
     updatedAt: theme.updatedAt?.toISOString() ?? null,
   }));
@@ -26,7 +29,7 @@ export const getThemeById = async (id: string): Promise<ThemeRecord | null> => {
   return theme
     ? {
       ...theme,
-      isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+      isDefault: readThemeIsDefault(theme),
       createdAt: theme.createdAt.toISOString(),
       updatedAt: theme.updatedAt?.toISOString() ?? null,
     }
@@ -74,7 +77,7 @@ export const createTheme = async (data: ThemeCreateInput): Promise<ThemeRecord> 
   });
   return {
     ...theme,
-    isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+    isDefault: readThemeIsDefault(theme),
     createdAt: theme.createdAt.toISOString(),
     updatedAt: theme.updatedAt?.toISOString() ?? null,
   };
@@ -126,7 +129,7 @@ export const updateTheme = async (
     });
     return {
       ...theme,
-      isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+      isDefault: readThemeIsDefault(theme),
       createdAt: theme.createdAt.toISOString(),
       updatedAt: theme.updatedAt?.toISOString() ?? null,
     };

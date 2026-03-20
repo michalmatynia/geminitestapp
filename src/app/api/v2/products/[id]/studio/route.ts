@@ -6,12 +6,12 @@ import { idParamSchema } from '@/shared/validations/api-schemas';
 import { GET_handler, PUT_handler } from '@/app/api/v2/products/[id]/studio/handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: 'products.[id].studio.GET',
+  source: 'v2.products.[id].studio.GET',
   paramsSchema: idParamSchema,
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: 'products.[id].studio.PUT',
+  source: 'v2.products.[id].studio.PUT',
   paramsSchema: idParamSchema,
   logSuccess: true,
 });

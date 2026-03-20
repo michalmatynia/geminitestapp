@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { randomUUID } from 'crypto';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
@@ -32,18 +27,19 @@ import {
   toTagResponse,
   toCategoryResponse,
 } from '../mongo-note-repository-utils';
-import { Filter, UpdateFilter, WithId } from 'mongodb';
+import { AnyBulkWriteOperation, Filter, UpdateFilter, WithId } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
 
 const noteCollectionName = 'notes';
 const tagCollectionName = 'tags';
 const categoryCollectionName = 'categories';
 const noteFileCollectionName = 'noteFiles';
+type DefaultNotebookRef = { id: string };
 
 export const mongoNoteCrudImpl = {
   async getAll(
     filters: NoteFilters = {},
-    getOrCreateDefaultNotebook: () => Promise<any>
+    getOrCreateDefaultNotebook: () => Promise<DefaultNotebookRef>
   ): Promise<NoteWithRelations[]> {
     const db = await getMongoDb();
     const resolvedNotebookId = filters.notebookId ?? (await getOrCreateDefaultNotebook()).id;
@@ -193,7 +189,7 @@ export const mongoNoteCrudImpl = {
 
   async create(
     data: NoteCreateInput,
-    getOrCreateDefaultNotebook: () => Promise<any>
+    getOrCreateDefaultNotebook: () => Promise<DefaultNotebookRef>
   ): Promise<NoteWithRelations> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
@@ -275,7 +271,7 @@ export const mongoNoteCrudImpl = {
   async update(
     id: string,
     data: NoteUpdateInput,
-    getOrCreateDefaultNotebook: () => Promise<any>
+    getOrCreateDefaultNotebook: () => Promise<DefaultNotebookRef>
   ): Promise<NoteWithRelations | null> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
@@ -408,7 +404,7 @@ export const mongoNoteCrudImpl = {
     if (addedIds.length === 0 && removedIds.length === 0) return;
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
-    const bulkOps: Record<string, unknown>[] = [];
+    const bulkOps: AnyBulkWriteOperation<NoteDocument>[] = [];
 
     for (const relatedId of addedIds) {
       if (relatedId === noteId) continue;
@@ -430,7 +426,7 @@ export const mongoNoteCrudImpl = {
     }
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps as unknown as Parameters<typeof collection.bulkWrite>[0]);
+      await collection.bulkWrite(bulkOps);
     }
   },
 

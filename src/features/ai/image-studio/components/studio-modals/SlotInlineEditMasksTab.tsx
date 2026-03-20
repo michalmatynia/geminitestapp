@@ -32,7 +32,6 @@ export function SlotInlineEditMasksTab(): React.JSX.Element {
             >
               <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
                 {mask.imageSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={mask.imageSrc}
                     alt={mask.name}

@@ -10,15 +10,15 @@ import {
 } from '@/app/api/v2/products/categories/[id]/handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
-  source: 'products.categories.[id].GET',
+  source: 'v2.products.categories.[id].GET',
 });
 
 export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, {
-  source: 'products.categories.[id].PUT',
+  source: 'v2.products.categories.[id].PUT',
   parseJsonBody: true,
   bodySchema: productCategoryUpdateSchema,
 });
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
-  source: 'products.categories.[id].DELETE',
+  source: 'v2.products.categories.[id].DELETE',
 });

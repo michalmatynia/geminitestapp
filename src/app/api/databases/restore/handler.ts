@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   pgBackupsDir,
@@ -22,6 +23,7 @@ import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/datab
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -35,6 +37,13 @@ type ExecOutputishError = {
   };
 };
 
+export const querySchema = z.object({
+  type: z.preprocess(
+    (value: unknown) => normalizeOptionalQueryString(value),
+    z.enum(['postgresql', 'mongodb']).optional()
+  ),
+});
+
 export async function postDatabasesRestoreHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -46,8 +55,8 @@ export async function postDatabasesRestoreHandler(
   let backupName: string | null;
   let truncateBeforeRestore: boolean;
 
-  const { searchParams } = new URL(req.url);
-  const type = searchParams.get('type') || 'postgresql';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const type = query.type ?? 'postgresql';
 
   const parsed = await parseObjectJsonBody(req, {
     logPrefix: 'databases.restore',

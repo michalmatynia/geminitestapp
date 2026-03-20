@@ -10,13 +10,12 @@ import {
 } from '@/app/api/v2/products/sync/profiles/handler';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'products.sync.profiles.GET',
-  requireCsrf: false,
+  source: 'v2.products.sync.profiles.GET',
   cacheControl: 'no-store',
 });
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.sync.profiles.POST',
+  source: 'v2.products.sync.profiles.POST',
   parseJsonBody: true,
   bodySchema: createProfileSchema,
 });

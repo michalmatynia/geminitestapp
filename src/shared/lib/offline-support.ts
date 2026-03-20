@@ -1,5 +1,5 @@
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, type DehydratedState } from '@tanstack/react-query';
 import { persistQueryClient, type PersistedClient } from '@tanstack/react-query-persist-client';
 
 import { QUERY_KEYS } from './query-keys';
@@ -20,35 +20,28 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
     storage: window.localStorage,
     deserialize: (cachedString: string): PersistedClient => {
       const parsed = JSON.parse(cachedString) as Partial<PersistedClient>;
-      const parsedClientState = (isRecord(parsed.clientState) ? parsed.clientState : {}) as
-        Partial<PersistedClient['clientState']> & Record<string, unknown>;
-      const queries = Array.isArray(parsedClientState.queries)
-        ? (parsedClientState.queries as Array<Record<string, unknown>>)
-        : [];
+      const parsedClientState = isRecord(parsed.clientState)
+        ? (parsed.clientState as Partial<DehydratedState>)
+        : {};
+      const queries = Array.isArray(parsedClientState.queries) ? parsedClientState.queries : [];
       const mutations = Array.isArray(parsedClientState.mutations)
         ? parsedClientState.mutations
         : [];
       const filteredQueries = queries
-        .filter((query: Record<string, unknown>) => {
-          const state = query?.['state'] as { status?: unknown } | undefined;
-          return shouldPersistQuery(query?.['queryKey'], state?.status);
+        .filter((query) => {
+          if (!isRecord(query)) return false;
+          const state = isRecord(query['state']) ? query['state'] : null;
+          return shouldPersistQuery(query['queryKey'], state?.['status']);
         })
-        .map((query: Record<string, unknown>) => {
-          if (query && typeof query === 'object' && 'promise' in query) {
-            const { promise: _ignored, ...rest } = query;
-            return rest;
-          }
-          return query;
-        });
+        .map((query) => query);
 
       return {
         timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : Date.now(),
         buster: typeof parsed.buster === 'string' ? parsed.buster : '',
         clientState: {
-          ...parsedClientState,
           queries: filteredQueries,
           mutations,
-        } as PersistedClient['clientState'],
+        },
       };
     },
   });

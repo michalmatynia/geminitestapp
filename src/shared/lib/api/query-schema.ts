@@ -39,14 +39,16 @@ export const parseOptionalCsvQueryValue = (value: unknown): string[] | undefined
   return items.length > 0 ? items : undefined;
 };
 
-export const optionalTrimmedQueryString = (schema: z.ZodString = z.string()) =>
-  z.preprocess(normalizeOptionalQueryString, schema.optional());
+export const optionalTrimmedQueryString = <TSchema extends z.ZodTypeAny = z.ZodString>(
+  schema?: TSchema
+) => z.preprocess(normalizeOptionalQueryString, (schema ?? z.string()).optional());
 
-export const optionalIntegerQuerySchema = (schema: z.ZodNumber) =>
-  z.preprocess(parseOptionalIntegerQueryValue, schema.optional());
+export const optionalIntegerQuerySchema = <TSchema extends z.ZodTypeAny = z.ZodNumber>(
+  schema?: TSchema
+) => z.preprocess(parseOptionalIntegerQueryValue, (schema ?? z.number()).optional());
 
-export const optionalBooleanQuerySchema = (schema: z.ZodBoolean = z.boolean()) =>
+export const optionalBooleanQuerySchema = (schema: z.ZodType<boolean> = z.boolean()) =>
   z.preprocess(parseOptionalBooleanQueryValue, schema.optional());
 
-export const optionalCsvQueryStringArray = (itemSchema: z.ZodString = z.string().min(1)) =>
+export const optionalCsvQueryStringArray = (itemSchema: z.ZodType<string> = z.string().min(1)) =>
   z.preprocess(parseOptionalCsvQueryValue, z.array(itemSchema).optional());

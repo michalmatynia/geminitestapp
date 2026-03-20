@@ -90,7 +90,6 @@ export function ensureQueryDataV2<
     queryClient,
     config,
     async ({ queryClient: currentQueryClient, normalizedQueryKey, queryFn, staleTime }) => {
-      // eslint-disable-next-line no-restricted-syntax
       const data = await currentQueryClient.ensureQueryData({
         queryKey: normalizedQueryKey,
         queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
@@ -114,7 +113,6 @@ export function prefetchQueryV2<
     queryClient,
     config,
     async ({ queryClient: currentQueryClient, normalizedQueryKey, queryFn, staleTime }) => {
-      // eslint-disable-next-line no-restricted-syntax
       await currentQueryClient.prefetchQuery({
         queryKey: normalizedQueryKey,
         queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
@@ -138,7 +136,6 @@ export function fetchQueryV2<
     queryClient,
     config,
     async ({ queryClient: currentQueryClient, normalizedQueryKey, queryFn, staleTime }) => {
-      // eslint-disable-next-line no-restricted-syntax
       const data = await currentQueryClient.fetchQuery({
         queryKey: normalizedQueryKey,
         queryFn: (context) => invokeQueryFactoryFn(queryFn, context),

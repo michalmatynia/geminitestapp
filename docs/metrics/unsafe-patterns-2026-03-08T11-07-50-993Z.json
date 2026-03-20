@@ -1,0 +1,894 @@
+{
+  "generatedAt": "2026-03-08T11:07:50.993Z",
+  "status": "passed",
+  "summary": {
+    "total": 84,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 84,
+    "status": "passed",
+    "fileCount": 4312
+  },
+  "scope": {
+    "root": "src",
+    "includeTests": false,
+    "doubleAssertionAllowlist": []
+  },
+  "trendCounters": {
+    "doubleAssertionCount": 0,
+    "anyCount": 32,
+    "eslintDisableCount": 52,
+    "nonNullAssertionCount": 0,
+    "tsIgnoreCount": 0,
+    "tsExpectErrorCount": 0
+  },
+  "eslintDisabledRules": {
+    "@next/next/no-img-element": 18,
+    "@typescript-eslint/no-explicit-any": 10,
+    "no-restricted-syntax": 8,
+    "@typescript-eslint/no-unsafe-assignment": 8,
+    "@typescript-eslint/no-unsafe-member-access": 5,
+    "@typescript-eslint/no-unsafe-argument": 3,
+    "@typescript-eslint/no-unsafe-return": 2,
+    "no-control-regex": 1,
+    "@typescript-eslint/no-unsafe-call": 1,
+    "@typescript-eslint/no-unused-vars": 1
+  },
+  "issues": [
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any",
+      "file": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
+      "line": 411,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 57,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 72,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 89,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 101,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/features/ai/ai-paths/components/CanvasControlPanel.tsx",
+      "line": 113,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
+      "line": 234,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/center-preview/SplitVariantPreview.tsx",
+      "line": 304,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/right-sidebar/__tests__/rightSidebarRuntimeMockComponents.tsx",
+      "line": 103,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/__tests__/studioInlineEditRuntimeMockComponents.tsx",
+      "line": 262,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/InlineImagePreviewCanvas.tsx",
+      "line": 198,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCardTab.tsx",
+      "line": 201,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx",
+      "line": 29,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditCompositesTab.tsx",
+      "line": 100,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/studio-modals/SlotInlineEditMasksTab.tsx",
+      "line": 35,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/VersionGraphComparePanel.tsx",
+      "line": 60,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/VersionGraphInspector.tsx",
+      "line": 81,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/ai/image-studio/components/VersionNodeDetailsModal.tsx",
+      "line": 323,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/case-resolver/components/CaseResolverFileViewer.tsx",
+      "line": 186,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/case-resolver/components/page/CaseResolverScanFileEditor.tsx",
+      "line": 338,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 62,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 75,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 99,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 112,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 131,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 144,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 207,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/foldertree/v2/hooks/folder-tree-instance/useFolderTreeEngineActions.ts",
+      "line": 219,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 167,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 286,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/context/integrations/useIntegrationsActionsImpl.ts",
+      "line": 300,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 80,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 110,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 111,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 135,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/features/integrations/services/tradera-listing-service.ts",
+      "line": 159,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/kangur/ui/components/KangurLessonDocumentRenderer.tsx",
+      "line": 240,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/features/notesapp/services/notes/note-repository/mongo/notes.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/products/components/form/studio/StudioPreviewCanvas.tsx",
+      "line": 36,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/features/products/components/ProductImageSlot.tsx",
+      "line": 183,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-control-regex",
+      "file": "src/features/products/security/file-upload.ts",
+      "line": 189,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/products/services/product-repository/mongo/read.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 4,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 108,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 142,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 163,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 188,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 191,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 225,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 233,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 250,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 253,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 319,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 395,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 403,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/query-factories-v2.ts",
+      "line": 409,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/shared/lib/tanstack-factory-v2/executors.ts",
+      "line": 93,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/shared/lib/tanstack-factory-v2/executors.ts",
+      "line": 117,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: no-restricted-syntax",
+      "file": "src/shared/lib/tanstack-factory-v2/executors.ts",
+      "line": 141,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 3,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 181,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 195,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 244,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/tanstack-factory-v2/hooks.ts",
+      "line": 257,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unused-vars",
+      "file": "src/shared/ui/data-table.tsx",
+      "line": 88,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @next/next/no-img-element",
+      "file": "src/shared/ui/vector-canvas/components/CanvasImageLayer.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "eslint-disable",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 52
+    },
+    {
+      "ruleId": "explicit-any",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 32
+    }
+  ],
+  "durationMs": 5074
+}

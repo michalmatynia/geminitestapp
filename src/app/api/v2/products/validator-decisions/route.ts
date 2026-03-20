@@ -8,7 +8,7 @@ import {
 } from '@/app/api/v2/products/validator-decisions/handler';
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.validator-decisions.POST',
+  source: 'v2.products.validator-decisions.POST',
   parseJsonBody: true,
   bodySchema: createDecisionSchema,
   cacheControl: 'no-store',

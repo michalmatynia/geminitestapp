@@ -86,7 +86,7 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
     connectionId: listing.connectionId,
     externalListingId: listing.externalListingId ?? null,
     inventoryId: listing.inventoryId ?? null,
-    exportHistory: (listing.exportHistory ?? null) as unknown as ProductListingExportEvent[] | null,
+    exportHistory: (listing.exportHistory ?? null) as ProductListingExportEvent[] | null,
   }));
 };
 

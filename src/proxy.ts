@@ -32,7 +32,11 @@ export function proxy(
   if (!handler || typeof handler !== 'function') {
     return baseProxy(request);
   }
-  return handler(request, resolvedContext);
+  const result = handler(request, resolvedContext);
+  if (result instanceof Promise) {
+    return result.then((response) => response ?? baseProxy(request));
+  }
+  return result ?? baseProxy(request);
 }
 
 export default proxy;

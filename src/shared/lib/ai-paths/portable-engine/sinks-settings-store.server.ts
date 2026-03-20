@@ -4,17 +4,14 @@ import type { MongoTimestampedStringSettingRecord } from '@/shared/contracts/set
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { type PrismaSettingClient, canUsePrismaSettings } from './types';
+import { canUsePrismaSettings, getPrismaSettingDelegate } from './types';
 
 const readSettingsRawFromPrisma = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings(prisma)) return null;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaClient = prisma as any as PrismaSettingClient;
-    if (!prismaClient.setting || typeof prismaClient.setting.findUnique !== 'function') {
-      return null;
-    }
-    const setting = await prismaClient.setting.findUnique({
+    const settingDelegate = getPrismaSettingDelegate(prisma);
+    if (!settingDelegate) return null;
+    const setting = await settingDelegate.findUnique({
       where: { key },
       select: { value: true },
     });
@@ -27,12 +24,11 @@ const readSettingsRawFromPrisma = async (key: string): Promise<string | null> =>
 const writeSettingsRawToPrisma = async (key: string, raw: string): Promise<boolean> => {
   if (!canUsePrismaSettings(prisma)) return false;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaClient = prisma as any as PrismaSettingClient;
-    if (!prismaClient.setting || typeof prismaClient.setting.upsert !== 'function') {
+    const settingDelegate = getPrismaSettingDelegate(prisma);
+    if (!settingDelegate || typeof settingDelegate.upsert !== 'function') {
       return false;
     }
-    await prismaClient.setting.upsert({
+    await settingDelegate.upsert({
       where: { key },
       create: { key, value: raw },
       update: { value: raw },

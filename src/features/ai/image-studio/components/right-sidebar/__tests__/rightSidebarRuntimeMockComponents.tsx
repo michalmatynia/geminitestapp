@@ -100,8 +100,7 @@ export function MockNextImage({
   fill?: boolean;
   unoptimized?: boolean;
 }): React.JSX.Element {
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img {...props} alt={props.alt ?? ''} />;
+  return React.createElement('img', { ...props, alt: props.alt ?? '' });
 }
 
 export function MockSelectSimple({

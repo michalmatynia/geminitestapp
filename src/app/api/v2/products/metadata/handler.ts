@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { CurrencyCode } from '@prisma/client';
 import { ObjectId } from 'mongodb';
+import { z } from 'zod';
 import {
   getProducerRepository,
   getTagRepository,
@@ -14,10 +15,15 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,
 } from '@/shared/lib/db/services/database-sync-types';
+
+export const querySchema = z.object({
+  catalogId: optionalTrimmedQueryString(),
+});
 
 const parseObjectPayload = async (req: NextRequest) =>
   await parseObjectJsonBody(req, {
@@ -195,8 +201,8 @@ export async function GET_products_metadata_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const searchParams = _req.nextUrl.searchParams;
-  const catalogId = searchParams.get('catalogId') || '';
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
+  const catalogId = query.catalogId ?? '';
 
   if (type === 'producers') {
     const repo = await getProducerRepository();

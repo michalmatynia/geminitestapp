@@ -9,10 +9,10 @@ import {
   producerCreateSchema,
 } from '@/app/api/v2/products/producers/handler';
 
-export const GET = apiHandler(GET_handler, { source: 'products.producers.GET' });
+export const GET = apiHandler(GET_handler, { source: 'v2.products.producers.GET' });
 
 export const POST = apiHandler(POST_handler, {
-  source: 'products.producers.POST',
+  source: 'v2.products.producers.POST',
   parseJsonBody: true,
   bodySchema: producerCreateSchema,
 });

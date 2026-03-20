@@ -22,7 +22,7 @@ export const GET = apiHandlerWithParams<StudioActionParams>(
 
     throw badRequestError(`Invalid studio action for GET: ${action}`);
   },
-  { source: 'products.[id].studio.[action].GET' }
+  { source: 'v2.products.[id].studio.[action].GET' }
 );
 
 export const POST = apiHandlerWithParams<StudioActionParams>(
@@ -35,5 +35,5 @@ export const POST = apiHandlerWithParams<StudioActionParams>(
 
     throw badRequestError(`Invalid studio action for POST: ${action}`);
   },
-  { source: 'products.[id].studio.[action].POST', logSuccess: true }
+  { source: 'v2.products.[id].studio.[action].POST', logSuccess: true }
 );

@@ -9,12 +9,12 @@ import {
 } from '@/app/api/v2/products/validator-settings/handler';
 
 export const GET = apiHandler(GET_handler, {
-  source: 'products.validator-settings.GET',
+  source: 'v2.products.validator-settings.GET',
   cacheControl: 'no-store',
 });
 
 export const PUT = apiHandler(PUT_handler, {
-  source: 'products.validator-settings.PUT',
+  source: 'v2.products.validator-settings.PUT',
   parseJsonBody: true,
   bodySchema: updateValidatorSettingsSchema,
 });

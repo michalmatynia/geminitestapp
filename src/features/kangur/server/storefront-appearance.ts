@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { unstable_cache } from 'next/cache';
+
 import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   parseKangurStorefrontAppearanceMode,
@@ -20,7 +22,7 @@ export const getKangurStorefrontDefaultMode = async (): Promise<KangurStorefront
   return parseKangurStorefrontAppearanceMode(raw);
 };
 
-export const getKangurStorefrontInitialState = async (): Promise<KangurStorefrontInitialState> => {
+const getKangurStorefrontInitialStateUncached = async (): Promise<KangurStorefrontInitialState> => {
   const [initialMode, settings] = await Promise.all([
     getKangurStorefrontDefaultMode(),
     listKangurSettingsByKeys([
@@ -43,3 +45,9 @@ export const getKangurStorefrontInitialState = async (): Promise<KangurStorefron
     },
   };
 };
+
+export const getKangurStorefrontInitialState = unstable_cache(
+  getKangurStorefrontInitialStateUncached,
+  ['kangur-storefront-initial-state'],
+  { revalidate: 300 }
+);

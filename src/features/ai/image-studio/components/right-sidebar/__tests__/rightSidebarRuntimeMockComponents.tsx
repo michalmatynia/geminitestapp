@@ -137,3 +137,13 @@ export function MockSelectSimple({
     </label>
   );
 }
+
+export function MockInsetPanel({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): React.JSX.Element {
+  return <div className={className}>{children}</div>;
+}

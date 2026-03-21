@@ -759,7 +759,7 @@ function GameContent(): React.JSX.Element {
             visible={xpToast.visible}
           />
         )}
-        navigation={<KangurGameNavigationWidget visible={screen !== 'home'} />}
+        navigation={<KangurGameNavigationWidget />}
         afterNavigation={(
           <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
             {translations('statusAnnouncement', { label: currentScreenLabel })}

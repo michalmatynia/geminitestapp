@@ -160,10 +160,9 @@ describe('useKangurMobileDailyPlan', () => {
     });
   });
 
-  it('combines top assignments, recent results, focus data, and refresh actions', async () => {
+  it('combines recent results, focus data, and refresh actions', async () => {
     const { result } = renderHook(() => useKangurMobileDailyPlan());
 
-    expect(result.current.assignmentItems).toHaveLength(3);
     expect(result.current.displayName).toBe('Ada Learner');
     expect(result.current.weakestFocus?.operation.operation).toBe('addition');
     expect(result.current.weakestFocus?.practiceHref).toEqual({
@@ -200,7 +199,6 @@ describe('useKangurMobileDailyPlan', () => {
         focus: 'adding',
       },
     });
-    expect(result.current.assignmentItems[0]?.href).toBe('/lessons');
     expect(result.current.scoreError).toBeNull();
 
     await act(async () => {

@@ -25,6 +25,14 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
 
 import { KangurTopNavigationController } from './KangurTopNavigationController';
 
+function LessonsNavigationController(): React.JSX.Element {
+  return <KangurTopNavigationController navigation={LESSONS_NAVIGATION} />;
+}
+
+function HiddenGameNavigationController(): React.JSX.Element {
+  return <KangurTopNavigationController navigation={GAME_NAVIGATION} visible={false} />;
+}
+
 const LESSONS_NAVIGATION = {
   basePath: '/kangur',
   canManageLearners: true,
@@ -115,6 +123,28 @@ describe('KangurTopNavigationController', () => {
       <KangurTopNavigationProvider>
         <KangurTopNavigationHost />
         <KangurTopNavigationController navigation={GAME_NAVIGATION} visible={false} />
+      </KangurTopNavigationProvider>
+    );
+
+    expect(screen.queryByRole('navigation', { name: /główna nawigacja kangur/i })).toBeNull();
+  });
+
+  it('clears the previous owner navigation immediately when a hidden controller replaces it', () => {
+    const { rerender } = render(
+      <KangurTopNavigationProvider>
+        <KangurTopNavigationHost />
+        <LessonsNavigationController />
+      </KangurTopNavigationProvider>
+    );
+
+    expect(
+      screen.getByRole('navigation', { name: /główna nawigacja kangur/i })
+    ).toBeInTheDocument();
+
+    rerender(
+      <KangurTopNavigationProvider>
+        <KangurTopNavigationHost />
+        <HiddenGameNavigationController />
       </KangurTopNavigationProvider>
     );
 

@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   replaceMock,
+  useKangurMobileDailyPlanAssignmentsMock,
   useKangurMobileDailyPlanDuelsMock,
   useKangurMobileDailyPlanLessonMasteryMock,
   useKangurMobileDailyPlanMock,
@@ -15,6 +16,7 @@ const {
   useRouterMock,
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
+  useKangurMobileDailyPlanAssignmentsMock: vi.fn(),
   useKangurMobileDailyPlanDuelsMock: vi.fn(),
   useKangurMobileDailyPlanLessonMasteryMock: vi.fn(),
   useKangurMobileDailyPlanMock: vi.fn(),
@@ -29,6 +31,10 @@ vi.mock('expo-router', () => ({
 
 vi.mock('./useKangurMobileDailyPlan', () => ({
   useKangurMobileDailyPlan: useKangurMobileDailyPlanMock,
+}));
+
+vi.mock('./useKangurMobileDailyPlanAssignments', () => ({
+  useKangurMobileDailyPlanAssignments: useKangurMobileDailyPlanAssignmentsMock,
 }));
 
 vi.mock('./useKangurMobileDailyPlanDuels', () => ({
@@ -51,8 +57,10 @@ describe('KangurDailyPlanScreen', () => {
     useRouterMock.mockReturnValue({
       replace: replaceMock,
     });
-    useKangurMobileDailyPlanMock.mockReturnValue({
+    useKangurMobileDailyPlanAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileDailyPlanMock.mockReturnValue({
       authError: null,
       displayName: 'Ada Learner',
       isAuthenticated: false,
@@ -94,7 +102,6 @@ describe('KangurDailyPlanScreen', () => {
 
   it('shows the restoring shell while learner auth is still coming back', () => {
     useKangurMobileDailyPlanMock.mockReturnValue({
-      assignmentItems: [],
       authError: null,
       displayName: 'Ada Learner',
       isAuthenticated: false,
@@ -129,7 +136,7 @@ describe('KangurDailyPlanScreen', () => {
 
   it('renders focus, assignments, recent results, and duel actions for an authenticated learner', async () => {
     const createRematchMock = vi.fn().mockResolvedValue('duel-plan-1');
-    useKangurMobileDailyPlanMock.mockReturnValue({
+    useKangurMobileDailyPlanAssignmentsMock.mockReturnValue({
       assignmentItems: [
         {
           assignment: {
@@ -146,6 +153,8 @@ describe('KangurDailyPlanScreen', () => {
           href: '/lessons',
         },
       ],
+    });
+    useKangurMobileDailyPlanMock.mockReturnValue({
       authError: null,
       displayName: 'Ada Learner',
       isAuthenticated: true,
@@ -302,8 +311,10 @@ describe('KangurDailyPlanScreen', () => {
         content.includes('Skupiony plan nauki dla Ada Learner'),
       ),
     ).toBeTruthy();
-    expect(screen.getByText('Do powtórki')).toBeTruthy();
+    expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejszy tryb')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Lokalne zadania na dziś')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getByText('Ostatnie wyniki')).toBeTruthy();
     expect(screen.getAllByText('Dodawanie').length).toBeGreaterThanOrEqual(1);

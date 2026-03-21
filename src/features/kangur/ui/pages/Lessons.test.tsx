@@ -11,7 +11,9 @@ const {
   useKangurAuthMock,
   lessonCardPropsMock,
   lessonsWordmarkPropsMock,
+  openLoginModalMock,
   localeState,
+  topNavigationPropsMock,
   tutorSessionSyncPropsMock,
   lessonsState,
 } = vi.hoisted(() => ({
@@ -19,9 +21,11 @@ const {
   useKangurAuthMock: vi.fn(),
   lessonCardPropsMock: vi.fn(),
   lessonsWordmarkPropsMock: vi.fn(),
+  openLoginModalMock: vi.fn(),
   localeState: {
     value: 'pl' as 'de' | 'en' | 'pl',
   },
+  topNavigationPropsMock: vi.fn(),
   tutorSessionSyncPropsMock: vi.fn(),
   lessonsState: {
     value: [] as Array<Record<string, unknown>>,
@@ -114,13 +118,25 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
-  KangurStandardPageLayout: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='mock-lessons-layout'>{children}</div>
+  KangurStandardPageLayout: ({
+    children,
+    navigation,
+  }: {
+    children: React.ReactNode;
+    navigation?: React.ReactNode;
+  }) => (
+    <div data-testid='mock-lessons-layout'>
+      {navigation}
+      {children}
+    </div>
   ),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
-  KangurTopNavigationController: () => <div data-testid='mock-top-nav' />,
+  KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
+    topNavigationPropsMock(navigation);
+    return <div data-testid='mock-top-nav' />;
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -149,7 +165,7 @@ vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: () => ({
-    openLoginModal: vi.fn(),
+    openLoginModal: openLoginModalMock,
   }),
 }));
 
@@ -319,6 +335,8 @@ describe('Lessons page subject filtering', () => {
       canAccessParentAssignments: false,
     });
     lessonCardPropsMock.mockClear();
+    openLoginModalMock.mockClear();
+    topNavigationPropsMock.mockClear();
     tutorSessionSyncPropsMock.mockClear();
   });
 
@@ -371,5 +389,22 @@ describe('Lessons page subject filtering', () => {
         locale: 'de',
       })
     );
+  });
+
+  it('wires the lessons top navigation login action to the shared login modal', () => {
+    render(<Lessons />);
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const latestNavigation = topNavigationPropsMock.mock.calls.at(-1)?.[0] as
+      | { onLogin?: () => void }
+      | undefined;
+
+    expect(latestNavigation?.onLogin).toBe(openLoginModalMock);
+
+    latestNavigation?.onLogin?.();
+
+    expect(openLoginModalMock).toHaveBeenCalledTimes(1);
   });
 });

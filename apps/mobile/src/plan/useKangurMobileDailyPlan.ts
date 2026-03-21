@@ -1,4 +1,3 @@
-import type { KangurAssignmentPlan, KangurLearnerRecommendationAction } from '@kangur/core';
 import type { KangurScore } from '@kangur/contracts';
 import type { Href } from 'expo-router';
 
@@ -18,11 +17,6 @@ type KangurMobileDailyPlanFocus = {
   practiceHref: Href;
 };
 
-type KangurMobileDailyPlanAssignmentItem = {
-  assignment: KangurAssignmentPlan;
-  href: Href | null;
-};
-
 type KangurMobileDailyPlanRecentResultItem = {
   historyHref: Href;
   lessonHref: Href | null;
@@ -31,11 +25,9 @@ type KangurMobileDailyPlanRecentResultItem = {
 };
 
 type UseKangurMobileDailyPlanResult = {
-  assignmentItems: KangurMobileDailyPlanAssignmentItem[];
   authError: string | null;
   authMode: 'development' | 'learner-session';
   displayName: string;
-  getAssignmentHref: (action: KangurLearnerRecommendationAction) => Href | null;
   isAuthenticated: boolean;
   isLoadingAuth: boolean;
   isLoading: boolean;
@@ -73,14 +65,9 @@ export const useKangurMobileDailyPlan =
     const trainingFocus = useKangurMobileTrainingFocus();
 
     return {
-      assignmentItems: profile.assignments.slice(0, 3).map((assignment) => ({
-        assignment,
-        href: profile.getActionHref(assignment.action),
-      })),
       authError: profile.authError,
       authMode: profile.authMode,
       displayName: profile.displayName,
-      getAssignmentHref: profile.getActionHref,
       isAuthenticated: profile.isAuthenticated,
       isLoadingAuth: profile.isLoadingAuth,
       isLoading:

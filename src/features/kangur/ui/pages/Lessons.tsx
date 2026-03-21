@@ -8,6 +8,7 @@ import { KangurTopNavigationController } from '@/features/kangur/ui/components/K
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useLessons, LessonsProvider } from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
 import { ActiveLessonView } from './lessons/Lessons.ActiveLesson';
@@ -25,6 +26,7 @@ function LessonsContent() {
     guestPlayerName,
     setGuestPlayerName,
   } = useLessons();
+  const { openLoginModal } = useKangurLoginModal();
 
   const { user, logout } = auth;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('lessons');
@@ -51,7 +53,7 @@ function LessonsContent() {
     guestPlayerName: user ? undefined : guestPlayerName,
     isAuthenticated: Boolean(user),
     onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
-    onLogin: () => {},
+    onLogin: openLoginModal,
     onLogout: () => logout(false),
   };
 

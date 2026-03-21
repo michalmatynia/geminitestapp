@@ -15,6 +15,7 @@ const {
   shareKangurDuelInviteMock,
   useKangurMobileAuthMock,
   useKangurMobileDuelsAssignmentsMock,
+  useKangurMobileDuelsLessonMasteryMock,
   useKangurMobileDuelLobbyChatMock,
   useKangurMobileDuelsLobbyMock,
   useKangurMobileDuelSessionMock,
@@ -26,6 +27,7 @@ const {
   shareKangurDuelInviteMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileDuelsAssignmentsMock: vi.fn(),
+  useKangurMobileDuelsLessonMasteryMock: vi.fn(),
   useKangurMobileDuelLobbyChatMock: vi.fn(),
   useKangurMobileDuelsLobbyMock: vi.fn(),
   useKangurMobileDuelSessionMock: vi.fn(),
@@ -56,6 +58,10 @@ vi.mock('./useKangurMobileDuelSession', () => ({
 
 vi.mock('./useKangurMobileDuelsAssignments', () => ({
   useKangurMobileDuelsAssignments: useKangurMobileDuelsAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileDuelsLessonMastery', () => ({
+  useKangurMobileDuelsLessonMastery: useKangurMobileDuelsLessonMasteryMock,
 }));
 
 vi.mock('./duelInviteShare', () => ({
@@ -170,6 +176,13 @@ describe('KangurDuelsScreen', () => {
     });
     useKangurMobileDuelsAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileDuelsLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 0,
+      masteredLessons: 0,
+      strongest: [],
+      trackedLessons: 0,
+      weakest: [],
     });
   });
 
@@ -394,6 +407,51 @@ describe('KangurDuelsScreen', () => {
         },
       ],
     });
+    useKangurMobileDuelsLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 1,
+      masteredLessons: 1,
+      strongest: [
+        {
+          attempts: 4,
+          bestScorePercent: 96,
+          componentId: 'multiplication',
+          emoji: '✖️',
+          lastCompletedAt: '2026-03-21T08:24:00.000Z',
+          lastScorePercent: 92,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'multiplication' },
+          },
+          masteryPercent: 94,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'multiplication' },
+          },
+          title: 'Mnożenie',
+        },
+      ],
+      trackedLessons: 2,
+      weakest: [
+        {
+          attempts: 3,
+          bestScorePercent: 78,
+          componentId: 'clock',
+          emoji: '⏰',
+          lastCompletedAt: '2026-03-21T08:18:00.000Z',
+          lastScorePercent: 74,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'clock' },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'time_compare' },
+          },
+          title: 'Zegar i czas',
+        },
+      ],
+    });
 
     renderDuelsScreen();
 
@@ -419,12 +477,18 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Śledzone 2')).toBeTruthy();
+    expect(screen.getByText('Opanowane 1')).toBeTruthy();
+    expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getByText('Próby 4 • ostatni wynik 92%')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania z lobby')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();
     expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
-    expect(screen.getByText('Otwórz lekcję')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('#1 Ola')).toBeTruthy();
     expect(screen.getByText('Ola Quiz')).toBeTruthy();
   });
@@ -688,6 +752,51 @@ describe('KangurDuelsScreen', () => {
         },
       ],
     });
+    useKangurMobileDuelsLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 1,
+      masteredLessons: 1,
+      strongest: [
+        {
+          attempts: 5,
+          bestScorePercent: 95,
+          componentId: 'addition',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:28:00.000Z',
+          lastScorePercent: 93,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'addition' },
+          },
+          masteryPercent: 91,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'addition' },
+          },
+          title: 'Dodawanie w pamięci',
+        },
+      ],
+      trackedLessons: 2,
+      weakest: [
+        {
+          attempts: 2,
+          bestScorePercent: 78,
+          componentId: 'clock',
+          emoji: '⏰',
+          lastCompletedAt: '2026-03-21T08:20:00.000Z',
+          lastScorePercent: 72,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'clock' },
+          },
+          masteryPercent: 69,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'time_compare' },
+          },
+          title: 'Zegar i czas',
+        },
+      ],
+    });
 
     renderDuelsScreen();
 
@@ -707,11 +816,17 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie w pamięci')).toBeTruthy();
+    expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Śledzone 2')).toBeTruthy();
+    expect(screen.getByText('Opanowane 1')).toBeTruthy();
+    expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getByText('Próby 5 • ostatni wynik 93%')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania obok pojedynku')).toBeTruthy();
     expect(screen.getByText('Domknij dodawanie')).toBeTruthy();
     expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
-    expect(screen.getByText('Otwórz lekcję')).toBeTruthy();
+    expect(screen.getAllByText('Otwórz lekcję').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Opuść pojedynek')).toBeTruthy();
   });
 

@@ -325,7 +325,7 @@ describe('useKangurMobileLearnerProfile', () => {
     expect(result.current.recommendationsNote).toContain('Auf Mobile laufen bereits Lektionen');
   });
 
-  it('passes the active locale through to localized recommendations and assignments', async () => {
+  it('passes the active locale through to localized recommendations', async () => {
     listScoresMock.mockResolvedValue([createScore()]);
     const progressSnapshot = createProgressSnapshot();
 
@@ -359,13 +359,6 @@ describe('useKangurMobileLearnerProfile', () => {
       },
       id: 'focus_weakest_operation',
       title: 'Fokus auf: Division',
-    });
-    expect(result.current.assignments[0]).toMatchObject({
-      action: {
-        label: 'Lektion öffnen',
-      },
-      id: 'lesson-retry-division',
-      title: '➗ Wiederholung: Division',
     });
   });
 });

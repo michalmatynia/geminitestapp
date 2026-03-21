@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-18'
+last_reviewed: '2026-03-21'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,15 +8,15 @@ canonical: true
 ---
 # Import Boundaries Check
 
-Generated at: 2026-03-18T19:19:37.439Z
+Generated at: 2026-03-21T16:23:31.886Z
 
 ## Summary
 
-- Status: WARN
-- Files scanned: 5525
+- Status: FAILED
+- Files scanned: 5649
 - Features tracked: 10
 - Circular dependencies: 0
-- Errors: 0
+- Errors: 1
 - Warnings: 12
 - Info: 0
 
@@ -28,23 +28,25 @@ Generated at: 2026-03-18T19:19:37.439Z
 | case-resolver | ai, case-resolver-capture, document-editor, filemaker, foldertree | 5 |
 | cms | files, foldertree, gsap, products, viewer3d | 5 |
 | admin | ai, foldertree, products, prompt-engine | 4 |
+| ai | files, foldertree, observability, viewer3d | 4 |
 | products | ai, files, foldertree, internationalization | 4 |
-| ai | files, foldertree, viewer3d | 3 |
+| integrations | data-import-export, product-sync, products | 3 |
 | notesapp | document-editor, foldertree | 2 |
 | drafter | products | 1 |
-| integrations | products | 1 |
 | prompt-exploder | foldertree | 1 |
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
+| cross-feature-internal-import | 1 | 0 | 0 |
 | deep-relative-import | 0 | 12 | 0 |
 
 ## Issues
 
 | Severity | Rule | Location | Message |
 | --- | --- | --- | --- |
+| ERROR | cross-feature-internal-import | src/features/admin/components/Menu.tsx:20 | Imports internal path from feature "ai": @/features/ai/chatbot/public. Use the barrel export instead. |
 | WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:13 | Deep relative import (3 levels up). Consider using path aliases. |
 | WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:14 | Deep relative import (3 levels up). Consider using path aliases. |
 | WARN | deep-relative-import | src/app/[locale]/(frontend)/[...slug]/page.tsx:18 | Deep relative import (3 levels up). Consider using path aliases. |

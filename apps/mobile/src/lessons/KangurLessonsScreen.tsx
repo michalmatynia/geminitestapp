@@ -21,6 +21,10 @@ import {
   useKangurMobileLessonsAssignments,
   type KangurMobileLessonsAssignmentItem,
 } from './useKangurMobileLessonsAssignments';
+import {
+  useKangurMobileLessonsLessonMastery,
+  type KangurMobileLessonsLessonMasteryItem,
+} from './useKangurMobileLessonsLessonMastery';
 import { useKangurMobileLessonsDuels } from './useKangurMobileLessonsDuels';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
@@ -458,11 +462,149 @@ const getMasteryTone = (badgeAccent: string): Tone => {
   };
 };
 
+const getLessonMasteryTone = (masteryPercent: number): Tone => {
+  if (masteryPercent >= 90) {
+    return {
+      backgroundColor: '#ecfdf5',
+      borderColor: '#a7f3d0',
+      textColor: '#047857',
+    };
+  }
+
+  if (masteryPercent >= 70) {
+    return {
+      backgroundColor: '#fffbeb',
+      borderColor: '#fde68a',
+      textColor: '#b45309',
+    };
+  }
+
+  return {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+    textColor: '#b91c1c',
+  };
+};
+
+function LessonMasteryRow({
+  insight,
+  title,
+}: {
+  insight: KangurMobileLessonsLessonMasteryItem;
+  title: string;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const masteryTone = getLessonMasteryTone(insight.masteryPercent);
+  const lastAttemptLabel = insight.lastCompletedAt
+    ? new Intl.DateTimeFormat(getKangurMobileLocaleTag(locale), {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(insight.lastCompletedAt))
+    : copy({
+        de: 'kein Datum',
+        en: 'no date',
+        pl: 'brak daty',
+      });
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 10,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {insight.emoji} {insight.title}
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
+              en: `Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
+              pl: `Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
+            })}
+          </Text>
+        </View>
+        <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
+      </View>
+
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Bestes Ergebnis ${insight.bestScorePercent}% • letzter Versuch ${lastAttemptLabel}`,
+          en: `Best score ${insight.bestScorePercent}% • last attempt ${lastAttemptLabel}`,
+          pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia próba ${lastAttemptLabel}`,
+        })}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Link href={insight.lessonHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {copy({
+                de: 'Lektion öffnen',
+                en: 'Open lesson',
+                pl: 'Otwórz lekcję',
+              })}
+            </Text>
+          </Pressable>
+        </Link>
+        {insight.practiceHref ? (
+          <Link href={insight.practiceHref} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Danach trainieren',
+                  en: 'Practice after',
+                  pl: 'Potem trenuj',
+                })}
+              </Text>
+            </Pressable>
+          </Link>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 export function KangurLessonsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
+  const lessonMastery = useKangurMobileLessonsLessonMastery();
   const lessonsAssignments = useKangurMobileLessonsAssignments();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
@@ -1083,6 +1225,104 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   pl: 'Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.',
                 })}
               </Text>
+            </Card>
+          ) : null}
+
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Lektionsbeherrschung',
+                  en: 'Lesson mastery',
+                  pl: 'Opanowanie lekcji',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Stand aus den Lektionen',
+                  en: 'State from lessons',
+                  pl: 'Stan z lekcji',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Na ekranie lekcji możesz od razu połączyć katalog i ostatnie checkpointy z lokalnie zapisanym poziomem opanowania, aby szybciej wybrać powtórkę.',
+                  en: 'On the lessons screen you can connect the catalog and recent checkpoints with locally saved mastery so the next review is easier to choose.',
+                  pl: 'Na ekranie lekcji możesz od razu połączyć katalog i ostatnie checkpointy z lokalnie zapisanym poziomem opanowania, aby szybciej wybrać powtórkę.',
+                })}
+              </Text>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <Pill
+                  label={copy({
+                    de: `Verfolgt ${lessonMastery.trackedLessons}`,
+                    en: `Tracked ${lessonMastery.trackedLessons}`,
+                    pl: `Śledzone ${lessonMastery.trackedLessons}`,
+                  })}
+                  tone={{
+                    backgroundColor: '#eef2ff',
+                    borderColor: '#c7d2fe',
+                    textColor: '#4338ca',
+                  }}
+                />
+                <Pill
+                  label={copy({
+                    de: `Beherrscht ${lessonMastery.masteredLessons}`,
+                    en: `Mastered ${lessonMastery.masteredLessons}`,
+                    pl: `Opanowane ${lessonMastery.masteredLessons}`,
+                  })}
+                  tone={{
+                    backgroundColor: '#ecfdf5',
+                    borderColor: '#a7f3d0',
+                    textColor: '#047857',
+                  }}
+                />
+                <Pill
+                  label={copy({
+                    de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
+                    en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
+                    pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
+                  })}
+                  tone={{
+                    backgroundColor: '#fffbeb',
+                    borderColor: '#fde68a',
+                    textColor: '#b45309',
+                  }}
+                />
+              </View>
+
+              {lessonMastery.trackedLessons === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                    en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                    pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+                  })}
+                </Text>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {lessonMastery.weakest[0] ? (
+                    <LessonMasteryRow
+                      insight={lessonMastery.weakest[0]}
+                      title={copy({
+                        de: 'Zum Wiederholen',
+                        en: 'Needs review',
+                        pl: 'Do powtórki',
+                      })}
+                    />
+                  ) : null}
+                  {lessonMastery.strongest[0] ? (
+                    <LessonMasteryRow
+                      insight={lessonMastery.strongest[0]}
+                      title={copy({
+                        de: 'Stärkste Lektion',
+                        en: 'Strongest lesson',
+                        pl: 'Najmocniejsza lekcja',
+                      })}
+                    />
+                  ) : null}
+                </View>
+              )}
             </Card>
           ) : null}
 

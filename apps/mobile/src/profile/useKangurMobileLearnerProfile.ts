@@ -1,12 +1,8 @@
 import {
-  buildKangurAssignments,
   buildKangurLearnerProfileSnapshot,
-  buildLessonMasteryInsights,
   resolvePreferredKangurPracticeOperation,
-  type KangurAssignmentPlan,
   type KangurLearnerRecommendationAction,
   type KangurLearnerProfileSnapshot,
-  type KangurLessonMasteryInsights,
 } from '@kangur/core';
 import { createDefaultKangurProgressState } from '@kangur/contracts';
 import type { Href } from 'expo-router';
@@ -18,7 +14,6 @@ import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
 
 type UseKangurMobileLearnerProfileResult = {
-  assignments: KangurAssignmentPlan[];
   authError: string | null;
   authMode: 'development' | 'learner-session';
   canNavigateToRecommendation: (page: string) => boolean;
@@ -27,7 +22,6 @@ type UseKangurMobileLearnerProfileResult = {
   isAuthenticated: boolean;
   isLoadingAuth: boolean;
   isLoadingScores: boolean;
-  masteryInsights: KangurLessonMasteryInsights;
   recommendationsNote: string;
   refreshScores: () => Promise<void>;
   scoresError: string | null;
@@ -120,14 +114,8 @@ export const useKangurMobileLearnerProfile =
         }),
       [defaultDailyGoalGames, locale, progress, scoresQuery.scores],
     );
-    const masteryInsights = useMemo(
-      () => buildLessonMasteryInsights(progress, 3, locale),
-      [locale, progress],
-    );
-    const assignments = useMemo(() => buildKangurAssignments(progress, 3, locale), [locale, progress]);
 
     return {
-      assignments,
       authError,
       authMode,
       canNavigateToRecommendation: (page) =>
@@ -148,7 +136,6 @@ export const useKangurMobileLearnerProfile =
       isAuthenticated,
       isLoadingAuth,
       isLoadingScores: isLoadingAuth || scoresQuery.isLoading,
-      masteryInsights,
       recommendationsNote: copy({
         de: 'Auf Mobile laufen bereits Lektionen, Arithmetiktraining und das erste Logikquiz. Ausgebautere grafische Modi bleiben vorerst informativ.',
         en: 'Lessons, arithmetic practice, and the first logic quiz already work on mobile. More advanced graphical modes are still informational for now.',

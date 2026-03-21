@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-18T19:19:36.926Z",
+  "generatedAt": "2026-03-21T16:23:31.312Z",
   "status": "passed",
   "summary": {
-    "total": 15,
+    "total": 58,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 15,
+    "infoCount": 58,
     "status": "passed",
-    "fileCount": 5525
+    "fileCount": 5649
   },
   "scope": {
     "root": "src",
@@ -16,91 +16,36 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 1,
-    "eslintDisableCount": 7,
-    "nonNullAssertionCount": 7,
+    "anyCount": 29,
+    "eslintDisableCount": 21,
+    "nonNullAssertionCount": 8,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@typescript-eslint/no-explicit-any": 7,
-    "--": 6,
-    "route": 6,
-    "modules": 6,
-    "define": 6,
-    "their": 6,
-    "own": 6,
-    "param": 6,
-    "shapes.": 6,
-    "@typescript-eslint/no-unsafe-assignment": 1
+    "@typescript-eslint/no-unsafe-assignment": 13,
+    "@typescript-eslint/no-unsafe-call": 11,
+    "@typescript-eslint/no-unsafe-member-access": 11,
+    "@typescript-eslint/no-explicit-any": 9,
+    "@typescript-eslint/no-unsafe-argument": 8,
+    "--": 1,
+    "catch-all": 1,
+    "route": 1,
+    "modules": 1,
+    "define": 1,
+    "their": 1,
+    "own": 1,
+    "param": 1,
+    "shapes.": 1,
+    "@typescript-eslint/no-unsafe-return": 1
   },
   "issues": [
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
-      "file": "src/app/api/ai-paths/[[...path]]/route.ts",
-      "line": 48,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
     {
       "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/app/api/ai-paths/runs/enqueue/handler.ts",
       "line": 172,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
-      "file": "src/app/api/chatbot/[[...path]]/route.ts",
-      "line": 31,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
-      "file": "src/app/api/databases/[[...path]]/route.ts",
-      "line": 40,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
-      "file": "src/app/api/image-studio/[[...path]]/route.ts",
-      "line": 53,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
-      "file": "src/app/api/v2/integrations/[[...path]]/route.ts",
-      "line": 59,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- route modules define their own param shapes.",
-      "file": "src/app/api/v2/products/[[...path]]/route.ts",
-      "line": 73,
       "column": null,
       "snippet": null,
       "context": null
@@ -119,8 +64,18 @@
       "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
+      "file": "src/features/kangur/admin/admin-kangur-social/hooks/useSocialPipelineRunner.ts",
+      "line": 331,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "non-null-assertion",
+      "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/features/kangur/duels/server.db.ts",
-      "line": 543,
+      "line": 545,
       "column": null,
       "snippet": null,
       "context": null
@@ -157,10 +112,30 @@
     },
     {
       "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call",
+      "file": "src/features/products/performance/monitoring.ts",
+      "line": 294,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
       "ruleId": "non-null-assertion",
       "message": "Non-null assertion operator `!`. Consider using optional chaining or a null check.",
       "file": "src/shared/lib/ai-paths/core/normalization/stored-trigger-path-config.ts",
       "line": 360,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any -- catch-all route modules define their own param shapes.",
+      "file": "src/shared/lib/api/catch-all-route-types.ts",
+      "line": 12,
       "column": null,
       "snippet": null,
       "context": null
@@ -184,6 +159,466 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 160,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 187,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 226,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/ai-sync.ts",
+      "line": 257,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 157,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 182,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 213,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 232,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/auth-sync.ts",
+      "line": 249,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/catalog-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 86,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 90,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/chatbot-sync.ts",
+      "line": 112,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 171,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 191,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 214,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 248,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 269,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/cms-sync.ts",
+      "line": 289,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access",
+      "file": "src/shared/lib/db/services/sync/geo-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 114,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/image-sync.ts",
+      "line": 139,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 268,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 288,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/integration-sync.ts",
+      "line": 340,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return",
+      "file": "src/shared/lib/db/services/sync/notes-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/product-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "eslint-disable",
+      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 198,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 217,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 242,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 268,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "explicit-any",
+      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
+      "file": "src/shared/lib/db/services/sync/system-sync.ts",
+      "line": 298,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
@@ -191,20 +626,20 @@
       "ruleId": "eslint-disable",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 7
+      "infoCount": 21
     },
     {
       "ruleId": "explicit-any",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 1
+      "infoCount": 29
     },
     {
       "ruleId": "non-null-assertion",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 7
+      "infoCount": 8
     }
   ],
-  "durationMs": 1712
+  "durationMs": 2085
 }

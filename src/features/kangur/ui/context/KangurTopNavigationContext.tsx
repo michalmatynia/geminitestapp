@@ -70,8 +70,22 @@ export function KangurTopNavigationProvider({
         clearTimeoutRef.current = null;
       }
 
-      if (typeof window === 'undefined' || immediate) {
+      if (typeof window === 'undefined') {
         applyClearNavigation(ownerId);
+        return;
+      }
+
+      if (immediate) {
+        // A hidden controller can replace a previously visible page controller during route
+        // transitions, so clear the currently rendered host navigation right away even when
+        // the owner ids do not match yet.
+        setVisibleRegistration(null);
+        setRegistration((current) => {
+          if (current?.ownerId !== ownerId) {
+            return current;
+          }
+          return null;
+        });
         return;
       }
 

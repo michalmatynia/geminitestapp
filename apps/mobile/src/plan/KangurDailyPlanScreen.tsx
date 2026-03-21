@@ -17,6 +17,7 @@ import {
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
+import { useKangurMobileDailyPlanAssignments } from './useKangurMobileDailyPlanAssignments';
 import { useKangurMobileDailyPlanDuels } from './useKangurMobileDailyPlanDuels';
 import { useKangurMobileDailyPlan } from './useKangurMobileDailyPlan';
 import {
@@ -619,8 +620,8 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
   const router = useRouter();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const lessonMastery = useKangurMobileDailyPlanLessonMastery();
+  const dailyPlanAssignments = useKangurMobileDailyPlanAssignments();
   const {
-    assignmentItems,
     authError,
     displayName,
     isAuthenticated,
@@ -1056,24 +1057,40 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
           </Card>
 
           <Card>
-            <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Nächste Schritte',
+                  en: 'Next steps',
+                  pl: 'Następne kroki',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Der Tagesplan sammelt die wichtigsten lokalen Aufgaben an einem Ort, damit du direkt mit der nächsten Lektion oder dem nächsten Training weitermachen kannst.',
+                  en: 'The daily plan keeps the most important local tasks in one place so you can jump straight into the next lesson or practice block.',
+                  pl: 'Plan dnia zbiera najważniejsze lokalne zadania w jednym miejscu, aby od razu przejść do kolejnej lekcji albo bloku treningowego.',
+                })}
+              </Text>
+            </View>
+            <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
               {copy({
-                de: 'Aufgaben',
-                en: 'Assignments',
-                pl: 'Zadania',
+                de: 'Lokale Aufgaben für heute',
+                en: 'Local tasks for today',
+                pl: 'Lokalne zadania na dziś',
               })}
             </Text>
-            {assignmentItems.length === 0 ? (
+            {dailyPlanAssignments.assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
                 {copy({
                   de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere ein Training, um den ersten Plan der nächsten Schritte zu erzeugen.',
-                  en: 'There are no local assignments yet. Open lessons or complete practice to generate the first plan of next steps.',
-                  pl: 'Brak jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj trening, aby wygenerować pierwszy plan kolejnych kroków.',
+                  en: 'There are no local tasks yet. Open lessons or complete more practice to build the first next-steps plan.',
+                  pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj więcej treningów, aby zbudować pierwszy plan kolejnych kroków.',
                 })}
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
-                {assignmentItems.map(({ assignment, href }) => (
+                {dailyPlanAssignments.assignmentItems.map(({ assignment, href }) => (
                   <AssignmentRow
                     key={assignment.id}
                     assignment={assignment}

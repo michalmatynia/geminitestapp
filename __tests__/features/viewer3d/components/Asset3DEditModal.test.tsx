@@ -7,8 +7,9 @@ import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAsse
 import { useAdmin3DAssetsState } from '@/features/viewer3d/hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
-const { logClientErrorMock } = vi.hoisted(() => ({
+const { logClientErrorMock, logClientCatchMock } = vi.hoisted(() => ({
   logClientErrorMock: vi.fn(),
+  logClientCatchMock: vi.fn(),
 }));
 
 vi.mock('@/features/viewer3d/api', () => ({
@@ -17,6 +18,7 @@ vi.mock('@/features/viewer3d/api', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
+  logClientCatch: logClientCatchMock,
 }));
 
 vi.mock('@/features/viewer3d/context/Admin3DAssetsContext', () => ({
@@ -125,6 +127,6 @@ describe('Asset3DEditModal', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => expect(screen.getByText('API Error')).toBeInTheDocument());
-    expect(logClientErrorMock).toHaveBeenCalled();
+    expect(logClientCatchMock).toHaveBeenCalled();
   });
 });

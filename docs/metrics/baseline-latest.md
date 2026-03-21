@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-21T13:39:44.547Z
+Generated at: 2026-03-21T15:59:40.995Z
 
 ## Snapshot
 
-- Source files: 7117
-- Source lines: 1160881
+- Source files: 7135
+- Source lines: 1167597
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -25,7 +25,7 @@ Generated at: 2026-03-21T13:39:44.547Z
 - Cross-feature dependency pairs: 3
 - Shared -> features imports: 1
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 28
+- Prop-drilling chains (depth >= 3): 33
 - Prop-drilling chains (depth >= 4): 5
 
 ## Top API Hotspots (by LOC)
@@ -60,16 +60,16 @@ Generated at: 2026-03-21T13:39:44.547Z
 
 | File | LOC |
 | --- | ---: |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1888 |
 | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1701 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
 | `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1568 |
-| `src/features/kangur/page-content-catalog.ts` | 1477 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1549 |
+| `src/features/kangur/page-content-catalog.ts` | 1461 |
 | `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
 | `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1223 |
-| `src/features/kangur/ui/pages/Game.tsx` | 1143 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1141 |
+| `src/features/kangur/ui/pages/Game.tsx` | 1151 |
+| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
 | `src/features/kangur/lessons/lesson-catalog-i18n.ts` | 1138 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
 | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1086 |
@@ -79,4 +79,4 @@ Generated at: 2026-03-21T13:39:44.547Z
 | `src/features/kangur/ui/components/animations/AddingAnimations.tsx` | 1041 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1035 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1031 |
+| `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1034 |

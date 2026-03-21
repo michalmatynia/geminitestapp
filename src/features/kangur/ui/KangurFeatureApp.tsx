@@ -16,7 +16,7 @@ import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/componen
 import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
 import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
 import { KangurAiTutorContentProvider } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
-import { KangurAiTutorProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
+import { KangurAiTutorDeferredProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import { KangurAgeGroupFocusProvider } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
@@ -308,13 +308,13 @@ export function KangurFeatureApp(): JSX.Element {
                     <KangurScoreSyncProvider>
                       <KangurContextRegistryPageBoundary>
                         <KangurAiTutorContentProvider>
-                          <KangurAiTutorProvider>
+                          <KangurAiTutorDeferredProvider>
                             <KangurTutorAnchorProvider>
                               <AuthenticatedApp />
                               <KangurAiTutorWidget />
                               <KangurLoginModal />
                             </KangurTutorAnchorProvider>
-                          </KangurAiTutorProvider>
+                          </KangurAiTutorDeferredProvider>
                         </KangurAiTutorContentProvider>
                       </KangurContextRegistryPageBoundary>
                     </KangurScoreSyncProvider>

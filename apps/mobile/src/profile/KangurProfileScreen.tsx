@@ -30,6 +30,8 @@ import {
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { useKangurMobileProfileDuels } from './useKangurMobileProfileDuels';
+import { useKangurMobileProfileAssignments } from './useKangurMobileProfileAssignments';
+import { useKangurMobileProfileLessonMastery } from './useKangurMobileProfileLessonMastery';
 import { useKangurMobileLearnerProfile } from './useKangurMobileLearnerProfile';
 
 const RESULTS_ROUTE = createKangurResultsHref();
@@ -738,8 +740,9 @@ export function KangurProfileScreen(): React.JSX.Element {
   const router = useRouter();
   const { copy, locale } = useKangurMobileI18n();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 3 });
+  const profileAssignments = useKangurMobileProfileAssignments();
+  const profileLessonMastery = useKangurMobileProfileLessonMastery();
   const {
-    assignments,
     authError,
     authMode,
     canNavigateToRecommendation,
@@ -748,7 +751,6 @@ export function KangurProfileScreen(): React.JSX.Element {
     isAuthenticated,
     isLoadingAuth,
     isLoadingScores,
-    masteryInsights,
     recommendationsNote,
     refreshScores,
     scoresError,
@@ -1331,9 +1333,9 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <Pill
                 label={copy({
-                  de: `Verfolgt ${masteryInsights.trackedLessons}`,
-                  en: `Tracked ${masteryInsights.trackedLessons}`,
-                  pl: `Śledzone ${masteryInsights.trackedLessons}`,
+                  de: `Verfolgt ${profileLessonMastery.trackedLessons}`,
+                  en: `Tracked ${profileLessonMastery.trackedLessons}`,
+                  pl: `Śledzone ${profileLessonMastery.trackedLessons}`,
                 })}
                 tone={{
                   backgroundColor: '#eef2ff',
@@ -1343,9 +1345,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               />
               <Pill
                 label={copy({
-                  de: `Beherrscht ${masteryInsights.masteredLessons}`,
-                  en: `Mastered ${masteryInsights.masteredLessons}`,
-                  pl: `Opanowane ${masteryInsights.masteredLessons}`,
+                  de: `Beherrscht ${profileLessonMastery.masteredLessons}`,
+                  en: `Mastered ${profileLessonMastery.masteredLessons}`,
+                  pl: `Opanowane ${profileLessonMastery.masteredLessons}`,
                 })}
                 tone={{
                   backgroundColor: '#ecfdf5',
@@ -1355,9 +1357,9 @@ export function KangurProfileScreen(): React.JSX.Element {
               />
               <Pill
                 label={copy({
-                  de: `Zum Wiederholen ${masteryInsights.lessonsNeedingPractice}`,
-                  en: `Needs review ${masteryInsights.lessonsNeedingPractice}`,
-                  pl: `Do powtórki ${masteryInsights.lessonsNeedingPractice}`,
+                  de: `Zum Wiederholen ${profileLessonMastery.lessonsNeedingPractice}`,
+                  en: `Needs review ${profileLessonMastery.lessonsNeedingPractice}`,
+                  pl: `Do powtórki ${profileLessonMastery.lessonsNeedingPractice}`,
                 })}
                 tone={{
                   backgroundColor: '#fff7ed',
@@ -1367,7 +1369,7 @@ export function KangurProfileScreen(): React.JSX.Element {
               />
             </View>
 
-            {masteryInsights.trackedLessons === 0 ? (
+            {profileLessonMastery.trackedLessons === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
                   de: 'Es gibt keine gespeicherten Lektionsversuche. Schließe eine beliebige Lektion ab, um Stärken und Wiederholungsbereiche zu sehen.',
@@ -1385,7 +1387,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       pl: 'Do powtórki',
                     })}
                   </Text>
-                  {masteryInsights.weakest.length === 0 ? (
+                  {profileLessonMastery.weakest.length === 0 ? (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {copy({
                         de: 'Alle verfolgten Lektionen sind auf einem sicheren Niveau.',
@@ -1394,7 +1396,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       })}
                     </Text>
                   ) : (
-                    masteryInsights.weakest.map((insight) => (
+                    profileLessonMastery.weakest.map((insight) => (
                       <MasteryInsightRow key={insight.componentId} insight={insight} />
                     ))
                   )}
@@ -1408,7 +1410,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       pl: 'Najmocniejsze lekcje',
                     })}
                   </Text>
-                  {masteryInsights.strongest.length === 0 ? (
+                  {profileLessonMastery.strongest.length === 0 ? (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {copy({
                         de: 'Schließe zuerst ein paar Lektionen ab, um die stärksten Bereiche zu sehen.',
@@ -1417,7 +1419,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       })}
                     </Text>
                   ) : (
-                    masteryInsights.strongest.map((insight) => (
+                    profileLessonMastery.strongest.map((insight) => (
                       <MasteryInsightRow key={insight.componentId} insight={insight} />
                     ))
                   )}
@@ -1655,35 +1657,42 @@ export function KangurProfileScreen(): React.JSX.Element {
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                 {copy({
-                  de: 'Aufgaben für jetzt',
-                  en: 'Tasks for now',
-                  pl: 'Zadania na teraz',
+                  de: 'Nächste Schritte',
+                  en: 'Next steps',
+                  pl: 'Następne kroki',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Lokale Aufgaben im Profil',
+                  en: 'Local tasks in the profile',
+                  pl: 'Lokalne zadania w profilu',
                 })}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Das ist eine leichte Version des Aufgabenplaners. Das vollständige Aufgabenpanel wird später zusammen mit den kompletten Trainings- und Lektionspfaden portiert.',
-                  en: 'This is a lightweight version of the task planner. The full assigned-tasks panel will be ported later together with the complete training and lesson flows.',
-                  pl: 'To lekka wersja planera zadań. Pełny panel przypisanych zadań zostanie przeniesiony później razem z pełnymi trasami treningu i lekcji.',
+                  de: 'Auch im Profil kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen, ohne zur Startseite zurückzukehren.',
+                  en: 'The profile can also jump straight into the next local tasks from your progress without going back to the home screen.',
+                  pl: 'Także z profilu możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu bez wracania na ekran główny.',
                 })}
               </Text>
             </View>
 
-            {assignments.length === 0 ? (
+            {profileAssignments.assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 {copy({
-                  de: 'Es gibt noch keine aktiven Aufgaben. Neue Vorschläge erscheinen hier zusammen mit weiterem Fortschritt.',
-                  en: 'There are no active tasks yet. New suggestions will appear here as progress grows.',
-                  pl: 'Nie ma jeszcze aktywnych zadań. Nowe propozycje pojawią się tutaj wraz z kolejnym postępem.',
+                  de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                  en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
+                  pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
                 })}
               </Text>
             ) : (
               <View style={{ gap: 10 }}>
-                {assignments.map((assignment) => (
+                {profileAssignments.assignmentItems.map((item) => (
                   <AssignmentRow
-                    key={assignment.id}
-                    assignment={assignment}
-                    href={getActionHref(assignment.action)}
+                    key={item.assignment.id}
+                    assignment={item.assignment}
+                    href={item.href}
                   />
                 ))}
               </View>

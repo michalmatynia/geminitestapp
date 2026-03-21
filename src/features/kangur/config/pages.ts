@@ -1,24 +1,26 @@
+import dynamic from 'next/dynamic';
 
-import Game from '@/features/kangur/ui/pages/Game';
-import Competition from '@/features/kangur/ui/pages/Competition';
-import Duels from '@/features/kangur/ui/pages/Duels';
-import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
-import Lessons from '@/features/kangur/ui/pages/Lessons';
-import ParentDashboard from '@/features/kangur/ui/pages/ParentDashboard';
-import SocialUpdates from '@/features/kangur/ui/pages/SocialUpdates';
-import Tests from '@/features/kangur/ui/pages/Tests';
+import { createElement, type ComponentType, type ReactElement } from 'react';
 
-import type { ComponentType } from 'react';
+const PageLoadingFallback = (): ReactElement =>
+  createElement('div', {
+    'aria-busy': 'true',
+    'aria-live': 'polite',
+    className: 'kangur-shell-viewport-height w-full',
+  });
+
+const lazyPage = (loader: () => Promise<{ default: ComponentType }>) =>
+  dynamic(loader, { loading: PageLoadingFallback });
 
 export const kangurPages: Readonly<Record<string, ComponentType>> = Object.freeze({
-  Competition,
-  Game,
-  Duels,
-  LearnerProfile,
-  Lessons,
-  ParentDashboard,
-  SocialUpdates,
-  Tests,
+  Competition: lazyPage(() => import('@/features/kangur/ui/pages/Competition')),
+  Game: lazyPage(() => import('@/features/kangur/ui/pages/Game')),
+  Duels: lazyPage(() => import('@/features/kangur/ui/pages/Duels')),
+  LearnerProfile: lazyPage(() => import('@/features/kangur/ui/pages/LearnerProfile')),
+  Lessons: lazyPage(() => import('@/features/kangur/ui/pages/Lessons')),
+  ParentDashboard: lazyPage(() => import('@/features/kangur/ui/pages/ParentDashboard')),
+  SocialUpdates: lazyPage(() => import('@/features/kangur/ui/pages/SocialUpdates')),
+  Tests: lazyPage(() => import('@/features/kangur/ui/pages/Tests')),
 });
 
 export const KANGUR_MAIN_PAGE = 'Game';

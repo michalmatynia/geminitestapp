@@ -87,6 +87,7 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  KangurAiTutorDeferredProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({

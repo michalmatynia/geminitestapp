@@ -258,7 +258,7 @@ describe('Game page', () => {
     });
   });
 
-  it('pins home hero, action, and assignment widgets during the home-screen exit transition', () => {
+  it('keeps the shared game navigation visible on the home screen', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
       canAccessParentAssignments: true,
@@ -284,7 +284,7 @@ describe('Game page', () => {
     expect(homeActionsPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({ hideWhenScreenMismatch: false })
     );
-    expect(screen.queryByTestId('kangur-game-navigation-widget')).toBeNull();
+    expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
   });
 
   it('shows the parent add-learner prompt under the home actions when no learner is selected', () => {

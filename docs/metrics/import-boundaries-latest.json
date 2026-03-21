@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-18T19:19:37.439Z",
-  "status": "warn",
+  "generatedAt": "2026-03-21T16:23:31.886Z",
+  "status": "failed",
   "summary": {
-    "total": 12,
-    "errorCount": 0,
+    "total": 13,
+    "errorCount": 1,
     "warningCount": 12,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 5525,
+    "status": "failed",
+    "fileCount": 5649,
     "featureCount": 10,
     "circularDependencyCount": 0
   },
@@ -25,6 +25,7 @@
     "ai": [
       "files",
       "foldertree",
+      "observability",
       "viewer3d"
     ],
     "case-resolver": [
@@ -45,6 +46,8 @@
       "products"
     ],
     "integrations": [
+      "data-import-export",
+      "product-sync",
       "products"
     ],
     "kangur": [
@@ -71,6 +74,16 @@
   },
   "circularDependencies": [],
   "issues": [
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/chatbot/public. Use the barrel export instead.",
+      "file": "src/features/admin/components/Menu.tsx",
+      "line": 20,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
     {
       "severity": "warn",
       "ruleId": "deep-relative-import",
@@ -194,11 +207,17 @@
   ],
   "rules": [
     {
+      "ruleId": "cross-feature-internal-import",
+      "errorCount": 1,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
       "ruleId": "deep-relative-import",
       "errorCount": 0,
       "warningCount": 12,
       "infoCount": 0
     }
   ],
-  "durationMs": 300
+  "durationMs": 352
 }

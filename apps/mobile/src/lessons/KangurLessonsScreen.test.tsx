@@ -14,6 +14,7 @@ const {
   useLessonsScreenBootStateMock,
   useKangurMobileLessonsAssignmentsMock,
   useKangurMobileLessonCheckpointsMock,
+  useKangurMobileLessonsLessonMasteryMock,
   useKangurMobileLessonsDuelsMock,
   useKangurMobileLessonsMock,
   useLocalSearchParamsMock,
@@ -24,6 +25,7 @@ const {
   useLessonsScreenBootStateMock: vi.fn(),
   useKangurMobileLessonsAssignmentsMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
+  useKangurMobileLessonsLessonMasteryMock: vi.fn(),
   useKangurMobileLessonsDuelsMock: vi.fn(),
   useKangurMobileLessonsMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
@@ -92,6 +94,10 @@ vi.mock('./useKangurMobileLessonCheckpoints', () => ({
 
 vi.mock('./useKangurMobileLessonsAssignments', () => ({
   useKangurMobileLessonsAssignments: useKangurMobileLessonsAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileLessonsLessonMastery', () => ({
+  useKangurMobileLessonsLessonMastery: useKangurMobileLessonsLessonMasteryMock,
 }));
 
 vi.mock('./useKangurMobileLessonsDuels', () => ({
@@ -204,6 +210,13 @@ describe('KangurLessonsScreen', () => {
     });
     useKangurMobileLessonsAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileLessonsLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 0,
+      masteredLessons: 0,
+      strongest: [],
+      trackedLessons: 0,
+      weakest: [],
     });
     useKangurMobileLessonsDuelsMock.mockReturnValue({
       actionError: null,
@@ -320,6 +333,59 @@ describe('KangurLessonsScreen', () => {
         },
       ],
     });
+    useKangurMobileLessonsLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 1,
+      masteredLessons: 1,
+      strongest: [
+        {
+          attempts: 4,
+          bestScorePercent: 96,
+          componentId: 'clock',
+          emoji: '🕒',
+          lastCompletedAt: '2026-03-21T08:18:00.000Z',
+          lastScorePercent: 94,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          masteryPercent: 93,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          title: 'Nauka zegara',
+        },
+      ],
+      trackedLessons: 2,
+      weakest: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
 
     renderLessonsScreen();
 
@@ -339,6 +405,12 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Śledzone 2')).toBeTruthy();
+    expect(screen.getByText('Opanowane 1')).toBeTruthy();
+    expect(screen.getByText('Do powtórki 1')).toBeTruthy();
+    expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getByText('Próby 4 • ostatni wynik 94%')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania po lekcjach')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();

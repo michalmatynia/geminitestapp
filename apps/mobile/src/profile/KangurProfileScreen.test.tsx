@@ -11,12 +11,16 @@ import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 const {
   replaceMock,
   useKangurMobileLessonCheckpointsMock,
+  useKangurMobileProfileAssignmentsMock,
+  useKangurMobileProfileLessonMasteryMock,
   useKangurMobileLearnerProfileMock,
   useKangurMobileProfileDuelsMock,
   useRouterMock,
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
+  useKangurMobileProfileAssignmentsMock: vi.fn(),
+  useKangurMobileProfileLessonMasteryMock: vi.fn(),
   useKangurMobileLearnerProfileMock: vi.fn(),
   useKangurMobileProfileDuelsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -33,6 +37,14 @@ vi.mock('./useKangurMobileLearnerProfile', () => ({
 
 vi.mock('./useKangurMobileProfileDuels', () => ({
   useKangurMobileProfileDuels: useKangurMobileProfileDuelsMock,
+}));
+
+vi.mock('./useKangurMobileProfileAssignments', () => ({
+  useKangurMobileProfileAssignments: useKangurMobileProfileAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileProfileLessonMastery', () => ({
+  useKangurMobileProfileLessonMastery: useKangurMobileProfileLessonMasteryMock,
 }));
 
 vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
@@ -68,13 +80,6 @@ describe('KangurProfileScreen', () => {
       isAuthenticated: false,
       isLoadingAuth: false,
       isLoadingScores: false,
-      masteryInsights: {
-        trackedLessons: 0,
-        masteredLessons: 0,
-        lessonsNeedingPractice: 0,
-        strongest: [],
-        weakest: [],
-      },
       recommendationsNote: 'Notatka',
       refreshScores: vi.fn(),
       scoresError: null,
@@ -122,6 +127,16 @@ describe('KangurProfileScreen', () => {
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileProfileAssignmentsMock.mockReturnValue({
+      assignmentItems: [],
+    });
+    useKangurMobileProfileLessonMasteryMock.mockReturnValue({
+      trackedLessons: 0,
+      masteredLessons: 0,
+      lessonsNeedingPractice: 0,
+      strongest: [],
+      weakest: [],
+    });
   });
 
   it('shows the learner restore shell while auth is still loading', () => {
@@ -135,13 +150,6 @@ describe('KangurProfileScreen', () => {
       isAuthenticated: false,
       isLoadingAuth: true,
       isLoadingScores: true,
-      masteryInsights: {
-        trackedLessons: 0,
-        masteredLessons: 0,
-        lessonsNeedingPractice: 0,
-        strongest: [],
-        weakest: [],
-      },
       recommendationsNote: 'Notatka',
       refreshScores: vi.fn(),
       scoresError: null,
@@ -210,13 +218,6 @@ describe('KangurProfileScreen', () => {
       isAuthenticated: true,
       isLoadingAuth: false,
       isLoadingScores: false,
-      masteryInsights: {
-        trackedLessons: 3,
-        masteredLessons: 1,
-        lessonsNeedingPractice: 1,
-        strongest: [],
-        weakest: [],
-      },
       recommendationsNote:
         'Na mobile działają już lekcje, trening arytmetyczny oraz pierwszy quiz logiczny.',
       refreshScores: vi.fn(),
@@ -270,6 +271,59 @@ describe('KangurProfileScreen', () => {
           },
         ],
       },
+    });
+    useKangurMobileProfileLessonMasteryMock.mockReturnValue({
+      trackedLessons: 3,
+      masteredLessons: 1,
+      lessonsNeedingPractice: 1,
+      strongest: [
+        {
+          attempts: 4,
+          bestScorePercent: 96,
+          componentId: 'clock',
+          emoji: '🕒',
+          lastCompletedAt: '2026-03-21T08:18:00.000Z',
+          lastScorePercent: 96,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          masteryPercent: 94,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          title: 'Zegar',
+        },
+      ],
+      weakest: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
     });
     useKangurMobileProfileDuelsMock.mockReturnValue({
       actionError: null,
@@ -348,6 +402,32 @@ describe('KangurProfileScreen', () => {
         },
       ],
     });
+    useKangurMobileProfileAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'adding',
+              },
+            },
+            description: 'Skup się na najsłabszym obszarze.',
+            id: 'assignment-1',
+            priority: 'high',
+            target: '1 lekcja',
+            title: 'Powtórka dodawania',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+        },
+      ],
+    });
 
     renderProfileScreen();
 
@@ -364,10 +444,14 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Lokalne zadania w profilu')).toBeTruthy();
     expect(screen.getByText('Plan na dziś')).toBeTruthy();
     expect(screen.getByText('Ostatnie sesje')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
+    expect(screen.getAllByText('Priorytet wysoki').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
     expect(screen.getByText('Otwórz całą historię')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Szybki rewanż'));
@@ -393,7 +477,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Duelle')).toBeTruthy();
     expect(screen.getByText('Letzte Lektions-Checkpoints')).toBeTruthy();
     expect(screen.getByText('Plan für heute')).toBeTruthy();
-    expect(screen.getByText('Aufgaben für jetzt')).toBeTruthy();
+    expect(screen.getByText('Nächste Schritte')).toBeTruthy();
     expect(screen.getByText('Ergebnisverlauf')).toBeTruthy();
     expect(screen.getByText('🎮 Erstes Spiel')).toBeTruthy();
   });

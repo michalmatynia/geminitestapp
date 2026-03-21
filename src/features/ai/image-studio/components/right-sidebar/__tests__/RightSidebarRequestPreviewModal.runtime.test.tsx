@@ -27,6 +27,7 @@ vi.mock('@/shared/ui', async () => {
   const mocks = await import('./rightSidebarRuntimeMockComponents');
   return {
     SelectSimple: mocks.MockSelectSimple,
+    InsetPanel: mocks.MockInsetPanel,
   };
 });
 

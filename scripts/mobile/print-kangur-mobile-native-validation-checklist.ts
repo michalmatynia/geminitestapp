@@ -6,6 +6,7 @@ export type KangurMobileNativeValidationChecklistTarget =
 
 export type KangurMobileNativeValidationChecklistSection = {
   backendCommand: string;
+  dependencyCommand: string;
   launchCommand: string;
   manualFallbackCommands?: string[];
   notes: string[];
@@ -54,6 +55,7 @@ const getTargetCommands = (target: KangurMobileRuntimeTarget) => {
     case 'ios-simulator':
       return {
         backendCommand: 'npm run check:mobile:runtime:backend:ios',
+        dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:ios:local',
         prepareCommand: 'npm run prepare:mobile:runtime:ios',
         readinessCommand: 'npm run check:mobile:native:runtime:ios',
@@ -61,6 +63,7 @@ const getTargetCommands = (target: KangurMobileRuntimeTarget) => {
     case 'android-emulator':
       return {
         backendCommand: 'npm run check:mobile:runtime:backend:android',
+        dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:android:local',
         prepareCommand: 'npm run prepare:mobile:runtime:android',
         readinessCommand: 'npm run check:mobile:native:runtime:android',
@@ -68,6 +71,7 @@ const getTargetCommands = (target: KangurMobileRuntimeTarget) => {
     case 'device':
       return {
         backendCommand: 'npm run check:mobile:runtime:backend:device',
+        dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:device:local',
         prepareCommand: 'npm run prepare:mobile:runtime:device',
         readinessCommand: 'npm run check:mobile:native:runtime:device',
@@ -181,6 +185,7 @@ const renderKangurMobileNativeValidationChecklist = (
     .flatMap((section) => [
       `[kangur-mobile-native-checklist] target=${section.title}`,
       `[kangur-mobile-native-checklist] Run ${section.readinessCommand}`,
+      `[kangur-mobile-native-checklist] Run ${section.dependencyCommand}`,
       `[kangur-mobile-native-checklist] Run ${section.backendCommand}`,
       `[kangur-mobile-native-checklist] Run ${section.prepareCommand}`,
       `[kangur-mobile-native-checklist] Run ${section.launchCommand}`,

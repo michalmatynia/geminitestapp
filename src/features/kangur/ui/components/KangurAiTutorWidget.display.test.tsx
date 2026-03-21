@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, render, screen } from '@/__tests__/test-utils';
+import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';

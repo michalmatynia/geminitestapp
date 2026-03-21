@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, renderHook } from '@/__tests__/test-utils';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useProductListState } from '@/features/products/hooks/useProductListState';

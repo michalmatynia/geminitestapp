@@ -78,7 +78,7 @@ export function useProductListState(): ProductListContextType & {
     : new Set<string>();
 
   useProductSync();
-  useProductAiPathsRunSync();
+  const productAiRunStatusByProductId = useProductAiPathsRunSync();
 
   const {
     preferences,
@@ -570,6 +570,7 @@ export function useProductListState(): ProductListContextType & {
     traderaBadgeIds,
     traderaBadgeStatuses,
     queuedProductIds,
+    productAiRunStatusByProductId,
     categoryNameById,
     thumbnailSource: preferences.thumbnailSource ?? 'file',
     showTriggerRunFeedback,

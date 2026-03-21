@@ -13,6 +13,7 @@ import {
   useProductListRowActionsContext,
   useProductListRowVisualsContext,
 } from '@/features/products/context/ProductListContext';
+import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { getDocumentationTooltip } from '@/shared/lib/documentation';
@@ -213,13 +214,18 @@ const ImageCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function Image
 const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCell({ row }) {
   const product: ProductWithImages = row.original;
   const { onProductNameClick } = useProductListRowActionsContext();
-  const { productNameKey, queuedProductIds, categoryNameById } = useProductListRowVisualsContext();
+  const { productNameKey, queuedProductIds, productAiRunStatusByProductId, categoryNameById } =
+    useProductListRowVisualsContext();
 
   const nameKey = productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
 
   const isImported: boolean = !!product.baseProductId;
-  const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
+  const productRunFeedback = resolveProductAiRunFeedbackForList({
+    productId: product.id,
+    queuedProductIds,
+    productAiRunStatusByProductId,
+  });
   const normalizedSku = (product.sku ?? '').trim();
   const categoryLabel = resolveProductCategoryLabel(
     product,
@@ -289,9 +295,12 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
             </button>
           </Tooltip>
         )}
-        {isQueued && (
-          <Badge variant='processing' className='ml-1'>
-            Queued
+        {productRunFeedback && (
+          <Badge
+            variant={productRunFeedback.variant}
+            className={cn('ml-1', productRunFeedback.badgeClassName)}
+          >
+            {productRunFeedback.label}
           </Badge>
         )}
       </div>

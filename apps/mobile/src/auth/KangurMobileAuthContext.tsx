@@ -47,17 +47,17 @@ const KangurMobileAuthContext =
 
 const toAuthErrorMessage = (error: unknown): string => {
   if (!(error instanceof Error)) {
-    return 'Nie udalo sie odswiezyc sesji ucznia.';
+    return 'Nie udało się odświeżyć sesji ucznia.';
   }
 
   const message = error.message.trim();
   if (!message) {
-    return 'Nie udalo sie odswiezyc sesji ucznia.';
+    return 'Nie udało się odświeżyć sesji ucznia.';
   }
 
   const normalizedMessage = message.toLowerCase();
   if (normalizedMessage === 'failed to fetch' || normalizedMessage.includes('networkerror')) {
-    return 'Nie udalo sie polaczyc z API Kangura.';
+    return 'Nie udało się połączyć z API Kangura.';
   }
 
   return message;

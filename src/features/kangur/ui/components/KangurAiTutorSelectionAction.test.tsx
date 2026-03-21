@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@/__tests__/test-utils';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { KangurAiTutorSelectionAction } from './KangurAiTutorSelectionAction';
 

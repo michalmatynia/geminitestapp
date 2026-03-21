@@ -258,14 +258,14 @@ export function KangurCmsRuntimeDataProvider({
           : translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.actions.returnToPractice',
-            'Wroc do praktyki'
+            'Wróć do praktyki'
           ),
         description:
           homeSpotlightAssignment?.description?.trim() ||
           translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.description.returnToPractice',
-            'Wroc do praktyki i kontynuuj wyzwanie.'
+            'Wróć do praktyki i kontynuuj wyzwanie.'
           ),
         hasAssignment: Boolean(homeSpotlightAssignment),
         openAssignment: openHomeSpotlightAssignment,
@@ -283,7 +283,7 @@ export function KangurCmsRuntimeDataProvider({
           translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.progress.completedPercent',
-            '{percent}% ukonczono',
+            '{percent}% ukończono',
             { percent: 0 }
           ),
         progressPercent: homeSpotlightAssignment?.progress.percent ?? 0,
@@ -291,7 +291,7 @@ export function KangurCmsRuntimeDataProvider({
           translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.title.continuePractice',
-            'Kontynuuj praktyke'
+            'Kontynuuj praktykę'
           ),
       },
       priorityAssignments: {
@@ -312,14 +312,14 @@ export function KangurCmsRuntimeDataProvider({
           : translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.actions.returnToPractice',
-            'Wroc do praktyki'
+            'Wróć do praktyki'
           ),
         description:
           game.activePracticeAssignment?.description?.trim() ||
           translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.description.returnToPractice',
-            'Wroc do praktyki i kontynuuj wyzwanie.'
+            'Wróć do praktyki i kontynuuj wyzwanie.'
           ),
         hasAssignment: Boolean(game.activePracticeAssignment),
         helperLabel: game.activePracticeAssignment
@@ -334,7 +334,7 @@ export function KangurCmsRuntimeDataProvider({
           : translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.helper.nextStep',
-            'Nastepny krok w praktyce.'
+            'Następny krok w praktyce.'
           ),
         openAssignment: openActivePracticeAssignment,
         priorityLabel: game.activePracticeAssignment
@@ -351,7 +351,7 @@ export function KangurCmsRuntimeDataProvider({
           translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.progress.completedPercent',
-            '{percent}% ukonczono',
+            '{percent}% ukończono',
             { percent: 0 }
           ),
         progressPercent: game.activePracticeAssignment?.progress.percent ?? 0,
@@ -463,21 +463,21 @@ export function KangurCmsRuntimeDataProvider({
           : translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.actions.returnToPractice',
-            'Wroc do praktyki'
+            'Wróć do praktyki'
           ),
         assignmentDescription:
           resultAssignment?.description?.trim() ||
           translateKangurCmsRuntimeWithFallback(
             cmsRuntimeTranslate,
             'assignments.description.returnToPractice',
-            'Wroc do praktyki i kontynuuj wyzwanie.'
+            'Wróć do praktyki i kontynuuj wyzwanie.'
           ),
         assignmentEyebrow: resultAssignment
           ? resultAssignment.progress.status === 'completed'
             ? translateKangurCmsRuntimeWithFallback(
               cmsRuntimeTranslate,
               'assignments.eyebrow.completedParent',
-              'Ukonczone zadanie od rodzica'
+              'Ukończone zadanie od rodzica'
             )
             : translateKangurCmsRuntimeWithFallback(
               cmsRuntimeTranslate,

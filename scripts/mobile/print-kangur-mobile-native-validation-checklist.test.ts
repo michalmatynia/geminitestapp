@@ -36,6 +36,7 @@ describe('createKangurMobileNativeValidationChecklistSection', () => {
     ).toEqual(
       expect.objectContaining({
         backendCommand: 'npm run check:mobile:runtime:backend:android',
+        dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:android:local',
         prepareCommand: 'npm run prepare:mobile:runtime:android',
         readinessCommand: 'npm run check:mobile:native:runtime:android',

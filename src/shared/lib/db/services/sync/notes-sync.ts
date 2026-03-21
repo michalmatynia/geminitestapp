@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import { ObjectId } from 'mongodb';
 
-import type { SyncHandler } from './types';
+import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-export const syncNotebooks: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncNotebooks: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo.collection('notebooks').find({}).toArray();
   const warnings: string[] = [];
   const seenNames = new Set<string>();
@@ -37,7 +38,7 @@ export const syncNotebooks: SyncHandler = async ({ mongo, prisma, normalizeId })
   };
 };
 
-export const syncThemes: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncThemes: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const availableNotebookIds = new Set<string>(
     (await prisma.notebook.findMany({ select: { id: true } })).map(
       (entry: { id: string }) => entry.id
@@ -90,7 +91,7 @@ export const syncThemes: SyncHandler = async ({ mongo, prisma, normalizeId }) =>
   };
 };
 
-export const syncTags: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncTags: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const availableNotebookIds = new Set<string>(
     (await prisma.notebook.findMany({ select: { id: true } })).map(
       (entry: { id: string }) => entry.id
@@ -136,7 +137,7 @@ export const syncTags: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
   };
 };
 
-export const syncCategories: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncCategories: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo.collection('categories').find({}).toArray();
   const warnings: string[] = [];
   const availableNotebookIds = new Set<string>(
@@ -211,7 +212,7 @@ export const syncCategories: SyncHandler = async ({ mongo, prisma, normalizeId }
   };
 };
 
-export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
+export const syncNotes: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const docs = await mongo.collection('notes').find({}).toArray();
   const availableNotebookIds = new Set<string>(
     (await prisma.notebook.findMany({ select: { id: true } })).map(
@@ -326,7 +327,7 @@ export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncNoteFiles: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncNoteFiles: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo.collection('noteFiles').find({}).toArray();
   const availableNoteIds = new Set<string>(
     (await prisma.note.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
@@ -358,7 +359,7 @@ export const syncNoteFiles: SyncHandler = async ({ mongo, prisma, normalizeId })
 
 // --- Prisma to Mongo handlers ---
 
-export const syncNotesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncNotesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const [notes, tags, categories] = await Promise.all([
     prisma.note.findMany({
       include: {
@@ -486,7 +487,7 @@ export const syncNotesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => 
   };
 };
 
-export const syncNoteFilesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncNoteFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const files = await prisma.noteFile.findMany();
   const docs = files.map((file) => ({
     _id: file.id,
@@ -512,7 +513,7 @@ export const syncNoteFilesPrismaToMongo: SyncHandler = async ({ mongo, prisma })
   };
 };
 
-export const syncTagsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.tag.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -533,7 +534,7 @@ export const syncTagsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
   };
 };
 
-export const syncCategoriesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.category.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -558,7 +559,7 @@ export const syncCategoriesPrismaToMongo: SyncHandler = async ({ mongo, prisma }
   };
 };
 
-export const syncNotebooksPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncNotebooksPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.notebook.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -579,7 +580,7 @@ export const syncNotebooksPrismaToMongo: SyncHandler = async ({ mongo, prisma })
   };
 };
 
-export const syncThemesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.theme.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,

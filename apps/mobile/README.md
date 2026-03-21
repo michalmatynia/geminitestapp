@@ -44,6 +44,7 @@ npm run dev:mobile:web
 npm run typecheck:mobile
 npm run config:mobile
 npm run export:mobile:web
+npm run check:mobile:native:deps
 npm run dev:mobile:ios:local
 npm run dev:mobile:android:local
 ```
@@ -59,8 +60,12 @@ Validated on March 21, 2026:
 
 ```bash
 npm run typecheck:mobile
+npm run check:mobile:native:deps
+npm run check:mobile:native:runtime:ios
+npx vitest run apps/mobile/src/practice/KangurPracticeScreen.test.tsx apps/mobile/src/home/HomeScreen.test.tsx apps/mobile/src/plan/KangurDailyPlanScreen.test.tsx apps/mobile/src/scores/KangurResultsScreen.test.tsx apps/mobile/src/lessons/KangurLessonsScreen.test.tsx apps/mobile/src/profile/KangurProfileScreen.test.tsx apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx
 npm run config:mobile
 npm run export:mobile:web
+npm run dev:mobile:ios:local
 ```
 
 Runtime-checked on the exported preview:
@@ -78,9 +83,101 @@ Notes from that route sweep:
 - all of the exported mobile routes above returned `200`
 - the major mobile routes now use consistent Polish UI copy on the main shell, profile, results, plan, leaderboard, and practice flows
 - score-family labels, demo-session names, and practice sync messages were also normalized to the same Polish copy style
+- the main mobile route shells now also have light screen-level regression coverage:
+  - `apps/mobile/src/practice/KangurPracticeScreen.test.tsx`
+  - `apps/mobile/src/home/HomeScreen.test.tsx`
+  - `apps/mobile/src/plan/KangurDailyPlanScreen.test.tsx`
+  - `apps/mobile/src/scores/KangurResultsScreen.test.tsx`
+  - `apps/mobile/src/profile/KangurProfileScreen.test.tsx`
+  - `apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx`
 - the lessons routes still settle correctly for both `/lessons` and `/lessons?focus=clock`
-- the lessons loading skeleton had already been validated earlier; this later fast headless sweep did not catch the short-lived boot phase again
+- the lessons loading state is now covered by screen-level regression tests in `apps/mobile/src/lessons/KangurLessonsScreen.test.tsx`
+- `/lessons` now shows the catalog skeleton during initial boot, while `/lessons?focus=clock` shows both the focused-lesson skeleton and the catalog skeleton before settled content appears
+- exported-preview proof artifacts for that loader pass are in:
+  - `output/playwright/lessons-catalog-loading.png`
+  - `output/playwright/lessons-catalog-settled.png`
+  - `output/playwright/lessons-focus-clock-loading.png`
+  - `output/playwright/lessons-focus-clock-settled.png`
+- a second exported-preview sweep now also rechecked `/`, `/plan`, and `/results` after the new screen tests:
+  - `output/playwright/home-route-shell.png`
+  - `output/playwright/plan-route-shell.png`
+  - `output/playwright/results-route-shell.png`
+- that later sweep confirmed all three routes still return `200` and none of them leak raw `Failed to fetch`
+- a third exported-preview sweep rechecked `/profile` and `/leaderboard` after the new route-shell tests:
+  - `output/playwright/profile-route-shell.png`
+  - `output/playwright/leaderboard-route-shell.png`
+- that later sweep confirmed both routes return `200`, render the correct route titles, and do not leak raw `Failed to fetch`
+- a fourth exported-preview sweep rechecked `/practice` after the new route-shell test:
+  - `output/playwright/practice-route-shell.png`
+- that later sweep confirmed `/practice` returns `200`, renders the mobile training shell with the first question, and does not leak raw `Failed to fetch`
 - the profile screen no longer leaks raw `Failed to fetch`; it now shows a friendly localized API-connection message
+
+## Native iOS state
+
+As of March 21, 2026, the checked iOS local launch path is healthy again:
+
+- `npm run dev:mobile:ios:local` now gets through:
+  - iOS toolchain check
+  - native Expo/React Native dependency preflight
+  - mobile tooling tests
+  - mobile typecheck
+  - scoped iOS runtime readiness
+  - Expo Go launch on the simulator
+  - Metro bundle startup
+- `npm run check:mobile:native:runtime:ios` now behaves like the real sandbox gate:
+  - `status=warning`
+  - `host=ok`
+  - `backend=skipped`
+  - `runtime=ok`
+- the latest checked run reached:
+  - `Starting Metro Bundler`
+  - `Opening exp://192.168.0.33:8081 on iPhone 17 Pro`
+  - `iOS Bundled ... node_modules/expo-router/entry.js`
+  - `Waiting on http://localhost:8081`
+- backend probing is still reported as `skipped` inside the Codex sandbox, so the remaining native learner-session validation still belongs in a normal shell plus Expo Go interaction
+- fresh simulator launch proof artifact:
+  - `output/playwright/ios-native-launch-home.png`
+- ordinary native route recheck after the repaired launch path:
+  - `output/playwright/ios-native-home-ordinary.png`
+  - `output/playwright/ios-native-results-ordinary.png`
+  - `output/playwright/ios-native-practice-ordinary.png`
+  - `output/playwright/ios-native-profile-ordinary.png`
+  - `output/playwright/ios-native-plan-ordinary.png`
+  - `output/playwright/ios-native-leaderboard-ordinary.png`
+
+Current native caveat:
+
+- this host can still hit transient CoreSimulatorService failures during `simctl`, but the checked iOS readiness path no longer reports that as a fake “install Xcode” blocker
+- `prepare:runtime:ios` now also runs `npm run check:mobile:native:deps` so missing native Expo/React Native modules fail fast before Metro starts
+- `npm run checklist:mobile:native:runtime:ios` now prints the same checked chain, including `npm run check:mobile:native:deps`, before the backend, prepare, launch, and learner-session validation steps
+- `npm run dev:mobile:ios:local -- --dry-run` and the checked launch failure hints now also surface `npm run check:mobile:native:deps` explicitly, so the launcher output matches the actual native prepare flow
+- `npm run dev:mobile:ios:local` now also fails fast when Expo port `8081` is already occupied, instead of falling into Expo's interactive port prompt; the recovery hint points at `lsof -i tcp:8081`
+- the checked launch command is the better source of truth than the standalone prepare wrapper when this host is flaky
+- the main remaining native iOS gap is still one manual non-debug learner-session practice run inside Expo Go, followed by the ordinary-route recheck from the checklist
+- in the latest ordinary-route simulator pass, the native shells loaded for home/profile/plan/results/leaderboard/practice, but without a completed learner-session login they still fell back to local mode and could show `Network request failed`
+- a one-off LAN-IP relaunch experiment (`EXPO_PUBLIC_KANGUR_API_URL=http://192.168.0.33:3000`) was inconclusive on this host because Expo never reached `Waiting on http://localhost:8081`, so no config change was adopted from that trial
+- the ordinary-route `Network request failed` screenshots were also captured during a session where the local backend had in fact fallen out of service on `localhost:3000`, so they should not be treated as proof of a stable iOS runtime bug by themselves
+
+## Native Android state
+
+As of March 21, 2026, the Android mobile scripts are aligned with the repaired workspace, but the host is still not ready for a live emulator launch:
+
+- `npm run dev:mobile:android:local -- --dry-run` is healthy and shows the intended launcher behavior
+- `npm run check:mobile:native:deps` is green, so the remaining Android blocker is not native dependency drift inside this repo
+- the Android local launcher normalizes `EXPO_PUBLIC_KANGUR_API_URL` from `http://localhost:3000` to `http://10.0.2.2:3000` for emulator runtime traffic
+- `npm run checklist:mobile:native:runtime:android` now prints the full checked chain, including `npm run check:mobile:native:deps`, before the backend, prepare, launch, and learner-session validation steps
+- the remaining blocker is still host-side:
+  - `adb` unavailable
+  - `emulator` unavailable
+  - `ANDROID_SDK_ROOT` / `ANDROID_HOME` unset
+
+Current Android caveat:
+
+- the runtime env itself is already correct in this branch for emulator use
+- the next real Android step is to install/configure Android Studio platform-tools and emulator support, then rerun:
+  - `npm run check:mobile:android:toolchain`
+  - `npm run check:mobile:native:runtime:android`
+  - `npm run dev:mobile:android:local`
 
 ## Environment
 
@@ -133,6 +230,22 @@ If `npm run export:mobile:web` starts failing again with missing modules, check 
 
 - [package.json](./package.json)
 - [../../scripts/mobile/run-with-mobile-env.ts](../../scripts/mobile/run-with-mobile-env.ts)
+
+The native iOS path also needed a follow-up dependency repair for Expo/React Native local launches. The practical fixes were:
+
+- add the missing `marky` dependency explicitly in [package.json](./package.json) so Expo dev-middleware no longer fails through `lighthouse-logger`
+- add the missing Babel preset plugins used by `@react-native/babel-preset` in [package.json](./package.json)
+- add the missing React Native runtime subset used during native bundle/dev startup in [package.json](./package.json)
+- add [../../scripts/mobile/check-kangur-mobile-native-deps.ts](../../scripts/mobile/check-kangur-mobile-native-deps.ts) and wire it into the checked native prepare flow
+- harden [../../scripts/mobile/check-kangur-mobile-ios-toolchain.ts](../../scripts/mobile/check-kangur-mobile-ios-toolchain.ts) for transient CoreSimulatorService failures
+- downgrade transient `simctl` CoreSimulatorService failures to a warning instead of a fake Xcode blocker, and reuse the resilient iOS collector from the native host/runtime checks
+- add an iOS `simctl` warm-up to the checked `prepare:runtime:ios` script in [package.json](./package.json)
+
+One more route-shell caveat from March 21, 2026:
+
+- do not place test files under `apps/mobile/app/*`
+- Expo Router treats that directory as route territory, and a misplaced `*.test.tsx` there can break `expo export --platform web`
+- keep screen tests under `apps/mobile/src/**` instead
 
 ## Known repo-wide blocker
 

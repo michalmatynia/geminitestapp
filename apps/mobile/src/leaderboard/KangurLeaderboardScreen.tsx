@@ -119,14 +119,14 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Wroc
+                Wróć
               </Text>
             </Pressable>
           </Link>
 
           <SectionTitle
             title='Ranking'
-            subtitle='Mobilny ranking korzysta z tych samych kontraktow wynikow i logiki mapowania rankingu co wspolny Kangur.'
+            subtitle='Mobilny ranking korzysta z tych samych kontraktów wyników i logiki mapowania rankingu co wspólny Kangur.'
           />
         </View>
 
@@ -201,7 +201,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odswiez</Text>
+              <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odśwież</Text>
             </Pressable>
           </View>
         </View>
@@ -216,8 +216,8 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           >
             <Text style={{ color: '#334155', fontSize: 15 }}>
               {isRestoringAuth
-                ? 'Przywracamy sesje ucznia i ranking...'
-                : 'Ladujemy ranking...'}
+                ? 'Przywracamy sesję ucznia i ranking...'
+                : 'Ładujemy ranking...'}
             </Text>
           </View>
         ) : error ? (
@@ -230,11 +230,11 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#991b1b', fontWeight: '800', fontSize: 16 }}>
-              Ranking niedostepny
+              Ranking niedostępny
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 21 }}>
               {error} Uruchom webowe API Kangura pod skonfigurowanym adresem, a potem
-              odswiez widok.
+              odśwież widok.
             </Text>
           </View>
         ) : items.length === 0 ? (
@@ -246,7 +246,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#334155', fontSize: 15 }}>
-              Zaden wynik nie pasuje do obecnych filtrow.
+              Żaden wynik nie pasuje do obecnych filtrów.
             </Text>
           </View>
         ) : (

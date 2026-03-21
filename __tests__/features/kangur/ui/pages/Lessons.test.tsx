@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { fireEvent, screen, waitFor, within } from '@/__tests__/test-utils';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';

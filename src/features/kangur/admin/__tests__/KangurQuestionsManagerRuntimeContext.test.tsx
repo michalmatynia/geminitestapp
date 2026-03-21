@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render } from '@/__tests__/test-utils';
+import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useKangurQuestionsManagerRuntimeContext } from '@/features/kangur/admin/context/KangurQuestionsManagerRuntimeContext';

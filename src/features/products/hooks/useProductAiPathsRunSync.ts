@@ -1,9 +1,14 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { invalidateProductsCountsAndDetail } from '@/features/products/hooks/productCache';
+import {
+  buildProductAiRunFeedbackFromSnapshot,
+  compareProductAiRunFeedback,
+  type ProductAiRunFeedback,
+} from '@/features/products/lib/product-ai-run-feedback';
 import {
   buildQueuedProductAiRunSource,
   markQueuedProductSource,
@@ -27,6 +32,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 const AI_PATH_RUN_BADGE_REFRESH_INTERVAL_MS = 10_000;
+const EMPTY_PRODUCT_AI_RUN_STATUS_BY_PRODUCT_ID = new Map<string, ProductAiRunFeedback>();
 
 type TrackedProductRun = {
   productId: string;
@@ -59,21 +65,53 @@ const hasTrackedProductRuns = (
   return false;
 };
 
+const buildProductAiRunStatusByProductId = (
+  trackedRuns: ReadonlyMap<string, TrackedProductRun>
+): ReadonlyMap<string, ProductAiRunFeedback> => {
+  const next = new Map<string, ProductAiRunFeedback>();
+
+  trackedRuns.forEach((trackedRun: TrackedProductRun) => {
+    const snapshot = trackedRun.latestSnapshot;
+    if (!snapshot || snapshot.trackingState === 'stopped' || isTrackedAiPathRunTerminal(snapshot)) {
+      return;
+    }
+
+    const feedback = buildProductAiRunFeedbackFromSnapshot(snapshot);
+    if (!feedback) return;
+
+    const current = next.get(trackedRun.productId);
+    if (!current || compareProductAiRunFeedback(feedback, current) > 0) {
+      next.set(trackedRun.productId, feedback);
+    }
+  });
+
+  return next;
+};
+
 /**
  * Listens for AI-Paths runs triggered on individual products and reflects their
- * in-progress state in the product list's "Queued" badge + completion highlight.
+ * in-progress state in the product list's run badge + completion highlight.
  *
  * The event is dispatched by useAiPathTriggerEvent (shared lib) via a CustomEvent
  * so the shared layer never imports from the products feature.
  */
-export function useProductAiPathsRunSync(): void {
+export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeedback> {
   const queryClient = useQueryClient();
   const trackedRunsRef = useRef<Map<string, TrackedProductRun>>(new Map());
   const badgeRefreshIntervalRef = useRef<SafeTimerId | null>(null);
   const disposedRef = useRef(false);
+  const [productAiRunStatusByProductId, setProductAiRunStatusByProductId] = useState<
+    ReadonlyMap<string, ProductAiRunFeedback>
+  >(() => EMPTY_PRODUCT_AI_RUN_STATUS_BY_PRODUCT_ID);
 
   useEffect(() => {
     disposedRef.current = false;
+
+    const syncProductAiRunStatuses = (): void => {
+      setProductAiRunStatusByProductId(
+        buildProductAiRunStatusByProductId(trackedRunsRef.current)
+      );
+    };
 
     const stopBadgeRefresh = (): void => {
       if (badgeRefreshIntervalRef.current === null) return;
@@ -105,6 +143,7 @@ export function useProductAiPathsRunSync(): void {
       if (trackedRunsRef.current.size === 0) {
         stopBadgeRefresh();
       }
+      syncProductAiRunStatuses();
     };
 
     const refreshTrackedRunBadges = (): void => {
@@ -133,6 +172,7 @@ export function useProductAiPathsRunSync(): void {
         existingTrackedRun.productId = productId;
         refreshQueuedBadge(runId, productId);
         ensureBadgeRefresh();
+        syncProductAiRunStatuses();
         return;
       }
 
@@ -159,6 +199,7 @@ export function useProductAiPathsRunSync(): void {
           }
 
           refreshQueuedBadge(runId, activeTrackedRun.productId);
+          syncProductAiRunStatuses();
         },
         {
           initialSnapshot: {
@@ -217,4 +258,6 @@ export function useProductAiPathsRunSync(): void {
       channel?.close();
     };
   }, [queryClient]);
+
+  return productAiRunStatusByProductId;
 }

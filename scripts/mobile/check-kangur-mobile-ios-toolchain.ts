@@ -18,11 +18,14 @@ export type KangurMobileIosToolchainState = {
   developerDir: string | null;
   simctlAvailable: boolean;
   simctlLicenseBlocked?: boolean;
+  simctlTransientFailure?: boolean;
   xcodebuildAvailable: boolean;
 };
 
 const COMMAND_LINE_TOOLS_DIR = '/Library/Developer/CommandLineTools';
 const FULL_XCODE_DIR = '/Applications/Xcode.app/Contents/Developer';
+const MAX_TRANSIENT_SIMCTL_RETRIES = 5;
+const TRANSIENT_SIMCTL_RETRY_DELAY_MS = 1000;
 
 const addIssue = (
   issues: KangurMobileIosToolchainIssue[],
@@ -31,6 +34,11 @@ const addIssue = (
 ): void => {
   issues.push({ level, message });
 };
+
+const isTransientSimctlFailure = (output: string): boolean =>
+  output.includes('CoreSimulatorService connection became invalid') ||
+  output.includes('Unable to locate device set') ||
+  output.includes('Connection refused');
 
 export const analyzeKangurMobileIosToolchain = (
   state: KangurMobileIosToolchainState,
@@ -65,6 +73,12 @@ export const analyzeKangurMobileIosToolchain = (
         issues,
         'error',
         'xcrun simctl is blocked because the Xcode license has not been accepted yet. Run sudo xcodebuild -license in Terminal, accept the license, then re-run the iOS toolchain check.',
+      );
+    } else if (state.simctlTransientFailure) {
+      addIssue(
+        issues,
+        'warning',
+        'xcrun simctl hit a transient CoreSimulatorService failure. Run xcrun simctl list devices once, confirm the simulator is still available, then re-run the iOS toolchain check.',
       );
     } else {
       addIssue(
@@ -108,24 +122,54 @@ const runCommand = (
   };
 };
 
-export const runKangurMobileIosToolchainCheck = (): void => {
-  const xcodeSelect = runCommand('xcode-select', ['-p']);
-  const developerDir = xcodeSelect.ok ? xcodeSelect.output.trim() : null;
-  const xcodebuild = runCommand('xcodebuild', ['-version']);
-  const simctl = runCommand('xcrun', ['simctl', 'list', 'devices', 'available']);
-  const simctlLicenseBlocked = /have not agreed to the Xcode license agreements/i.test(
-    simctl.output,
-  );
-  const simctlHasAvailableDevices =
-    simctl.ok && /\([0-9A-Fa-f-]{36}\)/.test(simctl.output);
+const runSimctlAvailableDevices = (): {
+  ok: boolean;
+  output: string;
+} => {
+  runCommand('xcrun', ['simctl', 'list', 'devices']);
+  let lastResult = runCommand('xcrun', ['simctl', 'list', 'devices', 'available']);
 
-  const report = analyzeKangurMobileIosToolchain({
-    developerDir,
-    simctlHasAvailableDevices,
-    simctlAvailable: simctl.ok,
-    simctlLicenseBlocked,
-    xcodebuildAvailable: xcodebuild.ok,
-  });
+  for (
+    let attempt = 1;
+    attempt < MAX_TRANSIENT_SIMCTL_RETRIES &&
+    !lastResult.ok &&
+    isTransientSimctlFailure(lastResult.output);
+    attempt += 1
+  ) {
+    runCommand('xcrun', ['simctl', 'list', 'devices']);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, TRANSIENT_SIMCTL_RETRY_DELAY_MS);
+    lastResult = runCommand('xcrun', ['simctl', 'list', 'devices', 'available']);
+  }
+
+  return lastResult;
+};
+
+export const collectKangurMobileIosToolchainState =
+  (): KangurMobileIosToolchainState => {
+    const xcodeSelect = runCommand('xcode-select', ['-p']);
+    const developerDir = xcodeSelect.ok ? xcodeSelect.output.trim() : null;
+    const xcodebuild = runCommand('xcodebuild', ['-version']);
+    const simctl = runSimctlAvailableDevices();
+    const simctlLicenseBlocked =
+      /have not agreed to the Xcode license agreements/i.test(simctl.output);
+    const simctlTransientFailure =
+      !simctl.ok && isTransientSimctlFailure(simctl.output);
+    const simctlHasAvailableDevices =
+      simctl.ok && /\([0-9A-Fa-f-]{36}\)/.test(simctl.output);
+
+    return {
+      developerDir,
+      simctlAvailable: simctl.ok,
+      simctlHasAvailableDevices,
+      simctlLicenseBlocked,
+      simctlTransientFailure,
+      xcodebuildAvailable: xcodebuild.ok,
+    };
+  };
+
+export const runKangurMobileIosToolchainCheck = (): void => {
+  const toolchainState = collectKangurMobileIosToolchainState();
+  const report = analyzeKangurMobileIosToolchain(toolchainState);
 
   console.log(
     `[kangur-mobile-ios-toolchain] status=${report.status} developerDir=${report.resolved.developerDir ?? 'unset'}`,

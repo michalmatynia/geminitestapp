@@ -610,6 +610,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     runtimeValues: validatorValues,
     patterns: validatorPatterns,
     latestProductValues,
+    categories,
     validationScope: validationInstanceScope,
     validatorEnabled,
     isIssueDenied,

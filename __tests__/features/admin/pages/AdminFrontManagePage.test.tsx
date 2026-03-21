@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { screen, waitFor, fireEvent } from '@/__tests__/test-utils';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';

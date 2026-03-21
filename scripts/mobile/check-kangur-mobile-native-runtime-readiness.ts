@@ -7,10 +7,10 @@ import {
 } from './check-kangur-mobile-runtime-env';
 import {
   collectKangurMobileAndroidToolchainState,
-  collectKangurMobileIosToolchainState,
   createKangurMobileNativeHostReport,
   type KangurMobileNativeHostReport,
 } from './check-kangur-mobile-native-host';
+import { collectKangurMobileIosToolchainState } from './check-kangur-mobile-ios-toolchain';
 import {
   createKangurMobileRuntimeBackendProbeUrl,
   probeKangurMobileRuntimeBackend,

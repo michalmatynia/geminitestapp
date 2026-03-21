@@ -1,4 +1,4 @@
-import { renderHook, act } from '@/__tests__/test-utils';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { usePanelState } from '@/shared/ui/templates/panels/usePanelState';

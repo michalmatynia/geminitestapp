@@ -1,4 +1,4 @@
-import { renderHook, act } from '@/__tests__/test-utils';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { usePickerSearch } from '@/shared/ui/templates/pickers/usePickerSearch';

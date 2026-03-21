@@ -138,11 +138,11 @@ export const useKangurMobileLearnerProfile =
       isLoadingScores: isLoadingAuth || scoresQuery.isLoading,
       masteryInsights,
       recommendationsNote:
-        'Na mobile dzialaja juz lekcje, trening arytmetyczny oraz pierwszy quiz logiczny. Bardziej rozbudowane tryby graficzne pozostaja jeszcze informacyjne.',
+        'Na mobile działają już lekcje, trening arytmetyczny oraz pierwszy quiz logiczny. Bardziej rozbudowane tryby graficzne pozostają jeszcze informacyjne.',
       refreshScores: scoresQuery.refresh,
       scoresError:
         scoresQuery.error instanceof Error
-          ? 'Nie udalo sie pobrac historii wynikow.'
+          ? 'Nie udało się pobrać historii wyników.'
           : null,
       signIn,
       supportsLearnerCredentials,

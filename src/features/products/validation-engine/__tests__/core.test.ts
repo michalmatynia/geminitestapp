@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductCategory, ProductValidationPattern } from '@/shared/contracts/products';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
   buildLatestFieldMirrorSemanticState,
@@ -64,6 +64,33 @@ function makePattern(
 }
 
 const SCOPE = 'product_edit' as const;
+
+const CATEGORY_FIXTURES: ProductCategory[] = [
+  {
+    id: 'keychains-category',
+    name: 'Keychains',
+    name_en: 'Keychains',
+    name_pl: 'Breloki',
+    name_de: 'Schlusselanhanger',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'anime-pin-category',
+    name: 'Anime Pins',
+    name_en: 'Anime Pins',
+    name_pl: 'Przypinki Anime',
+    name_de: 'Anime Pins',
+    color: null,
+    parentId: null,
+    catalogId: 'catalog-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 // -----------------------------------------------------------------------
 
@@ -389,8 +416,10 @@ describe('buildFieldIssues', () => {
           name_en: 'Awa Awa no Mi | 4 cm | Metal | Anime Pin | One Piece',
           categoryId: '',
         },
+        categories: CATEGORY_FIXTURES,
         selectedCatalogIds: ['catalog-1'],
       }),
+      categories: CATEGORY_FIXTURES,
       patterns: [pattern],
       latestProductValues: null,
       validationScope: SCOPE,
@@ -403,6 +432,62 @@ describe('buildFieldIssues', () => {
       replacementScope: 'field',
       replacementActive: true,
     });
+  });
+
+  it('suppresses category inference when the inferred name segment does not resolve to a category', () => {
+    const pattern = makePattern({
+      regex: '^$',
+      target: 'category',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementFields: ['categoryId'],
+      replacementValue: encodeDynamicReplacementRecipe({
+        version: 1,
+        sourceMode: 'form_field',
+        sourceField: 'nameEnSegment4',
+        sourceRegex: null,
+        sourceFlags: null,
+        sourceMatchGroup: null,
+        mathOperation: 'none',
+        mathOperand: null,
+        roundMode: 'none',
+        padLength: null,
+        padChar: null,
+        logicOperator: 'none',
+        logicOperand: null,
+        logicFlags: null,
+        logicWhenTrueAction: 'keep',
+        logicWhenTrueValue: null,
+        logicWhenFalseAction: 'keep',
+        logicWhenFalseValue: null,
+        resultAssembly: 'segment_only',
+        targetApply: 'replace_whole_field',
+      }),
+      launchEnabled: true,
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment4',
+      launchOperator: 'is_not_empty',
+      message: 'Infer category from name segment #4',
+      skipNoopReplacementProposal: false,
+      semanticState: buildNameSegmentCategorySemanticState(),
+    });
+
+    const issues = buildFieldIssues({
+      values: buildProductValidationSourceValues({
+        baseValues: {
+          name_en: 'Mochi Mochi no Mi | 4 cm | Metal | Przypinka Anime | One Piece',
+          categoryId: '',
+        },
+        categories: CATEGORY_FIXTURES,
+        selectedCatalogIds: ['catalog-1'],
+      }),
+      categories: CATEGORY_FIXTURES,
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: SCOPE,
+    });
+
+    expect(issues['categoryId']).toBeUndefined();
   });
 
   it('proposes a category replacement when the current category differs from the inferred segment', () => {

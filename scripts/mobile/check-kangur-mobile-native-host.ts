@@ -6,8 +6,8 @@ import {
 } from './check-kangur-mobile-android-toolchain';
 import {
   analyzeKangurMobileIosToolchain,
+  collectKangurMobileIosToolchainState,
   type KangurMobileIosToolchainReport,
-  type KangurMobileIosToolchainState,
 } from './check-kangur-mobile-ios-toolchain';
 
 export type KangurMobileNativeHostReport = {
@@ -34,19 +34,6 @@ const runCommand = (
     output,
   };
 };
-
-export const collectKangurMobileIosToolchainState =
-  (): KangurMobileIosToolchainState => {
-    const xcodeSelect = runCommand('xcode-select', ['-p']);
-    const xcodebuild = runCommand('xcodebuild', ['-version']);
-    const simctl = runCommand('xcrun', ['simctl', 'list', 'devices', 'available']);
-
-    return {
-      developerDir: xcodeSelect.ok ? xcodeSelect.output.trim() : null,
-      simctlAvailable: simctl.ok,
-      xcodebuildAvailable: xcodebuild.ok,
-    };
-  };
 
 export const collectKangurMobileAndroidToolchainState =
   (env: NodeJS.ProcessEnv = process.env): KangurMobileAndroidToolchainState => {

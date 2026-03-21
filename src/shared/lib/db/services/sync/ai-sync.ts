@@ -1,4 +1,5 @@
-import type { SyncHandler } from './types';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+import type { DatabaseSyncHandler } from './types';
 import type {
   MongoProductAiJobDoc,
   MongoAiPathRunDoc,
@@ -13,7 +14,7 @@ import type {
   AiPathRunEventLevel,
 } from '@prisma/client';
 
-export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+export const syncProductAiJobs: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection<MongoProductAiJobDoc>('product_ai_jobs').find({}).toArray();
   const data = docs
     .map((doc): Prisma.ProductAiJobCreateManyInput | null => {
@@ -40,7 +41,7 @@ export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeI
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncAiPathRuns: SyncHandler = async ({
+export const syncAiPathRuns: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -85,7 +86,7 @@ export const syncAiPathRuns: SyncHandler = async ({
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncAiPathRunNodes: SyncHandler = async ({
+export const syncAiPathRunNodes: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -121,7 +122,7 @@ export const syncAiPathRunNodes: SyncHandler = async ({
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncAiPathRunEvents: SyncHandler = async ({
+export const syncAiPathRunEvents: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -153,7 +154,7 @@ export const syncAiPathRunEvents: SyncHandler = async ({
 
 // --- Prisma to Mongo handlers ---
 
-export const syncProductAiJobsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncProductAiJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.productAiJob.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -180,7 +181,7 @@ export const syncProductAiJobsPrismaToMongo: SyncHandler = async ({ mongo, prism
   };
 };
 
-export const syncAiPathRunsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncAiPathRunsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRun.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -219,7 +220,7 @@ export const syncAiPathRunsPrismaToMongo: SyncHandler = async ({ mongo, prisma }
   };
 };
 
-export const syncAiPathRunNodesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncAiPathRunNodesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRunNode.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -250,7 +251,7 @@ export const syncAiPathRunNodesPrismaToMongo: SyncHandler = async ({ mongo, pris
   };
 };
 
-export const syncAiPathRunEventsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncAiPathRunEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiPathRunEvent.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,

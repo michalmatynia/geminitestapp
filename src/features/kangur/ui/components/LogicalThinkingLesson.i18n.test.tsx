@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@/__tests__/test-utils';
+import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

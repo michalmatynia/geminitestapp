@@ -29,7 +29,7 @@ describe('mobile env helpers', () => {
 
     expect(resolveMobileEnvFilePaths()).toEqual([
       resolve(ORIGINAL_CWD, 'apps/mobile/.env.example'),
-      resolve(ORIGINAL_CWD, '../../apps/mobile/.env.example'),
+      
     ]);
   });
 

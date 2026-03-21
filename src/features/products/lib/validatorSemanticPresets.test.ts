@@ -16,7 +16,7 @@ describe('validator semantic presets', () => {
     const payload = buildNameSegmentCategoryTemplatePayload();
 
     expect(payload.label).toBe('Name Segment #4 -> Category');
-    expect(payload.message).toBe('Infer category from Name EN segment #4 when category is empty.');
+    expect(payload.message).toBe('Infer category from Name EN segment #4 when the current category differs.');
     expect(payload.semanticState).toMatchObject({
       version: 2,
       presetId: PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS.inferCategoryFromNameSegment,

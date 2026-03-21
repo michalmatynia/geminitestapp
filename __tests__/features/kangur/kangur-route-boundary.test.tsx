@@ -1,4 +1,4 @@
-import { render, screen } from '@/__tests__/test-utils';
+import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 

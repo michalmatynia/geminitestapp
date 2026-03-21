@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { Socket } from 'node:net';
 import { resolve } from 'node:path';
 import {
   analyzeKangurMobileRuntimeEnv,
@@ -15,6 +16,7 @@ import { detectKangurMobileLanHost } from './check-kangur-mobile-native-runtime-
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const MOBILE_WORKSPACE_DIR = resolve(import.meta.dirname, '../../apps/mobile');
 const ANDROID_EMULATOR_HOST = '10.0.2.2';
+const DEFAULT_EXPO_DEV_SERVER_PORT = 8081;
 
 export type KangurMobileNativeLocalOptions = {
   dryRun: boolean;
@@ -27,6 +29,7 @@ export type KangurMobileNativeLocalPlan = {
     | 'checklist:mobile:native:runtime:ios'
     | 'checklist:mobile:native:runtime:android'
     | 'checklist:mobile:native:runtime:device';
+  rootDependencyScript: 'check:mobile:native:deps';
   prepareScript: 'prepare:runtime:ios' | 'prepare:runtime:android' | 'prepare:runtime:device';
   rootPrepareScript:
     | 'prepare:mobile:runtime:ios'
@@ -44,6 +47,7 @@ export type KangurMobileNativeLocalPlan = {
     | 'checklist:native:runtime:ios'
     | 'checklist:native:runtime:android'
     | 'checklist:native:runtime:device';
+  workspaceDependencyScript: 'check:native:deps';
   workspaceReadinessScript:
     | 'check:native:runtime:ios'
     | 'check:native:runtime:android'
@@ -55,6 +59,11 @@ export type KangurMobileNativeLocalPlan = {
 export type KangurMobileNativeLocalLaunchEnvResolution = {
   env: NodeJS.ProcessEnv;
   notices: string[];
+};
+
+export type KangurMobileNativeLocalExpoPortReport = {
+  port: number;
+  status: 'free' | 'occupied';
 };
 
 const replaceApiUrlHostname = (
@@ -149,6 +158,11 @@ export const createKangurMobileNativeLocalReadinessHint = (
 ): string =>
   `Run "npm run ${plan.rootReadinessScript}" from the repo root or "npm run ${plan.workspaceReadinessScript}" in apps/mobile for the full scoped readiness report.`;
 
+export const createKangurMobileNativeLocalDependencyHint = (
+  plan: KangurMobileNativeLocalPlan,
+): string =>
+  `Run "npm run ${plan.rootDependencyScript}" from the repo root or "npm run ${plan.workspaceDependencyScript}" in apps/mobile to preflight native Expo and React Native dependencies before launch.`;
+
 export const createKangurMobileNativeLocalPrepareHint = (
   plan: KangurMobileNativeLocalPlan,
 ): string =>
@@ -159,13 +173,77 @@ export const createKangurMobileNativeLocalChecklistHint = (
 ): string =>
   `After Expo launches, use "npm run ${plan.rootChecklistScript}" from the repo root or "npm run ${plan.workspaceChecklistScript}" in apps/mobile for the native learner-session validation checklist.`;
 
+export const createKangurMobileNativeLocalPortConflictHint = (
+  port = DEFAULT_EXPO_DEV_SERVER_PORT,
+): string =>
+  `Port ${port} is already occupied. Stop the existing Expo/dev server on that port or run "lsof -i tcp:${port}" to identify it, then re-run the native launch.`;
+
 export const createKangurMobileNativeLocalPrepareFailureMessage = (
   plan: KangurMobileNativeLocalPlan,
   error: unknown,
 ): string => {
   const details = error instanceof Error ? error.message : String(error);
-  return `[kangur-mobile-native-local] ${plan.rootPrepareScript} failed for ${plan.target}. ${createKangurMobileNativeLocalReadinessHint(plan)} ${createKangurMobileNativeLocalPrepareHint(plan)}\n${details}`;
+  return `[kangur-mobile-native-local] ${plan.rootPrepareScript} failed for ${plan.target}. ${createKangurMobileNativeLocalReadinessHint(plan)} ${createKangurMobileNativeLocalDependencyHint(plan)} ${createKangurMobileNativeLocalPrepareHint(plan)}\n${details}`;
 };
+
+export const checkKangurMobileNativeLocalExpoPort = (
+  port = DEFAULT_EXPO_DEV_SERVER_PORT,
+  {
+    host = '127.0.0.1',
+    timeoutMs = 500,
+  }: {
+    host?: string;
+    timeoutMs?: number;
+  } = {},
+): Promise<KangurMobileNativeLocalExpoPortReport> =>
+  new Promise((resolvePromise, rejectPromise) => {
+    const socket = new Socket();
+    let settled = false;
+
+    const resolveWith = (
+      status: KangurMobileNativeLocalExpoPortReport['status'],
+    ): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      socket.destroy();
+      resolvePromise({
+        port,
+        status,
+      });
+    };
+
+    const rejectWith = (error: Error): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      socket.destroy();
+      rejectPromise(error);
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => {
+      resolveWith('occupied');
+    });
+    socket.once('timeout', () => {
+      resolveWith('free');
+    });
+    socket.once('error', (error: NodeJS.ErrnoException) => {
+      if (
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'EHOSTUNREACH' ||
+        error.code === 'ENETUNREACH'
+      ) {
+        resolveWith('free');
+        return;
+      }
+
+      rejectWith(error);
+    });
+    socket.connect(port, host);
+  });
 
 export const parseKangurMobileNativeLocalOptions = (
   args: string[] = process.argv.slice(2),
@@ -218,11 +296,13 @@ export const createKangurMobileNativeLocalPlan = (
     case 'ios-simulator':
       return {
         rootChecklistScript: 'checklist:mobile:native:runtime:ios',
+        rootDependencyScript: 'check:mobile:native:deps',
         prepareScript: 'prepare:runtime:ios',
         rootPrepareScript: 'prepare:mobile:runtime:ios',
         rootReadinessScript: 'check:mobile:native:runtime:ios',
         rootStartScript: 'dev:mobile:ios:local',
         workspaceChecklistScript: 'checklist:native:runtime:ios',
+        workspaceDependencyScript: 'check:native:deps',
         workspaceReadinessScript: 'check:native:runtime:ios',
         startScript: 'ios',
         target,
@@ -230,11 +310,13 @@ export const createKangurMobileNativeLocalPlan = (
     case 'android-emulator':
       return {
         rootChecklistScript: 'checklist:mobile:native:runtime:android',
+        rootDependencyScript: 'check:mobile:native:deps',
         prepareScript: 'prepare:runtime:android',
         rootPrepareScript: 'prepare:mobile:runtime:android',
         rootReadinessScript: 'check:mobile:native:runtime:android',
         rootStartScript: 'dev:mobile:android:local',
         workspaceChecklistScript: 'checklist:native:runtime:android',
+        workspaceDependencyScript: 'check:native:deps',
         workspaceReadinessScript: 'check:native:runtime:android',
         startScript: 'android',
         target,
@@ -242,11 +324,13 @@ export const createKangurMobileNativeLocalPlan = (
     case 'device':
       return {
         rootChecklistScript: 'checklist:mobile:native:runtime:device',
+        rootDependencyScript: 'check:mobile:native:deps',
         prepareScript: 'prepare:runtime:device',
         rootPrepareScript: 'prepare:mobile:runtime:device',
         rootReadinessScript: 'check:mobile:native:runtime:device',
         rootStartScript: 'dev:mobile:device:local',
         workspaceChecklistScript: 'checklist:native:runtime:device',
+        workspaceDependencyScript: 'check:native:deps',
         workspaceReadinessScript: 'check:native:runtime:device',
         startScript: 'dev',
         target,
@@ -311,7 +395,7 @@ export const runKangurMobileNativeLocal = async (
   const plan = createKangurMobileNativeLocalPlan(options.target);
 
   console.log(
-    `[kangur-mobile-native-local] target=${plan.target} readiness=${plan.rootReadinessScript} prepare=${options.skipPrepare ? 'skipped' : plan.rootPrepareScript} start=${plan.rootStartScript} checklist=${plan.rootChecklistScript}`,
+    `[kangur-mobile-native-local] target=${plan.target} readiness=${plan.rootReadinessScript} deps=${plan.rootDependencyScript} prepare=${options.skipPrepare ? 'skipped' : plan.rootPrepareScript} start=${plan.rootStartScript} checklist=${plan.rootChecklistScript}`,
   );
   for (const notice of launchEnv.notices) {
     console.log(`[kangur-mobile-native-local] NOTICE ${notice}`);
@@ -329,7 +413,7 @@ export const runKangurMobileNativeLocal = async (
 
   if (options.dryRun) {
     console.log(
-      `[kangur-mobile-native-local] dry-run apiUrl=${report.resolved.apiUrl} authMode=${report.resolved.authMode} readiness=${plan.rootReadinessScript} prepare=${plan.rootPrepareScript} start=${plan.rootStartScript} checklist=${plan.rootChecklistScript}`,
+      `[kangur-mobile-native-local] dry-run apiUrl=${report.resolved.apiUrl} authMode=${report.resolved.authMode} readiness=${plan.rootReadinessScript} deps=${plan.rootDependencyScript} prepare=${plan.rootPrepareScript} start=${plan.rootStartScript} checklist=${plan.rootChecklistScript}`,
     );
     console.log(
       `[kangur-mobile-native-local] ${createKangurMobileNativeLocalChecklistHint(plan)}`,
@@ -357,6 +441,15 @@ export const runKangurMobileNativeLocal = async (
     } else {
       await probeKangurMobileRuntimeBackend(report.resolved.apiUrl);
     }
+  }
+
+  const expoPortReport = await checkKangurMobileNativeLocalExpoPort();
+  if (expoPortReport.status === 'occupied') {
+    throw new Error(
+      `[kangur-mobile-native-local] ${createKangurMobileNativeLocalPortConflictHint(
+        expoPortReport.port,
+      )}`,
+    );
   }
 
   console.log(

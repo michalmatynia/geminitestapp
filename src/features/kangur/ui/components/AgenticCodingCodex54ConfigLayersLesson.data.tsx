@@ -31,7 +31,7 @@ const TRUST_RULES = [
 ] as const;
 
 const PROFILE_KEYS = [
-  { title: 'profile', description: 'Domyslny profil startowy (jak `--profile`).' },
+  { title: 'profile', description: 'Domyślny profil startowy (jak `--profile`).' },
   {
     title: 'profiles.<name>.*',
     description: 'Profilowe nadpisania dowolnych kluczy config.',
@@ -143,7 +143,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Profile pozwalaja trzymac rozne konfiguracje w jednym miejscu.
+            Profile pozwalają trzymać różne konfiguracje w jednym miejscu.
           </KangurLessonLead>
           <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
             {PROFILE_KEYS.map((item) => (
@@ -168,11 +168,11 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
       ),
     },
     {
-      title: 'Przyklad configu',
+      title: 'Przykład configu',
       content: (
         <KangurLessonStack align='start' className='w-full'>
           <KangurLessonLead align='left'>
-            Traktuj profile jako bezpieczne presety. Nastepnie odpaliaj Codex z
+            Traktuj profile jako bezpieczne presety. Następnie odpalaj Codex z
             docelowym profilem.
           </KangurLessonLead>
           <AgenticLessonCodeBlock accent='slate' title='config.toml' code={CONFIG_EXAMPLE} />

@@ -60,7 +60,7 @@ export const useKangurMobileResults = (
     availableOperations,
     error:
       scoresQuery.error instanceof Error
-        ? 'Nie udalo sie pobrac historii wynikow.'
+        ? 'Nie udało się pobrać historii wyników.'
         : null,
     isEnabled: scoresQuery.isEnabled,
     isLoading: scoresQuery.isLoading,

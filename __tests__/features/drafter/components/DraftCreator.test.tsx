@@ -1,4 +1,4 @@
-import { screen, fireEvent, waitFor, act } from '@/__tests__/test-utils';
+import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { DraftCreator } from '@/features/drafter/components/DraftCreator';

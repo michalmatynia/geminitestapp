@@ -14,10 +14,8 @@ const { handleSubmitMock, routerPushMock, useProductFormImagesMock } = vi.hoiste
   useProductFormImagesMock: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: routerPushMock,
-  }),
+vi.mock('next/navigation', () => ({\n  usePathname: vi.fn(() => '/admin/products'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 vi.mock('next/link', () => ({

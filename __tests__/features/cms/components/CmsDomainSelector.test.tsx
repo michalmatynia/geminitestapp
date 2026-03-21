@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@/__tests__/test-utils';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';

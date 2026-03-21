@@ -5,6 +5,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { useOptionalCmsStorefrontAppearance, type CmsStorefrontAppearanceMode } from '@/features/cms/public';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { logger } from '@/shared/utils/logger';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 
 
@@ -164,7 +165,7 @@ export function KangurSurfaceClassSync({
       const signature = JSON.stringify(payload);
       if (debugRef.current !== signature) {
         debugRef.current = signature;
-        console.info('[KangurThemeDebug]', payload);
+        logger.info('[KangurThemeDebug]', payload);
       }
     }
 

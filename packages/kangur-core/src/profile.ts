@@ -407,11 +407,11 @@ const buildRecommendations = (input: {
   if (weakestOperation && weakestOperation.averageAccuracy < 75) {
     recommendations.push({
       id: 'focus_weakest_operation',
-      title: `Skup sie na: ${weakestOperation.label}`,
-      description: `Wykonaj 2 krotkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawnosci.`,
+      title: `Skup się na: ${weakestOperation.label}`,
+      description: `Wykonaj 2 krótkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawności.`,
       priority: 'high',
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
         query: {
           focus: weakestOperation.operation,
@@ -423,8 +423,8 @@ const buildRecommendations = (input: {
   if (input.averageAccuracy < 70) {
     recommendations.push({
       id: 'improve_accuracy',
-      title: 'Stabilizuj skutecznosc',
-      description: 'Przez 3 gry wybieraj tryb sredni i skup sie na dokladnosci zamiast czasie.',
+      title: 'Stabilizuj skuteczność',
+      description: 'Przez 3 gry wybieraj tryb średni i skup się na dokładności zamiast czasie.',
       priority: 'high',
       action: {
         label: 'Uruchom trening',
@@ -440,11 +440,11 @@ const buildRecommendations = (input: {
   if (weakestLessonEntry && weakestLessonEntry.masteryPercent < 80) {
     recommendations.push({
       id: 'strengthen_lesson_mastery',
-      title: `Powtorz lekcje: ${weakestLessonEntry.title}`,
-      description: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtorka tej lekcji podniesie stabilnosc.`,
+      title: `Powtórz lekcję: ${weakestLessonEntry.title}`,
+      description: `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtórka tej lekcji podniesie stabilność.`,
       priority: weakestLessonEntry.masteryPercent < 60 ? 'high' : 'medium',
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
         query: {
           focus: weakestLessonEntry.componentId,
@@ -476,8 +476,8 @@ const buildRecommendations = (input: {
   if (input.currentStreakDays < 2) {
     recommendations.push({
       id: 'streak_bootstrap',
-      title: 'Zbuduj serie',
-      description: 'Zagraj takze jutro, aby uruchomic serie kolejnych dni.',
+      title: 'Zbuduj serię',
+      description: 'Zagraj także jutro, aby uruchomić serię kolejnych dni.',
       priority: 'medium',
       action: {
         label: 'Zagraj dzis',
@@ -495,11 +495,11 @@ const buildRecommendations = (input: {
       id: 'maintain_momentum',
       title: 'Utrzymaj tempo',
       description: strongestOperation
-        ? `Swietna forma. Dorzuc 1 sesje ${strongestOperation.label.toLowerCase()} dla utrwalenia.`
-        : 'Swietna forma. Kontynuuj dzisiejszy rytm nauki.',
+        ? `Świetna forma. Dorzuć 1 sesję ${strongestOperation.label.toLowerCase()} dla utrwalenia.`
+        : 'Świetna forma. Kontynuuj dzisiejszy rytm nauki.',
       priority: 'low',
       action: {
-        label: 'Kontynuuj gre',
+        label: 'Kontynuuj grę',
         page: 'Game',
         query: {
           operation: strongestPracticeOperation ?? 'mixed',

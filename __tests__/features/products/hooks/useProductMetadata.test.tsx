@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@/__tests__/test-utils';
+import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useProductMetadata } from '@/features/products/hooks/useProductMetadata';

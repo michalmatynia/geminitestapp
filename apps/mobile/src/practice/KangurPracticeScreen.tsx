@@ -53,7 +53,7 @@ const resolvePracticePlayerName = (
     return fullName;
   }
 
-  return 'Uczen mobilny';
+  return 'Uczeń mobilny';
 };
 
 function Card({
@@ -440,7 +440,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
             </Pressable>
           </Link>
 
@@ -453,10 +453,10 @@ export function KangurPracticeScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {operationConfig.kind === 'logic'
-                ? 'To pierwszy mobilny quiz logiczny w aplikacji. Korzysta z tekstowych pytan wielokrotnego wyboru i tej samej sciezki zapisu postepu oraz wynikow co trening arytmetyczny.'
+                ? 'To pierwszy mobilny quiz logiczny w aplikacji. Korzysta z tekstowych pytań wielokrotnego wyboru i tej samej ścieżki zapisu postępu oraz wyników co trening arytmetyczny.'
                 : operationConfig.kind === 'time'
-                  ? 'To lekki mobilny trening czasu i kalendarza. Nadal korzysta z prostych pytan wielokrotnego wyboru oraz tej samej sciezki postepu i wynikow.'
-                  : 'To pierwszy mobilny zamiennik glownego trybu gry. Na razie obejmuje lekki trening pytan wielokrotnego wyboru dla podstawowych operacji.'}
+                  ? 'To lekki mobilny trening czasu i kalendarza. Nadal korzysta z prostych pytań wielokrotnego wyboru oraz tej samej ścieżki postępu i wyników.'
+                  : 'To pierwszy mobilny zamiennik głównego trybu gry. Na razie obejmuje lekki trening pytań wielokrotnego wyboru dla podstawowych operacji.'}
             </Text>
           </Card>
 
@@ -469,7 +469,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 Wynik: {correctAnswers}/{questions.length}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Skutecznosc {completion.scorePercent}% · XP +{completion.xpGained}
+                Skuteczność {completion.scorePercent}% · XP +{completion.xpGained}
                 {completion.isPerfect ? ' · Perfekcyjna gra' : ''}
               </Text>
               {scoreSyncState ? (
@@ -505,15 +505,15 @@ export function KangurPracticeScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                    Deweloperski podglad synchronizacji
+                    Deweloperski podgląd synchronizacji
                   </Text>
                   <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
-                    To sprawdza te same mobilne zrodla danych, ktore zasilaja
+                    To sprawdza te same mobilne źródła danych, które zasilają
                     wyniki, profil, plan dnia i ranking.
                   </Text>
                   {practiceSyncProof.isLoading ? (
                     <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
-                      Odswiezamy podglad synchronizacji...
+                      Odświeżamy podgląd synchronizacji...
                     </Text>
                   ) : (
                     <View style={{ gap: 8 }}>
@@ -577,7 +577,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#1d4ed8', fontWeight: '700' }}>
-                      Odswiez podglad
+                      Odśwież podgląd
                     </Text>
                   </Pressable>
                 </View>
@@ -632,7 +632,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Zobacz historie trybu
+                      Zobacz historię trybu
                     </Text>
                   </Pressable>
                 </Link>
@@ -650,7 +650,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                        Otworz pasujaca lekcje
+                        Otwórz pasującą lekcję
                       </Text>
                     </Pressable>
                   </Link>
@@ -668,7 +668,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Otworz plan dnia
+                      Otwórz plan dnia
                     </Text>
                   </Pressable>
                 </Link>
@@ -682,7 +682,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Wroc do profilu</Text>
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Wróć do profilu</Text>
                   </Pressable>
                 </Link>
               </View>
@@ -712,7 +712,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 {currentQuestion.question}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Wybierz jedna odpowiedz. Wynik zapisze sie lokalnie po zakonczeniu calej serii.
+                Wybierz jedną odpowiedź. Wynik zapisze się lokalnie po zakończeniu całej serii.
               </Text>
 
               <View style={{ gap: 10 }}>
@@ -754,8 +754,8 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     {isChoiceCorrect
-                      ? 'Dobra odpowiedz.'
-                      : `Poprawna odpowiedz: ${String(currentQuestion.answer)}.`}
+                      ? 'Dobra odpowiedź.'
+                      : `Poprawna odpowiedź: ${String(currentQuestion.answer)}.`}
                   </Text>
                   <Pressable
                     accessibilityRole='button'
@@ -769,7 +769,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      {isLastQuestion ? 'Zakoncz trening' : 'Nastepne pytanie'}
+                      {isLastQuestion ? 'Zakończ trening' : 'Następne pytanie'}
                     </Text>
                   </Pressable>
                 </View>

@@ -36,11 +36,11 @@ export const buildKangurAssignments = (
       id: 'lesson-start',
       title: 'Pierwsza lekcja startowa',
       description:
-        'Uruchom pierwsza lekcje, aby zaczac zbierac dane o mocnych stronach ucznia.',
+        'Uruchom pierwszą lekcję, aby zacząć zbierać dane o mocnych stronach ucznia.',
       target: '1 lekcja',
       priority: 'medium',
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
       },
     });
@@ -49,18 +49,18 @@ export const buildKangurAssignments = (
   insights.weakest.forEach((lesson, index) => {
     assignments.push({
       id: `lesson-retry-${lesson.componentId}`,
-      title: `${lesson.emoji} Powtorka: ${lesson.title}`,
+      title: `${lesson.emoji} Powtórka: ${lesson.title}`,
       description:
         lesson.masteryPercent < 60
-          ? `To jeden z najslabszych obszarow (${lesson.masteryPercent}%). Potrzebna jest szybka powtorka i kolejna proba.`
-          : `Lekcja ma jeszcze rezerwe (${lesson.masteryPercent}%). Jedna powtorka powinna ustabilizowac wynik.`,
+          ? `To jeden z najsłabszych obszarów (${lesson.masteryPercent}%). Potrzebna jest szybka powtórka i kolejna próba.`
+          : `Lekcja ma jeszcze rezerwę (${lesson.masteryPercent}%). Jedna powtórka powinna ustabilizować wynik.`,
       target:
         index === 0
-          ? '1 powtorka + wynik min. 75%'
-          : '1 powtorka + wynik min. 80%',
+          ? '1 powtórka + wynik min. 75%'
+          : '1 powtórka + wynik min. 80%',
       priority: lesson.masteryPercent < 60 ? 'high' : 'medium',
       action: {
-        label: 'Otworz lekcje',
+        label: 'Otwórz lekcję',
         page: 'Lessons',
         query: {
           focus: lesson.componentId,
@@ -75,10 +75,10 @@ export const buildKangurAssignments = (
     description:
       insights.lessonsNeedingPractice > 0
         ? weakestPracticeOperation
-          ? 'Po powtorkach uruchom trening celowany, aby od razu sprawdzic najslabszy obszar w praktyce.'
-          : 'Po powtorkach uruchom trening mieszany, aby sprawdzic czy umiejetnosci przenosza sie do praktyki.'
-        : 'Podtrzymaj rytm nauki krotszym treningiem obejmujacym kolejne pytania praktyczne.',
-    target: progress.gamesPlayed < 5 ? '8 pytan' : '12 pytan',
+          ? 'Po powtórkach uruchom trening celowany, aby od razu sprawdzić najsłabszy obszar w praktyce.'
+          : 'Po powtórkach uruchom trening mieszany, aby sprawdzić, czy umiejętności przenoszą się do praktyki.'
+        : 'Podtrzymaj rytm nauki krótszym treningiem obejmującym kolejne pytania praktyczne.',
+    target: progress.gamesPlayed < 5 ? '8 pytań' : '12 pytań',
     priority: insights.lessonsNeedingPractice > 0 ? 'medium' : 'low',
     action: {
       label: 'Uruchom trening',
@@ -94,12 +94,12 @@ export const buildKangurAssignments = (
   if (strongestLesson && strongestLesson.masteryPercent >= 85) {
     assignments.push({
       id: `lesson-retain-${strongestLesson.componentId}`,
-      title: `${strongestLesson.emoji} Utrwal mocna strone`,
-      description: `${strongestLesson.title} jest stabilna (${strongestLesson.masteryPercent}%). Krotkie utrwalenie pomoze utrzymac poziom.`,
-      target: '1 szybka powtorka',
+      title: `${strongestLesson.emoji} Utrwal mocną stronę`,
+      description: `${strongestLesson.title} jest stabilna (${strongestLesson.masteryPercent}%). Krótkie utrwalenie pomoże utrzymać poziom.`,
+      target: '1 szybka powtórka',
       priority: 'low',
       action: {
-        label: 'Powtorz lekcje',
+        label: 'Powtórz lekcję',
         page: 'Lessons',
         query: {
           focus: strongestLesson.componentId,

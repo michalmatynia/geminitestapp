@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   getSystemLogById: getSystemLogByIdMock,
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/features/observability/entry-server', () => ({
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 

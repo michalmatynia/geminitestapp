@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, UseQueryResult } from '@tanstack/react-query';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 

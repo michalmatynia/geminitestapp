@@ -146,7 +146,7 @@ const getPriorityLabel = (priority: KangurAssignmentPriority): string => {
     return 'Priorytet wysoki';
   }
   if (priority === 'medium') {
-    return 'Priorytet sredni';
+    return 'Priorytet średni';
   }
   return 'Priorytet niski';
 };
@@ -319,13 +319,13 @@ function MasteryInsightRow({
             {insight.emoji} {insight.title}
           </Text>
           <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-            Proby: {insight.attempts} · ostatni wynik {insight.lastScorePercent}%
+            Próby: {insight.attempts} · ostatni wynik {insight.lastScorePercent}%
           </Text>
         </View>
         <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
       </View>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        Najlepszy wynik: {insight.bestScorePercent}% · Ostatnia proba:{' '}
+        Najlepszy wynik: {insight.bestScorePercent}% · Ostatnia próba:{' '}
         {formatProfileDate(insight.lastCompletedAt)}
       </Text>
     </View>
@@ -390,7 +390,7 @@ function SessionRow({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill label={`Skutecznosc ${session.accuracyPercent}%`} tone={operationTone} />
+        <Pill label={`Skuteczność ${session.accuracyPercent}%`} tone={operationTone} />
         <Pill
           label={`Czas ${formatProfileDuration(session.timeTakenSeconds)}`}
           tone={{
@@ -434,7 +434,7 @@ function SessionRow({
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Otworz lekcje
+                Otwórz lekcję
               </Text>
             </Pressable>
           </Link>
@@ -582,34 +582,34 @@ export function KangurProfileScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Dane i postep
+              Dane i postęp
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
               Profil ucznia
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {isLoadingAuth && !isAuthenticated
-                ? 'Przywracamy sesje ucznia i zapisane statystyki.'
+                ? 'Przywracamy sesję ucznia i zapisane statystyki.'
                 : `Statystyki ucznia: ${displayName}.`}
             </Text>
 
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Sprawdzamy zapisana sesje ucznia. Po zakonczeniu przywrocimy
-                zsynchronizowane wyniki i lokalny postep.
+                Sprawdzamy zapisaną sesję ucznia. Po zakończeniu przywrócimy
+                zsynchronizowane wyniki i lokalny postęp.
               </Text>
             ) : !isAuthenticated ? (
               supportsLearnerCredentials ? (
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     Tryb `{authMode}` wymaga loginu ucznia. Formularz logowania jest teraz na
-                    ekranie glownym aplikacji.
+                    ekranie głównym aplikacji.
                   </Text>
                   <Link href='/' asChild>
                     <Pressable
@@ -623,7 +623,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                        Otworz ekran logowania
+                        Otwórz ekran logowania
                       </Text>
                     </Pressable>
                   </Link>
@@ -643,7 +643,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Zaloguj sesje demo
+                    Zaloguj sesję demo
                   </Text>
                 </Pressable>
               )
@@ -667,7 +667,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                  Otworz plan dnia
+                  Otwórz plan dnia
                 </Text>
               </Pressable>
             </Link>
@@ -675,13 +675,13 @@ export function KangurProfileScreen(): React.JSX.Element {
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Postep poziomu
+              Postęp poziomu
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
               {snapshot.level.title}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14 }}>
-              Poziom {snapshot.level.level} · {snapshot.totalXp} XP lacznie
+              Poziom {snapshot.level.level} · {snapshot.totalXp} XP łącznie
             </Text>
             <View
               style={{
@@ -702,7 +702,7 @@ export function KangurProfileScreen(): React.JSX.Element {
             <Text style={{ color: '#64748b', fontSize: 13 }}>
               {snapshot.nextLevel
                 ? `Do poziomu ${snapshot.nextLevel.level}: ${xpToNextLevel} XP`
-                : 'Maksymalny poziom osiagniety'}
+                : 'Maksymalny poziom osiągnięty'}
             </Text>
           </Card>
 
@@ -715,24 +715,24 @@ export function KangurProfileScreen(): React.JSX.Element {
             }}
           >
             <Metric
-              label='Srednia skutecznosc'
+              label='Średnia skuteczność'
               value={`${snapshot.averageAccuracy}%`}
               description={`Najlepsza sesja: ${snapshot.bestAccuracy}%`}
             />
             <Metric
               label='Seria dni'
               value={`${snapshot.currentStreakDays}`}
-              description={`Najdluzsza: ${snapshot.longestStreakDays} dni`}
+              description={`Najdłuższa: ${snapshot.longestStreakDays} dni`}
             />
             <Metric
               label='Cel dzienny'
               value={`${snapshot.todayGames}/${snapshot.dailyGoalGames}`}
-              description={`Wypelnienie: ${snapshot.dailyGoalPercent}%`}
+              description={`Wypełnienie: ${snapshot.dailyGoalPercent}%`}
             />
             <Metric
               label='Odznaki'
               value={`${snapshot.unlockedBadges}/${snapshot.totalBadges}`}
-              description='Odblokowane osiagniecia'
+              description='Odblokowane osiągnięcia'
             />
           </View>
 
@@ -742,14 +742,14 @@ export function KangurProfileScreen(): React.JSX.Element {
                 Opanowanie lekcji
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Mobilny profil pokazuje najmocniejsze i najslabsze obszary na podstawie
+                Mobilny profil pokazuje najmocniejsze i najsłabsze obszary na podstawie
                 zapisanych lekcji.
               </Text>
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <Pill
-                label={`Sledzone ${masteryInsights.trackedLessons}`}
+                label={`Śledzone ${masteryInsights.trackedLessons}`}
                 tone={{
                   backgroundColor: '#eef2ff',
                   borderColor: '#c7d2fe',
@@ -765,7 +765,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 }}
               />
               <Pill
-                label={`Do powtorki ${masteryInsights.lessonsNeedingPractice}`}
+                label={`Do powtórki ${masteryInsights.lessonsNeedingPractice}`}
                 tone={{
                   backgroundColor: '#fff7ed',
                   borderColor: '#fdba74',
@@ -776,18 +776,18 @@ export function KangurProfileScreen(): React.JSX.Element {
 
             {masteryInsights.trackedLessons === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Brak zapisanych prob lekcji. Ukoncz dowolna lekcje, aby zobaczyc mocne strony i
-                obszary do powtorki.
+                Brak zapisanych prób lekcji. Ukończ dowolną lekcję, aby zobaczyć mocne strony i
+                obszary do powtórki.
               </Text>
             ) : (
               <View style={{ gap: 14 }}>
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                    Do powtorki
+                    Do powtórki
                   </Text>
                   {masteryInsights.weakest.length === 0 ? (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Wszystkie sledzone lekcje sa na bezpiecznym poziomie.
+                      Wszystkie śledzone lekcje są na bezpiecznym poziomie.
                     </Text>
                   ) : (
                     masteryInsights.weakest.map((insight) => (
@@ -802,7 +802,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                   </Text>
                   {masteryInsights.strongest.length === 0 ? (
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Najpierw ukoncz kilka lekcji, aby zobaczyc najmocniejsze obszary.
+                      Najpierw ukończ kilka lekcji, aby zobaczyć najmocniejsze obszary.
                     </Text>
                   ) : (
                     masteryInsights.strongest.map((insight) => (
@@ -817,16 +817,16 @@ export function KangurProfileScreen(): React.JSX.Element {
           <Card>
             <View style={{ gap: 4 }}>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Plan na dzis
+                Plan na dziś
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Krotka lista kolejnych krokow na podstawie ostatnich wynikow i aktywnosci.
+                Krótka lista kolejnych kroków na podstawie ostatnich wyników i aktywności.
               </Text>
             </View>
 
             {snapshot.recommendations.length === 0 ? (
               <Text style={{ color: '#475569', fontSize: 14 }}>
-                Brak rekomendacji do wyswietlenia.
+                Brak rekomendacji do wyświetlenia.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
@@ -850,7 +850,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                         {recommendation.priority === 'high'
                           ? 'Priorytet wysoki'
                           : recommendation.priority === 'medium'
-                            ? 'Priorytet sredni'
+                            ? 'Priorytet średni'
                             : 'Priorytet niski'}
                       </Text>
                       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
@@ -888,7 +888,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                           }}
                         >
                           <Text style={{ color: '#475569', fontWeight: '700' }}>
-                            {translateKangurMobileActionLabel(recommendation.action.label)} · wkrotce
+                            {translateKangurMobileActionLabel(recommendation.action.label)} · wkrótce
                           </Text>
                         </View>
                       )}
@@ -909,20 +909,20 @@ export function KangurProfileScreen(): React.JSX.Element {
                 Ostatnie sesje
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Widok ostatnich prob i rytmu pracy ucznia. To zastapi bardziej rozbudowana historie
-                po porcie kolejnych ekranow.
+                Widok ostatnich prób i rytmu pracy ucznia. To zastąpi bardziej rozbudowaną historię
+                po porcie kolejnych ekranów.
               </Text>
             </View>
 
             {isLoadingScores ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Sprawdzamy ostatnie podejscia ucznia.
+                Sprawdzamy ostatnie podejścia ucznia.
               </Text>
             ) : scoresError ? (
               <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{scoresError}</Text>
             ) : !hasRecentSessions ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Brak rozegranych sesji. Pierwsze podejscia pojawia sie tutaj automatycznie.
+                Brak rozegranych sesji. Pierwsze podejścia pojawią się tutaj automatycznie.
               </Text>
             ) : (
               <View style={{ gap: 10 }}>
@@ -944,7 +944,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Otworz cala historie
+                      Otwórz całą historię
                     </Text>
                   </Pressable>
                 </Link>
@@ -958,7 +958,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 Odznaki
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Pelna siatka odznak jest juz wspolna dla web i mobile, wiec tutaj pokazujemy stan
+                Pełna siatka odznak jest już wspólna dla web i mobile, więc tutaj pokazujemy stan
                 odblokowania bez dodatkowej logiki platformowej.
               </Text>
             </View>
@@ -995,8 +995,8 @@ export function KangurProfileScreen(): React.JSX.Element {
                 Zadania na teraz
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                To lekka wersja planera zadan. Pelny panel przypisanych zadan zostanie przeniesiony
-                pozniej razem z pelnymi trasami treningu i lekcji.
+                To lekka wersja planera zadań. Pełny panel przypisanych zadań zostanie przeniesiony
+                później razem z pełnymi trasami treningu i lekcji.
               </Text>
             </View>
 
@@ -1021,13 +1021,13 @@ export function KangurProfileScreen(): React.JSX.Element {
             >
               <View style={{ gap: 4, flex: 1 }}>
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                  Historia wynikow
+                  Historia wyników
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                   {isLoadingScores
-                    ? 'Pobieramy zapisane podejscia dla profilu.'
+                    ? 'Pobieramy zapisane podejścia dla profilu.'
                     : scoresError ??
-                      'W tej wersji mobilnej historia wynikow jest tylko dodatkiem do lokalnego postepu.'}
+                      'W tej wersji mobilnej historia wyników jest tylko dodatkiem do lokalnego postępu.'}
                 </Text>
               </View>
               <Pressable
@@ -1042,7 +1042,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odswiez</Text>
+                <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odśwież</Text>
               </Pressable>
             </View>
           </Card>

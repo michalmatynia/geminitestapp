@@ -1,7 +1,8 @@
-import type { SyncHandler } from './types';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-export const syncIntegrations: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncIntegrations: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo.collection('integrations').find({}).toArray();
   const warnings: string[] = [];
   const seenSlugs = new Set<string>();
@@ -54,7 +55,7 @@ export const syncIntegrations: SyncHandler = async ({ mongo, prisma, normalizeId
   };
 };
 
-export const syncIntegrationConnections: SyncHandler = async ({
+export const syncIntegrationConnections: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -166,7 +167,7 @@ export const syncIntegrationConnections: SyncHandler = async ({
   };
 };
 
-export const syncProductListings: SyncHandler = async ({
+export const syncProductListings: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -261,7 +262,7 @@ export const syncProductListings: SyncHandler = async ({
 
 // --- Prisma to Mongo handlers ---
 
-export const syncIntegrationsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncIntegrationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.integration.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -281,7 +282,7 @@ export const syncIntegrationsPrismaToMongo: SyncHandler = async ({ mongo, prisma
   };
 };
 
-export const syncIntegrationConnectionsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncIntegrationConnectionsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.integrationConnection.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -333,7 +334,7 @@ export const syncIntegrationConnectionsPrismaToMongo: SyncHandler = async ({ mon
   };
 };
 
-export const syncProductListingsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncProductListingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.productListing.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,

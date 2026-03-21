@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { render, screen } from '@/__tests__/test-utils';
+import { render, screen } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildKangurEmbeddedBasePath } from '@/features/kangur/config/routing';

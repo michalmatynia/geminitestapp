@@ -1,4 +1,4 @@
-import { screen, fireEvent, waitFor } from '@/__tests__/test-utils';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GenericMapper as GenericItemMapper } from '@/shared/ui/templates/mappers/GenericMapper';

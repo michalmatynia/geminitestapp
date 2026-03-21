@@ -23,7 +23,7 @@ vi.mock('@/shared/lib/api/handle-api-error', () => ({
   createErrorResponse: vi.fn(),
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/features/observability/entry-server', () => ({
   hydrateLogRuntimeContext: vi.fn(),
   hydrateSystemLogRecordRuntimeContext: vi.fn(),
 }));

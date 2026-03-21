@@ -39,6 +39,9 @@
       "@docs/*": [
         "./docs/*"
       ],
+      "@prisma/client": [
+        "./node_modules/.prisma/client/index.d.ts"
+      ],
       "@/__tests__/*": [
         "./__tests__/*"
       ],
@@ -129,7 +132,6 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "src/shared/lib/db/services/sync/**"
+    "**/*.spec.tsx"
   ]
 }

@@ -92,12 +92,8 @@ export const getProductListDisplayName = (
   product: ProductWithImages,
   key: ProductNameKey,
 ): string => {
-  const rawBaseName =
-    getProductNameValue(product, key) ??
-    getProductNameValue(product, 'name_en') ??
-    getProductNameValue(product, 'name_pl') ??
-    getProductNameValue(product, 'name_de') ??
-    'Product';
+  const rawBaseName = getProductNameValue(product, key) ?? '';
+  if (!rawBaseName) return '';
 
   const parsedNameParts = rawBaseName
     .split('|')

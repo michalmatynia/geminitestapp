@@ -9,6 +9,7 @@ import {
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import type {
+  ProductCategory,
   ProductValidationInstanceScope,
   ProductValidationPattern,
 } from '@/shared/contracts/products';
@@ -21,6 +22,7 @@ type UseProductValidatorIssuesOptions = {
   runtimeValues?: Record<string, unknown>;
   patterns: ProductValidationPattern[];
   latestProductValues: Record<string, unknown> | null;
+  categories?: ReadonlyArray<ProductCategory>;
   validationScope: ProductValidationInstanceScope;
   validatorEnabled: boolean;
   isIssueDenied: (fieldName: string, patternId: string) => boolean;
@@ -42,6 +44,7 @@ export const useProductValidatorIssues = ({
   runtimeValues,
   patterns,
   latestProductValues,
+  categories,
   validationScope,
   validatorEnabled,
   isIssueDenied,
@@ -203,9 +206,10 @@ export const useProductValidatorIssues = ({
           patterns,
           latestProductValues,
           validationScope,
+          categories,
         })
         : ({} as Record<string, FieldValidatorIssue[]>),
-    [latestProductValues, patterns, validationScope, validatorEnabled, values]
+    [categories, latestProductValues, patterns, validationScope, validatorEnabled, values]
   );
 
   const fieldIssues = useMemo(

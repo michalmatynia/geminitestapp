@@ -11,6 +11,7 @@ import {
   useProductListRowVisualsContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
+import { resolveProductAiRunFeedbackForList } from '@/features/products/lib/product-ai-run-feedback';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import {
@@ -175,6 +176,7 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
     traderaBadgeIds,
     traderaBadgeStatuses,
     queuedProductIds,
+    productAiRunStatusByProductId,
     categoryNameById,
     thumbnailSource,
     showTriggerRunFeedback,
@@ -227,7 +229,11 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
         const nameValue = getProductListDisplayName(product, nameKey);
         const isSelected = Boolean(rowSelection[product.id]);
         const isImported: boolean = Boolean(product.baseProductId?.trim());
-        const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
+        const productRunFeedback = resolveProductAiRunFeedbackForList({
+          productId: product.id,
+          queuedProductIds,
+          productAiRunStatusByProductId,
+        });
         const skuLabel = product.sku?.trim() || 'No SKU';
         const categoryLabel = resolveProductCategoryLabel(product, categoryNameById, nameKey);
         const thumbnailUrl = resolveThumbnailUrl(
@@ -309,14 +315,21 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
                     </span>
                     <span className='truncate'>Category: {categoryLabel}</span>
                   </div>
-                  {(isImported || isQueued) && (
+                  {(isImported || productRunFeedback) && (
                     <div className='flex flex-wrap items-center gap-2'>
                       {isImported && (
                         <Badge variant='info' icon={<Download className='size-3' />}>
                           Imported
                         </Badge>
                       )}
-                      {isQueued && <Badge variant='processing'>Queued</Badge>}
+                      {productRunFeedback ? (
+                        <Badge
+                          variant={productRunFeedback.variant}
+                          className={productRunFeedback.badgeClassName}
+                        >
+                          {productRunFeedback.label}
+                        </Badge>
+                      ) : null}
                     </div>
                   )}
                 </div>

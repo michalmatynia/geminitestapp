@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { render } from '@/__tests__/test-utils';
+import { render } from '@testing-library/react';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 

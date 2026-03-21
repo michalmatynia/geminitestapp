@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import type {
   MongoSettingDoc,
   MongoUserPreferencesDoc,
@@ -5,10 +6,10 @@ import type {
   MongoFileUploadEventDoc,
   MongoAiConfigurationDoc,
 } from '../database-sync-types';
-import type { SyncHandler } from './types';
+import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-export const syncSettings: SyncHandler = async ({ mongo, prisma, toDate }) => {
+export const syncSettings: DatabaseSyncHandler = async ({ mongo, prisma, toDate }) => {
   const docs = await mongo.collection('settings').find({}).toArray();
   const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
   docs.forEach((doc: MongoSettingDoc) => {
@@ -34,7 +35,7 @@ export const syncSettings: SyncHandler = async ({ mongo, prisma, toDate }) => {
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncUserPreferences: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+export const syncUserPreferences: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const existingUserIds = new Set<string>(
     (await prisma.user.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
   );
@@ -73,7 +74,7 @@ export const syncUserPreferences: SyncHandler = async ({ mongo, prisma, normaliz
   };
 };
 
-export const syncSystemLogs: SyncHandler = async ({
+export const syncSystemLogs: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -108,7 +109,7 @@ export const syncSystemLogs: SyncHandler = async ({
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncFileUploadEvents: SyncHandler = async ({
+export const syncFileUploadEvents: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -158,7 +159,7 @@ export const syncFileUploadEvents: SyncHandler = async ({
   };
 };
 
-export const syncAiConfigurations: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs: MongoAiConfigurationDoc[] = (await mongo
     .collection('ai_configurations')
     .find({})
@@ -191,7 +192,7 @@ export const syncAiConfigurations: SyncHandler = async ({ mongo, prisma, normali
 
 // --- Prisma to Mongo handlers ---
 
-export const syncSettingsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.setting.findMany();
   const docs = rows.map((row) => ({
     _id: row.key,
@@ -210,7 +211,7 @@ export const syncSettingsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) 
   };
 };
 
-export const syncUserPreferencesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.userPreferences.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -235,7 +236,7 @@ export const syncUserPreferencesPrismaToMongo: SyncHandler = async ({ mongo, pri
   };
 };
 
-export const syncSystemLogsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.systemLog.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -261,7 +262,7 @@ export const syncSystemLogsPrismaToMongo: SyncHandler = async ({ mongo, prisma }
   };
 };
 
-export const syncFileUploadEventsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.fileUploadEvent.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -291,7 +292,7 @@ export const syncFileUploadEventsPrismaToMongo: SyncHandler = async ({ mongo, pr
   };
 };
 
-export const syncAiConfigurationsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncAiConfigurationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiConfiguration.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,

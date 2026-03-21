@@ -88,7 +88,7 @@ export const useKangurMobileLeaderboard = (
   return {
     error:
       scoresQuery.error instanceof Error
-        ? 'Nie udalo sie pobrac wynikow.'
+        ? 'Nie udało się pobrać wyników.'
         : null,
     isLoadingAuth,
     isLoading: isRestoringAuth || scoresQuery.isLoading,

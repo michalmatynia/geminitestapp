@@ -18,13 +18,13 @@ export const buildSyncingState = (): PracticeScoreSyncState => ({
 export const buildAwaitingAuthRetryState = (): PracticeScoreSyncState => ({
   status: 'awaiting-auth',
   message:
-    'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji ucznia, aby doslac go do Kangura.',
+    'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji ucznia, aby dosłać go do Kangura.',
 });
 
 export const buildSyncedState = (): PracticeScoreSyncState => ({
   status: 'synced',
   message:
-    'Wynik zapisano w API Kangura. Powinien byc od razu widoczny w profilu, rankingu i ostatnich wynikach.',
+    'Wynik zapisano w API Kangura. Powinien być od razu widoczny w profilu, rankingu i ostatnich wynikach.',
 });
 
 export const buildLocalOnlySyncState = (
@@ -33,14 +33,14 @@ export const buildLocalOnlySyncState = (
   status: 'local-only',
   message:
     reason === 'auth'
-      ? 'Wynik zapisano tylko lokalnie. Zaloguj sesje ucznia, aby wysylac wyniki do Kangura.'
-      : 'Wynik zapisano tylko lokalnie. Sesja serwera nie byla gotowa do synchronizacji, wiec wynik nie trafil jeszcze do Kangura.',
+      ? 'Wynik zapisano tylko lokalnie. Zaloguj sesję ucznia, aby wysyłać wyniki do Kangura.'
+      : 'Wynik zapisano tylko lokalnie. Sesja serwera nie była gotowa do synchronizacji, więc wynik nie trafił jeszcze do Kangura.',
 });
 
 export const buildUnexpectedSyncFailureState = (): PracticeScoreSyncState => ({
   status: 'sync-failed',
   message:
-    'Wynik zapisano lokalnie, ale zapis do API Kangura nie udal sie. Odswiez sesje i sprobuj ponownie.',
+    'Wynik zapisano lokalnie, ale zapis do API Kangura nie udał się. Odśwież sesję i spróbuj ponownie.',
 });
 
 export const resolvePracticeScoreSyncAppearance = (

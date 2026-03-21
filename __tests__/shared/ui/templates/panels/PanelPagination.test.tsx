@@ -1,4 +1,4 @@
-import { render, screen } from '@/__tests__/test-utils';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { PanelPagination } from '@/shared/ui/templates/panels/PanelPagination';

@@ -1,11 +1,12 @@
-import type { SyncHandler } from './types';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+import type { DatabaseSyncHandler } from './types';
 import type {
   MongoChatbotSessionDoc,
   MongoChatbotJobDoc,
 } from '../database-sync-types';
 import type { Prisma, ChatbotJobStatus } from '@prisma/client';
 
-export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+export const syncChatbotSessions: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = await mongo
     .collection<MongoChatbotSessionDoc>('chatbot_sessions')
     .find({})
@@ -43,7 +44,7 @@ export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normaliz
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncChatbotJobs: SyncHandler = async ({
+export const syncChatbotJobs: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   normalizeId,
@@ -77,7 +78,7 @@ export const syncChatbotJobs: SyncHandler = async ({
 
 // --- Prisma to Mongo handlers ---
 
-export const syncChatbotSessionsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncChatbotSessionsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.chatbotSession.findMany({
     include: { messages: true },
   });
@@ -105,7 +106,7 @@ export const syncChatbotSessionsPrismaToMongo: SyncHandler = async ({ mongo, pri
   };
 };
 
-export const syncChatbotJobsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncChatbotJobsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.chatbotJob.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,

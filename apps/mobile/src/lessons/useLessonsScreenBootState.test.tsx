@@ -10,13 +10,11 @@ const { runAfterInteractionsMock, cancelInteractionTaskMock } = vi.hoisted(() =>
   cancelInteractionTaskMock: vi.fn(),
 }));
 
-vi.mock('react-native', async () => {
-  return {
-    InteractionManager: {
-      runAfterInteractions: runAfterInteractionsMock,
-    },
-  };
-});
+vi.mock('react-native', () => ({
+  InteractionManager: {
+    runAfterInteractions: runAfterInteractionsMock,
+  },
+}));
 
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
 

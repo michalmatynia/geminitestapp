@@ -103,12 +103,12 @@ export const buildKangurPracticeSyncProofSnapshot = ({
             detail: `${operationLabel} ${matchedScore.score}/${matchedScore.total_questions} · ${formatKangurMobileScoreDateTime(
               matchedScore.created_date,
             )}`,
-            label: 'Historia wynikow',
+            label: 'Historia wyników',
             status: 'ready',
           }
         : {
-            detail: 'Swiezy zsynchronizowany wynik nie jest jeszcze widoczny w historii ucznia.',
-            label: 'Historia wynikow',
+            detail: 'Świeży zsynchronizowany wynik nie jest jeszcze widoczny w historii ucznia.',
+            label: 'Historia wyników',
             status: 'missing',
           },
       hasOperationProgress
@@ -116,22 +116,22 @@ export const buildKangurPracticeSyncProofSnapshot = ({
             detail: lessonMastery
               ? `Opanowanie ${lessonMastery.masteryPercent}% · gier ${progress.gamesPlayed}`
               : `Tryb zapisany lokalnie · gier ${progress.gamesPlayed}`,
-            label: 'Postep profilu',
+            label: 'Postęp profilu',
             status: 'ready',
           }
         : {
-            detail: 'Lokalny postep nie pokazuje jeszcze tego trybu w opanowaniu lekcji.',
-            label: 'Postep profilu',
+            detail: 'Lokalny postęp nie pokazuje jeszcze tego trybu w opanowaniu lekcji.',
+            label: 'Postęp profilu',
             status: 'missing',
           },
       isVisibleInDailyPlan
         ? {
-            detail: 'Swiezy wynik jest widoczny w sekcji ostatnich wynikow uzywanej przez /plan.',
+            detail: 'Świeży wynik jest widoczny w sekcji ostatnich wyników używanej przez /plan.',
             label: 'Plan dnia',
             status: 'ready',
           }
         : {
-            detail: 'Swiezy wynik nie trafil jeszcze do sekcji ostatnich wynikow dla /plan.',
+            detail: 'Świeży wynik nie trafił jeszcze do sekcji ostatnich wyników dla /plan.',
             label: 'Plan dnia',
             status: 'missing',
           },
@@ -144,7 +144,7 @@ export const buildKangurPracticeSyncProofSnapshot = ({
             status: 'ready',
           }
         : {
-            detail: 'Biezacy zsynchronizowany wynik nie jest jeszcze widoczny w rankingu.',
+            detail: 'Bieżący zsynchronizowany wynik nie jest jeszcze widoczny w rankingu.',
             label: 'Ranking',
             status: 'missing',
           },

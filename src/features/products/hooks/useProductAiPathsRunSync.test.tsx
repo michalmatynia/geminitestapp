@@ -172,6 +172,51 @@ describe('useProductAiPathsRunSync', () => {
     expect(invalidateProductsCountsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
   });
 
+  it('exposes the active tracked status for the product list and clears it when the run finishes', async () => {
+    const queryClient = createQueryClient();
+    const view = renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-status', entityType: 'product', entityId: 'product-1' },
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-status',
+      status: 'queued',
+      label: 'Queued',
+    });
+
+    act(() => {
+      emitTrackedRunSnapshot('run-status', {
+        status: 'running',
+        updatedAt: '2026-03-09T12:00:03.000Z',
+      });
+    });
+
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-status',
+      status: 'running',
+      label: 'Running',
+    });
+
+    act(() => {
+      emitTrackedRunSnapshot('run-status', {
+        status: 'completed',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+        trackingState: 'stopped',
+      });
+    });
+
+    expect(view.result.current.has('product-1')).toBe(false);
+  });
+
   it('replays the most recent product enqueue on mount so queued badges survive remounts', async () => {
     getRecentAiPathRunEnqueueMock.mockReturnValue({
       type: 'run-enqueued',
@@ -206,7 +251,7 @@ describe('useProductAiPathsRunSync', () => {
 
   it('removes only the completed run source while another run for the same product remains queued', async () => {
     const queryClient = createQueryClient();
-    renderHook(() => useProductAiPathsRunSync(), {
+    const view = renderHook(() => useProductAiPathsRunSync(), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -234,6 +279,24 @@ describe('useProductAiPathsRunSync', () => {
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
     expect(removeQueuedProductSourceMock).not.toHaveBeenCalledWith('product-1', 'ai-run:run-2');
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-2',
+      status: 'queued',
+      label: 'Queued',
+    });
+
+    act(() => {
+      emitTrackedRunSnapshot('run-2', {
+        status: 'running',
+        updatedAt: '2026-03-09T12:00:05.500Z',
+      });
+    });
+
+    expect(view.result.current.get('product-1')).toMatchObject({
+      runId: 'run-2',
+      status: 'running',
+      label: 'Running',
+    });
 
     act(() => {
       emitTrackedRunSnapshot('run-2', {

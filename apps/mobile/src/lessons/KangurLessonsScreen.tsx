@@ -65,7 +65,7 @@ function LessonsLoadingDetailCard(): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        Ladowanie lekcji
+        Ładowanie lekcji
       </Text>
       <SkeletonBlock height={28} width='68%' radius={16} />
       <SkeletonBlock height={18} width='100%' />
@@ -95,7 +95,7 @@ function LessonsLoadingDetailCard(): React.JSX.Element {
         </View>
       </View>
       <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
-        Przygotowujemy wybrana lekcje i sekcje do czytania.
+        Przygotowujemy wybraną lekcję i sekcje do czytania.
       </Text>
     </Card>
   );
@@ -108,7 +108,7 @@ function LessonsLoadingCatalogCard(): React.JSX.Element {
         Katalog lekcji
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        Wczytujemy liste tematow i stan opanowania.
+        Wczytujemy listę tematów i stan opanowania.
       </Text>
 
       <View style={{ gap: 12 }}>
@@ -279,20 +279,20 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Nauka i powtorki
+              Nauka i powtórki
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
               Lekcje
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
-              To pierwszy mobilny katalog lekcji. Rekomendacje i zadania z profilu moga juz
-              otwierac konkretne tematy przez parametr focus.
+              To pierwszy mobilny katalog lekcji. Rekomendacje i zadania z profilu mogą już
+              otwierać konkretne tematy przez parametr focus.
             </Text>
           </Card>
 
@@ -492,7 +492,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                               fontWeight: '700',
                             }}
                           >
-                            Nastepna
+                            Następna
                           </Text>
                         </Pressable>
                       </View>
@@ -519,8 +519,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 </View>
               ) : (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  Wlasciwa tresc tej lekcji nie jest jeszcze przeniesiona do mobilnej aplikacji.
-                  Ten ekran zamyka za to luke nawigacyjna i pokazuje prawidlowy stan opanowania.
+                  Właściwa treść tej lekcji nie jest jeszcze przeniesiona do mobilnej aplikacji.
+                  Ten ekran zamyka za to lukę nawigacyjną i pokazuje prawidłowy stan opanowania.
                 </Text>
               )}
               <Pressable
@@ -537,7 +537,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                  Wroc do listy lekcji
+                  Wróć do listy lekcji
                 </Text>
               </Pressable>
               {selectedPracticeOperation ? (
@@ -568,7 +568,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 Nie znaleziono lekcji dla "{focusToken}"
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Pokazujemy pelny katalog, aby mozna bylo przejsc dalej recznie.
+                Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.
               </Text>
             </Card>
           ) : null}
@@ -579,7 +579,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 Katalog lekcji
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Zacznij od nowych tematow albo wroc do obszarow wymagajacych powtorki.
+                Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.
               </Text>
 
               <View style={{ gap: 12 }}>

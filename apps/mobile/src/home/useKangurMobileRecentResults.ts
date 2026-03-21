@@ -30,7 +30,7 @@ export const useKangurMobileRecentResults = (
   return {
     error:
       resultsQuery.error instanceof Error
-        ? 'Nie udalo sie pobrac ostatnich wynikow.'
+        ? 'Nie udało się pobrać ostatnich wyników.'
         : null,
     isEnabled: resultsQuery.isEnabled,
     isLoading: resultsQuery.isLoading,

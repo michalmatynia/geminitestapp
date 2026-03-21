@@ -5,6 +5,7 @@ import type {
   ProductWithImages,
 } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';
@@ -93,6 +94,7 @@ export interface ProductListContextType {
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
+  productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;
@@ -261,6 +263,7 @@ export interface ProductListRowVisualsContextType {
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
+  productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;

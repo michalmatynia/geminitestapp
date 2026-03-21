@@ -1,4 +1,4 @@
-import { render } from '@/__tests__/test-utils';
+import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
 import { SignalDots } from '@/features/ai/ai-paths/components/SignalDots';

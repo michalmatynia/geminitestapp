@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@/__tests__/test-utils';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

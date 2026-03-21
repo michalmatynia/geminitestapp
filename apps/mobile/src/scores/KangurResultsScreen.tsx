@@ -243,7 +243,7 @@ function OperationInsightCard({
               fontWeight: '700',
             }}
           >
-            Srednio {operation.averageAccuracyPercent}%
+            Średnio {operation.averageAccuracyPercent}%
           </Text>
         </View>
         <View
@@ -295,7 +295,7 @@ function OperationInsightCard({
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Otworz lekcje
+                Otwórz lekcję
               </Text>
             </Pressable>
           </Link>
@@ -367,19 +367,19 @@ export function KangurResultsScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Historia wynikow
+              Historia wyników
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
               Ostatnie sesje mobilne
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              Jeden widok dla ostatnich wynikow, skutecznosci oraz podzialu na sesje
+              Jeden widok dla ostatnich wyników, skuteczności oraz podziału na sesje
               arytmetyczne, czasowe i logiczne.
             </Text>
             <Link href={createKangurPlanHref()} asChild>
@@ -396,7 +396,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                  Otworz plan dnia
+                  Otwórz plan dnia
                 </Text>
               </Pressable>
             </Link>
@@ -405,13 +405,13 @@ export function KangurResultsScreen(): React.JSX.Element {
           {results.isLoading ? (
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Przywracamy sesje ucznia i historie wynikow.
+                Przywracamy sesję ucznia i historię wyników.
               </Text>
             </Card>
           ) : !results.isEnabled ? (
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Zaloguj ucznia, aby zobaczyc zsynchronizowana historie wynikow.
+                Zaloguj ucznia, aby zobaczyć zsynchronizowaną historię wyników.
               </Text>
               <Link href={RESULTS_HOME_ROUTE} asChild>
                 <Pressable
@@ -425,7 +425,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Otworz ekran logowania
+                    Otwórz ekran logowania
                   </Text>
                 </Pressable>
               </Link>
@@ -443,17 +443,17 @@ export function KangurResultsScreen(): React.JSX.Element {
                 <Metric
                   label='Sesje'
                   value={`${results.summary.totalSessions}`}
-                  description='Widok obejmuje 40 ostatnich podejsc.'
+                  description='Widok obejmuje 40 ostatnich podejść.'
                 />
                 <Metric
-                  label='Srednia'
+                  label='Średnia'
                   value={`${results.summary.averageAccuracyPercent}%`}
-                  description={`Najlepsza skutecznosc: ${results.summary.bestAccuracyPercent}%`}
+                  description={`Najlepsza skuteczność: ${results.summary.bestAccuracyPercent}%`}
                 />
                 <Metric
                   label='Arytmetyka'
                   value={`${results.summary.arithmeticSessions}`}
-                  description='Dodawanie, odejmowanie, mnozenie, dzielenie i podobne tryby.'
+                  description='Dodawanie, odejmowanie, mnożenie, dzielenie i podobne tryby.'
                 />
                 <Metric
                   label='Czas'
@@ -463,7 +463,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                 <Metric
                   label='Logika'
                   value={`${results.summary.logicSessions}`}
-                  description='Wszystkie dostepne sesje logiczne.'
+                  description='Wszystkie dostępne sesje logiczne.'
                 />
               </View>
 
@@ -474,7 +474,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                       Wnioski po trybach
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Szybki podglad najmocniejszego i najslabszego trybu w aktualnym
+                      Szybki podgląd najmocniejszego i najsłabszego trybu w aktualnym
                       zakresie filtrowania.
                     </Text>
                   </View>
@@ -489,7 +489,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                   >
                     {strongestOperation ? (
                       <OperationInsightCard
-                        description={`Najwyzsza srednia skutecznosc. Najlepsza proba ${strongestOperation.bestAccuracyPercent}%.`}
+                        description={`Najwyższa średnia skuteczność. Najlepsza próba ${strongestOperation.bestAccuracyPercent}%.`}
                         lessonHref={(() => {
                           const focus = resolveKangurLessonFocusForPracticeOperation(
                             strongestOperation.operation,
@@ -503,7 +503,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                     ) : null}
                     {weakestOperation ? (
                       <OperationInsightCard
-                        description={`Najlepszy kandydat do kolejnej powtorki. Najlepsza proba ${weakestOperation.bestAccuracyPercent}%.`}
+                        description={`Najlepszy kandydat do kolejnej powtórki. Najlepsza próba ${weakestOperation.bestAccuracyPercent}%.`}
                         lessonHref={(() => {
                           const focus = resolveKangurLessonFocusForPracticeOperation(
                             weakestOperation.operation,
@@ -511,8 +511,8 @@ export function KangurResultsScreen(): React.JSX.Element {
                           return focus ? createKangurLessonHref(focus) : undefined;
                         })()}
                         operation={weakestOperation}
-                        practiceLabel='Trenuj najslabszy tryb'
-                        title='Do powtorki'
+                        practiceLabel='Trenuj najsłabszy tryb'
+                        title='Do powtórki'
                       />
                     ) : null}
                   </View>
@@ -530,11 +530,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                 >
                   <View style={{ flex: 1, gap: 4 }}>
                     <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                      Pelna lista
+                      Pełna lista
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       Historia korzysta z tego samego zapytania ograniczonego do ucznia co profil
-                      i ekran glowny.
+                      i ekran główny.
                     </Text>
                   </View>
                   <Pressable
@@ -550,7 +550,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odswiez</Text>
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odśwież</Text>
                   </Pressable>
                 </View>
 
@@ -609,7 +609,7 @@ export function KangurResultsScreen(): React.JSX.Element {
 
                 {results.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Pobieramy historie wynikow.
+                    Pobieramy historię wyników.
                   </Text>
                 ) : results.error ? (
                   <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
@@ -617,8 +617,8 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                 ) : results.scores.length === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Brak zsynchronizowanych wynikow. Ukoncz jedna sesje treningowa, aby
-                    wypelnic ten widok.
+                    Brak zsynchronizowanych wyników. Ukończ jedną sesję treningową, aby
+                    wypełnić ten widok.
                   </Text>
                 ) : (
                   <View style={{ gap: 10 }}>
@@ -684,7 +684,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   fontWeight: '700',
                                 }}
                               >
-                                Skutecznosc {accuracyPercent}%
+                                Skuteczność {accuracyPercent}%
                               </Text>
                             </View>
                           </View>
@@ -758,7 +758,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   <Text
                                     style={{ color: '#0f172a', fontWeight: '700' }}
                                   >
-                                    Otworz lekcje
+                                    Otwórz lekcję
                                   </Text>
                                 </Pressable>
                               </Link>

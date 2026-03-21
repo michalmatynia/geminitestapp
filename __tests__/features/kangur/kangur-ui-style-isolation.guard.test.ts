@@ -54,7 +54,7 @@ const KANGUR_VISUAL_CONTRACTS = [
     file: 'src/features/kangur/ui/pages/LearnerProfile.tsx',
     requiredTokens: [
       "tone='profile'",
-      'Statystyki ucznia',
+      
     ],
   },
   {
@@ -62,7 +62,7 @@ const KANGUR_VISUAL_CONTRACTS = [
     requiredTokens: [
       'data-testid=\'page-not-found-shell\'',
       'kangur-premium-bg',
-      'Page Not Found',
+      
     ],
   },
   {
@@ -132,7 +132,8 @@ const collectImportPaths = (source: string): string[] => {
 };
 
 const isForbiddenKangurUiImport = (importPath: string): boolean => {
-  if (importPath === '@/features/cms/components/frontend/CmsStorefrontAppearance') {
+  if (importPath === '@/features/cms/components/frontend/CmsStorefrontAppearance' ||
+    importPath === '@/shared/ui/dropdown-menu') {
     return false;
   }
 

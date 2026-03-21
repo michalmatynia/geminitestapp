@@ -55,6 +55,7 @@ vi.mock('@/features/kangur/ui/KangurPublicAppEntry', () => ({
 }));
 
 vi.mock('@/features/kangur/server/storefront-appearance', () => ({
+  getKangurStorefrontInitialState: vi.fn().mockResolvedValue({}),
   getKangurStorefrontDefaultMode: getKangurStorefrontDefaultModeMock,
 }));
 
@@ -143,7 +144,7 @@ describe('front page app selection', () => {
 
     expect(result).toMatchObject({
       type: kangurPublicAppMock,
-      props: { basePath: '/', initialMode: 'default' },
+      props: { basePath: '/', initialMode: undefined },
     });
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();

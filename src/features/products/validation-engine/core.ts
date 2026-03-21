@@ -3,6 +3,7 @@ import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
   ProductValidationTarget,
+  ProductCategory,
   FieldValidatorIssue,
 } from '@/shared/contracts/products';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
@@ -26,7 +27,7 @@ import {
   getProductValidationSemanticState,
 } from '@/shared/lib/products/utils/validator-semantic-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import { resolveValidatorCategoryReplacementId } from '@/features/products/lib/resolveValidatorCategoryReplacement';
 
 export type { FieldValidatorIssue };
 
@@ -478,6 +479,7 @@ function applyPatternPlansToField({
   latestProductValues,
   validationScope,
   fieldPlans,
+  categories,
 }: {
   fieldName: string;
   normalizedRawValue: string;
@@ -485,6 +487,7 @@ function applyPatternPlansToField({
   latestProductValues: Record<string, unknown> | null;
   validationScope: ProductValidationInstanceScope;
   fieldPlans: StaticPatternPlan[];
+  categories?: ReadonlyArray<ProductCategory>;
 }): FieldValidatorIssue[] {
   const localIssues: FieldValidatorIssue[] = [];
   let workingValue = normalizedRawValue;
@@ -560,6 +563,13 @@ function applyPatternPlansToField({
           latestProductValues,
         })
         : null;
+      const shouldSuppressUnresolvableCategoryProposal =
+        fieldName === 'categoryId' &&
+        Boolean(categories?.length) &&
+        Boolean(resolvedReplacement?.value) &&
+        resolveValidatorCategoryReplacementId(resolvedReplacement?.value ?? null, [
+          ...(categories ?? []),
+        ]) === null;
       const effectiveReplacement = resolvedReplacement;
       const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
       const isSemanticNoopReplacement =
@@ -588,7 +598,11 @@ function applyPatternPlansToField({
         normalizeProductValidationSkipNoopReplacementProposal(
           pattern.skipNoopReplacementProposal
         ) && isNoopReplacement;
-      if (!inSequenceGroup && !shouldSuppressNoopReplacementProposal) {
+      if (
+        !inSequenceGroup &&
+        !shouldSuppressNoopReplacementProposal &&
+        !shouldSuppressUnresolvableCategoryProposal
+      ) {
         localIssues.push({
           patternId: pattern.id,
           message: pattern.message,
@@ -609,6 +623,7 @@ function applyPatternPlansToField({
         });
       }
 
+      if (shouldSuppressUnresolvableCategoryProposal) break;
       if (!hasEffectiveReplacement) break;
       if (isNoopReplacement) break;
       replaced = true;
@@ -676,11 +691,13 @@ export const buildFieldIssues = ({
   patterns,
   latestProductValues,
   validationScope,
+  categories,
 }: {
   values: Record<string, unknown>;
   patterns: ProductValidationPattern[];
   latestProductValues: Record<string, unknown> | null;
   validationScope: ProductValidationInstanceScope;
+  categories?: ReadonlyArray<ProductCategory>;
 }): Record<string, FieldValidatorIssue[]> => {
   const issues: Record<string, FieldValidatorIssue[]> = {};
   const entries = Object.entries(values);
@@ -724,6 +741,7 @@ export const buildFieldIssues = ({
       latestProductValues,
       validationScope,
       fieldPlans,
+      categories,
     });
     if (fieldIssues.length > 0) issues[fieldName] = fieldIssues;
   }

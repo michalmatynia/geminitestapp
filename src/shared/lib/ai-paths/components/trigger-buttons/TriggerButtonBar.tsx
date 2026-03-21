@@ -7,7 +7,6 @@ import type {
   AiTriggerButtonLocation,
   AiTriggerButtonRecord,
 } from '@/shared/contracts/ai-trigger-buttons';
-import type { StatusVariant } from '@/shared/contracts/ui';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   ActionMenu,
@@ -26,6 +25,7 @@ import {
 import { cn } from '@/shared/utils';
 
 import { type TriggerButtonLastRun, useTriggerButtons } from '../../hooks/useTriggerButtons';
+import { resolveTriggerButtonRunFeedbackPresentation } from '../../trigger-button-run-feedback';
 
 type TriggerButtonBarProps = {
   location: AiTriggerButtonLocation;
@@ -69,54 +69,6 @@ const COMPACT_TRIGGER_BUTTON_INLINE_LIMITS: Partial<Record<AiTriggerButtonLocati
 const truncateMiddle = (value: string, start = 8, end = 6): string => {
   if (value.length <= start + end + 1) return value;
   return `${value.slice(0, start)}...${value.slice(-end)}`;
-};
-
-const resolveRunFeedbackPresentation = (
-  status: TriggerButtonLastRun['status']
-): {
-  label: string;
-  variant: StatusVariant;
-  badgeClassName?: string;
-} => {
-  switch (status) {
-    case 'waiting':
-      return {
-        label: 'Waiting',
-        variant: 'neutral',
-        badgeClassName:
-          'border-slate-500/40 bg-slate-500/20 text-slate-200 hover:bg-slate-500/25',
-      };
-    case 'queued':
-      return {
-        label: 'Queued',
-        variant: 'pending',
-        badgeClassName:
-          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
-      };
-    case 'running':
-      return {
-        label: 'Running',
-        variant: 'processing',
-        badgeClassName:
-          'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
-      };
-    case 'blocked_on_lease':
-      return { label: 'Awaiting resource', variant: 'warning' };
-    case 'handoff_ready':
-      return { label: 'Ready for review', variant: 'info' };
-    case 'paused':
-      return { label: 'Paused', variant: 'warning' };
-    case 'completed':
-      return { label: 'Completed', variant: 'success' };
-    case 'failed':
-      return { label: 'Failed', variant: 'error' };
-    case 'canceled':
-      return { label: 'Canceled', variant: 'warning' };
-    case 'dead_lettered':
-      return { label: 'Failed (max retries)', variant: 'error' };
-    default:
-      return { label: status, variant: 'neutral' };
-  }
 };
 
 const resolveCompactInlineLimit = (location: AiTriggerButtonLocation): number | null =>
@@ -204,7 +156,7 @@ function TriggerRunFeedback(props: {
   run: TriggerButtonLastRun;
 }): React.JSX.Element {
   const { location, run } = props;
-  const presentation = resolveRunFeedbackPresentation(run.status);
+  const presentation = resolveTriggerButtonRunFeedbackPresentation(run.status);
   const queueHref = `/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(run.runId)}&runId=${encodeURIComponent(run.runId)}&status=all`;
   const messageClassName =
     run.status === 'failed' || run.status === 'dead_lettered'
@@ -495,7 +447,7 @@ export function TriggerButtonBar({
           </span>
         ) : lastRun ? (
           <span className='shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground'>
-            {resolveRunFeedbackPresentation(lastRun.status).label}
+            {resolveTriggerButtonRunFeedbackPresentation(lastRun.status).label}
           </span>
         ) : null}
       </DropdownMenuItem>

@@ -228,7 +228,7 @@ test.describe('Products Management', () => {
     await expect(page.getByRole('button', { name: 'Brelok | 13 cm | Faux Leather' })).toBeVisible();
   });
 
-  test('should fall back to English product and parameter values when the Polish locale is selected', async ({
+  test('should not render the English title when the Polish locale is selected but the Polish title is missing', async ({
     page,
   }) => {
     await page.route('**/api/user/preferences', async (route) => {
@@ -315,9 +315,11 @@ test.describe('Products Management', () => {
 
     await page.goto('/admin/products', { waitUntil: 'domcontentloaded' });
 
-    await expect(
-      page.getByRole('button', { name: 'Keychain | 13 cm | Faux Leather' })
-    ).toBeVisible();
+    const productButton = page.getByRole('button', { name: 'Open product' });
+
+    await expect(productButton).toBeVisible();
+    await expect(productButton).toHaveText('—');
+    await expect(page.getByText('Keychain | 13 cm | Faux Leather')).not.toBeVisible();
   });
 
   test('should preserve the parameter summary after a full products page reload', async ({ page }) => {

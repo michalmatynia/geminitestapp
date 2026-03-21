@@ -83,7 +83,7 @@ export const useKangurPracticeSyncProof = ({
     error:
       leaderboard.error ??
       (scoresQuery.error instanceof Error
-        ? 'Nie udalo sie odswiezyc podgladu synchronizacji.'
+        ? 'Nie udało się odświeżyć podglądu synchronizacji.'
         : null),
     isEnabled: enabled,
     isLoading: enabled && (scoresQuery.isLoading || leaderboard.isLoading),

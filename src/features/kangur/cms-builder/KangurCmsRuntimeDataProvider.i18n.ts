@@ -96,7 +96,7 @@ export const resolveKangurCmsResultTitle = (
   translateKangurCmsRuntimeWithFallback(
     translate,
     'result.title',
-    'Swietna robota, {playerName}!',
+    'Świetna robota, {playerName}!',
     {
       playerName: resolveKangurCmsPlayerName(playerName, translate),
     }

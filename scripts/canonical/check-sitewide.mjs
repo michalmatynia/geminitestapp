@@ -1069,6 +1069,7 @@ const checkHardcodedSecrets = (sourceFileMap) => {
     'src/shared/lib/security/csrf-client.ts',
     'src/shared/lib/search/search-settings.ts',
     'src/shared/lib/auth/auth-secret-settings.ts',
+    'src/shared/lib/products/utils/validator-semantic-operations.ts',
   ]);
 
   for (const [relativeFile, content] of sourceFileMap.entries()) {

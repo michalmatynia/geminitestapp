@@ -1,3 +1,12 @@
+---
+owner: 'Kangur Team'
+last_reviewed: '2026-03-21'
+status: 'active'
+doc_type: 'guide'
+scope: 'feature:kangur'
+canonical: true
+---
+
 # Kangur React Native Monorepo Scaffold
 
 ## Current scaffold

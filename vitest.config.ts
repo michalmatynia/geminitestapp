@@ -14,13 +14,18 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
       '@/__tests__': path.resolve(__dirname, './__tests__'),
+      '@': path.resolve(__dirname, './src'),
       '@docs': path.resolve(__dirname, './docs'),
       '@kangur/contracts': path.resolve(__dirname, './packages/kangur-contracts/src/index.ts'),
       '@kangur/core': path.resolve(__dirname, './packages/kangur-core/src/index.ts'),
       '@kangur/api-client': path.resolve(__dirname, './packages/kangur-api-client/src/index.ts'),
       '@kangur/platform': path.resolve(__dirname, './packages/kangur-platform/src/index.ts'),
+      'react-native': path.resolve(__dirname, './apps/mobile/test/react-native.ts'),
+      'react-native-safe-area-context': path.resolve(
+        __dirname,
+        './apps/mobile/test/react-native-safe-area-context.ts',
+      ),
       'server-only': path.resolve(__dirname, './__tests__/mocks/server-only.js'),
       'next/server': path.resolve(__dirname, './node_modules/next/dist/server/web/exports/index.js'),
       'next/navigation': path.resolve(__dirname, './node_modules/next/dist/client/components/navigation.js'),

@@ -19,7 +19,7 @@ const DEMO_TIMESTAMP = '2026-03-20T00:00:00.000Z';
 const DEMO_LEARNER = {
   id: 'mobile-demo-learner',
   ownerUserId: 'mobile-demo-parent',
-  displayName: 'Uczen demo mobile',
+  displayName: 'Uczeń demo mobile',
   loginName: 'mobile-demo',
   status: 'active' as const,
   legacyUserKey: null,

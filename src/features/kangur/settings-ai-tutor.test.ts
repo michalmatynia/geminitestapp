@@ -15,6 +15,9 @@ describe('kangur ai tutor settings', () => {
         'learner-1': {
           enabled: true,
           agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
           playwrightPersonaId: '',
         },
       })
@@ -23,6 +26,9 @@ describe('kangur ai tutor settings', () => {
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1')).toEqual({
       enabled: true,
       agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
       motionPresetId: null,
       guestIntroMode: 'first_visit',
       homeOnboardingMode: 'first_visit',
@@ -46,6 +52,9 @@ describe('kangur ai tutor settings', () => {
         'learner-1': {
           enabled: true,
           agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
           motionPresetId: 'motion-2',
         },
         'learner-2': {
@@ -148,6 +157,9 @@ describe('kangur ai tutor settings', () => {
     const appSettings = resolveKangurAiTutorAppSettings(
       JSON.stringify({
         agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         motionPresetId: 'motion-2',
         dailyMessageLimit: 12,
         guestIntroMode: 'every_visit',
@@ -158,6 +170,9 @@ describe('kangur ai tutor settings', () => {
 
     expect(appSettings).toEqual({
       agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
       motionPresetId: 'motion-2',
       dailyMessageLimit: 12,
       guestIntroMode: 'every_visit',
@@ -165,6 +180,9 @@ describe('kangur ai tutor settings', () => {
     });
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1', appSettings)).toMatchObject({
       agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
       motionPresetId: 'motion-2',
       dailyMessageLimit: 12,
       guestIntroMode: 'every_visit',
@@ -179,6 +197,9 @@ describe('kangur ai tutor settings', () => {
           enabled: true,
           teachingAgentId: 'legacy-teacher',
           agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         },
       })
     );
@@ -186,6 +207,9 @@ describe('kangur ai tutor settings', () => {
       JSON.stringify({
         teachingAgentId: 'legacy-teacher',
         agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         dailyMessageLimit: 9,
       }),
       store
@@ -193,6 +217,9 @@ describe('kangur ai tutor settings', () => {
 
     expect(appSettings).toEqual({
       agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
       motionPresetId: null,
       dailyMessageLimit: 9,
       guestIntroMode: 'first_visit',
@@ -201,6 +228,9 @@ describe('kangur ai tutor settings', () => {
     expect(getKangurAiTutorSettingsForLearner(store, 'learner-1', appSettings)).toEqual(
       expect.objectContaining({
         agentPersonaId: 'persona-1',
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         dailyMessageLimit: 9,
         guestIntroMode: 'first_visit',
         homeOnboardingMode: 'first_visit',
@@ -218,6 +248,9 @@ describe('kangur ai tutor settings', () => {
 
     expect(appSettings).toEqual({
       agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
       motionPresetId: null,
       dailyMessageLimit: null,
       guestIntroMode: 'every_visit',
@@ -235,6 +268,9 @@ describe('kangur ai tutor settings', () => {
 
     expect(appSettings).toEqual({
       agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
       motionPresetId: null,
       dailyMessageLimit: null,
       guestIntroMode: 'first_visit',
@@ -247,6 +283,9 @@ describe('kangur ai tutor settings', () => {
       {
         enabled: true,
         agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
         homeOnboardingMode: 'first_visit',
@@ -281,6 +320,9 @@ describe('kangur ai tutor settings', () => {
       {
         enabled: true,
         agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
         homeOnboardingMode: 'first_visit',
@@ -313,6 +355,9 @@ describe('kangur ai tutor settings', () => {
       {
         enabled: true,
         agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
         homeOnboardingMode: 'first_visit',
@@ -347,6 +392,9 @@ describe('kangur ai tutor settings', () => {
       {
         enabled: true,
         agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
         homeOnboardingMode: 'first_visit',
@@ -377,6 +425,9 @@ describe('kangur ai tutor settings', () => {
       {
         enabled: true,
         agentPersonaId: null,
+      contextRegistryDepth: 1,
+      contextRegistryMaxNodes: 24,
+      knowledgeGraphEnabled: true,
         motionPresetId: null,
         guestIntroMode: 'first_visit',
         homeOnboardingMode: 'first_visit',

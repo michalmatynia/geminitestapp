@@ -141,7 +141,7 @@ function FocusCard({
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{description}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Pill
-          label={`Srednio ${operation.averageAccuracyPercent}%`}
+          label={`Średnio ${operation.averageAccuracyPercent}%`}
           tone={{
             backgroundColor: accentColor === '#b91c1c' ? '#fef2f2' : '#ecfdf5',
             borderColor: accentColor === '#b91c1c' ? '#fecaca' : '#a7f3d0',
@@ -160,7 +160,7 @@ function FocusCard({
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton href={practiceHref} label='Trenuj teraz' tone='primary' />
-        {lessonHref ? <LinkButton href={lessonHref} label='Otworz lekcje' /> : null}
+        {lessonHref ? <LinkButton href={lessonHref} label='Otwórz lekcję' /> : null}
         <LinkButton href={historyHref} label='Historia trybu' />
       </View>
     </View>
@@ -201,7 +201,7 @@ const getPriorityLabel = (priority: KangurAssignmentPlan['priority']): string =>
     return 'Priorytet wysoki';
   }
   if (priority === 'medium') {
-    return 'Priorytet sredni';
+    return 'Priorytet średni';
   }
 
   return 'Priorytet niski';
@@ -314,7 +314,7 @@ function RecentResultRow({
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton href={practiceHref} label='Trenuj ponownie' tone='primary' />
-        {lessonHref ? <LinkButton href={lessonHref} label='Otworz lekcje' /> : null}
+        {lessonHref ? <LinkButton href={lessonHref} label='Otwórz lekcję' /> : null}
         <LinkButton href={historyHref} label='Historia trybu' />
       </View>
     </View>
@@ -361,7 +361,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wroc</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
             </Pressable>
           </Link>
 
@@ -370,12 +370,12 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               Plan dnia
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
-              Jedno miejsce na dzis
+              Jedno miejsce na dziś
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {isLoadingAuth && !isAuthenticated
-                ? 'Przywracamy sesje ucznia oraz ostatni plan oparty na wynikach i postepie.'
-                : `Skupiony plan nauki dla ${displayName}, zlozony z treningu, lekcji i najwazniejszych wynikow.`}
+                ? 'Przywracamy sesję ucznia oraz ostatni plan oparty na wynikach i postępie.'
+                : `Skupiony plan nauki dla ${displayName}, złożony z treningu, lekcji i najważniejszych wyników.`}
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -398,23 +398,23 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#0f172a', fontWeight: '700' }}>Odswiez plan</Text>
+                <Text style={{ color: '#0f172a', fontWeight: '700' }}>Odśwież plan</Text>
               </Pressable>
             </View>
 
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Przywracamy sesje ucznia. Gdy bedzie gotowa, plan pobierze
-                zsynchronizowane wyniki i wskazowki treningowe.
+                Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze
+                zsynchronizowane wyniki i wskazówki treningowe.
               </Text>
             ) : !isAuthenticated ? (
               supportsLearnerCredentials ? (
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Zaloguj ucznia na ekranie glownym, aby pobrac wyniki, fokus
-                    treningowy i zsynchronizowana historie.
+                    Zaloguj ucznia na ekranie głównym, aby pobrać wyniki, fokus
+                    treningowy i zsynchronizowaną historię.
                   </Text>
-                  <LinkButton href='/' label='Otworz ekran logowania' />
+                  <LinkButton href='/' label='Otwórz ekran logowania' />
                 </View>
               ) : (
                 <Pressable
@@ -431,7 +431,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Zaloguj sesje demo
+                    Zaloguj sesję demo
                   </Text>
                 </Pressable>
               )
@@ -447,34 +447,34 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               Fokus treningowy
             </Text>
             {isLoading ? (
-              <Text style={{ color: '#475569' }}>Ladujemy fokus oparty na wynikach...</Text>
+              <Text style={{ color: '#475569' }}>Ładujemy fokus oparty na wynikach...</Text>
             ) : scoreError ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Zaloguj ucznia, aby odblokowac wskazowki dla najmocniejszego i najslabszego trybu.
+                Zaloguj ucznia, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.
               </Text>
             ) : !weakestFocus && !strongestFocus ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Ukoncz jedna zsynchronizowana sesje, aby zbudowac pierwszy fokus treningowy.
+                Ukończ jedną zsynchronizowaną sesję, aby zbudować pierwszy fokus treningowy.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
                 {weakestFocus ? (
                   <FocusCard
                     accentColor='#b91c1c'
-                    description='To obecnie najslabszy zsynchronizowany tryb. Zacznij od krotkiej sesji celowanej, a potem wroc do pasujacej lekcji, jesli bedzie trzeba.'
+                    description='To obecnie najsłabszy zsynchronizowany tryb. Zacznij od krótkiej sesji celowanej, a potem wróć do pasującej lekcji, jeśli będzie trzeba.'
                     historyHref={weakestFocus.historyHref}
                     lessonHref={weakestFocus.lessonHref}
                     operation={weakestFocus.operation}
                     practiceHref={weakestFocus.practiceHref}
-                    title='Do powtorki'
+                    title='Do powtórki'
                   />
                 ) : null}
                 {strongestFocus ? (
                   <FocusCard
                     accentColor='#047857'
-                    description='Ten tryb jest teraz najbardziej stabilny. Uzyj go do szybkiego podbicia pewnosci albo lekkiej rozgrzewki.'
+                    description='Ten tryb jest teraz najbardziej stabilny. Użyj go do szybkiego podbicia pewności albo lekkiej rozgrzewki.'
                     historyHref={strongestFocus.historyHref}
                     lessonHref={strongestFocus.lessonHref}
                     operation={strongestFocus.operation}
@@ -492,8 +492,8 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             </Text>
             {assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Brak jeszcze lokalnych zadan. Otworz lekcje albo wykonaj trening,
-                aby wygenerowac pierwszy plan kolejnych krokow.
+                Brak jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj trening,
+                aby wygenerować pierwszy plan kolejnych kroków.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
@@ -520,20 +520,20 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
                 Ostatnie wyniki
               </Text>
-              <LinkButton href={createKangurResultsHref()} label='Otworz historie' />
+              <LinkButton href={createKangurResultsHref()} label='Otwórz historię' />
             </View>
             {isLoading ? (
-              <Text style={{ color: '#475569' }}>Ladujemy ostatnie wyniki...</Text>
+              <Text style={{ color: '#475569' }}>Ładujemy ostatnie wyniki...</Text>
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Zaloguj sesje ucznia, aby zobaczyc tutaj zsynchronizowane wyniki.
+                Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki.
               </Text>
             ) : scoreError ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
             ) : recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Brak jeszcze zsynchronizowanych wynikow. Ukoncz jedna sesje,
-                aby wypelnic te sekcje.
+                Brak jeszcze zsynchronizowanych wyników. Ukończ jedną sesję,
+                aby wypełnić tę sekcję.
               </Text>
             ) : (
               <View style={{ gap: 12 }}>

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { renderHook } from '@/__tests__/test-utils';
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useKangurAiTutorPanelShellState } from './KangurAiTutorWidget.panel-shell';

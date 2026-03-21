@@ -1,4 +1,4 @@
-import { render, screen } from '@/__tests__/test-utils';
+import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';

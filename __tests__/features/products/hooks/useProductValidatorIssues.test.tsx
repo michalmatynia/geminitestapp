@@ -1,4 +1,4 @@
-import { act, renderHook } from '@/__tests__/test-utils';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';

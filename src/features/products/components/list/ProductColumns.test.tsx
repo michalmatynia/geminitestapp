@@ -135,6 +135,48 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByText('Queued')).toBeInTheDocument();
   });
 
+  it('prefers the tracker-backed running badge over the queued fallback', () => {
+    const product = createProduct();
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set(['product-1']),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      queuedProductIds: new Set(['product-1']),
+      productAiRunStatusByProductId: new Map([
+        [
+          'product-1',
+          {
+            runId: 'run-1',
+            status: 'running',
+            updatedAt: '2026-03-21T10:00:00.000Z',
+            label: 'Running',
+            variant: 'processing',
+            badgeClassName:
+              'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+          },
+        ],
+      ]),
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByText('Running')).toBeInTheDocument();
+    expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
+
   it('does not render the queued badge when the product id is not queued', () => {
     const product = createProduct();
     useProductListActionsContextMock.mockReturnValue({
@@ -280,6 +322,44 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(screen.getByRole('button', { name: 'Open Brelok | Metal' })).toBeInTheDocument();
+  });
+
+  it('does not fall back to English product titles when the selected locale title is missing', () => {
+    const product = createProduct({
+      name_en: 'Keychain',
+      name_pl: null,
+      parameters: [
+        {
+          parameterId: 'material',
+          value: '',
+          valuesByLanguage: { en: 'Metal' },
+        },
+      ] as ProductWithImages['parameters'],
+    });
+    useProductListActionsContextMock.mockReturnValue({
+      productNameKey: 'name_pl',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Breloki']]),
+    });
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_pl',
+      queuedProductIds: new Set<string>(),
+      categoryNameById: new Map([['category-1', 'Breloki']]),
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByRole('button', { name: 'Open product' })).toHaveTextContent('—');
+    expect(screen.queryByText('Keychain | Metal')).not.toBeInTheDocument();
   });
 
   it('falls back to nested localized names and legacy localized parameter fields', () => {

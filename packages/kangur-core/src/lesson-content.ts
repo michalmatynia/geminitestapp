@@ -29,30 +29,30 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         id: 'basics',
         title: 'Podstawy dodawania',
         description:
-          'Zacznij od prostego laczenia grup. Dobrym nawykiem jest start od wiekszej liczby i doliczanie kolejnych elementow.',
+          'Zacznij od prostego łączenia grup. Dobrym nawykiem jest start od większej liczby i doliczanie kolejnych elementów.',
         example: {
-          label: 'Przyklad',
+          label: 'Przykład',
           equation: '2 + 3 = 5',
-          explanation: 'Masz 2 jablka, dokladasz 3 kolejne i razem widzisz 5.',
+          explanation: 'Masz 2 jabłka, dokładasz 3 kolejne i razem widzisz 5.',
         },
         reminders: [
           'Dodawanie odpowiada na pytanie: ile jest razem?',
-          'Przy malych liczbach mozesz liczyc na palcach albo w myslach.',
+          'Przy małych liczbach możesz liczyć na palcach albo w myślach.',
         ],
       },
       {
         id: 'cross-ten',
         title: 'Dodawanie przez 10',
         description:
-          'Gdy suma przekracza 10, najlatwiej najpierw dopelnic do 10, a dopiero potem dodac reszte.',
+          'Gdy suma przekracza 10, najłatwiej najpierw dopełnić do 10, a dopiero potem dodać resztę.',
         example: {
-          label: 'Przyklad',
+          label: 'Przykład',
           equation: '7 + 5 = 12',
           explanation: 'Najpierw 7 + 3 = 10, potem dodajesz pozostale 2 i otrzymujesz 12.',
         },
         reminders: [
-          'Szukaj par, ktore razem daja 10.',
-          'Rozkladaj druga liczbe na dwie czesci, jesli to upraszcza rachunek.',
+          'Szukaj par, które razem dają 10.',
+          'Rozkładaj drugą liczbę na dwie części, jeśli to upraszcza rachunek.',
         ],
       },
       {
@@ -67,7 +67,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         },
         reminders: [
           'Oddziel dziesiatki od jednosci.',
-          'Na koncu polacz czesci w jeden wynik.',
+          'Na końcu połącz części w jeden wynik.',
         ],
       },
       {
@@ -83,11 +83,11 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
       },
     ],
     practiceNote:
-      'Interaktywne gry z dodawaniem pozostaja jeszcze po stronie web. Ten mobilny ekran przenosi juz tresc i logike nauki, ale nie gry.',
+      'Interaktywne gry z dodawaniem pozostają jeszcze po stronie web. Ten mobilny ekran przenosi już treść i logikę nauki, ale nie gry.',
   },
   subtracting: {
     introduction:
-      'Odejmowanie to zabieranie czesci z grupy i sprawdzanie ile zostalo. Mobilna wersja obejmuje juz glowna tresc lekcji, ale jeszcze bez gry.',
+      'Odejmowanie to zabieranie części z grupy i sprawdzanie, ile zostało. Mobilna wersja obejmuje już główną treść lekcji, ale jeszcze bez gry.',
     sections: [
       {
         id: 'basics',
@@ -100,22 +100,22 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           explanation: 'Masz 5 jablek, zabierasz 2 i zostaja 3.',
         },
         reminders: [
-          'Odejmowanie odpowiada na pytanie: ile zostalo?',
-          'Mozesz liczyc wstecz na osi liczbowej.',
+          'Odejmowanie odpowiada na pytanie: ile zostało?',
+          'Możesz liczyć wstecz na osi liczbowej.',
         ],
       },
       {
         id: 'cross-ten',
         title: 'Odejmowanie przez 10',
         description:
-          'Gdy trzeba przejsc przez 10, rozdziel odjemnik na dwie czesci: najpierw zejdz do 10, a potem odejmij reszte.',
+          'Gdy trzeba przejść przez 10, rozdziel odjemnik na dwie części: najpierw zejdź do 10, a potem odejmij resztę.',
         example: {
           label: 'Przyklad',
           equation: '13 - 5 = 8',
           explanation: 'Najpierw 13 - 3 = 10, potem 10 - 2 = 8.',
         },
         reminders: [
-          'Rozloz liczbe 5 na 3 i 2, jesli to daje pelna dziesiatke.',
+          'Rozłóż liczbę 5 na 3 i 2, jeśli to daje pełną dziesiątkę.',
           'Schodzenie do 10 upraszcza drugi krok.',
         ],
       },
@@ -214,11 +214,11 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
       },
     ],
     practiceNote:
-      'Ten temat ma juz pierwszy mobilny trening. Po przeczytaniu lekcji mozesz od razu przejsc do praktyki mnozenia.',
+      'Ten temat ma już pierwszy mobilny trening. Po przeczytaniu lekcji możesz od razu przejść do praktyki mnożenia.',
   },
   division: {
     introduction:
-      'Dzielenie to rowny podzial na grupy. W mobilnej wersji przenosimy najpierw glowna tresc lekcji: sens dzielenia, zwiazek z mnozeniem i reszte z dzielenia.',
+      'Dzielenie to równy podział na grupy. W mobilnej wersji przenosimy najpierw główną treść lekcji: sens dzielenia, związek z mnożeniem i resztę z dzielenia.',
     sections: [
       {
         id: 'intro',
@@ -254,7 +254,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         id: 'remainder',
         title: 'Reszta z dzielenia',
         description:
-          'Nie kazde dzielenie da sie wykonac bez reszty. Wtedy czesc elementow zostaje poza rownym podzialem.',
+          'Nie każde dzielenie da się wykonać bez reszty. Wtedy część elementów zostaje poza równym podziałem.',
         example: {
           label: 'Przyklad',
           equation: '7 ÷ 2 = 3 reszta 1',
@@ -282,7 +282,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
   },
   clock: {
     introduction:
-      'Lekcja zegara sklada sie z trzech etapow: godziny, minuty i laczenie obu wskazowek. Na mobile przenosimy ten tok nauki bez interaktywnego cwiczenia z tarcza.',
+      'Lekcja zegara składa się z trzech etapów: godziny, minuty i łączenie obu wskazówek. Na mobile przenosimy ten tok nauki bez interaktywnego ćwiczenia z tarczą.',
     sections: [
       {
         id: 'hours',
@@ -311,7 +311,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         },
         reminders: [
           '3 oznacza 15 minut, 6 oznacza 30 minut, a 9 oznacza 45 minut.',
-          'Pamietaj, ze kolejne liczby to skoki co 5 minut.',
+          'Pamiętaj, że kolejne liczby to skoki co 5 minut.',
         ],
       },
       {
@@ -331,11 +331,11 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
       },
     ],
     practiceNote:
-      'Interaktywne cwiczenie z zegarem zostanie podpiete pozniej. Na tym etapie mobilny ekran odtwarza pelny porzadek nauki potrzebny przed praktyka.',
+      'Interaktywne ćwiczenie z zegarem zostanie podpięte później. Na tym etapie mobilny ekran odtwarza pełny porządek nauki potrzebny przed praktyką.',
   },
   calendar: {
     introduction:
-      'Kalendarz pomaga uporzadkowac czas: dni tygodnia, miesiace, daty i pory roku. Na mobile przenosimy glowny porzadek nauki bez interaktywnej gry.',
+      'Kalendarz pomaga uporządkować czas: dni tygodnia, miesiące, daty i pory roku. Na mobile przenosimy główny porządek nauki bez interaktywnej gry.',
     sections: [
       {
         id: 'intro',
@@ -346,10 +346,10 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: '1 tydzien = 7 dni',
           explanation:
-            'Kazdy tydzien sklada sie z tych samych 7 dni, a miesiace i lata ukladaja z nich wiekszy plan czasu.',
+            'Każdy tydzień składa się z tych samych 7 dni, a miesiące i lata układają z nich większy plan czasu.',
         },
         reminders: [
-          'Rok ma 12 miesiecy.',
+          'Rok ma 12 miesięcy.',
           'Tydzien ma 7 dni.',
         ],
       },
@@ -371,17 +371,17 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
       },
       {
         id: 'months',
-        title: 'Miesiace i pory roku',
+        title: 'Miesiące i pory roku',
         description:
-          'Kazdy miesiac ma swoja nazwe i liczbe dni. Miesiace lacza sie tez w cztery pory roku.',
+          'Każdy miesiąc ma swoją nazwę i liczbę dni. Miesiące łączą się też w cztery pory roku.',
         example: {
           label: 'Przyklad',
           equation: 'Marzec, kwiecien, maj = wiosna',
           explanation:
-            'Miesiace mozna grupowac nie tylko po kolejnosci, ale tez po porach roku, co pomaga je szybciej zapamietac.',
+          'Miesiące można grupować nie tylko po kolejności, ale też po porach roku, co pomaga je szybciej zapamiętać.',
         },
         reminders: [
-          'Wiekszosc miesiecy ma 30 lub 31 dni.',
+          'Większość miesięcy ma 30 lub 31 dni.',
           'Luty ma zwykle 28 dni.',
         ],
       },
@@ -429,7 +429,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         id: 'patterns',
         title: 'Wzorce i ciagi',
         description:
-          'Logiczne myslenie czesto zaczyna sie od dostrzezenia powtarzajacego sie ukladu albo stalej zmiany.',
+          'Logiczne myślenie często zaczyna się od dostrzeżenia powtarzającego się układu albo stałej zmiany.',
         example: {
           label: 'Przyklad',
           equation: '2, 4, 6, 8, ?',
@@ -450,7 +450,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: '🍎 🍌 🥕 🍇',
           explanation:
-            'Intruziem jest 🥕, bo pozostale elementy sa owocami, a to warzywo.',
+            'Intruziem jest 🥕, bo pozostałe elementy są owocami, a to warzywo.',
         },
         reminders: [
           'Najpierw nazwij wspolna ceche grupy.',
@@ -475,7 +475,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
       },
     ],
     practiceNote:
-      'Te lekcje przygotowuja do kolejnych logicznych zadan. Na mobile zaczynamy od wspolnych zasad i przykladow, a bardziej interaktywne cwiczenia dojda pozniej.',
+      'Te lekcje przygotowują do kolejnych logicznych zadań. Na mobile zaczynamy od wspólnych zasad i przykładów, a bardziej interaktywne ćwiczenia dojdą później.',
   },
   logical_patterns: {
     introduction:
@@ -493,7 +493,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
             'Powtarza sie wzorzec czerwony-niebieski, wiec brakujacym elementem jest 🔵.',
         },
         reminders: [
-          'Znajdz najmniejsza czesc, ktora sie powtarza.',
+          'Znajdź najmniejszą część, która się powtarza.',
           'Sprawdz, czy ta sama regula dziala od poczatku do konca.',
         ],
       },
@@ -562,11 +562,11 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: '🍎 🍌 🍇 🍓',
           explanation:
-            'Te elementy mozna polaczyc w grupe owocow, bo maja wspolna kategorie.',
+            'Te elementy można połączyć w grupę owoców, bo mają wspólną kategorię.',
         },
         reminders: [
-          'Grupowac mozna wedlug koloru, ksztaltu, rozmiaru, kategorii albo wlasnosci liczbowej.',
-          'Najpierw ustal ceche, dopiero potem ukladaj grupy.',
+          'Grupować można według koloru, kształtu, rozmiaru, kategorii albo własności liczbowej.',
+          'Najpierw ustal cechę, dopiero potem układaj grupy.',
         ],
       },
       {
@@ -594,7 +594,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: '2, 4, 7, 8, 10',
           explanation:
-            'Intruziem jest 7, bo pozostale liczby sa parzyste, a 7 jest nieparzysta.',
+            'Intruziem jest 7, bo pozostałe liczby są parzyste, a 7 jest nieparzysta.',
         },
         reminders: [
           'Najpierw ustal wspolna ceche wiekszosci elementow.',
@@ -610,10 +610,10 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: 'sport / muzyka / oba',
           explanation:
-            'Czesc wspolna pokazuje elementy, ktore pasuja do dwoch kategorii naraz.',
+            'Część wspólna pokazuje elementy, które pasują do dwóch kategorii naraz.',
         },
         reminders: [
-          'Czesc wspolna to przeciecie dwoch zbiorow.',
+          'Część wspólna to przecięcie dwóch zbiorów.',
           'Klasyfikacja porzadkuje informacje i ulatwia dalsze wnioskowanie.',
         ],
       },
@@ -666,11 +666,11 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: 'Niektore koty sa rude.',
           explanation:
-            'To nie znaczy, ze kazdy kot jest rudy. Twierdzenie dotyczy tylko czesci kotow.',
+            'To nie znaczy, że każdy kot jest rudy. Twierdzenie dotyczy tylko części kotów.',
         },
         reminders: [
           'Wszyscy oznacza kazdy przypadek.',
-          'Niektorzy oznacza tylko czesc przypadkow.',
+          'Niektórzy oznacza tylko część przypadków.',
           'Zaden oznacza brak jakiegokolwiek wyjatku.',
         ],
       },
@@ -683,7 +683,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
           label: 'Przyklad',
           equation: 'Sa trzy domy: czerwony, niebieski, zielony...',
           explanation:
-            'Rozwiazywanie zagadki polega na zapisywaniu pewnych faktow i systematycznym odrzucaniu tego, co niemozliwe.',
+            'Rozwiązywanie zagadki polega na zapisywaniu pewnych faktów i systematycznym odrzucaniu tego, co niemożliwe.',
         },
         reminders: [
           'Zacznij od faktow bezposrednich.',
@@ -702,7 +702,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         id: 'intro',
         title: 'Co to jest analogia',
         description:
-          'W analogii szukasz odpowiedzi na pytanie: jaka relacja laczy pierwsza pare i jak przeniesc ja na druga?',
+          'W analogii szukasz odpowiedzi na pytanie: jaka relacja łączy pierwszą parę i jak przenieść ją na drugą?',
         example: {
           label: 'Przyklad',
           equation: 'Ptak : latac = ryba : ?',
@@ -718,7 +718,7 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
         id: 'verbal',
         title: 'Analogie slowne',
         description:
-          'Analogie slowne moga opierac sie na przeciwienstwie, funkcji, czesci i calosci albo typowym dzialaniu.',
+          'Analogie słowne mogą opierać się na przeciwieństwie, funkcji, części i całości albo typowym działaniu.',
         example: {
           label: 'Przyklad',
           equation: 'Nozyczki : ciecie = olowek : ?',
@@ -748,17 +748,17 @@ const KANGUR_PORTABLE_LESSON_BODIES: Partial<
       },
       {
         id: 'cause-whole',
-        title: 'Czesc-calosc i przyczyna-skutek',
+        title: 'Część-całość i przyczyna-skutek',
         description:
           'Wiele analogii opiera sie na tym, ze jeden element nalezy do drugiego albo cos wywoluje okreslony efekt.',
         example: {
           label: 'Przyklad',
           equation: 'Strona : ksiazka = cegla : ?',
           explanation:
-            'To relacja czesc -> calosc, wiec odpowiedzia jest mur albo budynek.',
+            'To relacja część -> całość, więc odpowiedzią jest mur albo budynek.',
         },
         reminders: [
-          'Czesc-calosc to bardzo czesty wzorzec w zadaniach analogicznych.',
+          'Część-całość to bardzo częsty wzorzec w zadaniach analogicznych.',
           'Przyczyna-skutek pyta o to, co wywoluje dany rezultat.',
         ],
       },

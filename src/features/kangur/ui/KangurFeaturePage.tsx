@@ -27,6 +27,7 @@ import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurSto
 import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import { isKangurThemeDebugEnabled } from '@/features/kangur/utils/theme-debug';
 import { cn } from '@/features/kangur/shared/utils';
+import { logger } from '@/shared/utils/logger';
 
 import type { CSSProperties, JSX, KeyboardEvent } from 'react';
 
@@ -97,7 +98,7 @@ export function KangurFeaturePageShell({
     const signature = JSON.stringify(payload);
     if (debugRef.current === signature) return;
     debugRef.current = signature;
-    console.info('[KangurThemeDebug]', payload);
+    logger.info('[KangurThemeDebug]', payload);
   }, [appearanceMode, kangurAppearance.theme?.themePreset]);
 
   useEffect(() => {

@@ -38,7 +38,13 @@ describe('run-with-mobile-env cli', () => {
   it('loads env values before executing the child command', () => {
     const tempDir = createTempDir();
     const envFile = join(tempDir, '.env.local');
-    writeFileSync(envFile, 'EXPO_PUBLIC_KANGUR_API_URL=http://localhost:3000\n');
+    const expectedApiUrl = 'http://kangur-test.local:3999';
+    writeFileSync(envFile, `EXPO_PUBLIC_KANGUR_API_URL=${expectedApiUrl}\n`);
+    const env = {
+      ...process.env,
+      KANGUR_MOBILE_ENV_FILE: envFile,
+    };
+    delete env.EXPO_PUBLIC_KANGUR_API_URL;
 
     const result = spawnSync(
       'node',
@@ -53,14 +59,11 @@ describe('run-with-mobile-env cli', () => {
       {
         cwd: REPO_ROOT,
         encoding: 'utf8',
-        env: {
-          ...process.env,
-          KANGUR_MOBILE_ENV_FILE: envFile,
-        },
+        env,
       },
     );
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('http://localhost:3000');
+    expect(result.stdout).toContain(expectedApiUrl);
   });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@/__tests__/test-utils';
+import { render, screen } from '@testing-library/react';
 
 import { FrontendBlockRenderer } from '@/features/cms/components/frontend/sections/FrontendBlockRenderer';
 import type { PageBlock } from '@/shared/contracts/cms';

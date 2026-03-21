@@ -14,7 +14,7 @@ import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-ac
 import {
   hydrateLogRuntimeContext,
   hydrateSystemLogRecordRuntimeContext,
-} from '@/features/observability/server';
+} from '@/features/observability/entry-server';
 import { clearActivityLogs } from '@/shared/lib/observability/activity-repository';
 import {
   clearSystemLogs,

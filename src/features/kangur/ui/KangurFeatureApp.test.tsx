@@ -3,7 +3,7 @@
  */
 
 import React, { type ReactNode } from 'react';
-import { act, cleanup, render, screen, waitFor } from '@/__tests__/test-utils';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {

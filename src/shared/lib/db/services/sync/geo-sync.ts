@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../database-sync-types';
-import type { SyncHandler } from './types';
+import type { DatabaseSyncHandler } from './types';
 import type { Prisma, CurrencyCode } from '@prisma/client';
 
-export const syncCurrencies: SyncHandler = async ({ mongo, prisma, currencyCodes }) => {
+export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, currencyCodes }) => {
   // Clear dependent data so currency deletes don't fail on FK constraints.
   await prisma.product.deleteMany();
   await prisma.priceGroup.deleteMany();
@@ -39,7 +40,7 @@ export const syncCurrencies: SyncHandler = async ({ mongo, prisma, currencyCodes
   };
 };
 
-export const syncCountries: SyncHandler = async ({ mongo, prisma, countryCodes }) => {
+export const syncCountries: DatabaseSyncHandler = async ({ mongo, prisma, countryCodes }) => {
   const docs = (await mongo
     .collection('countries')
     .find({})
@@ -90,7 +91,7 @@ export const syncCountries: SyncHandler = async ({ mongo, prisma, countryCodes }
   };
 };
 
-export const syncLanguages: SyncHandler = async ({ mongo, prisma }) => {
+export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   // Clear catalogs so defaultLanguage FK doesn't block language deletes.
   await prisma.catalog.deleteMany();
   const docs = (await mongo
@@ -136,7 +137,7 @@ export const syncLanguages: SyncHandler = async ({ mongo, prisma }) => {
 
 // --- Prisma to Mongo handlers ---
 
-export const syncCurrenciesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.currency.findMany();
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -157,7 +158,7 @@ export const syncCurrenciesPrismaToMongo: SyncHandler = async ({ mongo, prisma }
   };
 };
 
-export const syncCountriesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.country.findMany({ include: { currencies: true } });
   const docs = rows.map((row) => ({
     _id: row.id,
@@ -178,7 +179,7 @@ export const syncCountriesPrismaToMongo: SyncHandler = async ({ mongo, prisma })
   };
 };
 
-export const syncLanguagesPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+export const syncLanguagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.language.findMany({
     include: { countries: { include: { country: true } } },
   });

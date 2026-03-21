@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import type { MongoProductDoc } from '../database-sync-types';
-import type { SyncHandler } from './types';
+import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
-export const syncProducts: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const availableProducerIds = new Set<string>(
     (await prisma.producer.findMany({ select: { id: true } })).map(
       (entry: { id: string }) => entry.id
@@ -157,7 +158,7 @@ export const syncProducts: SyncHandler = async ({ mongo, prisma, normalizeId, to
   };
 };
 
-export const syncProductDrafts: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+export const syncProductDrafts: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection('product_drafts').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {
@@ -221,7 +222,7 @@ export const syncProductDrafts: SyncHandler = async ({ mongo, prisma, normalizeI
 
 // --- Prisma to Mongo handlers ---
 
-export const syncProductsPrismaToMongo: SyncHandler = async ({
+export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   toObjectIdMaybe,
@@ -343,7 +344,7 @@ export const syncProductsPrismaToMongo: SyncHandler = async ({
   };
 };
 
-export const syncProductDraftsPrismaToMongo: SyncHandler = async ({
+export const syncProductDraftsPrismaToMongo: DatabaseSyncHandler = async ({
   mongo,
   prisma,
   toObjectIdMaybe,

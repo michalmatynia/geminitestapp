@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  checkKangurMobileNativeLocalExpoPort,
   createKangurMobileNativeLocalChecklistHint,
+  createKangurMobileNativeLocalDependencyHint,
   createKangurMobileNativeLocalLaunchEnv,
+  createKangurMobileNativeLocalPortConflictHint,
   createKangurMobileNativeLocalPrepareHint,
   createKangurMobileNativeLocalReadinessHint,
   createKangurMobileNativeLocalPrepareFailureMessage,
@@ -58,11 +61,13 @@ describe('createKangurMobileNativeLocalPlan', () => {
   it('maps iOS simulator validation to prepare and ios start scripts', () => {
     expect(createKangurMobileNativeLocalPlan('ios-simulator')).toEqual({
       rootChecklistScript: 'checklist:mobile:native:runtime:ios',
+      rootDependencyScript: 'check:mobile:native:deps',
       prepareScript: 'prepare:runtime:ios',
       rootPrepareScript: 'prepare:mobile:runtime:ios',
       rootReadinessScript: 'check:mobile:native:runtime:ios',
       rootStartScript: 'dev:mobile:ios:local',
       workspaceChecklistScript: 'checklist:native:runtime:ios',
+      workspaceDependencyScript: 'check:native:deps',
       workspaceReadinessScript: 'check:native:runtime:ios',
       startScript: 'ios',
       target: 'ios-simulator',
@@ -72,11 +77,13 @@ describe('createKangurMobileNativeLocalPlan', () => {
   it('maps android emulator validation to prepare and android start scripts', () => {
     expect(createKangurMobileNativeLocalPlan('android-emulator')).toEqual({
       rootChecklistScript: 'checklist:mobile:native:runtime:android',
+      rootDependencyScript: 'check:mobile:native:deps',
       prepareScript: 'prepare:runtime:android',
       rootPrepareScript: 'prepare:mobile:runtime:android',
       rootReadinessScript: 'check:mobile:native:runtime:android',
       rootStartScript: 'dev:mobile:android:local',
       workspaceChecklistScript: 'checklist:native:runtime:android',
+      workspaceDependencyScript: 'check:native:deps',
       workspaceReadinessScript: 'check:native:runtime:android',
       startScript: 'android',
       target: 'android-emulator',
@@ -86,11 +93,13 @@ describe('createKangurMobileNativeLocalPlan', () => {
   it('maps device validation to prepare and dev start scripts', () => {
     expect(createKangurMobileNativeLocalPlan('device')).toEqual({
       rootChecklistScript: 'checklist:mobile:native:runtime:device',
+      rootDependencyScript: 'check:mobile:native:deps',
       prepareScript: 'prepare:runtime:device',
       rootPrepareScript: 'prepare:mobile:runtime:device',
       rootReadinessScript: 'check:mobile:native:runtime:device',
       rootStartScript: 'dev:mobile:device:local',
       workspaceChecklistScript: 'checklist:native:runtime:device',
+      workspaceDependencyScript: 'check:native:deps',
       workspaceReadinessScript: 'check:native:runtime:device',
       startScript: 'dev',
       target: 'device',
@@ -124,6 +133,19 @@ describe('createKangurMobileNativeLocalPrepareHint', () => {
   });
 });
 
+describe('createKangurMobileNativeLocalDependencyHint', () => {
+  it('includes both root and workspace dependency checks', () => {
+    const plan = createKangurMobileNativeLocalPlan('ios-simulator');
+
+    expect(createKangurMobileNativeLocalDependencyHint(plan)).toContain(
+      'npm run check:mobile:native:deps',
+    );
+    expect(createKangurMobileNativeLocalDependencyHint(plan)).toContain(
+      'npm run check:native:deps',
+    );
+  });
+});
+
 describe('createKangurMobileNativeLocalChecklistHint', () => {
   it('includes both root and workspace checklist commands', () => {
     const plan = createKangurMobileNativeLocalPlan('ios-simulator');
@@ -133,6 +155,17 @@ describe('createKangurMobileNativeLocalChecklistHint', () => {
     );
     expect(createKangurMobileNativeLocalChecklistHint(plan)).toContain(
       'npm run checklist:native:runtime:ios',
+    );
+  });
+});
+
+describe('createKangurMobileNativeLocalPortConflictHint', () => {
+  it('points at the occupied Expo port and the lsof recovery command', () => {
+    expect(createKangurMobileNativeLocalPortConflictHint()).toContain(
+      'Port 8081 is already occupied.',
+    );
+    expect(createKangurMobileNativeLocalPortConflictHint()).toContain(
+      'lsof -i tcp:8081',
     );
   });
 });
@@ -238,6 +271,17 @@ describe('createKangurMobileNativeLocalLaunchEnv', () => {
   });
 });
 
+describe('checkKangurMobileNativeLocalExpoPort', () => {
+  it('reports free when no local server is listening on the probe port', async () => {
+    const report = await checkKangurMobileNativeLocalExpoPort(65531);
+
+    expect(report).toEqual({
+      port: 65531,
+      status: 'free',
+    });
+  });
+});
+
 describe('createKangurMobileNativeLocalPrepareFailureMessage', () => {
   it('includes the target-specific readiness command', () => {
     const plan = createKangurMobileNativeLocalPlan('ios-simulator');
@@ -250,6 +294,9 @@ describe('createKangurMobileNativeLocalPrepareFailureMessage', () => {
     expect(message).toContain('prepare:mobile:runtime:ios failed for ios-simulator');
     expect(message).toContain(
       'Run "npm run check:mobile:native:runtime:ios" from the repo root',
+    );
+    expect(message).toContain(
+      'Run "npm run check:mobile:native:deps" from the repo root',
     );
     expect(message).toContain(
       'Then re-run "npm run prepare:mobile:runtime:ios" or "npm run dev:mobile:ios:local".',

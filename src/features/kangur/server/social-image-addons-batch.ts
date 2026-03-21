@@ -25,6 +25,7 @@ import {
   findLatestAddonByPresetId,
   upsertKangurSocialImageAddon,
 } from './social-image-addons-repository';
+import { logger } from '@/shared/utils/logger';
 
 const SOCIAL_BATCH_PLAYWRIGHT_SCRIPT = `
 export default async function run({ page, input, artifacts, helpers, emit, log }) {
@@ -247,7 +248,7 @@ export async function createKangurSocialImageAddonsBatch(
     }
   }
 
-  console.log('[BATCH] Enqueueing Playwright run with %d captures...', captures.length);
+  logger.info('[BATCH] Enqueueing Playwright run with %d captures...', captures.length);
   const run = await enqueuePlaywrightNodeRun({
     request: {
       script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
@@ -262,7 +263,7 @@ export async function createKangurSocialImageAddonsBatch(
     ownerUserId: input.createdBy ?? null,
   });
 
-  console.log('[BATCH] Playwright run finished, status:', run.status, 'runId:', run.runId);
+  logger.info('[BATCH] Playwright run finished, status:', run.status, 'runId:', run.runId);
   if (run.status !== 'completed') {
     const reason = run.error?.trim() || 'Playwright batch capture failed.';
     throw operationFailedError(reason);
@@ -284,9 +285,9 @@ export async function createKangurSocialImageAddonsBatch(
   const addons: KangurSocialImageAddon[] = [];
   const failures: Array<{ id: string; reason: string }> = [];
 
-  console.log('[BATCH] Processing %d presets...', presets.length);
+  logger.info('[BATCH] Processing %d presets...', presets.length);
   for (const preset of presets) {
-    console.log('[BATCH] [%s] Finding artifact...', preset.id);
+    logger.info('[BATCH] [%s] Finding artifact...', preset.id);
     const artifact = resolveArtifactByName(run.artifacts, preset.id);
     const resultStatus = resultMap.get(preset.id);
     if (!artifact) {
@@ -303,7 +304,7 @@ export async function createKangurSocialImageAddonsBatch(
       continue;
     }
 
-    console.log('[BATCH] [%s] Reading artifact file...', preset.id);
+    logger.info('[BATCH] [%s] Reading artifact file...', preset.id);
     const artifactData = await readPlaywrightNodeArtifact({
       runId: run.runId,
       fileName: artifactFile,
@@ -313,7 +314,7 @@ export async function createKangurSocialImageAddonsBatch(
       continue;
     }
 
-    console.log('[BATCH] [%s] Sharp metadata...', preset.id);
+    logger.info('[BATCH] [%s] Sharp metadata...', preset.id);
     const buffer = artifactData.content;
     const metadata = await sharp(buffer, { failOnError: false }).metadata();
     const width = typeof metadata.width === 'number' ? metadata.width : null;
@@ -323,10 +324,10 @@ export async function createKangurSocialImageAddonsBatch(
     const publicPath = buildAddonPublicPath(filename);
 
     // Write to temp dir (outside public/) to avoid Turbopack HMR during pipeline
-    console.log('[BATCH] [%s] Writing temp copy...', preset.id);
+    logger.info('[BATCH] [%s] Writing temp copy...', preset.id);
     const tempDiskPath = await writeTempCopy(filename, buffer);
 
-    console.log('[BATCH] [%s] Uploading to storage...', preset.id);
+    logger.info('[BATCH] [%s] Uploading to storage...', preset.id);
     const stored = await uploadToConfiguredStorage({
       buffer,
       filename,
@@ -339,7 +340,7 @@ export async function createKangurSocialImageAddonsBatch(
         // Already written to temp dir — skip public/ write to prevent Turbopack HMR
       },
     });
-    console.log('[BATCH] [%s] Upload done, source=%s', preset.id, stored.source);
+    logger.info('[BATCH] [%s] Upload done, source=%s', preset.id, stored.source);
 
     // For local storage, use temp disk path so the vision handler can read
     // without files being in public/uploads/ (which triggers Turbopack rebuilds).
@@ -357,7 +358,7 @@ export async function createKangurSocialImageAddonsBatch(
       height,
     });
 
-    console.log('[BATCH] [%s] Finding previous addon...', preset.id);
+    logger.info('[BATCH] [%s] Finding previous addon...', preset.id);
     const previousAddon = await findLatestAddonByPresetId(preset.id);
 
     const addon = normalizeKangurSocialImageAddon({
@@ -375,10 +376,10 @@ export async function createKangurSocialImageAddonsBatch(
       updatedBy: input.createdBy ?? null,
     });
 
-    console.log('[BATCH] [%s] Upserting addon...', preset.id);
+    logger.info('[BATCH] [%s] Upserting addon...', preset.id);
     const saved = await upsertKangurSocialImageAddon(addon);
     addons.push(saved);
-    console.log('[BATCH] [%s] Done', preset.id);
+    logger.info('[BATCH] [%s] Done', preset.id);
   }
 
   void ErrorSystem.logInfo('Kangur social image add-on batch capture completed', {

@@ -46,8 +46,8 @@ export const buildKangurHomeDebugProofViewModel = (input: {
     return {
       checks: [
         {
-          detail: 'Przywracamy sesje ucznia i zsynchronizowane dane wynikow.',
-          label: 'Petla wynikow strony glownej',
+          detail: 'Przywracamy sesję ucznia i zsynchronizowane dane wyników.',
+          label: 'Pętla wyników strony głównej',
           status: 'info',
         },
       ],
@@ -60,8 +60,8 @@ export const buildKangurHomeDebugProofViewModel = (input: {
     return {
       checks: [
         {
-          detail: 'Na stronie glownej nie wlaczono jeszcze petli wynikow dla sesji ucznia.',
-          label: 'Petla wynikow strony glownej',
+          detail: 'Na stronie głównej nie włączono jeszcze pętli wyników dla sesji ucznia.',
+          label: 'Pętla wyników strony głównej',
           status: 'missing',
         },
       ],
@@ -85,25 +85,25 @@ export const buildKangurHomeDebugProofViewModel = (input: {
             status: 'ready',
           }
         : {
-            detail: 'Ten tryb nie jest jeszcze widoczny w sekcji ostatnich wynikow.',
+            detail: 'Ten tryb nie jest jeszcze widoczny w sekcji ostatnich wyników.',
             label: 'Ostatnie wyniki',
             status: 'missing',
           },
       strongestOperation?.operation === input.operation
         ? {
-            detail: `Najmocniejszy tryb na stronie glownej: ${strongestOperation.averageAccuracyPercent}% w ${strongestOperation.sessions} sesjach.`,
+            detail: `Najmocniejszy tryb na stronie głównej: ${strongestOperation.averageAccuracyPercent}% w ${strongestOperation.sessions} sesjach.`,
             label: 'Fokus treningowy',
             status: 'ready',
           }
         : weakestOperation?.operation === input.operation
           ? {
-              detail: `Tryb do powtorki na stronie glownej: ${weakestOperation.averageAccuracyPercent}% w ${weakestOperation.sessions} sesjach.`,
+              detail: `Tryb do powtórki na stronie głównej: ${weakestOperation.averageAccuracyPercent}% w ${weakestOperation.sessions} sesjach.`,
               label: 'Fokus treningowy',
               status: 'ready',
             }
           : {
               detail:
-                'Fokus treningowy jest juz gotowy, ale ten tryb nie jest teraz najmocniejsza ani najslabsza karta.',
+                'Fokus treningowy jest już gotowy, ale ten tryb nie jest teraz najmocniejszą ani najsłabszą kartą.',
               label: 'Fokus treningowy',
               status: 'missing',
             },

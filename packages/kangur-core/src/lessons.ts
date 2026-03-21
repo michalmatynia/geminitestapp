@@ -35,7 +35,7 @@ export const KANGUR_PORTABLE_LESSONS: readonly KangurPortableLesson[] = [
     id: 'kangur-lesson-calendar',
     componentId: 'calendar',
     title: 'Nauka kalendarza',
-    description: 'Dni, miesiace, daty i pory roku',
+    description: 'Dni, miesiące, daty i pory roku',
     emoji: '📅',
     sortOrder: 2 * KANGUR_LESSON_SORT_ORDER_GAP,
   },
@@ -230,7 +230,7 @@ export const getKangurLessonMasteryPresentation = (
   if (mastery.masteryPercent >= 85) {
     return {
       statusLabel: `Opanowane ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukonczono ${mastery.completions}x · najlepszy wynik ${mastery.bestScorePercent}%`,
+      summaryLabel: `Ukończono ${mastery.completions}x · najlepszy wynik ${mastery.bestScorePercent}%`,
       badgeAccent: 'emerald',
     };
   }
@@ -238,14 +238,14 @@ export const getKangurLessonMasteryPresentation = (
   if (mastery.masteryPercent >= 60) {
     return {
       statusLabel: `W trakcie ${mastery.masteryPercent}%`,
-      summaryLabel: `Ukonczono ${mastery.completions}x · ostatni wynik ${mastery.lastScorePercent}%`,
+      summaryLabel: `Ukończono ${mastery.completions}x · ostatni wynik ${mastery.lastScorePercent}%`,
       badgeAccent: 'amber',
     };
   }
 
   return {
-    statusLabel: `Powtorz ${mastery.masteryPercent}%`,
-    summaryLabel: `Ukonczono ${mastery.completions}x · ostatni wynik ${mastery.lastScorePercent}%`,
+    statusLabel: `Powtórz ${mastery.masteryPercent}%`,
+    summaryLabel: `Ukończono ${mastery.completions}x · ostatni wynik ${mastery.lastScorePercent}%`,
     badgeAccent: 'rose',
   };
 };

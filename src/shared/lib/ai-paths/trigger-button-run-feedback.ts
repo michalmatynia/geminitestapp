@@ -2,6 +2,7 @@
 
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { StatusVariant } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -10,6 +11,12 @@ const ACTIVE_FEEDBACK_TTL_MS = 60 * 60 * 1000;
 const TERMINAL_FEEDBACK_TTL_MS = 30 * 60 * 1000;
 
 export type TriggerButtonRunFeedbackStatus = AiPathRunRecord['status'] | 'waiting';
+
+export type TriggerButtonRunFeedbackPresentation = {
+  label: string;
+  variant: StatusVariant;
+  badgeClassName?: string;
+};
 
 export type TriggerButtonRunFeedbackSnapshot = {
   runId: string;
@@ -49,6 +56,50 @@ const RUN_FEEDBACK_STATUSES = new Set<TriggerButtonRunFeedbackStatus>([
   'canceled',
   'dead_lettered',
 ]);
+
+export const resolveTriggerButtonRunFeedbackPresentation = (
+  status: TriggerButtonRunFeedbackStatus
+): TriggerButtonRunFeedbackPresentation => {
+  switch (status) {
+    case 'waiting':
+      return {
+        label: 'Waiting',
+        variant: 'neutral',
+        badgeClassName:
+          'border-slate-500/40 bg-slate-500/20 text-slate-200 hover:bg-slate-500/25',
+      };
+    case 'queued':
+      return {
+        label: 'Queued',
+        variant: 'pending',
+        badgeClassName:
+          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+      };
+    case 'running':
+      return {
+        label: 'Running',
+        variant: 'processing',
+        badgeClassName:
+          'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
+      };
+    case 'blocked_on_lease':
+      return { label: 'Awaiting resource', variant: 'warning' };
+    case 'handoff_ready':
+      return { label: 'Ready for review', variant: 'info' };
+    case 'paused':
+      return { label: 'Paused', variant: 'warning' };
+    case 'completed':
+      return { label: 'Completed', variant: 'success' };
+    case 'failed':
+      return { label: 'Failed', variant: 'error' };
+    case 'canceled':
+      return { label: 'Canceled', variant: 'warning' };
+    case 'dead_lettered':
+      return { label: 'Failed (max retries)', variant: 'error' };
+    default:
+      return { label: status, variant: 'neutral' };
+  }
+};
 
 const isTrackedRunStatus = (
   status: TriggerButtonRunFeedbackStatus

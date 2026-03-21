@@ -89,6 +89,27 @@ describe('analyzeKangurMobileIosToolchain', () => {
     );
   });
 
+  it('warns with a specific message when simctl hits a transient CoreSimulatorService failure', () => {
+    const report = analyzeKangurMobileIosToolchain({
+      developerDir: '/Applications/Xcode.app/Contents/Developer',
+      simctlHasAvailableDevices: false,
+      simctlAvailable: false,
+      simctlLicenseBlocked: false,
+      simctlTransientFailure: true,
+      xcodebuildAvailable: true,
+    });
+
+    expect(report.status).toBe('ok');
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          level: 'warning',
+          message: expect.stringContaining('transient CoreSimulatorService failure'),
+        }),
+      ]),
+    );
+  });
+
   it('fails with a specific message when no simulator devices are available', () => {
     const report = analyzeKangurMobileIosToolchain({
       developerDir: '/Applications/Xcode.app/Contents/Developer',

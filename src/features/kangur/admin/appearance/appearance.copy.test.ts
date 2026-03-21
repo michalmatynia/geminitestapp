@@ -18,13 +18,13 @@ describe('appearance.copy', () => {
 
     expect(sections[0]).toMatchObject({
       id: 'corePalette',
-      title: 'Paleta glowna',
+      title: 'Paleta główna',
       subtitle: 'Kolory marki, tony tekstu i stany informacji zwrotnej w Kangur.',
     });
     expect(sections[0]?.fields[0]).toMatchObject({ label: 'Glowny akcent' });
 
     const homeActionsSection = sections.find(
-      (section) => section.title === 'Przyciski akcji strony glownej'
+      (section) => section.title === 'Przyciski akcji strony głównej'
     );
     expect(homeActionsSection?.fields[0]).toMatchObject({
       label: 'Lekcje Kolor tekstu',

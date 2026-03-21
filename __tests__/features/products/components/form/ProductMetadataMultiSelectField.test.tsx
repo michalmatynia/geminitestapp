@@ -1,4 +1,4 @@
-import { render } from '@/__tests__/test-utils';
+import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProductMetadataMultiSelectField } from '@/features/products/components/form/ProductMetadataMultiSelectField';

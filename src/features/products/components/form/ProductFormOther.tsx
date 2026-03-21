@@ -54,12 +54,19 @@ type CategoryIssueHintRowProps = {
   currentCategoryLabel: string;
   proposedCategoryLabel: string | null;
   selectedCategoryId: string | null;
+  canApplyReplacement: boolean;
 };
 
 const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
   props: CategoryIssueHintRowProps
 ): React.JSX.Element {
-  const { issue, currentCategoryLabel, proposedCategoryLabel, selectedCategoryId } = props;
+  const {
+    issue,
+    currentCategoryLabel,
+    proposedCategoryLabel,
+    selectedCategoryId,
+    canApplyReplacement,
+  } = props;
 
   const { categories, setCategoryId } = useProductFormMetadata();
   const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
@@ -102,7 +109,7 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
       value={currentCategoryLabel}
       proposedValueOverride={proposedCategoryLabel}
       hideMatchSnippet
-      onReplace={issue.replacementValue ? onReplace : undefined}
+      onReplace={issue.replacementValue && canApplyReplacement ? onReplace : undefined}
       onDeny={onDeny}
       denyLabel={getDenyActionLabel(issue.patternId)}
     />
@@ -353,9 +360,7 @@ export default function ProductFormOther(): React.JSX.Element {
                 categories,
                 categoryNameById,
               });
-              const proposedCategoryLabel = replacementId
-                ? resolvedReplacement?.displayValue ?? replacementId
-                : null;
+              const proposedCategoryLabel = resolvedReplacement?.displayValue ?? null;
               return (
                 <CategoryIssueHintRow
                   key={issue.patternId}
@@ -363,6 +368,7 @@ export default function ProductFormOther(): React.JSX.Element {
                   currentCategoryLabel={currentCategoryLabel}
                   proposedCategoryLabel={proposedCategoryLabel}
                   selectedCategoryId={selectedCategoryId}
+                  canApplyReplacement={Boolean(resolvedReplacement)}
                 />
               );
             })}

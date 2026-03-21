@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { act, fireEvent, render, screen, waitFor } from '@/__tests__/test-utils';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();

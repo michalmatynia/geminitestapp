@@ -1,5 +1,5 @@
 import { type InfiniteData, QueryClient, QueryClientProvider, type UseInfiniteQueryResult, type UseQueryResult, type UseSuspenseQueryResult } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@/__tests__/test-utils';
+import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import {

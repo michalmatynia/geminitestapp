@@ -1,14 +1,22 @@
 import 'dotenv/config';
 
-import type { MongoPersistedStringSettingRecord } from '@/shared/contracts/settings';
+import { KANGUR_SLOT_ASSIGNMENTS_KEY } from '@/shared/contracts/kangur';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
-import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
+import { encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   getKangurThemeSettingsKeyForAppearanceMode,
   KANGUR_THEME_CATALOG_KEY,
-  type KangurThemeCatalogEntry,
+  parseKangurThemeCatalog,
 } from '@/features/kangur/theme-settings';
+import {
+  KANGUR_LEGACY_SETTINGS_COLLECTION,
+  KANGUR_SETTINGS_COLLECTION,
+  readKangurSettingWithLegacyFallback,
+  resolveKangurStoredValue,
+  type KangurLegacySettingDocument,
+  type KangurSettingDoc,
+} from './kangur-settings-store';
 
 type CliOptions = {
   dryRun: boolean;
@@ -17,8 +25,6 @@ type CliOptions = {
 type SlotKey = 'daily' | 'dawn' | 'sunset' | 'nightly';
 type SlotAssignment = { id: string; name: string };
 type SlotAssignments = Partial<Record<SlotKey, SlotAssignment | null>>;
-
-type SettingDoc = MongoPersistedStringSettingRecord<string, Date>;
 
 type SyncResult = {
   slot: SlotKey;
@@ -29,8 +35,7 @@ type SyncResult = {
   reason?: string;
 };
 
-const SETTINGS_COLLECTION = 'settings';
-const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_cms_slot_assignments_v1';
+const LEGACY_SLOT_ASSIGNMENTS_KEY = 'kangur_cms_slot_assignments_v1';
 const SLOT_KEYS: SlotKey[] = ['daily', 'dawn', 'sunset', 'nightly'];
 const SLOT_MODE: Record<SlotKey, 'default' | 'dawn' | 'sunset' | 'dark'> = {
   daily: 'default',
@@ -55,11 +60,6 @@ const parseArgs = (argv: string[]): CliOptions => {
   return options;
 };
 
-const resolveStoredValue = (doc: SettingDoc | null | undefined, key: string): string | null => {
-  if (!doc || typeof doc.value !== 'string') return null;
-  return decodeSettingValue(key, doc.value);
-};
-
 const parseSlotAssignments = (raw: string | null): SlotAssignments => {
   if (!raw) return {};
   try {
@@ -71,23 +71,6 @@ const parseSlotAssignments = (raw: string | null): SlotAssignments => {
     // ignore malformed
   }
   return {};
-};
-
-const parseCatalog = (raw: string | null): KangurThemeCatalogEntry[] => {
-  if (!raw) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (entry): entry is KangurThemeCatalogEntry =>
-        entry !== null &&
-        typeof entry === 'object' &&
-        typeof (entry as Record<string, unknown>)['id'] === 'string' &&
-        typeof (entry as Record<string, unknown>)['name'] === 'string'
-    );
-  } catch {
-    return [];
-  }
 };
 
 const determineStatus = (current: string | null, nextValue: string): SyncResult['status'] => {
@@ -106,21 +89,24 @@ async function main(): Promise<void> {
 
   try {
     const db = await getMongoDb();
-    const collection = db.collection<SettingDoc>(SETTINGS_COLLECTION);
-
-    const slotDoc = await collection.findOne(
-      { key: KANGUR_SLOT_ASSIGNMENTS_KEY },
-      { projection: { value: 1 } }
+    const collection = db.collection<KangurSettingDoc>(KANGUR_SETTINGS_COLLECTION);
+    const legacyCollection = db.collection<KangurLegacySettingDocument>(
+      KANGUR_LEGACY_SETTINGS_COLLECTION
     );
-    const slotRaw = resolveStoredValue(slotDoc, KANGUR_SLOT_ASSIGNMENTS_KEY);
+
+    const slotRaw = await readKangurSettingWithLegacyFallback({
+      collection,
+      legacyCollection,
+      keys: [KANGUR_SLOT_ASSIGNMENTS_KEY, LEGACY_SLOT_ASSIGNMENTS_KEY],
+    });
     const assignments = parseSlotAssignments(slotRaw);
 
-    const catalogDoc = await collection.findOne(
-      { key: KANGUR_THEME_CATALOG_KEY },
-      { projection: { value: 1 } }
-    );
-    const catalogRaw = resolveStoredValue(catalogDoc, KANGUR_THEME_CATALOG_KEY);
-    const catalog = parseCatalog(catalogRaw);
+    const catalogRaw = await readKangurSettingWithLegacyFallback({
+      collection,
+      legacyCollection,
+      keys: [KANGUR_THEME_CATALOG_KEY],
+    });
+    const catalog = parseKangurThemeCatalog(catalogRaw);
 
     const now = new Date();
 
@@ -150,8 +136,11 @@ async function main(): Promise<void> {
       }
 
       const nextValue = serializeSetting(entry.settings);
-      const existing = await collection.findOne({ key: settingsKey }, { projection: { value: 1 } });
-      const currentValue = resolveStoredValue(existing, settingsKey);
+      const existing = await collection.findOne(
+        { $or: [{ _id: settingsKey }, { key: settingsKey }] },
+        { projection: { _id: 1, key: 1, value: 1 } }
+      );
+      const currentValue = resolveKangurStoredValue(existing, settingsKey);
       const status = determineStatus(currentValue, nextValue);
 
       results.push({
@@ -164,13 +153,15 @@ async function main(): Promise<void> {
 
       if (!options.dryRun && status !== 'unchanged') {
         await collection.updateOne(
-          { key: settingsKey },
+          { $or: [{ _id: settingsKey }, { key: settingsKey }] },
           {
             $set: {
+              key: settingsKey,
               value: encodeSettingValue(settingsKey, nextValue),
               updatedAt: now,
             },
             $setOnInsert: {
+              _id: settingsKey,
               createdAt: now,
             },
           },

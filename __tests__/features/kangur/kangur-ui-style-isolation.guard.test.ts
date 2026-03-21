@@ -89,6 +89,13 @@ const KANGUR_VISUAL_CONTRACTS = [
     file: 'src/app/(frontend)/kangur/login/page.tsx',
     requiredTokens: ['KangurFeatureRouteShell', "translations('routeLoading')"],
   },
+  {
+    file: 'src/app/globals.css',
+    requiredTokens: [
+      'kangur-surface-active',
+      '--kangur-soft-card-border',
+    ],
+  },
 ] as const;
 
 const IMPORT_FROM_RE = /(?:import|export)\s+[^'"]*from\s+['"]([^'"]+)['"]/g;

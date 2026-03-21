@@ -1,12 +1,11 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import React from 'react';
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
 } from '@/features/kangur/storefront-appearance-settings';
-import { LoadingPanel } from '@/shared/ui/LoadingPanel';
+import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 
 const LazyKangurPublicApp = React.lazy(() =>
   import('./KangurPublicApp').then((mod) => ({
@@ -23,11 +22,10 @@ export function KangurPublicAppEntry({
   initialMode?: KangurStorefrontAppearanceMode;
   initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
 }): React.JSX.Element {
-  const translations = useTranslations('KangurPublic');
 
   return (
     <React.Suspense
-      fallback={<LoadingPanel>{translations('entryLoading')}</LoadingPanel>}
+      fallback={<KangurAppLoader visible={true} />}
     >
       <LazyKangurPublicApp
         basePath={basePath}

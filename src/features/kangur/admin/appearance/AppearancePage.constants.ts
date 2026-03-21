@@ -17,6 +17,7 @@ import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/S
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 export type { KangurThemeMode as AppearanceSlot } from '@/features/kangur/theme-settings';
+export { KANGUR_SLOT_ASSIGNMENTS_KEY } from '@/shared/contracts/kangur';
 
 export const SLOT_ORDER: AppearanceSlot[] = ['daily', 'dawn', 'sunset', 'nightly'];
 
@@ -100,8 +101,6 @@ export const resolveFactoryTheme = (id: ThemeSelectionId): ThemeSettings => {
       return KANGUR_FACTORY_DAILY_THEME;
   }
 };
-
-export const KANGUR_SLOT_ASSIGNMENTS_KEY = 'kangur_slot_assignments';
 
 export type SlotAssignments = Record<AppearanceSlot, { id: string; name: string } | null>;
 

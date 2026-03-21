@@ -117,7 +117,7 @@ function SignInPageLoader(): React.JSX.Element {
             aria-busy={isSubmitting}
           >
             {error && (
-              <Alert variant='error' className='text-xs'>
+              <Alert id='signin-error' variant='error' className='text-xs' role='alert'>
                 {error}
               </Alert>
             )}
@@ -132,6 +132,7 @@ function SignInPageLoader(): React.JSX.Element {
                 required
                 ref={focusOnMount}
                 autoComplete='email'
+                aria-describedby={error ? 'signin-error' : undefined}
                 className='h-10 bg-gray-900/50'
               />
             </FormField>
@@ -144,6 +145,7 @@ function SignInPageLoader(): React.JSX.Element {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete='current-password'
+                aria-describedby={error ? 'signin-error' : undefined}
                 className='h-10 bg-gray-900/50'
               />
             </FormField>

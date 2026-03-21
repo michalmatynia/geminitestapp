@@ -5,6 +5,15 @@ import type { NextRequest } from 'next/server';
 
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type {
+  CatchAllRouteDefinition as RouteDefinition,
+  CatchAllOptionalRoutePatternToken as PatternToken,
+  CatchAllRouteHandler as RouteHandler,
+  CatchAllRouteMethod as HttpMethod,
+  CatchAllRouteModule as RouteModule,
+  CatchAllRouteParams as Params,
+  CatchAllRoutePathParams as RouteParams,
+} from '@/shared/lib/api/catch-all-route-types';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as productsIndex from '../route-handler';
@@ -62,21 +71,6 @@ import * as productImagesLinkToFile from '../[id]/images/link-to-file/route-hand
 import * as productImagesById from '../[id]/images/[imageFileId]/route-handler';
 import * as productStudio from '../[id]/studio/route-handler';
 import * as productStudioAction from '../[id]/studio/[action]/route-handler';
-
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type Params = Record<string, string>;
-type RouteParams = { path?: string[] | string };
-type RouteHandler<P extends Params = Params> = (
-  request: NextRequest,
-  context: { params: P | Promise<P> }
-) => Promise<Response>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
-type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
-type PatternToken =
-  | string
-  | { literal: string; optional?: boolean }
-  | { param: string; optional?: boolean };
-type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 

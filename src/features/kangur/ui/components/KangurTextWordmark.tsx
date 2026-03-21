@@ -1,4 +1,5 @@
 import { KangurWordmarkBase } from '@/features/kangur/ui/components/KangurWordmarkBase';
+import { KANGUR_WORDMARK_DEFAULT_TEXT_PROPS } from '@/features/kangur/ui/components/kangur-wordmark';
 
 export type KangurTextWordmarkProps = React.SVGProps<SVGSVGElement> & {
   arcPath?: string;
@@ -6,17 +7,6 @@ export type KangurTextWordmarkProps = React.SVGProps<SVGSVGElement> & {
   label: string;
   textProps?: React.SVGProps<SVGTextElement>;
 };
-
-const KANGUR_TEXT_WORDMARK_TEXT_PROPS = {
-  fontFamily:
-    'var(--kangur-wordmark-font, "Baloo 2", "Averia Sans Libre", "Trebuchet MS", sans-serif)',
-  fontSize: 68,
-  fontWeight: 700,
-  letterSpacing: '-0.02em',
-  textAnchor: 'middle',
-  x: 281,
-  y: 103,
-} satisfies React.SVGProps<SVGTextElement>;
 
 export function KangurTextWordmark({
   arcPath = 'M104 118C208 140 322 140 442 112',
@@ -31,7 +21,7 @@ export function KangurTextWordmark({
       idPrefix={idPrefix}
       textLabel={label}
       textProps={{
-        ...KANGUR_TEXT_WORDMARK_TEXT_PROPS,
+        ...KANGUR_WORDMARK_DEFAULT_TEXT_PROPS,
         ...textProps,
       }}
       wordTransform='translate(108 111)'

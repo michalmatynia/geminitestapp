@@ -21,12 +21,12 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie' | 'game';
-type GeometryBasicsTranslate = (key: string) => string;
 
-const createStaticTranslator = (messages: Record<string, unknown>): GeometryBasicsTranslate => (key) => {
+const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
   const resolved = key.split('.').reduce<unknown>(
     (current, segment) =>
       typeof current === 'object' && current !== null
@@ -39,7 +39,7 @@ const createStaticTranslator = (messages: Record<string, unknown>): GeometryBasi
 };
 
 const buildGeometryBasicsSlides = (
-  translations: GeometryBasicsTranslate
+  translations: LessonTranslate
 ): Record<Exclude<SectionId, 'game'>, LessonSlide[]> => ({
   punkt: [
     {
@@ -277,7 +277,7 @@ const buildGeometryBasicsSlides = (
   ],
 });
 
-const buildGeometryBasicsSections = (translations: GeometryBasicsTranslate) => [
+const buildGeometryBasicsSections = (translations: LessonTranslate) => [
   {
     id: 'punkt',
     emoji: '●',

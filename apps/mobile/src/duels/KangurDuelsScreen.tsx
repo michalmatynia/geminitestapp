@@ -17,6 +17,11 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import {
+  useKangurMobileI18n,
+  type KangurMobileLocale,
+  type KangurMobileLocalizedValue,
+} from '../i18n/kangurMobileI18n';
 import { shareKangurDuelInvite } from './duelInviteShare';
 import { createKangurDuelsHref } from './duelsHref';
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
@@ -31,9 +36,22 @@ type Tone = {
 
 const HOME_ROUTE = '/' as Href;
 
-const DUEL_MODE_LABELS: Record<KangurDuelMode, string> = {
-  challenge: 'Wyzwanie',
-  quick_match: 'Szybki mecz',
+const localizeDuelText = (
+  value: KangurMobileLocalizedValue<string>,
+  locale: KangurMobileLocale,
+): string => value[locale];
+
+const DUEL_MODE_LABELS: Record<KangurDuelMode, KangurMobileLocalizedValue<string>> = {
+  challenge: {
+    de: 'Herausforderung',
+    en: 'Challenge',
+    pl: 'Wyzwanie',
+  },
+  quick_match: {
+    de: 'Schnelles Match',
+    en: 'Quick match',
+    pl: 'Szybki mecz',
+  },
 };
 
 const DUEL_OPERATION_SYMBOLS: Record<KangurDuelOperation, string> = {
@@ -43,17 +61,48 @@ const DUEL_OPERATION_SYMBOLS: Record<KangurDuelOperation, string> = {
   division: '÷',
 };
 
-const DUEL_OPERATION_LABELS: Record<KangurDuelOperation, string> = {
-  addition: 'Dodawanie',
-  subtraction: 'Odejmowanie',
-  multiplication: 'Mnożenie',
-  division: 'Dzielenie',
+const DUEL_OPERATION_LABELS: Record<KangurDuelOperation, KangurMobileLocalizedValue<string>> = {
+  addition: {
+    de: 'Addition',
+    en: 'Addition',
+    pl: 'Dodawanie',
+  },
+  subtraction: {
+    de: 'Subtraktion',
+    en: 'Subtraction',
+    pl: 'Odejmowanie',
+  },
+  multiplication: {
+    de: 'Multiplikation',
+    en: 'Multiplication',
+    pl: 'Mnożenie',
+  },
+  division: {
+    de: 'Division',
+    en: 'Division',
+    pl: 'Dzielenie',
+  },
 };
 
-const DUEL_DIFFICULTY_LABELS: Record<KangurDuelDifficulty, string> = {
-  easy: 'Łatwy',
-  medium: 'Średni',
-  hard: 'Trudny',
+const DUEL_DIFFICULTY_LABELS: Record<
+  KangurDuelDifficulty,
+  KangurMobileLocalizedValue<string>
+> = {
+  easy: {
+    de: 'Leicht',
+    en: 'Easy',
+    pl: 'Łatwy',
+  },
+  medium: {
+    de: 'Mittel',
+    en: 'Medium',
+    pl: 'Średni',
+  },
+  hard: {
+    de: 'Schwer',
+    en: 'Hard',
+    pl: 'Trudny',
+  },
 };
 
 const DUEL_DIFFICULTY_EMOJIS: Record<KangurDuelDifficulty, string> = {
@@ -62,30 +111,98 @@ const DUEL_DIFFICULTY_EMOJIS: Record<KangurDuelDifficulty, string> = {
   hard: '🔴',
 };
 
-const DUEL_STATUS_LABELS: Record<KangurDuelStatus, string> = {
-  aborted: 'Przerwany',
-  completed: 'Zakończony',
-  created: 'Utworzony',
-  in_progress: 'W trakcie',
-  ready: 'Gotowy',
-  waiting: 'Oczekiwanie',
+const DUEL_STATUS_LABELS: Record<KangurDuelStatus, KangurMobileLocalizedValue<string>> = {
+  aborted: {
+    de: 'Abgebrochen',
+    en: 'Aborted',
+    pl: 'Przerwany',
+  },
+  completed: {
+    de: 'Beendet',
+    en: 'Completed',
+    pl: 'Zakończony',
+  },
+  created: {
+    de: 'Erstellt',
+    en: 'Created',
+    pl: 'Utworzony',
+  },
+  in_progress: {
+    de: 'Läuft',
+    en: 'In progress',
+    pl: 'W trakcie',
+  },
+  ready: {
+    de: 'Bereit',
+    en: 'Ready',
+    pl: 'Gotowy',
+  },
+  waiting: {
+    de: 'Warten',
+    en: 'Waiting',
+    pl: 'Oczekiwanie',
+  },
 };
 
-const DUEL_PLAYER_STATUS_LABELS: Record<KangurDuelPlayerStatus, string> = {
-  completed: 'Ukończono',
-  invited: 'Zaproszony',
-  left: 'Wyszedł',
-  playing: 'Gra',
-  ready: 'Gotowy',
+const DUEL_PLAYER_STATUS_LABELS: Record<
+  KangurDuelPlayerStatus,
+  KangurMobileLocalizedValue<string>
+> = {
+  completed: {
+    de: 'Fertig',
+    en: 'Completed',
+    pl: 'Ukończono',
+  },
+  invited: {
+    de: 'Eingeladen',
+    en: 'Invited',
+    pl: 'Zaproszony',
+  },
+  left: {
+    de: 'Verlassen',
+    en: 'Left',
+    pl: 'Wyszedł',
+  },
+  playing: {
+    de: 'Spielt',
+    en: 'Playing',
+    pl: 'Gra',
+  },
+  ready: {
+    de: 'Bereit',
+    en: 'Ready',
+    pl: 'Gotowy',
+  },
 };
 
 const MODE_FILTER_OPTIONS: Array<{
   value: 'all' | KangurDuelMode;
-  label: string;
+  label: KangurMobileLocalizedValue<string>;
 }> = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'quick_match', label: 'Szybkie mecze' },
-  { value: 'challenge', label: 'Wyzwania' },
+  {
+    value: 'all',
+    label: {
+      de: 'Alle',
+      en: 'All',
+      pl: 'Wszystkie',
+    },
+  },
+  {
+    value: 'quick_match',
+    label: {
+      de: 'Schnelle Matches',
+      en: 'Quick matches',
+      pl: 'Szybkie mecze',
+    },
+  },
+  {
+    value: 'challenge',
+    label: {
+      de: 'Herausforderungen',
+      en: 'Challenges',
+      pl: 'Wyzwania',
+    },
+  },
 ];
 
 const OPERATION_OPTIONS: KangurDuelOperation[] = [
@@ -118,14 +235,45 @@ const DUEL_REACTION_EMOJIS: Record<KangurDuelReactionType, string> = {
   thumbs_up: '👍',
 };
 
-const DUEL_REACTION_LABELS: Record<KangurDuelReactionType, string> = {
-  cheer: 'Brawa',
-  wow: 'Wow',
-  gg: 'Dobra gra',
-  fire: 'Ogień',
-  clap: 'Super',
-  rocket: 'Rakieta',
-  thumbs_up: 'Kciuk w górę',
+const DUEL_REACTION_LABELS: Record<
+  KangurDuelReactionType,
+  KangurMobileLocalizedValue<string>
+> = {
+  cheer: {
+    de: 'Applaus',
+    en: 'Cheer',
+    pl: 'Brawa',
+  },
+  wow: {
+    de: 'Wow',
+    en: 'Wow',
+    pl: 'Wow',
+  },
+  gg: {
+    de: 'Gutes Spiel',
+    en: 'Good game',
+    pl: 'Dobra gra',
+  },
+  fire: {
+    de: 'Feuer',
+    en: 'Fire',
+    pl: 'Ogień',
+  },
+  clap: {
+    de: 'Super',
+    en: 'Nice',
+    pl: 'Super',
+  },
+  rocket: {
+    de: 'Rakete',
+    en: 'Rocket',
+    pl: 'Rakieta',
+  },
+  thumbs_up: {
+    de: 'Daumen hoch',
+    en: 'Thumbs up',
+    pl: 'Kciuk w górę',
+  },
 };
 
 function isWaitingSessionStatus(status: KangurDuelStatus): boolean {
@@ -426,28 +574,51 @@ function getPlayerStatusTone(status: KangurDuelPlayerStatus): Tone {
   };
 }
 
-function formatModeLabel(mode: KangurDuelMode): string {
-  return DUEL_MODE_LABELS[mode];
+function formatModeLabel(mode: KangurDuelMode, locale: KangurMobileLocale): string {
+  return localizeDuelText(DUEL_MODE_LABELS[mode], locale);
 }
 
-function formatOperationLabel(operation: KangurDuelOperation): string {
-  return `${DUEL_OPERATION_SYMBOLS[operation]} ${DUEL_OPERATION_LABELS[operation]}`;
+function formatOperationLabel(
+  operation: KangurDuelOperation,
+  locale: KangurMobileLocale,
+): string {
+  return `${DUEL_OPERATION_SYMBOLS[operation]} ${localizeDuelText(DUEL_OPERATION_LABELS[operation], locale)}`;
 }
 
-function formatDifficultyLabel(difficulty: KangurDuelDifficulty): string {
-  return `${DUEL_DIFFICULTY_EMOJIS[difficulty]} ${DUEL_DIFFICULTY_LABELS[difficulty]}`;
+function formatDifficultyLabel(
+  difficulty: KangurDuelDifficulty,
+  locale: KangurMobileLocale,
+): string {
+  return `${DUEL_DIFFICULTY_EMOJIS[difficulty]} ${localizeDuelText(DUEL_DIFFICULTY_LABELS[difficulty], locale)}`;
 }
 
-function formatStatusLabel(status: KangurDuelStatus): string {
-  return DUEL_STATUS_LABELS[status];
+function formatStatusLabel(status: KangurDuelStatus, locale: KangurMobileLocale): string {
+  return localizeDuelText(DUEL_STATUS_LABELS[status], locale);
 }
 
-function formatSeriesBestOfLabel(bestOf: 1 | 3 | 5 | 7 | 9): string {
+function formatSeriesBestOfLabel(
+  bestOf: 1 | 3 | 5 | 7 | 9,
+  locale: KangurMobileLocale,
+): string {
   if (bestOf === 1) {
-    return 'Pojedynczy mecz';
+    return localizeDuelText(
+      {
+        de: 'Einzelnes Match',
+        en: 'Single match',
+        pl: 'Pojedynczy mecz',
+      },
+      locale,
+    );
   }
 
-  return `Seria BO${bestOf}`;
+  return localizeDuelText(
+    {
+      de: `BO${bestOf}-Serie`,
+      en: `BO${bestOf} series`,
+      pl: `Seria BO${bestOf}`,
+    },
+    locale,
+  );
 }
 
 function normalizeSeriesBestOf(
@@ -460,58 +631,119 @@ function normalizeSeriesBestOf(
   return 1;
 }
 
-function formatPlayerStatusLabel(status: KangurDuelPlayerStatus): string {
-  return DUEL_PLAYER_STATUS_LABELS[status];
+function formatPlayerStatusLabel(
+  status: KangurDuelPlayerStatus,
+  locale: KangurMobileLocale,
+): string {
+  return localizeDuelText(DUEL_PLAYER_STATUS_LABELS[status], locale);
 }
 
-function formatReactionLabel(type: KangurDuelReactionType): string {
-  return `${DUEL_REACTION_EMOJIS[type]} ${DUEL_REACTION_LABELS[type]}`;
+function formatReactionLabel(
+  type: KangurDuelReactionType,
+  locale: KangurMobileLocale,
+): string {
+  return `${DUEL_REACTION_EMOJIS[type]} ${localizeDuelText(DUEL_REACTION_LABELS[type], locale)}`;
 }
 
-function formatRelativeAge(isoString: string): string {
+function formatRelativeAge(isoString: string, locale: KangurMobileLocale): string {
   const parsed = Date.parse(isoString);
   if (!Number.isFinite(parsed)) {
-    return 'przed chwilą';
+    return localizeDuelText(
+      {
+        de: 'gerade eben',
+        en: 'just now',
+        pl: 'przed chwilą',
+      },
+      locale,
+    );
   }
 
   const seconds = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
   if (seconds < 10) {
-    return 'przed chwilą';
+    return localizeDuelText(
+      {
+        de: 'gerade eben',
+        en: 'just now',
+        pl: 'przed chwilą',
+      },
+      locale,
+    );
   }
   if (seconds < 60) {
-    return `${seconds}s temu`;
+    return locale === 'de'
+      ? `vor ${seconds}s`
+      : locale === 'en'
+        ? `${seconds}s ago`
+        : `${seconds}s temu`;
   }
 
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `${minutes} min temu`;
+    return locale === 'de'
+      ? `vor ${minutes} Min.`
+      : locale === 'en'
+        ? `${minutes} min ago`
+        : `${minutes} min temu`;
   }
 
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return `${hours} godz. temu`;
+    return locale === 'de'
+      ? `vor ${hours} Std.`
+      : locale === 'en'
+        ? `${hours} hr ago`
+        : `${hours} godz. temu`;
   }
 
   const days = Math.floor(hours / 24);
-  return `${days} dni temu`;
+  return locale === 'de'
+    ? `vor ${days} Tagen`
+    : locale === 'en'
+      ? `${days} days ago`
+      : `${days} dni temu`;
 }
 
-function formatQuestionProgress(session: KangurDuelSession, player: KangurDuelPlayer): string {
+function formatQuestionProgress(
+  session: KangurDuelSession,
+  player: KangurDuelPlayer,
+  locale: KangurMobileLocale,
+): string {
   const completed = Math.min(player.currentQuestionIndex ?? 0, session.questionCount);
-  return `${completed}/${session.questionCount} pytań`;
+  return locale === 'de'
+    ? `${completed}/${session.questionCount} Fragen`
+    : locale === 'en'
+      ? `${completed}/${session.questionCount} questions`
+      : `${completed}/${session.questionCount} pytań`;
 }
 
-function formatSpectatorQuestionProgress(session: KangurDuelSession): string {
+function formatSpectatorQuestionProgress(
+  session: KangurDuelSession,
+  locale: KangurMobileLocale,
+): string {
   const currentQuestion =
     session.status === 'in_progress'
       ? Math.min((session.currentQuestionIndex ?? 0) + 1, session.questionCount)
       : Math.min(session.currentQuestionIndex ?? 0, session.questionCount);
-  return `Runda ${currentQuestion}/${session.questionCount}`;
+  return locale === 'de'
+    ? `Runde ${currentQuestion}/${session.questionCount}`
+    : locale === 'en'
+      ? `Round ${currentQuestion}/${session.questionCount}`
+      : `Runda ${currentQuestion}/${session.questionCount}`;
 }
 
-function resolveWinnerSummary(players: KangurDuelPlayer[]): string {
+function resolveWinnerSummary(
+  players: KangurDuelPlayer[],
+  locale: KangurMobileLocale,
+): string {
   if (!players.length) {
-    return 'Pojedynek zakończony.';
+    return localizeDuelText(
+      {
+        de: 'Das Duell ist beendet.',
+        en: 'The duel is finished.',
+        pl: 'Pojedynek zakończony.',
+      },
+      locale,
+    );
   }
 
   const sorted = [...players].sort((left, right) => {
@@ -523,7 +755,14 @@ function resolveWinnerSummary(players: KangurDuelPlayer[]): string {
   const secondPlayer = sorted[1];
 
   if (!topPlayer) {
-    return 'Pojedynek zakończony.';
+    return localizeDuelText(
+      {
+        de: 'Das Duell ist beendet.',
+        en: 'The duel is finished.',
+        pl: 'Pojedynek zakończony.',
+      },
+      locale,
+    );
   }
 
   const topScore = topPlayer.score + (topPlayer.bonusPoints ?? 0);
@@ -532,30 +771,59 @@ function resolveWinnerSummary(players: KangurDuelPlayer[]): string {
     : null;
 
   if (secondScore !== null && secondScore === topScore) {
-    return 'Remis po ostatniej rundzie.';
+    return localizeDuelText(
+      {
+        de: 'Unentschieden nach der letzten Runde.',
+        en: 'Draw after the final round.',
+        pl: 'Remis po ostatniej rundzie.',
+      },
+      locale,
+    );
   }
 
-  return `Wygrywa ${topPlayer.displayName} z wynikiem ${topScore}.`;
+  return locale === 'de'
+    ? `${topPlayer.displayName} gewinnt mit ${topScore} Punkten.`
+    : locale === 'en'
+      ? `${topPlayer.displayName} wins with ${topScore} points.`
+      : `Wygrywa ${topPlayer.displayName} z wynikiem ${topScore}.`;
 }
 
-function formatSeriesTitle(series: KangurDuelSeries): string {
-  return `Seria BO${series.bestOf}`;
+function formatSeriesTitle(series: KangurDuelSeries, locale: KangurMobileLocale): string {
+  return formatSeriesBestOfLabel(normalizeSeriesBestOf(series.bestOf), locale);
 }
 
-function formatSeriesProgress(series: KangurDuelSeries): string {
+function formatSeriesProgress(
+  series: KangurDuelSeries,
+  locale: KangurMobileLocale,
+): string {
   const gameIndex = Math.min(
     series.bestOf,
     Math.max(1, series.gameIndex),
   );
-  return `Gra ${gameIndex} z ${series.bestOf}`;
+  return locale === 'de'
+    ? `Spiel ${gameIndex} von ${series.bestOf}`
+    : locale === 'en'
+      ? `Game ${gameIndex} of ${series.bestOf}`
+      : `Gra ${gameIndex} z ${series.bestOf}`;
 }
 
-function formatLobbySeriesSummary(series: KangurDuelSeries): string {
+function formatLobbySeriesSummary(
+  series: KangurDuelSeries,
+  locale: KangurMobileLocale,
+): string {
   if (series.isComplete) {
-    return `Seria zakończona · ukończone gry: ${series.completedGames}`;
+    return locale === 'de'
+      ? `Serie beendet · abgeschlossene Spiele: ${series.completedGames}`
+      : locale === 'en'
+        ? `Series complete · completed games: ${series.completedGames}`
+        : `Seria zakończona · ukończone gry: ${series.completedGames}`;
   }
 
-  return `${formatSeriesProgress(series)} · ukończone gry: ${series.completedGames}`;
+  return locale === 'de'
+    ? `${formatSeriesProgress(series, locale)} · abgeschlossene Spiele: ${series.completedGames}`
+    : locale === 'en'
+      ? `${formatSeriesProgress(series, locale)} · completed games: ${series.completedGames}`
+      : `${formatSeriesProgress(series, locale)} · ukończone gry: ${series.completedGames}`;
 }
 
 function resolveSeriesWins(
@@ -568,9 +836,14 @@ function resolveSeriesWins(
 function formatSeriesSummary(
   series: KangurDuelSeries,
   players: KangurDuelPlayer[],
+  locale: KangurMobileLocale,
 ): string {
   if (players.length === 0) {
-    return `Ukończono ${series.completedGames} gier w serii.`;
+    return locale === 'de'
+      ? `${series.completedGames} Spiele der Serie wurden abgeschlossen.`
+      : locale === 'en'
+        ? `${series.completedGames} games in the series have been completed.`
+        : `Ukończono ${series.completedGames} gier w serii.`;
   }
 
   const rankedPlayers = [...players].sort((left, right) => {
@@ -587,7 +860,11 @@ function formatSeriesSummary(
   );
 
   if (!leader) {
-    return `Ukończono ${series.completedGames} gier w serii.`;
+    return locale === 'de'
+      ? `${series.completedGames} Spiele der Serie wurden abgeschlossen.`
+      : locale === 'en'
+        ? `${series.completedGames} games in the series have been completed.`
+        : `Ukończono ${series.completedGames} gier w serii.`;
   }
 
   const leaderWins = resolveSeriesWins(series, leader.learnerId);
@@ -597,21 +874,44 @@ function formatSeriesSummary(
 
   if (series.isComplete) {
     if (challenger && challengerWins === leaderWins) {
-      return `Seria zakończona remisem ${leaderWins}:${challengerWins}.`;
+      return locale === 'de'
+        ? `Die Serie endete unentschieden ${leaderWins}:${challengerWins}.`
+        : locale === 'en'
+          ? `The series ended in a ${leaderWins}:${challengerWins} draw.`
+          : `Seria zakończona remisem ${leaderWins}:${challengerWins}.`;
     }
 
-    return `Serię wygrywa ${leader.displayName} ${leaderWins}:${challengerWins}.`;
+    return locale === 'de'
+      ? `${leader.displayName} gewinnt die Serie ${leaderWins}:${challengerWins}.`
+      : locale === 'en'
+        ? `${leader.displayName} wins the series ${leaderWins}:${challengerWins}.`
+        : `Serię wygrywa ${leader.displayName} ${leaderWins}:${challengerWins}.`;
   }
 
   if (leaderWins === 0 && challengerWins === 0) {
-    return 'Pierwsza gra serii jeszcze się nie rozstrzygnęła.';
+    return localizeDuelText(
+      {
+        de: 'Das erste Spiel der Serie ist noch nicht entschieden.',
+        en: 'The first game of the series is still undecided.',
+        pl: 'Pierwsza gra serii jeszcze się nie rozstrzygnęła.',
+      },
+      locale,
+    );
   }
 
   if (challenger && challengerWins === leaderWins) {
-    return `Seria jest remisowa ${leaderWins}:${challengerWins}.`;
+    return locale === 'de'
+      ? `Die Serie steht ${leaderWins}:${challengerWins} unentschieden.`
+      : locale === 'en'
+        ? `The series is tied ${leaderWins}:${challengerWins}.`
+        : `Seria jest remisowa ${leaderWins}:${challengerWins}.`;
   }
 
-  return `Prowadzi ${leader.displayName} ${leaderWins}:${challengerWins}.`;
+  return locale === 'de'
+    ? `${leader.displayName} führt ${leaderWins}:${challengerWins}.`
+    : locale === 'en'
+      ? `${leader.displayName} leads ${leaderWins}:${challengerWins}.`
+      : `Prowadzi ${leader.displayName} ${leaderWins}:${challengerWins}.`;
 }
 
 function resolveSessionIdParam(value: string | string[] | undefined): string | null {
@@ -629,8 +929,18 @@ function resolveSpectateParam(value: string | string[] | undefined): boolean {
 function formatLobbyChatSenderLabel(
   message: KangurDuelLobbyChatMessage,
   activeLearnerId: string | null,
+  locale: KangurMobileLocale,
 ): string {
-  return message.senderId === activeLearnerId ? 'Ty' : message.senderName;
+  return message.senderId === activeLearnerId
+    ? localizeDuelText(
+        {
+          de: 'Du',
+          en: 'You',
+          pl: 'Ty',
+        },
+        locale,
+      )
+    : message.senderName;
 }
 
 function LobbyEntryCard({
@@ -638,6 +948,7 @@ function LobbyEntryCard({
   actionLabel,
   description,
   entry,
+  locale,
 }: {
   action: React.ReactNode;
   actionLabel: string;
@@ -658,6 +969,7 @@ function LobbyEntryCard({
     timePerQuestionSec: number;
     updatedAt: string;
   };
+  locale: KangurMobileLocale;
 }): React.JSX.Element {
   return (
     <View
@@ -680,9 +992,9 @@ function LobbyEntryCard({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill label={formatModeLabel(entry.mode)} tone={getStatusTone(entry.status)} />
+        <Pill label={formatModeLabel(entry.mode, locale)} tone={getStatusTone(entry.status)} />
         <Pill
-          label={formatOperationLabel(entry.operation)}
+          label={formatOperationLabel(entry.operation, locale)}
           tone={{
             backgroundColor: '#eff6ff',
             borderColor: '#bfdbfe',
@@ -690,7 +1002,7 @@ function LobbyEntryCard({
           }}
         />
         <Pill
-          label={formatDifficultyLabel(entry.difficulty)}
+          label={formatDifficultyLabel(entry.difficulty, locale)}
           tone={{
             backgroundColor: '#fffbeb',
             borderColor: '#fde68a',
@@ -699,7 +1011,7 @@ function LobbyEntryCard({
         />
         {entry.series ? (
           <Pill
-            label={formatSeriesTitle(entry.series)}
+            label={formatSeriesTitle(entry.series, locale)}
             tone={{
               backgroundColor: '#f5f3ff',
               borderColor: '#ddd6fe',
@@ -710,12 +1022,15 @@ function LobbyEntryCard({
       </View>
 
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {entry.questionCount} pytań · {entry.timePerQuestionSec}s na pytanie · aktualizacja{' '}
-        {formatRelativeAge(entry.updatedAt)}
+        {locale === 'de'
+          ? `${entry.questionCount} Fragen · ${entry.timePerQuestionSec}s pro Frage · aktualisiert ${formatRelativeAge(entry.updatedAt, locale)}`
+          : locale === 'en'
+            ? `${entry.questionCount} questions · ${entry.timePerQuestionSec}s per question · updated ${formatRelativeAge(entry.updatedAt, locale)}`
+            : `${entry.questionCount} pytań · ${entry.timePerQuestionSec}s na pytanie · aktualizacja ${formatRelativeAge(entry.updatedAt, locale)}`}
       </Text>
       {entry.series ? (
         <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-          {formatLobbySeriesSummary(entry.series)}
+          {formatLobbySeriesSummary(entry.series, locale)}
         </Text>
       ) : null}
 
@@ -728,6 +1043,7 @@ function LobbyEntryCard({
 }
 
 export function KangurDuelsScreen(): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const params = useLocalSearchParams<{
     join?: string | string[];
     spectate?: string | string[];
@@ -791,7 +1107,13 @@ export function KangurDuelsScreen(): React.JSX.Element {
       hasWaitingSession &&
       (hasPendingInvitedPlayer || isInvitedLearnerMissing || needsMorePlayersToStart),
   );
-  const inviteeName = duel.session?.invitedLearnerName?.trim() || 'drugiej osoby';
+  const inviteeName =
+    duel.session?.invitedLearnerName?.trim() ||
+    copy({
+      de: 'der zweiten Person',
+      en: 'the other player',
+      pl: 'drugiej osoby',
+    });
 
   const createLoginCallToAction = (label: string): React.JSX.Element =>
     supportsLearnerCredentials ? (
@@ -857,6 +1179,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
     try {
       await shareKangurDuelInvite({
+        locale,
         sessionId: duel.session.id,
         sharerDisplayName: duel.player.displayName,
       });
@@ -864,7 +1187,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
       setInviteShareError(
         error instanceof Error && error.message.trim().length > 0
           ? error.message
-          : 'Nie udało się udostępnić linku do zaproszenia.',
+          : copy({
+              de: 'Der Einladungslink konnte nicht geteilt werden.',
+              en: 'Could not share the invite link.',
+              pl: 'Nie udało się udostępnić linku do zaproszenia.',
+            }),
       );
     }
   };
@@ -885,7 +1212,12 @@ export function KangurDuelsScreen(): React.JSX.Element {
       }
 
       setRouteJoinError(
-        lobby.actionError ?? 'Nie udało się dołączyć do zaproszenia do pojedynku.',
+        lobby.actionError ??
+          copy({
+            de: 'Der Duell-Einladung konnte nicht beigetreten werden.',
+            en: 'Could not join the duel invite.',
+            pl: 'Nie udało się dołączyć do zaproszenia do pojedynku.',
+          }),
       );
     } finally {
       setIsJoiningFromRoute(false);
@@ -924,13 +1256,23 @@ export function KangurDuelsScreen(): React.JSX.Element {
       return;
     }
 
-    setChatActionError('Nie udało się wysłać wiadomości do czatu lobby.');
+    setChatActionError(
+      copy({
+        de: 'Die Nachricht konnte nicht in den Lobby-Chat gesendet werden.',
+        en: 'Could not send the message to the lobby chat.',
+        pl: 'Nie udało się wysłać wiadomości do czatu lobby.',
+      }),
+    );
   };
 
   const renderJoinAction = (targetSessionId: string): React.JSX.Element =>
     lobby.isAuthenticated ? (
       <ActionButton
-        label='Dołącz do pojedynku'
+        label={copy({
+          de: 'Duell beitreten',
+          en: 'Join duel',
+          pl: 'Dołącz do pojedynku',
+        })}
         onPress={async () => {
           const nextSessionId = await lobby.joinDuel(targetSessionId);
           if (nextSessionId) {
@@ -940,13 +1282,23 @@ export function KangurDuelsScreen(): React.JSX.Element {
         stretch
       />
     ) : (
-      createLoginCallToAction('Zaloguj, aby dołączyć')
+      createLoginCallToAction(
+        copy({
+          de: 'Anmelden, um beizutreten',
+          en: 'Sign in to join',
+          pl: 'Zaloguj, aby dołączyć',
+        }),
+      )
     );
 
   const renderSpectateAction = (targetSessionId: string): React.JSX.Element => (
     <LinkButton
       href={createKangurDuelsHref({ sessionId: targetSessionId, spectate: true })}
-      label='Obserwuj pojedynek'
+      label={copy({
+        de: 'Duell beobachten',
+        en: 'Watch duel',
+        pl: 'Obserwuj pojedynek',
+      })}
       stretch
       tone='secondary'
     />
@@ -963,47 +1315,101 @@ export function KangurDuelsScreen(): React.JSX.Element {
           }}
         >
           <View style={{ gap: 14 }}>
-            <ActionButton label='Wróć do lobby' onPress={openLobby} tone='ghost' />
+            <ActionButton
+              label={copy({
+                de: 'Zurück zur Lobby',
+                en: 'Back to lobby',
+                pl: 'Wróć do lobby',
+              })}
+              onPress={openLobby}
+              tone='ghost'
+            />
             <SectionTitle
-              title='Dołączanie do zaproszenia'
-              subtitle='Link z parametrem join przyjmuje prywatne zaproszenie i po powodzeniu otwiera aktywną sesję pojedynku.'
+              title={copy({
+                de: 'Einladung beitreten',
+                en: 'Joining invite',
+                pl: 'Dołączanie do zaproszenia',
+              })}
+              subtitle={copy({
+                de: 'Ein Link mit dem Parameter join akzeptiert eine private Einladung und öffnet danach die aktive Duellsitzung.',
+                en: 'A link with the join parameter accepts a private invite and then opens the active duel session.',
+                pl: 'Link z parametrem join przyjmuje prywatne zaproszenie i po powodzeniu otwiera aktywną sesję pojedynku.',
+              })}
             />
           </View>
 
           {!lobby.isAuthenticated && !lobby.isLoadingAuth ? (
             <Card>
               <MessageCard
-                title='Zaloguj sesję ucznia'
-                description='Prywatne zaproszenie do pojedynku wymaga aktywnej sesji ucznia.'
+                title={copy({
+                  de: 'Lernenden-Sitzung anmelden',
+                  en: 'Sign in the learner session',
+                  pl: 'Zaloguj sesję ucznia',
+                })}
+                description={copy({
+                  de: 'Eine private Duell-Einladung erfordert eine aktive Lernenden-Sitzung.',
+                  en: 'A private duel invite requires an active learner session.',
+                  pl: 'Prywatne zaproszenie do pojedynku wymaga aktywnej sesji ucznia.',
+                })}
               />
-              {createLoginCallToAction('Przejdź do logowania')}
+              {createLoginCallToAction(
+                copy({
+                  de: 'Zum Login',
+                  en: 'Go to sign in',
+                  pl: 'Przejdź do logowania',
+                }),
+              )}
             </Card>
           ) : isJoiningFromRoute || lobby.isActionPending ? (
             <Card>
               <MessageCard
-                title='Dołączamy do pojedynku'
-                description='Akceptujemy prywatne zaproszenie i pobieramy pełny stan sesji.'
+                title={copy({
+                  de: 'Duellbeitritt läuft',
+                  en: 'Joining duel',
+                  pl: 'Dołączamy do pojedynku',
+                })}
+                description={copy({
+                  de: 'Die private Einladung wird akzeptiert und der vollständige Sitzungsstatus geladen.',
+                  en: 'Accepting the private invite and loading the full session state.',
+                  pl: 'Akceptujemy prywatne zaproszenie i pobieramy pełny stan sesji.',
+                })}
               />
             </Card>
           ) : routeJoinError || lobby.actionError ? (
             <Card>
               <MessageCard
-                title='Nie udało się przyjąć zaproszenia'
+                title={copy({
+                  de: 'Einladung konnte nicht angenommen werden',
+                  en: 'Could not accept the invite',
+                  pl: 'Nie udało się przyjąć zaproszenia',
+                })}
                 description={
                   routeJoinError ??
                   lobby.actionError ??
-                  'Spróbuj ponownie albo wróć do lobby pojedynków.'
+                  copy({
+                    de: 'Versuche es erneut oder kehre zur Duell-Lobby zurück.',
+                    en: 'Try again or go back to the duels lobby.',
+                    pl: 'Spróbuj ponownie albo wróć do lobby pojedynków.',
+                  })
                 }
                 tone='error'
               />
               <View style={{ gap: 8 }}>
                 <ActionButton
-                  label='Spróbuj ponownie'
+                  label={copy({
+                    de: 'Erneut versuchen',
+                    en: 'Try again',
+                    pl: 'Spróbuj ponownie',
+                  })}
                   onPress={joinSessionFromRoute}
                   stretch
                 />
                 <ActionButton
-                  label='Wróć do lobby'
+                  label={copy({
+                    de: 'Zurück zur Lobby',
+                    en: 'Back to lobby',
+                    pl: 'Wróć do lobby',
+                  })}
                   onPress={openLobby}
                   stretch
                   tone='secondary'
@@ -1013,8 +1419,16 @@ export function KangurDuelsScreen(): React.JSX.Element {
           ) : (
             <Card>
               <MessageCard
-                title='Przygotowujemy sesję'
-                description='Jeśli link jest poprawny, za chwilę otworzy się ekran pojedynku.'
+                title={copy({
+                  de: 'Sitzung wird vorbereitet',
+                  en: 'Preparing session',
+                  pl: 'Przygotowujemy sesję',
+                })}
+                description={copy({
+                  de: 'Wenn der Link korrekt ist, öffnet sich gleich der Duellbildschirm.',
+                  en: 'If the link is correct, the duel screen will open shortly.',
+                  pl: 'Jeśli link jest poprawny, za chwilę otworzy się ekran pojedynku.',
+                })}
               />
             </Card>
           )}
@@ -1034,13 +1448,41 @@ export function KangurDuelsScreen(): React.JSX.Element {
           }}
         >
           <View style={{ gap: 14 }}>
-            <ActionButton label='Wróć do lobby' onPress={openLobby} tone='ghost' />
+            <ActionButton
+              label={copy({
+                de: 'Zurück zur Lobby',
+                en: 'Back to lobby',
+                pl: 'Wróć do lobby',
+              })}
+              onPress={openLobby}
+              tone='ghost'
+            />
             <SectionTitle
-              title={duel.isSpectating ? 'Podgląd pojedynku' : 'Pojedynek'}
+              title={
+                duel.isSpectating
+                  ? copy({
+                      de: 'Duellansicht',
+                      en: 'Duel view',
+                      pl: 'Podgląd pojedynku',
+                    })
+                  : copy({
+                      de: 'Duell',
+                      en: 'Duel',
+                      pl: 'Pojedynek',
+                    })
+              }
               subtitle={
                 duel.isSpectating
-                  ? 'Tryb obserwatora pokazuje publiczny stan pojedynku i reakcje bez dołączania do meczu jako gracz.'
-                  : 'Mobilny ekran pojedynku pokazuje poczekalnię, postęp gracza i stan rundy na tych samych kontraktach duels co web.'
+                  ? copy({
+                      de: 'Der Zuschauermodus zeigt den öffentlichen Duellstatus und Reaktionen, ohne dem Match als Spieler beizutreten.',
+                      en: 'Spectator mode shows the public duel state and reactions without joining the match as a player.',
+                      pl: 'Tryb obserwatora pokazuje publiczny stan pojedynku i reakcje bez dołączania do meczu jako gracz.',
+                    })
+                  : copy({
+                      de: 'Der mobile Duellbildschirm zeigt Warteraum, Spielerfortschritt und Rundenstatus auf denselben Duels-Verträgen wie das Web.',
+                      en: 'The mobile duel screen shows the waiting room, player progress, and round state using the same duels contracts as the web app.',
+                      pl: 'Mobilny ekran pojedynku pokazuje poczekalnię, postęp gracza i stan rundy na tych samych kontraktach duels co web.',
+                    })
               }
             />
           </View>
@@ -1048,21 +1490,59 @@ export function KangurDuelsScreen(): React.JSX.Element {
           {!duel.isSpectating && !duel.isAuthenticated && !isLoadingAuth ? (
             <Card>
               <MessageCard
-                title='Zaloguj sesję ucznia'
-                description='Do otwarcia konkretnego pojedynku potrzebna jest aktywna sesja ucznia.'
+                title={copy({
+                  de: 'Lernenden-Sitzung anmelden',
+                  en: 'Sign in the learner session',
+                  pl: 'Zaloguj sesję ucznia',
+                })}
+                description={copy({
+                  de: 'Um dieses konkrete Duell zu öffnen, ist eine aktive Lernenden-Sitzung erforderlich.',
+                  en: 'An active learner session is required to open this duel.',
+                  pl: 'Do otwarcia konkretnego pojedynku potrzebna jest aktywna sesja ucznia.',
+                })}
               />
-              {createLoginCallToAction('Przejdź do logowania')}
+              {createLoginCallToAction(
+                copy({
+                  de: 'Zum Login',
+                  en: 'Go to sign in',
+                  pl: 'Przejdź do logowania',
+                }),
+              )}
             </Card>
           ) : duel.isLoading ? (
             <Card>
               <MessageCard
-                title={duel.isSpectating ? 'Ładujemy podgląd pojedynku' : 'Ładujemy pojedynek'}
+                title={
+                  duel.isSpectating
+                    ? copy({
+                        de: 'Duellansicht wird geladen',
+                        en: 'Loading duel view',
+                        pl: 'Ładujemy podgląd pojedynku',
+                      })
+                    : copy({
+                        de: 'Duell wird geladen',
+                        en: 'Loading duel',
+                        pl: 'Ładujemy pojedynek',
+                      })
+                }
                 description={
                   duel.isRestoringAuth
-                    ? 'Przywracamy sesję ucznia i stan aktywnego pojedynku.'
+                    ? copy({
+                        de: 'Die Lernenden-Sitzung und der Status des aktiven Duells werden wiederhergestellt.',
+                        en: 'Restoring the learner session and the active duel state.',
+                        pl: 'Przywracamy sesję ucznia i stan aktywnego pojedynku.',
+                      })
                     : duel.isSpectating
-                      ? 'Pobieramy publiczny stan rundy, listę graczy i liczbę widzów.'
-                      : 'Pobieramy aktualny stan rundy i listę graczy.'
+                      ? copy({
+                          de: 'Der öffentliche Rundenstatus, die Spielerliste und die Zahl der Zuschauer werden geladen.',
+                          en: 'Loading the public round state, player list, and spectator count.',
+                          pl: 'Pobieramy publiczny stan rundy, listę graczy i liczbę widzów.',
+                        })
+                      : copy({
+                          de: 'Der aktuelle Rundenstatus und die Spielerliste werden geladen.',
+                          en: 'Loading the current round state and player list.',
+                          pl: 'Pobieramy aktualny stan rundy i listę graczy.',
+                        })
                 }
               />
             </Card>
@@ -1071,42 +1551,86 @@ export function KangurDuelsScreen(): React.JSX.Element {
               <MessageCard
                 title={
                   duel.isSpectating
-                    ? 'Nie udało się otworzyć podglądu pojedynku'
-                    : 'Nie udało się otworzyć pojedynku'
+                    ? copy({
+                        de: 'Duellansicht konnte nicht geöffnet werden',
+                        en: 'Could not open the duel view',
+                        pl: 'Nie udało się otworzyć podglądu pojedynku',
+                      })
+                    : copy({
+                        de: 'Duell konnte nicht geöffnet werden',
+                        en: 'Could not open the duel',
+                        pl: 'Nie udało się otworzyć pojedynku',
+                      })
                 }
                 description={
                   duel.error ??
                   (duel.isSpectating
-                    ? 'Brakuje danych publicznego podglądu. Wróć do lobby i spróbuj jeszcze raz.'
-                    : 'Brakuje danych pojedynku. Wróć do lobby i spróbuj jeszcze raz.')
+                    ? copy({
+                        de: 'Es fehlen Daten für die öffentliche Ansicht. Kehre zur Lobby zurück und versuche es erneut.',
+                        en: 'The public view data is missing. Go back to the lobby and try again.',
+                        pl: 'Brakuje danych publicznego podglądu. Wróć do lobby i spróbuj jeszcze raz.',
+                      })
+                    : copy({
+                        de: 'Es fehlen Duelldaten. Kehre zur Lobby zurück und versuche es erneut.',
+                        en: 'The duel data is missing. Go back to the lobby and try again.',
+                        pl: 'Brakuje danych pojedynku. Wróć do lobby i spróbuj jeszcze raz.',
+                      }))
                 }
                 tone='error'
               />
-              <ActionButton label='Wróć do lobby' onPress={openLobby} stretch />
+              <ActionButton
+                label={copy({
+                  de: 'Zurück zur Lobby',
+                  en: 'Back to lobby',
+                  pl: 'Wróć do lobby',
+                })}
+                onPress={openLobby}
+                stretch
+              />
             </Card>
           ) : (
             <>
               <Card>
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                    Sesja {duel.session.id}
+                    {copy({
+                      de: `Sitzung ${duel.session.id}`,
+                      en: `Session ${duel.session.id}`,
+                      pl: `Sesja ${duel.session.id}`,
+                    })}
                   </Text>
                   <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                    {formatModeLabel(duel.session.mode)} · {formatOperationLabel(duel.session.operation)}
+                    {formatModeLabel(duel.session.mode, locale)} ·{' '}
+                    {formatOperationLabel(duel.session.operation, locale)}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {duel.session.questionCount} pytań · {duel.session.timePerQuestionSec}s na odpowiedź ·{' '}
-                    {formatDifficultyLabel(duel.session.difficulty)}
+                    {locale === 'de'
+                      ? `${duel.session.questionCount} Fragen · ${duel.session.timePerQuestionSec}s pro Antwort · ${formatDifficultyLabel(duel.session.difficulty, locale)}`
+                      : locale === 'en'
+                        ? `${duel.session.questionCount} questions · ${duel.session.timePerQuestionSec}s per answer · ${formatDifficultyLabel(duel.session.difficulty, locale)}`
+                        : `${duel.session.questionCount} pytań · ${duel.session.timePerQuestionSec}s na odpowiedź · ${formatDifficultyLabel(duel.session.difficulty, locale)}`}
                   </Text>
                 </View>
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   <Pill
-                    label={formatStatusLabel(duel.session.status)}
+                    label={formatStatusLabel(duel.session.status, locale)}
                     tone={getStatusTone(duel.session.status)}
                   />
                   <Pill
-                    label={duel.session.visibility === 'private' ? 'Prywatny' : 'Publiczny'}
+                    label={
+                      duel.session.visibility === 'private'
+                        ? copy({
+                            de: 'Privat',
+                            en: 'Private',
+                            pl: 'Prywatny',
+                          })
+                        : copy({
+                            de: 'Öffentlich',
+                            en: 'Public',
+                            pl: 'Publiczny',
+                          })
+                    }
                     tone={{
                       backgroundColor: '#f8fafc',
                       borderColor: '#cbd5e1',
@@ -1116,8 +1640,8 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   <Pill
                     label={
                       duel.player
-                        ? formatQuestionProgress(duel.session, duel.player)
-                        : formatSpectatorQuestionProgress(duel.session)
+                        ? formatQuestionProgress(duel.session, duel.player, locale)
+                        : formatSpectatorQuestionProgress(duel.session, locale)
                     }
                     tone={{
                       backgroundColor: '#eff6ff',
@@ -1127,7 +1651,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   />
                   {duel.isSpectating || duel.spectatorCount > 0 ? (
                     <Pill
-                      label={`Widownia ${duel.spectatorCount}`}
+                      label={copy({
+                        de: `Zuschauer ${duel.spectatorCount}`,
+                        en: `Audience ${duel.spectatorCount}`,
+                        pl: `Widownia ${duel.spectatorCount}`,
+                      })}
                       tone={{
                         backgroundColor: '#f5f3ff',
                         borderColor: '#ddd6fe',
@@ -1137,7 +1665,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   ) : null}
                   {duel.session.series ? (
                     <Pill
-                      label={formatSeriesTitle(duel.session.series)}
+                      label={formatSeriesTitle(duel.session.series, locale)}
                       tone={{
                         backgroundColor: '#f5f3ff',
                         borderColor: '#ddd6fe',
@@ -1149,18 +1677,34 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
                 {duel.isSpectating ? (
                   <MessageCard
-                    title='Tryb obserwatora'
+                    title={copy({
+                      de: 'Zuschauermodus',
+                      en: 'Spectator mode',
+                      pl: 'Tryb obserwatora',
+                    })}
                     description={
                       duel.isAuthenticated
-                        ? 'Obserwujesz publiczny stan pojedynku. Możesz wysyłać reakcje, ale nie odpowiadasz na pytania.'
-                        : 'Obserwujesz publiczny stan pojedynku. Zaloguj sesję ucznia, jeśli chcesz wysyłać reakcje.'
+                        ? copy({
+                            de: 'Du beobachtest den öffentlichen Duellstatus. Du kannst Reaktionen senden, beantwortest aber keine Fragen.',
+                            en: 'You are watching the public duel state. You can send reactions, but you do not answer questions.',
+                            pl: 'Obserwujesz publiczny stan pojedynku. Możesz wysyłać reakcje, ale nie odpowiadasz na pytania.',
+                          })
+                        : copy({
+                            de: 'Du beobachtest den öffentlichen Duellstatus. Melde eine Lernenden-Sitzung an, wenn du Reaktionen senden möchtest.',
+                            en: 'You are watching the public duel state. Sign in the learner session if you want to send reactions.',
+                            pl: 'Obserwujesz publiczny stan pojedynku. Zaloguj sesję ucznia, jeśli chcesz wysyłać reakcje.',
+                          })
                     }
                   />
                 ) : null}
 
                 {duel.actionError ? (
                   <MessageCard
-                    title='Akcja nie powiodła się'
+                    title={copy({
+                      de: 'Aktion fehlgeschlagen',
+                      en: 'Action failed',
+                      pl: 'Akcja nie powiodła się',
+                    })}
                     description={duel.actionError}
                     tone='error'
                   />
@@ -1170,20 +1714,28 @@ export function KangurDuelsScreen(): React.JSX.Element {
               {duel.session.series ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    Seria
+                    {copy({
+                      de: 'Serie',
+                      en: 'Series',
+                      pl: 'Seria',
+                    })}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {formatSeriesProgress(duel.session.series)}
+                    {formatSeriesProgress(duel.session.series, locale)}
                   </Text>
                   <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-                    {formatSeriesSummary(duel.session.series, duel.session.players)}
+                    {formatSeriesSummary(duel.session.series, duel.session.players, locale)}
                   </Text>
                 </Card>
               ) : null}
 
               <Card>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                  Gracze
+                  {copy({
+                    de: 'Spieler',
+                    en: 'Players',
+                    pl: 'Gracze',
+                  })}
                 </Text>
                 <View style={{ gap: 10 }}>
                   {duel.session.players.map((player) => (
@@ -1212,18 +1764,24 @@ export function KangurDuelsScreen(): React.JSX.Element {
                           {player.displayName}
                         </Text>
                         <Pill
-                          label={formatPlayerStatusLabel(player.status)}
+                          label={formatPlayerStatusLabel(player.status, locale)}
                           tone={getPlayerStatusTone(player.status)}
                         />
                       </View>
                       <Text style={{ color: '#475569', lineHeight: 20 }}>
-                        Wynik {player.score}
-                        {player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''} ·{' '}
-                        {formatQuestionProgress(duel.session!, player)}
+                        {locale === 'de'
+                          ? `Punktzahl ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} Bonus` : ''} · ${formatQuestionProgress(duel.session!, player, locale)}`
+                          : locale === 'en'
+                            ? `Score ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''} · ${formatQuestionProgress(duel.session!, player, locale)}`
+                            : `Wynik ${player.score}${player.bonusPoints ? ` + ${player.bonusPoints} bonus` : ''} · ${formatQuestionProgress(duel.session!, player, locale)}`}
                       </Text>
                       {duel.session!.series ? (
                         <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
-                          Wygrane gry w serii:{' '}
+                          {copy({
+                            de: 'Gewonnene Spiele in der Serie:',
+                            en: 'Series games won:',
+                            pl: 'Wygrane gry w serii:',
+                          })}{' '}
                           {resolveSeriesWins(duel.session!.series, player.learnerId)}
                         </Text>
                       ) : null}
@@ -1234,31 +1792,54 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
               <Card>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                  Reakcje
+                  {copy({
+                    de: 'Reaktionen',
+                    en: 'Reactions',
+                    pl: 'Reakcje',
+                  })}
                 </Text>
                 {duel.session.status === 'completed' || duel.session.status === 'aborted' ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Sesja jest zakończona, ale ostatnie reakcje zostają widoczne w historii
-                    pojedynku.
+                    {copy({
+                      de: 'Die Sitzung ist beendet, aber die letzten Reaktionen bleiben in der Duellhistorie sichtbar.',
+                      en: 'The session is finished, but the latest reactions remain visible in the duel history.',
+                      pl: 'Sesja jest zakończona, ale ostatnie reakcje zostają widoczne w historii pojedynku.',
+                    })}
                   </Text>
                 ) : !duel.isAuthenticated ? (
                   <MessageCard
-                    title='Reakcje dla zalogowanych'
-                    description='Zalogowany uczeń może reagować na przebieg pojedynku emotkami na żywo.'
+                    title={copy({
+                      de: 'Reaktionen nur für angemeldete Nutzer',
+                      en: 'Reactions for signed-in users',
+                      pl: 'Reakcje dla zalogowanych',
+                    })}
+                    description={copy({
+                      de: 'Ein angemeldeter Lernender kann live mit Emojis auf den Duellverlauf reagieren.',
+                      en: 'A signed-in learner can react to the duel live with emoji.',
+                      pl: 'Zalogowany uczeń może reagować na przebieg pojedynku emotkami na żywo.',
+                    })}
                   />
                 ) : (
                   <>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                       {duel.isSpectating
-                        ? 'Wyślij szybką reakcję podczas oglądania pojedynku.'
-                        : 'Wyślij szybką reakcję bez opuszczania pojedynku.'}
+                        ? copy({
+                            de: 'Sende eine schnelle Reaktion, während du das Duell beobachtest.',
+                            en: 'Send a quick reaction while watching the duel.',
+                            pl: 'Wyślij szybką reakcję podczas oglądania pojedynku.',
+                          })
+                        : copy({
+                            de: 'Sende eine schnelle Reaktion, ohne das Duell zu verlassen.',
+                            en: 'Send a quick reaction without leaving the duel.',
+                            pl: 'Wyślij szybką reakcję bez opuszczania pojedynku.',
+                          })}
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {DUEL_REACTION_OPTIONS.map((type) => (
                         <ActionButton
                           key={type}
                           disabled={duel.isMutating}
-                          label={formatReactionLabel(type)}
+                          label={formatReactionLabel(type, locale)}
                           onPress={async () => {
                             await duel.sendReaction(type);
                           }}
@@ -1295,18 +1876,26 @@ export function KangurDuelsScreen(): React.JSX.Element {
                           <Text
                             style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}
                           >
-                            {formatReactionLabel(reaction.type)}
+                            {formatReactionLabel(reaction.type, locale)}
                           </Text>
                           <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-                            {reaction.displayName} · {formatRelativeAge(reaction.createdAt)}
+                            {reaction.displayName} · {formatRelativeAge(reaction.createdAt, locale)}
                           </Text>
                         </View>
                       ))}
                   </View>
                 ) : (
                   <MessageCard
-                    title='Brak reakcji'
-                    description='Po pierwszej emotce historia reakcji pojawi się tutaj.'
+                    title={copy({
+                      de: 'Keine Reaktionen',
+                      en: 'No reactions',
+                      pl: 'Brak reakcji',
+                    })}
+                    description={copy({
+                      de: 'Nach dem ersten Emoji erscheint die Reaktionshistorie hier.',
+                      en: 'After the first emoji, the reaction history will appear here.',
+                      pl: 'Po pierwszej emotce historia reakcji pojawi się tutaj.',
+                    })}
                   />
                 )}
               </Card>
@@ -1315,32 +1904,68 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
                     {duel.isSpectating
-                      ? 'Poczekalnia publicznego pojedynku'
-                      : 'Poczekalnia pojedynku'}
+                      ? copy({
+                          de: 'Warteraum des öffentlichen Duells',
+                          en: 'Public duel waiting room',
+                          pl: 'Poczekalnia publicznego pojedynku',
+                        })
+                      : copy({
+                          de: 'Duell-Warteraum',
+                          en: 'Duel waiting room',
+                          pl: 'Poczekalnia pojedynku',
+                        })}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {duel.isSpectating
-                      ? 'Obserwujesz etap oczekiwania. Gdy wymagani gracze dołączą, podgląd przełączy się automatycznie do aktywnej rundy.'
-                      : 'Czekamy, aż wszyscy gracze dołączą i backend przełączy sesję do aktywnej rundy. Gdy druga osoba pojawi się w lobby, ekran odświeży się automatycznie.'}
+                      ? copy({
+                          de: 'Du beobachtest die Wartephase. Sobald die benötigten Spieler beigetreten sind, wechselt die Ansicht automatisch zur aktiven Runde.',
+                          en: 'You are watching the waiting phase. Once the required players join, the view will switch automatically to the active round.',
+                          pl: 'Obserwujesz etap oczekiwania. Gdy wymagani gracze dołączą, podgląd przełączy się automatycznie do aktywnej rundy.',
+                        })
+                      : copy({
+                          de: 'Wir warten, bis alle Spieler beitreten und das Backend die Sitzung in die aktive Runde umschaltet. Wenn die zweite Person in der Lobby erscheint, aktualisiert sich der Bildschirm automatisch.',
+                          en: 'Waiting for all players to join so the backend can switch the session to the active round. When the second player appears in the lobby, the screen will refresh automatically.',
+                          pl: 'Czekamy, aż wszyscy gracze dołączą i backend przełączy sesję do aktywnej rundy. Gdy druga osoba pojawi się w lobby, ekran odświeży się automatycznie.',
+                        })}
                   </Text>
                   <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                    Minimalna liczba graczy do startu: {duel.session.minPlayersToStart ?? 2}
+                    {copy({
+                      de: `Minimale Spielerzahl zum Start: ${duel.session.minPlayersToStart ?? 2}`,
+                      en: `Minimum players to start: ${duel.session.minPlayersToStart ?? 2}`,
+                      pl: `Minimalna liczba graczy do startu: ${duel.session.minPlayersToStart ?? 2}`,
+                    })}
                   </Text>
                   {canShareInvite ? (
                     <View style={{ gap: 8 }}>
                       <MessageCard
-                        title='Udostępnij zaproszenie'
-                        description={`Wyślij bezpośredni link do ${inviteeName}, aby otworzyć prywatny pojedynek na telefonie bez szukania go w lobby.`}
+                        title={copy({
+                          de: 'Einladung teilen',
+                          en: 'Share invite',
+                          pl: 'Udostępnij zaproszenie',
+                        })}
+                        description={copy({
+                          de: `Sende ${inviteeName} einen direkten Link, um das private Duell auf dem Handy zu öffnen, ohne in der Lobby zu suchen.`,
+                          en: `Send a direct link to ${inviteeName} to open the private duel on mobile without searching in the lobby.`,
+                          pl: `Wyślij bezpośredni link do ${inviteeName}, aby otworzyć prywatny pojedynek na telefonie bez szukania go w lobby.`,
+                        })}
                       />
                       <ActionButton
-                        label='Udostępnij link zaproszenia'
+                        label={copy({
+                          de: 'Einladungslink teilen',
+                          en: 'Share invite link',
+                          pl: 'Udostępnij link zaproszenia',
+                        })}
                         onPress={handleInviteShare}
                         stretch
                         tone='secondary'
                       />
                       {inviteShareError ? (
                         <MessageCard
-                          title='Nie udało się udostępnić zaproszenia'
+                          title={copy({
+                            de: 'Einladung konnte nicht geteilt werden',
+                            en: 'Could not share the invite',
+                            pl: 'Nie udało się udostępnić zaproszenia',
+                          })}
                           description={inviteShareError}
                           tone='error'
                         />
@@ -1353,7 +1978,17 @@ export function KangurDuelsScreen(): React.JSX.Element {
               {duel.session.status === 'in_progress' && duel.currentQuestion ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    {duel.isSpectating ? 'Podgląd pytania' : 'Aktualne pytanie'}
+                    {duel.isSpectating
+                      ? copy({
+                          de: 'Fragenansicht',
+                          en: 'Question view',
+                          pl: 'Podgląd pytania',
+                        })
+                      : copy({
+                          de: 'Aktuelle Frage',
+                          en: 'Current question',
+                          pl: 'Aktualne pytanie',
+                        })}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 22 }}>
                     {duel.currentQuestion.prompt}
@@ -1361,7 +1996,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   {duel.isSpectating ? (
                     <>
                       <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
-                        Widz nie wysyła odpowiedzi, ale może śledzić pytanie i tempo meczu.
+                        {copy({
+                          de: 'Zuschauer senden keine Antworten, können aber Frage und Spieltempo verfolgen.',
+                          en: 'Spectators do not send answers, but they can follow the question and match pace.',
+                          pl: 'Widz nie wysyła odpowiedzi, ale może śledzić pytanie i tempo meczu.',
+                        })}
                       </Text>
                       <View style={{ gap: 8 }}>
                         {duel.currentQuestion.choices.map((choice, index) => (
@@ -1376,7 +2015,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                             }}
                           >
                             <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                              Opcja {index + 1}: {String(choice)}
+                              {copy({
+                                de: `Option ${index + 1}: ${String(choice)}`,
+                                en: `Option ${index + 1}: ${String(choice)}`,
+                                pl: `Opcja ${index + 1}: ${String(choice)}`,
+                              })}
                             </Text>
                           </View>
                         ))}
@@ -1388,7 +2031,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                         <ActionButton
                           key={`duel-choice-${index}-${String(choice)}`}
                           disabled={duel.isMutating}
-                          label={`Odpowiedź: ${String(choice)}`}
+                          label={copy({
+                            de: `Antwort: ${String(choice)}`,
+                            en: `Answer: ${String(choice)}`,
+                            pl: `Odpowiedź: ${String(choice)}`,
+                          })}
                           onPress={async () => {
                             await duel.submitAnswer(choice as KangurDuelChoice);
                           }}
@@ -1404,19 +2051,31 @@ export function KangurDuelsScreen(): React.JSX.Element {
               {duel.session.status === 'completed' || duel.session.status === 'aborted' ? (
                 <Card>
                   <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    Podsumowanie
+                    {copy({
+                      de: 'Zusammenfassung',
+                      en: 'Summary',
+                      pl: 'Podsumowanie',
+                    })}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {resolveWinnerSummary(duel.session.players)}
+                    {resolveWinnerSummary(duel.session.players, locale)}
                   </Text>
                   {!duel.isSpectating && duel.isAuthenticated ? (
                     <View style={{ gap: 8 }}>
                       <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
-                        Rewanż zachowa ten sam tryb, działanie, poziom i format serii.
+                        {copy({
+                          de: 'Das Rückspiel behält denselben Modus, dieselbe Rechenart, denselben Schwierigkeitsgrad und dasselbe Serienformat.',
+                          en: 'The rematch will keep the same mode, operation, difficulty, and series format.',
+                          pl: 'Rewanż zachowa ten sam tryb, działanie, poziom i format serii.',
+                        })}
                       </Text>
                       <ActionButton
                         disabled={lobby.isActionPending}
-                        label='Zagraj rewanż'
+                        label={copy({
+                          de: 'Rückspiel starten',
+                          en: 'Play rematch',
+                          pl: 'Zagraj rewanż',
+                        })}
                         onPress={handleRematch}
                         stretch
                       />
@@ -1431,8 +2090,16 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     disabled={duel.isMutating}
                     label={
                       duel.isSpectating
-                        ? 'Odśwież podgląd pojedynku'
-                        : 'Odśwież stan pojedynku'
+                        ? copy({
+                            de: 'Duellansicht aktualisieren',
+                            en: 'Refresh duel view',
+                            pl: 'Odśwież podgląd pojedynku',
+                          })
+                        : copy({
+                            de: 'Duellstatus aktualisieren',
+                            en: 'Refresh duel state',
+                            pl: 'Odśwież stan pojedynku',
+                          })
                     }
                     onPress={duel.refresh}
                     stretch
@@ -1440,14 +2107,22 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   />
                   {duel.isSpectating ? (
                     <ActionButton
-                      label='Wróć do lobby'
+                      label={copy({
+                        de: 'Zurück zur Lobby',
+                        en: 'Back to lobby',
+                        pl: 'Wróć do lobby',
+                      })}
                       onPress={openLobby}
                       stretch
                     />
                   ) : (
                     <ActionButton
                       disabled={duel.isMutating}
-                      label='Opuść pojedynek'
+                      label={copy({
+                        de: 'Duell verlassen',
+                        en: 'Leave duel',
+                        pl: 'Opuść pojedynek',
+                      })}
                       onPress={async () => {
                         const didLeave = await duel.leaveSession();
                         if (didLeave) {
@@ -1477,38 +2152,82 @@ export function KangurDuelsScreen(): React.JSX.Element {
         }}
       >
         <View style={{ gap: 14 }}>
-          <LinkButton href={HOME_ROUTE} label='Wróć' tone='secondary' />
+          <LinkButton
+            href={HOME_ROUTE}
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+            tone='secondary'
+          />
           <SectionTitle
-            title='Pojedynki'
-            subtitle='Mobilne lobby pojedynków korzysta z tych samych kontraktów i endpointów Kangur duels co wersja webowa.'
+            title={copy({
+              de: 'Duelle',
+              en: 'Duels',
+              pl: 'Pojedynki',
+            })}
+            subtitle={copy({
+              de: 'Die mobile Duell-Lobby nutzt dieselben Kangur-Duels-Verträge und Endpunkte wie die Webversion.',
+              en: 'The mobile duels lobby uses the same Kangur duels contracts and endpoints as the web version.',
+              pl: 'Mobilne lobby pojedynków korzysta z tych samych kontraktów i endpointów Kangur duels co wersja webowa.',
+            })}
           />
         </View>
 
         {!lobby.isAuthenticated && !lobby.isLoadingAuth ? (
           <Card>
             <MessageCard
-              title='Zaloguj sesję ucznia'
-              description='Goście mogą przeglądać publiczne lobby i ranking. Do tworzenia lub dołączania do pojedynków potrzebna jest aktywna sesja ucznia.'
+              title={copy({
+                de: 'Lernenden-Sitzung anmelden',
+                en: 'Sign in the learner session',
+                pl: 'Zaloguj sesję ucznia',
+              })}
+              description={copy({
+                de: 'Gäste können die öffentliche Lobby und Rangliste ansehen. Zum Erstellen oder Beitreten von Duellen ist eine aktive Lernenden-Sitzung nötig.',
+                en: 'Guests can browse the public lobby and leaderboard. Creating or joining duels requires an active learner session.',
+                pl: 'Goście mogą przeglądać publiczne lobby i ranking. Do tworzenia lub dołączania do pojedynków potrzebna jest aktywna sesja ucznia.',
+              })}
             />
-            {createLoginCallToAction('Przejdź do logowania')}
+            {createLoginCallToAction(
+              copy({
+                de: 'Zum Login',
+                en: 'Go to sign in',
+                pl: 'Przejdź do logowania',
+              }),
+            )}
           </Card>
         ) : null}
 
         <Card>
           <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            Panel gry
+            {copy({
+              de: 'Spielbereich',
+              en: 'Play panel',
+              pl: 'Panel gry',
+            })}
           </Text>
           <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            Wybierz działanie, tryb działań i poziom trudności dla nowego pojedynku.
+            {copy({
+              de: 'Wähle Rechenart, Spielmodus und Schwierigkeitsgrad für das neue Duell.',
+              en: 'Choose the operation, mode, and difficulty for the new duel.',
+              pl: 'Wybierz działanie, tryb działań i poziom trudności dla nowego pojedynku.',
+            })}
           </Text>
 
           <View style={{ gap: 8 }}>
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Działanie</Text>
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+              {copy({
+                de: 'Rechenart',
+                en: 'Operation',
+                pl: 'Działanie',
+              })}
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {OPERATION_OPTIONS.map((option) => (
                 <FilterChip
                   key={option}
-                  label={formatOperationLabel(option)}
+                  label={formatOperationLabel(option, locale)}
                   onPress={() => {
                     lobby.setOperation(option);
                   }}
@@ -1519,12 +2238,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
           </View>
 
           <View style={{ gap: 8 }}>
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Poziom</Text>
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+              {copy({
+                de: 'Schwierigkeit',
+                en: 'Difficulty',
+                pl: 'Poziom',
+              })}
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {DIFFICULTY_OPTIONS.map((option) => (
                 <FilterChip
                   key={option}
-                  label={formatDifficultyLabel(option)}
+                  label={formatDifficultyLabel(option, locale)}
                   onPress={() => {
                     lobby.setDifficulty(option);
                   }}
@@ -1535,12 +2260,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
           </View>
 
           <View style={{ gap: 8 }}>
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Format</Text>
+            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+              {copy({
+                de: 'Format',
+                en: 'Format',
+                pl: 'Format',
+              })}
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {SERIES_BEST_OF_OPTIONS.map((option) => (
                 <FilterChip
                   key={`series-best-of-${option}`}
-                  label={formatSeriesBestOfLabel(option)}
+                  label={formatSeriesBestOfLabel(option, locale)}
                   onPress={() => {
                     lobby.setSeriesBestOf(option);
                   }}
@@ -1550,14 +2281,26 @@ export function KangurDuelsScreen(): React.JSX.Element {
             </View>
             <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
               {lobby.seriesBestOf === 1
-                ? 'Nowe wyzwania utworzą pojedynczy mecz.'
-                : `Nowe wyzwania utworzą ${formatSeriesBestOfLabel(lobby.seriesBestOf)}.`}
+                ? copy({
+                    de: 'Neue Herausforderungen erstellen ein einzelnes Match.',
+                    en: 'New challenges will create a single match.',
+                    pl: 'Nowe wyzwania utworzą pojedynczy mecz.',
+                  })
+                : copy({
+                    de: `Neue Herausforderungen erstellen ${formatSeriesBestOfLabel(lobby.seriesBestOf, locale)}.`,
+                    en: `New challenges will create ${formatSeriesBestOfLabel(lobby.seriesBestOf, locale)}.`,
+                    pl: `Nowe wyzwania utworzą ${formatSeriesBestOfLabel(lobby.seriesBestOf, locale)}.`,
+                  })}
             </Text>
           </View>
 
           {lobby.actionError ? (
             <MessageCard
-              title='Akcja nie powiodła się'
+              title={copy({
+                de: 'Aktion fehlgeschlagen',
+                en: 'Action failed',
+                pl: 'Akcja nie powiodła się',
+              })}
               description={lobby.actionError}
               tone='error'
             />
@@ -1567,7 +2310,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
             <View style={{ gap: 8 }}>
               <ActionButton
                 disabled={lobby.isActionPending}
-                label='Szybki mecz'
+                label={copy({
+                  de: 'Schnelles Match',
+                  en: 'Quick match',
+                  pl: 'Szybki mecz',
+                })}
                 onPress={async () => {
                   const nextSessionId = await lobby.createQuickMatch();
                   if (nextSessionId) {
@@ -1578,7 +2325,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
               />
               <ActionButton
                 disabled={lobby.isActionPending}
-                label='Publiczne wyzwanie'
+                label={copy({
+                  de: 'Öffentliche Herausforderung',
+                  en: 'Public challenge',
+                  pl: 'Publiczne wyzwanie',
+                })}
                 onPress={async () => {
                   const nextSessionId = await lobby.createPublicChallenge();
                   if (nextSessionId) {
@@ -1590,7 +2341,13 @@ export function KangurDuelsScreen(): React.JSX.Element {
               />
             </View>
           ) : (
-            createLoginCallToAction('Zaloguj, aby rozpocząć pojedynek')
+            createLoginCallToAction(
+              copy({
+                de: 'Anmelden, um ein Duell zu starten',
+                en: 'Sign in to start a duel',
+                pl: 'Zaloguj, aby rozpocząć pojedynek',
+              }),
+            )
           )}
         </Card>
 
@@ -1605,15 +2362,27 @@ export function KangurDuelsScreen(): React.JSX.Element {
           >
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                Lobby
+                {copy({
+                  de: 'Lobby',
+                  en: 'Lobby',
+                  pl: 'Lobby',
+                })}
               </Text>
               <Text style={{ color: '#64748b', fontSize: 13 }}>
-                Widoczne publiczne pokoje: {lobby.visiblePublicEntries.length}
+                {copy({
+                  de: `Sichtbare öffentliche Räume: ${lobby.visiblePublicEntries.length}`,
+                  en: `Visible public rooms: ${lobby.visiblePublicEntries.length}`,
+                  pl: `Widoczne publiczne pokoje: ${lobby.visiblePublicEntries.length}`,
+                })}
               </Text>
             </View>
             <ActionButton
               disabled={lobby.isActionPending}
-              label='Odśwież'
+              label={copy({
+                de: 'Aktualisieren',
+                en: 'Refresh',
+                pl: 'Odśwież',
+              })}
               onPress={lobby.refresh}
               tone='secondary'
             />
@@ -1623,7 +2392,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
             {MODE_FILTER_OPTIONS.map((option) => (
               <FilterChip
                 key={option.value}
-                label={option.label}
+                label={localizeDuelText(option.label, locale)}
                 onPress={() => {
                   lobby.setModeFilter(option.value);
                 }}
@@ -1634,17 +2403,33 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
           {lobby.lobbyError ? (
             <MessageCard
-              title='Lobby jest niedostępne'
+              title={copy({
+                de: 'Lobby ist nicht verfügbar',
+                en: 'Lobby is unavailable',
+                pl: 'Lobby jest niedostępne',
+              })}
               description={lobby.lobbyError}
               tone='error'
             />
           ) : lobby.isLobbyLoading ? (
             <MessageCard
-              title='Ładujemy lobby'
+              title={copy({
+                de: 'Lobby wird geladen',
+                en: 'Loading lobby',
+                pl: 'Ładujemy lobby',
+              })}
               description={
                 lobby.isRestoringAuth
-                  ? 'Przywracamy sesję ucznia i pobieramy dostępne pojedynki.'
-                  : 'Pobieramy dostępne publiczne i prywatne pokoje.'
+                  ? copy({
+                      de: 'Die Lernenden-Sitzung wird wiederhergestellt und verfügbare Duelle werden geladen.',
+                      en: 'Restoring the learner session and loading available duels.',
+                      pl: 'Przywracamy sesję ucznia i pobieramy dostępne pojedynki.',
+                    })
+                  : copy({
+                      de: 'Verfügbare öffentliche und private Räume werden geladen.',
+                      en: 'Loading available public and private rooms.',
+                      pl: 'Pobieramy dostępne publiczne i prywatne pokoje.',
+                    })
               }
             />
           ) : (
@@ -1652,15 +2437,28 @@ export function KangurDuelsScreen(): React.JSX.Element {
               {lobby.inviteEntries.length > 0 ? (
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                    Zaproszenia
+                    {copy({
+                      de: 'Einladungen',
+                      en: 'Invites',
+                      pl: 'Zaproszenia',
+                    })}
                   </Text>
                   {lobby.inviteEntries.map((entry) => (
                     <LobbyEntryCard
                       key={entry.sessionId}
                       action={renderJoinAction(entry.sessionId)}
-                      actionLabel='Prywatne zaproszenie dla zalogowanego ucznia.'
-                      description={`Gospodarz ${entry.host.displayName} zaprasza do prywatnego pojedynku ${formatOperationLabel(entry.operation)}.`}
+                      actionLabel={copy({
+                        de: 'Private Einladung für angemeldete Lernende.',
+                        en: 'Private invite for a signed-in learner.',
+                        pl: 'Prywatne zaproszenie dla zalogowanego ucznia.',
+                      })}
+                      description={copy({
+                        de: `Gastgeber ${entry.host.displayName} lädt zu einem privaten Duell ${formatOperationLabel(entry.operation, locale)} ein.`,
+                        en: `Host ${entry.host.displayName} is inviting you to a private ${formatOperationLabel(entry.operation, locale)} duel.`,
+                        pl: `Gospodarz ${entry.host.displayName} zaprasza do prywatnego pojedynku ${formatOperationLabel(entry.operation, locale)}.`,
+                      })}
                       entry={entry}
+                      locale={locale}
                     />
                   ))}
                 </View>
@@ -1668,12 +2466,24 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
               <View style={{ gap: 10 }}>
                 <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                  Publiczne pokoje
+                  {copy({
+                    de: 'Öffentliche Räume',
+                    en: 'Public rooms',
+                    pl: 'Publiczne pokoje',
+                  })}
                 </Text>
                 {lobby.visiblePublicEntries.length === 0 ? (
                   <MessageCard
-                    title='Brak publicznych pojedynków'
-                    description='Zmiana filtra albo szybki mecz utworzy nowy pokój gotowy do dołączenia.'
+                    title={copy({
+                      de: 'Keine öffentlichen Duelle',
+                      en: 'No public duels',
+                      pl: 'Brak publicznych pojedynków',
+                    })}
+                    description={copy({
+                      de: 'Ein anderer Filter oder ein schnelles Match erstellt einen neuen Raum zum Beitreten.',
+                      en: 'Changing the filter or starting a quick match will create a new room to join.',
+                      pl: 'Zmiana filtra albo szybki mecz utworzy nowy pokój gotowy do dołączenia.',
+                    })}
                   />
                 ) : (
                   lobby.visiblePublicEntries.map((entry) => (
@@ -1685,9 +2495,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
                           {renderSpectateAction(entry.sessionId)}
                         </View>
                       }
-                      actionLabel='Możesz dołączyć jako gracz albo otworzyć pokój w trybie obserwatora.'
-                      description={`${formatModeLabel(entry.mode)} gospodarza ${entry.host.displayName}. Status: ${formatStatusLabel(entry.status).toLowerCase()}.`}
+                      actionLabel={copy({
+                        de: 'Du kannst als Spieler beitreten oder den Raum im Zuschauermodus öffnen.',
+                        en: 'You can join as a player or open the room in spectator mode.',
+                        pl: 'Możesz dołączyć jako gracz albo otworzyć pokój w trybie obserwatora.',
+                      })}
+                      description={copy({
+                        de: `${formatModeLabel(entry.mode, locale)} von ${entry.host.displayName}. Status: ${formatStatusLabel(entry.status, locale).toLowerCase()}.`,
+                        en: `${formatModeLabel(entry.mode, locale)} hosted by ${entry.host.displayName}. Status: ${formatStatusLabel(entry.status, locale).toLowerCase()}.`,
+                        pl: `${formatModeLabel(entry.mode, locale)} gospodarza ${entry.host.displayName}. Status: ${formatStatusLabel(entry.status, locale).toLowerCase()}.`,
+                      })}
                       entry={entry}
+                      locale={locale}
                     />
                   ))
                 )}
@@ -1707,16 +2526,28 @@ export function KangurDuelsScreen(): React.JSX.Element {
           >
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                Czat lobby
+                {copy({
+                  de: 'Lobby-Chat',
+                  en: 'Lobby chat',
+                  pl: 'Czat lobby',
+                })}
               </Text>
               <Text style={{ color: '#64748b', fontSize: 13 }}>
-                Szybka koordynacja przed pojedynkiem i w czasie oczekiwania na przeciwnika.
+                {copy({
+                  de: 'Schnelle Abstimmung vor dem Duell und während du auf einen Gegner wartest.',
+                  en: 'Quick coordination before the duel and while waiting for an opponent.',
+                  pl: 'Szybka koordynacja przed pojedynkiem i w czasie oczekiwania na przeciwnika.',
+                })}
               </Text>
             </View>
             {chat.isAuthenticated ? (
               <ActionButton
                 disabled={chat.isLoading || chat.isSending}
-                label='Odśwież'
+                label={copy({
+                  de: 'Aktualisieren',
+                  en: 'Refresh',
+                  pl: 'Odśwież',
+                })}
                 onPress={chat.refresh}
                 tone='secondary'
               />
@@ -1725,30 +2556,62 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
           {!chat.isAuthenticated ? (
             <MessageCard
-              title='Czat lobby wymaga logowania'
-              description='Zalogowany uczeń może czytać i wysyłać krótkie wiadomości do innych osób w lobby.'
+              title={copy({
+                de: 'Lobby-Chat erfordert Anmeldung',
+                en: 'Lobby chat requires sign-in',
+                pl: 'Czat lobby wymaga logowania',
+              })}
+              description={copy({
+                de: 'Ein angemeldeter Lernender kann kurze Nachrichten an andere Personen in der Lobby lesen und senden.',
+                en: 'A signed-in learner can read and send short messages to other people in the lobby.',
+                pl: 'Zalogowany uczeń może czytać i wysyłać krótkie wiadomości do innych osób w lobby.',
+              })}
             />
           ) : chat.error ? (
             <MessageCard
-              title='Nie udało się pobrać czatu lobby'
+              title={copy({
+                de: 'Lobby-Chat konnte nicht geladen werden',
+                en: 'Could not load the lobby chat',
+                pl: 'Nie udało się pobrać czatu lobby',
+              })}
               description={chat.error}
               tone='error'
             />
           ) : chat.isLoading ? (
             <MessageCard
-              title='Ładujemy czat lobby'
+              title={copy({
+                de: 'Lobby-Chat wird geladen',
+                en: 'Loading lobby chat',
+                pl: 'Ładujemy czat lobby',
+              })}
               description={
                 chat.isRestoringAuth
-                  ? 'Przywracamy sesję ucznia i pobieramy ostatnie wiadomości.'
-                  : 'Pobieramy bieżące wiadomości z lobby.'
+                  ? copy({
+                      de: 'Die Lernenden-Sitzung wird wiederhergestellt und die letzten Nachrichten werden geladen.',
+                      en: 'Restoring the learner session and loading the latest messages.',
+                      pl: 'Przywracamy sesję ucznia i pobieramy ostatnie wiadomości.',
+                    })
+                  : copy({
+                      de: 'Die aktuellen Nachrichten aus der Lobby werden geladen.',
+                      en: 'Loading the latest messages from the lobby.',
+                      pl: 'Pobieramy bieżące wiadomości z lobby.',
+                    })
               }
             />
           ) : (
             <>
               {lobbyChatPreview.length === 0 ? (
                 <MessageCard
-                  title='Brak wiadomości'
-                  description='To dobre miejsce na ustalenie szybkiego meczu albo prywatnego rewanżu.'
+                  title={copy({
+                    de: 'Keine Nachrichten',
+                    en: 'No messages',
+                    pl: 'Brak wiadomości',
+                  })}
+                  description={copy({
+                    de: 'Das ist ein guter Ort, um ein schnelles Match oder ein privates Rückspiel zu verabreden.',
+                    en: 'This is a good place to arrange a quick match or a private rematch.',
+                    pl: 'To dobre miejsce na ustalenie szybkiego meczu albo prywatnego rewanżu.',
+                  })}
                 />
               ) : (
                 <View style={{ gap: 10 }}>
@@ -1767,13 +2630,13 @@ export function KangurDuelsScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                        {formatLobbyChatSenderLabel(message, activeLearnerId)}
+                        {formatLobbyChatSenderLabel(message, activeLearnerId, locale)}
                       </Text>
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                         {message.message}
                       </Text>
                       <Text style={{ color: '#64748b', fontSize: 12 }}>
-                        {formatRelativeAge(message.createdAt)}
+                        {formatRelativeAge(message.createdAt, locale)}
                       </Text>
                     </View>
                   ))}
@@ -1782,7 +2645,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
               <View style={{ gap: 8 }}>
                 <TextInput
-                  accessibilityLabel='Wiadomość do czatu lobby'
+                  accessibilityLabel={copy({
+                    de: 'Nachricht an den Lobby-Chat',
+                    en: 'Lobby chat message',
+                    pl: 'Wiadomość do czatu lobby',
+                  })}
                   editable={!chat.isSending}
                   maxLength={chat.maxMessageLength}
                   multiline
@@ -1792,7 +2659,11 @@ export function KangurDuelsScreen(): React.JSX.Element {
                       setChatActionError(null);
                     }
                   }}
-                  placeholder='Napisz do lobby'
+                  placeholder={copy({
+                    de: 'Schreibe in die Lobby',
+                    en: 'Write to the lobby',
+                    pl: 'Napisz do lobby',
+                  })}
                   style={{
                     backgroundColor: '#ffffff',
                     borderColor: '#cbd5e1',
@@ -1806,18 +2677,38 @@ export function KangurDuelsScreen(): React.JSX.Element {
                   value={chatDraft}
                 />
                 <Text style={{ color: '#64748b', fontSize: 12 }}>
-                  Pozostało {chatRemainingChars} znaków.
+                  {copy({
+                    de: `${chatRemainingChars} Zeichen übrig.`,
+                    en: `${chatRemainingChars} characters left.`,
+                    pl: `Pozostało ${chatRemainingChars} znaków.`,
+                  })}
                 </Text>
                 {chatActionError ? (
                   <MessageCard
-                    title='Nie udało się wysłać wiadomości'
+                    title={copy({
+                      de: 'Nachricht konnte nicht gesendet werden',
+                      en: 'Could not send the message',
+                      pl: 'Nie udało się wysłać wiadomości',
+                    })}
                     description={chatActionError}
                     tone='error'
                   />
                 ) : null}
                 <ActionButton
                   disabled={!canSendChatMessage}
-                  label={chat.isSending ? 'Wysyłanie...' : 'Wyślij wiadomość'}
+                  label={
+                    chat.isSending
+                      ? copy({
+                          de: 'Wird gesendet...',
+                          en: 'Sending...',
+                          pl: 'Wysyłanie...',
+                        })
+                      : copy({
+                          de: 'Nachricht senden',
+                          en: 'Send message',
+                          pl: 'Wyślij wiadomość',
+                        })
+                  }
                   onPress={handleLobbyChatSend}
                   stretch
                 />
@@ -1828,28 +2719,60 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
         <Card>
           <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            Aktywni uczniowie
+            {copy({
+              de: 'Aktive Lernende',
+              en: 'Active learners',
+              pl: 'Aktywni uczniowie',
+            })}
           </Text>
           {!lobby.isAuthenticated ? (
             <MessageCard
-              title='Lista aktywnych uczniów wymaga logowania'
-              description='Po zalogowaniu mobilna aplikacja zacznie też pingować obecność w lobby.'
+              title={copy({
+                de: 'Liste aktiver Lernender erfordert Anmeldung',
+                en: 'Active learners list requires sign-in',
+                pl: 'Lista aktywnych uczniów wymaga logowania',
+              })}
+              description={copy({
+                de: 'Nach der Anmeldung beginnt die mobile App auch, Präsenz in der Lobby zu senden.',
+                en: 'After sign-in, the mobile app will also start pinging presence in the lobby.',
+                pl: 'Po zalogowaniu mobilna aplikacja zacznie też pingować obecność w lobby.',
+              })}
             />
           ) : lobby.presenceError ? (
             <MessageCard
-              title='Nie udało się pobrać obecności'
+              title={copy({
+                de: 'Präsenz konnte nicht geladen werden',
+                en: 'Could not load presence',
+                pl: 'Nie udało się pobrać obecności',
+              })}
               description={lobby.presenceError}
               tone='error'
             />
           ) : lobby.isPresenceLoading ? (
             <MessageCard
-              title='Aktualizujemy obecność'
-              description='Synchronizujemy listę uczniów widocznych w lobby.'
+              title={copy({
+                de: 'Präsenz wird aktualisiert',
+                en: 'Updating presence',
+                pl: 'Aktualizujemy obecność',
+              })}
+              description={copy({
+                de: 'Die Liste der in der Lobby sichtbaren Lernenden wird synchronisiert.',
+                en: 'Synchronizing the list of learners visible in the lobby.',
+                pl: 'Synchronizujemy listę uczniów widocznych w lobby.',
+              })}
             />
           ) : lobby.presenceEntries.length === 0 ? (
             <MessageCard
-              title='Brak obecnych uczniów'
-              description='Gdy inni uczniowie otworzą lobby, pojawią się tutaj.'
+              title={copy({
+                de: 'Keine aktiven Lernenden',
+                en: 'No active learners',
+                pl: 'Brak obecnych uczniów',
+              })}
+              description={copy({
+                de: 'Wenn andere Lernende die Lobby öffnen, erscheinen sie hier.',
+                en: 'When other learners open the lobby, they will appear here.',
+                pl: 'Gdy inni uczniowie otworzą lobby, pojawią się tutaj.',
+              })}
             />
           ) : (
             <View style={{ gap: 10 }}>
@@ -1869,7 +2792,12 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     {entry.displayName}
                   </Text>
                   <Text style={{ color: '#64748b', fontSize: 12 }}>
-                    Ostatnia aktywność {formatRelativeAge(entry.lastSeenAt)}
+                    {copy({
+                      de: 'Letzte Aktivität',
+                      en: 'Last activity',
+                      pl: 'Ostatnia aktywność',
+                    })}{' '}
+                    {formatRelativeAge(entry.lastSeenAt, locale)}
                   </Text>
                 </View>
               ))}
@@ -1879,23 +2807,47 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
         <Card>
           <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            Szukaj uczniów
+            {copy({
+              de: 'Lernende suchen',
+              en: 'Search learners',
+              pl: 'Szukaj uczniów',
+            })}
           </Text>
           {!lobby.isAuthenticated ? (
             <MessageCard
-              title='Wyszukiwanie wymaga logowania'
-              description='Po zalogowaniu możesz wysłać prywatne wyzwanie po loginie ucznia.'
+              title={copy({
+                de: 'Suche erfordert Anmeldung',
+                en: 'Search requires sign-in',
+                pl: 'Wyszukiwanie wymaga logowania',
+              })}
+              description={copy({
+                de: 'Nach der Anmeldung kannst du über den Login eines Lernenden eine private Herausforderung senden.',
+                en: 'After signing in, you can send a private challenge using a learner login.',
+                pl: 'Po zalogowaniu możesz wysłać prywatne wyzwanie po loginie ucznia.',
+              })}
             />
           ) : (
             <>
               <View style={{ gap: 8 }}>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  Wpisz co najmniej 2 znaki loginu lub nazwy ucznia.
+                  {copy({
+                    de: 'Gib mindestens 2 Zeichen des Logins oder Namens des Lernenden ein.',
+                    en: 'Enter at least 2 characters from the learner login or name.',
+                    pl: 'Wpisz co najmniej 2 znaki loginu lub nazwy ucznia.',
+                  })}
                 </Text>
                 <TextInput
-                  accessibilityLabel='Wyszukiwarka uczniów'
+                  accessibilityLabel={copy({
+                    de: 'Lernendensuche',
+                    en: 'Learner search',
+                    pl: 'Wyszukiwarka uczniów',
+                  })}
                   onChangeText={lobby.setSearchQuery}
-                  placeholder='Szukaj ucznia'
+                  placeholder={copy({
+                    de: 'Lernenden suchen',
+                    en: 'Search learner',
+                    pl: 'Szukaj ucznia',
+                  })}
                   style={{
                     backgroundColor: '#ffffff',
                     borderColor: '#cbd5e1',
@@ -1909,13 +2861,21 @@ export function KangurDuelsScreen(): React.JSX.Element {
                 <View style={{ gap: 8 }}>
                   <ActionButton
                     disabled={lobby.searchQuery.trim().length < 2}
-                    label='Szukaj'
+                    label={copy({
+                      de: 'Suchen',
+                      en: 'Search',
+                      pl: 'Szukaj',
+                    })}
                     onPress={lobby.submitSearch}
                     stretch
                   />
                   {lobby.searchSubmittedQuery ? (
                     <ActionButton
-                      label='Wyczyść wyszukiwanie'
+                      label={copy({
+                        de: 'Suche löschen',
+                        en: 'Clear search',
+                        pl: 'Wyczyść wyszukiwanie',
+                      })}
                       onPress={lobby.clearSearch}
                       stretch
                       tone='secondary'
@@ -1926,20 +2886,40 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
               {lobby.searchError ? (
                 <MessageCard
-                  title='Wyszukiwanie nie powiodło się'
+                  title={copy({
+                    de: 'Suche fehlgeschlagen',
+                    en: 'Search failed',
+                    pl: 'Wyszukiwanie nie powiodło się',
+                  })}
                   description={lobby.searchError}
                   tone='error'
                 />
               ) : lobby.isSearchLoading ? (
                 <MessageCard
-                  title='Szukamy uczniów'
-                  description='Dopasowujemy wyniki dla wpisanego zapytania.'
+                  title={copy({
+                    de: 'Lernende werden gesucht',
+                    en: 'Searching learners',
+                    pl: 'Szukamy uczniów',
+                  })}
+                  description={copy({
+                    de: 'Die Ergebnisse für die eingegebene Anfrage werden abgeglichen.',
+                    en: 'Matching results for the entered query.',
+                    pl: 'Dopasowujemy wyniki dla wpisanego zapytania.',
+                  })}
                 />
               ) : lobby.searchSubmittedQuery.length >= 2 &&
                 lobby.searchResults.length === 0 ? (
                 <MessageCard
-                  title='Brak wyników'
-                  description='Nie znaleźliśmy uczniów pasujących do wpisanego zapytania.'
+                  title={copy({
+                    de: 'Keine Ergebnisse',
+                    en: 'No results',
+                    pl: 'Brak wyników',
+                  })}
+                  description={copy({
+                    de: 'Es wurden keine Lernenden gefunden, die zur eingegebenen Anfrage passen.',
+                    en: 'We did not find any learners matching the entered query.',
+                    pl: 'Nie znaleźliśmy uczniów pasujących do wpisanego zapytania.',
+                  })}
                 />
               ) : lobby.searchResults.length > 0 ? (
                 <View style={{ gap: 10 }}>
@@ -1959,11 +2939,19 @@ export function KangurDuelsScreen(): React.JSX.Element {
                         {entry.displayName}
                       </Text>
                       <Text style={{ color: '#64748b', fontSize: 12 }}>
-                        Login: {entry.loginName}
+                        {copy({
+                          de: `Login: ${entry.loginName}`,
+                          en: `Login: ${entry.loginName}`,
+                          pl: `Login: ${entry.loginName}`,
+                        })}
                       </Text>
                       <ActionButton
                         disabled={lobby.isActionPending}
-                        label='Wyślij prywatne wyzwanie'
+                        label={copy({
+                          de: 'Private Herausforderung senden',
+                          en: 'Send private challenge',
+                          pl: 'Wyślij prywatne wyzwanie',
+                        })}
                         onPress={async () => {
                           const nextSessionId = await lobby.createPrivateChallenge(
                             entry.learnerId,
@@ -1984,22 +2972,50 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
         <Card>
           <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            Ostatni przeciwnicy
+            {copy({
+              de: 'Letzte Gegner',
+              en: 'Recent opponents',
+              pl: 'Ostatni przeciwnicy',
+            })}
           </Text>
           {!lobby.isAuthenticated ? (
             <MessageCard
-              title='Historia przeciwników wymaga logowania'
-              description='Po zalogowaniu pojawi się tutaj skrót do ponownego wyzwania ostatnich rywali.'
+              title={copy({
+                de: 'Gegnerverlauf erfordert Anmeldung',
+                en: 'Opponent history requires sign-in',
+                pl: 'Historia przeciwników wymaga logowania',
+              })}
+              description={copy({
+                de: 'Nach der Anmeldung erscheint hier eine Abkürzung, um die letzten Rivalen erneut herauszufordern.',
+                en: 'After signing in, a shortcut to challenge recent rivals again will appear here.',
+                pl: 'Po zalogowaniu pojawi się tutaj skrót do ponownego wyzwania ostatnich rywali.',
+              })}
             />
           ) : lobby.isOpponentsLoading ? (
             <MessageCard
-              title='Ładujemy listę przeciwników'
-              description='Pobieramy ostatnie kontakty z historii pojedynków.'
+              title={copy({
+                de: 'Gegnerliste wird geladen',
+                en: 'Loading opponents',
+                pl: 'Ładujemy listę przeciwników',
+              })}
+              description={copy({
+                de: 'Die letzten Kontakte aus der Duellhistorie werden geladen.',
+                en: 'Loading recent contacts from the duel history.',
+                pl: 'Pobieramy ostatnie kontakty z historii pojedynków.',
+              })}
             />
           ) : lobby.opponents.length === 0 ? (
             <MessageCard
-              title='Brak zapisanych przeciwników'
-              description='Backend nie zwrócił jeszcze historii przeciwników dla tego ucznia.'
+              title={copy({
+                de: 'Keine gespeicherten Gegner',
+                en: 'No saved opponents',
+                pl: 'Brak zapisanych przeciwników',
+              })}
+              description={copy({
+                de: 'Das Backend hat für diesen Lernenden noch keinen Gegnerverlauf zurückgegeben.',
+                en: 'The backend has not returned any opponent history for this learner yet.',
+                pl: 'Backend nie zwrócił jeszcze historii przeciwników dla tego ucznia.',
+              })}
             />
           ) : (
             <View style={{ gap: 10 }}>
@@ -2019,11 +3035,20 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     {entry.displayName}
                   </Text>
                   <Text style={{ color: '#64748b', fontSize: 12 }}>
-                    Ostatnia gra {formatRelativeAge(entry.lastPlayedAt)}
+                    {copy({
+                      de: 'Letztes Spiel',
+                      en: 'Last game',
+                      pl: 'Ostatnia gra',
+                    })}{' '}
+                    {formatRelativeAge(entry.lastPlayedAt, locale)}
                   </Text>
                   <ActionButton
                     disabled={lobby.isActionPending}
-                    label='Wyzwij ponownie'
+                    label={copy({
+                      de: 'Erneut herausfordern',
+                      en: 'Challenge again',
+                      pl: 'Wyzwij ponownie',
+                    })}
                     onPress={async () => {
                       const nextSessionId = await lobby.createPrivateChallenge(
                         entry.learnerId,
@@ -2042,18 +3067,34 @@ export function KangurDuelsScreen(): React.JSX.Element {
 
         <Card>
           <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-            Wyniki dueli
+            {copy({
+              de: 'Duellrangliste',
+              en: 'Duels leaderboard',
+              pl: 'Wyniki dueli',
+            })}
           </Text>
           {lobby.leaderboardError ? (
             <MessageCard
-              title='Ranking dueli jest niedostępny'
+              title={copy({
+                de: 'Duellrangliste ist nicht verfügbar',
+                en: 'Duels leaderboard is unavailable',
+                pl: 'Ranking dueli jest niedostępny',
+              })}
               description={lobby.leaderboardError}
               tone='error'
             />
           ) : lobby.leaderboardEntries.length === 0 ? (
             <MessageCard
-              title='Brak rozegranych dueli'
-              description='Ranking zapełni się po pierwszych zakończonych pojedynkach.'
+              title={copy({
+                de: 'Keine gespielten Duelle',
+                en: 'No completed duels',
+                pl: 'Brak rozegranych dueli',
+              })}
+              description={copy({
+                de: 'Die Rangliste füllt sich nach den ersten abgeschlossenen Duellen.',
+                en: 'The leaderboard will fill up after the first completed duels.',
+                pl: 'Ranking zapełni się po pierwszych zakończonych pojedynkach.',
+              })}
             />
           ) : (
             <View style={{ gap: 10 }}>
@@ -2073,11 +3114,18 @@ export function KangurDuelsScreen(): React.JSX.Element {
                     #{index + 1} {entry.displayName}
                   </Text>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Wygrane {entry.wins} · Porażki {entry.losses} · Remisy {entry.ties}
+                    {copy({
+                      de: `Siege ${entry.wins} · Niederlagen ${entry.losses} · Unentschieden ${entry.ties}`,
+                      en: `Wins ${entry.wins} · Losses ${entry.losses} · Draws ${entry.ties}`,
+                      pl: `Wygrane ${entry.wins} · Porażki ${entry.losses} · Remisy ${entry.ties}`,
+                    })}
                   </Text>
                   <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                    Mecze {entry.matches} · Win rate {Math.round(entry.winRate * 100)}% · ostatnia gra{' '}
-                    {formatRelativeAge(entry.lastPlayedAt)}
+                    {copy({
+                      de: `Spiele ${entry.matches} · Siegesquote ${Math.round(entry.winRate * 100)}% · letztes Spiel ${formatRelativeAge(entry.lastPlayedAt, locale)}`,
+                      en: `Matches ${entry.matches} · Win rate ${Math.round(entry.winRate * 100)}% · last game ${formatRelativeAge(entry.lastPlayedAt, locale)}`,
+                      pl: `Mecze ${entry.matches} · Win rate ${Math.round(entry.winRate * 100)}% · ostatnia gra ${formatRelativeAge(entry.lastPlayedAt, locale)}`,
+                    })}
                   </Text>
                 </View>
               ))}

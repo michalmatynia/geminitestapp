@@ -14,6 +14,7 @@ import {
   parseKangurSocialSettings,
 } from '@/features/kangur/settings-social';
 import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
+import type { SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type KangurSocialPipelineJobData =
@@ -61,13 +62,8 @@ const KANGUR_SOCIAL_PIPELINE_LOCK_DURATION_MS = parseMsFromEnv(
   60_000
 );
 
-type KangurSocialPipelineQueueState = {
-  workerStarted: boolean;
-  schedulerRegistered: boolean;
-};
-
 const globalWithQueueState = globalThis as typeof globalThis & {
-  __kangurSocialPipelineQueueState__?: KangurSocialPipelineQueueState;
+  __kangurSocialPipelineQueueState__?: SchedulerQueueState;
 };
 
 const queueState =

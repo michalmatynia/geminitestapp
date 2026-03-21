@@ -3,7 +3,7 @@
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   createCaseResolverWorkspaceMutationId,
@@ -185,9 +185,10 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
           source: 'cases_page_rename',
         });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'AdminCaseResolverCasesPage', action: 'renameCase', caseId },
+        logClientCatch(error, {
+          source: 'AdminCaseResolverCasesPage',
+          action: 'renameCase',
+          caseId,
         });
         toast('Failed to rename case.', { variant: 'error' });
       }
@@ -238,13 +239,10 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
           source: 'cases_page_toggle_status',
         });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'AdminCaseResolverCasesPage',
-            action: 'toggleCaseStatus',
-            caseId,
-          },
+        logClientCatch(error, {
+          source: 'AdminCaseResolverCasesPage',
+          action: 'toggleCaseStatus',
+          caseId,
         });
         toast('Failed to update case status.', { variant: 'error' });
       }

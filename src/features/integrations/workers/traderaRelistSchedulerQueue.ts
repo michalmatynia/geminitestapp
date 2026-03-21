@@ -11,15 +11,12 @@ import {
 } from '@/features/integrations/services/tradera-listing-service';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { createManagedQueue } from '@/shared/lib/queue';
+import type { ScheduledTickJobData } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { enqueueTraderaListingJob } from './traderaListingQueue';
 
 import type { Queue, RepeatableJob } from 'bullmq';
-
-type TraderaRelistSchedulerJobData = {
-  type: 'scheduled-tick';
-};
 
 const SCHEDULER_QUEUE_NAME = 'tradera-relist-scheduler';
 const SCHEDULER_REPEAT_JOB_ID = 'tradera-relist-scheduler-tick';
@@ -30,7 +27,7 @@ const parseMs = (value: string | null, fallback: number): number => {
   return Math.max(30_000, Math.floor(parsed));
 };
 
-const queue = createManagedQueue<TraderaRelistSchedulerJobData>({
+const queue = createManagedQueue<ScheduledTickJobData>({
   name: SCHEDULER_QUEUE_NAME,
   concurrency: 1,
   defaultJobOptions: {

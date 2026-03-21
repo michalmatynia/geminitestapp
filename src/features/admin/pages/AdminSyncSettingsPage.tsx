@@ -25,7 +25,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const BACKGROUND_SYNC_KEYS = {
   enabled: 'background_sync_enabled',
@@ -105,10 +105,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       offlineQueue.refresh();
       toast('Offline queue processed', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminSyncSettingsPage', action: 'processQueue' },
-      });
+      logClientCatch(error, { source: 'AdminSyncSettingsPage', action: 'processQueue' });
       toast(error instanceof Error ? error.message : 'Failed to process queue', {
         variant: 'error',
       });

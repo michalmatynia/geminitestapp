@@ -7,7 +7,7 @@ import {
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
 import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { isDescendantCaseId } from '../utils';
 import { waitForCaseAvailability } from './case-availability';
@@ -126,9 +126,9 @@ export const handleCreateCaseImpl = async (args: {
       options: { source: 'cases_page_create_sync' },
     });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'AdminCaseResolverCasesPage', action: 'createCase' },
+    logClientCatch(error, {
+      source: 'AdminCaseResolverCasesPage',
+      action: 'createCase',
     });
     toast('Failed to create case.', { variant: 'error' });
   } finally {
@@ -337,9 +337,9 @@ export const handleSaveCaseDraftImpl = async (args: {
     setEditingCaseId(null);
     toast('Case updated successfully.', { variant: 'success' });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'AdminCaseResolverCasesPage', action: 'saveCaseDraft' },
+    logClientCatch(error, {
+      source: 'AdminCaseResolverCasesPage',
+      action: 'saveCaseDraft',
     });
     toast('Failed to save case.', { variant: 'error' });
   } finally {
@@ -421,9 +421,9 @@ export const handleUpdateCaseImpl = async (args: {
     setEditingCaseId(null);
     toast('Case updated successfully.', { variant: 'success' });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'AdminCaseResolverCasesPage', action: 'updateCase' },
+    logClientCatch(error, {
+      source: 'AdminCaseResolverCasesPage',
+      action: 'updateCase',
     });
     toast('Failed to update case.', { variant: 'error' });
   }
@@ -479,9 +479,9 @@ export const handleDeleteCaseImpl = async (args: {
     }
     toast('Case deleted successfully.', { variant: 'success' });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'AdminCaseResolverCasesPage', action: 'deleteCase' },
+    logClientCatch(error, {
+      source: 'AdminCaseResolverCasesPage',
+      action: 'deleteCase',
     });
     toast('Failed to delete case.', { variant: 'error' });
   } finally {

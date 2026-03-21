@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import { createKangurDuelsHref } from '../duels/duelsHref';
 import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
@@ -36,6 +37,7 @@ import {
   createKangurPracticeDebugRedirectHref,
   resolveKangurPracticeDebugRedirectTarget,
 } from './practiceDebugRedirect';
+import { useKangurMobilePracticeDuels } from './useKangurMobilePracticeDuels';
 import { useKangurPracticeSyncProof } from './useKangurPracticeSyncProof';
 
 const PRACTICE_QUESTION_COUNT = 8;
@@ -335,6 +337,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
     ? resolvePracticeScoreSyncAppearance(scoreSyncState.status)
     : null;
   const lessonHref = createKangurLessonHrefForPracticeOperation(operation);
+  const practiceDuels = useKangurMobilePracticeDuels();
   const practiceSyncProof = useKangurPracticeSyncProof({
     enabled: __DEV__ && scoreSyncState?.status === 'synced',
     expectedCorrectAnswers: correctAnswers,
@@ -416,6 +419,10 @@ export function KangurPracticeScreen(): React.JSX.Element {
       }),
     );
   }, [completion, debugRedirectTarget, operation, router, scoreSyncState?.status]);
+
+  const openDuelSession = (sessionId: string): void => {
+    router.replace(createKangurDuelsHref({ sessionId }));
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -600,6 +607,170 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     </Text>
                   </View>
                 ))}
+              </View>
+              <View
+                style={{
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  padding: 14,
+                  gap: 10,
+                }}
+              >
+                <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                  Po treningu
+                </Text>
+                <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                  Pojedynki
+                </Text>
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  Po zakończeniu serii możesz od razu wejść do pojedynków albo wrócić do ostatnich rywali.
+                </Text>
+
+                {practiceDuels.isRestoringAuth || practiceDuels.isLoading ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    Pobieramy podsumowanie pojedynków po treningu.
+                  </Text>
+                ) : practiceDuels.error ? (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                      {practiceDuels.error}
+                    </Text>
+                    <Pressable
+                      accessibilityRole='button'
+                      onPress={() => {
+                        void practiceDuels.refresh();
+                      }}
+                      style={{
+                        alignSelf: 'flex-start',
+                        borderRadius: 999,
+                        backgroundColor: '#0f172a',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                        Odśwież pojedynki
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : !practiceDuels.isAuthenticated ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.
+                  </Text>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    {practiceDuels.currentEntry ? (
+                      <View
+                        style={{
+                          borderRadius: 18,
+                          borderWidth: 1,
+                          borderColor: '#bfdbfe',
+                          backgroundColor: '#eff6ff',
+                          padding: 12,
+                          gap: 6,
+                        }}
+                      >
+                        <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                          TWÓJ WYNIK W POJEDYNKACH
+                        </Text>
+                        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                          #{practiceDuels.currentRank} {practiceDuels.currentEntry.displayName}
+                        </Text>
+                        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                          Wygrane {practiceDuels.currentEntry.wins} • Porażki {practiceDuels.currentEntry.losses} • Remisy {practiceDuels.currentEntry.ties}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.
+                      </Text>
+                    )}
+
+                    {practiceDuels.actionError ? (
+                      <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                        {practiceDuels.actionError}
+                      </Text>
+                    ) : null}
+
+                    {practiceDuels.opponents.length === 0 ? (
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.
+                      </Text>
+                    ) : (
+                      <View style={{ gap: 10 }}>
+                        {practiceDuels.opponents.map((opponent) => (
+                          <View
+                            key={opponent.learnerId}
+                            style={{
+                              borderRadius: 18,
+                              borderWidth: 1,
+                              borderColor: '#e2e8f0',
+                              backgroundColor: '#ffffff',
+                              padding: 12,
+                              gap: 6,
+                            }}
+                          >
+                            <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                              {opponent.displayName}
+                            </Text>
+                            <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                              Ostatni pojedynek{' '}
+                              {new Intl.DateTimeFormat('pl', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              }).format(new Date(opponent.lastPlayedAt))}
+                            </Text>
+                            <Pressable
+                              accessibilityRole='button'
+                              disabled={practiceDuels.isActionPending}
+                              onPress={() => {
+                                void practiceDuels.createRematch(opponent.learnerId).then((sessionId) => {
+                                  if (sessionId) {
+                                    openDuelSession(sessionId);
+                                  }
+                                });
+                              }}
+                              style={{
+                                alignSelf: 'flex-start',
+                                borderRadius: 999,
+                                backgroundColor: practiceDuels.isActionPending ? '#94a3b8' : '#1d4ed8',
+                                paddingHorizontal: 12,
+                                paddingVertical: 9,
+                              }}
+                            >
+                              <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                                {practiceDuels.pendingOpponentLearnerId === opponent.learnerId
+                                  ? 'Wysyłanie rewanżu...'
+                                  : 'Szybki rewanż'}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <Link href={createKangurDuelsHref()} asChild>
+                      <Pressable
+                        accessibilityRole='button'
+                        style={{
+                          alignSelf: 'flex-start',
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: '#cbd5e1',
+                          backgroundColor: '#ffffff',
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                        }}
+                      >
+                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                          Otwórz pojedynki
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  </View>
+                )}
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 <Pressable

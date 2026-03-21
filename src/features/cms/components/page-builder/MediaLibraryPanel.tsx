@@ -8,7 +8,7 @@ import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/fil
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { useToast, FileUploadButton, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
@@ -118,8 +118,7 @@ export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Elem
         }
       }
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'MediaLibraryPanel', action: 'handleUpload' } });
+      logClientCatch(error, { source: 'MediaLibraryPanel', action: 'handleUpload' });
       const message = error instanceof Error ? error.message : 'Upload failed';
       toast(message, { variant: 'error' });
     }

@@ -31,7 +31,7 @@ import type {
 import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 // --- Granular Contexts ---
 
@@ -266,9 +266,10 @@ export function CategoryMapperProvider({
       const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'BaseCategoryMapper', action: 'fetchFromBase', connectionId },
+      logClientCatch(error, {
+        source: 'BaseCategoryMapper',
+        action: 'fetchFromBase',
+        connectionId,
       });
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
@@ -332,14 +333,11 @@ export function CategoryMapperProvider({
       toast(result.message, { variant: 'success' });
       setPendingMappings(new Map());
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'BaseCategoryMapper',
-          action: 'saveMappings',
-          connectionId,
-          catalogId: selectedCatalogId,
-        },
+      logClientCatch(error, {
+        source: 'BaseCategoryMapper',
+        action: 'saveMappings',
+        connectionId,
+        catalogId: selectedCatalogId,
       });
       const message = error instanceof Error ? error.message : 'Failed to save mappings';
       toast(message, { variant: 'error' });

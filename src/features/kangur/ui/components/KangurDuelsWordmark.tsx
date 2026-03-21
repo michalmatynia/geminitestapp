@@ -1,11 +1,6 @@
 import { KangurTextWordmark } from '@/features/kangur/ui/components/KangurTextWordmark';
+import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type KangurDuelsWordmarkProps = React.SVGProps<SVGSVGElement> & {
-  idPrefix?: string;
-  label?: string;
-  locale?: string | null;
-};
 
 const KANGUR_DUELS_WORDMARK_LABELS = {
   de: 'Duell-Lobby',
@@ -29,7 +24,7 @@ export function KangurDuelsWordmark({
   label,
   locale = 'pl',
   ...props
-}: KangurDuelsWordmarkProps): React.JSX.Element {
+}: KangurLocalizedWordmarkProps): React.JSX.Element {
   const resolvedLabel = label?.trim() || getKangurDuelsWordmarkLabel(locale);
 
   return (

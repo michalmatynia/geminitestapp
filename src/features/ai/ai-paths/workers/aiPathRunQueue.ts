@@ -2,6 +2,7 @@ import 'server-only';
 
 import { type AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
 import { serviceUnavailableError } from '@/shared/errors/app-error';
+import type { RepeatableJobEntry } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
@@ -48,13 +49,6 @@ const { warn: debugQueueWarn } = createDebugQueueLogger(
 );
 
 let reconcileInFlight: Promise<void> | null = null;
-
-type RepeatableJobEntry = {
-  id?: string | null;
-  name?: string;
-  every?: number | null;
-  key: string;
-};
 
 type QueueJobRemovalApi = {
   remove: () => Promise<void>;

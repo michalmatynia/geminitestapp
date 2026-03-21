@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { type AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
 import { useToast, FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
@@ -49,8 +49,7 @@ function AuthUserPagesForm(): React.JSX.Element {
       await refetchSettings();
       toast('User page settings saved', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AuthUserPagesPage', action: 'saveSettings' } });
+      logClientCatch(error, { source: 'AuthUserPagesPage', action: 'saveSettings' });
       toast('Failed to save user page settings', { variant: 'error' });
     }
   };

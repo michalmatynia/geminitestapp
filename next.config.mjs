@@ -21,6 +21,13 @@ const isTurbopack =
   Boolean(process.env.TURBOPACK) &&
   process.env.TURBOPACK !== '0' &&
   process.env.TURBOPACK !== 'false';
+const requestedDevBundler =
+  typeof process.env.NEXT_DEV_BUNDLER === 'string'
+    ? process.env.NEXT_DEV_BUNDLER.trim().toLowerCase()
+    : '';
+const isPlaywrightBrokerRuntime = Boolean(
+  process.env.PLAYWRIGHT_RUNTIME_LEASE_KEY || process.env.PLAYWRIGHT_RUNTIME_AGENT_ID
+);
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -146,6 +153,13 @@ const nextConfig = {
     config.optimization = config.optimization || {};
     config.optimization.moduleIds = 'deterministic';
     config.optimization.minimize = process.env.NODE_ENV === 'production';
+
+    if (isDev && requestedDevBundler === 'webpack' && isPlaywrightBrokerRuntime) {
+      // Brokered Playwright runtimes already isolate their dist dir. Keep webpack
+      // cache in memory to avoid ENOSPC and partial on-disk cache writes during
+      // accessibility/browser smoke runs on near-full local volumes.
+      config.cache = { type: 'memory' };
+    }
 
     // Prevent webpack dev server from triggering HMR rebuilds when files are
     // written to public/uploads/ (e.g. batch screenshot captures).

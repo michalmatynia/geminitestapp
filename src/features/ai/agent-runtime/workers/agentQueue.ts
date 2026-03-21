@@ -7,6 +7,7 @@ import {
 } from '@/features/ai/agent-runtime/workers/agent-processor';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { createManagedQueue } from '@/shared/lib/queue';
+import type { RepeatableJobEntry } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type AgentJobData = {
@@ -48,13 +49,6 @@ const AGENT_RECOVERY_REPEAT_EVERY_MS = 120_000;
 let workerStarted = false;
 let recoveryJobRegistered = false;
 let reconcileInFlight: Promise<void> | null = null;
-
-type RepeatableJobEntry = {
-  id?: string | null;
-  name?: string;
-  every?: number | null;
-  key: string;
-};
 
 const hasRepeatableQueueApi = (
   value: unknown

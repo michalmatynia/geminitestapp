@@ -20,17 +20,10 @@ import {
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_START_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'game';
 type SubtractingSlideSectionId = Exclude<SectionId, 'game'>;
-type SubtractingLessonTranslate = (key: string) => string;
-type WidenLessonCopy<T> = T extends string
-  ? string
-  : T extends readonly (infer U)[]
-    ? readonly WidenLessonCopy<U>[]
-    : T extends object
-      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
-      : T;
 
 const SUBTRACTING_LESSON_COPY_PL = {
   lessonTitle: 'Odejmowanie',
@@ -196,7 +189,7 @@ const SUBTRACTING_LESSON_COPY_PL = {
 type SubtractingLessonCopy = WidenLessonCopy<typeof SUBTRACTING_LESSON_COPY_PL>;
 
 const translateSubtractingLesson = (
-  translate: SubtractingLessonTranslate,
+  translate: LessonTranslate,
   key: string,
   fallback: string
 ): string => {
@@ -656,7 +649,7 @@ function SubtractingAbacusAnimation({
 }
 
 const buildSubtractingLessonCopy = (
-  translate: SubtractingLessonTranslate
+  translate: LessonTranslate
 ): SubtractingLessonCopy => ({
   lessonTitle: translateSubtractingLesson(
     translate,

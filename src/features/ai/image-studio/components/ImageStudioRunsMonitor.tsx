@@ -12,6 +12,7 @@ import {
   StandardDataTablePanel,
   Checkbox,
   PanelFilters,
+  insetPanelVariants,
   UI_CENTER_ROW_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 
@@ -174,7 +175,7 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
           </div>
         }
         compact
-        className='rounded-lg border border-border/60 bg-card/40 p-3'
+        className={insetPanelVariants({ padding: 'sm' })}
       />
 
       <StandardDataTablePanel

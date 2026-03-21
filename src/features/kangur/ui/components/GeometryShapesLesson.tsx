@@ -25,12 +25,12 @@ import {
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
+import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
 type ShapeCardId = 'circle' | 'triangle' | 'square' | 'rectangle' | 'pentagon' | 'hexagon';
-type GeometryShapesTranslate = (key: string) => string;
 
-const createStaticTranslator = (messages: Record<string, unknown>): GeometryShapesTranslate => (key) => {
+const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
   const resolved = key.split('.').reduce<unknown>(
     (current, segment) =>
       typeof current === 'object' && current !== null
@@ -65,7 +65,7 @@ function GeometryShapesGameStage({
   return <GeometryDrawingGame onFinish={onFinish} />;
 }
 
-const buildShapeCards = (translations: GeometryShapesTranslate) =>
+const buildShapeCards = (translations: LessonTranslate) =>
   SHAPE_CARD_IDS.map((shape) => ({
     ...shape,
     name: translations(`shapeCards.${shape.id}.name`),
@@ -73,7 +73,7 @@ const buildShapeCards = (translations: GeometryShapesTranslate) =>
   }));
 
 const buildGeometryShapesSlides = (
-  translations: GeometryShapesTranslate
+  translations: LessonTranslate
 ): Record<Exclude<SectionId, 'game'>, LessonSlide[]> => {
   const shapeCards = buildShapeCards(translations);
 
@@ -273,7 +273,7 @@ const buildGeometryShapesSlides = (
   };
 };
 
-const buildGeometryShapesSections = (translations: GeometryShapesTranslate) => [
+const buildGeometryShapesSections = (translations: LessonTranslate) => [
   {
     id: 'podstawowe',
     emoji: '🔺',

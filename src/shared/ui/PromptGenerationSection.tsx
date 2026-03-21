@@ -14,6 +14,9 @@ import {
   Textarea,
   UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+import { insetPanelVariants } from './InsetPanel';
 
 interface PromptGenerationSectionProps {
   pathNumber: number;
@@ -52,9 +55,11 @@ interface PromptGenerationSectionProps {
 const resolvePromptRows = (pathNumber: number): number => (pathNumber === 1 ? 4 : 6);
 
 const resolveResultClassName = (pathNumber: number): string =>
-  pathNumber === 1
-    ? 'mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto font-mono'
-    : 'mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto font-sans';
+  cn(
+    insetPanelVariants({ radius: 'compact', padding: 'md' }),
+    'mt-1.5 text-sm text-gray-300 overflow-y-auto',
+    pathNumber === 1 ? 'h-[100px] font-mono' : 'h-[132px] font-sans'
+  );
 
 const {
   Context: PromptGenerationSectionRuntimeContext,

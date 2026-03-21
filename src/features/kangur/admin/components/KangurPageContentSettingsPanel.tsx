@@ -3,21 +3,23 @@ import {
   Alert,
   Badge,
   Button,
-  Card,
   FormField,
   FormSection,
   Textarea,
 } from '@/features/kangur/shared/ui';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurPageContentMutations } from '../hooks/useKangurPageContentMutations';
+import {
+  KANGUR_ADMIN_INSET_CARD_CLASS_NAME,
+  KangurAdminCard,
+  KangurAdminInsetCard,
+} from './KangurAdminCard';
 import { KangurPageContentEntryEditor } from './KangurPageContentEntryEditor';
 import { KangurPageContentEntryList } from './KangurPageContentEntryList';
 import { KangurPageContentManifestCoverage } from './KangurPageContentManifestCoverage';
 
 const AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE = 'pl';
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
-const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
-const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
 
 export function KangurPageContentSettingsPanel(): React.JSX.Element {
   const {
@@ -53,7 +55,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
       description='Edit the canonical Mongo section records that connect page anchors, content ids, and linked native-guide explanations.'
       className={SETTINGS_SECTION_CLASS_NAME}
     >
-      <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+      <KangurAdminCard>
         <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
           <div>
             <div className='flex items-center gap-2'>
@@ -117,7 +119,7 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
               entries={parsedState.store.entries}
               selectedEntryId={selectedEntryId}
               onSelect={setSelectedEntryId}
-              className={SETTINGS_INSET_CARD_CLASS_NAME}
+              className={KANGUR_ADMIN_INSET_CARD_CLASS_NAME}
             />
 
             {selectedEntry ? (
@@ -136,20 +138,20 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
                 onDuplicateFragment={handleDuplicateSelectedFragment}
                 onDeleteFragment={handleDeleteSelectedFragment}
                 onMoveFragment={handleMoveSelectedFragment}
-                className={SETTINGS_INSET_CARD_CLASS_NAME}
-                insetCardClassName={SETTINGS_INSET_CARD_CLASS_NAME}
+                className={KANGUR_ADMIN_INSET_CARD_CLASS_NAME}
+                insetCardClassName={KANGUR_ADMIN_INSET_CARD_CLASS_NAME}
               />
             ) : (
-              <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+              <KangurAdminInsetCard>
                 <div className='rounded-2xl border border-dashed border-border/60 px-4 py-8 text-sm text-muted-foreground text-center'>
                   Select a page-content entry from the list to start editing.
                 </div>
-              </Card>
+              </KangurAdminInsetCard>
             )}
           </div>
         ) : null}
 
-        <Card variant='subtle' padding='md' className={`${SETTINGS_INSET_CARD_CLASS_NAME} mt-4`}>
+        <KangurAdminInsetCard className='mt-4'>
           <FormField
             label='Page content JSON'
             description='Raw mirror of the full canonical section document. Use this for bulk edits or direct structural changes.'
@@ -167,8 +169,8 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
           <div className='mt-2 text-xs text-muted-foreground text-center'>
             {isDirty ? 'Unsaved page-content changes' : 'Page content in sync'}
           </div>
-        </Card>
-      </Card>
+        </KangurAdminInsetCard>
+      </KangurAdminCard>
     </FormSection>
   );
 }

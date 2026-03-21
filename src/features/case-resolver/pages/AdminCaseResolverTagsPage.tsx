@@ -16,7 +16,7 @@ import {
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverTagModal } from '../components/modals/CaseResolverEntityModalVariants';
@@ -196,9 +196,10 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       toast(editingTag ? 'Tag updated.' : 'Tag created.', { variant: 'success' });
       setShowModal(false);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminCaseResolverTagsPage', action: 'saveTag', tagId: editingTag?.id },
+      logClientCatch(error, {
+        source: 'AdminCaseResolverTagsPage',
+        action: 'saveTag',
+        tagId: editingTag?.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to save tag.', { variant: 'error' });
     }
@@ -226,13 +227,10 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       });
       toast('Tag deleted.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminCaseResolverTagsPage',
-          action: 'deleteTag',
-          tagId: tagToDelete.id,
-        },
+      logClientCatch(error, {
+        source: 'AdminCaseResolverTagsPage',
+        action: 'deleteTag',
+        tagId: tagToDelete.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to delete tag.', { variant: 'error' });
     } finally {

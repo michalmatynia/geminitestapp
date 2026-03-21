@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { createDefaultKangurProgressState } from '@kangur/contracts';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
@@ -39,13 +39,21 @@ const createWrapper =
     <KangurMobileI18nProvider locale={locale}>{children}</KangurMobileI18nProvider>;
 
 describe('useKangurMobileLessons', () => {
+  let progressSnapshot = createProgressSnapshot();
+  const saveProgressMock = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
 
-    const progressSnapshot = createProgressSnapshot();
+    progressSnapshot = createProgressSnapshot();
+    saveProgressMock.mockImplementation((progress) => {
+      progressSnapshot = progress;
+      return progress;
+    });
 
     useKangurMobileRuntimeMock.mockReturnValue({
       progressStore: {
+        saveProgress: saveProgressMock,
         subscribeToProgress: () => () => {},
         loadProgress: () => progressSnapshot,
       },
@@ -65,5 +73,41 @@ describe('useKangurMobileLessons', () => {
     expect(result.current.selectedLesson?.mastery.summaryLabel).toContain(
       'bestes Ergebnis 100%',
     );
+  });
+
+  it('saves a completed lesson checkpoint into mobile progress', () => {
+    const { result } = renderHook(() => useKangurMobileLessons('clock'), {
+      wrapper: createWrapper('pl'),
+    });
+
+    let saveResult:
+      | {
+          countsAsLessonCompletion: boolean;
+          newBadges: string[];
+          scorePercent: number;
+        }
+      | null = null;
+
+    act(() => {
+      saveResult = result.current.saveLessonCheckpoint({
+        countsAsLessonCompletion: true,
+        lessonComponentId: 'clock',
+        scorePercent: 100,
+      });
+    });
+
+    expect(saveResult).toEqual({
+      countsAsLessonCompletion: true,
+      newBadges: ['lesson_hero'],
+      scorePercent: 100,
+    });
+    expect(saveProgressMock).toHaveBeenCalledTimes(1);
+    expect(progressSnapshot.lessonsCompleted).toBe(1);
+    expect(progressSnapshot.badges).toContain('lesson_hero');
+    expect(progressSnapshot.lessonMastery.clock).toMatchObject({
+      attempts: 5,
+      completions: 5,
+      lastScorePercent: 100,
+    });
   });
 });

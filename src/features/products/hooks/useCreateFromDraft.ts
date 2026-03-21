@@ -9,7 +9,7 @@ import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { draftKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type UseCreateFromDraftProps = {
   setCreateDraft: (draft: ProductDraft | null) => void;
@@ -46,9 +46,10 @@ export function useCreateFromDraft({
         handleOpenCreateFromDraft(draft);
         toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useCreateFromDraft', action: 'createFromDraft', draftId },
+        logClientCatch(error, {
+          source: 'useCreateFromDraft',
+          action: 'createFromDraft',
+          draftId,
         });
         toast('Failed to load draft template', { variant: 'error' });
       }

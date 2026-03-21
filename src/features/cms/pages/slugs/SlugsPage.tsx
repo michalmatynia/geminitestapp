@@ -32,7 +32,7 @@ import {
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -116,9 +116,10 @@ export default function SlugsPage(): React.JSX.Element {
     try {
       await deleteSlug.mutateAsync({ id: slugToDelete.id, domainId: activeDomainId });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'slugs-page', action: 'deleteSlug', slugId: slugToDelete.id },
+      logClientCatch(error, {
+        source: 'slugs-page',
+        action: 'deleteSlug',
+        slugId: slugToDelete.id,
       });
     } finally {
       setSlugToDelete(null);

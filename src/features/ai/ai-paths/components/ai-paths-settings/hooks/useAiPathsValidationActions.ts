@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import type { Toast } from '@/shared/contracts/ui';
 import type { AiPathsValidationConfig } from '@/shared/lib/ai-paths';
 import { normalizeAiPathsValidationConfig, AI_PATHS_LAST_ERROR_KEY } from '@/shared/lib/ai-paths';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export function useAiPathsValidationActions(args: {
   setAiPathsValidation: (config: AiPathsValidationConfig) => void;
@@ -31,12 +31,9 @@ export function useAiPathsValidationActions(args: {
           }
         }
       } catch (err) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            service: 'ai-paths',
-            action: 'persistLastError',
-          },
+        logClientCatch(err, {
+          service: 'ai-paths',
+          action: 'persistLastError',
         });
       }
       },

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import type { NoteEditorType } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 // Why: Editor mode (markdown/wysiwyg) has complex migration logic:
 // - Existing notes lock to their type
@@ -107,13 +107,10 @@ export function useEditorMode(
       onSuccess?.();
       return htmlContent;
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useEditorMode',
-          action: 'migrateToWysiwyg',
-          noteId: note.id,
-        },
+      logClientCatch(error, {
+        source: 'useEditorMode',
+        action: 'migrateToWysiwyg',
+        noteId: note.id,
       });
       toast('Failed to migrate note', { variant: 'error' });
       throw error;
@@ -150,13 +147,10 @@ export function useEditorMode(
       onSuccess?.();
       return markdownContent;
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useEditorMode',
-          action: 'migrateToMarkdown',
-          noteId: note.id,
-        },
+      logClientCatch(error, {
+        source: 'useEditorMode',
+        action: 'migrateToMarkdown',
+        noteId: note.id,
       });
       toast('Failed to migrate note', { variant: 'error' });
       throw error;

@@ -39,7 +39,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
-import { SelectSimple } from '@/shared/ui';
+import { InsetPanel, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -336,15 +336,14 @@ export default function RichTextEditorImpl({
 
   if (!editor) {
     return (
-      <div
-        className={cn(
-          'rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-400',
-          surfaceClassName
-        )}
+      <InsetPanel
+        radius='compact'
+        padding='sm'
+        className={cn('text-xs text-gray-400', surfaceClassName)}
         style={surfaceStyle}
       >
         {loadingLabel}
-      </div>
+      </InsetPanel>
     );
   }
 

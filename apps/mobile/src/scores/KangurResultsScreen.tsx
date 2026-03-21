@@ -1,8 +1,9 @@
 import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
-import { Link, useLocalSearchParams, type Href } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   createKangurLessonHref,
@@ -22,6 +23,7 @@ import {
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { createKangurResultsHref } from './resultsHref';
 import { useKangurMobileResults } from './useKangurMobileResults';
+import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
 
 function Card({
   children,
@@ -132,6 +134,7 @@ const getOperationTone = (
 };
 
 const RESULTS_HOME_ROUTE = '/' as const;
+const DUELS_ROUTE = createKangurDuelsHref();
 
 const resolveResultsFilterFamily = (
   value: string | string[] | undefined,
@@ -349,6 +352,7 @@ function OperationInsightCard({
 
 export function KangurResultsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  const router = useRouter();
   const params = useLocalSearchParams<{
     family?: string | string[];
     operation?: string | string[];
@@ -359,11 +363,15 @@ export function KangurResultsScreen(): React.JSX.Element {
     family: filterOperation ? 'all' : filterFamily,
     operation: filterOperation,
   });
+  const duelResults = useKangurMobileResultsDuels();
   const strongestOperation = results.operationPerformance[0] ?? null;
   const weakestOperation =
     results.operationPerformance.length > 1
       ? results.operationPerformance[results.operationPerformance.length - 1]
       : null;
+  const openDuelSession = (sessionId: string): void => {
+    router.replace(createKangurDuelsHref({ sessionId }));
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -643,6 +651,215 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </View>
                 </Card>
               ) : null}
+
+              <Card>
+                <View style={{ gap: 4 }}>
+                  <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                    {copy({
+                      de: 'Duelle',
+                      en: 'Duels',
+                      pl: 'Pojedynki',
+                    })}
+                  </Text>
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Nach dem Blick auf die letzten Ergebnisse kannst du hier direkt zu deinen Duellrivalen zurückkehren.',
+                      en: 'After reviewing recent scores, you can jump straight back to duel rivals here.',
+                      pl: 'Po sprawdzeniu ostatnich wyników możesz tutaj od razu wrócić do rywali z pojedynków.',
+                    })}
+                  </Text>
+                </View>
+
+                {duelResults.isRestoringAuth || duelResults.isLoading ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Die Duellzusammenfassung in den Ergebnissen wird geladen.',
+                      en: 'Loading duel summary in results.',
+                      pl: 'Pobieramy podsumowanie pojedynków w wynikach.',
+                    })}
+                  </Text>
+                ) : duelResults.error ? (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                      {duelResults.error}
+                    </Text>
+                    <Pressable
+                      accessibilityRole='button'
+                      onPress={() => {
+                        void duelResults.refresh();
+                      }}
+                      style={{
+                        alignSelf: 'flex-start',
+                        borderRadius: 999,
+                        backgroundColor: '#0f172a',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                        {copy({
+                          de: 'Duelle aktualisieren',
+                          en: 'Refresh duels',
+                          pl: 'Odśwież pojedynki',
+                        })}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    {duelResults.currentEntry ? (
+                      <View
+                        style={{
+                          borderRadius: 20,
+                          borderWidth: 1,
+                          borderColor: '#bfdbfe',
+                          backgroundColor: '#eff6ff',
+                          padding: 14,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                          {copy({
+                            de: 'DEIN DUELLSTAND',
+                            en: 'YOUR DUEL SNAPSHOT',
+                            pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                          })}
+                        </Text>
+                        <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                          #{duelResults.currentRank} {duelResults.currentEntry.displayName}
+                        </Text>
+                        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                          {copy({
+                            de: `Siege ${duelResults.currentEntry.wins} • Niederlagen ${duelResults.currentEntry.losses} • Unentschieden ${duelResults.currentEntry.ties}`,
+                            en: `Wins ${duelResults.currentEntry.wins} • Losses ${duelResults.currentEntry.losses} • Ties ${duelResults.currentEntry.ties}`,
+                            pl: `Wygrane ${duelResults.currentEntry.wins} • Porażki ${duelResults.currentEntry.losses} • Remisy ${duelResults.currentEntry.ties}`,
+                          })}
+                        </Text>
+                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                          {copy({
+                            de: `Matches ${duelResults.currentEntry.matches} • Quote ${Math.round(duelResults.currentEntry.winRate * 100)}% • letztes Duell ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
+                            en: `Matches ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • last duel ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
+                            pl: `Mecze ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • ostatni pojedynek ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
+                          })}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        {copy({
+                          de: 'Dein Konto ist noch nicht im aktuellen Kurz-Ranking der Duelle sichtbar.',
+                          en: 'Your account is not yet visible in the current compact duel ranking.',
+                          pl: 'Twojego konta nie ma jeszcze w bieżącym skrócie rankingu pojedynków.',
+                        })}
+                      </Text>
+                    )}
+
+                    {duelResults.actionError ? (
+                      <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                        {duelResults.actionError}
+                      </Text>
+                    ) : null}
+
+                    {duelResults.opponents.length === 0 ? (
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        {copy({
+                          de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
+                          en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
+                          pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                        })}
+                      </Text>
+                    ) : (
+                      <View style={{ gap: 10 }}>
+                        <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                          {copy({
+                            de: 'Letzte Rivalen',
+                            en: 'Recent rivals',
+                            pl: 'Ostatni rywale',
+                          })}
+                        </Text>
+                        {duelResults.opponents.map((opponent) => (
+                          <View
+                            key={opponent.learnerId}
+                            style={{
+                              borderRadius: 20,
+                              borderWidth: 1,
+                              borderColor: '#e2e8f0',
+                              backgroundColor: '#f8fafc',
+                              padding: 14,
+                              gap: 8,
+                            }}
+                          >
+                            <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                              {opponent.displayName}
+                            </Text>
+                            <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                              {copy({
+                                de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                                en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                                pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                              })}
+                            </Text>
+                            <Pressable
+                              accessibilityRole='button'
+                              disabled={duelResults.isActionPending}
+                              onPress={() => {
+                                void duelResults.createRematch(opponent.learnerId).then((sessionId) => {
+                                  if (sessionId) {
+                                    openDuelSession(sessionId);
+                                  }
+                                });
+                              }}
+                              style={{
+                                alignSelf: 'flex-start',
+                                borderRadius: 999,
+                                backgroundColor: duelResults.isActionPending ? '#94a3b8' : '#1d4ed8',
+                                paddingHorizontal: 14,
+                                paddingVertical: 10,
+                              }}
+                            >
+                              <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                                {duelResults.pendingOpponentLearnerId === opponent.learnerId
+                                  ? copy({
+                                      de: 'Rückkampf wird gesendet...',
+                                      en: 'Sending rematch...',
+                                      pl: 'Wysyłanie rewanżu...',
+                                    })
+                                  : copy({
+                                      de: 'Schneller Rückkampf',
+                                      en: 'Quick rematch',
+                                      pl: 'Szybki rewanż',
+                                    })}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <Link href={DUELS_ROUTE} asChild>
+                      <Pressable
+                        accessibilityRole='button'
+                        style={{
+                          alignSelf: 'flex-start',
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: '#cbd5e1',
+                          backgroundColor: '#ffffff',
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                        }}
+                      >
+                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                          {copy({
+                            de: 'Duelle öffnen',
+                            en: 'Open duels',
+                            pl: 'Otwórz pojedynki',
+                          })}
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  </View>
+                )}
+              </Card>
 
               <Card>
                 <View

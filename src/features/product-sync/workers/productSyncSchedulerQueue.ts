@@ -6,11 +6,11 @@ import {
 } from '@/features/product-sync/services/product-sync-repository';
 import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
 import { createManagedQueue } from '@/shared/lib/queue';
+import type {
+  ScheduledTickJobData,
+  SchedulerQueueState,
+} from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-type ProductSyncSchedulerJobData = {
-  type: 'scheduled-tick';
-};
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
@@ -47,13 +47,8 @@ const isExpectedSkipReason = (message: string): boolean => {
   );
 };
 
-type ProductSyncSchedulerQueueState = {
-  workerStarted: boolean;
-  schedulerRegistered: boolean;
-};
-
 const globalWithQueueState = globalThis as typeof globalThis & {
-  __productSyncSchedulerQueueState__?: ProductSyncSchedulerQueueState;
+  __productSyncSchedulerQueueState__?: SchedulerQueueState;
 };
 
 const queueState =
@@ -63,7 +58,7 @@ const queueState =
     schedulerRegistered: false,
   });
 
-const queue = createManagedQueue<ProductSyncSchedulerJobData>({
+const queue = createManagedQueue<ScheduledTickJobData>({
   name: 'product-sync-scheduler',
   concurrency: 1,
   defaultJobOptions: {

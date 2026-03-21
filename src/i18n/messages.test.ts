@@ -95,16 +95,122 @@ describe('site messages', () => {
     expect(messages.KangurStaticLessons.geometryShapes.shapeCards.hexagon.name).toBe(
       'Шестикутник',
     );
+    expect(messages.KangurStaticLessons.logicalAnalogies.lessonTitle).toBe('Аналогії');
+    expect(messages.KangurStaticLessons.logicalAnalogies.game.stageTitle).toBe(
+      'Міст зв\'язків',
+    );
+    expect(messages.KangurStaticLessons.logicalPatterns.lessonTitle).toBe(
+      'Візерунки й послідовності',
+    );
+    expect(messages.KangurStaticLessons.logicalPatterns.slides.intro.whatIsPattern.title).toBe(
+      'Що таке візерунок?',
+    );
+    expect(messages.KangurStaticLessons.logicalClassification.lessonTitle).toBe(
+      'Класифікація',
+    );
+    expect(messages.KangurStaticLessons.logicalClassification.slides.diagram.venn.title).toBe(
+      'Діаграма Венна',
+    );
+    expect(messages.KangurStaticLessons.logicalReasoning.lessonTitle).toBe(
+      'Міркування',
+    );
+    expect(messages.KangurStaticLessons.logicalReasoning.game.ui.zones.valid.title).toBe(
+      'Випливає',
+    );
+    expect(messages.KangurStaticLessons.logicalThinking.lessonTitle).toBe(
+      'Логічне мислення',
+    );
+    expect(messages.KangurStaticLessons.logicalThinking.games.lab.ui.feedback.success).toBe(
+      'Чудово! Так тримати.',
+    );
+    expect(messages.KangurStaticLessons.englishBasicsShell.lessonTitle).toBe(
+      'Англійська: основи',
+    );
+    expect(messages.KangurStaticLessons.englishArticlesShell.sections.zero.title).toBe(
+      'Нульовий артикль',
+    );
+    expect(messages.KangurStaticLessons.englishSentenceStructureShell.sections.blueprint.title).toBe(
+      'Схема',
+    );
+    expect(messages.KangurStaticLessons.englishPartsOfSpeechShell.sections.subjectPronouns.title).toBe(
+      'Особові займенники',
+    );
+    expect(messages.KangurStaticLessons.englishSubjectVerbAgreementShell.sections.gameAgreement.title).toBe(
+      'Гра: узгодження підмета й дієслова',
+    );
+    expect(messages.KangurStaticLessons.englishPrepositionsShell.sections.gamePrepositions.title).toBe(
+      'Спринт із прийменників',
+    );
+    expect(messages.KangurStaticLessons.englishBasics.slides.greetings.hello.title).toBe(
+      'Hello і goodbye',
+    );
+    expect(messages.KangurStaticLessons.englishBasics.slides.summary.recap.title).toBe(
+      'Коротке повторення',
+    );
+    expect(messages.KangurStaticLessons.englishArticles.slides.intro.overview.title).toBe(
+      'Артиклі коротко',
+    );
+    expect(messages.KangurStaticLessons.englishArticles.slides.the.focus.title).toBe(
+      'The для чогось конкретного',
+    );
+    expect(messages.KangurStaticLessons.englishSentenceStructure.slides.blueprint.core.title).toBe(
+      'Схема SVO',
+    );
+    expect(messages.KangurStaticLessons.englishSentenceStructure.slides.practice.buildSentence.title).toBe(
+      'Склади речення',
+    );
+    expect(messages.KangurStaticLessons.englishPartsOfSpeech.slides.subjectPronouns.overview.title).toBe(
+      'Займенники-підмети',
+    );
+    expect(messages.KangurStaticLessons.englishPartsOfSpeech.slides.summary.recap.title).toBe(
+      'Підсумок',
+    );
+    expect(messages.KangurStaticLessons.englishSubjectVerbAgreement.slides.core.match.title).toBe(
+      'Підмет + дієслово = узгодження',
+    );
+    expect(messages.KangurStaticLessons.englishSubjectVerbAgreement.slides.summary.recap.title).toBe(
+      'Підсумок',
+    );
+    expect(messages.KangurStaticLessons.englishPrepositions.slides.intro.overview.title).toBe(
+      'Прийменники коротко',
+    );
+    expect(messages.KangurStaticLessons.englishPrepositions.slides.summary.recap.items.at).toBe(
+      'at = точний час / точка (at 6:00, at the bus stop)',
+    );
+    expect(messages.KangurStaticLessons.alphabetBasics.header.title).toBe(
+      'Алфавіт',
+    );
+    expect(messages.KangurStaticLessons.alphabetBasics.actions.check).toBe(
+      'Перевірити',
+    );
+    expect(messages.KangurStaticLessons.alphabetCopy.guide.writeHere).toBe(
+      'Пиши тут',
+    );
+    expect(messages.KangurStaticLessons.alphabetCopy.feedback.success).toBe(
+      'Чудова робота. Літера {letter} готова.',
+    );
+    expect(messages.NotFound.title).toBe('Сторінку не знайдено');
+    expect(messages.NotFound.backToHome).toBe('Назад на головну');
+    expect(messages.AuthSignIn.title).toBe('Увійти');
+    expect(messages.AuthSignIn.submit).toBe('Увійти');
+    expect(messages.AuthRegister.title).toBe('Створити обліковий запис');
+    expect(messages.AuthRegister.passwordHint).toBe('Мінімум {count} символів.');
+    expect(messages.CmsHome.readyEyebrow).toBe('CMS готовий');
+    expect(messages.CmsHome.openEditor).toBe('Відкрити редактор CMS');
+    expect(messages.CmsMenu.siteNavigation).toBe('Навігація сайтом');
+    expect(messages.CmsMenu.opensInNewTab).toBe('відкривається в новій вкладці');
+    expect(messages.AuthApi.tooManyAttempts).toBe(
+      'Забагато спроб. Спробуйте ще раз пізніше.',
+    );
+    expect(messages.AuthApi.emailVerificationRequired).toBe(
+      'Потрібне підтвердження електронної пошти.',
+    );
   });
 
   it('falls back to English for untranslated Ukrainian sections before Polish', async () => {
     const messages = await loadSiteMessages('uk');
 
-    expect(messages.KangurStaticLessons.logicalPatterns.lessonTitle).toBe(
-      'Patterns and sequences',
-    );
-    expect(messages.KangurStaticLessons.logicalPatterns.sections.intro.title).toBe(
-      'Patterns - introduction',
-    );
+    expect(messages.Product.fallbackTitle).toBe('Product');
+    expect(messages.Product.backToStorefront).toBe('Back to storefront');
   });
 });

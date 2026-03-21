@@ -293,6 +293,80 @@ describe('acquireRuntimeLease', () => {
     await expect(fs.stat(path.join(rootDir, left.runtimeTmpDir))).resolves.toBeTruthy();
   });
 
+  it('cleans stale managed dist and runtime temp dirs before starting a fresh runtime', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-stale-artifacts-'));
+    cleanupTargets.push(rootDir);
+
+    const appId = 'web';
+    const mode = 'dev';
+    const agentId = 'agent-stale-artifacts';
+    const bundler = 'webpack';
+    const leaseKey = buildRuntimeLeaseKey({
+      rootDir,
+      appId,
+      mode,
+      bundler,
+      agentId,
+    });
+    const distDir = resolveBrokerManagedDistDir({ appId, mode, bundler, agentId });
+    const runtimeTmpDir = resolveBrokerManagedRuntimeTmpDir({ leaseKey });
+    const staleDistMarker = path.join(rootDir, distDir, 'stale.txt');
+    const staleRuntimeMarker = path.join(rootDir, runtimeTmpDir, 'stale.txt');
+
+    await fs.mkdir(path.dirname(staleDistMarker), { recursive: true });
+    await fs.mkdir(path.dirname(staleRuntimeMarker), { recursive: true });
+    await fs.writeFile(staleDistMarker, 'stale dist', 'utf8');
+    await fs.writeFile(staleRuntimeMarker, 'stale runtime tmp', 'utf8');
+
+    const healthyBaseUrls = new Set<string>();
+    const spawnImpl = vi.fn(
+      (_command: string, _args: string[], options: { env: Record<string, string> }) => {
+        const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+          detached: true,
+          stdio: 'ignore',
+        });
+        child.unref();
+
+        const baseUrl = `http://${options.env.HOST}:${options.env.PORT}`;
+        setTimeout(() => {
+          healthyBaseUrls.add(baseUrl);
+        }, 50);
+
+        return child;
+      }
+    );
+
+    const fetchImpl = async (candidate: string) => {
+      const url = new URL(candidate);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      if (healthyBaseUrls.has(baseUrl)) {
+        return { status: 200 };
+      }
+
+      throw new Error('runtime not ready');
+    };
+
+    const lease = await acquireRuntimeLease({
+      rootDir,
+      appId,
+      mode,
+      agentId,
+      env: {
+        PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:43178',
+      },
+      spawnImpl,
+      fetchImpl,
+      startupTimeoutMs: 3_000,
+      reuseTimeoutMs: 500,
+    });
+
+    expect(lease.reused).toBe(false);
+    expect(spawnImpl).toHaveBeenCalledTimes(1);
+    await expect(fs.stat(path.join(rootDir, distDir))).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(fs.stat(staleRuntimeMarker)).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(fs.stat(path.join(rootDir, runtimeTmpDir))).resolves.toBeTruthy();
+  });
+
   it('scopes broker-managed runtimes by bundler and passes it to the dev server env', async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'runtime-broker-bundler-'));
     cleanupTargets.push(rootDir);

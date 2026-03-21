@@ -5,6 +5,15 @@ import type { NextRequest } from 'next/server';
 
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type {
+  CatchAllRouteDefinition as RouteDefinition,
+  CatchAllRouteHandler as RouteHandler,
+  CatchAllRouteMethod as HttpMethod,
+  CatchAllRouteModule as RouteModule,
+  CatchAllRouteParams as Params,
+  CatchAllRoutePathParams as RouteParams,
+  CatchAllRoutePatternToken as PatternToken,
+} from '@/shared/lib/api/catch-all-route-types';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as chatbotIndex from '../route-handler';
@@ -20,18 +29,6 @@ import * as sessionsIndex from '../sessions/route-handler';
 import * as sessionById from '../sessions/[sessionId]/route-handler';
 import * as sessionMessages from '../sessions/[sessionId]/messages/route-handler';
 import * as settings from '../settings/route-handler';
-
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type Params = Record<string, string>;
-type RouteParams = { path?: string[] | string };
-type RouteHandler<P extends Params = Params> = (
-  request: NextRequest,
-  context: { params: P | Promise<P> }
-) => Promise<Response>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- route modules define their own param shapes.
-type RouteModule = Partial<Record<HttpMethod, RouteHandler<any>>>;
-type PatternToken = string | { param: string };
-type RouteDefinition = { pattern: PatternToken[]; module: RouteModule };
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 

@@ -19,7 +19,7 @@ import {
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -43,13 +43,10 @@ export default function ThemesPage(): React.ReactNode {
       await deleteMutation.mutateAsync(id);
       setThemeToDelete(null);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          service: 'cms',
-          action: 'deleteTheme',
-          themeId: id,
-        },
+      logClientCatch(error, {
+        service: 'cms',
+        action: 'deleteTheme',
+        themeId: id,
       });
     }  };
 

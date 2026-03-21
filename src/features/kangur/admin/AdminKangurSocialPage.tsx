@@ -7,7 +7,6 @@ import { KangurAdminContentShell } from '@/features/kangur/admin/components/Kang
 import {
   Breadcrumbs,
   Button,
-  Card,
   LoadingState,
 } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
@@ -23,6 +22,7 @@ import { SocialPostList } from './admin-kangur-social/SocialPost.List';
 import { SocialPostEditorModal } from './admin-kangur-social/SocialPost.EditorModal';
 import { SocialPostPipeline } from './admin-kangur-social/SocialPost.Pipeline';
 import { KangurSocialPipelineQueuePanel } from './admin-kangur-social/KangurSocialPipelineQueuePanel';
+import { KangurAdminCard } from './components/KangurAdminCard';
 
 export function AdminKangurSocialPage(): React.JSX.Element {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = React.useState(false);
@@ -355,18 +355,14 @@ export function AdminKangurSocialPage(): React.JSX.Element {
             <KangurSocialPipelineQueuePanel variant='compact' />
 
             {activePost?.status === 'failed' && activePost.publishError ? (
-              <Card
-                variant='subtle'
-                padding='md'
-                className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-              >
+              <KangurAdminCard>
                 <div className='space-y-2'>
                   <div className='text-sm font-semibold text-foreground'>Publish error</div>
                   <div className='text-sm text-muted-foreground whitespace-pre-wrap'>
                     {activePost.publishError}
                   </div>
                 </div>
-              </Card>
+              </KangurAdminCard>
             ) : null}
           </div>
         </div>

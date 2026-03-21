@@ -6,6 +6,7 @@ import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
 } from '@/features/kangur/storefront-appearance-settings';
+import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 
 const LazyKangurPublicApp = React.lazy(() =>
   import('./KangurPublicApp').then((mod) => ({
@@ -26,11 +27,7 @@ export function KangurPublicAppEntry({
 
   return (
     <React.Suspense
-      fallback={
-        <div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
-          {translations('entryLoading')}
-        </div>
-      }
+      fallback={<LoadingPanel>{translations('entryLoading')}</LoadingPanel>}
     >
       <LazyKangurPublicApp
         basePath={basePath}

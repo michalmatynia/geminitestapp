@@ -30,7 +30,7 @@ import {
   UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -79,14 +79,11 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       setName('');
       toast('Tag created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesTagsPage',
-          action: 'createTag',
-          name,
-          notebookId: selectedNotebookId,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesTagsPage',
+        action: 'createTag',
+        name,
+        notebookId: selectedNotebookId,
       });
       toast('Failed to create tag', { variant: 'error' });
     }
@@ -98,13 +95,10 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       await deleteTag.mutateAsync(toDelete.id);
       toast('Tag deleted', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesTagsPage',
-          action: 'deleteTag',
-          tagId: toDelete.id,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesTagsPage',
+        action: 'deleteTag',
+        tagId: toDelete.id,
       });
       toast('Failed to delete tag', { variant: 'error' });
     } finally {
@@ -138,9 +132,10 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       toast('Tag updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminNotesTagsPage', action: 'updateTag', tagId },
+      logClientCatch(error, {
+        source: 'AdminNotesTagsPage',
+        action: 'updateTag',
+        tagId,
       });
       toast('Failed to update tag', { variant: 'error' });
     }

@@ -11,7 +11,7 @@ import React, {
 import type { NoteWithRelations, TagRecord } from '@/shared/contracts/notes';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useNotesAppActions, useNotesAppState } from '../hooks/NotesAppContext';
 import { useNoteSettingsState } from '../hooks/NoteSettingsContext';
@@ -251,9 +251,10 @@ export function NoteFormProvider({
         toast(note ? 'Note updated successfully' : 'Note created successfully');
         onSuccess();
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'NoteForm', action: 'saveNote', noteId: note?.id },
+        logClientCatch(error, {
+          source: 'NoteForm',
+          action: 'saveNote',
+          noteId: note?.id,
         });
         const message = error instanceof Error ? error.message : 'Failed to save note';
         toast(message, { variant: 'error' });

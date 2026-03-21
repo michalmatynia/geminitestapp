@@ -16,7 +16,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useCountries, useCurrencies, useLanguages } from '@/shared/hooks/use-i18n-queries';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type ConfirmationConfig = {
   title: string;
@@ -175,13 +175,10 @@ export function InternationalizationProvider({
           await deleteLanguageMutation.mutateAsync(language.id);
           toast(`Language ${language.name} deleted.`, { variant: 'success' });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'InternationalizationContext',
-              action: 'deleteLanguage',
-              languageId: language.id,
-            },
+          logClientCatch(error, {
+            source: 'InternationalizationContext',
+            action: 'deleteLanguage',
+            languageId: language.id,
           });
           toast('Failed to delete language.', { variant: 'error' });
         }
@@ -205,13 +202,10 @@ export function InternationalizationProvider({
           await deleteCurrencyMutation.mutateAsync(currency.id);
           toast(`Currency ${currency.code} deleted.`, { variant: 'success' });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'InternationalizationContext',
-              action: 'deleteCurrency',
-              currencyId: currency.id,
-            },
+          logClientCatch(error, {
+            source: 'InternationalizationContext',
+            action: 'deleteCurrency',
+            currencyId: currency.id,
           });
           toast('Failed to delete currency.', { variant: 'error' });
         }
@@ -235,13 +229,10 @@ export function InternationalizationProvider({
           await deleteCountryMutation.mutateAsync(country.id);
           toast(`Country ${country.name} deleted.`, { variant: 'success' });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'InternationalizationContext',
-              action: 'deleteCountry',
-              countryId: country.id,
-            },
+          logClientCatch(error, {
+            source: 'InternationalizationContext',
+            action: 'deleteCountry',
+            countryId: country.id,
           });
           toast('Failed to delete country.', { variant: 'error' });
         }

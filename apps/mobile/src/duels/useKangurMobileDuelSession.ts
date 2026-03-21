@@ -11,6 +11,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import {
+  useKangurMobileI18n,
+  type KangurMobileLocalizedValue,
+} from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 
 const MOBILE_DUEL_SESSION_POLL_MS = 4_000;
@@ -41,7 +45,11 @@ type UseKangurMobileDuelSessionResult = {
 const createMobileDuelSpectatorId = (): string =>
   `mobile_spectator_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
-const toSessionErrorMessage = (error: unknown, fallback: string): string | null => {
+const toSessionErrorMessage = (
+  error: unknown,
+  fallback: string,
+  copy: (value: KangurMobileLocalizedValue<string>) => string,
+): string | null => {
   if (!error) {
     return null;
   }
@@ -50,7 +58,11 @@ const toSessionErrorMessage = (error: unknown, fallback: string): string | null 
     const status = (error as { status?: number }).status;
 
     if (status === 401) {
-      return 'Zaloguj sesję ucznia, aby otworzyć pojedynek.';
+      return copy({
+        de: 'Melde eine Lernenden-Sitzung an, um das Duell zu öffnen.',
+        en: 'Sign in the learner session to open the duel.',
+        pl: 'Zaloguj sesję ucznia, aby otworzyć pojedynek.',
+      });
     }
   }
 
@@ -65,7 +77,11 @@ const toSessionErrorMessage = (error: unknown, fallback: string): string | null 
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return 'Nie udało się połączyć z API Kangura.';
+    return copy({
+      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
+      en: 'Could not connect to the Kangur API.',
+      pl: 'Nie udało się połączyć z API Kangura.',
+    });
   }
 
   return message;
@@ -75,6 +91,7 @@ export const useKangurMobileDuelSession = (
   sessionId: string | null,
   options: UseKangurMobileDuelSessionOptions = {},
 ): UseKangurMobileDuelSessionResult => {
+  const { copy } = useKangurMobileI18n();
   const queryClient = useQueryClient();
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
   const { isLoadingAuth, session } = useKangurMobileAuth();
@@ -205,7 +222,7 @@ export const useKangurMobileDuelSession = (
     try {
       return await action();
     } catch (error) {
-      setActionError(toSessionErrorMessage(error, fallbackMessage));
+      setActionError(toSessionErrorMessage(error, fallbackMessage, copy));
       return null;
     } finally {
       setIsMutating(false);
@@ -218,8 +235,17 @@ export const useKangurMobileDuelSession = (
     error: toSessionErrorMessage(
       isSpectating ? spectatorQuery.error : playerQuery.error,
       isSpectating
-        ? 'Nie udało się pobrać podglądu pojedynku.'
-        : 'Nie udało się pobrać stanu pojedynku.',
+        ? copy({
+            de: 'Die Duellansicht konnte nicht geladen werden.',
+            en: 'Could not load the duel view.',
+            pl: 'Nie udało się pobrać podglądu pojedynku.',
+          })
+        : copy({
+            de: 'Der Duellstatus konnte nicht geladen werden.',
+            en: 'Could not load the duel state.',
+            pl: 'Nie udało się pobrać stanu pojedynku.',
+          }),
+      copy,
     ),
     isAuthenticated,
     isLoading: isSpectating ? spectatorQuery.isLoading : isRestoringAuth || playerQuery.isLoading,
@@ -240,7 +266,11 @@ export const useKangurMobileDuelSession = (
             },
             { cache: 'no-store' },
           ),
-        'Nie udało się opuścić pojedynku.',
+        copy({
+          de: 'Das Duell konnte nicht verlassen werden.',
+          en: 'Could not leave the duel.',
+          pl: 'Nie udało się opuścić pojedynku.',
+        }),
       );
 
       if (!response) {
@@ -269,7 +299,11 @@ export const useKangurMobileDuelSession = (
             },
             { cache: 'no-store' },
           ),
-        'Nie udało się wysłać reakcji.',
+        copy({
+          de: 'Die Reaktion konnte nicht gesendet werden.',
+          en: 'Could not send the reaction.',
+          pl: 'Nie udało się wysłać reakcji.',
+        }),
       );
 
       if (!response) {
@@ -319,7 +353,11 @@ export const useKangurMobileDuelSession = (
             },
             { cache: 'no-store' },
           ),
-        'Nie udało się wysłać odpowiedzi.',
+        copy({
+          de: 'Die Antwort konnte nicht gesendet werden.',
+          en: 'Could not send the answer.',
+          pl: 'Nie udało się wysłać odpowiedzi.',
+        }),
       );
 
       if (!response) {

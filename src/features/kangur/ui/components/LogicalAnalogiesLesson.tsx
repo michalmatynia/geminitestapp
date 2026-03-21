@@ -21,17 +21,10 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'intro' | 'liczby_ksztalty' | 'relacje' | 'game_relacje' | 'podsumowanie';
 type SlideSectionId = Exclude<SectionId, 'game_relacje'>;
-type LogicalAnalogiesLessonTranslate = (key: string) => string;
-type WidenLessonCopy<T> = T extends string
-  ? string
-  : T extends readonly (infer U)[]
-    ? readonly WidenLessonCopy<U>[]
-    : T extends object
-      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
-      : T;
 
 const LOGICAL_ANALOGIES_LESSON_COPY_PL = {
   lessonTitle: 'Analogie',
@@ -243,7 +236,7 @@ const LOGICAL_ANALOGIES_LESSON_COPY_PL = {
 type LogicalAnalogiesLessonCopy = WidenLessonCopy<typeof LOGICAL_ANALOGIES_LESSON_COPY_PL>;
 
 const translateLogicalAnalogiesLesson = (
-  translate: LogicalAnalogiesLessonTranslate,
+  translate: LessonTranslate,
   key: string,
   fallback: string
 ): string => {
@@ -252,7 +245,7 @@ const translateLogicalAnalogiesLesson = (
 };
 
 const localizeLogicalAnalogiesLessonCopy = <T,>(
-  translate: LogicalAnalogiesLessonTranslate,
+  translate: LessonTranslate,
   source: T,
   prefix = ''
 ): WidenLessonCopy<T> => {
@@ -288,7 +281,7 @@ const localizeLogicalAnalogiesLessonCopy = <T,>(
 };
 
 const buildLogicalAnalogiesLessonCopy = (
-  translate: LogicalAnalogiesLessonTranslate
+  translate: LessonTranslate
 ): LogicalAnalogiesLessonCopy =>
   localizeLogicalAnalogiesLessonCopy(translate, LOGICAL_ANALOGIES_LESSON_COPY_PL);
 

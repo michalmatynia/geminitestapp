@@ -12,6 +12,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
+
 const {
   answerDuelMock,
   getDuelSpectatorStateMock,
@@ -148,10 +150,16 @@ const createPlayerStateResponse = () => ({
 });
 
 const createWrapper =
-  (queryClient: QueryClient) =>
+  (queryClient: QueryClient, locale?: 'pl' | 'en' | 'de') =>
   ({ children }: { children: React.ReactNode }): React.JSX.Element =>
     (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        {locale ? (
+          <KangurMobileI18nProvider locale={locale}>{children}</KangurMobileI18nProvider>
+        ) : (
+          children
+        )}
+      </QueryClientProvider>
     );
 
 describe('useKangurMobileDuelSession', () => {
@@ -273,5 +281,20 @@ describe('useKangurMobileDuelSession', () => {
     });
 
     expect(answerDuelMock).not.toHaveBeenCalled();
+  });
+
+  it('localizes auth-required duel errors when the locale is de', async () => {
+    getDuelStateMock.mockRejectedValueOnce({ status: 401 });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useKangurMobileDuelSession('duel-401'), {
+      wrapper: createWrapper(queryClient, 'de'),
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe(
+        'Melde eine Lernenden-Sitzung an, um das Duell zu öffnen.',
+      );
+    });
   });
 });

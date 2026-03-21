@@ -6,7 +6,7 @@ import {
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
 import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   normalizeCaseParentId,
@@ -132,14 +132,11 @@ export const handleMoveCaseImpl = async (args: {
       source: 'cases_page_move_case',
     });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'AdminCaseResolverCasesPage',
-        action: 'moveCase',
-        caseId,
-        targetParentCaseId,
-      },
+    logClientCatch(error, {
+      source: 'AdminCaseResolverCasesPage',
+      action: 'moveCase',
+      caseId,
+      targetParentCaseId,
     });
     throw error;
   }
@@ -251,15 +248,12 @@ export const handleReorderCaseImpl = async (args: {
       source: 'cases_page_reorder_case',
     });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'AdminCaseResolverCasesPage',
-        action: 'reorderCase',
-        caseId,
-        targetCaseId,
-        position,
-      },
+    logClientCatch(error, {
+      source: 'AdminCaseResolverCasesPage',
+      action: 'reorderCase',
+      caseId,
+      targetCaseId,
+      position,
     });
     throw error;
   }

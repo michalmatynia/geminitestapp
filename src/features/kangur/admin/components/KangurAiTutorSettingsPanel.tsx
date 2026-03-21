@@ -15,7 +15,6 @@ import {
   Alert,
   Badge,
   Button,
-  Card,
   FormField,
   FormSection,
   Input,
@@ -27,6 +26,8 @@ import {
   KANGUR_CENTER_ROW_SPACED_CLASSNAME,
   KANGUR_GRID_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+
+import { KangurAdminCard, KangurAdminInsetCard } from './KangurAdminCard';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';
@@ -207,11 +208,7 @@ function AgentPersonaSelect() {
         />
       </FormField>
 
-      <Card
-        variant='subtle'
-        padding='sm'
-        className={cn('mt-4', 'rounded-2xl border-border/60 bg-background/60 shadow-sm')}
-      >
+      <KangurAdminInsetCard padding='sm' className='mt-4'>
         <div className={KANGUR_CENTER_ROW_CLASSNAME}>
           <Badge variant='outline'>Current persona</Badge>
         </div>
@@ -234,7 +231,7 @@ function AgentPersonaSelect() {
             </div>
           </div>
         </div>
-      </Card>
+      </KangurAdminInsetCard>
     </>
   );
 }
@@ -292,7 +289,7 @@ export function KangurAiTutorSettingsPanel(props: KangurAiTutorSettingsPanelProp
       >
         <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} xl:grid-cols-2`}>
           <div className='space-y-4'>
-            <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
+            <KangurAdminCard>
               <div className='flex items-center gap-2'>
                 <Badge variant='secondary'>AI Brain Routing</Badge>
               </div>
@@ -312,23 +309,23 @@ export function KangurAiTutorSettingsPanel(props: KangurAiTutorSettingsPanelProp
                   <Link href='/admin/brain?tab=routing'>Open AI Brain routing</Link>
                 </Button>
               </div>
-            </Card>
+            </KangurAdminCard>
 
-            <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
+            <KangurAdminCard>
               <DailyMessageLimitInput />
               <GuestIntroModeSelect />
               <HomeOnboardingModeSelect />
-            </Card>
+            </KangurAdminCard>
           </div>
 
           <div className='space-y-4'>
-            <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
+            <KangurAdminCard>
               <AgentPersonaSelect />
-            </Card>
+            </KangurAdminCard>
 
-            <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
+            <KangurAdminCard>
               <MotionPresetSelect />
-            </Card>
+            </KangurAdminCard>
           </div>
         </div>
 

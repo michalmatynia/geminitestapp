@@ -19,6 +19,12 @@ vi.mock('next/image', async () => {
 vi.mock('@/shared/ui', async () => {
   const mocks = await import('./rightSidebarRuntimeMockComponents');
   return {
+    InsetPanel: ({
+      children,
+      className,
+    }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
+      <div className={className}>{children}</div>
+    ),
     SelectSimple: mocks.MockSelectSimple,
   };
 });

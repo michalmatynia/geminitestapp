@@ -3,21 +3,27 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 
 const {
   getKangurPortableLessonBodyMock,
+  replaceMock,
   useLessonsScreenBootStateMock,
+  useKangurMobileLessonsDuelsMock,
   useKangurMobileLessonsMock,
   useLocalSearchParamsMock,
+  useRouterMock,
 } = vi.hoisted(() => ({
   getKangurPortableLessonBodyMock: vi.fn(),
+  replaceMock: vi.fn(),
   useLessonsScreenBootStateMock: vi.fn(),
+  useKangurMobileLessonsDuelsMock: vi.fn(),
   useKangurMobileLessonsMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
+  useRouterMock: vi.fn(),
 }));
 
 vi.mock('react-native', () => {
@@ -59,6 +65,7 @@ vi.mock('react-native-safe-area-context', () => {
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren) => children,
   useLocalSearchParams: useLocalSearchParamsMock,
+  useRouter: useRouterMock,
 }));
 
 vi.mock('@kangur/core', () => ({
@@ -72,6 +79,10 @@ vi.mock('./useLessonsScreenBootState', () => ({
 
 vi.mock('./useKangurMobileLessons', () => ({
   useKangurMobileLessons: useKangurMobileLessonsMock,
+}));
+
+vi.mock('./useKangurMobileLessonsDuels', () => ({
+  useKangurMobileLessonsDuels: useKangurMobileLessonsDuelsMock,
 }));
 
 import { KangurLessonsScreen } from './KangurLessonsScreen';
@@ -107,6 +118,9 @@ describe('KangurLessonsScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useLocalSearchParamsMock.mockReturnValue({});
+    useRouterMock.mockReturnValue({
+      replace: replaceMock,
+    });
     getKangurPortableLessonBodyMock.mockImplementation((_: string, locale?: string) => {
       if (locale === 'de') {
         return {
@@ -153,9 +167,25 @@ describe('KangurLessonsScreen', () => {
       };
     });
     useKangurMobileLessonsMock.mockReturnValue({
+      actionError: null,
       focusToken: 'clock',
       lessons: [mockLessonItem],
+      saveLessonCheckpoint: vi.fn(),
       selectedLesson: mockLessonItem,
+    });
+    useKangurMobileLessonsDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
     });
   });
 
@@ -174,8 +204,38 @@ describe('KangurLessonsScreen', () => {
     expect(screen.queryByText('Wybrana lekcja')).toBeNull();
   });
 
-  it('replaces the loading cards with the focused lesson content after boot', () => {
+  it('replaces the loading cards with the focused lesson content after boot', async () => {
     useLessonsScreenBootStateMock.mockReturnValue(false);
+    const createRematchMock = vi.fn().mockResolvedValue('duel-lessons-1');
+    useKangurMobileLessonsDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: createRematchMock,
+      currentEntry: {
+        displayName: 'Ada Learner',
+        lastPlayedAt: '2026-03-21T08:07:00.000Z',
+        learnerId: 'learner-1',
+        losses: 2,
+        matches: 5,
+        ties: 0,
+        winRate: 0.6,
+        wins: 3,
+      },
+      currentRank: 2,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [
+        {
+          displayName: 'Leo Mentor',
+          lastPlayedAt: '2026-03-21T08:05:00.000Z',
+          learnerId: 'learner-2',
+        },
+      ],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
 
     renderLessonsScreen();
 
@@ -188,8 +248,25 @@ describe('KangurLessonsScreen', () => {
         'Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.',
       ),
     ).toBeTruthy();
+    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
+    expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
+    expect(screen.getByText('Leo Mentor')).toBeTruthy();
+    expect(screen.getByText('Szybki rewanż')).toBeTruthy();
     expect(screen.queryByText('Ładowanie lekcji')).toBeNull();
     expect(screen.queryByText('Wczytujemy listę tematów i stan opanowania.')).toBeNull();
+
+    fireEvent.click(screen.getByText('Szybki rewanż'));
+
+    expect(createRematchMock).toHaveBeenCalledWith('learner-2');
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-lessons-1',
+        },
+      });
+    });
   });
 
   it('renders German lesson-shell copy when the locale is de', () => {
@@ -212,5 +289,54 @@ describe('KangurLessonsScreen', () => {
     expect(screen.getByText('Schau zuerst, wie sich die Zeiger bewegen.')).toBeTruthy();
     expect(screen.getByText('Volle Stunden')).toBeTruthy();
     expect(screen.getByText('Nach der Lektion kannst du direkt in das kuerzere Uhrtraining wechseln.')).toBeTruthy();
+  });
+
+  it('saves a local lesson checkpoint from the current section coverage', () => {
+    const saveLessonCheckpointMock = vi.fn().mockReturnValue({
+      countsAsLessonCompletion: false,
+      newBadges: [],
+      scorePercent: 50,
+    });
+    useLessonsScreenBootStateMock.mockReturnValue(false);
+    getKangurPortableLessonBodyMock.mockReturnValue({
+      introduction: 'Najpierw zobacz, jak przesuwaja sie wskazowki.',
+      practiceNote: 'Po lekcji przejdz od razu do krotszego treningu zegara.',
+      sections: [
+        {
+          description: 'Zacznij od pelnych godzin.',
+          id: 'sec-1',
+          reminders: ['Najpierw patrz na krotsza wskazowke.'],
+          title: 'Pelne godziny',
+        },
+        {
+          description: 'Potem dodaj minuty.',
+          id: 'sec-2',
+          reminders: ['Sprawdz, czy dluzsza wskazowka nie przekroczyla polowy.'],
+          title: 'Minuty',
+        },
+      ],
+    });
+    useKangurMobileLessonsMock.mockReturnValue({
+      actionError: null,
+      focusToken: 'clock',
+      lessons: [mockLessonItem],
+      saveLessonCheckpoint: saveLessonCheckpointMock,
+      selectedLesson: mockLessonItem,
+    });
+
+    renderLessonsScreen();
+
+    expect(screen.getByText('Postęp lekcji')).toBeTruthy();
+    expect(screen.getByText('50%')).toBeTruthy();
+    fireEvent.click(screen.getByText('Zapisz checkpoint'));
+
+    expect(saveLessonCheckpointMock).toHaveBeenCalledWith({
+      countsAsLessonCompletion: false,
+      lessonComponentId: 'clock',
+      scorePercent: 50,
+    });
+    expect(
+      screen.getByText('Checkpoint lekcji zapisano lokalnie z wynikiem 50%.'),
+    ).toBeTruthy();
   });
 });

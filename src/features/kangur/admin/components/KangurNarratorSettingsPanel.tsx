@@ -13,7 +13,6 @@ import {
   Alert,
   Badge,
   Button,
-  Card,
   FormSection,
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
@@ -23,6 +22,7 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
+import { KangurAdminCard } from './KangurAdminCard';
 import { SettingsChoiceCard } from './SettingsChoiceCard';
 
 const TEST_NARRATOR_TEMPLATE_TEXT =
@@ -154,7 +154,7 @@ export function KangurNarratorSettingsPanel({
         </div>
 
         <div className='space-y-4'>
-          <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
+          <KangurAdminCard>
             <div className='flex items-start justify-between gap-3'>
               <div>
                 <div className='flex items-center gap-2'>
@@ -227,7 +227,7 @@ export function KangurNarratorSettingsPanel({
                 ) : null}
               </Alert>
             ) : null}
-          </Card>
+          </KangurAdminCard>
 
           <Alert variant='default' title='Global behavior'>
             Lessons and exercises keep the play and pause controls, but the engine choice is no

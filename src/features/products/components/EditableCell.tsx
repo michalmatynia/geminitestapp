@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
 
 import { useUpdateProductField } from '@/features/products/hooks/useProductsMutations';
 import { Input, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type EditableCellProps = {
   value: number | null;
@@ -107,9 +107,11 @@ export const EditableCell = memo(
         setIsEditing(false);
         onUpdate(numValue);
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'EditableCell', action: 'save', field, productId },
+        logClientCatch(error, {
+          source: 'EditableCell',
+          action: 'save',
+          field,
+          productId,
         });
         toast(error instanceof Error ? error.message : `Failed to update ${field}`, {
           variant: 'error',

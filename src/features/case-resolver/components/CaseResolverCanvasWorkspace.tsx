@@ -27,7 +27,7 @@ import {
 import { Badge, Button, Card, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolver-canvas-utils';
@@ -186,9 +186,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
       invalidateAiPathsSettingsCache();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'CaseResolverCanvasWorkspace', action: 'persistUiState' },
+      logClientCatch(error, {
+        source: 'CaseResolverCanvasWorkspace',
+        action: 'persistUiState',
       });
     }
   }, [activeFile?.id, workspace?.id]);

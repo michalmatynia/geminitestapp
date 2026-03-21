@@ -37,6 +37,7 @@ export { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/li
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './input';
+export * from './InsetPanel';
 export * from './password-input';
 export * from './label';
 export * from './radio-group';
@@ -95,6 +96,7 @@ export { default as MissingImagePlaceholder } from './missing-image-placeholder'
 
 export * from './FormActions';
 export * from './LoadingState';
+export * from './LoadingPanel';
 export * from './Hint';
 export * from './ActionMenu';
 export * from './ExternalLink';

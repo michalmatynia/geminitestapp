@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import type { Toast } from '@/shared/contracts/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { autoformatMarkdown } from '../utils';
 
@@ -94,14 +94,11 @@ export function useNoteFormFiles({
         );
         toast('File uploaded successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'NoteForm',
-            action: 'uploadFile',
-            noteId,
-            slotIndex,
-          },
+        logClientCatch(error, {
+          source: 'NoteForm',
+          action: 'uploadFile',
+          noteId,
+          slotIndex,
         });
         const message = error instanceof Error ? error.message : 'Failed to upload file';
         toast(message);
@@ -123,14 +120,11 @@ export function useNoteFormFiles({
         );
         toast('File deleted successfully');
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'NoteForm',
-            action: 'deleteFile',
-            noteId,
-            slotIndex,
-          },
+        logClientCatch(error, {
+          source: 'NoteForm',
+          action: 'deleteFile',
+          noteId,
+          slotIndex,
         });
         toast('Failed to delete file');
       }
@@ -189,13 +183,10 @@ export function useNoteFormFiles({
 
           toast('Image pasted and uploaded');
         } catch (error: unknown) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'NoteForm',
-              action: 'uploadPastedImage',
-              noteId,
-            },
+          logClientCatch(error, {
+            source: 'NoteForm',
+            action: 'uploadPastedImage',
+            noteId,
           });
           toast('Failed to upload pasted image');
         } finally {

@@ -2,12 +2,14 @@ import {
   getKangurPortableLessonBody,
   getKangurPracticeOperationForLessonComponent,
 } from '@kangur/core';
-import { Link, type Href, useLocalSearchParams } from 'expo-router';
+import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 
+import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileLessonsDuels } from './useKangurMobileLessonsDuels';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
 
@@ -227,6 +229,7 @@ const getMasteryTone = (badgeAccent: string): Tone => {
 
 export function KangurLessonsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
@@ -236,7 +239,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
     normalizedRouteFocusToken && normalizedRouteFocusToken === dismissedFocusToken
       ? null
       : normalizedRouteFocusToken;
-  const { focusToken, lessons, selectedLesson } = useKangurMobileLessons(
+  const {
+    actionError: lessonActionError,
+    focusToken,
+    lessons,
+    saveLessonCheckpoint,
+    selectedLesson,
+  } = useKangurMobileLessons(
     effectiveFocusToken,
   );
   const lessonsViewKey = focusToken ?? 'catalog';
@@ -249,11 +258,34 @@ export function KangurLessonsScreen(): React.JSX.Element {
     !isPreparingLessonsView && selectedLesson
       ? getKangurPracticeOperationForLessonComponent(selectedLesson.lesson.componentId)
       : null;
+  const lessonDuels = useKangurMobileLessonsDuels();
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [savedLessonCheckpoint, setSavedLessonCheckpoint] = useState<{
+    countsAsLessonCompletion: boolean;
+    scorePercent: number;
+  } | null>(null);
+  const duelSectionDescription = selectedLesson
+    ? copy({
+        de: `Nach der Lektion "${selectedLesson.lesson.title}" kannst du direkt in die Duelle wechseln oder zu den letzten Rivalen zurückkehren.`,
+        en: `After the lesson "${selectedLesson.lesson.title}", you can jump straight into duels or return to recent rivals.`,
+        pl: `Po lekcji "${selectedLesson.lesson.title}" możesz od razu wejść w pojedynki albo wrócić do ostatnich rywali.`,
+      })
+    : copy({
+        de: 'Nach dem Lesen kannst du direkt in die Duelle wechseln oder zu den letzten Rivalen zurückkehren.',
+        en: 'After reading, you can jump straight into duels or return to recent rivals.',
+        pl: 'Po czytaniu możesz od razu wejść w pojedynki albo wrócić do ostatnich rywali.',
+      });
+  const openDuelSession = (sessionId: string): void => {
+    router.replace(createKangurDuelsHref({ sessionId }));
+  };
 
   useEffect(() => {
     setActiveSectionIndex(0);
   }, [selectedLesson?.lesson.id]);
+
+  useEffect(() => {
+    setSavedLessonCheckpoint(null);
+  }, [activeSectionIndex, selectedLesson?.lesson.id]);
 
   useEffect(() => {
     if (!normalizedRouteFocusToken) {
@@ -277,6 +309,21 @@ export function KangurLessonsScreen(): React.JSX.Element {
         },
       }
     : null;
+  const selectedLessonCheckpoint =
+    !isPreparingLessonsView && selectedLesson && selectedLessonBody
+      ? (() => {
+          const totalSections = Math.max(1, selectedLessonBody.sections.length);
+          const completedSections = Math.min(activeSectionIndex + 1, totalSections);
+
+          return {
+            completedSections,
+            countsAsLessonCompletion:
+              completedSections >= selectedLessonBody.sections.length,
+            scorePercent: Math.round((completedSections / totalSections) * 100),
+            totalSections,
+          };
+        })()
+      : null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -583,6 +630,119 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       {selectedLessonBody.practiceNote}
                     </Text>
                   </View>
+
+                  {selectedLessonCheckpoint ? (
+                    <View
+                      style={{
+                        borderRadius: 18,
+                        backgroundColor: '#ecfeff',
+                        borderWidth: 1,
+                        borderColor: '#a5f3fc',
+                        padding: 14,
+                        gap: 10,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 10,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <Text style={{ color: '#155e75', fontSize: 12, fontWeight: '700' }}>
+                          {copy({
+                            de: 'Lektionsfortschritt',
+                            en: 'Lesson progress',
+                            pl: 'Postęp lekcji',
+                          })}
+                        </Text>
+                        <Pill
+                          label={`${selectedLessonCheckpoint.scorePercent}%`}
+                          tone={{
+                            backgroundColor: '#ffffff',
+                            borderColor: '#67e8f9',
+                            textColor: '#155e75',
+                          }}
+                        />
+                      </View>
+
+                      <Text style={{ color: '#0f172a', fontSize: 14, lineHeight: 20 }}>
+                        {selectedLessonCheckpoint.countsAsLessonCompletion
+                          ? copy({
+                              de: `Alle ${selectedLessonCheckpoint.totalSections} Abschnitte sind gelesen. Speichere den Abschluss, damit Profil und Tagesplan diese Lektion sofort sehen.`,
+                              en: `All ${selectedLessonCheckpoint.totalSections} sections are read. Save the completion so the profile and daily plan see this lesson immediately.`,
+                              pl: `Przeczytano wszystkie ${selectedLessonCheckpoint.totalSections} sekcje. Zapisz ukończenie, aby profil i plan dnia od razu widziały tę lekcję.`,
+                            })
+                          : copy({
+                              de: `${selectedLessonCheckpoint.completedSections} von ${selectedLessonCheckpoint.totalSections} Abschnitten sind gelesen. Speichere einen Checkpoint, damit Profil und Tagesplan diese Wiederholung sofort sehen.`,
+                              en: `${selectedLessonCheckpoint.completedSections} of ${selectedLessonCheckpoint.totalSections} sections are read. Save a checkpoint so the profile and daily plan refresh this review.`,
+                              pl: `Przeczytano ${selectedLessonCheckpoint.completedSections} z ${selectedLessonCheckpoint.totalSections} sekcji. Zapisz checkpoint, aby profil i plan dnia odświeżyły tę powtórkę.`,
+                            })}
+                      </Text>
+
+                      {lessonActionError ? (
+                        <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                          {lessonActionError}
+                        </Text>
+                      ) : null}
+
+                      {savedLessonCheckpoint ? (
+                        <Text style={{ color: '#0f766e', fontSize: 14, lineHeight: 20 }}>
+                          {savedLessonCheckpoint.countsAsLessonCompletion
+                            ? copy({
+                                de: `Der Lektionsabschluss wurde mit ${savedLessonCheckpoint.scorePercent}% lokal gespeichert.`,
+                                en: `The lesson completion was saved locally with ${savedLessonCheckpoint.scorePercent}%.`,
+                                pl: `Ukończenie lekcji zapisano lokalnie z wynikiem ${savedLessonCheckpoint.scorePercent}%.`,
+                              })
+                            : copy({
+                                de: `Der Lektions-Checkpoint wurde mit ${savedLessonCheckpoint.scorePercent}% lokal gespeichert.`,
+                                en: `The lesson checkpoint was saved locally with ${savedLessonCheckpoint.scorePercent}%.`,
+                                pl: `Checkpoint lekcji zapisano lokalnie z wynikiem ${savedLessonCheckpoint.scorePercent}%.`,
+                              })}
+                        </Text>
+                      ) : null}
+
+                      <Pressable
+                        accessibilityRole='button'
+                        onPress={() => {
+                          if (!selectedLesson) {
+                            return;
+                          }
+
+                          const savedCheckpoint = saveLessonCheckpoint({
+                            countsAsLessonCompletion:
+                              selectedLessonCheckpoint.countsAsLessonCompletion,
+                            lessonComponentId: selectedLesson.lesson.componentId,
+                            scorePercent: selectedLessonCheckpoint.scorePercent,
+                          });
+                          setSavedLessonCheckpoint(savedCheckpoint);
+                        }}
+                        style={{
+                          alignSelf: 'flex-start',
+                          borderRadius: 999,
+                          backgroundColor: '#0f766e',
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                        }}
+                      >
+                        <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                          {selectedLessonCheckpoint.countsAsLessonCompletion
+                            ? copy({
+                                de: 'Lektion abschliessen',
+                                en: 'Complete lesson',
+                                pl: 'Ukończ lekcję',
+                              })
+                            : copy({
+                                de: 'Checkpoint speichern',
+                                en: 'Save checkpoint',
+                                pl: 'Zapisz checkpoint',
+                              })}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               ) : (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -660,6 +820,221 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   pl: 'Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.',
                 })}
               </Text>
+            </Card>
+          ) : null}
+
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Nach der Lektion',
+                  en: 'After the lesson',
+                  pl: 'Po lekcji',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Duelle',
+                  en: 'Duels',
+                  pl: 'Pojedynki',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {duelSectionDescription}
+              </Text>
+
+              {lessonDuels.isRestoringAuth || lessonDuels.isLoading ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Die Duell-Zusammenfassung nach der Lektion wird geladen.',
+                    en: 'Loading the post-lesson duel summary.',
+                    pl: 'Pobieramy podsumowanie pojedynków po lekcji.',
+                  })}
+                </Text>
+              ) : lessonDuels.error ? (
+                <View style={{ gap: 10 }}>
+                  <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                    {lessonDuels.error}
+                  </Text>
+                  <Pressable
+                    accessibilityRole='button'
+                    onPress={() => {
+                      void lessonDuels.refresh();
+                    }}
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderRadius: 999,
+                      backgroundColor: '#0f172a',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Duelle aktualisieren',
+                        en: 'Refresh duels',
+                        pl: 'Odśwież pojedynki',
+                      })}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : !lessonDuels.isAuthenticated ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Melde die Schulersitzung an, um hier den Duellstand und schnelle Rückkämpfe zu sehen.',
+                    en: 'Sign in the learner session to see duel standing and quick rematches here.',
+                    pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.',
+                  })}
+                </Text>
+              ) : (
+                <View style={{ gap: 12 }}>
+                  {lessonDuels.currentEntry ? (
+                    <View
+                      style={{
+                        borderRadius: 20,
+                        borderWidth: 1,
+                        borderColor: '#bfdbfe',
+                        backgroundColor: '#eff6ff',
+                        padding: 14,
+                        gap: 8,
+                      }}
+                    >
+                      <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                        {copy({
+                          de: 'DEIN DUELLSTAND',
+                          en: 'YOUR DUEL SNAPSHOT',
+                          pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                        })}
+                      </Text>
+                      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                        #{lessonDuels.currentRank} {lessonDuels.currentEntry.displayName}
+                      </Text>
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        {copy({
+                          de: `Siege ${lessonDuels.currentEntry.wins} • Niederlagen ${lessonDuels.currentEntry.losses} • Unentschieden ${lessonDuels.currentEntry.ties}`,
+                          en: `Wins ${lessonDuels.currentEntry.wins} • Losses ${lessonDuels.currentEntry.losses} • Ties ${lessonDuels.currentEntry.ties}`,
+                          pl: `Wygrane ${lessonDuels.currentEntry.wins} • Porażki ${lessonDuels.currentEntry.losses} • Remisy ${lessonDuels.currentEntry.ties}`,
+                        })}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: 'Dein Konto ist im sichtbaren Ausschnitt der Duell-Rangliste noch nicht vertreten.',
+                        en: 'Your account is not yet visible in the current duel leaderboard snapshot.',
+                        pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                      })}
+                    </Text>
+                  )}
+
+                  {lessonDuels.actionError ? (
+                    <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                      {lessonDuels.actionError}
+                    </Text>
+                  ) : null}
+
+                  {lessonDuels.opponents.length === 0 ? (
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
+                        en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
+                        pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                      })}
+                    </Text>
+                  ) : (
+                    <View style={{ gap: 12 }}>
+                      {lessonDuels.opponents.map((opponent) => (
+                        <View
+                          key={opponent.learnerId}
+                          style={{
+                            borderRadius: 20,
+                            borderWidth: 1,
+                            borderColor: '#e2e8f0',
+                            backgroundColor: '#f8fafc',
+                            padding: 14,
+                            gap: 8,
+                          }}
+                        >
+                          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                            {opponent.displayName}
+                          </Text>
+                          <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                            {copy({
+                              de: `Letztes Duell ${new Intl.DateTimeFormat(locale, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              }).format(new Date(opponent.lastPlayedAt))}`,
+                              en: `Last duel ${new Intl.DateTimeFormat(locale, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              }).format(new Date(opponent.lastPlayedAt))}`,
+                              pl: `Ostatni pojedynek ${new Intl.DateTimeFormat(locale, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              }).format(new Date(opponent.lastPlayedAt))}`,
+                            })}
+                          </Text>
+                          <Pressable
+                            accessibilityRole='button'
+                            disabled={lessonDuels.isActionPending}
+                            onPress={() => {
+                              void lessonDuels.createRematch(opponent.learnerId).then((sessionId) => {
+                                if (sessionId) {
+                                  openDuelSession(sessionId);
+                                }
+                              });
+                            }}
+                            style={{
+                              alignSelf: 'flex-start',
+                              borderRadius: 999,
+                              backgroundColor: lessonDuels.isActionPending ? '#94a3b8' : '#1d4ed8',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
+                            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                              {lessonDuels.pendingOpponentLearnerId === opponent.learnerId
+                                ? copy({
+                                    de: 'Rückkampf wird gesendet...',
+                                    en: 'Sending rematch...',
+                                    pl: 'Wysyłanie rewanżu...',
+                                  })
+                                : copy({
+                                    de: 'Schneller Rückkampf',
+                                    en: 'Quick rematch',
+                                    pl: 'Szybki rewanż',
+                                  })}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <Link href={createKangurDuelsHref()} asChild>
+                    <Pressable
+                      accessibilityRole='button'
+                      style={{
+                        alignSelf: 'flex-start',
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: '#cbd5e1',
+                        backgroundColor: '#ffffff',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                        {copy({
+                          de: 'Duelle öffnen',
+                          en: 'Open duels',
+                          pl: 'Otwórz pojedynki',
+                        })}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                </View>
+              )}
             </Card>
           ) : null}
 

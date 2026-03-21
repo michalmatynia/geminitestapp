@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { ImageStudioAnalysisSummaryChip } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
-import { Button, SelectSimple, Tooltip } from '@/shared/ui';
+import { Button, InsetPanel, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext } from './GenerationToolbarContext';
 import type { CenterMode } from './GenerationToolbarImageUtils';
@@ -100,7 +100,7 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
         : null;
 
   return (
-    <div className='rounded border border-border/60 bg-card/40 p-3'>
+    <InsetPanel radius='compact' padding='sm'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Center</div>
       {analysisSummaryData ? (
         <ImageStudioAnalysisSummaryChip
@@ -493,6 +493,6 @@ export function GenerationToolbarCenterSection(): React.JSX.Element {
           </Button>
         ) : null}
       </div>
-    </div>
+    </InsetPanel>
   );
 }

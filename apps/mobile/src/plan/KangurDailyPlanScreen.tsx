@@ -1,9 +1,10 @@
 import type { KangurAssignmentPlan } from '@kangur/core';
 import type { KangurScore } from '@kangur/contracts';
-import { Link, type Href } from 'expo-router';
+import { Link, useRouter, type Href } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   formatKangurMobileScoreDateTime,
@@ -12,6 +13,7 @@ import {
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
+import { useKangurMobileDailyPlanDuels } from './useKangurMobileDailyPlanDuels';
 import { useKangurMobileDailyPlan } from './useKangurMobileDailyPlan';
 
 function Card({
@@ -407,8 +409,11 @@ function RecentResultRow({
   );
 }
 
+const DUELS_ROUTE = createKangurDuelsHref();
+
 export function KangurDailyPlanScreen(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
+  const { copy, locale } = useKangurMobileI18n();
+  const router = useRouter();
   const {
     assignmentItems,
     authError,
@@ -424,6 +429,10 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
     supportsLearnerCredentials,
     weakestFocus,
   } = useKangurMobileDailyPlan();
+  const duelPlan = useKangurMobileDailyPlanDuels();
+  const openDuelSession = (sessionId: string): void => {
+    router.replace(createKangurDuelsHref({ sessionId }));
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -652,6 +661,191 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                     })}
                   />
                 ) : null}
+              </View>
+            )}
+          </Card>
+
+          <Card>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Duelle für heute',
+                  en: 'Duels for today',
+                  pl: 'Pojedynki na dziś',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Ein kurzer Duell-Check-in hilft dir, nach dem Training direkt in einen Rückkampf oder in die Lobby zu springen.',
+                  en: 'A quick duel check-in helps you jump into a rematch or the lobby right after training.',
+                  pl: 'Krótki podgląd pojedynków pomaga po treningu od razu wejść w rewanż albo do lobby.',
+                })}
+              </Text>
+            </View>
+
+            {duelPlan.isRestoringAuth || duelPlan.isLoading ? (
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Die heutige Duell-Zusammenfassung wird geladen...',
+                  en: 'Loading today’s duel summary...',
+                  pl: 'Ładujemy dzisiejsze podsumowanie pojedynków...',
+                })}
+              </Text>
+            ) : duelPlan.error ? (
+              <View style={{ gap: 10 }}>
+                <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelPlan.error}</Text>
+                <Pressable
+                  accessibilityRole='button'
+                  onPress={() => {
+                    void duelPlan.refresh();
+                  }}
+                  style={{
+                    alignSelf: 'flex-start',
+                    borderRadius: 999,
+                    backgroundColor: '#0f172a',
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                    {copy({
+                      de: 'Duelle aktualisieren',
+                      en: 'Refresh duels',
+                      pl: 'Odśwież pojedynki',
+                    })}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : !duelPlan.isAuthenticated ? (
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Melde die Schulersitzung an, um hier deinen Duellstand und schnelle Rückkämpfe zu sehen.',
+                  en: 'Sign in the learner session to see duel standing and quick rematches here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.',
+                })}
+              </Text>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {duelPlan.currentEntry ? (
+                  <View
+                    style={{
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: '#bfdbfe',
+                      backgroundColor: '#eff6ff',
+                      padding: 14,
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                      {copy({
+                        de: 'DEIN DUELLSTAND',
+                        en: 'YOUR DUEL SNAPSHOT',
+                        pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                      })}
+                    </Text>
+                    <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                      #{duelPlan.currentRank} {duelPlan.currentEntry.displayName}
+                    </Text>
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: `Siege ${duelPlan.currentEntry.wins} • Niederlagen ${duelPlan.currentEntry.losses} • Unentschieden ${duelPlan.currentEntry.ties}`,
+                        en: `Wins ${duelPlan.currentEntry.wins} • Losses ${duelPlan.currentEntry.losses} • Ties ${duelPlan.currentEntry.ties}`,
+                        pl: `Wygrane ${duelPlan.currentEntry.wins} • Porażki ${duelPlan.currentEntry.losses} • Remisy ${duelPlan.currentEntry.ties}`,
+                      })}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={{ color: '#475569', lineHeight: 22 }}>
+                    {copy({
+                      de: 'Dein Konto ist im sichtbaren Ausschnitt der Duell-Rangliste noch nicht vertreten.',
+                      en: 'Your account is not yet visible in the current duel leaderboard snapshot.',
+                      pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                    })}
+                  </Text>
+                )}
+
+                {duelPlan.actionError ? (
+                  <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelPlan.actionError}</Text>
+                ) : null}
+
+                {duelPlan.opponents.length === 0 ? (
+                  <Text style={{ color: '#475569', lineHeight: 22 }}>
+                    {copy({
+                      de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
+                      en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
+                      pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    {duelPlan.opponents.map((opponent) => (
+                      <View
+                        key={opponent.learnerId}
+                        style={{
+                          borderRadius: 20,
+                          borderWidth: 1,
+                          borderColor: '#e2e8f0',
+                          backgroundColor: '#f8fafc',
+                          padding: 14,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                          {opponent.displayName}
+                        </Text>
+                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                          {copy({
+                            de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                            en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                            pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                          })}
+                        </Text>
+                        <Pressable
+                          accessibilityRole='button'
+                          disabled={duelPlan.isActionPending}
+                          onPress={() => {
+                            void duelPlan.createRematch(opponent.learnerId).then((sessionId) => {
+                              if (sessionId) {
+                                openDuelSession(sessionId);
+                              }
+                            });
+                          }}
+                          style={{
+                            alignSelf: 'flex-start',
+                            borderRadius: 999,
+                            backgroundColor: duelPlan.isActionPending ? '#94a3b8' : '#1d4ed8',
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                          }}
+                        >
+                          <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                            {duelPlan.pendingOpponentLearnerId === opponent.learnerId
+                              ? copy({
+                                  de: 'Rückkampf wird gesendet...',
+                                  en: 'Sending rematch...',
+                                  pl: 'Wysyłanie rewanżu...',
+                                })
+                              : copy({
+                                  de: 'Schneller Rückkampf',
+                                  en: 'Quick rematch',
+                                  pl: 'Szybki rewanż',
+                                })}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                <LinkButton
+                  href={DUELS_ROUTE}
+                  label={copy({
+                    de: 'Duelle öffnen',
+                    en: 'Open duels',
+                    pl: 'Otwórz pojedynki',
+                  })}
+                />
               </View>
             )}
           </Card>

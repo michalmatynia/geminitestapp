@@ -60,4 +60,26 @@ describe('duelInviteShare', () => {
       }),
     ).toContain('Dołącz do prywatnego pojedynku Kangura od Ada.');
   });
+
+  it('builds German invite copy when the locale is de', async () => {
+    await shareKangurDuelInvite({
+      locale: 'de',
+      sessionId: 'invite-1',
+      sharerDisplayName: 'Ada',
+    });
+
+    expect(shareMock).toHaveBeenCalledWith({
+      message:
+        'Tritt dem privaten Kangur-Duell von Ada bei.\nkangur://duels?join=invite-1',
+      title: 'Kangur-Duell-Einladung',
+      url: 'kangur://duels?join=invite-1',
+    });
+    expect(
+      createKangurDuelInviteShareMessage({
+        locale: 'de',
+        sessionId: 'invite-1',
+        sharerDisplayName: 'Ada',
+      }),
+    ).toContain('Tritt dem privaten Kangur-Duell von Ada bei.');
+  });
 });

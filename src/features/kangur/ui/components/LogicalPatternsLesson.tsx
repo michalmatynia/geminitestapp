@@ -24,17 +24,10 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'intro' | 'ciagi_arytm' | 'ciagi_geom' | 'strategie' | 'game_warsztat';
 type SlideSectionId = Exclude<SectionId, 'game_warsztat'>;
-type LogicalPatternsLessonTranslate = (key: string) => string;
-type WidenLessonCopy<T> = T extends string
-  ? string
-  : T extends readonly (infer U)[]
-    ? readonly WidenLessonCopy<U>[]
-    : T extends object
-      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
-      : T;
 
 const LOGICAL_PATTERNS_LESSON_COPY_PL = {
   lessonTitle: 'Wzorce i ciągi',
@@ -235,7 +228,7 @@ const LOGICAL_PATTERNS_LESSON_COPY_PL = {
 type LogicalPatternsLessonCopy = WidenLessonCopy<typeof LOGICAL_PATTERNS_LESSON_COPY_PL>;
 
 const translateLogicalPatternsLesson = (
-  translate: LogicalPatternsLessonTranslate,
+  translate: LessonTranslate,
   key: string,
   fallback: string
 ): string => {
@@ -244,7 +237,7 @@ const translateLogicalPatternsLesson = (
 };
 
 const localizeLogicalPatternsLessonCopy = <T,>(
-  translate: LogicalPatternsLessonTranslate,
+  translate: LessonTranslate,
   source: T,
   prefix = ''
 ): WidenLessonCopy<T> => {
@@ -280,7 +273,7 @@ const localizeLogicalPatternsLessonCopy = <T,>(
 };
 
 const buildLogicalPatternsLessonCopy = (
-  translate: LogicalPatternsLessonTranslate
+  translate: LessonTranslate
 ): LogicalPatternsLessonCopy =>
   localizeLogicalPatternsLessonCopy(translate, LOGICAL_PATTERNS_LESSON_COPY_PL);
 

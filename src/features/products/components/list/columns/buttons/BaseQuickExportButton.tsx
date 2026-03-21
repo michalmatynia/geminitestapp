@@ -25,7 +25,7 @@ import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { AppModal, Button, useToast } from '@/shared/ui';
+import { AppModal, Button, InsetPanel, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';
@@ -388,12 +388,12 @@ export function BaseQuickExportButton(props: {
             already exists in the selected Base.com inventory.
           </p>
 
-          <div className='rounded-md border border-border/60 bg-card/40 p-3 text-xs text-gray-300'>
+          <InsetPanel radius='compact' padding='sm' className='text-xs text-gray-300'>
             Existing Base product ID:{' '}
             <span className='font-mono text-white'>
               {existingSkuDecision?.existingProductId ?? 'Unavailable'}
             </span>
-          </div>
+          </InsetPanel>
 
           {!existingSkuDecision?.existingProductId && (
             <p className='text-xs text-amber-300'>

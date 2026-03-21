@@ -1,7 +1,8 @@
 import { cn } from '@/features/kangur/utils/cn';
-import { Card } from '@/features/kangur/shared/ui';
 
 import type { LucideIcon } from 'lucide-react';
+
+import { KangurAdminCard } from './KangurAdminCard';
 
 type KangurAdminMetricCardTone = 'neutral' | 'info' | 'warning' | 'success';
 
@@ -48,10 +49,9 @@ export function KangurAdminMetricCard({
   className,
 }: KangurAdminMetricCardProps): React.JSX.Element {
   const toneStyles = METRIC_TONE_STYLES[tone];
-  const cardClassName = cn('rounded-2xl border-border/60 bg-card/40 shadow-sm', className);
 
   return (
-    <Card variant='subtle' padding='md' className={cardClassName}>
+    <KangurAdminCard className={className}>
       <div className='flex items-start justify-between gap-3'>
         <div>
           <div className='text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground'>
@@ -69,6 +69,6 @@ export function KangurAdminMetricCard({
         </div>
       </div>
       <div className='mt-3 text-xs leading-relaxed text-muted-foreground'>{detail}</div>
-    </Card>
+    </KangurAdminCard>
   );
 }

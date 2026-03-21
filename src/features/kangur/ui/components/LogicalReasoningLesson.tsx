@@ -27,19 +27,12 @@ import {
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'wnioskowanie' | 'kwantyfikatory' | 'zagadki' | 'podsumowanie' | 'gra';
-type LogicalReasoningLessonTranslate = (key: string) => string;
-type WidenLessonCopy<T> = T extends string
-  ? string
-  : T extends readonly (infer U)[]
-    ? readonly WidenLessonCopy<U>[]
-    : T extends object
-      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
-      : T;
 
 const createStaticTranslator =
-  (messages: Record<string, unknown>): LogicalReasoningLessonTranslate =>
+  (messages: Record<string, unknown>): LessonTranslate =>
   (key) => {
     const resolved = key.split('.').reduce<unknown>(
       (current, segment) =>
@@ -346,7 +339,7 @@ const LOGICAL_REASONING_LESSON_COPY_PL = {
 type LogicalReasoningLessonCopy = WidenLessonCopy<typeof LOGICAL_REASONING_LESSON_COPY_PL>;
 
 const translateLogicalReasoningLesson = (
-  translate: LogicalReasoningLessonTranslate,
+  translate: LessonTranslate,
   key: string,
   fallback: string
 ): string => {
@@ -355,7 +348,7 @@ const translateLogicalReasoningLesson = (
 };
 
 const localizeLogicalReasoningLessonCopy = <T,>(
-  translate: LogicalReasoningLessonTranslate,
+  translate: LessonTranslate,
   source: T,
   prefix = ''
 ): WidenLessonCopy<T> => {
@@ -391,7 +384,7 @@ const localizeLogicalReasoningLessonCopy = <T,>(
 };
 
 const buildLogicalReasoningLessonCopy = (
-  translate: LogicalReasoningLessonTranslate
+  translate: LessonTranslate
 ): LogicalReasoningLessonCopy =>
   localizeLogicalReasoningLessonCopy(translate, LOGICAL_REASONING_LESSON_COPY_PL);
 

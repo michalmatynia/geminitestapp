@@ -1,5 +1,6 @@
 'use client';
 import { Suspense, lazy, useMemo } from 'react';
+import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
 import { AdminCaseResolverPageProvider, useAdminCaseResolverPageActionsContext as useActions, useAdminCaseResolverPageStateContext as useStateCtx } from '../context/AdminCaseResolverPageContext';
 
@@ -10,7 +11,7 @@ function AdminCaseResolverPageInner() {
   const val = useMemo(() => ({ ...state, ...actions }), [state, actions]);
   return (
     <CaseResolverViewProvider value={val}>
-      <Suspense fallback={<div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>Loading case resolver...</div>}>
+      <Suspense fallback={<LoadingPanel>Loading case resolver...</LoadingPanel>}>
         <LazyCaseResolverPageView />
       </Suspense>
     </CaseResolverViewProvider>

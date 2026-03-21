@@ -19,6 +19,7 @@ import {
   PanelFilters,
   SearchInput,
   Checkbox,
+  insetPanelVariants,
 } from '@/shared/ui';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -397,7 +398,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
           </div>
         }
         compact
-        className='rounded-lg border border-border/60 bg-card/40 p-3'
+        className={insetPanelVariants({ padding: 'sm' })}
       />
 
       <div className='flex items-center justify-between px-1 text-[10px] text-muted-foreground uppercase font-bold tracking-wider'>

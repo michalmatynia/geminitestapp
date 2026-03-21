@@ -4,6 +4,7 @@ import React from 'react';
 
 import { resolveKangurFeaturePageRoute } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
+import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 
 import { KangurAdminMenuToggle } from './KangurAdminMenuToggle';
 
@@ -31,11 +32,7 @@ export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.
         embedded
       >
         <React.Suspense
-          fallback={
-            <div className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'>
-              Loading Kangur workspace...
-            </div>
-          }
+          fallback={<LoadingPanel>Loading Kangur workspace...</LoadingPanel>}
         >
           <LazyKangurFeaturePageShell />
         </React.Suspense>

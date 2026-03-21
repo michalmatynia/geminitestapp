@@ -6,6 +6,7 @@ import type { PageComponent } from '@/shared/contracts/cms';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 
 const LazyCmsPageShell = React.lazy(() =>
   import('@/features/cms/components/frontend/CmsPageShell').then((mod) => ({
@@ -57,16 +58,7 @@ type HomeContentClientProps = CmsVariantProps | FallbackVariantProps;
 export function HomeContentClient(props: HomeContentClientProps): React.JSX.Element {
   return (
     <React.Suspense
-      fallback={
-        <div
-          className='min-h-[420px] rounded-xl border border-border/40 bg-card/20 p-6 text-sm text-muted-foreground'
-          role='status'
-          aria-live='polite'
-          aria-atomic='true'
-        >
-          {props.loadingLabel}
-        </div>
-      }
+      fallback={<LoadingPanel>{props.loadingLabel}</LoadingPanel>}
     >
       <LazyCmsPageShell
         menu={props.menu}

@@ -5,7 +5,6 @@ import React from 'react';
 import {
   Badge,
   Button,
-  Card,
   FormField,
   FormModal,
   Input,
@@ -28,6 +27,7 @@ import {
   BRAIN_MODEL_DEFAULT_VALUE,
   type AddonFormState,
 } from './AdminKangurSocialPage.Constants';
+import { KangurAdminCard } from '../components/KangurAdminCard';
 
 type SelectOption = {
   value: string;
@@ -238,11 +238,7 @@ export function AdminKangurSocialSettingsModal(
 
         <TabsContent value='models' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
           <div className='grid gap-4 xl:grid-cols-2'>
-            <Card
-              variant='subtle'
-              padding='md'
-              className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-            >
+            <KangurAdminCard>
               <div className='flex items-center justify-between gap-3'>
                 <div>
                   <div className='text-sm font-semibold text-foreground'>Brain model</div>
@@ -282,13 +278,9 @@ export function AdminKangurSocialSettingsModal(
                   Open AI Brain routing
                 </a>
               </div>
-            </Card>
+            </KangurAdminCard>
 
-            <Card
-              variant='subtle'
-              padding='md'
-              className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-            >
+            <KangurAdminCard>
               <div className='flex items-center justify-between gap-3'>
                 <div>
                   <div className='text-sm font-semibold text-foreground'>Vision model</div>
@@ -328,16 +320,12 @@ export function AdminKangurSocialSettingsModal(
                   Open AI Brain routing
                 </a>
               </div>
-            </Card>
+            </KangurAdminCard>
           </div>
         </TabsContent>
 
         <TabsContent value='project' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <FormField
               label='Project URL'
               description='Current project link to reference in generated posts.'
@@ -351,18 +339,14 @@ export function AdminKangurSocialSettingsModal(
                 aria-label='Project URL'
               />
             </FormField>
-          </Card>
+          </KangurAdminCard>
         </TabsContent>
 
         <TabsContent
           value='documentation'
           className='mt-4 space-y-4 data-[state=inactive]:hidden'
         >
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <div className='space-y-3'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Documentation references</div>
@@ -449,13 +433,9 @@ export function AdminKangurSocialSettingsModal(
                 )}
               </div>
             </div>
-          </Card>
+          </KangurAdminCard>
 
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <div className='space-y-3'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Loaded context</div>
@@ -475,13 +455,9 @@ export function AdminKangurSocialSettingsModal(
                 </div>
               )}
             </div>
-          </Card>
+          </KangurAdminCard>
 
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <div className='space-y-3'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Documentation updates</div>
@@ -605,15 +581,11 @@ export function AdminKangurSocialSettingsModal(
                 </div>
               )}
             </div>
-          </Card>
+          </KangurAdminCard>
         </TabsContent>
 
         <TabsContent value='publishing' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <FormField
               label='Default LinkedIn connection'
               description='Applies across StudiQ Social when saving or publishing posts.'
@@ -661,15 +633,11 @@ export function AdminKangurSocialSettingsModal(
                 Per-post editors now use the default publishing connection from this settings modal.
               </div>
             )}
-          </Card>
+          </KangurAdminCard>
         </TabsContent>
 
         <TabsContent value='capture' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <div className='space-y-3'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Capture single add-on</div>
@@ -736,13 +704,9 @@ export function AdminKangurSocialSettingsModal(
                 </div>
               </div>
             </div>
-          </Card>
+          </KangurAdminCard>
 
-          <Card
-            variant='subtle'
-            padding='md'
-            className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-          >
+          <KangurAdminCard>
             <div className='space-y-3'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Batch capture presets</div>
@@ -872,7 +836,7 @@ export function AdminKangurSocialSettingsModal(
                 <div className='text-xs text-muted-foreground'>No batch capture run yet.</div>
               )}
             </div>
-          </Card>
+          </KangurAdminCard>
         </TabsContent>
       </Tabs>
     </FormModal>

@@ -8,13 +8,14 @@ import {
   Alert,
   Badge,
   Button,
-  Card,
   FormField,
   FormSection,
   Input,
   ToggleRow,
 } from '@/features/kangur/shared/ui';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+
+import { KangurAdminCard } from './KangurAdminCard';
 
 const formatShortTimestamp = (value: string): string => {
   return withKangurClientErrorSync(
@@ -203,7 +204,7 @@ export function KangurParentVerificationSettingsPanel(props: KangurParentVerific
         className={className}
         gridClassName='gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]'
       >
-        <Card variant='subtle' padding='md' className='rounded-2xl border-border/60 bg-card/40 shadow-sm'>
+        <KangurAdminCard>
           <div className='space-y-4'>
             <RequireEmailVerificationToggle />
             <RequireCaptchaToggle />
@@ -211,7 +212,7 @@ export function KangurParentVerificationSettingsPanel(props: KangurParentVerific
             <NotificationsDisabledUntilInput />
             <ResendCooldownInput />
           </div>
-        </Card>
+        </KangurAdminCard>
         <div className='space-y-3'>
           <Alert variant='default' title='Scope'>
             Applies to parent create-account and resend-verification actions across login pages and public

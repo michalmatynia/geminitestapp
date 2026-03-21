@@ -12,7 +12,7 @@ import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const SKU_LOOKUP_TIMEOUT_MS = 30_000;
 
@@ -107,9 +107,10 @@ export function useProductOperations(
         return;
       }
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useProductOperations', action: 'validateSku', sku },
+      logClientCatch(error, {
+        source: 'useProductOperations',
+        action: 'validateSku',
+        sku,
       });
       toast('SKU pre-check failed. You can continue; uniqueness will be validated on save.', {
         variant: 'info',
@@ -126,7 +127,12 @@ export function useProductOperations(
         toast('Product duplicated.', { variant: 'success' });
         router.push(`/admin/products/${duplicated.id}/edit`);
       } catch (error) {
-        logClientError(error);
+        logClientCatch(error, {
+          source: 'useProductOperations',
+          action: 'duplicateProduct',
+          sourceProductId: duplicateSourceProduct.id,
+          sku,
+        });
         setActionError(error instanceof Error ? error.message : 'Failed to duplicate product.');
       }
     } else {

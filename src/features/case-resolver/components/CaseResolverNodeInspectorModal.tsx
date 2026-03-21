@@ -23,6 +23,7 @@ import {
   CompactEmptyState,
   Textarea,
   CopyButton,
+  InsetPanel,
   ValidatorFormatterToggle,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
@@ -131,7 +132,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
       <div className='space-y-3'>
         {selectedNode ? (
           <>
-            <div className='rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-300'>
+            <InsetPanel radius='compact' padding='sm' className='text-xs text-gray-300'>
               <div className='flex items-center justify-between gap-2'>
                 <span className='text-gray-500'>Node</span>
                 <span className='font-medium text-gray-100'>{selectedNode.title}</span>
@@ -140,7 +141,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 <span className='text-gray-500'>Type</span>
                 <span className='uppercase text-[10px] text-gray-200'>{selectedNode.type}</span>
               </div>
-            </div>
+            </InsetPanel>
 
             {selectedNode.type === 'prompt' && selectedPromptMeta ? (
               <>

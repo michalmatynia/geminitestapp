@@ -25,7 +25,7 @@ import {
   SelectSimple,
   UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export default function AuthSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -118,8 +118,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       await refetchSettings();
       toast('Default role saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveDefaultRole' } });
+      logClientCatch(error, { source: 'AuthSettingsPage', action: 'saveDefaultRole' });
       toast(error instanceof Error ? error.message : 'Failed to save settings.', {
         variant: 'error',
       });
@@ -136,9 +135,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
       await refetchSettings();
       toast('Security policy saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AuthSettingsPage', action: 'saveSecurityPolicy' },
+      logClientCatch(error, {
+        source: 'AuthSettingsPage',
+        action: 'saveSecurityPolicy',
       });
       toast(error instanceof Error ? error.message : 'Failed to save security policy.', {
         variant: 'error',
@@ -160,8 +159,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
         variant: 'success',
       });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaSetup' } });
+      logClientCatch(error, { source: 'AuthSettingsPage', action: 'handleMfaSetup' });
       toast(error instanceof Error ? error.message : 'Failed to start MFA setup.', {
         variant: 'error',
       });
@@ -184,8 +182,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       setMfaToken('');
       toast('MFA enabled. Save your recovery codes.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaVerify' } });
+      logClientCatch(error, { source: 'AuthSettingsPage', action: 'handleMfaVerify' });
       toast(error instanceof Error ? error.message : 'Failed to verify MFA.', {
         variant: 'error',
       });
@@ -213,9 +210,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
       setMfaDisableCode('');
       toast('MFA disabled.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AuthSettingsPage', action: 'handleMfaDisable' },
+      logClientCatch(error, {
+        source: 'AuthSettingsPage',
+        action: 'handleMfaDisable',
       });
       toast(error instanceof Error ? error.message : 'Failed to disable MFA.', {
         variant: 'error',

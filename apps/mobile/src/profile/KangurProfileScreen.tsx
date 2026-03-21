@@ -1,14 +1,18 @@
 import {
   KANGUR_BADGES,
+  getLocalizedKangurCoreLessonTitle,
+  getLocalizedKangurCoreLevelTitle,
+  getLocalizedKangurMetadataBadgeName,
   type KangurAssignmentPlan,
   type KangurAssignmentPriority,
   type KangurLessonMasteryInsight,
   type KangurRecentSession,
 } from '@kangur/core';
-import { Link, type Href } from 'expo-router';
+import { Link, type Href, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { createKangurDuelsHref } from '../duels/duelsHref';
 import {
   getKangurMobileLocaleTag,
   useKangurMobileI18n,
@@ -21,9 +25,11 @@ import {
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
+import { useKangurMobileProfileDuels } from './useKangurMobileProfileDuels';
 import { useKangurMobileLearnerProfile } from './useKangurMobileLearnerProfile';
 
 const RESULTS_ROUTE = createKangurResultsHref();
+const DUELS_ROUTE = createKangurDuelsHref();
 
 type Tone = {
   backgroundColor: string;
@@ -328,206 +334,6 @@ const getSessionAccentTone = (operation: string): Tone => {
   };
 };
 
-const getLocalizedProfileLessonTitle = (
-  componentId: string,
-  fallbackTitle: string,
-  locale: 'pl' | 'en' | 'de',
-): string => {
-  if (locale === 'pl') {
-    return fallbackTitle;
-  }
-
-  const titles: Record<string, { pl: string; en: string; de: string }> = {
-    clock: {
-      de: 'Uhr',
-      en: 'Clock',
-      pl: 'Nauka zegara',
-    },
-    calendar: {
-      de: 'Kalender',
-      en: 'Calendar',
-      pl: 'Nauka kalendarza',
-    },
-    adding: {
-      de: 'Addition',
-      en: 'Addition',
-      pl: 'Dodawanie',
-    },
-    subtracting: {
-      de: 'Subtraktion',
-      en: 'Subtraction',
-      pl: 'Odejmowanie',
-    },
-    multiplication: {
-      de: 'Multiplikation',
-      en: 'Multiplication',
-      pl: 'Mnozenie',
-    },
-    division: {
-      de: 'Division',
-      en: 'Division',
-      pl: 'Dzielenie',
-    },
-    geometry_basics: {
-      de: 'Grundlagen der Geometrie',
-      en: 'Geometry basics',
-      pl: 'Podstawy geometrii',
-    },
-    geometry_shapes: {
-      de: 'Geometrische Formen',
-      en: 'Geometric shapes',
-      pl: 'Figury geometryczne',
-    },
-    geometry_symmetry: {
-      de: 'Symmetrie',
-      en: 'Symmetry',
-      pl: 'Symetria',
-    },
-    geometry_perimeter: {
-      de: 'Umfang',
-      en: 'Perimeter',
-      pl: 'Obwód figur',
-    },
-    logical_thinking: {
-      de: 'Logisches Denken',
-      en: 'Logical thinking',
-      pl: 'Myslenie logiczne',
-    },
-    logical_patterns: {
-      de: 'Muster',
-      en: 'Patterns',
-      pl: 'Wzorce i ciagi',
-    },
-    logical_classification: {
-      de: 'Klassifikation',
-      en: 'Classification',
-      pl: 'Klasyfikacja',
-    },
-    logical_reasoning: {
-      de: 'Schlussfolgern',
-      en: 'Reasoning',
-      pl: 'Wnioskowanie',
-    },
-    logical_analogies: {
-      de: 'Analogien',
-      en: 'Analogies',
-      pl: 'Analogie',
-    },
-  };
-
-  return titles[componentId]?.[locale] ?? fallbackTitle;
-};
-
-const getLocalizedProfileLevelTitle = (
-  level: number,
-  fallbackTitle: string,
-  locale: 'pl' | 'en' | 'de',
-): string => {
-  if (locale === 'pl') {
-    return fallbackTitle;
-  }
-
-  const titles: Record<number, { pl: string; en: string; de: string }> = {
-    1: {
-      de: 'Anfaenger 🐣',
-      en: 'Beginner 🐣',
-      pl: 'Raczkujacy 🐣',
-    },
-    2: {
-      de: 'Schueler ✏️',
-      en: 'Student ✏️',
-      pl: 'Uczen ✏️',
-    },
-    3: {
-      de: 'Denker 🤔',
-      en: 'Thinker 🤔',
-      pl: 'Mysliciel 🤔',
-    },
-    4: {
-      de: 'Zahlenmeister 🔢',
-      en: 'Number master 🔢',
-      pl: 'Liczmistrz 🔢',
-    },
-    5: {
-      de: 'Mathematiker 📐',
-      en: 'Mathematician 📐',
-      pl: 'Matematyk 📐',
-    },
-    6: {
-      de: 'Genie 🧠',
-      en: 'Genius 🧠',
-      pl: 'Geniusz 🧠',
-    },
-    7: {
-      de: 'Legende 🏆',
-      en: 'Legend 🏆',
-      pl: 'Legenda 🏆',
-    },
-  };
-
-  return titles[level]?.[locale] ?? fallbackTitle;
-};
-
-const getLocalizedProfileBadgeName = (
-  badgeId: string,
-  fallbackName: string,
-  locale: 'pl' | 'en' | 'de',
-): string => {
-  if (locale === 'pl') {
-    return fallbackName;
-  }
-
-  const titles: Record<string, { pl: string; en: string; de: string }> = {
-    first_game: {
-      de: 'Erstes Spiel',
-      en: 'First game',
-      pl: 'Pierwsza gra',
-    },
-    perfect_10: {
-      de: 'Perfektes Ergebnis',
-      en: 'Perfect score',
-      pl: 'Idealny wynik',
-    },
-    lesson_hero: {
-      de: 'Lektionsheld',
-      en: 'Lesson hero',
-      pl: 'Bohater lekcji',
-    },
-    clock_master: {
-      de: 'Uhrmeister',
-      en: 'Clock master',
-      pl: 'Mistrz zegara',
-    },
-    geometry_artist: {
-      de: 'Formenkuenstler',
-      en: 'Shape artist',
-      pl: 'Artysta figur',
-    },
-    ten_games: {
-      de: 'Zehn Spiele',
-      en: 'Ten games',
-      pl: 'Dziesiatka',
-    },
-    xp_500: {
-      de: '500 XP',
-      en: '500 XP',
-      pl: 'Pol tysiaca XP',
-    },
-    xp_1000: {
-      de: '1000 XP',
-      en: '1000 XP',
-      pl: 'Tysiacznik',
-    },
-    variety: {
-      de: 'Vielseitig',
-      en: 'All-rounder',
-      pl: 'Wszechstronny',
-    },
-  };
-
-  return titles[badgeId]?.[locale] ?? fallbackName;
-};
-
 function MasteryInsightRow({
   insight,
 }: {
@@ -557,7 +363,8 @@ function MasteryInsightRow({
       >
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {insight.emoji} {getLocalizedProfileLessonTitle(insight.componentId, insight.title, locale)}
+            {insight.emoji}{' '}
+            {getLocalizedKangurCoreLessonTitle(insight.componentId, locale, insight.title)}
           </Text>
           <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
             {copy({
@@ -820,6 +627,7 @@ function AssignmentRow({
 }
 
 export function KangurProfileScreen(): React.JSX.Element {
+  const router = useRouter();
   const { copy, locale } = useKangurMobileI18n();
   const {
     assignments,
@@ -839,11 +647,15 @@ export function KangurProfileScreen(): React.JSX.Element {
     supportsLearnerCredentials,
     snapshot,
   } = useKangurMobileLearnerProfile();
+  const duelProfile = useKangurMobileProfileDuels();
 
   const xpToNextLevel = snapshot.nextLevel
     ? Math.max(0, snapshot.nextLevel.minXp - snapshot.totalXp)
     : 0;
   const hasRecentSessions = snapshot.recentSessions.length > 0;
+  const openDuelSession = (sessionId: string): void => {
+    router.replace(createKangurDuelsHref({ sessionId }));
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
@@ -1008,7 +820,11 @@ export function KangurProfileScreen(): React.JSX.Element {
               })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
-              {getLocalizedProfileLevelTitle(snapshot.level.level, snapshot.level.title, locale)}
+              {getLocalizedKangurCoreLevelTitle(
+                snapshot.level.level,
+                snapshot.level.title,
+                locale,
+              )}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14 }}>
               {copy({
@@ -1109,6 +925,223 @@ export function KangurProfileScreen(): React.JSX.Element {
               })}
             />
           </View>
+
+          <Card>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Duelle',
+                  en: 'Duels',
+                  pl: 'Pojedynki',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Ein kompakter Blick auf deinen Duellstand und die letzten Rivalen direkt im Profil.',
+                  en: 'A compact view of your duel standing and recent rivals directly in the profile.',
+                  pl: 'Kompaktowy podgląd Twojego wyniku w pojedynkach i ostatnich rywali bezpośrednio w profilu.',
+                })}
+              </Text>
+            </View>
+
+            {!duelProfile.isAuthenticated ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Melde die Schulersitzung an, um hier den Duellstand und letzte Rivalen zu sehen.',
+                  en: 'Sign in the learner session to see duel standing and recent rivals here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i ostatnich rywali.',
+                })}
+              </Text>
+            ) : duelProfile.isRestoringAuth || duelProfile.isLoading ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Die Duellstatistiken im Profil werden geladen.',
+                  en: 'Loading duel stats in the profile.',
+                  pl: 'Pobieramy statystyki pojedynków w profilu.',
+                })}
+              </Text>
+            ) : duelProfile.error ? (
+              <View style={{ gap: 10 }}>
+                <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                  {duelProfile.error}
+                </Text>
+                <Pressable
+                  accessibilityRole='button'
+                  onPress={() => {
+                    void duelProfile.refresh();
+                  }}
+                  style={{
+                    alignSelf: 'flex-start',
+                    borderRadius: 999,
+                    backgroundColor: '#0f172a',
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                    {copy({
+                      de: 'Duelle aktualisieren',
+                      en: 'Refresh duels',
+                      pl: 'Odśwież pojedynki',
+                    })}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {duelProfile.currentEntry ? (
+                  <View
+                    style={{
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: '#bfdbfe',
+                      backgroundColor: '#eff6ff',
+                      padding: 14,
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+                      {copy({
+                        de: 'DEIN DUELLSTAND',
+                        en: 'YOUR DUEL SNAPSHOT',
+                        pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                      })}
+                    </Text>
+                    <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                      #{duelProfile.currentRank} {duelProfile.currentEntry.displayName}
+                    </Text>
+                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                      {copy({
+                        de: `Siege ${duelProfile.currentEntry.wins} • Niederlagen ${duelProfile.currentEntry.losses} • Unentschieden ${duelProfile.currentEntry.ties}`,
+                        en: `Wins ${duelProfile.currentEntry.wins} • Losses ${duelProfile.currentEntry.losses} • Ties ${duelProfile.currentEntry.ties}`,
+                        pl: `Wygrane ${duelProfile.currentEntry.wins} • Porażki ${duelProfile.currentEntry.losses} • Remisy ${duelProfile.currentEntry.ties}`,
+                      })}
+                    </Text>
+                    <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                      {copy({
+                        de: `Matches ${duelProfile.currentEntry.matches} • Quote ${Math.round(duelProfile.currentEntry.winRate * 100)}% • letztes Duell ${formatProfileDateTime(duelProfile.currentEntry.lastPlayedAt, locale)}`,
+                        en: `Matches ${duelProfile.currentEntry.matches} • Win rate ${Math.round(duelProfile.currentEntry.winRate * 100)}% • last duel ${formatProfileDateTime(duelProfile.currentEntry.lastPlayedAt, locale)}`,
+                        pl: `Mecze ${duelProfile.currentEntry.matches} • Win rate ${Math.round(duelProfile.currentEntry.winRate * 100)}% • ostatni pojedynek ${formatProfileDateTime(duelProfile.currentEntry.lastPlayedAt, locale)}`,
+                      })}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Dein Konto ist noch nicht im aktuellen Kurz-Ranking der Duelle sichtbar.',
+                      en: 'Your account is not yet visible in the current compact duel ranking.',
+                      pl: 'Twojego konta nie ma jeszcze w bieżącym skrócie rankingu pojedynków.',
+                    })}
+                  </Text>
+                )}
+
+                {duelProfile.actionError ? (
+                  <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                    {duelProfile.actionError}
+                  </Text>
+                ) : null}
+
+                {duelProfile.opponents.length === 0 ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine letzten Rivalen. Beende das erste Duell, damit hier schnelle Rückkämpfe erscheinen.',
+                      en: 'There are no recent rivals yet. Finish the first duel to unlock quick rematches here.',
+                      pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+                      {copy({
+                        de: 'Letzte Rivalen',
+                        en: 'Recent rivals',
+                        pl: 'Ostatni rywale',
+                      })}
+                    </Text>
+                    {duelProfile.opponents.map((opponent) => (
+                      <View
+                        key={opponent.learnerId}
+                        style={{
+                          borderRadius: 20,
+                          borderWidth: 1,
+                          borderColor: '#e2e8f0',
+                          backgroundColor: '#f8fafc',
+                          padding: 14,
+                          gap: 8,
+                        }}
+                      >
+                        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                          {opponent.displayName}
+                        </Text>
+                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                          {copy({
+                            de: `Letztes Duell ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+                            en: `Last duel ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+                            pl: `Ostatni pojedynek ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+                          })}
+                        </Text>
+                        <Pressable
+                          accessibilityRole='button'
+                          disabled={duelProfile.isActionPending}
+                          onPress={() => {
+                            void duelProfile.createRematch(opponent.learnerId).then((sessionId) => {
+                              if (sessionId) {
+                                openDuelSession(sessionId);
+                              }
+                            });
+                          }}
+                          style={{
+                            alignSelf: 'flex-start',
+                            borderRadius: 999,
+                            backgroundColor: duelProfile.isActionPending ? '#94a3b8' : '#1d4ed8',
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                          }}
+                        >
+                          <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                            {duelProfile.pendingOpponentLearnerId === opponent.learnerId
+                              ? copy({
+                                  de: 'Rückkampf wird gesendet...',
+                                  en: 'Sending rematch...',
+                                  pl: 'Wysyłanie rewanżu...',
+                                })
+                              : copy({
+                                  de: 'Schneller Rückkampf',
+                                  en: 'Quick rematch',
+                                  pl: 'Szybki rewanż',
+                                })}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                <Link href={DUELS_ROUTE} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Duelle öffnen',
+                        en: 'Open duels',
+                        pl: 'Otwórz pojedynki',
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+            )}
+          </Card>
 
           <Card>
             <View style={{ gap: 4 }}>
@@ -1427,7 +1460,7 @@ export function KangurProfileScreen(): React.JSX.Element {
                 return (
                   <Pill
                     key={badge.id}
-                    label={`${badge.emoji} ${getLocalizedProfileBadgeName(
+                    label={`${badge.emoji} ${getLocalizedKangurMetadataBadgeName(
                       badge.id,
                       badge.name,
                       locale,

@@ -11,7 +11,7 @@ import { ProductWithImages } from '@/shared/contracts/products';
 import { Button, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logger } from '@/shared/utils/logger';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface ProductTableFooterProps<TData> {
   table: ReactTable<TData>;
@@ -56,9 +56,9 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1); // Refresh the product list
       setShowDeleteConfirm(false);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ProductTableFooter', action: 'handleMassDelete' },
+      logClientCatch(error, {
+        source: 'ProductTableFooter',
+        action: 'handleMassDelete',
       });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
       toast('An error occurred during deletion', {
@@ -87,9 +87,9 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1);
       setShowBase64Confirm(false);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ProductTableFooter', action: 'handleMassBase64' },
+      logClientCatch(error, {
+        source: 'ProductTableFooter',
+        action: 'handleMassBase64',
       });
       setActionError(
         error instanceof Error ? error.message : 'An error occurred during base64 conversion.'

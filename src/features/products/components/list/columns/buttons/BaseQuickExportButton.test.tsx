@@ -23,6 +23,12 @@ vi.mock('@/shared/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+  InsetPanel: ({
+    children,
+    className,
+  }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
+    <div className={className}>{children}</div>
+  ),
   AppModal: ({
     open,
     title,

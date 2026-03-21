@@ -1,5 +1,6 @@
 import type { KangurProgressState } from '@kangur/contracts';
 
+import { getLocalizedKangurAllGoalsCompletedLabel } from '../progress-i18n';
 import {
   BADGE_TRACK_META,
   getAverageAccuracyPercent,
@@ -151,6 +152,7 @@ export const getRecommendedSessionMomentum = (
   options: {
     allGoalsCompletedLabel?: string;
     badges?: KangurBadgeStatus[];
+    locale?: string | null | undefined;
   } = {},
 ): KangurRecommendedSessionMomentum => {
   const completed = progress.recommendedSessionsCompleted ?? 0;
@@ -163,7 +165,9 @@ export const getRecommendedSessionMomentum = (
     return {
       completedSessions: completed,
       progressPercent: 100,
-      summary: options.allGoalsCompletedLabel ?? 'Wszystkie cele osiągnięte!',
+      summary:
+        options.allGoalsCompletedLabel ??
+        getLocalizedKangurAllGoalsCompletedLabel(options.locale),
       nextBadgeName: null,
     };
   }

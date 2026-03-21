@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
+import { insetPanelVariants } from './InsetPanel';
 import { SectionHeader } from './section-header';
 
 interface FiltersContainerProps {
@@ -27,7 +28,7 @@ export function FiltersContainer(props: FiltersContainerProps) {
 
   return (
     <section
-      className={cn('mb-4 space-y-3 rounded-lg border border-border/60 bg-card/40 p-4', className)}
+      className={cn(insetPanelVariants({ padding: 'md' }), 'mb-4 space-y-3', className)}
       aria-label={typeof title === 'string' ? title : 'Filters'}
     >
       <SectionHeader

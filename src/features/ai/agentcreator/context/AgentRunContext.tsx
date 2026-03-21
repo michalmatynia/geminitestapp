@@ -9,7 +9,7 @@ import type {
   AgentRunRecord,
 } from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useAgentAudits,
@@ -100,9 +100,10 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
       try {
         setAgentStreamStatus('live');
       } catch (err: unknown) {
-        logClientError(err);
-        logClientError(err, {
-          context: { source: 'AgentRunContext', action: 'onmessage', runId: selectedAgentRunId },
+        logClientCatch(err, {
+          source: 'AgentRunContext',
+          action: 'onmessage',
+          runId: selectedAgentRunId,
         });
         setAgentStreamStatus('error');
       }

@@ -53,6 +53,15 @@ export {
   KANGUR_LESSON_CATALOG,
   type KangurLessonCatalogEntry,
 } from './lesson-catalog';
+export type { KangurCoreLocale } from './profile-i18n';
+export {
+  getLocalizedKangurCoreLessonTitle,
+  getLocalizedKangurCoreLevelTitle,
+  getLocalizedKangurCoreOperationInfo,
+  getLocalizedKangurCoreWeekdayLabel,
+  localizeKangurCoreText,
+  normalizeKangurCoreLocale,
+} from './profile-i18n';
 export {
   KANGUR_LEADERBOARD_OPERATION_OPTIONS,
   KANGUR_LEADERBOARD_USER_OPTIONS,
@@ -104,6 +113,16 @@ export type {
   KangurRewardProfile,
   KangurRewardProfileConfig,
 } from './progress/rewards';
+
+export {
+  getLocalizedKangurAllGoalsCompletedLabel,
+  getLocalizedKangurClockSectionLabel,
+  getLocalizedKangurMetadataBadgeDescription,
+  getLocalizedKangurMetadataBadgeName,
+  getLocalizedKangurProgressActivityLabel,
+  getLocalizedKangurProgressBadgeTrackLabel,
+  getLocalizedKangurRewardBreakdownLabel,
+} from './progress-i18n';
 
 export {
   REWARD_PROFILE_CONFIG,

@@ -9,7 +9,7 @@ import type { ProductWithImages, ProductFilters } from '@/shared/contracts/produ
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export type RowSelectionState = Record<string, boolean>;
 
@@ -79,9 +79,9 @@ export function useProductListSelection({
         setRowSelection(newSelection);
         toast(`Selected ${productIds.length} products.`, { variant: 'success' });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useProductListSelection', action: 'selectAllGlobal' },
+        logClientCatch(error, {
+          source: 'useProductListSelection',
+          action: 'selectAllGlobal',
         });
         toast('Failed to select all products', { variant: 'error' });
       } finally {
@@ -106,13 +106,10 @@ export function useProductListSelection({
         setRefreshTrigger((prev: number) => prev + 1);
       }
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useProductListSelection',
-          action: 'massDelete',
-          productIds: selectedProductIds,
-        },
+      logClientCatch(error, {
+        source: 'useProductListSelection',
+        action: 'massDelete',
+        productIds: selectedProductIds,
       });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
     }
@@ -130,9 +127,10 @@ export function useProductListSelection({
         setRefreshTrigger((prev: number) => prev + 1);
       }
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useProductListSelection', action: 'singleDelete', productId: targetId },
+      logClientCatch(error, {
+        source: 'useProductListSelection',
+        action: 'singleDelete',
+        productId: targetId,
       });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
     }

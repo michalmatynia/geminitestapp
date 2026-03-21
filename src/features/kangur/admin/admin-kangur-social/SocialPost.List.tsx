@@ -22,6 +22,7 @@ import {
   formatDatetimeDisplay,
   statusLabel,
 } from './AdminKangurSocialPage.Constants';
+import { KANGUR_ADMIN_CARD_CLASS_NAME } from '../components/KangurAdminCard';
 
 const PAGE_SIZE = 8;
 
@@ -163,7 +164,7 @@ export function SocialPostList({
           </div>
         </div>
       }
-      className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+      className={KANGUR_ADMIN_CARD_CLASS_NAME}
       contentClassName='space-y-2'
       isLoading={isLoading}
       loadingMessage='Loading social posts...'

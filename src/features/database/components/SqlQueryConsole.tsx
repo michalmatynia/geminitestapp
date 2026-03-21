@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import { Button, Textarea, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useDatabaseConfig } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
@@ -46,8 +46,7 @@ function loadHistory(): string[] {
     const raw = localStorage.getItem(HISTORY_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
   } catch (error) {
-    logClientError(error);
-    logClientError(error, { context: { source: 'SqlQueryConsole', action: 'loadHistory' } });
+    logClientCatch(error, { source: 'SqlQueryConsole', action: 'loadHistory' });
     return [];
   }
 }
@@ -56,8 +55,7 @@ function saveHistory(history: string[]): void {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
   } catch (error) {
-    logClientError(error);
-    logClientError(error, { context: { source: 'SqlQueryConsole', action: 'saveHistory' } });
+    logClientCatch(error, { source: 'SqlQueryConsole', action: 'saveHistory' });
   }
 }
 

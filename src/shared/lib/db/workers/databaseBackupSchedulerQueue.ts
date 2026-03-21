@@ -3,13 +3,13 @@ import 'server-only';
 import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-policy';
 import { tickDatabaseBackupScheduler } from '@/shared/lib/db/services/database-backup-scheduler';
 import { createManagedQueue } from '@/shared/lib/queue';
+import type {
+  ScheduledTickJobData,
+  SchedulerQueueState,
+} from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { Queue } from 'bullmq';
-
-type DatabaseBackupSchedulerJobData = {
-  type: 'scheduled-tick';
-};
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
@@ -28,9 +28,7 @@ const DATABASE_BACKUP_SCHEDULER_LOCK_DURATION_MS = parseMsFromEnv(
   30_000
 );
 
-type DatabaseBackupSchedulerQueueState = {
-  workerStarted: boolean;
-  schedulerRegistered: boolean;
+type DatabaseBackupSchedulerQueueState = SchedulerQueueState & {
   schedulerSyncInFlight: boolean;
   startupTickQueued: boolean;
 };
@@ -52,7 +50,7 @@ const SCHEDULER_REPEAT_JOB_ID = 'database-backup-scheduler-tick';
 const STARTUP_TICK_JOB_ID = 'database-backup-scheduler-startup-tick';
 const SCHEDULER_QUEUE_NAME = 'database-backup-scheduler';
 
-const queue = createManagedQueue<DatabaseBackupSchedulerJobData>({
+const queue = createManagedQueue<ScheduledTickJobData>({
   name: SCHEDULER_QUEUE_NAME,
   concurrency: 1,
   defaultJobOptions: {

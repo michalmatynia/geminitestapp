@@ -27,7 +27,7 @@ import {
   FormField,
   UI_GRID_ROOMY_CLASSNAME,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 const slugify = (value: string): string =>
@@ -221,8 +221,7 @@ function AuthPermissionsForm({
       await refetchSettings();
       toast('Permission settings saved', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AuthPermissionsPage', action: 'saveSettings' } });
+      logClientCatch(error, { source: 'AuthPermissionsPage', action: 'saveSettings' });
       toast('Failed to save permission settings', { variant: 'error' });
     }
   };

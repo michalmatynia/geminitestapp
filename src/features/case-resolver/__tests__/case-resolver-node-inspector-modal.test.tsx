@@ -62,6 +62,12 @@ vi.mock('@/shared/ui', () => ({
   CompactEmptyState: ({ title }: { title: string }) => <div>{title}</div>,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   useToast: () => ({ toast: vi.fn() }),
+  InsetPanel: ({
+    children,
+    className,
+  }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
+    <div className={className}>{children}</div>
+  ),
   ValidatorFormatterToggle: () => <div />,
 }));
 

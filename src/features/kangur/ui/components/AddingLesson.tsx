@@ -40,17 +40,10 @@ import {
   KANGUR_START_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'podstawy' | 'przekroczenie' | 'dwucyfrowe' | 'zapamietaj' | 'synthesis' | 'game';
 type AddingSlideSectionId = Exclude<SectionId, 'game' | 'synthesis'>;
-type AddingLessonTranslate = (key: string) => string;
-type WidenLessonCopy<T> = T extends string
-  ? string
-  : T extends readonly (infer U)[]
-    ? readonly WidenLessonCopy<U>[]
-    : T extends object
-      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
-      : T;
 
 const ADDING_LESSON_COPY_PL = {
   lessonTitle: 'Dodawanie',
@@ -248,7 +241,7 @@ const ADDING_LESSON_COPY_PL = {
 type AddingLessonCopy = WidenLessonCopy<typeof ADDING_LESSON_COPY_PL>;
 
 const translateAddingLesson = (
-  translate: AddingLessonTranslate,
+  translate: LessonTranslate,
   key: string,
   fallback: string
 ): string => {
@@ -256,7 +249,7 @@ const translateAddingLesson = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-const buildAddingLessonCopy = (translate: AddingLessonTranslate): AddingLessonCopy => ({
+const buildAddingLessonCopy = (translate: LessonTranslate): AddingLessonCopy => ({
   lessonTitle: translateAddingLesson(translate, 'lessonTitle', ADDING_LESSON_COPY_PL.lessonTitle),
   sections: {
     podstawy: {

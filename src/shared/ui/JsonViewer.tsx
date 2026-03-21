@@ -3,10 +3,10 @@
 import React, { useMemo } from 'react';
 
 import { cn } from '@/shared/utils';
-
-import { CopyButton } from './copy-button';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { CopyButton } from './copy-button';
+import { InsetPanel } from './InsetPanel';
 
 interface JsonViewerProps {
   data: unknown;
@@ -50,12 +50,7 @@ export function JsonViewer({
   }, [data]);
 
   return (
-    <div
-      className={cn(
-        'relative flex flex-col gap-2 rounded-lg border border-border/60 bg-card/40 p-3',
-        className
-      )}
-    >
+    <InsetPanel padding='sm' className={cn('relative flex flex-col gap-2', className)}>
       {(title || showCopy) && (
         <div className='flex items-center justify-between gap-2 mb-1'>
           {title ? (
@@ -85,6 +80,6 @@ export function JsonViewer({
       >
         <pre className='min-w-full p-2 font-mono text-[11px] text-gray-300'>{formattedJson}</pre>
       </div>
-    </div>
+    </InsetPanel>
   );
 }

@@ -17,6 +17,7 @@ const {
   useQueryClientMock,
   useRouterMock,
   useKangurMobileAuthMock,
+  useKangurMobilePracticeDuelsMock,
   useKangurMobileRuntimeMock,
   useKangurPracticeSyncProofMock,
 } = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ const {
   useQueryClientMock: vi.fn(),
   useRouterMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
+  useKangurMobilePracticeDuelsMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
   useKangurPracticeSyncProofMock: vi.fn(),
 }));
@@ -75,6 +77,10 @@ vi.mock('../scores/resultsHref', () => ({
 
 vi.mock('./useKangurPracticeSyncProof', () => ({
   useKangurPracticeSyncProof: useKangurPracticeSyncProofMock,
+}));
+
+vi.mock('./useKangurMobilePracticeDuels', () => ({
+  useKangurMobilePracticeDuels: useKangurMobilePracticeDuelsMock,
 }));
 
 import { KangurPracticeScreen } from './KangurPracticeScreen';
@@ -124,6 +130,20 @@ describe('KangurPracticeScreen', () => {
         surfaces: [],
       },
     });
+    useKangurMobilePracticeDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
 
     resolveKangurPracticeOperationMock.mockReturnValue('clock');
     getKangurPracticeOperationConfigMock.mockReturnValue({
@@ -169,6 +189,41 @@ describe('KangurPracticeScreen', () => {
   });
 
   it('shows the synced completion summary after finishing a short run', async () => {
+    const replaceMock = vi.fn();
+    const createRematchMock = vi.fn().mockResolvedValue('duel-practice-1');
+    useRouterMock.mockReturnValue({
+      replace: replaceMock,
+    });
+    useKangurMobilePracticeDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: createRematchMock,
+      currentEntry: {
+        displayName: 'Ada Learner',
+        lastPlayedAt: '2026-03-21T08:07:00.000Z',
+        learnerId: 'learner-1',
+        losses: 2,
+        matches: 5,
+        ties: 0,
+        winRate: 0.6,
+        wins: 3,
+      },
+      currentRank: 2,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [
+        {
+          displayName: 'Leo Mentor',
+          lastPlayedAt: '2026-03-21T08:05:00.000Z',
+          learnerId: 'learner-2',
+        },
+      ],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
+
     render(<KangurPracticeScreen />);
 
     fireEvent.click(screen.getByText('7:00'));
@@ -179,6 +234,11 @@ describe('KangurPracticeScreen', () => {
 
     expect(await screen.findByText('Podsumowanie')).toBeTruthy();
     expect(screen.getByText('Wynik: 1/1')).toBeTruthy();
+    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
+    expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
+    expect(screen.getByText('Leo Mentor')).toBeTruthy();
+    expect(screen.getByText('Szybki rewanż')).toBeTruthy();
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.queryByText('Failed to fetch')).toBeNull();
@@ -187,6 +247,18 @@ describe('KangurPracticeScreen', () => {
       expect(
         screen.getByText(/Wynik zapisano w API Kangura\./),
       ).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Szybki rewanż'));
+
+    expect(createRematchMock).toHaveBeenCalledWith('learner-2');
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-practice-1',
+        },
+      });
     });
   });
 });

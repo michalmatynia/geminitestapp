@@ -3,6 +3,8 @@ import type {
   KangurProgressState,
 } from '@kangur/contracts';
 
+import { getLocalizedKangurRewardBreakdownLabel } from '../progress-i18n';
+
 export type KangurRewardBreakdownEntry = {
   kind: string;
   label: string;
@@ -311,50 +313,119 @@ export const buildRewardBreakdown = (
     perfectBonus: number;
     totalXp: number;
   },
+  locale?: string | null | undefined,
 ): KangurRewardBreakdownEntry[] => {
   const entries: KangurRewardBreakdownEntry[] = [
-    { kind: 'base', label: 'Ukończenie rundy', xp: config.baseXp },
+    {
+      kind: 'base',
+      label: getLocalizedKangurRewardBreakdownLabel('base', 'Ukończenie rundy', locale),
+      xp: config.baseXp,
+    },
   ];
 
   if (accuracyBonus > 0) {
-    entries.push({ kind: 'accuracy', label: 'Skuteczność', xp: accuracyBonus });
+    entries.push({
+      kind: 'accuracy',
+      label: getLocalizedKangurRewardBreakdownLabel('accuracy', 'Skuteczność', locale),
+      xp: accuracyBonus,
+    });
   }
   if (difficultyBonus > 0) {
-    entries.push({ kind: 'difficulty', label: 'Poziom trudności', xp: difficultyBonus });
+    entries.push({
+      kind: 'difficulty',
+      label: getLocalizedKangurRewardBreakdownLabel(
+        'difficulty',
+        'Poziom trudności',
+        locale,
+      ),
+      xp: difficultyBonus,
+    });
   }
   if (speedBonus > 0) {
-    entries.push({ kind: 'speed', label: 'Tempo', xp: speedBonus });
+    entries.push({
+      kind: 'speed',
+      label: getLocalizedKangurRewardBreakdownLabel('speed', 'Tempo', locale),
+      xp: speedBonus,
+    });
   }
   if (streakBonus > 0) {
-    entries.push({ kind: 'streak', label: 'Seria', xp: streakBonus });
+    entries.push({
+      kind: 'streak',
+      label: getLocalizedKangurRewardBreakdownLabel('streak', 'Seria', locale),
+      xp: streakBonus,
+    });
   }
   if (firstActivityBonus > 0) {
-    entries.push({ kind: 'first_activity', label: 'Pierwsza mocna próba', xp: firstActivityBonus });
+    entries.push({
+      kind: 'first_activity',
+      label: getLocalizedKangurRewardBreakdownLabel(
+        'first_activity',
+        'Pierwsza mocna próba',
+        locale,
+      ),
+      xp: firstActivityBonus,
+    });
   }
   if (improvementBonus > 0) {
-    entries.push({ kind: 'improvement', label: 'Poprawa wyniku', xp: improvementBonus });
+    entries.push({
+      kind: 'improvement',
+      label: getLocalizedKangurRewardBreakdownLabel('improvement', 'Poprawa wyniku', locale),
+      xp: improvementBonus,
+    });
   }
   if (masteryBonus > 0) {
-    entries.push({ kind: 'mastery', label: 'Postęp opanowania', xp: masteryBonus });
+    entries.push({
+      kind: 'mastery',
+      label: getLocalizedKangurRewardBreakdownLabel('mastery', 'Postęp opanowania', locale),
+      xp: masteryBonus,
+    });
   }
   if (varietyBonus > 0) {
-    entries.push({ kind: 'variety', label: 'Nowa ścieżka', xp: varietyBonus });
+    entries.push({
+      kind: 'variety',
+      label: getLocalizedKangurRewardBreakdownLabel('variety', 'Nowa ścieżka', locale),
+      xp: varietyBonus,
+    });
   }
   if (guidedFocusBonus > 0) {
-    entries.push({ kind: 'guided_focus', label: 'Polecony kierunek', xp: guidedFocusBonus });
+    entries.push({
+      kind: 'guided_focus',
+      label: getLocalizedKangurRewardBreakdownLabel(
+        'guided_focus',
+        'Polecony kierunek',
+        locale,
+      ),
+      xp: guidedFocusBonus,
+    });
   }
   if (perfectBonus > 0) {
-    entries.push({ kind: 'perfect', label: 'Pełny wynik', xp: perfectBonus });
+    entries.push({
+      kind: 'perfect',
+      label: getLocalizedKangurRewardBreakdownLabel('perfect', 'Pełny wynik', locale),
+      xp: perfectBonus,
+    });
   }
   if (antiRepeatPenalty > 0) {
-    entries.push({ kind: 'anti_repeat', label: 'Powtarzana aktywność', xp: -antiRepeatPenalty });
+    entries.push({
+      kind: 'anti_repeat',
+      label: getLocalizedKangurRewardBreakdownLabel(
+        'anti_repeat',
+        'Powtarzana aktywność',
+        locale,
+      ),
+      xp: -antiRepeatPenalty,
+    });
   }
 
   const breakdownTotal = entries.reduce((sum, entry) => sum + entry.xp, 0);
   if (totalXp > breakdownTotal) {
     entries.push({
       kind: 'minimum_floor',
-      label: 'Minimalna nagroda',
+      label: getLocalizedKangurRewardBreakdownLabel(
+        'minimum_floor',
+        'Minimalna nagroda',
+        locale,
+      ),
       xp: totalXp - breakdownTotal,
     });
   }

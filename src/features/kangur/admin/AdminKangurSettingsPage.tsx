@@ -8,7 +8,6 @@ import {
   Badge,
   Breadcrumbs,
   Button,
-  Card,
   FormSection,
   Switch,
 } from '@/features/kangur/shared/ui';
@@ -17,6 +16,7 @@ import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurAiTutorSettingsPanel } from './components/KangurAiTutorSettingsPanel';
+import { KangurAdminCard } from './components/KangurAdminCard';
 import { KangurNarratorSettingsPanel } from './components/KangurNarratorSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
 import { KangurParentVerificationSettingsPanel } from './components/KangurParentVerificationSettingsPanel';
@@ -28,7 +28,6 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
-const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 
 export function AdminKangurSettingsPage(): ReactElement {
   const {
@@ -120,7 +119,7 @@ export function AdminKangurSettingsPage(): ReactElement {
             description='Edit daily and nightly Kangur themes. Mongo-backed theme settings are the only active Kangur styling source at runtime.'
             className={SETTINGS_SECTION_CLASS_NAME}
           >
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <KangurAdminCard>
               <div className='flex items-center justify-between gap-4'>
                 <div>
                   <div className='text-sm font-semibold text-foreground'>
@@ -136,7 +135,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                   <Link href='/admin/kangur/appearance'>Open theme editor</Link>
                 </Button>
               </div>
-            </Card>
+            </KangurAdminCard>
           </FormSection>
 
           <FormSection
@@ -144,7 +143,7 @@ export function AdminKangurSettingsPage(): ReactElement {
             description='Mobile Game mode can replace direct vertical scrolling with explicit top and bottom scroll controls.'
             className={SETTINGS_SECTION_CLASS_NAME}
           >
-            <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+            <KangurAdminCard>
               <div className='flex items-center justify-between gap-4'>
                 <div>
                   <div className='flex items-center gap-2'>
@@ -166,7 +165,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                   data-doc-id='settings_phone_simulation_toggle'
                 />
               </div>
-            </Card>
+            </KangurAdminCard>
           </FormSection>
         </div>
 
@@ -224,7 +223,7 @@ export function AdminKangurSettingsPage(): ReactElement {
               Refine onboarding copy, page content, and native guide instructions used across Kangur.
             </p>
           </div>
-          <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+          <KangurAdminCard>
             <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
               <div className='space-y-1'>
                 <div className='text-sm font-semibold text-foreground'>AI Tutor content</div>
@@ -237,7 +236,7 @@ export function AdminKangurSettingsPage(): ReactElement {
             <Button asChild variant='outline' size='sm' className='mt-4'>
               <Link href='/admin/kangur/settings/ai-tutor-content'>Open AI Tutor content</Link>
             </Button>
-          </Card>
+          </KangurAdminCard>
           <Suspense fallback={<KangurAppLoader visible={true} />}>
             <KangurPageContentSettingsPanel />
           </Suspense>
@@ -255,7 +254,7 @@ export function AdminKangurSettingsPage(): ReactElement {
             className={SETTINGS_SECTION_CLASS_NAME}
           >
             <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-3`}>
-              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <KangurAdminCard>
                 <div className='text-sm font-semibold text-foreground'>Observability dashboard</div>
                 <p className='mt-1 text-sm text-muted-foreground'>
                   Open the dedicated Kangur dashboard with alerts, route health, client telemetry,
@@ -264,9 +263,9 @@ export function AdminKangurSettingsPage(): ReactElement {
                 <Button asChild variant='outline' size='sm' className='mt-4'>
                   <Link href='/admin/kangur/observability'>Open observability dashboard</Link>
                 </Button>
-              </Card>
+              </KangurAdminCard>
 
-              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <KangurAdminCard>
                 <div className='text-sm font-semibold text-foreground'>Kangur system logs</div>
                 <p className='mt-1 text-sm text-muted-foreground'>
                   Jump into System Logs scoped to Kangur events. Saved presets available there:
@@ -280,9 +279,9 @@ export function AdminKangurSettingsPage(): ReactElement {
                     <Link href='/admin/system/logs?source=kangur.tts.fallback'>TTS fallbacks</Link>
                   </Button>
                 </div>
-              </Card>
+              </KangurAdminCard>
 
-              <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+              <KangurAdminCard>
                 <div className='text-sm font-semibold text-foreground'>Raw summary and runbook</div>
                 <p className='mt-1 text-sm text-muted-foreground'>
                   Use the summary API for direct payload inspection. Operational steps live in{' '}
@@ -303,7 +302,7 @@ export function AdminKangurSettingsPage(): ReactElement {
                     </Link>
                   </Button>
                 </div>
-              </Card>
+              </KangurAdminCard>
             </div>
           </FormSection>
 

@@ -9,6 +9,7 @@ import { Button } from './button';
 import { ConfirmDialog } from './confirm-dialog';
 import { EmptyState } from './empty-state';
 import { FormModal } from './FormModal';
+import { InsetPanel } from './InsetPanel';
 import { Input } from './input';
 import { Label } from './label';
 import { LoadingState } from './LoadingState';
@@ -151,7 +152,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
         }
       />
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <InsetPanel padding='md'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <p className='text-sm font-semibold text-white'>{entityName} library</p>
@@ -163,7 +164,7 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
             {isLoading ? 'Loading...' : `${items.length} ${entityName.toLowerCase()}(s)`}
           </div>
         </div>
-      </div>
+      </InsetPanel>
 
       {isLoading ? (
         <LoadingState

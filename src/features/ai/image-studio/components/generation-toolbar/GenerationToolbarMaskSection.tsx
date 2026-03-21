@@ -1,7 +1,7 @@
 import { Play } from 'lucide-react';
 import React from 'react';
 
-import { Button, SelectSimple, ToggleRow } from '@/shared/ui';
+import { Button, InsetPanel, SelectSimple, ToggleRow } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type MaskAttachMode } from './GenerationToolbarContext';
 import { useGenerationToolbarMaskSectionRuntime } from './GenerationToolbarSectionContexts';
@@ -27,7 +27,7 @@ export function GenerationToolbarMaskSection(): React.JSX.Element {
   } = useGenerationToolbarMaskSectionRuntime();
 
   return (
-    <div className='rounded border border-border/60 bg-card/40 p-3'>
+    <InsetPanel radius='compact' padding='sm'>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>Mask</div>
         <span className='text-[11px] text-gray-400 whitespace-nowrap'>
@@ -104,6 +104,6 @@ export function GenerationToolbarMaskSection(): React.JSX.Element {
           labelClassName='text-[11px] text-gray-300'
         />
       </div>
-    </div>
+    </InsetPanel>
   );
 }

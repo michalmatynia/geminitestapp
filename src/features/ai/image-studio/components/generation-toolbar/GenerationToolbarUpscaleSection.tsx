@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button, InsetPanel, SelectSimple } from '@/shared/ui';
 
 import {
   useGenerationToolbarContext,
@@ -40,7 +40,7 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
   } = useGenerationToolbarUpscaleSectionRuntime();
 
   return (
-    <div className='rounded border border-border/60 bg-card/40 p-3'>
+    <InsetPanel radius='compact' padding='sm'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Upscale</div>
       <div className='grid gap-2 sm:grid-cols-2'>
         <SelectSimple
@@ -144,6 +144,6 @@ export function GenerationToolbarUpscaleSection(): React.JSX.Element {
           </Button>
         ) : null}
       </div>
-    </div>
+    </InsetPanel>
   );
 }

@@ -17,7 +17,7 @@ import {
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { isEditingProductHydrated, markEditingProductHydrated } from './editingProductHydration';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
@@ -288,13 +288,10 @@ export function useProductFormSubmit({
             onSuccessRef.current?.();
           }
         } catch (error: unknown) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              service: 'product-form',
-              action: 'submit',
-              productId: product?.id,
-            },
+          logClientCatch(error, {
+            service: 'product-form',
+            action: 'submit',
+            productId: product?.id,
           });
           if (error instanceof Error) {
             setUploadError(error.message);

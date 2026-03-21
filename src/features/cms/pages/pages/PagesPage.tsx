@@ -28,7 +28,7 @@ import {
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import type { FilterField } from '@/shared/contracts/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -85,9 +85,9 @@ export default function PagesPage(): React.ReactNode {
     try {
       await deletePage.mutateAsync(pageToDelete.id);
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'PagesPage.handleConfirmDelete', pageId: pageToDelete.id },
+      logClientCatch(error, {
+        source: 'PagesPage.handleConfirmDelete',
+        pageId: pageToDelete.id,
       });
     } finally {
       setPageToDelete(null);

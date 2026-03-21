@@ -1,3 +1,4 @@
+import type { SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
 import type { MongoSystemLogDoc } from '@/shared/lib/observability/system-log-types';
 
 export type SystemLogAlertsJobData = {
@@ -48,9 +49,7 @@ export type AlertEvidenceQuery = {
   limit?: number;
 };
 
-export type SystemLogAlertsQueueState = {
-  workerStarted: boolean;
-  schedulerRegistered: boolean;
+export type SystemLogAlertsQueueState = SchedulerQueueState & {
   startupTickQueued: boolean;
   lastAlertAt: number;
   lastSilenceAlertAt: number;

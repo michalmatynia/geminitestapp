@@ -1,18 +1,16 @@
 import { KangurWordmarkBase } from '@/features/kangur/ui/components/KangurWordmarkBase';
+import {
+  KANGUR_WORDMARK_DEFAULT_TEXT_PROPS,
+  type KangurLocalizedWordmarkProps,
+} from '@/features/kangur/ui/components/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type KangurTreningWordmarkProps = React.SVGProps<SVGSVGElement> & {
-  idPrefix?: string;
-  label?: string;
-  locale?: string | null;
-};
 
 export function KangurTreningWordmark({
   idPrefix = 'kangur-trening-wordmark',
   label = 'Trening',
   locale = 'pl',
   ...props
-}: KangurTreningWordmarkProps): React.JSX.Element {
+}: KangurLocalizedWordmarkProps): React.JSX.Element {
   const normalizedLocale = normalizeSiteLocale(locale);
   const resolvedLabel = label.trim() || 'Trening';
   const shouldUsePolishPathWordmark =
@@ -29,16 +27,7 @@ export function KangurTreningWordmark({
       textProps={
         shouldUsePolishPathWordmark
           ? undefined
-          : {
-              fontFamily:
-                'var(--kangur-wordmark-font, "Baloo 2", "Averia Sans Libre", "Trebuchet MS", sans-serif)',
-              fontSize: 68,
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              textAnchor: 'middle',
-              x: 281,
-              y: 103,
-            }
+          : KANGUR_WORDMARK_DEFAULT_TEXT_PROPS
       }
       wordTransform='translate(94 111)'
       {...props}

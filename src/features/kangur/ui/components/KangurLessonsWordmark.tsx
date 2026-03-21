@@ -1,18 +1,16 @@
 import { KangurWordmarkBase } from '@/features/kangur/ui/components/KangurWordmarkBase';
+import {
+  KANGUR_WORDMARK_DEFAULT_TEXT_PROPS,
+  type KangurLocalizedWordmarkProps,
+} from '@/features/kangur/ui/components/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type KangurLessonsWordmarkProps = React.SVGProps<SVGSVGElement> & {
-  idPrefix?: string;
-  label?: string;
-  locale?: string | null;
-};
 
 export function KangurLessonsWordmark({
   idPrefix = 'kangur-lessons-wordmark',
   label = 'Lekcje',
   locale = 'pl',
   ...props
-}: KangurLessonsWordmarkProps): React.JSX.Element {
+}: KangurLocalizedWordmarkProps): React.JSX.Element {
   const normalizedLocale = normalizeSiteLocale(locale);
   const resolvedLabel = label.trim() || 'Lekcje';
   const shouldUsePolishPathWordmark =
@@ -26,16 +24,7 @@ export function KangurLessonsWordmark({
       textProps={
         shouldUsePolishPathWordmark
           ? undefined
-          : {
-              fontFamily:
-                'var(--kangur-wordmark-font, "Baloo 2", "Averia Sans Libre", "Trebuchet MS", sans-serif)',
-              fontSize: 68,
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
-              textAnchor: 'middle',
-              x: 281,
-              y: 103,
-            }
+          : KANGUR_WORDMARK_DEFAULT_TEXT_PROPS
       }
       wordTransform='translate(132 111)'
       {...props}

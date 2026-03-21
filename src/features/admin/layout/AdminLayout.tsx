@@ -19,7 +19,7 @@ import { NoteSettingsProvider } from '@/shared/providers/NoteSettingsProvider';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { Session } from 'next-auth';
 
@@ -68,10 +68,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       try {
         await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'AdminLayout', action: 'persistMenuCollapsed' },
-        });
+        logClientCatch(error, { source: 'AdminLayout', action: 'persistMenuCollapsed' });
       }
     },
     [persistMenuCollapsedFallbacks, updatePreferencesMutation]

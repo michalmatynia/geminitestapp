@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Card } from '@/features/kangur/shared/ui';
+import { KangurAdminCard } from './KangurAdminCard';
 
 type KangurAdminStatusCardItem = {
   label: string;
@@ -22,12 +22,10 @@ export function KangurAdminStatusCard({
   children,
   sticky = true,
 }: KangurAdminStatusCardProps): React.JSX.Element {
-  const cardClassName = `h-fit border-border/60 bg-card/30 shadow-sm${
-    sticky ? ' xl:sticky xl:top-24' : ''
-  }`;
+  const cardClassName = `h-fit bg-card/30${sticky ? ' xl:sticky xl:top-24' : ''}`;
 
   return (
-    <Card
+    <KangurAdminCard
       variant='subtle-compact'
       padding='sm'
       className={cardClassName}
@@ -56,6 +54,6 @@ export function KangurAdminStatusCard({
 
         {children ? <div className='space-y-2'>{children}</div> : null}
       </div>
-    </Card>
+    </KangurAdminCard>
   );
 }

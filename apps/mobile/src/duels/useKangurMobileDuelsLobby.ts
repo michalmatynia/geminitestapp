@@ -12,6 +12,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import {
+  useKangurMobileI18n,
+  type KangurMobileLocalizedValue,
+} from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import {
   MOBILE_DUEL_DEFAULT_DIFFICULTY,
@@ -86,7 +90,11 @@ type UseKangurMobileDuelsLobbyResult = {
   visiblePublicEntries: KangurDuelLobbyEntry[];
 };
 
-const toQueryErrorMessage = (error: unknown, fallback: string): string | null => {
+const toQueryErrorMessage = (
+  error: unknown,
+  fallback: string,
+  copy: (value: KangurMobileLocalizedValue<string>) => string,
+): string | null => {
   if (!error) {
     return null;
   }
@@ -95,7 +103,11 @@ const toQueryErrorMessage = (error: unknown, fallback: string): string | null =>
     const status = (error as { status?: number }).status;
 
     if (status === 401) {
-      return 'Zaloguj sesję ucznia, aby korzystać z tego widoku.';
+      return copy({
+        de: 'Melde eine Lernenden-Sitzung an, um diese Ansicht zu nutzen.',
+        en: 'Sign in the learner session to use this view.',
+        pl: 'Zaloguj sesję ucznia, aby korzystać z tego widoku.',
+      });
     }
   }
 
@@ -110,7 +122,11 @@ const toQueryErrorMessage = (error: unknown, fallback: string): string | null =>
 
   const normalized = message.toLowerCase();
   if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return 'Nie udało się połączyć z API Kangura.';
+    return copy({
+      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
+      en: 'Could not connect to the Kangur API.',
+      pl: 'Nie udało się połączyć z API Kangura.',
+    });
   }
 
   return message;
@@ -118,6 +134,7 @@ const toQueryErrorMessage = (error: unknown, fallback: string): string | null =>
 
 export const useKangurMobileDuelsLobby =
   (): UseKangurMobileDuelsLobbyResult => {
+    const { copy } = useKangurMobileI18n();
     const queryClient = useQueryClient();
     const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
     const { isLoadingAuth, session } = useKangurMobileAuth();
@@ -278,7 +295,7 @@ export const useKangurMobileDuelsLobby =
 
         return response.session.id;
       } catch (error) {
-        setActionError(toQueryErrorMessage(error, fallbackMessage));
+        setActionError(toQueryErrorMessage(error, fallbackMessage, copy));
         return null;
       } finally {
         setIsActionPending(false);
@@ -308,7 +325,11 @@ export const useKangurMobileDuelsLobby =
               },
               { cache: 'no-store' },
             ),
-          'Nie udało się wysłać prywatnego wyzwania.',
+          copy({
+            de: 'Die private Herausforderung konnte nicht gesendet werden.',
+            en: 'Could not send the private challenge.',
+            pl: 'Nie udało się wysłać prywatnego wyzwania.',
+          }),
         ),
       createPublicChallenge: async (overrides) =>
         runSessionAction(
@@ -325,7 +346,11 @@ export const useKangurMobileDuelsLobby =
               },
               { cache: 'no-store' },
             ),
-          'Nie udało się utworzyć publicznego wyzwania.',
+          copy({
+            de: 'Die öffentliche Herausforderung konnte nicht erstellt werden.',
+            en: 'Could not create the public challenge.',
+            pl: 'Nie udało się utworzyć publicznego wyzwania.',
+          }),
         ),
       createQuickMatch: async (overrides) =>
         runSessionAction(
@@ -342,7 +367,11 @@ export const useKangurMobileDuelsLobby =
               },
               { cache: 'no-store' },
             ),
-          'Nie udało się utworzyć szybkiego meczu.',
+          copy({
+            de: 'Das schnelle Match konnte nicht erstellt werden.',
+            en: 'Could not create the quick match.',
+            pl: 'Nie udało się utworzyć szybkiego meczu.',
+          }),
         ),
       difficulty,
       inviteEntries,
@@ -363,16 +392,30 @@ export const useKangurMobileDuelsLobby =
               },
               { cache: 'no-store' },
             ),
-          'Nie udało się dołączyć do pojedynku.',
+          copy({
+            de: 'Der Beitritt zum Duell ist fehlgeschlagen.',
+            en: 'Could not join the duel.',
+            pl: 'Nie udało się dołączyć do pojedynku.',
+          }),
         ),
       leaderboardEntries: leaderboardQuery.data?.entries ?? [],
       leaderboardError: toQueryErrorMessage(
         leaderboardQuery.error,
-        'Nie udało się pobrać rankingu dueli.',
+        copy({
+          de: 'Die Duellrangliste konnte nicht geladen werden.',
+          en: 'Could not load the duels leaderboard.',
+          pl: 'Nie udało się pobrać rankingu dueli.',
+        }),
+        copy,
       ),
       lobbyError: toQueryErrorMessage(
         lobbyQuery.error,
-        'Nie udało się pobrać lobby pojedynków.',
+        copy({
+          de: 'Die Duell-Lobby konnte nicht geladen werden.',
+          en: 'Could not load the duels lobby.',
+          pl: 'Nie udało się pobrać lobby pojedynków.',
+        }),
+        copy,
       ),
       modeFilter,
       operation,
@@ -380,7 +423,12 @@ export const useKangurMobileDuelsLobby =
       presenceEntries: presenceQuery.data?.entries ?? [],
       presenceError: toQueryErrorMessage(
         presenceQuery.error,
-        'Nie udało się pobrać aktywnych uczniów.',
+        copy({
+          de: 'Die aktiven Lernenden konnten nicht geladen werden.',
+          en: 'Could not load the active learners.',
+          pl: 'Nie udało się pobrać aktywnych uczniów.',
+        }),
+        copy,
       ),
       publicEntries,
       refresh: async () => {
@@ -393,7 +441,12 @@ export const useKangurMobileDuelsLobby =
       },
       searchError: toQueryErrorMessage(
         searchQueryState.error,
-        'Nie udało się wyszukać uczniów.',
+        copy({
+          de: 'Die Lernenden konnten nicht gesucht werden.',
+          en: 'Could not search learners.',
+          pl: 'Nie udało się wyszukać uczniów.',
+        }),
+        copy,
       ),
       searchQuery,
       searchResults: searchQueryState.data?.entries ?? [],

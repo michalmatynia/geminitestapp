@@ -18,17 +18,10 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
 type SlideSectionId = Exclude<SectionId, 'game_draw'>;
-type GeometryPerimeterLessonTranslate = (key: string) => string;
-type WidenLessonCopy<T> = T extends string
-  ? string
-  : T extends readonly (infer U)[]
-    ? readonly WidenLessonCopy<U>[]
-    : T extends object
-      ? { [K in keyof T]: WidenLessonCopy<T[K]> }
-      : T;
 
 const GEOMETRY_PERIMETER_LESSON_COPY_PL = {
   lessonTitle: 'Obwód figur',
@@ -100,7 +93,7 @@ const GEOMETRY_PERIMETER_LESSON_COPY_PL = {
 type GeometryPerimeterLessonCopy = WidenLessonCopy<typeof GEOMETRY_PERIMETER_LESSON_COPY_PL>;
 
 const translateGeometryPerimeterLesson = (
-  translate: GeometryPerimeterLessonTranslate,
+  translate: LessonTranslate,
   key: string,
   fallback: string
 ): string => {
@@ -109,7 +102,7 @@ const translateGeometryPerimeterLesson = (
 };
 
 const buildGeometryPerimeterLessonCopy = (
-  translate: GeometryPerimeterLessonTranslate
+  translate: LessonTranslate
 ): GeometryPerimeterLessonCopy => ({
   lessonTitle: translateGeometryPerimeterLesson(
     translate,

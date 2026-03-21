@@ -20,7 +20,7 @@ import {
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   parseDatabaseEngineBackupScheduleSetting,
@@ -232,14 +232,11 @@ ${log}`
         );
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'DatabaseBackupsPanel',
-          action: 'restoreBackup',
-          backupName,
-          dbType: activeTab,
-        },
+      logClientCatch(error, {
+        source: 'DatabaseBackupsPanel',
+        action: 'restoreBackup',
+        backupName,
+        dbType: activeTab,
       });
       openLogModal(`An error occurred during restoration.
 
@@ -279,9 +276,10 @@ ${log}`);
 ${log}`);
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'DatabaseBackupsPanel', action: 'createBackup', dbType: activeTab },
+      logClientCatch(error, {
+        source: 'DatabaseBackupsPanel',
+        action: 'createBackup',
+        dbType: activeTab,
       });
       openLogModal(`An error occurred during backup.
 
@@ -306,14 +304,11 @@ ${String(error)}`);
         toast('Failed to delete backup.', { variant: 'error' });
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'DatabaseBackupsPanel',
-          action: 'deleteBackup',
-          backupName: backupToDelete,
-          dbType: activeTab,
-        },
+      logClientCatch(error, {
+        source: 'DatabaseBackupsPanel',
+        action: 'deleteBackup',
+        backupName: backupToDelete,
+        dbType: activeTab,
       });
       toast('An error occurred during deletion.', { variant: 'error' });
     } finally {
@@ -337,14 +332,11 @@ ${String(error)}`);
         toast('Failed to upload backup.', { variant: 'error' });
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'DatabaseBackupsPanel',
-          action: 'uploadBackup',
-          filename: file.name,
-          dbType: activeTab,
-        },
+      logClientCatch(error, {
+        source: 'DatabaseBackupsPanel',
+        action: 'uploadBackup',
+        filename: file.name,
+        dbType: activeTab,
       });
       toast('An error occurred during upload.', { variant: 'error' });
     }
@@ -413,14 +405,11 @@ ${String(error)}`);
       });
       toast('Backup schedule saved.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'DatabaseBackupsPanel',
-          action: 'saveDailySchedule',
-          setting: 'database_engine_backup_schedule_v1',
-          dbType: activeTargetKey,
-        },
+      logClientCatch(error, {
+        source: 'DatabaseBackupsPanel',
+        action: 'saveDailySchedule',
+        setting: 'database_engine_backup_schedule_v1',
+        dbType: activeTargetKey,
       });
       toast('Failed to save backup schedule.', { variant: 'error' });
     }

@@ -5,6 +5,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Breadcrumbs } from '@/shared/ui/Breadcrumbs';
 import { Drawer } from '@/shared/ui/Drawer';
+import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { JsonViewer } from '@/shared/ui/JsonViewer';
 import { SkipToContentLink } from '@/shared/ui/SkipToContentLink';
@@ -410,5 +411,13 @@ describe('shared accessibility primitives', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading products...');
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('announces LoadingPanel as a polite status update', () => {
+    render(<LoadingPanel>Loading dashboard...</LoadingPanel>);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading dashboard...');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
   });
 });

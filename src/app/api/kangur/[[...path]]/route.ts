@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { type NextRequest } from 'next/server';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import type { CatchAllRoutePathParams as RouteParams } from '@/shared/lib/api/catch-all-route-types';
 import { resolveKangurApiPathSegments } from '../route-utils';
 import { notFound } from './routing/routing.utils';
 import { handleAuthRouting } from './routing/routing.auth';
@@ -11,8 +12,6 @@ import { handleDuelRouting } from './routing/routing.duels';
 import { handleLearnerRouting } from './routing/routing.learner';
 import { handleAiTutorRouting } from './routing/routing.ai-tutor';
 import { handleMiscRouting } from './routing/routing.misc';
-
-type RouteParams = { path?: string[] | string };
 
 const routeKangurRequest = async (
   request: NextRequest,

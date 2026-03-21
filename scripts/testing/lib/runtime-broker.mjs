@@ -386,6 +386,21 @@ const cleanupLeaseManagedRuntimeTmpDir = async ({
   await removeDirectoryIfPresent(managedRuntimeTmpDirPath);
 };
 
+const cleanupFreshManagedRuntimeArtifacts = async ({
+  rootDir,
+  distDir = null,
+  managedDistDir = false,
+  runtimeTmpDir = null,
+} = {}) => {
+  if (managedDistDir && typeof distDir === 'string' && distDir.length > 0) {
+    await removeDirectoryIfPresent(path.join(rootDir, distDir));
+  }
+
+  if (typeof runtimeTmpDir === 'string' && runtimeTmpDir.length > 0) {
+    await removeDirectoryIfPresent(path.join(rootDir, runtimeTmpDir));
+  }
+};
+
 const signalProcess = async (pid, signal) => {
   if (!Number.isInteger(pid) || pid <= 0) {
     return false;
@@ -1007,6 +1022,12 @@ export const acquireRuntimeLease = async ({
     const runtimeTmpDir = resolveBrokerManagedRuntimeTmpDir({ leaseKey });
     const resolvedRuntimeTmpDir = path.join(resolvedRootDir, runtimeTmpDir);
 
+    await cleanupFreshManagedRuntimeArtifacts({
+      rootDir: resolvedRootDir,
+      distDir,
+      managedDistDir,
+      runtimeTmpDir,
+    });
     await fsPromises.mkdir(path.dirname(logFilePath), { recursive: true });
     await fsPromises.mkdir(resolvedRuntimeTmpDir, { recursive: true });
     const logFd = fs.openSync(logFilePath, 'a');

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Input, SelectSimple } from '@/shared/ui';
+import { InsetPanel, Input, SelectSimple } from '@/shared/ui';
 
 import { useGenerationToolbarDefaultsSectionRuntime } from './GenerationToolbarSectionContexts';
 
@@ -9,7 +9,7 @@ export function GenerationToolbarDefaultsSection(): React.JSX.Element {
     useGenerationToolbarDefaultsSectionRuntime();
 
   return (
-    <div className='rounded border border-border/60 bg-card/40 p-3'>
+    <InsetPanel radius='compact' padding='sm'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
         Generation Defaults
       </div>
@@ -33,6 +33,6 @@ export function GenerationToolbarDefaultsSection(): React.JSX.Element {
           ariaLabel='Generation image count'
          title='Select option'/>
       </div>
-    </div>
+    </InsetPanel>
   );
 }

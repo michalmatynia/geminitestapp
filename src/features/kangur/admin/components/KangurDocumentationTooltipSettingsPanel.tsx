@@ -11,11 +11,12 @@ import {
 } from '@/features/kangur/help-settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
-import { Badge, Button, Card, FormSection, Switch, useToast } from '@/features/kangur/shared/ui';
+import { Badge, Button, FormSection, Switch, useToast } from '@/features/kangur/shared/ui';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
+import { KangurAdminCard } from './KangurAdminCard';
 
 const DOCS_TOOLTIP_SURFACES: Array<{
   key: keyof KangurHelpSettings['docsTooltips'];
@@ -60,8 +61,6 @@ const DOCS_TOOLTIP_SURFACES: Array<{
     docId: 'settings_docs_tooltips_admin_toggle',
   },
 ] as const;
-
-const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
 
 const areHelpSettingsEqual = (left: KangurHelpSettings, right: KangurHelpSettings): boolean =>
   left.docsTooltips.enabled === right.docsTooltips.enabled &&
@@ -136,7 +135,7 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
         description='These toggles control documentation-driven tooltips. Tooltip text is sourced only from the central Kangur documentation files.'
         variant='subtle'
       >
-        <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+        <KangurAdminCard>
           <div className='flex items-center justify-between gap-4'>
             <div>
               <div className='flex items-center gap-2'>
@@ -165,16 +164,11 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
               aria-label='Enable Kangur docs tooltips'
             />
           </div>
-        </Card>
+        </KangurAdminCard>
 
         <div className={`${KANGUR_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
           {DOCS_TOOLTIP_SURFACES.map((surface) => (
-            <Card
-              key={surface.key}
-              variant='subtle'
-              padding='md'
-              className={SETTINGS_CARD_CLASS_NAME}
-            >
+            <KangurAdminCard key={surface.key}>
               <div className='flex items-start justify-between gap-4'>
                 <div>
                   <div className='flex items-center gap-2'>
@@ -200,11 +194,11 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
                   aria-label={`${surface.label} docs tooltips`}
                 />
               </div>
-            </Card>
+            </KangurAdminCard>
           ))}
         </div>
 
-        <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+        <KangurAdminCard>
           <div className='flex items-center justify-between gap-4'>
             <div>
               <div className='flex items-center gap-2'>
@@ -229,7 +223,7 @@ export function KangurDocumentationTooltipSettingsPanel(): React.JSX.Element {
               {isSaving ? 'Saving…' : 'Save tooltip settings'}
             </Button>
           </div>
-        </Card>
+        </KangurAdminCard>
       </FormSection>
     </>
   );

@@ -4,11 +4,12 @@ import { getScheduleSettings } from '@/features/ai/insights/server';
 import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { createManagedQueue } from '@/shared/lib/queue';
+import type {
+  RepeatableJobEntry,
+  ScheduledTickJobData,
+  SchedulerQueueState,
+} from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-type AiInsightsJobData = {
-  type: 'scheduled-tick';
-};
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
@@ -26,11 +27,6 @@ const AI_INSIGHTS_LOCK_DURATION_MS = parseMsFromEnv(
   180_000,
   60_000
 );
-
-type AiInsightsQueueState = {
-  workerStarted: boolean;
-  schedulerRegistered: boolean;
-};
 
 type AiInsightsQueueStatus = {
   running: boolean;
@@ -57,7 +53,7 @@ const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
 };
 
 const globalWithAiInsightsQueueState = globalThis as typeof globalThis & {
-  __aiInsightsQueueState__?: AiInsightsQueueState;
+  __aiInsightsQueueState__?: SchedulerQueueState;
 };
 
 // Next dev can evaluate this module in multiple route bundles; keep one worker/scheduler per process.
@@ -70,7 +66,7 @@ const aiInsightsQueueState =
 
 let reconcileInFlight: Promise<void> | null = null;
 
-const queue = createManagedQueue<AiInsightsJobData>({
+const queue = createManagedQueue<ScheduledTickJobData>({
   name: 'ai-insights',
   concurrency: 1,
   defaultJobOptions: {
@@ -104,13 +100,6 @@ const shouldRegisterInsightsScheduler = async (): Promise<boolean> => {
     (schedule.logsEnabled && logsBrain.enabled) ||
     (schedule.logsAutoOnError && logsBrain.enabled)
   );
-};
-
-type RepeatableJobEntry = {
-  id?: string | null;
-  name?: string;
-  every?: number | null;
-  key: string;
 };
 
 const hasRepeatableQueueApi = (

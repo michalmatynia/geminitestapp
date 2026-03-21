@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, SelectSimple, Tooltip } from '@/shared/ui';
+import { Button, InsetPanel, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type CropMode } from './GenerationToolbarContext';
 import { useGenerationToolbarCropSectionRuntime } from './GenerationToolbarSectionContexts';
@@ -32,7 +32,7 @@ export function GenerationToolbarCropSection(): React.JSX.Element {
   };
 
   return (
-    <div className='rounded border border-border/60 bg-card/40 p-3'>
+    <InsetPanel radius='compact' padding='sm'>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>Crop</div>
         <span className='text-[11px] text-gray-500'>{boundaryStatusLabel}</span>
@@ -117,6 +117,6 @@ export function GenerationToolbarCropSection(): React.JSX.Element {
           )
           : null}
       </div>
-    </div>
+    </InsetPanel>
   );
 }

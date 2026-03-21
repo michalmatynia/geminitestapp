@@ -28,13 +28,13 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
+import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
 type SectionId = 'intro' | 'diagram' | 'intruz' | 'podsumowanie' | 'game';
-type LogicalClassificationTranslate = (key: string) => string;
 
 const createStaticTranslator =
-  (messages: Record<string, unknown>): LogicalClassificationTranslate =>
+  (messages: Record<string, unknown>): LessonTranslate =>
   (key) => {
     const resolved = key.split('.').reduce<unknown>(
       (current, segment) =>
@@ -48,7 +48,7 @@ const createStaticTranslator =
   };
 
 const buildLogicalClassificationSlides = (
-  translate: LogicalClassificationTranslate
+  translate: LessonTranslate
 ): Record<Exclude<SectionId, 'game'>, LessonSlide[]> => ({
   intro: [
     {
@@ -567,7 +567,7 @@ const buildLogicalClassificationSlides = (
   ],
 });
 
-const buildLogicalClassificationSections = (translate: LogicalClassificationTranslate) =>
+const buildLogicalClassificationSections = (translate: LessonTranslate) =>
   [
     {
       id: 'intro',

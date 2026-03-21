@@ -6,6 +6,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
+
 const {
   useLocalSearchParamsMock,
   useRouterMock,
@@ -53,6 +55,13 @@ vi.mock('./duelInviteShare', () => ({
 }));
 
 import { KangurDuelsScreen } from './KangurDuelsScreen';
+
+const renderDuelsScreen = (locale: 'pl' | 'en' | 'de' = 'pl') =>
+  render(
+    <KangurMobileI18nProvider locale={locale}>
+      <KangurDuelsScreen />
+    </KangurMobileI18nProvider>,
+  );
 
 describe('KangurDuelsScreen', () => {
   beforeEach(() => {
@@ -320,7 +329,7 @@ describe('KangurDuelsScreen', () => {
       sendMessage: vi.fn(),
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     expect(screen.getByText('Pojedynki')).toBeTruthy();
     expect(screen.getByText('Panel gry')).toBeTruthy();
@@ -341,6 +350,128 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Wyniki dueli')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
     expect(screen.getByText('Ola Quiz')).toBeTruthy();
+  });
+
+  it('renders German lobby chrome when the locale provider resolves de', () => {
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      actionError: null,
+      createPrivateChallenge: vi.fn(),
+      createPublicChallenge: vi.fn(),
+      createQuickMatch: vi.fn(),
+      difficulty: 'easy',
+      inviteEntries: [
+        {
+          createdAt: '2026-03-21T08:00:00.000Z',
+          difficulty: 'easy',
+          host: {
+            displayName: 'Ada Mentor',
+            learnerId: 'learner-1',
+            status: 'ready',
+            score: 0,
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            joinedAt: '2026-03-21T08:00:00.000Z',
+          },
+          mode: 'challenge',
+          operation: 'addition',
+          questionCount: 5,
+          sessionId: 'invite-1',
+          status: 'waiting',
+          timePerQuestionSec: 15,
+          updatedAt: '2026-03-21T08:02:00.000Z',
+          visibility: 'private',
+        },
+      ],
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLobbyLoading: false,
+      isOpponentsLoading: false,
+      isPresenceLoading: false,
+      isRestoringAuth: false,
+      isSearchLoading: false,
+      joinDuel: vi.fn(),
+      leaderboardEntries: [
+        {
+          displayName: 'Ola',
+          lastPlayedAt: '2026-03-21T08:10:00.000Z',
+          learnerId: 'leader-1',
+          losses: 1,
+          matches: 4,
+          ties: 0,
+          winRate: 0.75,
+          wins: 3,
+        },
+      ],
+      leaderboardError: null,
+      lobbyError: null,
+      modeFilter: 'all',
+      operation: 'addition',
+      opponents: [],
+      presenceEntries: [],
+      presenceError: null,
+      publicEntries: [],
+      refresh: vi.fn(),
+      searchError: null,
+      searchQuery: '',
+      searchResults: [],
+      searchSubmittedQuery: '',
+      seriesBestOf: 3,
+      setDifficulty: vi.fn(),
+      setModeFilter: vi.fn(),
+      setOperation: vi.fn(),
+      setSeriesBestOf: vi.fn(),
+      setSearchQuery: vi.fn(),
+      submitSearch: vi.fn(),
+      clearSearch: vi.fn(),
+      visiblePublicEntries: [
+        {
+          createdAt: '2026-03-21T08:00:00.000Z',
+          difficulty: 'medium',
+          host: {
+            displayName: 'Leo',
+            learnerId: 'learner-2',
+            status: 'ready',
+            score: 0,
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            joinedAt: '2026-03-21T08:00:00.000Z',
+          },
+          mode: 'quick_match',
+          operation: 'multiplication',
+          questionCount: 5,
+          series: {
+            bestOf: 3,
+            completedGames: 1,
+            gameIndex: 2,
+            id: 'series-1',
+            isComplete: false,
+            leaderLearnerId: 'learner-2',
+            winsByPlayer: {
+              'learner-2': 1,
+            },
+          },
+          sessionId: 'public-1',
+          status: 'waiting',
+          timePerQuestionSec: 15,
+          updatedAt: '2026-03-21T08:03:00.000Z',
+          visibility: 'public',
+        },
+      ],
+    });
+
+    renderDuelsScreen('de');
+
+    expect(screen.getByText('Duelle')).toBeTruthy();
+    expect(screen.getByText('Spielbereich')).toBeTruthy();
+    expect(screen.getAllByText('Schnelles Match').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Öffentliche Herausforderung')).toBeTruthy();
+    expect(screen.getByText('Einladungen')).toBeTruthy();
+    expect(screen.getByText('Lobby-Chat')).toBeTruthy();
+    expect(screen.getByText('Duellrangliste')).toBeTruthy();
+    expect(screen.getAllByText('BO3-Serie').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Spiel 2 von 3 · abgeschlossene Spiele: 1')).toBeTruthy();
+    expect(screen.getByText('Duell beobachten')).toBeTruthy();
   });
 
   it('renders the waiting-room session shell for an active duel route', () => {
@@ -433,7 +564,7 @@ describe('KangurDuelsScreen', () => {
       submitAnswer: vi.fn(),
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     expect(screen.getByText('Pojedynek')).toBeTruthy();
     expect(screen.getByText('Sesja duel-1')).toBeTruthy();
@@ -512,7 +643,7 @@ describe('KangurDuelsScreen', () => {
       submitAnswer: vi.fn(),
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     expect(screen.getByText('Udostępnij zaproszenie')).toBeTruthy();
     expect(
@@ -525,6 +656,7 @@ describe('KangurDuelsScreen', () => {
 
     await waitFor(() => {
       expect(shareKangurDuelInviteMock).toHaveBeenCalledWith({
+        locale: 'pl',
         sessionId: 'duel-share-1',
         sharerDisplayName: 'Ada',
       });
@@ -596,7 +728,7 @@ describe('KangurDuelsScreen', () => {
       submitAnswer: vi.fn(),
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     fireEvent.click(screen.getByText('Udostępnij link zaproszenia'));
 
@@ -691,7 +823,7 @@ describe('KangurDuelsScreen', () => {
       submitAnswer: vi.fn(),
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     expect(screen.getByText('Podgląd pojedynku')).toBeTruthy();
     expect(screen.getByText('Tryb obserwatora')).toBeTruthy();
@@ -753,7 +885,7 @@ describe('KangurDuelsScreen', () => {
       visiblePublicEntries: [],
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     expect(screen.getByText('Dołączanie do zaproszenia')).toBeTruthy();
 
@@ -896,7 +1028,7 @@ describe('KangurDuelsScreen', () => {
       submitAnswer: vi.fn(),
     });
 
-    render(<KangurDuelsScreen />);
+    renderDuelsScreen();
 
     expect(screen.getByText('Podsumowanie')).toBeTruthy();
     expect(

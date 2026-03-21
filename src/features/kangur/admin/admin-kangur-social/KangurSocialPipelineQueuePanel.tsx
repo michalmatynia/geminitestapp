@@ -8,6 +8,8 @@ import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import { safeClearTimeout, safeSetInterval, safeSetTimeout, type SafeTimerId } from '@/shared/lib/timers';
 
+import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from '../components/KangurAdminCard';
+
 const REFRESH_INTERVAL_MS = 10_000;
 const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
 
@@ -193,11 +195,7 @@ export function KangurSocialPipelineQueuePanel({
 
   if (variant === 'compact') {
     return (
-      <Card
-        variant='subtle'
-        padding='md'
-        className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-      >
+      <KangurAdminCard>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <span className='text-xs font-semibold text-foreground'>
@@ -246,7 +244,7 @@ export function KangurSocialPipelineQueuePanel({
           <div className='mt-2 text-[11px] text-destructive'>{error}</div>
         ) : null}
         {isLoadingStatus ? <LoadingState message='Loading queue status...' className='py-6' /> : null}
-      </Card>
+      </KangurAdminCard>
     );
   }
 
@@ -315,7 +313,7 @@ export function KangurSocialPipelineQueuePanel({
           </div>
         </div>
       }
-      className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+      className={KANGUR_ADMIN_CARD_CLASS_NAME}
       contentClassName='space-y-3'
     >
       {error ? (

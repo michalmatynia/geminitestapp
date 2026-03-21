@@ -3,7 +3,7 @@ import { useMemo, useCallback } from 'react';
 import { findFolderById } from '@/features/foldertree';
 import type { UseNoteThemeProps } from '@/shared/contracts/notes';
 import type { NoteWithRelations, NotebookRecord, ThemeRecord } from '@/shared/contracts/notes';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export function useNoteTheme({
   themes,
@@ -96,14 +96,11 @@ export function useNoteTheme({
           await fetchFolderTree();
         }
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteTheme',
-            action: 'updateFolderTheme',
-            folderId: selectedFolderId,
-            themeId,
-          },
+        logClientCatch(error, {
+          source: 'useNoteTheme',
+          action: 'updateFolderTheme',
+          folderId: selectedFolderId,
+          themeId,
         });
       }
     },
@@ -124,14 +121,11 @@ export function useNoteTheme({
           setNotebook(updated);
         }
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useNoteTheme',
-            action: 'updateNotebookDefaultTheme',
-            notebookId: selectedNotebookId,
-            themeId,
-          },
+        logClientCatch(error, {
+          source: 'useNoteTheme',
+          action: 'updateNotebookDefaultTheme',
+          notebookId: selectedNotebookId,
+          themeId,
         });
       }
     },

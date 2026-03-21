@@ -28,7 +28,7 @@ import {
   UI_GRID_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '',
@@ -92,14 +92,11 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       setForm(defaultTheme);
       toast('Theme created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesThemesPage',
-          action: 'createTheme',
-          name: form.name,
-          notebookId: selectedNotebookId,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesThemesPage',
+        action: 'createTheme',
+        name: form.name,
+        notebookId: selectedNotebookId,
       });
       toast('Failed to create theme', { variant: 'error' });
     }
@@ -111,13 +108,10 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast('Theme deleted', { variant: 'success' });
       setThemeToDelete(null);
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesThemesPage',
-          action: 'deleteTheme',
-          themeId,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesThemesPage',
+        action: 'deleteTheme',
+        themeId,
       });
       toast('Failed to delete theme', { variant: 'error' });
     }
@@ -147,13 +141,10 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast('Theme updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesThemesPage',
-          action: 'updateTheme',
-          themeId,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesThemesPage',
+        action: 'updateTheme',
+        themeId,
       });
       toast('Failed to update theme', { variant: 'error' });
     }

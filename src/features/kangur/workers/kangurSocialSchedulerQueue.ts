@@ -2,11 +2,11 @@ import 'server-only';
 
 import { publishDueScheduledKangurSocialPosts } from '@/features/kangur/server/social-posts-publish';
 import { createManagedQueue } from '@/shared/lib/queue';
+import type {
+  ScheduledTickJobData,
+  SchedulerQueueState,
+} from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-type KangurSocialSchedulerJobData = {
-  type: 'scheduled-tick';
-};
 
 const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number): number => {
   const parsed = Number(raw);
@@ -26,13 +26,8 @@ const KANGUR_SOCIAL_SCHEDULER_LOCK_DURATION_MS = parseMsFromEnv(
   30_000
 );
 
-type KangurSocialSchedulerQueueState = {
-  workerStarted: boolean;
-  schedulerRegistered: boolean;
-};
-
 const globalWithQueueState = globalThis as typeof globalThis & {
-  __kangurSocialSchedulerQueueState__?: KangurSocialSchedulerQueueState;
+  __kangurSocialSchedulerQueueState__?: SchedulerQueueState;
 };
 
 const queueState =
@@ -42,7 +37,7 @@ const queueState =
     schedulerRegistered: false,
   });
 
-const queue = createManagedQueue<KangurSocialSchedulerJobData>({
+const queue = createManagedQueue<ScheduledTickJobData>({
   name: 'kangur-social-scheduler',
   concurrency: 1,
   defaultJobOptions: {

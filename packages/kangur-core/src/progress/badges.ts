@@ -1,5 +1,7 @@
 import type { KangurProgressState } from '@kangur/contracts';
 
+import { getLocalizedKangurProgressBadgeTrackLabel } from '../progress-i18n';
+
 export type KangurBadgeTrackKey =
   | 'onboarding'
   | 'consistency'
@@ -70,7 +72,15 @@ export const BADGE_TRACK_META: Record<
 
 export const getBadgeTrackMeta = (
   key: KangurBadgeTrackKey,
-): { label: string; emoji: string; order: number } => BADGE_TRACK_META[key];
+  locale?: string | null | undefined,
+): { label: string; emoji: string; order: number } => {
+  const meta = BADGE_TRACK_META[key];
+
+  return {
+    ...meta,
+    label: getLocalizedKangurProgressBadgeTrackLabel(key, meta.label, locale),
+  };
+};
 
 export const GUIDED_BADGE_IDS = new Set(['guided_step', 'guided_keeper']);
 

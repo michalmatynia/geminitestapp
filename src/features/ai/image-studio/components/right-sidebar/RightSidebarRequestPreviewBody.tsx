@@ -2,7 +2,7 @@ import Image from 'next/image';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { SelectSimple } from '@/shared/ui';
+import { InsetPanel, SelectSimple } from '@/shared/ui';
 
 import { useRightSidebarContext } from '../RightSidebarContext';
 
@@ -41,11 +41,11 @@ export function RightSidebarRequestPreviewBody(): React.JSX.Element {
           title='Preview Mode'
         />
       </div>
-      <div className='rounded border border-border/60 bg-card/40 p-3 text-[11px] text-gray-300'>
+      <InsetPanel radius='compact' padding='sm' className='text-[11px] text-gray-300'>
         This is the exact payload enqueued to{' '}
         <span className='text-gray-100'>`{activeRequestPreviewEndpoint}`</span> before runtime
         processing.
-      </div>
+      </InsetPanel>
       <div className='text-[11px] text-gray-400'>
         Resolved prompt length: <span className='text-gray-200'>{resolvedPromptLength}</span> · mask
         shapes in payload: <span className='text-gray-200'>{maskShapeCount}</span>

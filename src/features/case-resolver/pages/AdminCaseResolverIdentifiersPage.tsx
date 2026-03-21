@@ -16,7 +16,7 @@ import {
   SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverIdentifierModal } from '../components/modals/CaseResolverEntityModalVariants';
@@ -228,13 +228,10 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       });
       setShowModal(false);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminCaseResolverIdentifiersPage',
-          action: 'saveCaseIdentifier',
-          caseIdentifierId: editingCaseIdentifier?.id,
-        },
+      logClientCatch(error, {
+        source: 'AdminCaseResolverIdentifiersPage',
+        action: 'saveCaseIdentifier',
+        caseIdentifierId: editingCaseIdentifier?.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to save case identifier.', {
         variant: 'error',
@@ -274,13 +271,10 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       });
       toast('Case identifier deleted.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminCaseResolverIdentifiersPage',
-          action: 'deleteCaseIdentifier',
-          caseIdentifierId: caseIdentifierToDelete.id,
-        },
+      logClientCatch(error, {
+        source: 'AdminCaseResolverIdentifiersPage',
+        action: 'deleteCaseIdentifier',
+        caseIdentifierId: caseIdentifierToDelete.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to delete case identifier.', {
         variant: 'error',

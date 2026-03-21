@@ -14,7 +14,7 @@ import {
 import { createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logger } from '@/shared/utils/logger';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { invalidateProducts } from './productCache';
 
@@ -207,14 +207,11 @@ export function useProductImages(
             imageFileId: slotToClear.data.id,
           });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'useProductImages',
-              action: 'disconnectImage',
-              productId: product.id,
-              imageFileId: slotToClear.data.id,
-            },
+          logClientCatch(error, {
+            source: 'useProductImages',
+            action: 'disconnectImage',
+            productId: product.id,
+            imageFileId: slotToClear.data.id,
           });
         }
       } else if (slotToClear.type === 'file') {

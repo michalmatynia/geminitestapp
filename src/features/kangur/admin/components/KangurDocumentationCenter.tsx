@@ -10,6 +10,8 @@ import { Badge, Card, CompactEmptyState, ListPanel, PanelStats, SearchInput } fr
 import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
+import { KANGUR_ADMIN_CARD_CLASS_NAME, KangurAdminCard } from './KangurAdminCard';
+
 type GroupedTooltipDocs = {
   section: string;
   entries: typeof KANGUR_DOC_CATALOG;
@@ -118,10 +120,8 @@ export function KangurDocumentationCenter(): React.JSX.Element {
         {resultSummary}
       </div>
 
-      <Card
-        variant='subtle'
+      <KangurAdminCard
         padding='lg'
-        className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
         aria-labelledby={indexHeadingId}
         aria-describedby={indexDescriptionId}
       >
@@ -154,7 +154,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
           </div>
           <PanelStats stats={stats} className='grid-cols-1 sm:grid-cols-3 lg:grid-cols-3' />
         </div>
-      </Card>
+      </KangurAdminCard>
 
       <div
         className={cn(
@@ -171,7 +171,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
               </p>
             </div>
           }
-          className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+          className={KANGUR_ADMIN_CARD_CLASS_NAME}
           contentClassName='space-y-4'
         >
           {visibleGuides.length > 0 ? (
@@ -219,7 +219,7 @@ export function KangurDocumentationCenter(): React.JSX.Element {
               </p>
             </div>
           }
-          className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
+          className={KANGUR_ADMIN_CARD_CLASS_NAME}
           contentClassName='space-y-4'
         >
           {groupedTooltipDocs.length > 0 ? (

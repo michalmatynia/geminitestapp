@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { useCreateNoteTag } from '@/features/notesapp/api/useNoteMutations';
 import type { TagRecord } from '@/shared/contracts/notes';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 // Why: Tag selection has complex state:
 // - Input filtering against available tags
@@ -79,14 +79,11 @@ export function useNoteTags(
       setTagInput('');
       setIsTagDropdownOpen(false);
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useNoteTags',
-          action: 'createTag',
-          name: tagInput.trim(),
-          notebookId: notebookId ?? noteNotebookId,
-        },
+      logClientCatch(error, {
+        source: 'useNoteTags',
+        action: 'createTag',
+        name: tagInput.trim(),
+        notebookId: notebookId ?? noteNotebookId,
       });
       toast('Failed to create tag', { variant: 'error' });
     }

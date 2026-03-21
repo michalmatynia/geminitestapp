@@ -31,6 +31,11 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 
+import {
+  KANGUR_ADMIN_INSET_CARD_CLASS_NAME,
+  KangurAdminCard,
+  KangurAdminInsetCard,
+} from './KangurAdminCard';
 import { KangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditor';
 import { KangurAiTutorNativeGuideEntryList } from './KangurAiTutorNativeGuideEntryList';
 import { KangurAiTutorNativeGuideValidationSummary } from './KangurAiTutorNativeGuideValidationSummary';
@@ -40,8 +45,6 @@ const AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().fi
   (locale) => locale !== AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE
 );
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
-const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
-const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
 
 const ROUTE_PAGE_OPTIONS = ['Game', 'Lessons', 'ParentDashboard', 'LearnerProfile'] as const;
 
@@ -611,7 +614,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
       description='Edit the database-backed Kangur page, section, game, and test descriptions used by AI Tutor before any model call.'
       className={SETTINGS_SECTION_CLASS_NAME}
     >
-      <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+      <KangurAdminCard>
         <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
           <div>
             <div className='flex items-center gap-2'>
@@ -679,7 +682,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
         ) : null}
 
         {manifestCoverage ? (
-          <Card variant='subtle' padding='md' className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'>
+          <KangurAdminInsetCard className='mt-4'>
             <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Manifest coverage</div>
@@ -739,15 +742,11 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
                 Every tracked Kangur section is backed by an enabled Mongo native-guide entry.
               </p>
             )}
-          </Card>
+          </KangurAdminInsetCard>
         ) : null}
 
         {AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.length > 0 ? (
-          <Card
-            variant='subtle'
-            padding='md'
-            className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'
-          >
+          <KangurAdminInsetCard className='mt-4'>
             <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Translation status</div>
@@ -789,7 +788,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
                 </div>
               ))}
             </div>
-          </Card>
+          </KangurAdminInsetCard>
         ) : null}
 
         {parsedState.store ? (
@@ -802,7 +801,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
               onSelect={setSelectedEntryId}
               entryValidationCounts={entryValidationCounts}
               translationStatusByEntryId={translationStatusByEntryId}
-              className={SETTINGS_INSET_CARD_CLASS_NAME}
+              className={KANGUR_ADMIN_INSET_CARD_CLASS_NAME}
             />
 
             <KangurAiTutorNativeGuideEntryEditor
@@ -818,7 +817,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
               onMove={handleMoveSelectedEntry}
               onDelete={handleDeleteSelectedEntry}
               onApplyFollowUpActions={handleApplyFollowUpActions}
-              className={SETTINGS_INSET_CARD_CLASS_NAME}
+              className={KANGUR_ADMIN_INSET_CARD_CLASS_NAME}
             />
           </div>
         ) : (
@@ -857,7 +856,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
           {parsedState.error ? <span>Validation: {parsedState.error}</span> : null}
           <span>Endpoint: /api/kangur/ai-tutor/native-guide</span>
         </div>
-      </Card>
+      </KangurAdminCard>
     </FormSection>
   );
 }

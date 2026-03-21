@@ -13,7 +13,7 @@ import {
   SimpleSettingsList,
   useToast,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const AVAILABLE_INTEGRATIONS = [
   {
@@ -79,9 +79,10 @@ export default function AddIntegrationPage(): React.JSX.Element {
       });
       router.push('/admin/integrations');
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AddIntegrationPage', action: 'addIntegration', slug: integration.slug },
+      logClientCatch(error, {
+        source: 'AddIntegrationPage',
+        action: 'addIntegration',
+        slug: integration.slug,
       });
       const message = error instanceof Error ? error.message : 'Failed to add integration.';
       toast(message, { variant: 'error' });

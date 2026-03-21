@@ -1,11 +1,6 @@
 import { KangurTextWordmark } from '@/features/kangur/ui/components/KangurTextWordmark';
+import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type KangurParentDashboardWordmarkProps = React.SVGProps<SVGSVGElement> & {
-  idPrefix?: string;
-  label?: string;
-  locale?: string | null;
-};
 
 const KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS = {
   de: 'Elterndashboard',
@@ -29,7 +24,7 @@ export function KangurParentDashboardWordmark({
   label,
   locale = 'pl',
   ...props
-}: KangurParentDashboardWordmarkProps): React.JSX.Element {
+}: KangurLocalizedWordmarkProps): React.JSX.Element {
   const resolvedLabel = label?.trim() || getKangurParentDashboardWordmarkLabel(locale);
 
   return (

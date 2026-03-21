@@ -29,6 +29,7 @@ import {
 
 import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
+import { KangurAdminCard } from './components/KangurAdminCard';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
 import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
@@ -166,11 +167,7 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
               badge='Shared surface'
             />
 
-            <Card
-              variant='subtle'
-              padding='md'
-              className='rounded-2xl border-border/60 bg-card/40 shadow-sm'
-            >
+            <KangurAdminCard>
               <div className='flex flex-col gap-3'>
                 <div>
                   <div className='text-sm font-semibold text-foreground'>Choose workspace</div>
@@ -199,7 +196,7 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
                   ))}
                 </div>
               </div>
-            </Card>
+            </KangurAdminCard>
           </div>
 
           <div className='space-y-3'>

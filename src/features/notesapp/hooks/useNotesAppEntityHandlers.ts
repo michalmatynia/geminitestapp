@@ -13,7 +13,7 @@ import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { NotesAppActionsValue, NotesAppStateValue } from './NotesAppContext.types';
 import type { UseNoteDataResult } from './useNoteData';
@@ -77,9 +77,10 @@ export function useNotesAppEntityHandlers({
         updateSettings({ selectedNoteId: noteId });
         setIsEditing(false);
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'NotesAppProvider', action: 'fetchNote', noteId },
+        logClientCatch(error, {
+          source: 'NotesAppProvider',
+          action: 'fetchNote',
+          noteId,
         });
       }
     },
@@ -136,13 +137,10 @@ export function useNotesAppEntityHandlers({
           setSelectedNote({ ...selectedNote, isFavorite: nextFavorite });
         }
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'NotesAppProvider',
-            action: 'toggleFavorite',
-            noteId: note.id,
-          },
+        logClientCatch(error, {
+          source: 'NotesAppProvider',
+          action: 'toggleFavorite',
+          noteId: note.id,
         });
         toast('Failed to update favorite', { variant: 'error' });
       }
@@ -180,14 +178,11 @@ export function useNotesAppEntityHandlers({
         await fetchNotes();
         void handleSelectNoteFromTree(selectedNote.id);
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'NotesAppProvider',
-            action: 'unlinkNote',
-            noteId: selectedNote.id,
-            relatedId,
-          },
+        logClientCatch(error, {
+          source: 'NotesAppProvider',
+          action: 'unlinkNote',
+          noteId: selectedNote.id,
+          relatedId,
         });
         toast('Failed to unlink note', { variant: 'error' });
       }
@@ -208,13 +203,10 @@ export function useNotesAppEntityHandlers({
           setSelectedNote(null);
           setIsEditing(false);
         } catch (error: unknown) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'NotesAppProvider',
-              action: 'deleteNote',
-              noteId: selectedNote.id,
-            },
+          logClientCatch(error, {
+            source: 'NotesAppProvider',
+            action: 'deleteNote',
+            noteId: selectedNote.id,
           });
           toast('Failed to delete note', { variant: 'error' });
         }

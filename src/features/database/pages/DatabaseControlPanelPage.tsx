@@ -16,7 +16,7 @@ import {
   LoadingState,
   CollapsibleSection,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getControlPanelColumns,
@@ -107,8 +107,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       const result = await createJsonBackup.mutateAsync();
       setLogModalContent(result.log ?? result.message ?? 'Backup created');
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'ControlPanel', action: 'createJsonBackup' } });
+      logClientCatch(error, { source: 'ControlPanel', action: 'createJsonBackup' });
       toast('Failed to create JSON backup.', { variant: 'error' });
     }
   }, [createJsonBackup, toast]);
@@ -120,13 +119,10 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       const result = await restoreJsonBackup.mutateAsync(selectedJsonBackup);
       setLogModalContent(result.log ?? result.message ?? 'Backup restored');
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'ControlPanel',
-          action: 'restoreJsonBackup',
-          backupName: selectedJsonBackup,
-        },
+      logClientCatch(error, {
+        source: 'ControlPanel',
+        action: 'restoreJsonBackup',
+        backupName: selectedJsonBackup,
       });
       toast('Failed to restore JSON backup.', { variant: 'error' });
     }

@@ -17,7 +17,10 @@ import {
 import { createMutationV2, createPaginatedListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   SEARCH_DEBOUNCE_MS,
@@ -454,9 +457,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
           }
         );
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useDeadLetterRuns', action: 'loadDetail', runId },
+        logClientCatch(error, {
+          source: 'useDeadLetterRuns',
+          action: 'loadDetail',
+          runId,
         });
         toast(error instanceof Error ? error.message : 'Failed to load run details.', {
           variant: 'error',
@@ -569,9 +573,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         void handleOpenDetail(detail.run.id);
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useDeadLetterRuns', action: 'retryFailedNodes', runId: detail.run.id },
+      logClientCatch(error, {
+        source: 'useDeadLetterRuns',
+        action: 'retryFailedNodes',
+        runId: detail.run.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to retry nodes.', {
         variant: 'error',

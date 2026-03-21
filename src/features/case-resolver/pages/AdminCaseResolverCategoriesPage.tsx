@@ -24,7 +24,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverCategoryModal } from '../components/modals/CaseResolverEntityModalVariants';
@@ -105,9 +105,9 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         });
         toast(successMessage, { variant: 'success' });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'AdminCaseResolverCategoriesPage', action: 'persistCategories' },
+        logClientCatch(error, {
+          source: 'AdminCaseResolverCategoriesPage',
+          action: 'persistCategories',
         });
         toast(error instanceof Error ? error.message : 'Failed to save categories.', {
           variant: 'error',

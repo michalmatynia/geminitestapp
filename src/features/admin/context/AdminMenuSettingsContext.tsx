@@ -27,7 +27,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   cloneCustomNav,
@@ -296,8 +296,7 @@ export function AdminMenuSettingsProvider({
       ]);
       toast('Admin menu settings saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'AdminMenuSettingsPage', action: 'save' } });
+      logClientCatch(error, { source: 'AdminMenuSettingsPage', action: 'save' });
       toast(error instanceof Error ? error.message : 'Failed to save admin menu settings.', {
         variant: 'error',
       });

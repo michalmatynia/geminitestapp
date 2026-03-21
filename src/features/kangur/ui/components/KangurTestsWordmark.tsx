@@ -1,11 +1,6 @@
 import { KangurTextWordmark } from '@/features/kangur/ui/components/KangurTextWordmark';
+import type { KangurLocalizedWordmarkProps } from '@/features/kangur/ui/components/kangur-wordmark';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type KangurTestsWordmarkProps = React.SVGProps<SVGSVGElement> & {
-  idPrefix?: string;
-  label?: string;
-  locale?: string | null;
-};
 
 const KANGUR_TESTS_WORDMARK_LABELS = {
   de: 'Prüfungen',
@@ -29,7 +24,7 @@ export function KangurTestsWordmark({
   label,
   locale = 'pl',
   ...props
-}: KangurTestsWordmarkProps): React.JSX.Element {
+}: KangurLocalizedWordmarkProps): React.JSX.Element {
   const resolvedLabel = label?.trim() || getKangurTestsWordmarkLabel(locale);
 
   return (

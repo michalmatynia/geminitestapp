@@ -13,7 +13,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { streamAiPathRun } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   mergeRuntimeStateSnapshot,
@@ -104,13 +104,10 @@ export function useServerRunStream(
               : 'Server run failed.'),
         });
       } catch (err) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'useAiPathsServerExecution',
-            action: 'parseRunEvent',
-            runId,
-          },
+        logClientCatch(err, {
+          source: 'useAiPathsServerExecution',
+          action: 'parseRunEvent',
+          runId,
         });
       }
     };
@@ -237,13 +234,10 @@ export function useServerRunStream(
           });
         });
       } catch (err) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'useAiPathsServerExecution',
-            action: 'parseNodeEvent',
-            runId,
-          },
+        logClientCatch(err, {
+          source: 'useAiPathsServerExecution',
+          action: 'parseNodeEvent',
+          runId,
         });
       }
     };
@@ -300,13 +294,10 @@ export function useServerRunStream(
           args.setRuntimeEvents((prev) => [...prev, ...streamedEvents]);
         }
       } catch (err) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'useAiPathsServerExecution',
-            action: 'parseEventsEvent',
-            runId,
-          },
+        logClientCatch(err, {
+          source: 'useAiPathsServerExecution',
+          action: 'parseEventsEvent',
+          runId,
         });
       }
     };
@@ -331,13 +322,10 @@ export function useServerRunStream(
               : 'Server run failed.',
         });
       } catch (err) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'useAiPathsServerExecution',
-            action: 'parseDoneEvent',
-            runId,
-          },
+        logClientCatch(err, {
+          source: 'useAiPathsServerExecution',
+          action: 'parseDoneEvent',
+          runId,
         });
       }
     };
@@ -353,13 +341,10 @@ export function useServerRunStream(
           message: errorMessage ? `Server run failed: ${errorMessage}` : 'Server run failed.',
         });
       } catch (err) {
-        logClientError(err);
-        logClientError(err, {
-          context: {
-            source: 'useAiPathsServerExecution',
-            action: 'parseErrorEvent',
-            runId,
-          },
+        logClientCatch(err, {
+          source: 'useAiPathsServerExecution',
+          action: 'parseErrorEvent',
+          runId,
         });
       }
     };

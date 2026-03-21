@@ -3,19 +3,32 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useKangurMobileLeaderboardMock } = vi.hoisted(() => ({
+const {
+  replaceMock,
+  useKangurMobileLeaderboardDuelsMock,
+  useKangurMobileLeaderboardMock,
+  useRouterMock,
+} = vi.hoisted(() => ({
+  replaceMock: vi.fn(),
+  useKangurMobileLeaderboardDuelsMock: vi.fn(),
   useKangurMobileLeaderboardMock: vi.fn(),
+  useRouterMock: vi.fn(),
 }));
 
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren) => children,
+  useRouter: useRouterMock,
 }));
 
 vi.mock('./useKangurMobileLeaderboard', () => ({
   useKangurMobileLeaderboard: useKangurMobileLeaderboardMock,
+}));
+
+vi.mock('./useKangurMobileLeaderboardDuels', () => ({
+  useKangurMobileLeaderboardDuels: useKangurMobileLeaderboardDuelsMock,
 }));
 
 import { KangurLeaderboardScreen } from './KangurLeaderboardScreen';
@@ -23,6 +36,9 @@ import { KangurLeaderboardScreen } from './KangurLeaderboardScreen';
 describe('KangurLeaderboardScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useRouterMock.mockReturnValue({
+      replace: replaceMock,
+    });
     useKangurMobileLeaderboardMock.mockReturnValue({
       error: null,
       isLoading: false,
@@ -43,6 +59,19 @@ describe('KangurLeaderboardScreen', () => {
         { id: 'mine', label: 'Ty' },
       ],
       visibleCount: 0,
+    });
+    useKangurMobileLeaderboardDuelsMock.mockReturnValue({
+      actionError: null,
+      challengeLearner: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      entries: [],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: false,
+      isLoading: false,
+      pendingLearnerId: null,
+      refresh: vi.fn(),
     });
   });
 
@@ -76,7 +105,52 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Przywracamy sesję ucznia i ranking...')).toBeTruthy();
   });
 
-  it('renders leaderboard rows after the shell settles', () => {
+  it('renders leaderboard rows after the shell settles', async () => {
+    const challengeLearnerMock = vi.fn().mockResolvedValue('duel-leaderboard-1');
+    useKangurMobileLeaderboardDuelsMock.mockReturnValue({
+      actionError: null,
+      challengeLearner: challengeLearnerMock,
+      currentEntry: {
+        displayName: 'Ada Learner',
+        lastPlayedAt: '2026-03-21T08:07:00.000Z',
+        learnerId: 'learner-1',
+        losses: 2,
+        matches: 5,
+        ties: 0,
+        winRate: 0.6,
+        wins: 3,
+      },
+      currentRank: 2,
+      entries: [
+        {
+          displayName: 'Maja Sprint',
+          lastPlayedAt: '2026-03-21T08:10:00.000Z',
+          learnerId: 'learner-2',
+          losses: 1,
+          matches: 5,
+          ties: 0,
+          winRate: 0.8,
+          wins: 4,
+        },
+        {
+          displayName: 'Ada Learner',
+          lastPlayedAt: '2026-03-21T08:07:00.000Z',
+          learnerId: 'learner-1',
+          losses: 2,
+          matches: 5,
+          ties: 0,
+          winRate: 0.6,
+          wins: 3,
+        },
+      ],
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      pendingLearnerId: null,
+      refresh: vi.fn(),
+    });
+
     useKangurMobileLeaderboardMock.mockReturnValue({
       error: null,
       isLoading: false,
@@ -114,11 +188,29 @@ describe('KangurLeaderboardScreen', () => {
     render(<KangurLeaderboardScreen />);
 
     expect(screen.getByText('Widoczne wyniki: 1')).toBeTruthy();
-    expect(screen.getByText('Ada Learner')).toBeTruthy();
-    expect(screen.getByText('#1')).toBeTruthy();
+    expect(screen.getAllByText('Ada Learner').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('#1').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Ty').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('8 pkt')).toBeTruthy();
+    expect(screen.getByText('Ranking pojedynków')).toBeTruthy();
+    expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
+    expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
+    expect(screen.getByText('Maja Sprint')).toBeTruthy();
+    expect(screen.getByText('Rzuć wyzwanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz pojedynki')).toBeTruthy();
     expect(screen.queryByText('Przywracamy sesję ucznia i ranking...')).toBeNull();
+
+    fireEvent.click(screen.getByText('Rzuć wyzwanie'));
+
+    expect(challengeLearnerMock).toHaveBeenCalledWith('learner-2');
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-leaderboard-1',
+        },
+      });
+    });
   });
 });

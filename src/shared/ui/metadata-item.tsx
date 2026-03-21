@@ -2,6 +2,7 @@ import React, { type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { insetPanelVariants } from './InsetPanel';
 import { Label } from './label';
 
 interface MetadataItemProps {
@@ -90,7 +91,7 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
   }
 
   return (
-    <dl className={cn('p-3 rounded-lg bg-card/40 border border-border/60', className)}>
+    <dl className={cn(insetPanelVariants({ padding: 'sm' }), className)}>
       <div className='flex items-center gap-1.5 mb-1'>
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
         <dt>

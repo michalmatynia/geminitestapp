@@ -30,13 +30,17 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 
+import {
+  KANGUR_ADMIN_INSET_CARD_CLASS_NAME,
+  KangurAdminCard,
+  KangurAdminInsetCard,
+} from './KangurAdminCard';
+
 const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
 const AI_TUTOR_CONTENT_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().filter(
   (locale) => locale !== AI_TUTOR_CONTENT_EDITOR_LOCALE
 );
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
-const SETTINGS_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
-const SETTINGS_INSET_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-background/60 shadow-sm';
 const AI_TUTOR_HOME_ONBOARDING_STEP_FIELDS = [
   { key: 'home_actions', label: 'Home actions' },
   { key: 'home_quest', label: 'Home quest' },
@@ -321,6 +325,16 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       })),
     [translationStatusesByLocale]
   );
+  const trackedTranslationLocales = useMemo(
+    () =>
+      translationStatusSummaries
+        .filter(
+          ({ summary }) =>
+            summary.manual > 0 || summary.scaffolded > 0 || summary.missing > 0
+        )
+        .map(({ locale }) => locale),
+    [translationStatusSummaries]
+  );
   const sectionTranslationStatuses = useMemo(() => {
     const sectionStatuses = new Map<
       KangurAiTutorContentTranslatableSectionKey,
@@ -330,7 +344,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
     for (const section of AI_TUTOR_CONTENT_SECTION_CARD_KEYS) {
       sectionStatuses.set(
         section.key,
-        AI_TUTOR_CONTENT_TRANSLATION_LOCALES.map((locale) => ({
+        trackedTranslationLocales.map((locale) => ({
           locale,
           status: translationStatusesByLocale.get(locale)?.get(section.key) ?? 'missing',
         }))
@@ -338,7 +352,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
     }
 
     return sectionStatuses;
-  }, [translationStatusesByLocale]);
+  }, [trackedTranslationLocales, translationStatusesByLocale]);
   const translationFilterMatchCounts = useMemo(
     () =>
       new Map(
@@ -513,7 +527,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
       description='Edit the Mongo-backed tutor copy pack used by onboarding, helper prompts, labels, narrator controls, and tutor explanations.'
       className={SETTINGS_SECTION_CLASS_NAME}
     >
-      <Card variant='subtle' padding='md' className={SETTINGS_CARD_CLASS_NAME}>
+      <KangurAdminCard>
         <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
           <div>
             <div className='flex items-center gap-2'>
@@ -598,11 +612,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
         ) : null}
 
         {AI_TUTOR_CONTENT_TRANSLATION_LOCALES.length > 0 ? (
-          <Card
-            variant='subtle'
-            padding='md'
-            className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'
-          >
+          <KangurAdminInsetCard className='mt-4'>
             <div className='flex flex-col gap-3 md:flex-row md:items-start md:justify-between'>
               <div>
                 <div className='text-sm font-semibold text-foreground'>Translation status</div>
@@ -616,15 +626,15 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 <Badge
                   variant={isAiTutorContentTranslationStatusLoading ? 'warning' : 'outline'}
                 >
-                  {isAiTutorContentTranslationStatusLoading
-                    ? 'Loading translation badges...'
-                    : `${AI_TUTOR_CONTENT_TRANSLATION_LOCALES.length} locales tracked`}
+                  {`${trackedTranslationLocales.length} locales tracked`}
                 </Badge>
               </div>
             </div>
 
             <div className='mt-3 grid gap-3 md:grid-cols-2'>
-              {translationStatusSummaries.map(({ locale, summary }) => (
+              {translationStatusSummaries
+                .filter(({ locale }) => trackedTranslationLocales.includes(locale))
+                .map(({ locale, summary }) => (
                 <div
                   key={locale}
                   className='rounded-xl border border-border/60 bg-card/40 px-3 py-3 text-sm'
@@ -703,19 +713,19 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                 })}
               </div>
             </div>
-          </Card>
+          </KangurAdminInsetCard>
         ) : null}
 
         {parsedAiTutorContentState.content ? (
           <div className='mt-4 space-y-4'>
             {visibleStructuredSections.length === 0 ? (
-              <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+              <KangurAdminInsetCard>
                 No structured AI Tutor sections match the current translation status filters.
-              </Card>
+              </KangurAdminInsetCard>
             ) : null}
 
             {visibleStructuredSectionKeys.has('guestIntro') ? (
-            <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+            <KangurAdminInsetCard>
               <div className='flex items-center gap-2'>
                 <div className='text-sm font-semibold text-foreground'>
                   Structured onboarding editor
@@ -835,11 +845,11 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                  title='Help description'/>
                 {renderAiTutorContentIssues('guestIntro.help.description')}
               </FormField>
-            </Card>
+            </KangurAdminInsetCard>
             ) : null}
 
             {visibleStructuredSectionKeys.has('homeOnboarding') ? (
-            <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+            <KangurAdminInsetCard>
               <div className='flex items-center gap-2'>
                 <div className='text-sm font-semibold text-foreground'>
                   Home onboarding
@@ -936,7 +946,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                     key={step.key}
                     variant='subtle'
                     padding='md'
-                    className='rounded-2xl border-border/60 bg-background/60 shadow-sm'
+                    className={KANGUR_ADMIN_INSET_CARD_CLASS_NAME}
                   >
                     <div className='flex items-center gap-2'>
                       <div className='text-sm font-semibold text-foreground'>{step.label}</div>
@@ -998,11 +1008,11 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                   </Card>
                 ))}
               </div>
-            </Card>
+            </KangurAdminInsetCard>
             ) : null}
 
             {visibleStructuredSectionKeys.has('guidedCallout') ? (
-            <Card variant='subtle' padding='md' className={SETTINGS_INSET_CARD_CLASS_NAME}>
+            <KangurAdminInsetCard>
               <div className='flex items-center gap-2'>
                 <div className='text-sm font-semibold text-foreground'>
                   Guided onboarding buttons
@@ -1078,7 +1088,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
                   {renderAiTutorContentIssues('guidedCallout.buttons.understand')}
                 </FormField>
               </div>
-            </Card>
+            </KangurAdminInsetCard>
             ) : null}
           </div>
         ) : (
@@ -1124,7 +1134,7 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
           ) : null}
           <span>Endpoint: /api/kangur/ai-tutor/content</span>
         </div>
-      </Card>
+      </KangurAdminCard>
     </FormSection>
   );
 }

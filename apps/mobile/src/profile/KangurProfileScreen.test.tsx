@@ -3,21 +3,34 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 
-const { useKangurMobileLearnerProfileMock } = vi.hoisted(() => ({
+const {
+  replaceMock,
+  useKangurMobileLearnerProfileMock,
+  useKangurMobileProfileDuelsMock,
+  useRouterMock,
+} = vi.hoisted(() => ({
+  replaceMock: vi.fn(),
   useKangurMobileLearnerProfileMock: vi.fn(),
+  useKangurMobileProfileDuelsMock: vi.fn(),
+  useRouterMock: vi.fn(),
 }));
 
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren) => children,
+  useRouter: useRouterMock,
 }));
 
 vi.mock('./useKangurMobileLearnerProfile', () => ({
   useKangurMobileLearnerProfile: useKangurMobileLearnerProfileMock,
+}));
+
+vi.mock('./useKangurMobileProfileDuels', () => ({
+  useKangurMobileProfileDuels: useKangurMobileProfileDuelsMock,
 }));
 
 import { KangurProfileScreen } from './KangurProfileScreen';
@@ -36,6 +49,9 @@ const renderProfileScreen = (locale?: 'pl' | 'en' | 'de') =>
 describe('KangurProfileScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useRouterMock.mockReturnValue({
+      replace: replaceMock,
+    });
     useKangurMobileLearnerProfileMock.mockReturnValue({
       assignments: [],
       authError: null,
@@ -82,6 +98,20 @@ describe('KangurProfileScreen', () => {
         recommendations: [],
         recentSessions: [],
       },
+    });
+    useKangurMobileProfileDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: vi.fn(),
+      currentEntry: null,
+      currentRank: null,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
     });
   });
 
@@ -146,7 +176,9 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Sprawdzamy ostatnie podejścia ucznia.')).toBeTruthy();
   });
 
-  it('renders the populated learner profile after the shell settles', () => {
+  it('renders the populated learner profile after the shell settles', async () => {
+    const createRematchMock = vi.fn().mockResolvedValue('duel-profile-1');
+
     useKangurMobileLearnerProfileMock.mockReturnValue({
       assignments: [
         {
@@ -230,25 +262,76 @@ describe('KangurProfileScreen', () => {
         ],
       },
     });
+    useKangurMobileProfileDuelsMock.mockReturnValue({
+      actionError: null,
+      createRematch: createRematchMock,
+      currentEntry: {
+        displayName: 'Ada Learner',
+        lastPlayedAt: '2026-03-21T08:11:00.000Z',
+        learnerId: 'learner-1',
+        losses: 2,
+        matches: 5,
+        ties: 0,
+        winRate: 0.6,
+        wins: 3,
+      },
+      currentRank: 2,
+      error: null,
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      opponents: [
+        {
+          displayName: 'Leo Mentor',
+          lastPlayedAt: '2026-03-21T08:05:00.000Z',
+          learnerId: 'learner-2',
+        },
+      ],
+      pendingOpponentLearnerId: null,
+      refresh: vi.fn(),
+    });
 
     renderProfileScreen();
 
     expect(screen.getByText('Statystyki ucznia: Ada Learner.')).toBeTruthy();
-    expect(screen.getByText('Liczmistrz')).toBeTruthy();
+    expect(screen.getByText('Uczeń ✏️')).toBeTruthy();
+    expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
+    expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
+    expect(screen.getByText('Leo Mentor')).toBeTruthy();
+    expect(screen.getByText('Szybki rewanż')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
     expect(screen.getByText('Plan na dziś')).toBeTruthy();
     expect(screen.getByText('Ostatnie sesje')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
     expect(screen.getByText('Powtórka dodawania')).toBeTruthy();
     expect(screen.getByText('Otwórz całą historię')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Szybki rewanż'));
+
+    await waitFor(() => {
+      expect(createRematchMock).toHaveBeenCalledWith('learner-2');
+    });
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-profile-1',
+        },
+      });
+    });
   });
 
   it('renders German profile chrome when the locale provider is set to de', () => {
     renderProfileScreen('de');
 
     expect(screen.getByText('Schülerprofil')).toBeTruthy();
+    expect(screen.getByText('Anfaenger 🐣')).toBeTruthy();
+    expect(screen.getByText('Duelle')).toBeTruthy();
     expect(screen.getByText('Plan für heute')).toBeTruthy();
     expect(screen.getByText('Aufgaben für jetzt')).toBeTruthy();
     expect(screen.getByText('Ergebnisverlauf')).toBeTruthy();
+    expect(screen.getByText('🎮 Erstes Spiel')).toBeTruthy();
   });
 });

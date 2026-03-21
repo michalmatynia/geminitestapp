@@ -22,7 +22,7 @@ import type {
 } from '@/shared/contracts/notes';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useNotesAppDerivedState } from './useNotesAppDerivedState';
 import { useNotesAppDialogs } from './useNotesAppDialogs';
@@ -215,13 +215,10 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
           await applyUndoAction(action);
         }
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'NotesAppProvider',
-            action: 'undoFolderTree',
-            count,
-          },
+        logClientCatch(error, {
+          source: 'NotesAppProvider',
+          action: 'undoFolderTree',
+          count,
         });
         toast('Failed to undo', { variant: 'error' });
       }

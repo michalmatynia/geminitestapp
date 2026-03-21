@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Alert, Button, StatusBadge } from '@/shared/ui';
+import { Alert, Button, InsetPanel, StatusBadge } from '@/shared/ui';
 
 import {
   formatDurationMs,
@@ -193,7 +193,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
         </Alert>
       ) : null}
 
-      <div className='mt-4 rounded-md border border-border/60 bg-card/40 p-3'>
+      <InsetPanel radius='compact' padding='sm' className='mt-4'>
         <div className='flex items-center justify-between'>
           <div>
             <div className='text-xs text-gray-200'>Queue Metrics (History)</div>
@@ -283,7 +283,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
             </div>
           </div>
         ) : null}
-      </div>
+      </InsetPanel>
     </>
   );
 }

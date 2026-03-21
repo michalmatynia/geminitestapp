@@ -1,7 +1,9 @@
 import { cn } from '@/features/kangur/utils/cn';
-import { Badge, Card } from '@/features/kangur/shared/ui';
+import { Badge } from '@/features/kangur/shared/ui';
 
 import type { ReactNode } from 'react';
+
+import { KangurAdminCard, KangurAdminCardHeader } from './KangurAdminCard';
 
 type KangurAdminWorkspaceSectionCardProps = {
   title: string;
@@ -22,23 +24,16 @@ export function KangurAdminWorkspaceSectionCard({
   className,
   bodyClassName,
 }: KangurAdminWorkspaceSectionCardProps): React.JSX.Element {
-  const cardClassName = cn('rounded-2xl border-border/60 bg-card/40 shadow-sm', className);
-
   return (
-    <Card variant='subtle' padding='md' className={cardClassName}>
-      <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div className='min-w-0 flex-1'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <h3 className='text-sm font-semibold text-foreground'>{title}</h3>
-            {badge ? <Badge variant='outline'>{badge}</Badge> : null}
-          </div>
-          {description ? (
-            <p className='mt-1.5 text-sm leading-relaxed text-muted-foreground'>{description}</p>
-          ) : null}
-        </div>
-        {actions ? <div className='shrink-0'>{actions}</div> : null}
-      </div>
+    <KangurAdminCard className={cn(className)}>
+      <KangurAdminCardHeader
+        title={title}
+        titleAs='h3'
+        description={description}
+        badge={badge ? <Badge variant='outline'>{badge}</Badge> : undefined}
+        actions={actions}
+      />
       {children ? <div className={cn('mt-4', bodyClassName)}>{children}</div> : null}
-    </Card>
+    </KangurAdminCard>
   );
 }

@@ -24,7 +24,7 @@ import {
   UI_STACK_RELAXED_CLASSNAME,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -79,13 +79,10 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       setName('');
       toast('Notebook created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesNotebooksPage',
-          action: 'createNotebook',
-          name,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesNotebooksPage',
+        action: 'createNotebook',
+        name,
       });
       toast('Failed to create notebook', { variant: 'error' });
     }
@@ -111,13 +108,10 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast('Notebook updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesNotebooksPage',
-          action: 'updateNotebook',
-          id,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesNotebooksPage',
+        action: 'updateNotebook',
+        id,
       });
       toast('Failed to update notebook', { variant: 'error' });
     }
@@ -132,13 +126,10 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast('Notebook deleted', { variant: 'success' });
       setNotebookToDelete(null);
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesNotebooksPage',
-          action: 'deleteNotebook',
-          id,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesNotebooksPage',
+        action: 'deleteNotebook',
+        id,
       });
       toast('Failed to delete notebook', { variant: 'error' });
     }
@@ -162,13 +153,10 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       });
       toast('Notebook duplicated', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AdminNotesNotebooksPage',
-          action: 'duplicateNotebook',
-          originalId: notebook.id,
-        },
+      logClientCatch(error, {
+        source: 'AdminNotesNotebooksPage',
+        action: 'duplicateNotebook',
+        originalId: notebook.id,
       });
       toast('Failed to duplicate notebook', { variant: 'error' });
     }

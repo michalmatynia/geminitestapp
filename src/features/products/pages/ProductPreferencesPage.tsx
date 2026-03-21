@@ -22,7 +22,7 @@ import {
   LoadingState,
   FormActions,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -111,10 +111,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
       toast('Preferences saved successfully', { variant: 'success' });
       router.push('/admin/products');
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ProductPreferencesPage', action: 'handleSave' },
-      });
+      logClientCatch(error, { source: 'ProductPreferencesPage', action: 'handleSave' });
       toast('Failed to save preferences', { variant: 'error' });
     }
   };
@@ -125,9 +122,9 @@ export function ProductPreferencesPage(): React.JSX.Element {
       setPreferences(DEFAULT_PREFERENCES);
       toast('Preferences reset to default', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ProductPreferencesPage', action: 'handleResetToDefault' },
+      logClientCatch(error, {
+        source: 'ProductPreferencesPage',
+        action: 'handleResetToDefault',
       });
       toast('Failed to reset preferences', { variant: 'error' });
     }

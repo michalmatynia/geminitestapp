@@ -4,6 +4,8 @@ import { getKangurStorefrontInitialState } from '@/features/kangur/server/storef
 
 import type { ReactNode } from 'react';
 
+import './kangur.css';
+
 export default async function Layout({ children }: { children: ReactNode }): Promise<ReactNode> {
   const initialState = await getKangurStorefrontInitialState();
   return (

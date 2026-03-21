@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 
 import { useKangurMobileAuth } from '../src/auth/KangurMobileAuthContext';
+import { createKangurDuelsHref } from '../src/duels/duelsHref';
 import {
   buildKangurHomeDebugProofViewModel,
   resolveKangurHomeDebugProofOperation,
@@ -28,6 +29,7 @@ const LEADERBOARD_ROUTE = '/leaderboard' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
 const PRACTICE_ROUTE = createKangurPracticeHref('mixed');
 const PLAN_ROUTE = createKangurPlanHref();
+const DUELS_ROUTE = createKangurDuelsHref();
 
 function SectionCard({
   children,
@@ -287,7 +289,7 @@ export default function HomeScreen(): React.JSX.Element {
           </Text>
           <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
             Mobilna wersja wspólnej ścieżki nauki Kangura. W tej aplikacji są już
-            podpięte lekcje, profil, wyniki, plan dnia i ranking.
+            podpięte lekcje, profil, wyniki, plan dnia, ranking i pojedynki.
           </Text>
         </View>
 
@@ -424,6 +426,11 @@ export default function HomeScreen(): React.JSX.Element {
               href={LEADERBOARD_ROUTE}
               hint='Otwiera ranking uczniów.'
               label='Ranking'
+            />
+            <OutlineLink
+              href={DUELS_ROUTE}
+              hint='Otwiera lobby pojedynków.'
+              label='Pojedynki'
             />
           </View>
         </SectionCard>

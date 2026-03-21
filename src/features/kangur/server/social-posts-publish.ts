@@ -1,7 +1,10 @@
 import 'server-only';
 
 import { configurationError, invalidStateError, notFoundError } from '@/shared/errors/app-error';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import type {
+  KangurSocialPost,
+  KangurSocialPublishMode,
+} from '@/shared/contracts/kangur-social-posts';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
 import {
@@ -16,8 +19,6 @@ import {
 
 const truncatePublishError = (message: string): string =>
   message.length > 1000 ? `${message.slice(0, 997).trimEnd()}...` : message;
-
-export type KangurSocialPublishMode = 'published' | 'draft';
 
 export async function publishKangurSocialPost(
   post: KangurSocialPost,

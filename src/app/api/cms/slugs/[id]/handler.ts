@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   getDomainSlugLinks,
@@ -14,13 +15,21 @@ import {
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 
 type Params = { id: string };
 
-const resolveDomainFromRequest = async (req: NextRequest) => {
-  const domainId = req.nextUrl.searchParams.get('domainId');
+export const querySchema = z.object({
+  domainId: optionalTrimmedQueryString(),
+});
+
+const resolveDomainFromRequest = async (
+  req: NextRequest,
+  query?: z.infer<typeof querySchema>
+) => {
+  const domainId = query?.domainId ?? null;
   if (domainId) {
     const domain = await resolveCmsDomainScopeById(domainId);
     if (!domain) {
@@ -41,8 +50,9 @@ export async function GET_handler(
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const cmsRepository = await getCmsRepository();
-  const domain = await resolveDomainFromRequest(req);
+  const domain = await resolveDomainFromRequest(req, query);
   const slug = await getSlugForDomainById(domain.id, id, cmsRepository);
 
   if (!slug) {
@@ -62,8 +72,9 @@ export async function DELETE_handler(
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
   const cmsRepository = await getCmsRepository();
-  const domain = await resolveDomainFromRequest(req);
+  const domain = await resolveDomainFromRequest(req, query);
 
   await removeDomainSlug(domain.id, id);
   const stillLinked = await isSlugLinkedToAnyDomain(id);
@@ -84,6 +95,7 @@ export async function PUT_handler(
   params: Params
 ): Promise<NextResponse | Response> {
   const { id } = params;
+  const query = (_ctx.query ?? {}) as z.infer<typeof querySchema>;
 
   const parsed = await parseJsonBody(req, cmsSlugUpdateSchema, {
     logPrefix: 'cms-slugs',
@@ -94,7 +106,7 @@ export async function PUT_handler(
   const { slug, isDefault } = parsed.data;
 
   const cmsRepository = await getCmsRepository();
-  const domain = await resolveDomainFromRequest(req);
+  const domain = await resolveDomainFromRequest(req, query);
   const zoningEnabled = await isDomainZoningEnabled();
 
   const updatedSlug = await cmsRepository.updateSlug(id, {

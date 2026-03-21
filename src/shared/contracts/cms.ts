@@ -951,15 +951,14 @@ export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'upda
   components?: PageComponentInput[];
 };
 
-export type CmsPageLookupOptions = {
+export type CmsLookupOptionsDto = {
   locale?: string | null;
   fallbackToDefaultLocale?: boolean;
 };
 
-export type CmsSlugLookupOptions = {
-  locale?: string | null;
-  fallbackToDefaultLocale?: boolean;
-};
+export type CmsPageLookupOptions = CmsLookupOptionsDto;
+
+export type CmsSlugLookupOptions = CmsLookupOptionsDto;
 
 export type CmsRepository = {
   // Pages

@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
+import { kangurSocialImageAddonsBatchPayloadSchema } from '@/shared/contracts/kangur-social-image-addons';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { createKangurSocialImageAddonsBatch } from '@/features/kangur/server/social-image-addons-batch';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
-
-const bodySchema = z.object({
-  baseUrl: z.string().trim().url().optional(),
-  presetIds: z.array(z.string().trim().min(1)).optional(),
-  presetLimit: z.number().int().positive().nullable().optional(),
-});
 
 export async function postKangurSocialImageAddonsBatchHandler(
   req: NextRequest,
@@ -23,7 +17,7 @@ export async function postKangurSocialImageAddonsBatchHandler(
     throw forbiddenError('Only admins can run batch captures.');
   }
 
-  const parsed = bodySchema.parse(ctx.body ?? {});
+  const parsed = kangurSocialImageAddonsBatchPayloadSchema.parse(ctx.body ?? {});
   const startedAt = Date.now();
   const requestOrigin = new URL(req.url).origin;
   const baseUrl = parsed.baseUrl?.trim() || requestOrigin;

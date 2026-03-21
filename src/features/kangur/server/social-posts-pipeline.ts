@@ -12,7 +12,10 @@ import {
   type KangurSocialDocUpdatesResponse,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import type {
+  KangurSocialImageAddon,
+  KangurSocialImageAddonsBatchResult,
+} from '@/shared/contracts/kangur-social-image-addons';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/shared/social-capture-presets';
@@ -38,15 +41,6 @@ type EditorState = {
   titleEn: string;
   bodyPl: string;
   bodyEn: string;
-};
-
-export type KangurSocialImageAddonsBatchResult = {
-  addons: KangurSocialImageAddon[];
-  failures: Array<{ id: string; reason: string }>;
-  runId: string;
-  requestedPresetCount?: number;
-  usedPresetCount?: number;
-  usedPresetIds?: string[];
 };
 
 export type RunKangurSocialPostPipelineInput = {

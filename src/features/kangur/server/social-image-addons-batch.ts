@@ -14,6 +14,8 @@ import {
 import { uploadToConfiguredStorage } from '@/features/files/server';
 import {
   normalizeKangurSocialImageAddon,
+  type KangurSocialImageAddonsBatchPayload,
+  type KangurSocialImageAddonsBatchResult,
   type KangurSocialImageAddon,
 } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
@@ -112,21 +114,11 @@ export default async function run({ page, input, artifacts, helpers, emit, log }
 }
 `;
 
-type BatchCaptureInput = {
+type BatchCaptureInput = Omit<KangurSocialImageAddonsBatchPayload, 'baseUrl' | 'presetIds'> & {
   baseUrl: string;
   presetIds?: string[] | null;
-  presetLimit?: number | null;
   createdBy?: string | null;
   forwardCookies?: string | null;
-};
-
-type BatchCaptureResult = {
-  addons: KangurSocialImageAddon[];
-  failures: Array<{ id: string; reason: string }>;
-  runId: string;
-  requestedPresetCount: number;
-  usedPresetCount: number;
-  usedPresetIds: string[];
 };
 
 const resolveArtifactByName = (
@@ -204,7 +196,7 @@ const parseCookiesForPlaywright = (
 
 export async function createKangurSocialImageAddonsBatch(
   input: BatchCaptureInput
-): Promise<BatchCaptureResult> {
+): Promise<KangurSocialImageAddonsBatchResult> {
   const startedAt = Date.now();
   const baseUrl = input.baseUrl.trim().replace(/\/+$/, '');
   const presetIds = (input.presetIds ?? []).map((id) => id.trim()).filter(Boolean);
@@ -248,7 +240,7 @@ export async function createKangurSocialImageAddonsBatch(
     }
   }
 
-  logger.info('[BATCH] Enqueueing Playwright run with %d captures...', captures.length);
+  logger.info('[BATCH] Enqueueing Playwright run', { captureCount: captures.length });
   const run = await enqueuePlaywrightNodeRun({
     request: {
       script: SOCIAL_BATCH_PLAYWRIGHT_SCRIPT,
@@ -263,7 +255,10 @@ export async function createKangurSocialImageAddonsBatch(
     ownerUserId: input.createdBy ?? null,
   });
 
-  logger.info('[BATCH] Playwright run finished, status:', run.status, 'runId:', run.runId);
+  logger.info('[BATCH] Playwright run finished', {
+    status: run.status,
+    runId: run.runId,
+  });
   if (run.status !== 'completed') {
     const reason = run.error?.trim() || 'Playwright batch capture failed.';
     throw operationFailedError(reason);
@@ -285,9 +280,9 @@ export async function createKangurSocialImageAddonsBatch(
   const addons: KangurSocialImageAddon[] = [];
   const failures: Array<{ id: string; reason: string }> = [];
 
-  logger.info('[BATCH] Processing %d presets...', presets.length);
+  logger.info('[BATCH] Processing presets', { presetCount: presets.length });
   for (const preset of presets) {
-    logger.info('[BATCH] [%s] Finding artifact...', preset.id);
+    logger.info('[BATCH] Finding artifact', { presetId: preset.id });
     const artifact = resolveArtifactByName(run.artifacts, preset.id);
     const resultStatus = resultMap.get(preset.id);
     if (!artifact) {
@@ -304,7 +299,7 @@ export async function createKangurSocialImageAddonsBatch(
       continue;
     }
 
-    logger.info('[BATCH] [%s] Reading artifact file...', preset.id);
+    logger.info('[BATCH] Reading artifact file', { presetId: preset.id });
     const artifactData = await readPlaywrightNodeArtifact({
       runId: run.runId,
       fileName: artifactFile,
@@ -314,7 +309,7 @@ export async function createKangurSocialImageAddonsBatch(
       continue;
     }
 
-    logger.info('[BATCH] [%s] Sharp metadata...', preset.id);
+    logger.info('[BATCH] Reading image metadata', { presetId: preset.id });
     const buffer = artifactData.content;
     const metadata = await sharp(buffer, { failOnError: false }).metadata();
     const width = typeof metadata.width === 'number' ? metadata.width : null;
@@ -324,10 +319,10 @@ export async function createKangurSocialImageAddonsBatch(
     const publicPath = buildAddonPublicPath(filename);
 
     // Write to temp dir (outside public/) to avoid Turbopack HMR during pipeline
-    logger.info('[BATCH] [%s] Writing temp copy...', preset.id);
+    logger.info('[BATCH] Writing temp copy', { presetId: preset.id });
     const tempDiskPath = await writeTempCopy(filename, buffer);
 
-    logger.info('[BATCH] [%s] Uploading to storage...', preset.id);
+    logger.info('[BATCH] Uploading to storage', { presetId: preset.id });
     const stored = await uploadToConfiguredStorage({
       buffer,
       filename,
@@ -340,7 +335,10 @@ export async function createKangurSocialImageAddonsBatch(
         // Already written to temp dir — skip public/ write to prevent Turbopack HMR
       },
     });
-    logger.info('[BATCH] [%s] Upload done, source=%s', preset.id, stored.source);
+    logger.info('[BATCH] Upload completed', {
+      presetId: preset.id,
+      source: stored.source,
+    });
 
     // For local storage, use temp disk path so the vision handler can read
     // without files being in public/uploads/ (which triggers Turbopack rebuilds).
@@ -358,7 +356,7 @@ export async function createKangurSocialImageAddonsBatch(
       height,
     });
 
-    logger.info('[BATCH] [%s] Finding previous addon...', preset.id);
+    logger.info('[BATCH] Finding previous addon', { presetId: preset.id });
     const previousAddon = await findLatestAddonByPresetId(preset.id);
 
     const addon = normalizeKangurSocialImageAddon({
@@ -376,10 +374,10 @@ export async function createKangurSocialImageAddonsBatch(
       updatedBy: input.createdBy ?? null,
     });
 
-    logger.info('[BATCH] [%s] Upserting addon...', preset.id);
+    logger.info('[BATCH] Upserting addon', { presetId: preset.id });
     const saved = await upsertKangurSocialImageAddon(addon);
     addons.push(saved);
-    logger.info('[BATCH] [%s] Done', preset.id);
+    logger.info('[BATCH] Addon capture finished', { presetId: preset.id });
   }
 
   void ErrorSystem.logInfo('Kangur social image add-on batch capture completed', {

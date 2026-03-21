@@ -23,7 +23,7 @@ import type {
   KangurSocialDocUpdatesResponse,
   KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddonsBatchResult } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
+import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
 import {
   BRAIN_MODEL_DEFAULT_VALUE,
   type AddonFormState,

@@ -8,10 +8,10 @@ import {
   DragStateProvider,
   PageBuilderPageSkeleton,
   PageBuilderProvider,
+  ThemeSettingsProvider,
   type LeftPanelMode,
   usePageBuilder,
 } from '@/features/cms/public';
-import { ThemeSettingsProvider } from '@/features/cms/components/page-builder/ThemeSettingsContext';
 import type { SectionInstance } from '@/shared/contracts/cms';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';

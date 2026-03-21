@@ -2,7 +2,10 @@
 
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
+  kangurSocialImageAddonsBatchResultSchema,
   kangurSocialImageAddonsSchema,
+  type KangurSocialImageAddonsBatchPayload,
+  type KangurSocialImageAddonsBatchResult,
   type KangurSocialImageAddon,
 } from '@/shared/contracts/kangur-social-image-addons';
 import { api } from '@/shared/lib/api-client';
@@ -92,21 +95,6 @@ export const useCreateKangurSocialImageAddon = (): MutationResult<
     },
   });
 
-export type KangurSocialImageAddonsBatchPayload = {
-  baseUrl: string;
-  presetIds?: string[];
-  presetLimit?: number | null;
-};
-
-export type KangurSocialImageAddonsBatchResult = {
-  addons: KangurSocialImageAddon[];
-  failures: Array<{ id: string; reason: string }>;
-  runId: string;
-  requestedPresetCount?: number;
-  usedPresetCount?: number;
-  usedPresetIds?: string[];
-};
-
 export const useBatchCaptureKangurSocialImageAddons = (): MutationResult<
   KangurSocialImageAddonsBatchResult,
   KangurSocialImageAddonsBatchPayload
@@ -116,10 +104,12 @@ export const useBatchCaptureKangurSocialImageAddons = (): MutationResult<
     mutationFn: async (
       payload: KangurSocialImageAddonsBatchPayload
     ): Promise<KangurSocialImageAddonsBatchResult> =>
-      await api.post<KangurSocialImageAddonsBatchResult>(
-        '/api/kangur/social-image-addons/batch',
-        payload,
-        { timeout: 180_000 }
+      kangurSocialImageAddonsBatchResultSchema.parse(
+        await api.post<KangurSocialImageAddonsBatchResult>(
+          '/api/kangur/social-image-addons/batch',
+          payload,
+          { timeout: 180_000 }
+        )
       ),
     invalidate: invalidateSocialImageAddons,
     meta: {

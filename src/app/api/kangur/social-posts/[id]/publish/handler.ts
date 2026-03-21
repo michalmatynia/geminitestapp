@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import {
+  kangurSocialPublishModeSchema,
+  type KangurSocialPublishMode,
+} from '@/shared/contracts/kangur-social-posts';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { getKangurSocialPostById } from '@/features/kangur/server/social-posts-repository';
-import {
-  publishKangurSocialPost,
-  type KangurSocialPublishMode,
-} from '@/features/kangur/server/social-posts-publish';
+import { publishKangurSocialPost } from '@/features/kangur/server/social-posts-publish';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
 const bodySchema = z.object({
-  mode: z.enum(['draft', 'published']).optional(),
+  mode: kangurSocialPublishModeSchema.optional(),
   skipImages: z.boolean().optional(),
 });
 

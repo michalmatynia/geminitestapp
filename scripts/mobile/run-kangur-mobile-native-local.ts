@@ -205,11 +205,13 @@ export const checkKangurMobileNativeLocalExpoPort = (
         return;
       }
 
-      const execError = error as NodeJS.ErrnoException & {
-        code?: number | string;
-      };
+      const execError = error as NodeJS.ErrnoException;
+      const exitCode =
+        typeof (execError as { code?: unknown }).code === 'number'
+          ? (execError as { code?: number }).code
+          : undefined;
 
-      if (execError.code === 1) {
+      if (exitCode === 1) {
         resolvePromise({
           port,
           status: 'free',

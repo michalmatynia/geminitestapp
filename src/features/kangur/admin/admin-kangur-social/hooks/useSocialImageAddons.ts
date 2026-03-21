@@ -3,10 +3,10 @@
 import { useState } from 'react';
 
 import { useToast } from '@/features/kangur/shared/ui';
+import type { KangurSocialImageAddonsBatchResult } from '@/shared/contracts/kangur-social-image-addons';
 import {
   useBatchCaptureKangurSocialImageAddons,
   useCreateKangurSocialImageAddon,
-  type KangurSocialImageAddonsBatchResult,
 } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
 import {
   logKangurClientError,

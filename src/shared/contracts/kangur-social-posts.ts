@@ -35,6 +35,9 @@ export type KangurSocialDocUpdatePlan = {
   files: KangurSocialDocUpdateFilePlan[];
 };
 
+export const kangurSocialPublishModeSchema = z.enum(['published', 'draft']);
+export type KangurSocialPublishMode = z.infer<typeof kangurSocialPublishModeSchema>;
+
 export const KANGUR_SOCIAL_POSTS_COLLECTION = 'kangur_social_posts';
 export const KANGUR_SOCIAL_BILINGUAL_SEPARATOR = '\n---\n';
 

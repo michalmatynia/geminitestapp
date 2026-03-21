@@ -10,7 +10,6 @@ import {
   usePublishKangurSocialPost,
   useSaveKangurSocialPost,
   useUnpublishKangurSocialPost,
-  type KangurSocialPublishMode,
 } from '@/features/kangur/ui/hooks/useKangurSocialPosts';
 import {
   logKangurClientError,
@@ -20,6 +19,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 import {
   buildKangurSocialPostCombinedBody,
   type KangurSocialPost,
+  type KangurSocialPublishMode,
 } from '@/shared/contracts/kangur-social-posts';
 import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

@@ -6,6 +6,7 @@ import type {
   ProductValidationPattern,
   ProductValidationSemanticState,
   SequenceGroupView,
+  ValidatorPatternSimulatorInput,
 } from '@/shared/contracts/products';
 import {
   isPatternEnabledForValidationScope,
@@ -34,14 +35,6 @@ import { getReplacementFieldsForProductValidationTarget } from '@/features/produ
 
 import { buildValidationPayload, parseStrictInt } from './controller-diff-utils';
 import { buildDynamicRecipeFromForm, canCompileRegex } from './helpers';
-
-export type ValidatorPatternSimulatorInput = {
-  key: string;
-  fieldName: string;
-  sourceMode: DynamicReplacementSourceMode;
-  label: string;
-  placeholder: string;
-};
 
 export type ValidatorPatternSimulationResult = {
   status: 'invalid' | 'ready';

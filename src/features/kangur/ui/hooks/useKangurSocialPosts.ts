@@ -2,10 +2,12 @@
 
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
+  kangurSocialPublishModeSchema,
   kangurSocialPostsSchema,
   type KangurSocialDocUpdate,
   type KangurSocialDocUpdatesResponse,
   type KangurSocialPost,
+  type KangurSocialPublishMode,
 } from '@/shared/contracts/kangur-social-posts';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -187,8 +189,6 @@ export const useGenerateKangurSocialPost = (): MutationResult<
     },
   });
 
-export type KangurSocialPublishMode = 'published' | 'draft';
-
 export type KangurSocialPostPublishInput = {
   id: string;
   mode?: KangurSocialPublishMode;
@@ -203,7 +203,7 @@ export const usePublishKangurSocialPost = (): MutationResult<
     mutationKey: [...QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null }), 'publish'],
     mutationFn: async ({ id, mode, skipImages }: KangurSocialPostPublishInput): Promise<KangurSocialPost> =>
       await api.post<KangurSocialPost>(`/api/kangur/social-posts/${id}/publish`, {
-        ...(mode ? { mode } : {}),
+        ...(mode ? { mode: kangurSocialPublishModeSchema.parse(mode) } : {}),
         ...(skipImages ? { skipImages } : {}),
       }),
     invalidate: invalidateSocialPosts,

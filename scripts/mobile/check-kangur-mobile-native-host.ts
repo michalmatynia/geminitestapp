@@ -8,6 +8,7 @@ import {
   analyzeKangurMobileIosToolchain,
   collectKangurMobileIosToolchainState,
   type KangurMobileIosToolchainReport,
+  type KangurMobileIosToolchainState,
 } from './check-kangur-mobile-ios-toolchain';
 
 export type KangurMobileNativeHostReport = {

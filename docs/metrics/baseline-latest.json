@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-21T09:44:32.188Z",
+  "generatedAt": "2026-03-21T10:16:15.563Z",
   "source": {
-    "totalFiles": 7097,
-    "totalLines": 1157144,
+    "totalFiles": 7098,
+    "totalLines": 1157263,
     "useClientFiles": 2,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -25,16 +25,16 @@
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
+        "path": "src/app/api/v2/products/[[...path]]/route.ts",
+        "lines": 281
+      },
+      {
         "path": "src/app/api/agentcreator/[[...path]]/route.ts",
         "lines": 251
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
         "lines": 236
-      },
-      {
-        "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 234
       },
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
@@ -111,7 +111,7 @@
     "appFeatureDeepImports": 22,
     "featureToSharedTotalImports": 28,
     "featureToAppApiTotalImports": 0,
-    "sharedToFeaturesTotalImports": 3
+    "sharedToFeaturesTotalImports": 1
   },
   "architecture": {
     "crossFeatureEdgePairs": 3,
@@ -182,8 +182,8 @@
       },
       {
         "feature": "admin",
-        "files": 42,
-        "lines": 8430
+        "files": 43,
+        "lines": 8596
       },
       {
         "feature": "auth",

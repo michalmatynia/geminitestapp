@@ -15,9 +15,11 @@ import type {
   KangurSocialDocUpdatesResponse,
   KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddonsBatchResult } from '@/features/kangur/ui/hooks/useKangurSocialImageAddons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
+import type {
+  KangurSocialImageAddon,
+  KangurSocialImageAddonsBatchResult,
+} from '@/shared/contracts/kangur-social-image-addons';
 
 import {
   type EditorState,

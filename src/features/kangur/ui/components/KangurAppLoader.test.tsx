@@ -3,13 +3,13 @@ import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import enMessages from '@/i18n/messages/en.json';
+import plMessages from '@/i18n/messages/pl.json';
 
 import { KangurAppLoader } from './KangurAppLoader';
 
 const renderWithIntl = (element: ReactElement) =>
   render(
-    <NextIntlClientProvider locale='en' messages={enMessages}>
+    <NextIntlClientProvider locale='pl' messages={plMessages}>
       {element}
     </NextIntlClientProvider>
   );
@@ -26,7 +26,7 @@ describe('KangurAppLoader', () => {
     expect(panel).toHaveAttribute('data-loader-layout', 'expanded-card');
     expect(screen.getByTestId('kangur-app-loader-copy')).toBeInTheDocument();
     expect(screen.getByText('StudiQ')).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-app-loader-copy')).toHaveTextContent('Ladowanie');
+    expect(screen.getByTestId('kangur-app-loader-copy')).toHaveTextContent('Ładowanie');
   });
 
   it('does not render when hidden', () => {

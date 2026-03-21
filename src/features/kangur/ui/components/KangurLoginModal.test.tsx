@@ -12,6 +12,7 @@ import { createTestQueryClient } from '@/__tests__/test-utils';
 const { useKangurLoginModalMock } = vi.hoisted(() => ({
   useKangurLoginModalMock: vi.fn(),
 }));
+const kangurLoginPagePropsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@radix-ui/react-dialog', () => ({
   Root: ({
@@ -56,6 +57,14 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   useKangurLoginModal: useKangurLoginModalMock,
 }));
 
+vi.mock('@/features/kangur/ui/KangurLoginPage', () => ({
+  __esModule: true,
+  default: (props: unknown) => {
+    kangurLoginPagePropsMock(props);
+    return <div data-testid='kangur-login-page' />;
+  },
+}));
+
 import { KangurLoginModal } from '@/features/kangur/ui/components/KangurLoginModal';
 
 describe('KangurLoginModal', () => {
@@ -87,16 +96,22 @@ describe('KangurLoginModal', () => {
     );
 
     expect(closeLoginModal).not.toHaveBeenCalled();
+    expect(kangurLoginPagePropsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        onClose: expect.any(Function),
+      })
+    );
   });
 
   it('closes inline when the dialog requests a close', () => {
     const closeLoginModal = vi.fn();
+    const dismissLoginModal = vi.fn();
 
     useKangurLoginModalMock.mockReturnValue({
       authMode: 'sign-in',
       callbackUrl: '/kangur',
       closeLoginModal,
-      dismissLoginModal: vi.fn(),
+      dismissLoginModal,
       homeHref: '/kangur',
       isOpen: true,
       isRouteDriven: false,
@@ -110,5 +125,10 @@ describe('KangurLoginModal', () => {
     );
 
     expect(closeLoginModal).toHaveBeenCalledTimes(1);
+    expect(kangurLoginPagePropsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        onClose: dismissLoginModal,
+      })
+    );
   });
 });

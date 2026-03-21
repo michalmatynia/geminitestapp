@@ -36,6 +36,7 @@ vi.mock('@/features/kangur/ui/context/KangurProgressSyncProvider', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  KangurAiTutorDeferredProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('framer-motion', () => ({
@@ -138,12 +139,14 @@ describe('KangurFeatureApp shell behavior', () => {
   });
 
   it('renders nothing when auth is required', async () => {
+    const navigateToLogin = vi.fn();
     useKangurAuthMock.mockReturnValue(
       buildAuthState({
         authError: {
           type: 'auth_required',
           message: 'Authentication required',
         },
+        navigateToLogin,
       })
     );
 

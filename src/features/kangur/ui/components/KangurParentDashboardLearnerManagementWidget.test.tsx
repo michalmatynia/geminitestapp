@@ -219,6 +219,24 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     expect(runtimeState.value.selectLearner).toHaveBeenCalledWith('learner-2');
   });
 
+  it('keeps learner cards roomier on mobile layouts', () => {
+    render(<KangurParentDashboardLearnerManagementWidget />);
+
+    const learnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
+    const learnerCardContent = learnerCard.firstElementChild as HTMLElement | null;
+
+    expect(learnerCard.parentElement).toHaveClass('grid', 'sm:grid-cols-2');
+    expect(learnerCard.parentElement).not.toHaveClass('min-[420px]:grid-cols-2');
+    expect(learnerCard).toHaveClass('h-full');
+    expect(learnerCardContent).toHaveClass(
+      'w-full',
+      'flex-col',
+      'items-start',
+      'sm:flex-row',
+      'sm:items-center'
+    );
+  });
+
   it('loads more learner sessions when requested', async () => {
     learnerSessionsListMock
       .mockResolvedValueOnce({

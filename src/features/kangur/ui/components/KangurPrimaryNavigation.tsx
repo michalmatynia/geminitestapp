@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CmsStorefrontAppearanceButtons,
@@ -252,13 +252,33 @@ export function KangurPrimaryNavigation({
       KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP,
       locale
     );
-  const availableSubjects = getKangurSubjectsForAgeGroup(ageGroup);
+  const availableSubjects = useMemo(() => getKangurSubjectsForAgeGroup(ageGroup), [ageGroup]);
+  const subjectOptions = useMemo(
+    () =>
+      availableSubjects.map((item) => ({
+        id: item.id,
+        label: getLocalizedKangurSubjectLabel(item.id, locale, item.label),
+        isActive: subject === item.id,
+        onSelect: () => setSubject(item.id),
+      })),
+    [availableSubjects, locale, setSubject, subject]
+  );
+  const ageGroupOptions = useMemo(
+    () =>
+      KANGUR_AGE_GROUPS.map((group) => ({
+        id: group.id,
+        label: getLocalizedKangurAgeGroupLabel(group.id, locale, group.label),
+        isActive: ageGroup === group.id,
+        onSelect: () => setAgeGroup(group.id),
+      })),
+    [ageGroup, locale, setAgeGroup]
+  );
   const yellowPillActionClassName =
     `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`;
   const amberPillActionClassName =
     `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`;
-  const closeMobileMenu = (): void => setIsMobileMenuOpen(false);
-  const toggleMobileMenu = (): void => setIsMobileMenuOpen((prev) => !prev);
+  const closeMobileMenu = useCallback((): void => setIsMobileMenuOpen(false), []);
+  const toggleMobileMenu = useCallback((): void => setIsMobileMenuOpen((prev) => !prev), []);
 
   useEffect(() => subscribeToTutorVisibilityChanges(setIsTutorHidden), []);
 
@@ -683,13 +703,13 @@ export function KangurPrimaryNavigation({
       },
     }
     : null;
-  const kangurAppearanceModes = ['default', 'dawn', 'sunset', 'dark'] as const;
-  const kangurAppearanceLabels = {
+  const kangurAppearanceModes = useMemo(() => ['default', 'dawn', 'sunset', 'dark'] as const, []);
+  const kangurAppearanceLabels = useMemo(() => ({
     default: 'Daily',
     dawn: 'Dawn',
     sunset: 'Sunset',
     dark: 'Nightly',
-  };
+  }), []);
   const shouldRenderLanguageSwitcher =
     !isKangurEmbeddedBasePath(basePath) &&
     DEFAULT_SITE_I18N_CONFIG.locales.filter((entry) => entry.enabled).length > 1;
@@ -948,12 +968,7 @@ export function KangurPrimaryNavigation({
       currentChoiceLabel={subjectChoiceLabel}
       closeAriaLabel={navTranslations('subject.closeAriaLabel')}
       groupAriaLabel={navTranslations('subject.groupAriaLabel')}
-      options={availableSubjects.map((item) => ({
-        id: item.id,
-        label: getLocalizedKangurSubjectLabel(item.id, locale, item.label),
-        isActive: subject === item.id,
-        onSelect: () => setSubject(item.id),
-      }))}
+      options={subjectOptions}
     />
   );
   const ageGroupModal = (
@@ -971,12 +986,7 @@ export function KangurPrimaryNavigation({
       currentChoiceLabel={ageGroupChoiceLabel}
       closeAriaLabel={navTranslations('ageGroup.closeAriaLabel')}
       groupAriaLabel={navTranslations('ageGroup.groupAriaLabel')}
-      options={KANGUR_AGE_GROUPS.map((group) => ({
-        id: group.id,
-        label: getLocalizedKangurAgeGroupLabel(group.id, locale, group.label),
-        isActive: ageGroup === group.id,
-        onSelect: () => setAgeGroup(group.id),
-      }))}
+      options={ageGroupOptions}
     />
   );
 

@@ -185,6 +185,7 @@ export function KangurLearnerProfileRuntimeProvider({
 }): JSX.Element {
   const locale = normalizeSiteLocale(useLocale());
   const runtimeTranslations = useTranslations('KangurLearnerProfileRuntime');
+  const progressRuntimeTranslations = useTranslations('KangurProgressRuntime');
   const { basePath } = useKangurRouting();
   const { user, navigateToLogin } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
@@ -194,8 +195,17 @@ export function KangurLearnerProfileRuntimeProvider({
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [isLoadingScores, setIsLoadingScores] = useState(true);
   const [scoresError, setScoresError] = useState<string | null>(null);
+  const translateRuntime = useCallback(
+    (key: string, values?: Record<string, string | number>) => {
+      const translated = runtimeTranslations(key as never, values as never);
+      return translated === key
+        ? progressRuntimeTranslations(key as never, values as never)
+        : translated;
+    },
+    [progressRuntimeTranslations, runtimeTranslations]
+  );
   const loadScoresErrorLabel = translateKangurLearnerProfileWithFallback(
-    (key, values) => runtimeTranslations(key as never, values as never),
+    translateRuntime,
     'errors.loadScores',
     'Nie udało się pobrać historii wyników.'
   );
@@ -294,9 +304,9 @@ export function KangurLearnerProfileRuntimeProvider({
         scores,
         dailyGoalGames: KANGUR_LEARNER_PROFILE_DAILY_GOAL_GAMES,
         locale,
-        translate: (key, values) => runtimeTranslations(key as never, values as never),
+        translate: translateRuntime,
       }),
-    [locale, progress, runtimeTranslations, scores]
+    [locale, progress, scores, translateRuntime]
   );
   const maxWeeklyGames = useMemo(
     () => Math.max(1, ...snapshot.weeklyActivity.map((point) => point.games)),

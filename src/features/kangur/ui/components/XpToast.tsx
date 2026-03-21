@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { BADGES } from '@kangur/core';
@@ -19,7 +20,7 @@ import { cn } from '@/features/kangur/shared/utils';
 
 type XpToastProps = KangurXpToastState;
 
-export default function XpToast({
+const XpToast = memo(function XpToast({
   xpGained,
   newBadges,
   visible,
@@ -172,4 +173,6 @@ export default function XpToast({
       )}
     </AnimatePresence>
   );
-}
+});
+
+export default XpToast;

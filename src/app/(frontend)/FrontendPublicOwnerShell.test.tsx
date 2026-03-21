@@ -58,7 +58,7 @@ describe('FrontendPublicOwnerShell', () => {
     });
   });
 
-  it('keeps the home route embedded when Kangur owns the root', () => {
+  it('keeps the home route embedded without forcing body scroll lock when Kangur owns the root', () => {
     render(
       <FrontendPublicOwnerShell publicOwner='kangur'>
         <div data-testid='frontend-children'>children</div>
@@ -69,7 +69,7 @@ describe('FrontendPublicOwnerShell', () => {
     expect(kangurFeatureRouteShellMock).toHaveBeenCalledWith({
       basePath: '/',
       embedded: true,
-      forceBodyScrollLock: true,
+      forceBodyScrollLock: false,
     });
   });
 

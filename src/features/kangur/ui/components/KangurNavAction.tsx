@@ -3,7 +3,7 @@
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 
-import type { ComponentProps, ReactNode, Ref } from 'react';
+import { memo, type ComponentProps, type ReactNode, type Ref } from 'react';
 
 type KangurButtonProps = ComponentProps<typeof KangurButton>;
 
@@ -29,7 +29,7 @@ export type KangurNavActionProps = {
   children: ReactNode;
 };
 
-export function KangurNavAction({
+export const KangurNavAction = memo(function KangurNavAction({
   active = false,
   ariaLabel,
   className,
@@ -97,4 +97,4 @@ export function KangurNavAction({
       {children}
     </KangurButton>
   );
-}
+});

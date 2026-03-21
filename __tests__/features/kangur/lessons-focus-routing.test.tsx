@@ -4,6 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -93,6 +94,30 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
+  useKangurLessonSections: () => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: () => ({
+    entry: null,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
   useOptionalKangurAiTutor: () => null,
@@ -108,11 +133,26 @@ vi.mock('next-auth/react', () => ({
 
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: Infinity,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
 const renderLessonsPage = () =>
   render(
-    <KangurGuestPlayerProvider>
-      <Lessons />
-    </KangurGuestPlayerProvider>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <KangurGuestPlayerProvider>
+        <Lessons />
+      </KangurGuestPlayerProvider>
+    </QueryClientProvider>
   );
 
 const lessonsSettingsValue = JSON.stringify([

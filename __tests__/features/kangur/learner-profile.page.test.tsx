@@ -2,9 +2,10 @@
  * @vitest-environment jsdom
  */
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
@@ -25,6 +26,7 @@ const {
   navigateToLoginMock,
   logoutMock,
   checkAppStateMock,
+  useKangurPageContentEntryMock,
 } = vi.hoisted(() => ({
   logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
   withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
@@ -42,6 +44,7 @@ const {
   navigateToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
   checkAppStateMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
@@ -61,6 +64,40 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: useKangurSubjectFocusMock,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: useKangurPageContentEntryMock,
+}));
+
+vi.mock('@/features/kangur/docs/tooltips', () => ({
+  KangurDocsTooltipEnhancer: () => null,
+  useKangurDocsTooltips: () => ({
+    enabled: false,
+    helpSettings: {},
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  useKangurAiTutorSessionSync: () => undefined,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+  KangurTopNavigationController: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: () => undefined,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
+  useKangurRoutePageReady: () => undefined,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
+  useKangurRouteNavigator: () => ({
+    push: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -84,11 +121,26 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import LearnerProfile from '@/features/kangur/ui/pages/LearnerProfile';
 
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: Infinity,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
 const renderLearnerProfilePage = () =>
   render(
-    <KangurGuestPlayerProvider>
-      <LearnerProfile />
-    </KangurGuestPlayerProvider>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <KangurGuestPlayerProvider>
+        <LearnerProfile />
+      </KangurGuestPlayerProvider>
+    </QueryClientProvider>
   );
 
 const toLocalDateKey = (date: Date): string => {
@@ -189,6 +241,9 @@ describe('LearnerProfile page', () => {
     });
     useKangurLoginModalMock.mockReturnValue({
       openLoginModal: vi.fn(),
+    });
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: null,
     });
     useKangurSubjectFocusMock.mockReturnValue({
       subject: 'maths',

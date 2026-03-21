@@ -307,7 +307,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
           descriptionClassName='max-w-2xl'
         />
 
-        <div className='grid kangur-panel-gap min-[420px]:grid-cols-2'>
+        <div className='grid kangur-panel-gap sm:grid-cols-2'>
           {learners.map((learner) => {
             const isActiveLearner = learner.id === activeLearner?.id;
             const initial = learner.displayName.trim().charAt(0).toUpperCase() || '?';
@@ -317,7 +317,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                 accent='indigo'
                 aria-pressed={isActiveLearner}
                 aria-label={`Profil ucznia: ${learner.displayName} (${learnerStatusLabel})`}
-                buttonClassName='w-full rounded-[30px] px-5 py-4 text-left'
+                buttonClassName='h-full w-full rounded-[30px] px-5 py-4 text-left'
                 data-doc-id='parent_learner_profile_card'
                 data-testid={`parent-dashboard-learner-card-${learner.id}`}
                 emphasis={isActiveLearner ? 'accent' : 'neutral'}
@@ -334,9 +334,9 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                       {learner.status === 'active' ? 'Aktywny' : 'Wyłączony'}
                     </KangurStatusChip>
                   }
-                  asideClassName='w-full self-start sm:ml-auto sm:w-auto'
-                  className='w-full items-center'
-                  contentClassName='min-w-0 flex-1'
+                  asideClassName='self-start sm:ml-auto sm:w-auto'
+                  className='w-full flex-col items-start sm:flex-row sm:items-center'
+                  contentClassName='w-full min-w-0 flex-1'
                   description={`Login: ${learner.loginName}`}
                   descriptionClassName='break-words text-xs'
                   footer={
@@ -356,7 +356,7 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
                   footerClassName='mt-2'
                   headerClassName={cn(
                     KANGUR_TIGHT_ROW_CLASSNAME,
-                    'sm:items-start sm:justify-between'
+                    'w-full items-start sm:items-start sm:justify-between'
                   )}
                   icon={
                     <KangurIconBadge

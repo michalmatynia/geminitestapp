@@ -43,7 +43,7 @@ export default function FrontendPublicOwnerShellClient({
             <KangurFeatureRouteShell
               basePath='/'
               embedded={isHomeRoute}
-              forceBodyScrollLock={isHomeRoute}
+              forceBodyScrollLock={false}
             />
           </KangurMainRoleProvider>
         </KangurSurfaceClassSync>

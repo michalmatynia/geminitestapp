@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_WRAP_ROW_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
@@ -17,7 +18,7 @@ type KangurRewardBreakdownChipsProps = {
   limit?: number;
 };
 
-export default function KangurRewardBreakdownChips({
+const KangurRewardBreakdownChips = memo(function KangurRewardBreakdownChips({
   accent = 'slate',
   breakdown = [],
   chipClassName,
@@ -65,4 +66,6 @@ export default function KangurRewardBreakdownChips({
       ))}
     </div>
   );
-}
+});
+
+export default KangurRewardBreakdownChips;

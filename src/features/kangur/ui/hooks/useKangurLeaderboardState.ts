@@ -7,7 +7,7 @@ import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { logKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
-import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 
@@ -258,11 +258,12 @@ export const useKangurLeaderboardState = (
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const enabled = options.enabled ?? true;
   const limit = typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
+  const auth = useOptionalKangurAuth();
+  const currentUser = auth?.user ?? null;
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [operationFilter, setOperationFilter] = useState('all');
   const [userFilter, setUserFilter] = useState<KangurLeaderboardUserFilter>('all');
-  const [currentUser, setCurrentUser] = useState<KangurUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { subject } = useKangurSubjectFocus();
 
@@ -271,7 +272,6 @@ export const useKangurLeaderboardState = (
 
     if (!enabled) {
       setScores([]);
-      setCurrentUser(null);
       setError(null);
       setLoading(false);
       return () => {
@@ -284,38 +284,24 @@ export const useKangurLeaderboardState = (
       setError(null);
 
       try {
-        const [userResult, scoreRows] = await Promise.allSettled([
-          kangurPlatform.auth.me(),
-          kangurPlatform.score.filter({ subject }, '-score', 100),
-        ]);
+        const scoreRows = await kangurPlatform.score.filter({ subject }, '-score', 20);
 
         if (!isActive) {
           return;
         }
 
-        if (userResult.status === 'fulfilled') {
-          setCurrentUser(userResult.value);
-        } else {
-          if (!isKangurAuthStatusError(userResult.reason)) {
-            logKangurClientError(userResult.reason, {
-              source: 'useKangurLeaderboardState',
-              action: 'loadCurrentUser',
-            });
-          }
-          setCurrentUser(null);
+        setScores(scoreRows);
+        setError(null);
+      } catch (err) {
+        if (!isActive) {
+          return;
         }
-
-        if (scoreRows.status === 'fulfilled') {
-          setScores(scoreRows.value);
-          setError(null);
-        } else {
-          logKangurClientError(scoreRows.reason, {
-            source: 'useKangurLeaderboardState',
-            action: 'loadScores',
-          });
-          setScores([]);
-          setError(translations('errors.loadScores'));
-        }
+        logKangurClientError(err, {
+          source: 'useKangurLeaderboardState',
+          action: 'loadScores',
+        });
+        setScores([]);
+        setError(translations('errors.loadScores'));
       } finally {
         if (isActive) {
           setLoading(false);

@@ -229,6 +229,7 @@ describe('ParentDashboard page', () => {
 
     const activeLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-1');
     const inactiveLearnerCard = screen.getByTestId('parent-dashboard-learner-card-learner-2');
+    const activeLearnerCardContent = activeLearnerCard.firstElementChild as HTMLElement | null;
     const progressTab = screen.getByRole('tab', { name: /Post/i });
     const scoresTab = screen.getByRole('tab', { name: /Wyniki/i });
     const assignmentsTab = screen.getByRole('tab', { name: /Zadania/i });
@@ -237,6 +238,16 @@ describe('ParentDashboard page', () => {
     expect(activeLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
     expect(inactiveLearnerCard).toHaveAttribute('aria-pressed', 'false');
     expect(inactiveLearnerCard).toHaveClass('soft-card', 'rounded-[30px]');
+    expect(activeLearnerCard.parentElement).toHaveClass('grid', 'sm:grid-cols-2');
+    expect(activeLearnerCard.parentElement).not.toHaveClass('min-[420px]:grid-cols-2');
+    expect(activeLearnerCard).toHaveClass('h-full');
+    expect(activeLearnerCardContent).toHaveClass(
+      'w-full',
+      'flex-col',
+      'items-start',
+      'sm:flex-row',
+      'sm:items-center'
+    );
     expect(within(activeLearnerCard).getByTestId('parent-dashboard-learner-icon-learner-1')).toHaveClass(
       'rounded-full'
     );

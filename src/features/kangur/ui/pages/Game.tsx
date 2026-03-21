@@ -55,7 +55,7 @@ import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurM
 import { useKangurPhoneSimulation } from '@/features/kangur/ui/hooks/useKangurPhoneSimulation';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
-import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
+import { useKangurTutorAnchors, type KangurTutorAnchorConfig } from '@/features/kangur/ui/hooks/useKangurTutorAnchors';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
   lockKangurPageVerticalScroll,
@@ -332,283 +332,32 @@ function GameContent(): React.JSX.Element {
     ready: isGamePageReady,
   });
 
-  useKangurTutorAnchor({
-    id: 'kangur-game-home-actions',
-    kind: 'home_actions',
-    ref: homeActionsRef,
-    surface: 'game',
-    enabled: screen === 'home',
-    priority: 120,
-    metadata: {
-      contentId: 'game:home',
-      label: translations('home.actionsLabel'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-home-quest',
-    kind: 'home_quest',
-    ref: homeQuestRef,
-    surface: 'game',
-    enabled: screen === 'home',
-    priority: 110,
-    metadata: {
-      contentId: 'game:home',
-      label: translations('home.questHeading'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-home-assignments',
-    kind: 'priority_assignments',
-    ref: homeAssignmentsRef,
-    surface: 'game',
-    enabled: screen === 'home' && canAccessParentAssignments,
-    priority: 100,
-    metadata: {
-      contentId: 'game:home',
-      label: translations('home.priorityAssignmentsHeading'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-home-leaderboard',
-    kind: 'leaderboard',
-    ref: homeLeaderboardRef,
-    surface: 'game',
-    enabled: screen === 'home',
-    priority: 90,
-    metadata: {
-      contentId: 'game:home',
-      label: translations('home.leaderboardLabel'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-home-progress',
-    kind: 'progress',
-    ref: homeProgressRef,
-    surface: 'game',
-    enabled: screen === 'home',
-    priority: 80,
-    metadata: {
-      contentId: 'game:home',
-      label: translations('home.progressLabel'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-training-setup',
-    kind: 'screen',
-    ref: trainingSetupRef,
-    surface: 'game',
-    enabled: screen === 'training',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'training' ? tutorActivityContentId : null,
-      label: getScreenLabel('training'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-kangur-setup',
-    kind: 'screen',
-    ref: kangurSetupRef,
-    surface: 'game',
-    enabled: screen === 'kangur_setup',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'kangur_setup' ? tutorActivityContentId : null,
-      label: getScreenLabel('kangur_setup'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-kangur-session',
-    kind: 'screen',
-    ref: kangurSessionRef,
-    surface: 'game',
-    enabled: screen === 'kangur',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'kangur' ? tutorActivityContentId : null,
-      label: getScreenLabel('kangur'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-calendar-quiz',
-    kind: 'screen',
-    ref: calendarQuizRef,
-    surface: 'game',
-    enabled: screen === 'calendar_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'calendar_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('calendar_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-geometry-quiz',
-    kind: 'screen',
-    ref: geometryQuizRef,
-    surface: 'game',
-    enabled: screen === 'geometry_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('geometry_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-clock-quiz',
-    kind: 'screen',
-    ref: clockQuizRef,
-    surface: 'game',
-    enabled: screen === 'clock_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'clock_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('clock_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-addition-quiz',
-    kind: 'screen',
-    ref: additionQuizRef,
-    surface: 'game',
-    enabled: screen === 'addition_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'addition_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('addition_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-subtraction-quiz',
-    kind: 'screen',
-    ref: subtractionQuizRef,
-    surface: 'game',
-    enabled: screen === 'subtraction_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'subtraction_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('subtraction_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-division-quiz',
-    kind: 'screen',
-    ref: divisionQuizRef,
-    surface: 'game',
-    enabled: screen === 'division_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'division_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('division_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-multiplication-quiz',
-    kind: 'screen',
-    ref: multiplicationQuizRef,
-    surface: 'game',
-    enabled: screen === 'multiplication_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'multiplication_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('multiplication_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-logical-patterns-quiz',
-    kind: 'screen',
-    ref: logicalPatternsQuizRef,
-    surface: 'game',
-    enabled: screen === 'logical_patterns_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'logical_patterns_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('logical_patterns_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-logical-classification-quiz',
-    kind: 'screen',
-    ref: logicalClassificationQuizRef,
-    surface: 'game',
-    enabled: screen === 'logical_classification_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'logical_classification_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('logical_classification_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-logical-analogies-quiz',
-    kind: 'screen',
-    ref: logicalAnalogiesQuizRef,
-    surface: 'game',
-    enabled: screen === 'logical_analogies_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'logical_analogies_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('logical_analogies_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-english-sentence-quiz',
-    kind: 'screen',
-    ref: englishSentenceQuizRef,
-    surface: 'game',
-    enabled: screen === 'english_sentence_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'english_sentence_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('english_sentence_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-english-parts-of-speech-quiz',
-    kind: 'screen',
-    ref: englishPartsOfSpeechQuizRef,
-    surface: 'game',
-    enabled: screen === 'english_parts_of_speech_quiz',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'english_parts_of_speech_quiz' ? tutorActivityContentId : null,
-      label: getScreenLabel('english_parts_of_speech_quiz'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-operation-selector',
-    kind: 'screen',
-    ref: operationSelectorRef,
-    surface: 'game',
-    enabled: screen === 'operation',
-    priority: 120,
-    metadata: {
-      contentId: screen === 'operation' ? tutorActivityContentId : null,
-      label: getScreenLabel('operation'),
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-result-summary',
-    kind: 'review',
-    ref: resultSummaryRef,
-    surface: 'game',
-    enabled: screen === 'result',
-    priority: 110,
-    metadata: {
-      contentId: screen === 'result' ? tutorActivityContentId : null,
-      label: getScreenLabel('result'),
-      assignmentId: activeGameAssignment?.id ?? null,
-    },
-  });
-  useKangurTutorAnchor({
-    id: 'kangur-game-result-leaderboard',
-    kind: 'leaderboard',
-    ref: resultLeaderboardRef,
-    surface: 'game',
-    enabled: screen === 'result',
-    priority: 100,
-    metadata: {
-      contentId: screen === 'result' ? tutorActivityContentId : null,
-      label: translations('result.leaderboardLabel'),
-    },
-  });
+  const tutorAnchors = useMemo((): KangurTutorAnchorConfig[] => [
+    { id: 'kangur-game-home-actions', kind: 'home_actions', ref: homeActionsRef, surface: 'game', enabled: screen === 'home', priority: 120, contentId: 'game:home', label: translations('home.actionsLabel') },
+    { id: 'kangur-game-home-quest', kind: 'home_quest', ref: homeQuestRef, surface: 'game', enabled: screen === 'home', priority: 110, contentId: 'game:home', label: translations('home.questHeading') },
+    { id: 'kangur-game-home-assignments', kind: 'priority_assignments', ref: homeAssignmentsRef, surface: 'game', enabled: screen === 'home' && canAccessParentAssignments, priority: 100, contentId: 'game:home', label: translations('home.priorityAssignmentsHeading') },
+    { id: 'kangur-game-home-leaderboard', kind: 'leaderboard', ref: homeLeaderboardRef, surface: 'game', enabled: screen === 'home', priority: 90, contentId: 'game:home', label: translations('home.leaderboardLabel') },
+    { id: 'kangur-game-home-progress', kind: 'progress', ref: homeProgressRef, surface: 'game', enabled: screen === 'home', priority: 80, contentId: 'game:home', label: translations('home.progressLabel') },
+    { id: 'kangur-game-training-setup', kind: 'screen', ref: trainingSetupRef, surface: 'game', enabled: screen === 'training', priority: 120, contentId: screen === 'training' ? tutorActivityContentId : null, label: getScreenLabel('training') },
+    { id: 'kangur-game-kangur-setup', kind: 'screen', ref: kangurSetupRef, surface: 'game', enabled: screen === 'kangur_setup', priority: 120, contentId: screen === 'kangur_setup' ? tutorActivityContentId : null, label: getScreenLabel('kangur_setup') },
+    { id: 'kangur-game-kangur-session', kind: 'screen', ref: kangurSessionRef, surface: 'game', enabled: screen === 'kangur', priority: 120, contentId: screen === 'kangur' ? tutorActivityContentId : null, label: getScreenLabel('kangur') },
+    { id: 'kangur-game-calendar-quiz', kind: 'screen', ref: calendarQuizRef, surface: 'game', enabled: screen === 'calendar_quiz', priority: 120, contentId: screen === 'calendar_quiz' ? tutorActivityContentId : null, label: getScreenLabel('calendar_quiz') },
+    { id: 'kangur-game-geometry-quiz', kind: 'screen', ref: geometryQuizRef, surface: 'game', enabled: screen === 'geometry_quiz', priority: 120, contentId: screen === 'geometry_quiz' ? tutorActivityContentId : null, label: getScreenLabel('geometry_quiz') },
+    { id: 'kangur-game-clock-quiz', kind: 'screen', ref: clockQuizRef, surface: 'game', enabled: screen === 'clock_quiz', priority: 120, contentId: screen === 'clock_quiz' ? tutorActivityContentId : null, label: getScreenLabel('clock_quiz') },
+    { id: 'kangur-game-addition-quiz', kind: 'screen', ref: additionQuizRef, surface: 'game', enabled: screen === 'addition_quiz', priority: 120, contentId: screen === 'addition_quiz' ? tutorActivityContentId : null, label: getScreenLabel('addition_quiz') },
+    { id: 'kangur-game-subtraction-quiz', kind: 'screen', ref: subtractionQuizRef, surface: 'game', enabled: screen === 'subtraction_quiz', priority: 120, contentId: screen === 'subtraction_quiz' ? tutorActivityContentId : null, label: getScreenLabel('subtraction_quiz') },
+    { id: 'kangur-game-division-quiz', kind: 'screen', ref: divisionQuizRef, surface: 'game', enabled: screen === 'division_quiz', priority: 120, contentId: screen === 'division_quiz' ? tutorActivityContentId : null, label: getScreenLabel('division_quiz') },
+    { id: 'kangur-game-multiplication-quiz', kind: 'screen', ref: multiplicationQuizRef, surface: 'game', enabled: screen === 'multiplication_quiz', priority: 120, contentId: screen === 'multiplication_quiz' ? tutorActivityContentId : null, label: getScreenLabel('multiplication_quiz') },
+    { id: 'kangur-game-logical-patterns-quiz', kind: 'screen', ref: logicalPatternsQuizRef, surface: 'game', enabled: screen === 'logical_patterns_quiz', priority: 120, contentId: screen === 'logical_patterns_quiz' ? tutorActivityContentId : null, label: getScreenLabel('logical_patterns_quiz') },
+    { id: 'kangur-game-logical-classification-quiz', kind: 'screen', ref: logicalClassificationQuizRef, surface: 'game', enabled: screen === 'logical_classification_quiz', priority: 120, contentId: screen === 'logical_classification_quiz' ? tutorActivityContentId : null, label: getScreenLabel('logical_classification_quiz') },
+    { id: 'kangur-game-logical-analogies-quiz', kind: 'screen', ref: logicalAnalogiesQuizRef, surface: 'game', enabled: screen === 'logical_analogies_quiz', priority: 120, contentId: screen === 'logical_analogies_quiz' ? tutorActivityContentId : null, label: getScreenLabel('logical_analogies_quiz') },
+    { id: 'kangur-game-english-sentence-quiz', kind: 'screen', ref: englishSentenceQuizRef, surface: 'game', enabled: screen === 'english_sentence_quiz', priority: 120, contentId: screen === 'english_sentence_quiz' ? tutorActivityContentId : null, label: getScreenLabel('english_sentence_quiz') },
+    { id: 'kangur-game-english-parts-of-speech-quiz', kind: 'screen', ref: englishPartsOfSpeechQuizRef, surface: 'game', enabled: screen === 'english_parts_of_speech_quiz', priority: 120, contentId: screen === 'english_parts_of_speech_quiz' ? tutorActivityContentId : null, label: getScreenLabel('english_parts_of_speech_quiz') },
+    { id: 'kangur-game-operation-selector', kind: 'screen', ref: operationSelectorRef, surface: 'game', enabled: screen === 'operation', priority: 120, contentId: screen === 'operation' ? tutorActivityContentId : null, label: getScreenLabel('operation') },
+    { id: 'kangur-game-result-summary', kind: 'review', ref: resultSummaryRef, surface: 'game', enabled: screen === 'result', priority: 110, contentId: screen === 'result' ? tutorActivityContentId : null, label: getScreenLabel('result'), assignmentId: activeGameAssignment?.id ?? null },
+    { id: 'kangur-game-result-leaderboard', kind: 'leaderboard', ref: resultLeaderboardRef, surface: 'game', enabled: screen === 'result', priority: 100, contentId: screen === 'result' ? tutorActivityContentId : null, label: translations('result.leaderboardLabel') },
+  ], [activeGameAssignment?.id, canAccessParentAssignments, screen, translations, tutorActivityContentId]);
+  useKangurTutorAnchors(tutorAnchors);
 
   useEffect(() => {
     if (!shouldUseGameMobileChrome || typeof window === 'undefined') {

@@ -228,23 +228,23 @@
     "siteAppearance": "Wyglad strony"
   },
   "KangurPublic": {
-    "routeLoading": "Ladowanie Kangura...",
-    "entryLoading": "Ladowanie Kangura...",
-    "loaderStatus": "Ladowanie",
-    "loaderSrLabel": "Ladowanie aplikacji Kangur",
-    "errorTitle": "Wystapil blad w Kangurze",
-    "errorDescription": "Wystapil problem podczas ladowania aplikacji Kangur.",
-    "tryAgain": "Sprobuj ponownie",
-    "backToHome": "Wroc do Kangura",
-    "loadingApp": "Ladowanie aplikacji Kangur",
-    "loadingPage": "Ladowanie strony Kangura",
-    "loadingLanguage": "Przelaczanie jezyka Kangura",
+    "routeLoading": "Ładowanie Kangura...",
+    "entryLoading": "Ładowanie Kangura...",
+    "loaderStatus": "Ładowanie",
+    "loaderSrLabel": "Ładowanie aplikacji Kangur",
+    "errorTitle": "Wystąpił błąd w Kangurze",
+    "errorDescription": "Wystąpił problem podczas ładowania aplikacji Kangur.",
+    "tryAgain": "Spróbuj ponownie",
+    "backToHome": "Wróć do Kangura",
+    "loadingApp": "Ładowanie aplikacji Kangur",
+    "loadingPage": "Ładowanie strony Kangura",
+    "loadingLanguage": "Przełączanie języka Kangura",
     "accessibility": {
       "pageAnnouncement": "Widok: {label}",
-      "languageSwitchAnnouncement": "Przelaczanie jezyka: {label}",
+      "languageSwitchAnnouncement": "Przełączanie języka: {label}",
       "pages": {
         "Competition": "Kangur Matematyczny",
-        "Game": "Strona glowna",
+        "Game": "Strona główna",
         "Lessons": "Lekcje",
         "Tests": "Testy",
         "LearnerProfile": "Profil ucznia",
@@ -1157,11 +1157,11 @@
       "createParentAccount": "Utworz konto rodzica"
     },
     "levelProgress": {
-      "title": "Postep poziomu",
-      "summary": "Zobacz aktualny poziom, laczne XP i brakujacy dystans do nastepnego progu.",
-      "totalXpLine": "Poziom {level} · {xp} XP lacznie",
+      "title": "Postęp poziomu",
+      "summary": "Zobacz aktualny poziom, łączne XP i brakujący dystans do następnego progu.",
+      "totalXpLine": "Poziom {level} · {xp} XP łącznie",
       "xpToNextLevel": "Do poziomu {level}: {xp} XP",
-      "maxLevelReached": "Maksymalny poziom osiagniety"
+      "maxLevelReached": "Maksymalny poziom osiągnięty"
     },
     "lessonMastery": {
       "title": "Opanowanie lekcji",

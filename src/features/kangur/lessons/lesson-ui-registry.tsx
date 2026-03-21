@@ -63,7 +63,7 @@ const LessonLoadingFallback = (): JSX.Element => (
         </div>
       </KangurGlassPanel>
     ))}
-    <span className='sr-only'>Ladowanie sekcji lekcji...</span>
+    <span className='sr-only'>Ładowanie sekcji lekcji...</span>
   </div>
 );
 

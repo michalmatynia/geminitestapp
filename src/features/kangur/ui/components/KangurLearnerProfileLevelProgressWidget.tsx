@@ -28,6 +28,7 @@ export function KangurLearnerProfileLevelProgressWidget(): React.JSX.Element {
     >
       <div className={`${KANGUR_PANEL_ROW_MD_CLASSNAME} md:items-end md:justify-between`}>
         <KangurPanelIntro
+          className='min-w-0 flex-1'
           description={
             <>
               <p>{sectionSummary}</p>

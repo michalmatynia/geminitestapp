@@ -13,7 +13,7 @@ import type { JSX } from 'react';
 
 export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
   const translations = useTranslations('KangurLoginModal');
-  const { closeLoginModal, isOpen, isRouteDriven } =
+  const { closeLoginModal, dismissLoginModal, isOpen, isRouteDriven } =
     useKangurLoginModal();
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -62,7 +62,7 @@ export const KangurLoginModal = memo(function KangurLoginModal(): JSX.Element {
         }
       />
 
-      <KangurLoginPage />
+      <KangurLoginPage onClose={dismissLoginModal} />
     </KangurDialog>
   );
 });

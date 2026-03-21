@@ -28,13 +28,12 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurButton,
-  KangurPageShell,
-  KangurPageContainer,
 } from '@/features/kangur/ui/design/primitives';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -61,6 +60,7 @@ const PROFILE_TABS: Array<
 ];
 
 const PROFILE_MAIN_ID = 'kangur-learner-profile-main';
+const PROFILE_PAGE_ID = 'kangur-learner-profile-page';
 
 function LearnerProfileContent(): React.JSX.Element {
   const { user, isLoadingScores } = useKangurLearnerProfileRuntime();
@@ -120,17 +120,26 @@ function LearnerProfileContent(): React.JSX.Element {
     <div
       ref={tutorAnchorRef}
       id='learner-profile-root'
-      className={`w-full ${KANGUR_PANEL_GAP_CLASSNAME} flex flex-col`}
+      className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
     >
-      <KangurLearnerProfileHeroWidget />
-      <h2 className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'>
-        {translations('statsHeading')}
-      </h2>
+      <section className='w-full'>
+        <KangurLearnerProfileHeroWidget />
+      </section>
 
-      <div className='flex flex-col gap-6 lg:flex-row'>
-        <div className='flex flex-1 flex-col gap-6'>
+      <section
+        className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+        aria-labelledby='kangur-learner-profile-stats-heading'
+      >
+        <h2
+          id='kangur-learner-profile-stats-heading'
+          className='text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)]'
+        >
+          {translations('statsHeading')}
+        </h2>
+
+        <div className='w-full'>
           <div
-            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} self-start`}
+            className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full`}
             role='tablist'
             aria-label={translations('tabListLabel')}
           >
@@ -150,7 +159,12 @@ function LearnerProfileContent(): React.JSX.Element {
               </KangurButton>
             ))}
           </div>
+        </div>
 
+        <div
+          className={`grid w-full items-start ${KANGUR_PANEL_GAP_CLASSNAME} xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,28rem)]`}
+        >
+          <div className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
           {activeTab === 'overview' ? (
             <>
               <div className='grid gap-6 sm:grid-cols-2'>
@@ -164,14 +178,18 @@ function LearnerProfileContent(): React.JSX.Element {
           ) : (
             <KangurLearnerProfileAiTutorMoodWidget />
           )}
-        </div>
+          </div>
 
-        <div className='flex w-full flex-col gap-6 lg:w-[380px] xl:w-[420px]'>
-          <KangurLearnerProfileAssignmentsWidget />
-          <KangurLearnerProfilePerformanceWidget />
-          <KangurLearnerProfileSessionsWidget />
+          <aside
+            className={`flex min-w-0 flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
+            aria-label={translations('statsHeading')}
+          >
+            <KangurLearnerProfileAssignmentsWidget />
+            <KangurLearnerProfilePerformanceWidget />
+            <KangurLearnerProfileSessionsWidget />
+          </aside>
         </div>
-      </div>
+      </section>
 
       <KangurDocsTooltipEnhancer enabled={docsTooltipsEnabled} rootId='learner-profile-root' />
     </div>
@@ -198,12 +216,21 @@ export default function LearnerProfilePage(): React.JSX.Element {
 
   return (
     <KangurLearnerProfileRuntimeBoundary enabled={true}>
-      <KangurPageShell tone='profile' skipLinkTargetId={PROFILE_MAIN_ID}>
-        <KangurTopNavigationController navigation={navigation} />
-        <KangurPageContainer id={PROFILE_MAIN_ID}>
+      <KangurStandardPageLayout
+        tone='profile'
+        id={PROFILE_PAGE_ID}
+        skipLinkTargetId={PROFILE_MAIN_ID}
+        docsRootId={PROFILE_PAGE_ID}
+        docsTooltipsEnabled={false}
+        navigation={<KangurTopNavigationController navigation={navigation} />}
+        containerProps={{
+          as: 'section',
+          id: PROFILE_MAIN_ID,
+          className: `flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`,
+        }}
+      >
           <LearnerProfileContent />
-        </KangurPageContainer>
-      </KangurPageShell>
+      </KangurStandardPageLayout>
     </KangurLearnerProfileRuntimeBoundary>
   );
 }

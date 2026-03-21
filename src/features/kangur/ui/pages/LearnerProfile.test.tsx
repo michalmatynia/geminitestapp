@@ -160,6 +160,8 @@ describe('LearnerProfile page', () => {
     expect(screen.getByRole('tablist', { name: 'Profil ucznia' })).toBeInTheDocument();
     expect(screen.getByText('Profil ucznia')).toBeInTheDocument();
     expect(screen.getByText('Relacja z AI Tutorem')).toBeInTheDocument();
+    expect(document.getElementById('learner-profile-root')).toHaveClass('w-full');
+    expect(document.getElementById('learner-profile-root')).not.toHaveClass('max-w-[900px]');
   });
 
   it('routes back to the localized base path when the learner profile fails to load', () => {

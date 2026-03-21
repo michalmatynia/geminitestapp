@@ -104,6 +104,24 @@ describe('KangurFeatureRouteShell', () => {
     });
   });
 
+  it('maps learner profile routes into Kangur routing and observability context', () => {
+    usePathnameMock.mockReturnValue('/kangur/profile');
+
+    render(<KangurFeatureRouteShell />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'LearnerProfile',
+      requestedPath: '/kangur/profile',
+      requestedHref: '/kangur/profile',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'LearnerProfile',
+      requestedPath: '/kangur/profile',
+    });
+  });
+
   it('maps the tests slug while normalizing trailing slashes', () => {
     usePathnameMock.mockReturnValue('/kangur/tests/');
 

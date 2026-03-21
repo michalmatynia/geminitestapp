@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,

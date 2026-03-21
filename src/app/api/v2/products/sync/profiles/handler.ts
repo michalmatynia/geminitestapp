@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   createProductSyncProfile,
   listProductSyncProfiles,
-} from '@/features/product-sync/public/services/product-sync-repository';
+} from '@/features/product-sync/services/product-sync-repository';
 import type {
   ProductSyncProfileCreatePayload,
   ProductSyncProfilesResponse,

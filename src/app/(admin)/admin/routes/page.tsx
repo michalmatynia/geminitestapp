@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminRouteMapPage } from '@/features/admin/';
+import { AdminRouteMapPage } from '@/features/admin/pages/AdminRouteMapPage';
 
 export const dynamic = 'force-dynamic';
 

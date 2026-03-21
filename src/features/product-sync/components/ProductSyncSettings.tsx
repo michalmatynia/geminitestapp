@@ -11,7 +11,7 @@ import {
   useRelinkBaseProductsMutation,
   useRunProductSyncProfileMutation,
   useUpdateProductSyncProfileMutation,
-} from '@/features/product-sync/public/hooks/useProductSyncSettings';
+} from '@/features/product-sync/hooks/useProductSyncSettings';
 import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
 import {
   PRODUCT_SYNC_APP_FIELDS,

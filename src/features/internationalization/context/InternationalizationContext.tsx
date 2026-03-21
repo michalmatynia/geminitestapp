@@ -6,7 +6,7 @@ import {
   useDeleteCountryMutation,
   useDeleteCurrencyMutation,
   useDeleteLanguageMutation,
-} from '@/features/internationalization/public/hooks/useInternationalizationMutations';
+} from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type {
   CountryOption,
   CurrencyOption,

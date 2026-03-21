@@ -5,7 +5,7 @@ import {
   defaultCountries,
   defaultCurrencies,
   defaultLanguages,
-} from '@/features/internationalization/public/lib/internationalizationDefaults';
+} from '@/features/internationalization/lib/internationalizationDefaults';
 
 type CodeRecord = {
   code: string;

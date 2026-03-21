@@ -5,7 +5,7 @@ import { z } from 'zod';
 import {
   getCurrencyRepository,
   getInternationalizationProvider,
-} from '@/features/internationalization/public/server';
+} from '@/features/internationalization/server';
 import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/base';
 import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

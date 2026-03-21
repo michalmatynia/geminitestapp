@@ -19,7 +19,7 @@ const {
   },
 }));
 
-vi.mock('@/features/internationalization/public/server', () => ({
+vi.mock('@/features/internationalization/server', () => ({
   getCurrencyRepository: getCurrencyRepositoryMock,
   getInternationalizationProvider: getInternationalizationProviderMock,
 }));

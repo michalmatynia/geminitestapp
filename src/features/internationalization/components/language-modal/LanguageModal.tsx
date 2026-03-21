@@ -6,7 +6,7 @@ import {
   useInternationalizationActions,
   useInternationalizationData,
   useInternationalizationUi,
-} from '@/features/internationalization/public/context/InternationalizationContext';
+} from '@/features/internationalization/context/InternationalizationContext';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 

@@ -7,7 +7,7 @@ import {
   useInternationalizationActions,
   useInternationalizationData,
   useInternationalizationUi,
-} from '@/features/internationalization/public/context/InternationalizationContext';
+} from '@/features/internationalization/context/InternationalizationContext';
 import { countryFlagMap } from '@/shared/constants/internationalization';
 import {
   Button,

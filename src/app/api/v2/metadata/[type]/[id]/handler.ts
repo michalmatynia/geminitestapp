@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getCurrencyRepository,
   getInternationalizationProvider,
-} from '@/features/internationalization/public/server';
+} from '@/features/internationalization/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';

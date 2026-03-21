@@ -64,10 +64,13 @@ npm run typecheck:mobile
 npm run check:mobile:native:deps
 npm run check:mobile:native:port
 npm run check:mobile:native:runtime:ios
+npm run check:mobile:native:runtime:android
+npm run prepare:mobile:runtime:android
 npx vitest run apps/mobile/src/practice/KangurPracticeScreen.test.tsx apps/mobile/src/home/HomeScreen.test.tsx apps/mobile/src/plan/KangurDailyPlanScreen.test.tsx apps/mobile/src/scores/KangurResultsScreen.test.tsx apps/mobile/src/lessons/KangurLessonsScreen.test.tsx apps/mobile/src/profile/KangurProfileScreen.test.tsx apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx
 npm run config:mobile
 npm run export:mobile:web
 npm run dev:mobile:ios:local
+npm run dev:mobile:android:local
 ```
 
 Runtime-checked on the exported preview:
@@ -178,28 +181,44 @@ Current native caveat:
 
 ## Native Android state
 
-As of March 21, 2026, the Android mobile scripts are aligned with the repaired workspace, but the host is still not ready for a live emulator launch:
+As of March 21, 2026, the checked Android local launch path is healthy again:
 
-- `npm run dev:mobile:android:local -- --dry-run` is healthy and shows the intended launcher behavior
-- `npm run check:mobile:native:deps` is green, so the remaining Android blocker is not native dependency drift inside this repo
+- Android Studio is installed at `/Applications/Android Studio.app`
+- the Android SDK is available at `/Users/michalmatynia/Library/Android/sdk`
+- the shared mobile wrapper now auto-detects that default macOS SDK path and augments `PATH`, so the checked mobile scripts no longer depend on manual shell exports on this machine
+- `npm run check:mobile:android:toolchain` is green
+- `npm run check:mobile:native:deps` is green
 - the Android local launcher normalizes `EXPO_PUBLIC_KANGUR_API_URL` from `http://localhost:3000` to `http://10.0.2.2:3000` for emulator runtime traffic
+- `npm run check:mobile:native:runtime:android` now behaves like the real sandbox gate:
+  - `status=warning`
+  - `host=ok`
+  - `backend=skipped`
+  - `runtime=ok`
+- `npm run prepare:mobile:runtime:android` now passes end to end, including:
+  - Android toolchain check
+  - native Expo/React Native dependency preflight
+  - mobile tooling tests
+  - mobile typecheck
+  - Expo port preflight
+  - scoped Android runtime readiness
+- `npm run dev:mobile:android:local` now gets through:
+  - the full checked prepare chain
+  - Metro bundle startup
+  - Expo Go open on the `Kangur_API_35` emulator
+- the latest checked Android run reached:
+  - `Starting Metro Bundler`
+  - `Opening exp://192.168.0.33:8081 on Kangur_API_35`
+  - `Waiting on http://localhost:8081`
+- Expo Go is installed on the emulator already, so future local launches no longer need the earlier online bootstrap just to fetch Expo Go
 - `npm run checklist:mobile:native:runtime:android` now prints the full checked chain, including `npm run check:mobile:native:deps`, before the backend, prepare, launch, and learner-session validation steps
 - the same printed checklist now includes `npm run check:mobile:native:port` before launch, so Expo port conflicts are surfaced explicitly instead of only through the launcher
-- the remaining blocker is still host-side:
-  - `adb` unavailable
-  - `emulator` unavailable
-  - `ANDROID_SDK_ROOT` / `ANDROID_HOME` unset
-- the Android toolchain check now prints the exact macOS setup path for this machine:
-  - `export ANDROID_SDK_ROOT="/Users/michalmatynia/Library/Android/sdk"`
-  - `export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"`
 
 Current Android caveat:
 
-- the runtime env itself is already correct in this branch for emulator use
-- the next real Android step is to install/configure Android Studio platform-tools and emulator support, then rerun:
-  - `npm run check:mobile:android:toolchain`
-  - `npm run check:mobile:native:runtime:android`
-  - `npm run dev:mobile:android:local`
+- backend probing is still reported as `skipped` inside the Codex sandbox, so the remaining Android learner-session validation still belongs in a normal shell plus Expo Go interaction
+- the main remaining Android gap is now the same kind of product/runtime proof as iOS:
+  - one normal non-debug learner-session practice run in Expo Go
+  - then the ordinary-route recheck from `npm run checklist:mobile:native:runtime:android`
 
 ## Environment
 

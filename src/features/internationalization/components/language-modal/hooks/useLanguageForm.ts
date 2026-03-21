@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { useInternationalizationUi } from '@/features/internationalization/public/context/InternationalizationContext';
-import { useSaveLanguageMutation } from '@/features/internationalization/public/hooks/useInternationalizationMutations';
+import { useInternationalizationUi } from '@/features/internationalization/context/InternationalizationContext';
+import { useSaveLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

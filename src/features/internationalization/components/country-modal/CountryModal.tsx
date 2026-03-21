@@ -6,7 +6,7 @@ import {
   useInternationalizationActions,
   useInternationalizationData,
   useInternationalizationUi,
-} from '@/features/internationalization/public/context/InternationalizationContext';
+} from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
 import { LoadingState } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';

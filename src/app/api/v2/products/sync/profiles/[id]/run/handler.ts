@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { startProductSyncRun } from '@/features/product-sync/public/services/product-sync-run-starter';
+import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 

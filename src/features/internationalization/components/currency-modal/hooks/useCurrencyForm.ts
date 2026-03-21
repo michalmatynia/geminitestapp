@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useSaveCurrencyMutation } from '@/features/internationalization/public/hooks/useInternationalizationMutations';
+import { useSaveCurrencyMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

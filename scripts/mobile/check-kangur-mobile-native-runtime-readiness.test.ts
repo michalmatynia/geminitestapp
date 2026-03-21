@@ -586,6 +586,7 @@ describe('createKangurMobileNativeRuntimeReadinessScopedReport', () => {
     expect(scopedReport.nextSteps).toEqual([
       'Re-run npm run check:mobile:runtime:backend:ios outside the Codex sandbox or in your normal shell before native validation.',
       'Run npm run prepare:mobile:runtime:ios once the backend check is green for this target.',
+      'Run npm run check:mobile:native:port before npm run dev:mobile:ios:local so Expo does not stall on a port prompt.',
       'Run npm run dev:mobile:ios:local to launch Expo for this target.',
       'After Expo launches, run npm run checklist:mobile:native:runtime:ios for the learner-session validation flow.',
     ]);
@@ -674,6 +675,7 @@ describe('createKangurMobileNativeRuntimeReadinessScopedReport', () => {
     expect(scopedReport.nextSteps).toEqual([
       'Re-run npm run check:mobile:runtime:backend:device outside the Codex sandbox or in your normal shell before native validation.',
       'Run npm run prepare:mobile:runtime:device once the backend check is green for this target.',
+      'Run npm run check:mobile:native:port before npm run dev:mobile:device:local so Expo does not stall on a port prompt.',
       'Run npm run dev:mobile:device:local to launch Expo for this target.',
       'After Expo launches, run npm run checklist:mobile:native:runtime:device for the learner-session validation flow.',
     ]);

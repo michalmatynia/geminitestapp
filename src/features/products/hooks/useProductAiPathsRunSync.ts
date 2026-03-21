@@ -25,6 +25,7 @@ import {
   subscribeToTrackedAiPathRun,
 } from '@/shared/lib/ai-paths/client-run-tracker';
 import { getRecentAiPathRunEnqueue } from '@/shared/lib/query-invalidation';
+import { listTriggerButtonRunFeedback } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -166,7 +167,11 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       );
     };
 
-    const trackRun = (runId: string, productId: string): void => {
+    const trackRun = (
+      runId: string,
+      productId: string,
+      initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined
+    ): void => {
       const existingTrackedRun = trackedRunsRef.current.get(runId);
       if (existingTrackedRun) {
         existingTrackedRun.productId = productId;
@@ -204,7 +209,10 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
         {
           initialSnapshot: {
             runId,
-            status: 'queued',
+            status: initialSnapshot?.status ?? 'queued',
+            updatedAt: initialSnapshot?.updatedAt,
+            finishedAt: initialSnapshot?.finishedAt,
+            errorMessage: initialSnapshot?.errorMessage ?? null,
             entityId: productId,
             entityType: 'product',
           },
@@ -230,6 +238,22 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
     const handler = (event: Event): void => {
       handlePayload((event as CustomEvent<unknown>).detail);
     };
+
+    listTriggerButtonRunFeedback({
+      entityType: 'product',
+      activeOnly: true,
+    }).forEach((persistedRun) => {
+      if (!persistedRun.entityId) return;
+      trackRun(persistedRun.runId, persistedRun.entityId, {
+        runId: persistedRun.runId,
+        status: persistedRun.status,
+        updatedAt: persistedRun.updatedAt,
+        finishedAt: persistedRun.finishedAt,
+        errorMessage: persistedRun.errorMessage,
+        entityId: persistedRun.entityId,
+        entityType: 'product',
+      });
+    });
 
     handlePayload(getRecentAiPathRunEnqueue());
 

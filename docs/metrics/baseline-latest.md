@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-21T09:03:37.587Z
+Generated at: 2026-03-21T09:22:28.438Z
 
 ## Snapshot
 
-- Source files: 7096
-- Source lines: 1156921
+- Source files: 7097
+- Source lines: 1157205
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -22,9 +22,9 @@ Generated at: 2026-03-21T09:03:37.587Z
 - API delegated server routes: 159
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 285/29 (982.8%)
-- Cross-feature dependency pairs: 7
+- Cross-feature dependency pairs: 5
 - Shared -> features imports: 3
-- setInterval occurrences: 1
+- setInterval occurrences: 0
 - Prop-drilling chains (depth >= 3): 20
 - Prop-drilling chains (depth >= 4): 5
 
@@ -55,8 +55,6 @@ Generated at: 2026-03-21T09:03:37.587Z
 | `kangur -> cms` | 10 |
 | `products -> internationalization` | 4 |
 | `admin -> foldertree` | 2 |
-| `ai -> files` | 1 |
-| `ai -> kangur` | 1 |
 | `integrations -> product-sync` | 1 |
 | `products -> product-sync` | 1 |
 

@@ -10,6 +10,7 @@ export type KangurMobileNativeValidationChecklistSection = {
   launchCommand: string;
   manualFallbackCommands?: string[];
   notes: string[];
+  portCommand: string;
   prepareCommand: string;
   readinessCommand: string;
   title: string;
@@ -57,6 +58,7 @@ const getTargetCommands = (target: KangurMobileRuntimeTarget) => {
         backendCommand: 'npm run check:mobile:runtime:backend:ios',
         dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:ios:local',
+        portCommand: 'npm run check:mobile:native:port',
         prepareCommand: 'npm run prepare:mobile:runtime:ios',
         readinessCommand: 'npm run check:mobile:native:runtime:ios',
       };
@@ -65,6 +67,7 @@ const getTargetCommands = (target: KangurMobileRuntimeTarget) => {
         backendCommand: 'npm run check:mobile:runtime:backend:android',
         dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:android:local',
+        portCommand: 'npm run check:mobile:native:port',
         prepareCommand: 'npm run prepare:mobile:runtime:android',
         readinessCommand: 'npm run check:mobile:native:runtime:android',
       };
@@ -73,6 +76,7 @@ const getTargetCommands = (target: KangurMobileRuntimeTarget) => {
         backendCommand: 'npm run check:mobile:runtime:backend:device',
         dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:device:local',
+        portCommand: 'npm run check:mobile:native:port',
         prepareCommand: 'npm run prepare:mobile:runtime:device',
         readinessCommand: 'npm run check:mobile:native:runtime:device',
       };
@@ -147,6 +151,8 @@ export const createKangurMobileNativeValidationChecklistSection = (
         notes: [
           'The local launcher normalizes localhost to 10.0.2.2 for emulator runtime traffic.',
           'The backend check still probes host-side localhost before launch.',
+          'If the Android SDK is not configured yet on macOS, export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk".',
+          'Also export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH" before rerunning the checked Android flow.',
         ],
         title: 'Android emulator',
         validationSteps: [...COMMON_VALIDATION_STEPS],
@@ -188,6 +194,7 @@ const renderKangurMobileNativeValidationChecklist = (
       `[kangur-mobile-native-checklist] Run ${section.dependencyCommand}`,
       `[kangur-mobile-native-checklist] Run ${section.backendCommand}`,
       `[kangur-mobile-native-checklist] Run ${section.prepareCommand}`,
+      `[kangur-mobile-native-checklist] Run ${section.portCommand}`,
       `[kangur-mobile-native-checklist] Run ${section.launchCommand}`,
       ...section.notes.map(
         (note) => `[kangur-mobile-native-checklist] NOTE ${note}`,

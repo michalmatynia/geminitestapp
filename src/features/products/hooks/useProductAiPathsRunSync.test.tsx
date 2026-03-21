@@ -12,12 +12,14 @@ import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-
 const {
   invalidateProductsCountsAndDetailMock,
   getRecentAiPathRunEnqueueMock,
+  listTriggerButtonRunFeedbackMock,
   markQueuedProductSourceMock,
   removeQueuedProductSourceMock,
   subscribeToTrackedAiPathRunMock,
 } = vi.hoisted(() => ({
   invalidateProductsCountsAndDetailMock: vi.fn(),
   getRecentAiPathRunEnqueueMock: vi.fn(),
+  listTriggerButtonRunFeedbackMock: vi.fn(),
   markQueuedProductSourceMock: vi.fn(),
   removeQueuedProductSourceMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
@@ -37,6 +39,15 @@ vi.mock('@/features/products/state/queued-product-ops', () => ({
 vi.mock('@/shared/lib/query-invalidation', () => ({
   getRecentAiPathRunEnqueue: (...args: unknown[]) => getRecentAiPathRunEnqueueMock(...args),
 }));
+
+vi.mock('@/shared/lib/ai-paths/trigger-button-run-feedback', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/shared/lib/ai-paths/trigger-button-run-feedback')>();
+  return {
+    ...actual,
+    listTriggerButtonRunFeedback: (...args: unknown[]) => listTriggerButtonRunFeedbackMock(...args),
+  };
+});
 
 vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
   subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
@@ -93,12 +104,14 @@ describe('useProductAiPathsRunSync', () => {
     vi.useFakeTimers();
     invalidateProductsCountsAndDetailMock.mockReset();
     getRecentAiPathRunEnqueueMock.mockReset();
+    listTriggerButtonRunFeedbackMock.mockReset();
     markQueuedProductSourceMock.mockReset();
     removeQueuedProductSourceMock.mockReset();
     subscribeToTrackedAiPathRunMock.mockReset();
     trackedRunListeners.clear();
     trackedRunUnsubscribes.clear();
     getRecentAiPathRunEnqueueMock.mockReturnValue(null);
+    listTriggerButtonRunFeedbackMock.mockReturnValue([]);
 
     subscribeToTrackedAiPathRunMock.mockImplementation(
       (
@@ -247,6 +260,50 @@ describe('useProductAiPathsRunSync', () => {
         }),
       })
     );
+  });
+
+  it('restores persisted active product runs on mount so list pills survive refreshes', async () => {
+    listTriggerButtonRunFeedbackMock.mockReturnValue([
+      {
+        buttonId: 'button-product-modal',
+        pathId: 'path-shared',
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-42',
+        runId: 'run-persisted',
+        status: 'running',
+        updatedAt: '2026-03-09T12:00:04.000Z',
+        finishedAt: null,
+        errorMessage: null,
+      },
+    ]);
+
+    const queryClient = createQueryClient();
+    const view = renderHook(() => useProductAiPathsRunSync(), {
+      wrapper: createWrapper(queryClient),
+    });
+    await flushAsync();
+
+    expect(listTriggerButtonRunFeedbackMock).toHaveBeenCalledWith({
+      entityType: 'product',
+      activeOnly: true,
+    });
+    expect(subscribeToTrackedAiPathRunMock).toHaveBeenCalledWith(
+      'run-persisted',
+      expect.any(Function),
+      expect.objectContaining({
+        initialSnapshot: expect.objectContaining({
+          status: 'running',
+          entityId: 'product-42',
+          entityType: 'product',
+        }),
+      })
+    );
+    expect(view.result.current.get('product-42')).toMatchObject({
+      runId: 'run-persisted',
+      status: 'running',
+      label: 'Running',
+    });
   });
 
   it('removes only the completed run source while another run for the same product remains queued', async () => {

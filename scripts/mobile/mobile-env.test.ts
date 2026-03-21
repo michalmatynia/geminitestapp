@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
@@ -11,6 +12,7 @@ import {
 
 const ORIGINAL_ENV = { ...process.env };
 const ORIGINAL_CWD = process.cwd();
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 
 afterEach(() => {
   process.env = { ...ORIGINAL_ENV };
@@ -27,10 +29,14 @@ describe('mobile env helpers', () => {
   it('resolves a relative override env file path from both cwd and repo root', () => {
     process.env.KANGUR_MOBILE_ENV_FILE = 'apps/mobile/.env.example';
 
-    expect(resolveMobileEnvFilePaths()).toEqual([
-      resolve(ORIGINAL_CWD, 'apps/mobile/.env.example'),
-      
-    ]);
+    expect(resolveMobileEnvFilePaths()).toEqual(
+      Array.from(
+        new Set([
+          resolve(ORIGINAL_CWD, 'apps/mobile/.env.example'),
+          resolve(SCRIPT_DIR, '../../apps/mobile/.env.example'),
+        ]),
+      ),
+    );
   });
 
   it('falls back to the default mobile env file paths', () => {

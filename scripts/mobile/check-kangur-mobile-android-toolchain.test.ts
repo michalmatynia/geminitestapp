@@ -13,6 +13,7 @@ describe('analyzeKangurMobileAndroidToolchain', () => {
       }),
     ).toEqual({
       issues: [],
+      nextSteps: [],
       resolved: {
         androidHome: '/Users/test/Library/Android/sdk',
         androidSdkRoot: '/Users/test/Library/Android/sdk',
@@ -46,6 +47,16 @@ describe('analyzeKangurMobileAndroidToolchain', () => {
         }),
       ]),
     );
+    expect(report.nextSteps).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Install Android Studio'),
+        expect.stringContaining('export ANDROID_SDK_ROOT='),
+        expect.stringContaining('export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"'),
+        'Re-run npm run check:mobile:android:toolchain.',
+        'Then run npm run check:mobile:native:runtime:android.',
+        'Then run npm run dev:mobile:android:local.',
+      ]),
+    );
   });
 
   it('warns when ANDROID_SDK_ROOT and ANDROID_HOME differ', () => {
@@ -65,5 +76,6 @@ describe('analyzeKangurMobileAndroidToolchain', () => {
         }),
       ]),
     );
+    expect(report.nextSteps).toEqual([]);
   });
 });

@@ -1,12 +1,12 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 
 import { useSectionLayout } from './SectionLayoutContext';
-import { AppEmbedBlock } from '../blocks/AppEmbedBlock';
 import {
   BlockRenderContext,
   BlockSettingsContext,
@@ -17,7 +17,6 @@ import { ButtonBlock } from '../blocks/ButtonBlock';
 import { HeadingBlock } from '../blocks/HeadingBlock';
 import { ImageBlock, ImageElementBlock } from '../blocks/ImageBlock';
 import { InputBlock } from '../blocks/InputBlock';
-import { KangurWidgetBlock } from '../blocks/KangurWidgetBlock';
 import {
   AnnouncementBlock,
   DividerBlock,
@@ -25,10 +24,8 @@ import {
   IconBlock,
   VideoEmbedBlock,
 } from '../blocks/MiscellaneousBlocks';
-import { Model3DBlock } from '../blocks/Model3DBlock';
 import { ProgressBlock } from '../blocks/ProgressBlock';
 import { RepeaterBlock } from '../blocks/RepeaterBlock';
-import { RichTextBlock } from '../blocks/RichTextBlock';
 import { TextAtomBlock, TextAtomLetterBlock } from '../blocks/TextAtomBlock';
 import { TextBlock, TextElementBlock } from '../blocks/TextBlock';
 import {
@@ -39,6 +36,11 @@ import {
 import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 import { useMediaStyles } from '../media-styles-context';
+
+const Model3DBlock = dynamic(() => import('../blocks/Model3DBlock').then(mod => mod.Model3DBlock), { ssr: false });
+const AppEmbedBlock = dynamic(() => import('../blocks/AppEmbedBlock').then(mod => mod.AppEmbedBlock));
+const KangurWidgetBlock = dynamic(() => import('../blocks/KangurWidgetBlock').then(mod => mod.KangurWidgetBlock));
+const RichTextBlock = dynamic(() => import('../blocks/RichTextBlock').then(mod => mod.RichTextBlock));
 
 
 export { BlockSettingsContext };

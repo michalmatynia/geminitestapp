@@ -31,17 +31,29 @@ describe('parseKangurMobileNativeValidationChecklistTarget', () => {
 
 describe('createKangurMobileNativeValidationChecklistSection', () => {
   it('builds Android emulator commands and notes', () => {
-    expect(
-      createKangurMobileNativeValidationChecklistSection('android-emulator'),
-    ).toEqual(
+    const section =
+      createKangurMobileNativeValidationChecklistSection('android-emulator');
+
+    expect(section).toEqual(
       expect.objectContaining({
         backendCommand: 'npm run check:mobile:runtime:backend:android',
         dependencyCommand: 'npm run check:mobile:native:deps',
         launchCommand: 'npm run dev:mobile:android:local',
+        portCommand: 'npm run check:mobile:native:port',
         prepareCommand: 'npm run prepare:mobile:runtime:android',
         readinessCommand: 'npm run check:mobile:native:runtime:android',
         title: 'Android emulator',
       }),
+    );
+    expect(section.notes).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('10.0.2.2'),
+        expect.stringContaining('host-side localhost'),
+        expect.stringContaining('ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"'),
+        expect.stringContaining(
+          'PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+        ),
+      ]),
     );
   });
 

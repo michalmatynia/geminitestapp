@@ -6,6 +6,7 @@ import { PauseIcon, PlayIcon, RefreshCwIcon } from 'lucide-react';
 import { Badge, Button, Card, ListPanel, LoadingState } from '@/features/kangur/shared/ui';
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
+import { safeSetInterval } from '@/shared/lib/timers';
 
 const REFRESH_INTERVAL_MS = 10_000;
 const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
@@ -96,7 +97,7 @@ export function KangurSocialPipelineQueuePanel({
 
   useEffect(() => {
     void fetchData();
-    const interval = setInterval(() => void fetchData(), REFRESH_INTERVAL_MS);
+    const interval = safeSetInterval(() => void fetchData(), REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchData]);
 

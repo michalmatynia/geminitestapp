@@ -151,12 +151,13 @@ const nextConfig = {
     // written to public/uploads/ (e.g. batch screenshot captures).
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: [...(config.watchOptions?.ignored ?? []), '**/public/uploads/**'],
+      ignored: ['**/node_modules/**', '**/.git/**', '**/public/uploads/**'],
     };
 
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');
+    config.resolve.alias['three'] = path.resolve(__dirname, 'node_modules/three');
     config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(
       __dirname,
       'node_modules/three'

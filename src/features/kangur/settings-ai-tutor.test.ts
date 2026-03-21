@@ -29,6 +29,7 @@ describe('kangur ai tutor settings', () => {
       contextRegistryDepth: 1,
       contextRegistryMaxNodes: 24,
       knowledgeGraphEnabled: true,
+      experimentFlags: { coachingMode: null, contextStrategy: null },
       motionPresetId: null,
       guestIntroMode: 'first_visit',
       homeOnboardingMode: 'first_visit',

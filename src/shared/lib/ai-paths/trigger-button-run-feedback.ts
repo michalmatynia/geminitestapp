@@ -26,6 +26,14 @@ export type TriggerButtonRunFeedbackSnapshot = {
   errorMessage: string | null;
 };
 
+export type TriggerButtonRunFeedbackRecord = TriggerButtonRunFeedbackSnapshot & {
+  buttonId: string;
+  pathId: string | null;
+  location: AiTriggerButtonLocation;
+  entityId: string | null;
+  entityType: string;
+};
+
 type PersistedTriggerButtonRunFeedback = TriggerButtonRunFeedbackSnapshot & {
   buttonId: string;
   pathId: string | null;
@@ -165,6 +173,21 @@ const resolveFeedbackRecency = (value: TriggerButtonRunFeedbackSnapshot): number
   const timestamp = Date.parse(value.finishedAt ?? value.updatedAt ?? '');
   return Number.isFinite(timestamp) ? timestamp : 0;
 };
+
+const toTriggerButtonRunFeedbackRecord = (
+  value: PersistedTriggerButtonRunFeedback
+): TriggerButtonRunFeedbackRecord => ({
+  buttonId: value.buttonId,
+  pathId: value.pathId,
+  location: value.location,
+  entityId: value.entityId,
+  entityType: value.entityType,
+  runId: value.runId,
+  status: value.status,
+  updatedAt: value.updatedAt,
+  finishedAt: value.finishedAt,
+  errorMessage: value.errorMessage,
+});
 
 const matchesLegacyFeedbackRecord = (
   value: PersistedTriggerButtonRunFeedback,
@@ -349,6 +372,55 @@ export const readTriggerButtonRunFeedback = (input: {
     finishedAt: legacyMatch.finishedAt,
     errorMessage: legacyMatch.errorMessage,
   };
+};
+
+export const listTriggerButtonRunFeedback = (input?: {
+  entityType?: string | undefined;
+  entityId?: string | null | undefined;
+  activeOnly?: boolean | undefined;
+}): TriggerButtonRunFeedbackRecord[] => {
+  const currentMap = readPersistedFeedbackMap();
+  const prunedMap = pruneExpiredFeedback(currentMap);
+  if (prunedMap !== currentMap) {
+    writePersistedFeedbackMap(prunedMap);
+  }
+
+  const normalizedEntityType =
+    typeof input?.entityType === 'string'
+      ? normalizeRequiredString(input.entityType)?.toLowerCase() ?? null
+      : null;
+  const hasEntityIdFilter =
+    input !== undefined && Object.prototype.hasOwnProperty.call(input, 'entityId');
+  const normalizedEntityId = hasEntityIdFilter
+    ? normalizeOptionalString(input?.entityId ?? null)
+    : undefined;
+
+  const deduped = new Map<string, PersistedTriggerButtonRunFeedback>();
+
+  Object.values(prunedMap)
+    .map((value) => normalizePersistedFeedback(value))
+    .filter((value): value is PersistedTriggerButtonRunFeedback => Boolean(value))
+    .forEach((value) => {
+      if (normalizedEntityType && value.entityType !== normalizedEntityType) {
+        return;
+      }
+      if (hasEntityIdFilter && value.entityId !== normalizedEntityId) {
+        return;
+      }
+      if (input?.activeOnly && isTriggerButtonRunFeedbackTerminal(value.status)) {
+        return;
+      }
+
+      const dedupeKey = [value.runId, value.entityType, value.entityId ?? '__none__'].join('::');
+      const current = deduped.get(dedupeKey);
+      if (!current || resolveFeedbackRecency(value) > resolveFeedbackRecency(current)) {
+        deduped.set(dedupeKey, value);
+      }
+    });
+
+  return Array.from(deduped.values())
+    .sort((left, right) => resolveFeedbackRecency(right) - resolveFeedbackRecency(left))
+    .map((value) => toTriggerButtonRunFeedbackRecord(value));
 };
 
 export const persistTriggerButtonRunFeedback = (input: {

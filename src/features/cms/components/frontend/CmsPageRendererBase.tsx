@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
@@ -35,16 +36,17 @@ import { FrontendGridSection } from './sections/FrontendGridSection';
 import { FrontendHeroSection } from './sections/FrontendHeroSection';
 import { FrontendImageElementSection } from './sections/FrontendImageElementSection';
 import { FrontendImageWithTextSection } from './sections/FrontendImageWithTextSection';
-import { FrontendModel3DElementSection } from './sections/FrontendModel3DElementSection';
 import { FrontendNewsletterSection } from './sections/FrontendNewsletterSection';
-import { FrontendRichTextSection } from './sections/FrontendRichTextSection';
 import { FrontendSlideshowSection } from './sections/FrontendSlideshowSection';
 import { FrontendTestimonialsSection } from './sections/FrontendTestimonialsSection';
 import { FrontendTextAtomSection } from './sections/FrontendTextAtomSection';
 import { FrontendTextElementSection } from './sections/FrontendTextElementSection';
-import { FrontendVideoSection } from './sections/FrontendVideoSection';
 import { SectionBlockProvider } from './sections/SectionBlockContext';
 import { getHoverEffectVars } from './theme-styles';
+
+const FrontendModel3DElementSection = dynamic(() => import('./sections/FrontendModel3DElementSection').then(mod => mod.FrontendModel3DElementSection));
+const FrontendVideoSection = dynamic(() => import('./sections/FrontendVideoSection').then(mod => mod.FrontendVideoSection));
+const FrontendRichTextSection = dynamic(() => import('./sections/FrontendRichTextSection').then(mod => mod.FrontendRichTextSection));
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 

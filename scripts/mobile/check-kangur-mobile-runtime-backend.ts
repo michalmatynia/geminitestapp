@@ -62,6 +62,17 @@ const getRuntimeLaunchCommand = (
   }
 };
 
+const getRuntimePortCheckCommand = (
+  target: KangurMobileRuntimeTarget,
+): string => {
+  switch (target) {
+    case 'ios-simulator':
+    case 'android-emulator':
+    case 'device':
+      return 'npm run check:mobile:native:port';
+  }
+};
+
 const getRuntimeChecklistCommand = (
   target: KangurMobileRuntimeTarget,
 ): string => {
@@ -237,6 +248,7 @@ export const createKangurMobileRuntimeBackendNextSteps = (
   status: KangurMobileRuntimeBackendReport['status'],
 ): string[] => {
   const backendCheckCommand = getRuntimeBackendCheckCommand(target);
+  const portCheckCommand = getRuntimePortCheckCommand(target);
   const prepareCommand = getRuntimePrepareCommand(target);
   const launchCommand = getRuntimeLaunchCommand(target);
   const checklistCommand = getRuntimeChecklistCommand(target);
@@ -251,6 +263,7 @@ export const createKangurMobileRuntimeBackendNextSteps = (
   return [
     ...steps,
     `Run ${prepareCommand} once the backend check is green for this target.`,
+    `Run ${portCheckCommand} before ${launchCommand} so Expo does not stall on a port prompt.`,
     `Run ${launchCommand} to launch Expo for this target.`,
     `After Expo launches, run ${checklistCommand} for the learner-session validation flow.`,
   ];

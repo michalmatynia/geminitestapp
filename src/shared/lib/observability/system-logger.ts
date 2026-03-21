@@ -551,8 +551,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       try {
         let hydratedContext = context;
         try {
-          const hydrationModule =
-            await import('./runtime-context/hydrate-system-log-runtime-context');
+          const modulePath = './runtime-context/hydrate-system-log-runtime-context';
+          const hydrationModule = await import(/* webpackIgnore: true */ modulePath);
           if (typeof hydrationModule.hydrateLogRuntimeContext === 'function') {
             hydratedContext = (await hydrationModule.hydrateLogRuntimeContext(context)) ?? context;
           }

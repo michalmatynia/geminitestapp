@@ -8,12 +8,10 @@ import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
 import { AdminAiPathsBreadcrumbs, Badge, Button, ListPanel, Hint } from '@/shared/ui';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
-import { FileUploadEventsPanel } from '@/features/files';
 import { getMotionSafeScrollBehavior } from '@/shared/utils';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
-import { KangurSocialPipelineQueuePanel } from '@/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel';
 
 type QueueTab = 'paths-all' | 'paths' | 'paths-external' | 'file-uploads' | 'image-studio' | 'kangur-social';
 
@@ -42,7 +40,15 @@ const TABS_ID_PREFIX = 'ai-paths-queue-tabs';
 const getTriggerId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-trigger-${tab}`;
 const getContentId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-content-${tab}`;
 
-export function AdminAiPathsQueuePage(): React.JSX.Element {
+export type AdminAiPathsQueuePageProps = {
+  fileUploadsPanel?: React.ReactNode;
+  kangurSocialPanel?: React.ReactNode;
+};
+
+export function AdminAiPathsQueuePage({
+  fileUploadsPanel,
+  kangurSocialPanel,
+}: AdminAiPathsQueuePageProps): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedTab = searchParams?.get('tab') ?? 'paths-all';
   const requestedQuery = searchParams?.get('query')?.trim() ?? '';
@@ -208,7 +214,9 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             aria-labelledby={getTriggerId('file-uploads')}
             className='space-y-4'
           >
-            <FileUploadEventsPanel />
+            {fileUploadsPanel ?? (
+              <Hint>File uploads monitoring is not available in this context.</Hint>
+            )}
           </section>
         ) : null}
 
@@ -230,7 +238,9 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             aria-labelledby={getTriggerId('kangur-social')}
             className='space-y-4'
           >
-            <KangurSocialPipelineQueuePanel />
+            {kangurSocialPanel ?? (
+              <Hint>StudiQ Social pipeline is not available in this context.</Hint>
+            )}
           </section>
         ) : null}
       </ListPanel>

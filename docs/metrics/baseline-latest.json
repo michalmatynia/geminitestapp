@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-21T09:03:37.587Z",
+  "generatedAt": "2026-03-21T09:22:28.438Z",
   "source": {
-    "totalFiles": 7096,
-    "totalLines": 1156921,
+    "totalFiles": 7097,
+    "totalLines": 1157205,
     "useClientFiles": 2,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -107,14 +107,14 @@
     ]
   },
   "imports": {
-    "appFeatureBarrelImports": 0,
+    "appFeatureBarrelImports": 1,
     "appFeatureDeepImports": 22,
     "featureToSharedTotalImports": 28,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 3
   },
   "architecture": {
-    "crossFeatureEdgePairs": 7,
+    "crossFeatureEdgePairs": 5,
     "topCrossFeatureEdges": [
       {
         "edge": "kangur -> cms",
@@ -129,14 +129,6 @@
         "references": 2
       },
       {
-        "edge": "ai -> files",
-        "references": 1
-      },
-      {
-        "edge": "ai -> kangur",
-        "references": 1
-      },
-      {
         "edge": "integrations -> product-sync",
         "references": 1
       },
@@ -149,12 +141,12 @@
       {
         "feature": "kangur",
         "files": 1406,
-        "lines": 303735
+        "lines": 303703
       },
       {
         "feature": "ai",
         "files": 1087,
-        "lines": 223315
+        "lines": 223325
       },
       {
         "feature": "case-resolver",
@@ -164,12 +156,12 @@
       {
         "feature": "cms",
         "files": 333,
-        "lines": 53739
+        "lines": 53743
       },
       {
         "feature": "products",
-        "files": 253,
-        "lines": 51065
+        "files": 254,
+        "lines": 51225
       },
       {
         "feature": "integrations",
@@ -289,7 +281,7 @@
     ]
   },
   "runtime": {
-    "setIntervalOccurrences": 1
+    "setIntervalOccurrences": 0
   },
   "codeHealth": {
     "deepRelativeImportCount": 11,
@@ -649,6 +641,10 @@
         "lines": 20
       },
       {
+        "path": "src/app/(admin)/admin/ai-paths/queue/page.tsx",
+        "lines": 15
+      },
+      {
         "path": "src/app/(frontend)/products/[id]/page.tsx",
         "lines": 15
       },
@@ -670,10 +666,6 @@
       },
       {
         "path": "src/app/(admin)/admin/notes/notebooks/page.tsx",
-        "lines": 14
-      },
-      {
-        "path": "src/app/(admin)/admin/settings/playwright/page.tsx",
         "lines": 14
       }
     ]

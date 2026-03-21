@@ -1,4 +1,7 @@
 import { spawnSync } from 'node:child_process';
+import { homedir } from 'node:os';
+
+const DEFAULT_MACOS_ANDROID_SDK_ROOT = `${homedir()}/Library/Android/sdk`;
 
 export type KangurMobileAndroidToolchainIssue = {
   level: 'error' | 'warning';
@@ -7,6 +10,7 @@ export type KangurMobileAndroidToolchainIssue = {
 
 export type KangurMobileAndroidToolchainReport = {
   issues: KangurMobileAndroidToolchainIssue[];
+  nextSteps: string[];
   resolved: {
     androidHome: string | null;
     androidSdkRoot: string | null;
@@ -70,8 +74,42 @@ export const analyzeKangurMobileAndroidToolchain = (
     );
   }
 
+  const nextSteps: string[] = [];
+  if (issues.some((issue) => issue.level === 'error')) {
+    if (!state.androidSdkRoot && !state.androidHome) {
+      nextSteps.push(
+        'Install Android Studio, then download Android platform-tools and the Android Emulator from the SDK Manager.',
+      );
+      nextSteps.push(
+        `export ANDROID_SDK_ROOT="${DEFAULT_MACOS_ANDROID_SDK_ROOT}"`,
+      );
+      nextSteps.push(
+        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+      );
+    } else if (!state.androidSdkRoot && state.androidHome) {
+      nextSteps.push(`export ANDROID_SDK_ROOT="${state.androidHome}"`);
+      nextSteps.push(
+        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+      );
+    } else if (state.androidSdkRoot && !state.androidHome) {
+      nextSteps.push(`export ANDROID_HOME="${state.androidSdkRoot}"`);
+      nextSteps.push(
+        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+      );
+    } else if (state.androidSdkRoot) {
+      nextSteps.push(
+        'export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"',
+      );
+    }
+
+    nextSteps.push('Re-run npm run check:mobile:android:toolchain.');
+    nextSteps.push('Then run npm run check:mobile:native:runtime:android.');
+    nextSteps.push('Then run npm run dev:mobile:android:local.');
+  }
+
   return {
     issues,
+    nextSteps,
     resolved: {
       androidHome: state.androidHome,
       androidSdkRoot: state.androidSdkRoot,
@@ -118,6 +156,13 @@ export const runKangurMobileAndroidToolchainCheck = (): void => {
     for (const issue of report.issues) {
       const prefix = issue.level === 'error' ? 'ERROR' : 'WARN';
       console.log(`[kangur-mobile-android-toolchain] ${prefix} ${issue.message}`);
+    }
+  }
+
+  if (report.nextSteps.length > 0) {
+    console.log('[kangur-mobile-android-toolchain] Suggested next steps:');
+    for (const step of report.nextSteps) {
+      console.log(`[kangur-mobile-android-toolchain] NEXT ${step}`);
     }
   }
 

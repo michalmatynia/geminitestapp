@@ -130,6 +130,17 @@ const getRuntimeLaunchCommand = (
   }
 };
 
+const getRuntimePortCheckCommand = (
+  scope: Exclude<KangurMobileNativeRuntimeReadinessScope, 'all'>,
+): string => {
+  switch (scope) {
+    case 'ios-simulator':
+    case 'android-emulator':
+    case 'device':
+      return 'npm run check:mobile:native:port';
+  }
+};
+
 export const parseKangurMobileNativeRuntimeReadinessScope = (
   argv: string[] = process.argv.slice(2),
 ): KangurMobileNativeRuntimeReadinessScope => {
@@ -486,6 +497,7 @@ export const createKangurMobileNativeRuntimeReadinessScopedReport = (
     ...(canLaunchTarget
       ? [
           `Run ${getRuntimePrepareCommand(scope)} once the backend check is green for this target.`,
+          `Run ${getRuntimePortCheckCommand(scope)} before ${getRuntimeLaunchCommand(scope)} so Expo does not stall on a port prompt.`,
           `Run ${getRuntimeLaunchCommand(scope)} to launch Expo for this target.`,
           `After Expo launches, run ${getRuntimeChecklistCommand(scope)} for the learner-session validation flow.`,
         ]

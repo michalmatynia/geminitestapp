@@ -30,6 +30,7 @@
     "check:mobile:ios:toolchain": "npm run check:ios:toolchain --workspace @kangur/mobile",
     "check:mobile:android:toolchain": "npm run check:android:toolchain --workspace @kangur/mobile",
     "check:mobile:native:deps": "npm run check:native:deps --workspace @kangur/mobile",
+    "check:mobile:native:port": "npm run check:native:port --workspace @kangur/mobile",
     "check:mobile:native:host": "npm run check:native:host --workspace @kangur/mobile",
     "check:mobile:native:runtime": "npm run check:native:runtime --workspace @kangur/mobile",
     "check:mobile:native:runtime:ios": "npm run check:native:runtime:ios --workspace @kangur/mobile",

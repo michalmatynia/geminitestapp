@@ -45,6 +45,7 @@ npm run typecheck:mobile
 npm run config:mobile
 npm run export:mobile:web
 npm run check:mobile:native:deps
+npm run check:mobile:native:port
 npm run dev:mobile:ios:local
 npm run dev:mobile:android:local
 ```
@@ -61,6 +62,7 @@ Validated on March 21, 2026:
 ```bash
 npm run typecheck:mobile
 npm run check:mobile:native:deps
+npm run check:mobile:native:port
 npm run check:mobile:native:runtime:ios
 npx vitest run apps/mobile/src/practice/KangurPracticeScreen.test.tsx apps/mobile/src/home/HomeScreen.test.tsx apps/mobile/src/plan/KangurDailyPlanScreen.test.tsx apps/mobile/src/scores/KangurResultsScreen.test.tsx apps/mobile/src/lessons/KangurLessonsScreen.test.tsx apps/mobile/src/profile/KangurProfileScreen.test.tsx apps/mobile/src/leaderboard/KangurLeaderboardScreen.test.tsx
 npm run config:mobile
@@ -135,8 +137,18 @@ As of March 21, 2026, the checked iOS local launch path is healthy again:
   - `iOS Bundled ... node_modules/expo-router/entry.js`
   - `Waiting on http://localhost:8081`
 - backend probing is still reported as `skipped` inside the Codex sandbox, so the remaining native learner-session validation still belongs in a normal shell plus Expo Go interaction
+- direct backend proof in a normal shell is now available too:
+  - `curl -I http://localhost:3000/api/kangur/auth/me`
+  - returned `401 Unauthorized` on March 21, 2026, which is the expected unauthenticated response and confirms the local Kangur API was actually up during the latest iOS run
 - fresh simulator launch proof artifact:
   - `output/playwright/ios-native-launch-home.png`
+- fresh live-backend ordinary-route artifacts from the latest checked iOS session:
+  - `output/playwright/ios-native-home-live.png`
+  - `output/playwright/ios-native-results-live-cold.png`
+  - `output/playwright/ios-native-profile-live-cold.png`
+  - `output/playwright/ios-native-plan-live-cold.png`
+  - `output/playwright/ios-native-leaderboard-live-cold.png`
+  - `output/playwright/ios-native-practice-live-cold.png`
 - ordinary native route recheck after the repaired launch path:
   - `output/playwright/ios-native-home-ordinary.png`
   - `output/playwright/ios-native-results-ordinary.png`
@@ -148,13 +160,19 @@ As of March 21, 2026, the checked iOS local launch path is healthy again:
 Current native caveat:
 
 - this host can still hit transient CoreSimulatorService failures during `simctl`, but the checked iOS readiness path no longer reports that as a fake “install Xcode” blocker
-- `prepare:runtime:ios` now also runs `npm run check:mobile:native:deps` so missing native Expo/React Native modules fail fast before Metro starts
+- `prepare:runtime:ios` now also runs both `npm run check:mobile:native:deps` and `npm run check:mobile:native:port` so missing native Expo/React Native modules and stale Expo port conflicts fail fast before Metro starts
 - `npm run checklist:mobile:native:runtime:ios` now prints the same checked chain, including `npm run check:mobile:native:deps`, before the backend, prepare, launch, and learner-session validation steps
 - `npm run dev:mobile:ios:local -- --dry-run` and the checked launch failure hints now also surface `npm run check:mobile:native:deps` explicitly, so the launcher output matches the actual native prepare flow
 - `npm run dev:mobile:ios:local` now also fails fast when Expo port `8081` is already occupied, instead of falling into Expo's interactive port prompt; the recovery hint points at `lsof -i tcp:8081`
+- there is now a standalone preflight for that case too:
+  - `npm run check:mobile:native:port`
+- the checked `prepare:runtime:android` and `prepare:runtime:device` scripts now also include the same port preflight before their runtime launch phase
 - the checked launch command is the better source of truth than the standalone prepare wrapper when this host is flaky
 - the main remaining native iOS gap is still one manual non-debug learner-session practice run inside Expo Go, followed by the ordinary-route recheck from the checklist
-- in the latest ordinary-route simulator pass, the native shells loaded for home/profile/plan/results/leaderboard/practice, but without a completed learner-session login they still fell back to local mode and could show `Network request failed`
+- the latest checked iOS session supersedes the older ambiguous route captures:
+  - cold-open `/results` now reaches `Historia wyników / Ostatnie sesje mobilne` in Expo Go with the live backend up
+  - the fresh home capture also shows the ordinary authenticated dashboard shell again
+  - fresh cold-open captures now also cover `/profile`, `/plan`, `/leaderboard`, and `/practice` from the same healthy session
 - a one-off LAN-IP relaunch experiment (`EXPO_PUBLIC_KANGUR_API_URL=http://192.168.0.33:3000`) was inconclusive on this host because Expo never reached `Waiting on http://localhost:8081`, so no config change was adopted from that trial
 - the ordinary-route `Network request failed` screenshots were also captured during a session where the local backend had in fact fallen out of service on `localhost:3000`, so they should not be treated as proof of a stable iOS runtime bug by themselves
 
@@ -166,10 +184,14 @@ As of March 21, 2026, the Android mobile scripts are aligned with the repaired w
 - `npm run check:mobile:native:deps` is green, so the remaining Android blocker is not native dependency drift inside this repo
 - the Android local launcher normalizes `EXPO_PUBLIC_KANGUR_API_URL` from `http://localhost:3000` to `http://10.0.2.2:3000` for emulator runtime traffic
 - `npm run checklist:mobile:native:runtime:android` now prints the full checked chain, including `npm run check:mobile:native:deps`, before the backend, prepare, launch, and learner-session validation steps
+- the same printed checklist now includes `npm run check:mobile:native:port` before launch, so Expo port conflicts are surfaced explicitly instead of only through the launcher
 - the remaining blocker is still host-side:
   - `adb` unavailable
   - `emulator` unavailable
   - `ANDROID_SDK_ROOT` / `ANDROID_HOME` unset
+- the Android toolchain check now prints the exact macOS setup path for this machine:
+  - `export ANDROID_SDK_ROOT="/Users/michalmatynia/Library/Android/sdk"`
+  - `export PATH="$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"`
 
 Current Android caveat:
 

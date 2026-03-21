@@ -5,6 +5,7 @@ import {
   createKangurMobileNativeLocalChecklistHint,
   createKangurMobileNativeLocalDependencyHint,
   createKangurMobileNativeLocalLaunchEnv,
+  createKangurMobileNativeLocalPortHint,
   createKangurMobileNativeLocalPortConflictHint,
   createKangurMobileNativeLocalPrepareHint,
   createKangurMobileNativeLocalReadinessHint,
@@ -62,12 +63,14 @@ describe('createKangurMobileNativeLocalPlan', () => {
     expect(createKangurMobileNativeLocalPlan('ios-simulator')).toEqual({
       rootChecklistScript: 'checklist:mobile:native:runtime:ios',
       rootDependencyScript: 'check:mobile:native:deps',
+      rootPortScript: 'check:mobile:native:port',
       prepareScript: 'prepare:runtime:ios',
       rootPrepareScript: 'prepare:mobile:runtime:ios',
       rootReadinessScript: 'check:mobile:native:runtime:ios',
       rootStartScript: 'dev:mobile:ios:local',
       workspaceChecklistScript: 'checklist:native:runtime:ios',
       workspaceDependencyScript: 'check:native:deps',
+      workspacePortScript: 'check:native:port',
       workspaceReadinessScript: 'check:native:runtime:ios',
       startScript: 'ios',
       target: 'ios-simulator',
@@ -78,12 +81,14 @@ describe('createKangurMobileNativeLocalPlan', () => {
     expect(createKangurMobileNativeLocalPlan('android-emulator')).toEqual({
       rootChecklistScript: 'checklist:mobile:native:runtime:android',
       rootDependencyScript: 'check:mobile:native:deps',
+      rootPortScript: 'check:mobile:native:port',
       prepareScript: 'prepare:runtime:android',
       rootPrepareScript: 'prepare:mobile:runtime:android',
       rootReadinessScript: 'check:mobile:native:runtime:android',
       rootStartScript: 'dev:mobile:android:local',
       workspaceChecklistScript: 'checklist:native:runtime:android',
       workspaceDependencyScript: 'check:native:deps',
+      workspacePortScript: 'check:native:port',
       workspaceReadinessScript: 'check:native:runtime:android',
       startScript: 'android',
       target: 'android-emulator',
@@ -94,12 +99,14 @@ describe('createKangurMobileNativeLocalPlan', () => {
     expect(createKangurMobileNativeLocalPlan('device')).toEqual({
       rootChecklistScript: 'checklist:mobile:native:runtime:device',
       rootDependencyScript: 'check:mobile:native:deps',
+      rootPortScript: 'check:mobile:native:port',
       prepareScript: 'prepare:runtime:device',
       rootPrepareScript: 'prepare:mobile:runtime:device',
       rootReadinessScript: 'check:mobile:native:runtime:device',
       rootStartScript: 'dev:mobile:device:local',
       workspaceChecklistScript: 'checklist:native:runtime:device',
       workspaceDependencyScript: 'check:native:deps',
+      workspacePortScript: 'check:native:port',
       workspaceReadinessScript: 'check:native:runtime:device',
       startScript: 'dev',
       target: 'device',
@@ -142,6 +149,19 @@ describe('createKangurMobileNativeLocalDependencyHint', () => {
     );
     expect(createKangurMobileNativeLocalDependencyHint(plan)).toContain(
       'npm run check:native:deps',
+    );
+  });
+});
+
+describe('createKangurMobileNativeLocalPortHint', () => {
+  it('includes both root and workspace port checks', () => {
+    const plan = createKangurMobileNativeLocalPlan('ios-simulator');
+
+    expect(createKangurMobileNativeLocalPortHint(plan)).toContain(
+      'npm run check:mobile:native:port',
+    );
+    expect(createKangurMobileNativeLocalPortHint(plan)).toContain(
+      'npm run check:native:port',
     );
   });
 });

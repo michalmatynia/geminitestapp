@@ -43,6 +43,15 @@ avoid becoming another dumping ground.
 
 ## Major Feature Entry Points
 
+### AI Features
+- **AI Features Overview**: [`docs/ai-features/README.md`](./ai-features/README.md) — Comprehensive guides for all AI capabilities
+  - Agent Runtime: [`agent-runtime-overview.md`](./ai-features/agent-runtime-overview.md) — Autonomous agent execution
+  - Chatbot: [`chatbot-overview.md`](./ai-features/chatbot-overview.md) — Conversational AI
+  - Image Studio: [`image-studio-overview.md`](./ai-features/image-studio-overview.md) — Image generation platform
+  - AI Insights: AI-generated analytics and insights
+  - Agent Creator: Persona and agent configuration
+
+### Core Features
 - AI Paths: canonical feature docs under
   [`docs/ai-paths/README.md`](./ai-paths/README.md)
 - Case Resolver: [`docs/case-resolver/index.md`](./case-resolver/index.md)
@@ -56,6 +65,7 @@ avoid becoming another dumping ground.
 
 These are canonical platform guides.
 
+- [`docs/platform/accessibility.md`](./platform/accessibility.md) — WCAG 2.1 Level AA patterns, screen reader support, keyboard navigation
 - [`docs/platform/developer-handbook.md`](./platform/developer-handbook.md)
 - [`docs/platform/best-practices.md`](./platform/best-practices.md)
 - [`docs/platform/component-patterns.md`](./platform/component-patterns.md)

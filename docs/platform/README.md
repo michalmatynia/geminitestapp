@@ -24,12 +24,18 @@ New cross-cutting platform docs should land here instead of directly under
 
 ## Current Docs
 
-- [`api-caching.md`](./api-caching.md)
-- [`data-fetching-caching.md`](./data-fetching-caching.md)
+### Core Patterns & Best Practices
+- [`accessibility.md`](./accessibility.md) — WCAG 2.1 Level AA patterns and standards
 - [`component-patterns.md`](./component-patterns.md)
 - [`best-practices.md`](./best-practices.md)
-- [`developer-handbook.md`](./developer-handbook.md)
 - [`architecture-guardrails.md`](./architecture-guardrails.md)
+
+### Data & Caching
+- [`api-caching.md`](./api-caching.md)
+- [`data-fetching-caching.md`](./data-fetching-caching.md)
+
+### Developer Resources
+- [`developer-handbook.md`](./developer-handbook.md)
 - [`tooltip-documentation-platform.md`](./tooltip-documentation-platform.md)
 - [`migration-checklist.md`](./migration-checklist.md)
 - [`bun-support.md`](./bun-support.md)

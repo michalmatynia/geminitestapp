@@ -57,6 +57,10 @@ to the canonical repo references.
   `src/shared/lib/observability/`
 - Shared query/data conventions: `src/shared/lib/query-factories-v2.ts`,
   `docs/platform/architecture-guardrails.md`
+- Accessibility patterns: `docs/platform/accessibility.md` — WCAG 2.1 Level AA,
+  focus indicators, ARIA labeling, live regions, form error linking
+- AI Features: `docs/ai-features/` — Agent Runtime, Chatbot, Image Studio,
+  AI Insights, Agent Creator documentation
 - Raw `queryClient.fetchQuery(...)`, `queryClient.prefetchQuery(...)`, and
   `queryClient.ensureQueryData(...)` are forbidden outside the shared helper
   implementation file.
@@ -68,6 +72,10 @@ to the canonical repo references.
   flows can route differently across MongoDB and Redis-backed helpers.
 - Do not assume Redis is always available. Several queues support inline
   fallback behavior when Redis is absent.
+- All interactive components must support keyboard navigation and screen readers.
+  See `docs/platform/accessibility.md` for required patterns: `focus-visible:ring-*`,
+  `role="group"` + `aria-labelledby`, `aria-live` for feedback, `aria-describedby`
+  for form errors, `aria-sort` for table headers.
 - Treat generated docs and guardrail scripts as active maintenance surfaces when
   touching AI Paths, validator docs, or architecture boundaries.
 - When consuming scanner/check `--summary-json` output, preserve the envelope
@@ -121,4 +129,5 @@ bun run bun:repo:ci
 
 ## Last Updated
 
-Aligned to the scanned repo structure on `2026-03-16`.
+- `2026-03-21` — Added comprehensive AI features documentation and accessibility patterns
+- `2026-03-16` — Aligned to the scanned repo structure

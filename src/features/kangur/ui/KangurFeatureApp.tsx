@@ -82,8 +82,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isThemeLoading = isLoadingSettings || isFetchingSettings;
-  const canRenderRouteWhileLoading = resolvedPageKey === 'Game' || resolvedPageKey === 'Lessons';
-  const shouldShowBootLoader = (isBootLoading && !canRenderRouteWhileLoading) || isThemeLoading;
+  const shouldShowBootLoader = isThemeLoading;
   const isNavigationTransitionActive =
     isRouteAcknowledging || isRoutePending || isRouteWaitingForReady || isRouteRevealing;
   const isLanguageSwitcherTransition =
@@ -91,7 +90,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent =
-    isThemeLoading || (isBootLoading && !canRenderRouteWhileLoading) || shouldRedirectToHome;
+    isThemeLoading || shouldRedirectToHome;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const bootSkeletonShownAtRef = useRef<number | null>(

@@ -123,13 +123,6 @@ export function KangurProgressSyncProvider({
               saveProgress(mergedProgress);
             }
 
-            if (shouldUpdateRemote) {
-              await kangurPlatform.progress.update(mergedProgress, { subject });
-              if (cancelled) {
-                return null;
-              }
-            }
-
             return {
               mergedProgress,
               shouldUpdateLocal,
@@ -173,6 +166,19 @@ export function KangurProgressSyncProvider({
           subject,
         });
         lastSyncedProgressRef.current = serializeProgress(result.mergedProgress);
+
+        if (result.shouldUpdateRemote && !cancelled) {
+          const scheduleIdle =
+            typeof globalThis.requestIdleCallback === 'function'
+              ? globalThis.requestIdleCallback
+              : (cb: () => void) => setTimeout(cb, 1);
+          scheduleIdle(() => {
+            if (cancelled) {
+              return;
+            }
+            void kangurPlatform.progress.update(result.mergedProgress, { subject });
+          });
+        }
       } finally {
         if (!cancelled && syncStateRef.current === 'loading') {
           syncStateRef.current = 'ready';

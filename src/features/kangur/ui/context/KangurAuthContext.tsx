@@ -24,6 +24,13 @@ import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRou
 import type { KangurAuthMode } from '@/features/kangur/shared/contracts/kangur-auth';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
+const AUTH_CHECK_TIMEOUT_MS = 3_000;
+
+const raceWithTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> =>
+  Promise.race([
+    promise,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
 
 type KangurAuthError = {
   type: 'unknown' | 'auth_required' | 'user_not_registered';
@@ -123,34 +130,37 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
     setAuthError(null);
     setIsLoadingAuth(true);
     try {
-      const currentUser = await withKangurClientError(
-        {
-          source: 'kangur.auth',
-          action: 'check-app-state',
-          description: 'Fetches the current Kangur auth session.',
-          context: { stage: 'auth.me' },
-        },
-        async () => await kangurPlatform.auth.me(),
-        {
-          fallback: null,
-          onError: (error) => {
-            if (authRequestVersionRef.current !== requestVersion) {
-              return;
-            }
-            setUser(null);
-            setIsAuthenticated(false);
-
-            if (isKangurAuthStatusError(error)) {
-              // Anonymous mode is allowed; authentication is optional.
-              setAuthError(null);
-            } else {
-              setAuthError({
-                type: 'unknown',
-                message: resolveErrorMessage(error),
-              });
-            }
+      const currentUser = await raceWithTimeout(
+        withKangurClientError(
+          {
+            source: 'kangur.auth',
+            action: 'check-app-state',
+            description: 'Fetches the current Kangur auth session.',
+            context: { stage: 'auth.me' },
           },
-        }
+          async () => await kangurPlatform.auth.me(),
+          {
+            fallback: null,
+            onError: (error) => {
+              if (authRequestVersionRef.current !== requestVersion) {
+                return;
+              }
+              setUser(null);
+              setIsAuthenticated(false);
+
+              if (isKangurAuthStatusError(error)) {
+                // Anonymous mode is allowed; authentication is optional.
+                setAuthError(null);
+              } else {
+                setAuthError({
+                  type: 'unknown',
+                  message: resolveErrorMessage(error),
+                });
+              }
+            },
+          }
+        ),
+        AUTH_CHECK_TIMEOUT_MS
       );
       if (authRequestVersionRef.current !== requestVersion) {
         return;

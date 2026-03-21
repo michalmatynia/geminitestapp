@@ -411,6 +411,7 @@ describe('Game page', () => {
     expect(gameMain?.className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px'
     );
+    expect(gameMain?.className).toContain('overflow-y-auto');
     expect(gameMain?.className).not.toContain(
       'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
     );
@@ -420,10 +421,31 @@ describe('Game page', () => {
     expect(lockKangurPageVerticalScrollMock).not.toHaveBeenCalled();
   });
 
-  it('shows mobile phone simulation scroll controls when an active game screen overflows', async () => {
+  it('keeps the operation screen on the standard mobile layout when phone simulation is enabled', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('operation'),
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    const gameMain = document.getElementById('kangur-game-main');
+
+    expect(gameMain).not.toBeNull();
+    expect(gameMain?.className).toContain('overflow-y-auto');
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-container')).toBeNull();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-up')).toBeNull();
+    expect(screen.queryByTestId('kangur-game-phone-simulation-scroll-down')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Wróć do lekcji' })).not.toBeInTheDocument();
+    expect(lockKangurPageVerticalScrollMock).not.toHaveBeenCalled();
+  });
+
+  it('shows mobile phone simulation scroll controls when an active gameplay screen overflows', async () => {
+    useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('playing'),
       progress: { totalXp: 1 },
     });
 
@@ -479,7 +501,7 @@ describe('Game page', () => {
   it('returns to lessons from the mobile game controls', () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurGameRuntimeMock.mockReturnValue({
-      ...buildRuntime('operation'),
+      ...buildRuntime('playing'),
       progress: { totalXp: 1 },
     });
 
@@ -512,7 +534,7 @@ describe('Game page', () => {
   it('uses the shared shell viewport height and bottom clearance for phone simulation chrome', async () => {
     useKangurMobileBreakpointMock.mockReturnValue(true);
     useKangurPhoneSimulationMock.mockReturnValue({ enabled: true });
-    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('operation'));
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime('playing'));
 
     render(<Game />);
 

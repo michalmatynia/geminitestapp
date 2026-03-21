@@ -87,6 +87,23 @@ const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   'english_sentence_quiz',
   'english_parts_of_speech_quiz',
 ]);
+const GAME_MOBILE_CHROME_SCREENS = new Set<KangurGameScreen>([
+  'kangur',
+  'calendar_quiz',
+  'geometry_quiz',
+  'clock_quiz',
+  'addition_quiz',
+  'subtraction_quiz',
+  'division_quiz',
+  'multiplication_quiz',
+  'logical_patterns_quiz',
+  'logical_classification_quiz',
+  'logical_analogies_quiz',
+  'english_sentence_quiz',
+  'english_parts_of_speech_quiz',
+  'playing',
+  'result',
+]);
 const GAME_MOBILE_BACK_TO_LESSONS_ACKNOWLEDGE_MS = 110;
 
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
@@ -158,7 +175,9 @@ function GameContent(): React.JSX.Element {
   const isMobile = useKangurMobileBreakpoint();
   const { enabled: phoneSimulationEnabled } = useKangurPhoneSimulation();
   const shouldUsePhoneSimulation = isMobile && phoneSimulationEnabled;
-  const shouldUseGameMobileChrome = shouldUsePhoneSimulation && screen !== 'home';
+  const shouldUseGameMobileChrome =
+    shouldUsePhoneSimulation && GAME_MOBILE_CHROME_SCREENS.has(screen);
+  const shouldUseStandardMobileScroll = isMobile && !shouldUseGameMobileChrome;
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const getScreenLabel = (screenKey: KangurGameScreen): string =>
@@ -720,6 +739,24 @@ function GameContent(): React.JSX.Element {
     return () => window.cancelAnimationFrame(frameId);
   }, [screen, shouldUseGameMobileChrome, updateScrollButtons]);
 
+  useEffect(() => {
+    const schedule =
+      typeof globalThis.requestIdleCallback === 'function'
+        ? globalThis.requestIdleCallback
+        : (cb: () => void) => setTimeout(cb, 1);
+    const handle = schedule(() => {
+      routeNavigator.prefetch(createPageUrl('Lessons', basePath));
+      routeNavigator.prefetch(createPageUrl('Duels', basePath));
+    });
+    return () => {
+      if (typeof globalThis.cancelIdleCallback === 'function') {
+        globalThis.cancelIdleCallback(handle as number);
+      } else {
+        clearTimeout(handle as ReturnType<typeof setTimeout>);
+      }
+    };
+  }, [basePath, routeNavigator]);
+
   const renderScreen = (
     screenKey: KangurGameScreen,
     className: string,
@@ -773,7 +810,12 @@ function GameContent(): React.JSX.Element {
           'aria-labelledby': `${GAME_TITLE_ID} ${GAME_SCREEN_TITLE_ID}`,
           className: shouldUseGameMobileChrome
             ? `flex h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))] min-h-0 flex-col items-center py-3 sm:py-4 ${KANGUR_PANEL_GAP_CLASSNAME}`
-            : `flex flex-col items-center pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+            : cn(
+                `flex flex-col items-center pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-8 sm:pt-10 ${KANGUR_PANEL_GAP_CLASSNAME}`,
+                shouldUseStandardMobileScroll
+                  ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y'
+                  : null
+              ),
         }}
       >
         <div

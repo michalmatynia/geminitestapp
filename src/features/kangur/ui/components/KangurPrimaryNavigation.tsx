@@ -12,6 +12,7 @@ import {
   Trophy,
   X,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
@@ -33,13 +34,19 @@ import {
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { getKangurAvatarById } from '@/features/kangur/ui/avatars/catalog';
-import { KangurChoiceDialog } from '@/features/kangur/ui/components/KangurChoiceDialog';
+const KangurChoiceDialog = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurChoiceDialog').then(m => ({ default: m.KangurChoiceDialog }))
+);
 import { KangurDialogHeader } from '@/features/kangur/ui/components/KangurDialogHeader';
 import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
-import { KangurLanguageSwitcher } from '@/features/kangur/ui/components/KangurLanguageSwitcher';
+const KangurLanguageSwitcher = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurLanguageSwitcher').then(m => ({ default: m.KangurLanguageSwitcher }))
+);
 import { KangurNavAction } from '@/features/kangur/ui/components/KangurNavAction';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
-import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
+const KangurProfileMenu = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurProfileMenu').then(m => ({ default: m.KangurProfileMenu }))
+);
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useOptionalKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';

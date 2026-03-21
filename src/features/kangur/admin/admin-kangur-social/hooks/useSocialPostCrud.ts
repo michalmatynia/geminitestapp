@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/features/kangur/shared/ui';
 import {
+  fetchKangurSocialPosts,
   useDeleteKangurSocialPost,
   usePatchKangurSocialPost,
   usePublishKangurSocialPost,
@@ -110,8 +111,12 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       if (error instanceof ApiError && error.status === 404) {
         let refreshedPosts: KangurSocialPost[] | null = null;
         try {
-          const refetchResult = await fetchQueryV2<KangurSocialPost[], KangurSocialPost[]>(queryClient, {
+          const refetchResult = await fetchQueryV2<KangurSocialPost[]>(queryClient, {
             queryKey,
+            queryFn: async () =>
+              fetchKangurSocialPosts({
+                scope: 'admin',
+              }),
             staleTime: 0,
             meta: {
               source: 'kangur.admin.social.useSocialPostCrud.deletePost',
@@ -122,7 +127,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
               tags: ['kangur', 'social-posts'],
               description: 'Refetches social posts after 404 on delete.',
             },
-          });
+          })();
           refreshedPosts = refetchResult ?? null;
         } catch {
           refreshedPosts = null;

@@ -1,5 +1,10 @@
 import type { KangurAuthSession } from '@kangur/platform';
 
+import {
+  getKangurMobileLocalizedValue,
+  type KangurMobileLocale,
+} from '../i18n/kangurMobileI18n';
+
 export type KangurHomeAuthBoundaryViewModel = {
   developerAutoSignInLabel: string | null;
   isRestoringLearnerSession: boolean;
@@ -8,11 +13,59 @@ export type KangurHomeAuthBoundaryViewModel = {
   userLabel: string;
 };
 
+const STATUS_LABELS = {
+  anonymous: {
+    de: 'anonym',
+    en: 'anonymous',
+    pl: 'anonimowy',
+  },
+  authenticated: {
+    de: 'angemeldet',
+    en: 'signed in',
+    pl: 'zalogowany',
+  },
+  loading: {
+    de: 'laden',
+    en: 'loading',
+    pl: 'ladowanie',
+  },
+  restoring: {
+    de: 'wird wiederhergestellt',
+    en: 'restoring',
+    pl: 'przywracanie',
+  },
+} as const;
+
+const ACTOR_TYPE_LABELS = {
+  admin: {
+    de: 'admin',
+    en: 'admin',
+    pl: 'admin',
+  },
+  learner: {
+    de: 'schuler',
+    en: 'learner',
+    pl: 'uczen',
+  },
+  parent: {
+    de: 'elternteil',
+    en: 'parent',
+    pl: 'rodzic',
+  },
+} as const;
+
+const RESTORING_SESSION_LABEL = {
+  de: 'wiederherstellung der schulersitzung',
+  en: 'restoring learner session',
+  pl: 'przywracanie sesji ucznia',
+} as const;
+
 export const getKangurHomeAuthBoundaryViewModel = ({
   authError,
   developerAutoSignInEnabled,
   hasAttemptedDeveloperAutoSignIn,
   isLoadingAuth,
+  locale = 'pl',
   session,
   supportsLearnerCredentials,
 }: {
@@ -20,25 +73,29 @@ export const getKangurHomeAuthBoundaryViewModel = ({
   developerAutoSignInEnabled: boolean;
   hasAttemptedDeveloperAutoSignIn: boolean;
   isLoadingAuth: boolean;
+  locale?: KangurMobileLocale;
   session: KangurAuthSession;
   supportsLearnerCredentials: boolean;
 }): KangurHomeAuthBoundaryViewModel => {
   const isRestoringLearnerSession =
     isLoadingAuth && session.status !== 'authenticated';
-  const statusLabel = isRestoringLearnerSession
-    ? 'przywracanie'
-    : isLoadingAuth
-      ? 'ladowanie'
-      : session.status === 'authenticated'
-        ? 'zalogowany'
-        : 'anonimowy';
+  const statusLabel = getKangurMobileLocalizedValue(
+    isRestoringLearnerSession
+      ? STATUS_LABELS.restoring
+      : isLoadingAuth
+        ? STATUS_LABELS.loading
+        : session.status === 'authenticated'
+          ? STATUS_LABELS.authenticated
+          : STATUS_LABELS.anonymous,
+    locale,
+  );
   const actorTypeLabel =
     session.user?.actorType === 'learner'
-      ? 'uczen'
+      ? ACTOR_TYPE_LABELS['learner'][locale]
       : session.user?.actorType === 'parent'
-        ? 'rodzic'
-        : session.user?.actorType === 'admin'
-          ? 'admin'
+        ? ACTOR_TYPE_LABELS['parent'][locale]
+      : session.user?.actorType === 'admin'
+          ? ACTOR_TYPE_LABELS['admin'][locale]
           : session.user?.actorType ?? null;
 
   return {
@@ -62,9 +119,9 @@ export const getKangurHomeAuthBoundaryViewModel = ({
       session.status !== 'authenticated',
     statusLabel,
     userLabel: isRestoringLearnerSession
-      ? 'przywracanie sesji ucznia'
+      ? getKangurMobileLocalizedValue(RESTORING_SESSION_LABEL, locale)
       : session.user
         ? `${session.user.full_name} (${actorTypeLabel})`
-        : 'anonimowy',
+        : getKangurMobileLocalizedValue(STATUS_LABELS.anonymous, locale),
   };
 };

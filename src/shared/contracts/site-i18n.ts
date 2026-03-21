@@ -133,6 +133,14 @@ export const DEFAULT_SITE_I18N_CONFIG: SiteI18nConfig = siteI18nConfigSchema.par
       isDefault: false,
       textDirection: 'ltr',
     },
+    {
+      code: 'uk',
+      label: 'Ukrainian',
+      nativeLabel: 'Українська',
+      enabled: true,
+      isDefault: false,
+      textDirection: 'ltr',
+    },
   ],
   defaultLocale: 'pl',
   localePrefixMode: 'as-needed',
@@ -140,6 +148,7 @@ export const DEFAULT_SITE_I18N_CONFIG: SiteI18nConfig = siteI18nConfigSchema.par
   fallbacks: {
     en: ['pl'],
     de: ['pl'],
+    uk: ['en', 'pl'],
     pl: ['en'],
   },
   domains: [],

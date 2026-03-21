@@ -12,11 +12,8 @@ import type {
 
 export type {
   ClockChallengeMedal,
-  ClockChallengeResult,
   ClockGameMode,
   ClockTask,
-  ClockTrainingSectionContent,
-  ClockTrainingSectionId,
   ClockTrainingTaskPoolId,
 } from './clock-training/types';
 

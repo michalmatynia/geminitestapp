@@ -82,6 +82,16 @@ export const kangurSocialPostSchema = z.object({
 });
 export type KangurSocialPost = z.infer<typeof kangurSocialPostSchema>;
 
+export const kangurSocialPostEditorStateSchema = kangurSocialPostSchema.pick({
+  titlePl: true,
+  titleEn: true,
+  bodyPl: true,
+  bodyEn: true,
+});
+export type KangurSocialPostEditorStateDto = z.infer<
+  typeof kangurSocialPostEditorStateSchema
+>;
+
 export const kangurSocialPostsSchema = z.array(kangurSocialPostSchema);
 export type KangurSocialPosts = z.infer<typeof kangurSocialPostsSchema>;
 

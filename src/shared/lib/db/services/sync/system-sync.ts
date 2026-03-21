@@ -194,7 +194,7 @@ export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma,
 
 export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.setting.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.key,
     key: row.key,
     value: row.value,
@@ -213,7 +213,7 @@ export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 
 export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.userPreferences.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId,
@@ -238,7 +238,7 @@ export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mo
 
 export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.systemLog.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     level: row.level,
     message: row.message,
@@ -264,7 +264,7 @@ export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.fileUploadEvent.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     status: row.status,
@@ -294,7 +294,7 @@ export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ m
 
 export const syncAiConfigurationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.aiConfiguration.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     type: row.type ?? null,

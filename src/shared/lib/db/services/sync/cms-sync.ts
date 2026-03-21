@@ -167,7 +167,7 @@ export const syncCmsDomainSlugs: DatabaseSyncHandler = async ({ mongo, prisma })
 
 export const syncCmsSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.slug.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     slug: row.slug,
@@ -187,7 +187,7 @@ export const syncCmsSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 
 export const syncCmsThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.cmsTheme.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -210,7 +210,7 @@ export const syncCmsThemesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 
 export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.page.findMany({ include: { components: true } });
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -244,7 +244,7 @@ export const syncCmsPagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 
 export const syncCmsPageSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.pageSlug.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     pageId: row.pageId,
     slugId: row.slugId,
     assignedAt: row.assignedAt,
@@ -265,7 +265,7 @@ export const syncCmsDomainsPrismaToMongo: DatabaseSyncHandler = async ({
   toObjectIdMaybe,
 }) => {
   const rows = await prisma.cmsDomain.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: toObjectIdMaybe(row.id),
     id: row.id,
     domain: row.domain,
@@ -285,7 +285,7 @@ export const syncCmsDomainsPrismaToMongo: DatabaseSyncHandler = async ({
 
 export const syncCmsDomainSlugsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.cmsDomainSlug.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: new ObjectId(),
     domainId: row.domainId,
     slugId: row.slugId,

@@ -1,6 +1,12 @@
 import { getKangurLeaderboardOperationInfo } from '@kangur/core';
 import type { KangurScore } from '@kangur/contracts';
 
+import {
+  getKangurMobileLocaleTag,
+  type KangurMobileLocale,
+  type KangurMobileLocalizedValue,
+} from '../i18n/kangurMobileI18n';
+
 export type KangurMobileScoreFamily = 'all' | 'arithmetic' | 'logic' | 'time';
 export type KangurMobileScorePracticeFamily = Exclude<
   KangurMobileScoreFamily,
@@ -27,6 +33,113 @@ export type KangurMobileOperationPerformance = {
 export type KangurMobileTrainingFocus = {
   strongestOperation: KangurMobileOperationPerformance | null;
   weakestOperation: KangurMobileOperationPerformance | null;
+};
+
+const KANGUR_MOBILE_OPERATION_LABELS: Record<
+  string,
+  KangurMobileLocalizedValue<string>
+> = {
+  addition: {
+    de: 'Addition',
+    en: 'Addition',
+    pl: 'Dodawanie',
+  },
+  all: {
+    de: 'Alle',
+    en: 'All',
+    pl: 'Wszystkie',
+  },
+  calendar: {
+    de: 'Kalender',
+    en: 'Calendar',
+    pl: 'Kalendarz',
+  },
+  clock: {
+    de: 'Uhr',
+    en: 'Clock',
+    pl: 'Zegar',
+  },
+  decimals: {
+    de: 'Dezimalzahlen',
+    en: 'Decimals',
+    pl: 'Ulamki',
+  },
+  division: {
+    de: 'Division',
+    en: 'Division',
+    pl: 'Dzielenie',
+  },
+  logical_analogies: {
+    de: 'Analogien',
+    en: 'Analogies',
+    pl: 'Analogie',
+  },
+  logical_classification: {
+    de: 'Klassifikation',
+    en: 'Classification',
+    pl: 'Klasyfikacja',
+  },
+  logical_patterns: {
+    de: 'Muster und Reihen',
+    en: 'Patterns and sequences',
+    pl: 'Wzorce i ciagi',
+  },
+  logical_reasoning: {
+    de: 'Schlussfolgern',
+    en: 'Reasoning',
+    pl: 'Wnioskowanie',
+  },
+  logical_thinking: {
+    de: 'Logisches Denken',
+    en: 'Logical thinking',
+    pl: 'Myslenie logiczne',
+  },
+  mixed: {
+    de: 'Gemischt',
+    en: 'Mixed',
+    pl: 'Mieszane',
+  },
+  multiplication: {
+    de: 'Multiplikation',
+    en: 'Multiplication',
+    pl: 'Mnozenie',
+  },
+  powers: {
+    de: 'Potenzen',
+    en: 'Powers',
+    pl: 'Potegi',
+  },
+  roots: {
+    de: 'Wurzeln',
+    en: 'Roots',
+    pl: 'Pierwiastki',
+  },
+  subtraction: {
+    de: 'Subtraktion',
+    en: 'Subtraction',
+    pl: 'Odejmowanie',
+  },
+};
+
+const KANGUR_MOBILE_SCORE_FAMILY_LABELS: Record<
+  KangurMobileScorePracticeFamily,
+  KangurMobileLocalizedValue<string>
+> = {
+  arithmetic: {
+    de: 'Arithmetiktraining',
+    en: 'Arithmetic practice',
+    pl: 'Trening arytmetyczny',
+  },
+  logic: {
+    de: 'Logiktraining',
+    en: 'Logic practice',
+    pl: 'Trening logiczny',
+  },
+  time: {
+    de: 'Zeittraining',
+    en: 'Time practice',
+    pl: 'Trening czasu',
+  },
 };
 
 const toSafeRoundedPercent = (value: number): number => {
@@ -233,28 +346,28 @@ export const buildKangurMobileScoreSummary = (
   };
 };
 
-export const formatKangurMobileScoreOperation = (value: string): string =>
+export const formatKangurMobileScoreOperation = (
+  value: string,
+  locale: KangurMobileLocale = 'pl',
+): string =>
+  KANGUR_MOBILE_OPERATION_LABELS[value]?.[locale] ??
   getKangurLeaderboardOperationInfo(value).label;
 
 export const formatKangurMobileScoreFamily = (
   family: KangurMobileScorePracticeFamily,
-): string => {
-  if (family === 'logic') {
-    return 'Trening logiczny';
-  }
-  if (family === 'time') {
-    return 'Trening czasu';
-  }
-  return 'Trening arytmetyczny';
-};
+  locale: KangurMobileLocale = 'pl',
+): string => KANGUR_MOBILE_SCORE_FAMILY_LABELS[family][locale];
 
-export const formatKangurMobileScoreDateTime = (value: string): string => {
+export const formatKangurMobileScoreDateTime = (
+  value: string,
+  locale: KangurMobileLocale = 'pl',
+): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return value.slice(0, 16);
   }
 
-  return parsed.toLocaleString('pl-PL', {
+  return parsed.toLocaleString(getKangurMobileLocaleTag(locale), {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',

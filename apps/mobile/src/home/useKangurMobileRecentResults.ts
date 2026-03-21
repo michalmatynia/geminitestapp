@@ -1,5 +1,6 @@
 import type { KangurScore } from '@kangur/contracts';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
 
 type UseKangurMobileRecentResultsOptions = {
@@ -18,6 +19,7 @@ type UseKangurMobileRecentResultsResult = {
 export const useKangurMobileRecentResults = (
   options: UseKangurMobileRecentResultsOptions = {},
 ): UseKangurMobileRecentResultsResult => {
+  const { copy } = useKangurMobileI18n();
   const limit =
     typeof options.limit === 'number' && options.limit > 0
       ? Math.round(options.limit)
@@ -30,7 +32,11 @@ export const useKangurMobileRecentResults = (
   return {
     error:
       resultsQuery.error instanceof Error
-        ? 'Nie udało się pobrać ostatnich wyników.'
+        ? copy({
+            de: 'Die letzten Ergebnisse konnten nicht geladen werden.',
+            en: 'Could not load the recent results.',
+            pl: 'Nie udało się pobrać ostatnich wyników.',
+          })
         : null,
     isEnabled: resultsQuery.isEnabled,
     isLoading: resultsQuery.isLoading,

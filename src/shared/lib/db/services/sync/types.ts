@@ -1,7 +1,6 @@
- 
 import type { Db } from 'mongodb';
-import type { PrismaClient } from '../../../../../../node_modules/.prisma/client';
 import type { ObjectId } from 'mongodb';
+import type { PrismaClient } from '@prisma/client';
 
 export type DatabaseSyncHandlerContext = {
   mongo: Db;
@@ -10,8 +9,8 @@ export type DatabaseSyncHandlerContext = {
   toDate: (value: unknown) => Date | null;
   toJsonValue: (value: unknown) => unknown;
   toObjectIdMaybe: (value: string | null | undefined) => ObjectId | string | null;
-  currencyCodes?: string[];
-  countryCodes?: string[];
+  currencyCodes?: ReadonlySet<string>;
+  countryCodes?: ReadonlySet<string>;
 };
 
 export type DatabaseSyncHandlerResult = {

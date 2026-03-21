@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
 import {
   AdminFavoritesProvider,
   type AdminFavoriteCandidate,

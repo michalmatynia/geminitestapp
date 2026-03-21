@@ -3,6 +3,7 @@ import { Link, useLocalSearchParams, type Href } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   createKangurLessonHref,
   createKangurLessonHrefForPracticeOperation,
@@ -205,6 +206,7 @@ function OperationInsightCard({
   practiceLabel: string;
   title: string;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const operationTone = getOperationTone(operation.family);
 
   return (
@@ -221,7 +223,7 @@ function OperationInsightCard({
     >
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
       <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        {formatKangurMobileScoreOperation(operation.operation)}
+        {formatKangurMobileScoreOperation(operation.operation, locale)}
       </Text>
       <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{description}</Text>
 
@@ -243,7 +245,11 @@ function OperationInsightCard({
               fontWeight: '700',
             }}
           >
-            Średnio {operation.averageAccuracyPercent}%
+            {copy({
+              de: `Durchschnitt ${operation.averageAccuracyPercent}%`,
+              en: `Average ${operation.averageAccuracyPercent}%`,
+              pl: `Średnio ${operation.averageAccuracyPercent}%`,
+            })}
           </Text>
         </View>
         <View
@@ -257,7 +263,11 @@ function OperationInsightCard({
           }}
         >
           <Text style={{ color: '#475569', fontSize: 12, fontWeight: '700' }}>
-            Sesje {operation.sessions}
+            {copy({
+              de: `Sitzungen ${operation.sessions}`,
+              en: `Sessions ${operation.sessions}`,
+              pl: `Sesje ${operation.sessions}`,
+            })}
           </Text>
         </View>
       </View>
@@ -295,7 +305,11 @@ function OperationInsightCard({
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Otwórz lekcję
+                {copy({
+                  de: 'Lektion öffnen',
+                  en: 'Open lesson',
+                  pl: 'Otwórz lekcję',
+                })}
               </Text>
             </Pressable>
           </Link>
@@ -318,16 +332,23 @@ function OperationInsightCard({
               paddingHorizontal: 12,
               paddingVertical: 9,
             }}
-          >
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>Historia trybu</Text>
-          </Pressable>
-        </Link>
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Modusverlauf',
+                  en: 'Mode history',
+                  pl: 'Historia trybu',
+                })}
+              </Text>
+            </Pressable>
+          </Link>
       </View>
     </View>
   );
 }
 
 export function KangurResultsScreen(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
   const params = useLocalSearchParams<{
     family?: string | string[];
     operation?: string | string[];
@@ -367,20 +388,37 @@ export function KangurResultsScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Zurück',
+                  en: 'Back',
+                  pl: 'Wróć',
+                })}
+              </Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Historia wyników
+              {copy({
+                de: 'Ergebnisverlauf',
+                en: 'Score history',
+                pl: 'Historia wyników',
+              })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
-              Ostatnie sesje mobilne
+              {copy({
+                de: 'Letzte mobile Sitzungen',
+                en: 'Recent mobile sessions',
+                pl: 'Ostatnie sesje mobilne',
+              })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              Jeden widok dla ostatnich wyników, skuteczności oraz podziału na sesje
-              arytmetyczne, czasowe i logiczne.
+              {copy({
+                de: 'Eine Ansicht für letzte Ergebnisse, Genauigkeit und die Aufteilung in arithmetische, zeitbezogene und logische Sitzungen.',
+                en: 'One view for recent results, accuracy, and the split across arithmetic, time, and logic sessions.',
+                pl: 'Jeden widok dla ostatnich wyników, skuteczności oraz podziału na sesje arytmetyczne, czasowe i logiczne.',
+              })}
             </Text>
             <Link href={createKangurPlanHref()} asChild>
               <Pressable
@@ -394,24 +432,36 @@ export function KangurResultsScreen(): React.JSX.Element {
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                 }}
-              >
-                <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                  Otwórz plan dnia
-                </Text>
-              </Pressable>
-            </Link>
+                >
+                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                    {copy({
+                      de: 'Tagesplan öffnen',
+                      en: 'Open daily plan',
+                      pl: 'Otwórz plan dnia',
+                    })}
+                  </Text>
+                </Pressable>
+              </Link>
           </Card>
 
           {results.isLoading ? (
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Przywracamy sesję ucznia i historię wyników.
+                {copy({
+                  de: 'Die Schulersitzung und der Ergebnisverlauf werden wiederhergestellt.',
+                  en: 'Restoring the learner session and score history.',
+                  pl: 'Przywracamy sesję ucznia i historię wyników.',
+                })}
               </Text>
             </Card>
           ) : !results.isEnabled ? (
             <Card>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Zaloguj ucznia, aby zobaczyć zsynchronizowaną historię wyników.
+                {copy({
+                  de: 'Melde den Schuler an, um den synchronisierten Ergebnisverlauf zu sehen.',
+                  en: 'Sign in the learner to see synchronized score history.',
+                  pl: 'Zaloguj ucznia, aby zobaczyć zsynchronizowaną historię wyników.',
+                })}
               </Text>
               <Link href={RESULTS_HOME_ROUTE} asChild>
                 <Pressable
@@ -425,7 +475,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Otwórz ekran logowania
+                    {copy({
+                      de: 'Anmeldebildschirm öffnen',
+                      en: 'Open auth screen',
+                      pl: 'Otwórz ekran logowania',
+                    })}
                   </Text>
                 </Pressable>
               </Link>
@@ -441,29 +495,69 @@ export function KangurResultsScreen(): React.JSX.Element {
                 }}
               >
                 <Metric
-                  label='Sesje'
+                  label={copy({
+                    de: 'Sitzungen',
+                    en: 'Sessions',
+                    pl: 'Sesje',
+                  })}
                   value={`${results.summary.totalSessions}`}
-                  description='Widok obejmuje 40 ostatnich podejść.'
+                  description={copy({
+                    de: 'Die Ansicht umfasst die letzten 40 Versuche.',
+                    en: 'This view includes the latest 40 attempts.',
+                    pl: 'Widok obejmuje 40 ostatnich podejść.',
+                  })}
                 />
                 <Metric
-                  label='Średnia'
+                  label={copy({
+                    de: 'Durchschnitt',
+                    en: 'Average',
+                    pl: 'Średnia',
+                  })}
                   value={`${results.summary.averageAccuracyPercent}%`}
-                  description={`Najlepsza skuteczność: ${results.summary.bestAccuracyPercent}%`}
+                  description={copy({
+                    de: `Beste Trefferquote: ${results.summary.bestAccuracyPercent}%`,
+                    en: `Best accuracy: ${results.summary.bestAccuracyPercent}%`,
+                    pl: `Najlepsza skuteczność: ${results.summary.bestAccuracyPercent}%`,
+                  })}
                 />
                 <Metric
-                  label='Arytmetyka'
+                  label={copy({
+                    de: 'Arithmetik',
+                    en: 'Arithmetic',
+                    pl: 'Arytmetyka',
+                  })}
                   value={`${results.summary.arithmeticSessions}`}
-                  description='Dodawanie, odejmowanie, mnożenie, dzielenie i podobne tryby.'
+                  description={copy({
+                    de: 'Addition, Subtraktion, Multiplikation, Division und ähnliche Modi.',
+                    en: 'Addition, subtraction, multiplication, division, and similar modes.',
+                    pl: 'Dodawanie, odejmowanie, mnożenie, dzielenie i podobne tryby.',
+                  })}
                 />
                 <Metric
-                  label='Czas'
+                  label={copy({
+                    de: 'Zeit',
+                    en: 'Time',
+                    pl: 'Czas',
+                  })}
                   value={`${results.summary.timeSessions}`}
-                  description='Zegar i kalendarz.'
+                  description={copy({
+                    de: 'Uhr und Kalender.',
+                    en: 'Clock and calendar.',
+                    pl: 'Zegar i kalendarz.',
+                  })}
                 />
                 <Metric
-                  label='Logika'
+                  label={copy({
+                    de: 'Logik',
+                    en: 'Logic',
+                    pl: 'Logika',
+                  })}
                   value={`${results.summary.logicSessions}`}
-                  description='Wszystkie dostępne sesje logiczne.'
+                  description={copy({
+                    de: 'Alle verfügbaren Logiksitzungen.',
+                    en: 'All available logic sessions.',
+                    pl: 'Wszystkie dostępne sesje logiczne.',
+                  })}
                 />
               </View>
 
@@ -471,11 +565,18 @@ export function KangurResultsScreen(): React.JSX.Element {
                 <Card>
                   <View style={{ gap: 4 }}>
                     <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                      Wnioski po trybach
+                      {copy({
+                        de: 'Einblicke nach Modi',
+                        en: 'Mode insights',
+                        pl: 'Wnioski po trybach',
+                      })}
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Szybki podgląd najmocniejszego i najsłabszego trybu w aktualnym
-                      zakresie filtrowania.
+                      {copy({
+                        de: 'Ein schneller Blick auf den stärksten und schwächsten Modus im aktuellen Filterbereich.',
+                        en: 'A quick view of the strongest and weakest mode in the current filter scope.',
+                        pl: 'Szybki podgląd najmocniejszego i najsłabszego trybu w aktualnym zakresie filtrowania.',
+                      })}
                     </Text>
                   </View>
 
@@ -489,7 +590,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                   >
                     {strongestOperation ? (
                       <OperationInsightCard
-                        description={`Najwyższa średnia skuteczność. Najlepsza próba ${strongestOperation.bestAccuracyPercent}%.`}
+                        description={copy({
+                          de: `Höchste durchschnittliche Trefferquote. Bester Versuch ${strongestOperation.bestAccuracyPercent}%.`,
+                          en: `Highest average accuracy. Best attempt ${strongestOperation.bestAccuracyPercent}%.`,
+                          pl: `Najwyższa średnia skuteczność. Najlepsza próba ${strongestOperation.bestAccuracyPercent}%.`,
+                        })}
                         lessonHref={(() => {
                           const focus = resolveKangurLessonFocusForPracticeOperation(
                             strongestOperation.operation,
@@ -497,13 +602,25 @@ export function KangurResultsScreen(): React.JSX.Element {
                           return focus ? createKangurLessonHref(focus) : undefined;
                         })()}
                         operation={strongestOperation}
-                        practiceLabel='Utrzymaj tempo'
-                        title='Najmocniejszy tryb'
+                        practiceLabel={copy({
+                          de: 'Tempo halten',
+                          en: 'Keep the momentum',
+                          pl: 'Utrzymaj tempo',
+                        })}
+                        title={copy({
+                          de: 'Stärkster Modus',
+                          en: 'Strongest mode',
+                          pl: 'Najmocniejszy tryb',
+                        })}
                       />
                     ) : null}
                     {weakestOperation ? (
                       <OperationInsightCard
-                        description={`Najlepszy kandydat do kolejnej powtórki. Najlepsza próba ${weakestOperation.bestAccuracyPercent}%.`}
+                        description={copy({
+                          de: `Bester Kandidat für die nächste Wiederholung. Bester Versuch ${weakestOperation.bestAccuracyPercent}%.`,
+                          en: `Best candidate for the next review. Best attempt ${weakestOperation.bestAccuracyPercent}%.`,
+                          pl: `Najlepszy kandydat do kolejnej powtórki. Najlepsza próba ${weakestOperation.bestAccuracyPercent}%.`,
+                        })}
                         lessonHref={(() => {
                           const focus = resolveKangurLessonFocusForPracticeOperation(
                             weakestOperation.operation,
@@ -511,8 +628,16 @@ export function KangurResultsScreen(): React.JSX.Element {
                           return focus ? createKangurLessonHref(focus) : undefined;
                         })()}
                         operation={weakestOperation}
-                        practiceLabel='Trenuj najsłabszy tryb'
-                        title='Do powtórki'
+                        practiceLabel={copy({
+                          de: 'Schwächsten Modus trainieren',
+                          en: 'Practice weakest mode',
+                          pl: 'Trenuj najsłabszy tryb',
+                        })}
+                        title={copy({
+                          de: 'Zum Wiederholen',
+                          en: 'Needs review',
+                          pl: 'Do powtórki',
+                        })}
                       />
                     ) : null}
                   </View>
@@ -530,11 +655,18 @@ export function KangurResultsScreen(): React.JSX.Element {
                 >
                   <View style={{ flex: 1, gap: 4 }}>
                     <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                      Pełna lista
+                      {copy({
+                        de: 'Vollständige Liste',
+                        en: 'Full list',
+                        pl: 'Pełna lista',
+                      })}
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Historia korzysta z tego samego zapytania ograniczonego do ucznia co profil
-                      i ekran główny.
+                      {copy({
+                        de: 'Der Verlauf nutzt dieselbe auf den Schuler begrenzte Abfrage wie Profil und Startbildschirm.',
+                        en: 'History uses the same learner-scoped query as the profile and home screen.',
+                        pl: 'Historia korzysta z tego samego zapytania ograniczonego do ucznia co profil i ekran główny.',
+                      })}
                     </Text>
                   </View>
                   <Pressable
@@ -550,7 +682,13 @@ export function KangurResultsScreen(): React.JSX.Element {
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odśwież</Text>
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Aktualisieren',
+                        en: 'Refresh',
+                        pl: 'Odśwież',
+                      })}
+                    </Text>
                   </Pressable>
                 </View>
 
@@ -562,7 +700,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'all' && !filterOperation}
-                      label='Wszystkie sesje'
+                      label={copy({
+                        de: 'Alle Sitzungen',
+                        en: 'All sessions',
+                        pl: 'Wszystkie sesje',
+                      })}
                     />
                     <FilterPill
                       href={createKangurResultsHref({
@@ -570,7 +712,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'arithmetic' && !filterOperation}
-                      label='Arytmetyka'
+                      label={copy({
+                        de: 'Arithmetik',
+                        en: 'Arithmetic',
+                        pl: 'Arytmetyka',
+                      })}
                     />
                     <FilterPill
                       href={createKangurResultsHref({
@@ -578,7 +724,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'logic' && !filterOperation}
-                      label='Logika'
+                      label={copy({
+                        de: 'Logik',
+                        en: 'Logic',
+                        pl: 'Logika',
+                      })}
                     />
                     <FilterPill
                       href={createKangurResultsHref({
@@ -586,7 +736,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                         operation: null,
                       })}
                       isActive={filterFamily === 'time' && !filterOperation}
-                      label='Czas'
+                      label={copy({
+                        de: 'Zeit',
+                        en: 'Time',
+                        pl: 'Czas',
+                      })}
                     />
                   </View>
 
@@ -600,7 +754,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                             operation,
                           })}
                           isActive={filterOperation === operation}
-                          label={formatKangurMobileScoreOperation(operation)}
+                          label={formatKangurMobileScoreOperation(operation, locale)}
                         />
                       ))}
                     </View>
@@ -609,7 +763,11 @@ export function KangurResultsScreen(): React.JSX.Element {
 
                 {results.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Pobieramy historię wyników.
+                    {copy({
+                      de: 'Der Ergebnisverlauf wird geladen.',
+                      en: 'Loading score history.',
+                      pl: 'Pobieramy historię wyników.',
+                    })}
                   </Text>
                 ) : results.error ? (
                   <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
@@ -617,8 +775,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </Text>
                 ) : results.scores.length === 0 ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Brak zsynchronizowanych wyników. Ukończ jedną sesję treningową, aby
-                    wypełnić ten widok.
+                    {copy({
+                      de: 'Es gibt keine synchronisierten Ergebnisse. Schließe eine Trainingseinheit ab, um diese Ansicht zu füllen.',
+                      en: 'There are no synchronized results. Complete one practice session to fill this view.',
+                      pl: 'Brak zsynchronizowanych wyników. Ukończ jedną sesję treningową, aby wypełnić ten widok.',
+                    })}
                   </Text>
                 ) : (
                   <View style={{ gap: 10 }}>
@@ -660,10 +821,16 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   fontWeight: '800',
                                 }}
                               >
-                                {formatKangurMobileScoreOperation(score.operation)}
+                                {formatKangurMobileScoreOperation(
+                                  score.operation,
+                                  locale,
+                                )}
                               </Text>
                               <Text style={{ color: '#64748b', fontSize: 13 }}>
-                                {formatKangurMobileScoreDateTime(score.created_date)}
+                                {formatKangurMobileScoreDateTime(
+                                  score.created_date,
+                                  locale,
+                                )}
                               </Text>
                             </View>
 
@@ -684,7 +851,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   fontWeight: '700',
                                 }}
                               >
-                                Skuteczność {accuracyPercent}%
+                                {copy({
+                                  de: `Trefferquote ${accuracyPercent}%`,
+                                  en: `Accuracy ${accuracyPercent}%`,
+                                  pl: `Skuteczność ${accuracyPercent}%`,
+                                })}
                               </Text>
                             </View>
                           </View>
@@ -707,15 +878,20 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   fontWeight: '700',
                                 }}
                               >
-                                {formatKangurMobileScoreFamily(operationFamily)}
+                                {formatKangurMobileScoreFamily(
+                                  operationFamily,
+                                  locale,
+                                )}
                               </Text>
                             </View>
                           </View>
 
                           <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                            {score.correct_answers}/{score.total_questions} poprawnych ·{' '}
-                            {formatKangurMobileScoreDuration(score.time_taken)} · wynik{' '}
-                            {score.score}
+                            {copy({
+                              de: `${score.correct_answers}/${score.total_questions} richtig · ${formatKangurMobileScoreDuration(score.time_taken)} · Ergebnis ${score.score}`,
+                              en: `${score.correct_answers}/${score.total_questions} correct · ${formatKangurMobileScoreDuration(score.time_taken)} · score ${score.score}`,
+                              pl: `${score.correct_answers}/${score.total_questions} poprawnych · ${formatKangurMobileScoreDuration(score.time_taken)} · wynik ${score.score}`,
+                            })}
                           </Text>
 
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -736,7 +912,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                                 <Text
                                   style={{ color: '#ffffff', fontWeight: '700' }}
                                 >
-                                  Trenuj ten tryb
+                                  {copy({
+                                    de: 'Diesen Modus trainieren',
+                                    en: 'Train this mode',
+                                    pl: 'Trenuj ten tryb',
+                                  })}
                                 </Text>
                               </Pressable>
                             </Link>
@@ -758,7 +938,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   <Text
                                     style={{ color: '#0f172a', fontWeight: '700' }}
                                   >
-                                    Otwórz lekcję
+                                    {copy({
+                                      de: 'Lektion öffnen',
+                                      en: 'Open lesson',
+                                      pl: 'Otwórz lekcję',
+                                    })}
                                   </Text>
                                 </Pressable>
                               </Link>
@@ -787,7 +971,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                                   <Text
                                     style={{ color: '#0f172a', fontWeight: '700' }}
                                   >
-                                    Filtruj ten tryb
+                                    {copy({
+                                      de: 'Diesen Modus filtern',
+                                      en: 'Filter this mode',
+                                      pl: 'Filtruj ten tryb',
+                                    })}
                                   </Text>
                                 </Pressable>
                               </Link>

@@ -9,6 +9,7 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Badge } from '@/features/kangur/shared/ui';
 import {
   KANGUR_THEME_PREVIEW_SECTION_IDS,
+  type KangurThemePreviewSectionId,
 } from '@/features/kangur/admin/components/kangur-theme-settings.copy';
 import { KANGUR_CENTER_ROW_SPACED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
@@ -17,21 +18,6 @@ type KangurThemePreviewPanelProps = {
   theme: ThemeSettings;
   mode: KangurThemeMode;
 };
-
-type KangurThemePreviewSectionKey =
-  | 'corePalette'
-  | 'textOverrides'
-  | 'logoLoader'
-  | 'backgroundsSurfaces'
-  | 'buttons'
-  | 'navigationPills'
-  | 'gradients'
-  | 'homeActions'
-  | 'progressBars'
-  | 'inputs'
-  | 'typographyLayout'
-  | 'shapeSpacing'
-  | 'shadowsDepth';
 
 const normalizeThemePreviewSectionLabel = (value: string): string =>
   value
@@ -42,7 +28,7 @@ const normalizeThemePreviewSectionLabel = (value: string): string =>
 
 const THEME_PREVIEW_SECTION_KEY_BY_NORMALIZED_LABEL: Record<
   string,
-  KangurThemePreviewSectionKey
+  KangurThemePreviewSectionId
 > = {
   'core palette': 'corePalette',
   'text overrides': 'textOverrides',
@@ -61,13 +47,13 @@ const THEME_PREVIEW_SECTION_KEY_BY_NORMALIZED_LABEL: Record<
 
 const resolveThemePreviewSectionKey = (
   section: string | null | undefined
-): KangurThemePreviewSectionKey => {
+): KangurThemePreviewSectionId => {
   if (!section) {
     return 'corePalette';
   }
 
   if ((KANGUR_THEME_PREVIEW_SECTION_IDS as readonly string[]).includes(section)) {
-    return section as KangurThemePreviewSectionKey;
+    return section as KangurThemePreviewSectionId;
   }
 
   return (

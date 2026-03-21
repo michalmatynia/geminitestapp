@@ -15,7 +15,7 @@ export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, curre
   const data = docs
     .map((doc: MongoCurrencyDoc): Prisma.CurrencyCreateManyInput | null => {
       const code = String(doc.code ?? '').toUpperCase();
-      if (!currencyCodes.has(code)) {
+      if (currencyCodes && !currencyCodes.has(code)) {
         warnings.push(`Skipped currency code: ${code || 'unknown'}`);
         return null;
       }
@@ -49,7 +49,7 @@ export const syncCountries: DatabaseSyncHandler = async ({ mongo, prisma, countr
   const data = docs
     .map((doc: MongoCountryDoc) => {
       const code = String(doc.code ?? '').toUpperCase();
-      if (!countryCodes.has(code)) {
+      if (countryCodes && !countryCodes.has(code)) {
         warnings.push(`Skipped country code: ${code || 'unknown'}`);
         return null;
       }
@@ -139,7 +139,7 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
 
 export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.currency.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
@@ -160,7 +160,7 @@ export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.country.findMany({ include: { currencies: true } });
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     code: row.code,
@@ -183,7 +183,7 @@ export const syncLanguagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
   const rows = await prisma.language.findMany({
     include: { countries: { include: { country: true } } },
   });
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     code: row.code,

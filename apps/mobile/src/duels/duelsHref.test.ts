@@ -25,4 +25,13 @@ describe('createKangurDuelsHref', () => {
       },
     });
   });
+
+  it('returns a join route for invite deep links', () => {
+    expect(createKangurDuelsHref({ joinSessionId: 'duel-join-1' })).toEqual({
+      pathname: '/duels',
+      params: {
+        join: 'duel-join-1',
+      },
+    });
+  });
 });

@@ -88,8 +88,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     ? await prisma.product.createMany({ data: productData as Prisma.ProductCreateManyInput[] })
     : { count: 0 };
 
-  const imageRows = data.flatMap((product) =>
-    product.images.map((image) => ({
+  const imageRows = data.flatMap((product: any) =>
+    product.images.map((image: any) => ({
       productId: product.id,
       imageFileId: image.imageFileId,
       assignedAt: toDate(image.assignedAt) ?? new Date(),
@@ -99,8 +99,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     await prisma.productImage.createMany({ data: imageRows });
   }
 
-  const catalogRows = data.flatMap((product) =>
-    product.catalogs.map((catalog) => ({
+  const catalogRows = data.flatMap((product: any) =>
+    product.catalogs.map((catalog: any) => ({
       productId: product.id,
       catalogId: catalog.catalogId,
       assignedAt: toDate(catalog.assignedAt) ?? new Date(),
@@ -110,8 +110,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     await prisma.productCatalog.createMany({ data: catalogRows });
   }
 
-  const categoryRows = data.flatMap((product) =>
-    product.categories.map((category) => ({
+  const categoryRows = data.flatMap((product: any) =>
+    product.categories.map((category: any) => ({
       productId: product.id,
       categoryId: category.categoryId,
       assignedAt: toDate(category.assignedAt) ?? new Date(),
@@ -121,8 +121,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
     await prisma.productCategoryAssignment.createMany({ data: categoryRows });
   }
 
-  const tagRows = data.flatMap((product) =>
-    product.tags.map((tag) => ({
+  const tagRows = data.flatMap((product: any) =>
+    product.tags.map((tag: any) => ({
       productId: product.id,
       tagId: tag.tagId,
       assignedAt: toDate(tag.assignedAt) ?? new Date(),
@@ -134,8 +134,9 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
 
   const producerRows: Prisma.ProductProducerAssignmentCreateManyInput[] = [];
   const producerKeys = new Set<string>();
-  data.forEach((product) => {
-    product.producers.forEach((producer) => {
+  data.forEach((product: any) => {
+    product.producers.forEach(
+      (producer: { producerId: string; assignedAt?: Date | string | null }) => {
       const key = `${product.id}::${producer.producerId}`;
       if (producerKeys.has(key)) return;
       producerKeys.add(key);
@@ -144,7 +145,8 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
         producerId: producer.producerId,
         assignedAt: toDate(producer.assignedAt) ?? new Date(),
       });
-    });
+      }
+    );
   });
   if (producerRows.length) {
     await prisma.productProducerAssignment.createMany({ data: producerRows });
@@ -240,14 +242,14 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
     prisma.catalog.findMany({ include: { languages: true } }),
   ]);
   const catalogLanguageMap = new Map(
-    catalogRows.map((catalog) => [
+    catalogRows.map((catalog: any) => [
       catalog.id,
       catalog.languages
-        .sort((a, b) => a.position - b.position)
+        .sort((a: any, b: any) => a.position - b.position)
         .map((entry: { languageId: string }) => entry.languageId),
     ])
   );
-  const docs = rows.map((product) => {
+  const docs = rows.map((product: any) => {
     const categoryId = product.categories?.categoryId ?? null;
     return {
       _id: toObjectIdMaybe(product.id),
@@ -278,7 +280,7 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
       imageBase64s: product.imageBase64s ?? [],
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
-      images: product.images.map((image) => ({
+      images: product.images.map((image: any) => ({
         productId: image.productId,
         imageFileId: image.imageFileId,
         assignedAt: image.assignedAt,
@@ -295,7 +297,7 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
           updatedAt: image.imageFile.updatedAt,
         },
       })),
-      catalogs: product.catalogs.map((entry) => ({
+      catalogs: product.catalogs.map((entry: any) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
         assignedAt: entry.assignedAt,
@@ -322,12 +324,12 @@ export const syncProductsPrismaToMongo: DatabaseSyncHandler = async ({
           },
         ]
         : [],
-      tags: product.tags.map((entry) => ({
+      tags: product.tags.map((entry: any) => ({
         productId: product.id,
         tagId: entry.tagId,
         assignedAt: entry.assignedAt,
       })),
-      producers: product.producers.map((entry) => ({
+      producers: product.producers.map((entry: any) => ({
         productId: product.id,
         producerId: entry.producerId,
         assignedAt: entry.assignedAt,
@@ -350,7 +352,7 @@ export const syncProductDraftsPrismaToMongo: DatabaseSyncHandler = async ({
   toObjectIdMaybe,
 }) => {
   const rows = await prisma.productDraft.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: toObjectIdMaybe(row.id),
     id: row.id,
     name: row.name,

@@ -6,6 +6,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import { KangurMobileAuthProvider } from '../auth/KangurMobileAuthContext';
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 import { KangurRuntimeProvider } from './KangurRuntimeContext';
 
 const createQueryClient = (): QueryClient =>
@@ -30,7 +31,9 @@ export function KangurAppProviders({
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <QueryClientProvider client={queryClient}>
         <KangurRuntimeProvider>
-          <KangurMobileAuthProvider>{children}</KangurMobileAuthProvider>
+          <KangurMobileI18nProvider>
+            <KangurMobileAuthProvider>{children}</KangurMobileAuthProvider>
+          </KangurMobileI18nProvider>
         </KangurRuntimeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

@@ -244,9 +244,10 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       activeOnly: true,
     }).forEach((persistedRun) => {
       if (!persistedRun.entityId) return;
+      const initialStatus = persistedRun.status === 'waiting' ? 'queued' : persistedRun.status;
       trackRun(persistedRun.runId, persistedRun.entityId, {
         runId: persistedRun.runId,
-        status: persistedRun.status,
+        status: initialStatus,
         updatedAt: persistedRun.updatedAt,
         finishedAt: persistedRun.finishedAt,
         errorMessage: persistedRun.errorMessage,

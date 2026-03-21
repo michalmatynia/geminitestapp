@@ -110,7 +110,7 @@ export const syncImageStudioSlots: DatabaseSyncHandler = async ({
 
 export const syncImageFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.imageFile.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     filename: row.filename,
@@ -135,7 +135,7 @@ export const syncImageFilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 
 export const syncImageStudioSlotsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.imageStudioSlot.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     projectId: row.projectId,

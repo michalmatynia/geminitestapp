@@ -38,10 +38,10 @@ export function FrontendHeroSection(): React.ReactNode {
           <>
             <Image
               src={image}
-              alt=""
+              alt=''
               fill
               priority
-              sizes="100vw"
+              sizes='100vw'
               className='object-cover object-center'
             />
             <div className='absolute inset-0 bg-black/50' />

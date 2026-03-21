@@ -3,13 +3,11 @@
 import { createContext, useContext, ReactNode } from 'react';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
-import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
+import type { KangurAiTutorLocaleTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
-export type KangurAiTutorNativeGuideEntryTranslationStatus = {
-  locale: string;
-  status: KangurAiTutorTranslationStatusDto;
-};
+export type KangurAiTutorNativeGuideEntryTranslationStatus =
+  KangurAiTutorLocaleTranslationStatusDto;
 
 export type KangurAiTutorNativeGuideEntryEditorContextValue = {
   selectedEntry: KangurAiTutorNativeGuideEntry | null;

@@ -1,16 +1,15 @@
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import {
+  type KangurRecommendationLocalizer,
   resolveLocalizedRecommendationActivityLabel,
   translateRecommendationWithFallback,
-  type RecommendationTranslate,
 } from '@/features/kangur/ui/services/recommendation-i18n';
 import {
   getProgressAverageAccuracy,
   getProgressBadgeTrackSummaries,
   getProgressTopActivities,
 } from '@/features/kangur/ui/services/progress';
-import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
 import type {
   KangurDifficulty,
   KangurMode,
@@ -32,12 +31,6 @@ type KangurModeSetupRecommendation = {
   label: string;
   mode: KangurMode;
   title: string;
-};
-
-type KangurRecommendationLocalizer = {
-  locale?: string | null;
-  translate?: RecommendationTranslate;
-  progressTranslate?: KangurProgressTranslate;
 };
 
 export const hasMatchingTrainingSelection = (

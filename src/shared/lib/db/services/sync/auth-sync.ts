@@ -153,7 +153,7 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
 
 export const syncUsersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma, toObjectIdMaybe }) => {
   const rows = await prisma.user.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: toObjectIdMaybe(row.id) as ObjectId | string,
     id: row.id,
     name: row.name,
@@ -178,7 +178,7 @@ export const syncAccountsPrismaToMongo: DatabaseSyncHandler = async ({
   toObjectIdMaybe,
 }) => {
   const rows = await prisma.account.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: toObjectIdMaybe(row.id) as ObjectId | string,
     id: row.id,
     userId: toObjectIdMaybe(row.userId) as ObjectId | string,
@@ -209,7 +209,7 @@ export const syncSessionsPrismaToMongo: DatabaseSyncHandler = async ({
   toObjectIdMaybe,
 }) => {
   const rows = await prisma.session.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: toObjectIdMaybe(row.id) as ObjectId | string,
     id: row.id,
     sessionToken: row.sessionToken,
@@ -228,7 +228,7 @@ export const syncSessionsPrismaToMongo: DatabaseSyncHandler = async ({
 
 export const syncVerificationTokensPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.verificationToken.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     identifier: row.identifier,
     token: row.token,
     expires: row.expires,
@@ -245,7 +245,7 @@ export const syncVerificationTokensPrismaToMongo: DatabaseSyncHandler = async ({
 
 export const syncAuthSecurityProfilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.authSecurityProfile.findMany();
-  const docs = rows.map((row) => ({
+  const docs = rows.map((row: any) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId,

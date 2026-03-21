@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo, Suspense, lazy } from 'react';
+import { Suspense, lazy, useMemo } from 'react';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
 import { AdminCaseResolverPageProvider, useAdminCaseResolverPageActionsContext as useActions, useAdminCaseResolverPageStateContext as useStateCtx } from '../context/AdminCaseResolverPageContext';
 

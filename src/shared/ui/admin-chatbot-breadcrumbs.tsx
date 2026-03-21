@@ -1,18 +1,14 @@
 import * as React from 'react';
 
-import { AdminSectionBreadcrumbs, type AdminBreadcrumbNode } from './admin-section-breadcrumbs';
+import type { AdminSectionBreadcrumbWrapperProps } from '@/shared/contracts/ui';
 
-type AdminChatbotBreadcrumbsProps = {
-  current: string;
-  parent?: AdminBreadcrumbNode;
-  className?: string;
-};
+import { AdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 
 export function AdminChatbotBreadcrumbs({
   current,
   parent,
   className,
-}: AdminChatbotBreadcrumbsProps): React.JSX.Element {
+}: AdminSectionBreadcrumbWrapperProps): React.JSX.Element {
   const breadcrumbProps = { current, parent, className };
   return (
     <AdminSectionBreadcrumbs

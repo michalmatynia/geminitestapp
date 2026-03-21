@@ -45,6 +45,7 @@ import {
   getRecommendedTrainingSetup,
 } from '@/features/kangur/ui/services/game-setup-recommendations';
 import {
+  type KangurRecommendationLocalizer,
   resolveLocalizedRecommendationActivityLabel,
   translateRecommendationWithFallback,
   type RecommendationTranslate,
@@ -225,12 +226,6 @@ type KangurOperationSelectorRecommendation = {
   recommendedScreen: KangurRecommendedSelectorScreen | null;
   target: KangurOperationSelectorRecommendationTarget;
   title: string;
-};
-
-type KangurSelectorRecommendationLocalizer = {
-  locale?: string | null;
-  translate?: RecommendationTranslate;
-  progressTranslate?: KangurProgressTranslate;
 };
 
 const resolveRecommendationDifficulty = (accuracy: number): KangurDifficulty => {
@@ -478,7 +473,7 @@ const getQuestRecommendation = (
 
 const getWeakestLessonRecommendation = (
   progress: KangurProgressState,
-  localizer?: KangurSelectorRecommendationLocalizer
+  localizer?: KangurRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null => {
   const translate = localizer?.translate;
   const weakestLesson = Object.entries(progress.lessonMastery ?? {})
@@ -698,7 +693,7 @@ const getFallbackRecommendation = (
 const getOperationSelectorRecommendation = (
   progress: KangurProgressState,
   quest: KangurDailyQuestState | null,
-  localizer?: KangurSelectorRecommendationLocalizer
+  localizer?: KangurRecommendationLocalizer
 ): KangurOperationSelectorRecommendation | null =>
   getQuestRecommendation(quest, progress, localizer?.translate) ??
   getWeakestLessonRecommendation(progress, localizer) ??

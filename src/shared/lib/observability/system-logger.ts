@@ -551,10 +551,19 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       try {
         let hydratedContext = context;
         try {
-          const modulePath = './runtime-context/hydrate-system-log-runtime-context';
-          const hydrationModule = await import(/* webpackIgnore: true */ modulePath);
+          const hydrationModule = (await import(
+            '@/features/observability/server'
+          )) as {
+            hydrateLogRuntimeContext?: (
+              ctx: Record<string, unknown> | null | undefined
+            ) => Promise<Record<string, unknown> | null>;
+          };
+
           if (typeof hydrationModule.hydrateLogRuntimeContext === 'function') {
-            hydratedContext = (await hydrationModule.hydrateLogRuntimeContext(context)) ?? context;
+            hydratedContext =
+              ((await hydrationModule.hydrateLogRuntimeContext(
+                context as Record<string, unknown>
+              )) as Record<string, unknown>) ?? context;
           }
         } catch (enrichmentError) {
           logClientError(enrichmentError);

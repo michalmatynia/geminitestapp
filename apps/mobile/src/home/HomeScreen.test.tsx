@@ -9,12 +9,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   useLocalSearchParamsMock,
   useKangurMobileAuthMock,
+  useKangurMobileHomeDuelsInvitesMock,
+  useKangurMobileHomeDuelsSpotlightMock,
   useKangurMobileRuntimeMock,
   useKangurMobileRecentResultsMock,
   useKangurMobileTrainingFocusMock,
 } = vi.hoisted(() => ({
   useLocalSearchParamsMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
+  useKangurMobileHomeDuelsInvitesMock: vi.fn(),
+  useKangurMobileHomeDuelsSpotlightMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
   useKangurMobileRecentResultsMock: vi.fn(),
   useKangurMobileTrainingFocusMock: vi.fn(),
@@ -35,6 +39,14 @@ vi.mock('../providers/KangurRuntimeContext', () => ({
 
 vi.mock('./useKangurMobileRecentResults', () => ({
   useKangurMobileRecentResults: useKangurMobileRecentResultsMock,
+}));
+
+vi.mock('./useKangurMobileHomeDuelsInvites', () => ({
+  useKangurMobileHomeDuelsInvites: useKangurMobileHomeDuelsInvitesMock,
+}));
+
+vi.mock('./useKangurMobileHomeDuelsSpotlight', () => ({
+  useKangurMobileHomeDuelsSpotlight: useKangurMobileHomeDuelsSpotlightMock,
 }));
 
 vi.mock('./useKangurMobileTrainingFocus', () => ({
@@ -74,6 +86,20 @@ describe('HomeScreen', () => {
       isRestoringAuth: false,
       refresh: vi.fn(),
       results: [],
+    });
+    useKangurMobileHomeDuelsInvitesMock.mockReturnValue({
+      error: null,
+      invites: [],
+      isAuthenticated: false,
+      isLoading: false,
+      isRestoringAuth: false,
+      refresh: vi.fn(),
+    });
+    useKangurMobileHomeDuelsSpotlightMock.mockReturnValue({
+      entries: [],
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
     });
     useKangurMobileTrainingFocusMock.mockReturnValue({
       error: null,
@@ -174,6 +200,36 @@ describe('HomeScreen', () => {
         },
       ],
     });
+    useKangurMobileHomeDuelsInvitesMock.mockReturnValue({
+      error: null,
+      invites: [
+        {
+          createdAt: '2026-03-21T08:00:00.000Z',
+          difficulty: 'medium',
+          host: {
+            bonusPoints: 0,
+            currentQuestionIndex: 0,
+            displayName: 'Leo Mentor',
+            joinedAt: '2026-03-21T08:00:00.000Z',
+            learnerId: 'learner-2',
+            score: 0,
+            status: 'ready',
+          },
+          mode: 'challenge',
+          operation: 'multiplication',
+          questionCount: 5,
+          sessionId: 'invite-1',
+          status: 'waiting',
+          timePerQuestionSec: 15,
+          updatedAt: '2026-03-21T08:05:00.000Z',
+          visibility: 'private',
+        },
+      ],
+      isAuthenticated: true,
+      isLoading: false,
+      isRestoringAuth: false,
+      refresh: vi.fn(),
+    });
     useKangurMobileTrainingFocusMock.mockReturnValue({
       error: null,
       isEnabled: true,
@@ -193,6 +249,34 @@ describe('HomeScreen', () => {
         sessions: 3,
       },
     });
+    useKangurMobileHomeDuelsSpotlightMock.mockReturnValue({
+      entries: [
+        {
+          createdAt: '2026-03-21T08:00:00.000Z',
+          difficulty: 'hard',
+          host: {
+            bonusPoints: 0,
+            currentQuestionIndex: 2,
+            displayName: 'Maja Sprint',
+            joinedAt: '2026-03-21T08:00:00.000Z',
+            learnerId: 'learner-4',
+            score: 4,
+            status: 'playing',
+          },
+          mode: 'quick_match',
+          operation: 'division',
+          questionCount: 6,
+          sessionId: 'public-live-1',
+          status: 'in_progress',
+          timePerQuestionSec: 12,
+          updatedAt: '2026-03-21T08:09:00.000Z',
+          visibility: 'public',
+        },
+      ],
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    });
 
     render(<HomeScreen />);
 
@@ -204,5 +288,11 @@ describe('HomeScreen', () => {
     expect(screen.getAllByText('Historia trybu: Zegar').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('7/8 poprawnych')).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();
+    expect(screen.getByText('Leo Mentor')).toBeTruthy();
+    expect(screen.getByText('Dołącz: Leo Mentor')).toBeTruthy();
+    expect(screen.getByText('Na żywo w pojedynkach')).toBeTruthy();
+    expect(screen.getByText('Maja Sprint')).toBeTruthy();
+    expect(screen.getByText('Obserwuj na żywo')).toBeTruthy();
   });
 });

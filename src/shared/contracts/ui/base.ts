@@ -54,6 +54,13 @@ export type AdminSectionBreadcrumbsConfigDto = {
 };
 export type AdminSectionBreadcrumbsConfig = AdminSectionBreadcrumbsConfigDto;
 
+export type AdminSectionBreadcrumbWrapperPropsDto = {
+  current: string;
+  parent?: AdminBreadcrumbNode;
+  className?: string;
+};
+export type AdminSectionBreadcrumbWrapperProps = AdminSectionBreadcrumbWrapperPropsDto;
+
 export type AdminSectionBreadcrumbsPropsDto = {
   section: AdminBreadcrumbNode;
   current: string;

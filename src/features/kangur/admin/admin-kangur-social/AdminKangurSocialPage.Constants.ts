@@ -1,13 +1,11 @@
 import { ApiError } from '@/shared/lib/api-client';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import type {
+  KangurSocialPost,
+  KangurSocialPostEditorStateDto,
+} from '@/shared/contracts/kangur-social-posts';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
-export type EditorState = {
-  titlePl: string;
-  titleEn: string;
-  bodyPl: string;
-  bodyEn: string;
-};
+export type EditorState = KangurSocialPostEditorStateDto;
 
 export const emptyEditorState: EditorState = {
   titlePl: '',

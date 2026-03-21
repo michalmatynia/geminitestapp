@@ -65,13 +65,13 @@ export const ErrorSystem = {
         } catch (auditError) {
           logClientError(auditError);
           // Fallback to logger if audit logging fails
-          const { logger } = await import('@/shared/utils/logger');
+          const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
           logger.error('[ErrorSystem] Failed to log to Agent Audit:', auditError);
         }
       }
     } catch (importError) {
       logClientError(importError);
-      const { logger } = await import('@/shared/utils/logger');
+      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
@@ -103,13 +103,13 @@ export const ErrorSystem = {
           await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
           logClientError(auditError);
-          const { logger } = await import('@/shared/utils/logger');
+          const { logger } = (await import('@/shared/utils/logger')) as { logger: { warn: (msg: string, ...args: unknown[]) => void } };
           logger.warn('[ErrorSystem] Failed to log warning to Agent Audit:', { error: auditError });
         }
       }
     } catch (importError) {
       logClientError(importError);
-      const { logger } = await import('@/shared/utils/logger');
+      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
@@ -133,7 +133,7 @@ export const ErrorSystem = {
       });
     } catch (importError) {
       logClientError(importError);
-      const { logger } = await import('@/shared/utils/logger');
+      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },
@@ -159,7 +159,7 @@ export const ErrorSystem = {
       });
     } catch (importError) {
       logClientError(importError);
-      const { logger } = await import('@/shared/utils/logger');
+      const { logger } = (await import('@/shared/utils/logger')) as { logger: { error: (msg: string, ...args: unknown[]) => void } };
       logger.error('[ErrorSystem] Failed to import dependencies:', importError);
     }
   },

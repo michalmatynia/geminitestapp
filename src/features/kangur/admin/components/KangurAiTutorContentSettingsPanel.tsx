@@ -13,7 +13,10 @@ import {
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
-import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
+import type {
+  KangurAiTutorLocaleTranslationStatusDto,
+  KangurAiTutorTranslationStatusDto,
+} from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
@@ -63,10 +66,7 @@ const AI_TUTOR_CONTENT_SECTION_CARD_KEYS = [
 const stringifyAiTutorContent = (content: KangurAiTutorContent): string =>
   `${JSON.stringify(content, null, 2)}\n`;
 
-type SectionTranslationStatus = {
-  locale: string;
-  status: KangurAiTutorTranslationStatusDto;
-};
+type SectionTranslationStatus = KangurAiTutorLocaleTranslationStatusDto;
 
 type SectionTranslationFilterStatus = Extract<
   KangurAiTutorTranslationStatusDto,

@@ -24,7 +24,9 @@ type SocialPostsQueryOptions = {
 const SOCIAL_POSTS_QUERY_TIMEOUT_MS = 60_000;
 const KANGUR_SOCIAL_POSTS_QUERY_KEY = ['kangur', 'social-posts'] as const;
 
-const fetchSocialPosts = async (options?: SocialPostsQueryOptions): Promise<KangurSocialPost[]> => {
+export const fetchKangurSocialPosts = async (
+  options?: SocialPostsQueryOptions
+): Promise<KangurSocialPost[]> => {
   const payload = await api.get<KangurSocialPost[]>('/api/kangur/social-posts', {
     params: {
       scope: options?.scope,
@@ -43,7 +45,7 @@ export const useKangurSocialPosts = (
       scope: options?.scope ?? 'public',
       limit: options?.limit ?? null,
     }),
-    queryFn: async (): Promise<KangurSocialPost[]> => fetchSocialPosts(options),
+    queryFn: async (): Promise<KangurSocialPost[]> => fetchKangurSocialPosts(options),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 30,
     refetchOnMount: false,

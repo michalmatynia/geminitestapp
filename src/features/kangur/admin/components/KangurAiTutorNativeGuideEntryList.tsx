@@ -1,11 +1,11 @@
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
-import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
+import type {
+  KangurAiTutorLocaleTranslationStatusDto,
+  KangurAiTutorTranslationStatusDto,
+} from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { Badge, Card } from '@/features/kangur/shared/ui';
 
-type EntryTranslationStatus = {
-  locale: string;
-  status: KangurAiTutorTranslationStatusDto;
-};
+type EntryTranslationStatus = KangurAiTutorLocaleTranslationStatusDto;
 
 type Props = {
   entries: KangurAiTutorNativeGuideEntry[];

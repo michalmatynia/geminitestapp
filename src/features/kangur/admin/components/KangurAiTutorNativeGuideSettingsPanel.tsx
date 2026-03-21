@@ -17,7 +17,7 @@ import {
   buildKangurAiTutorNativeGuideTranslationStatusByEntryId,
   summarizeKangurAiTutorNativeGuideTranslationStatuses,
 } from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
-import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
+import type { KangurAiTutorLocaleTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
@@ -92,10 +92,8 @@ type NativeGuideManifestCoverageRow = {
   disabledGuideIds: string[];
 };
 
-type EntryTranslationStatus = {
-  locale: string;
-  status: KangurAiTutorTranslationStatusDto;
-};
+type EntryTranslationStatus = KangurAiTutorLocaleTranslationStatusDto;
+type EntryTranslationStatusValue = EntryTranslationStatus['status'];
 
 export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const { toast } = useToast();
@@ -253,7 +251,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const translationStatusesByLocale = useMemo(() => {
     const sourceStore = parsedState.store;
     if (!sourceStore) {
-      return new Map<string, Map<string, KangurAiTutorTranslationStatusDto>>();
+      return new Map<string, Map<string, EntryTranslationStatusValue>>();
     }
 
     return new Map(
@@ -277,10 +275,11 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
     for (const entry of parsedState.store.entries) {
       statuses.set(
         entry.id,
-        AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.map((locale) => ({
-          locale,
-          status: translationStatusesByLocale.get(locale)?.get(entry.id) ?? 'missing',
-        }))
+        AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES.map((locale) => {
+          const status: EntryTranslationStatusValue =
+            translationStatusesByLocale.get(locale)?.get(entry.id) ?? 'missing';
+          return { locale, status };
+        })
       );
     }
 

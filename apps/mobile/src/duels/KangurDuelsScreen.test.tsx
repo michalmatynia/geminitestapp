@@ -3,12 +3,13 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useLocalSearchParamsMock,
   useRouterMock,
+  replaceMock,
   useKangurMobileAuthMock,
   useKangurMobileDuelLobbyChatMock,
   useKangurMobileDuelsLobbyMock,
@@ -16,6 +17,7 @@ const {
 } = vi.hoisted(() => ({
   useLocalSearchParamsMock: vi.fn(),
   useRouterMock: vi.fn(),
+  replaceMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileDuelLobbyChatMock: vi.fn(),
   useKangurMobileDuelsLobbyMock: vi.fn(),
@@ -51,7 +53,7 @@ describe('KangurDuelsScreen', () => {
     vi.clearAllMocks();
     useLocalSearchParamsMock.mockReturnValue({});
     useRouterMock.mockReturnValue({
-      replace: vi.fn(),
+      replace: replaceMock,
     });
     useKangurMobileAuthMock.mockReturnValue({
       isLoadingAuth: false,
@@ -491,5 +493,67 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Podgląd pytania')).toBeTruthy();
     expect(screen.getByText('Opcja 1: 4')).toBeTruthy();
     expect(screen.getByText('Odśwież podgląd pojedynku')).toBeTruthy();
+  });
+
+  it('auto-joins an invite route and replaces the route with the active session id', async () => {
+    const joinDuelMock = vi.fn().mockResolvedValue('duel-joined-1');
+
+    useLocalSearchParamsMock.mockReturnValue({
+      join: 'invite-join-1',
+    });
+    useKangurMobileDuelsLobbyMock.mockReturnValue({
+      actionError: null,
+      createPrivateChallenge: vi.fn(),
+      createPublicChallenge: vi.fn(),
+      createQuickMatch: vi.fn(),
+      difficulty: 'easy',
+      inviteEntries: [],
+      isActionPending: false,
+      isAuthenticated: true,
+      isLoadingAuth: false,
+      isLobbyLoading: false,
+      isOpponentsLoading: false,
+      isPresenceLoading: false,
+      isRestoringAuth: false,
+      isSearchLoading: false,
+      joinDuel: joinDuelMock,
+      leaderboardEntries: [],
+      leaderboardError: null,
+      lobbyError: null,
+      modeFilter: 'all',
+      operation: 'addition',
+      opponents: [],
+      presenceEntries: [],
+      presenceError: null,
+      publicEntries: [],
+      refresh: vi.fn(),
+      searchError: null,
+      searchQuery: '',
+      searchResults: [],
+      searchSubmittedQuery: '',
+      setDifficulty: vi.fn(),
+      setModeFilter: vi.fn(),
+      setOperation: vi.fn(),
+      setSearchQuery: vi.fn(),
+      submitSearch: vi.fn(),
+      clearSearch: vi.fn(),
+      visiblePublicEntries: [],
+    });
+
+    render(<KangurDuelsScreen />);
+
+    expect(screen.getByText('Dołączanie do zaproszenia')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(joinDuelMock).toHaveBeenCalledWith('invite-join-1');
+    });
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith({
+        pathname: '/duels',
+        params: {
+          sessionId: 'duel-joined-1',
+        },
+      });
+    });
   });
 });

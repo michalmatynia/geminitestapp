@@ -3,9 +3,9 @@
 import { useTranslations } from 'next-intl';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { KangurThemeMode } from '@/features/kangur/admin/components/KangurThemeSettingsPanel';
 import { ComponentSettingsPanel, usePageBuilder } from '@/features/cms/public';
 import { SidePanel } from '@/features/kangur/shared/ui';
+import type { KangurThemeMode } from '@/features/kangur/theme-settings';
 
 import { KangurThemePreviewPanel } from './KangurThemePreviewPanel';
 
@@ -25,9 +25,6 @@ export function KangurCmsBuilderRightPanel({
   const t = useTranslations('KangurCmsBuilder.rightPanel');
   const { state, selectedBlock, selectedColumn, selectedSection } = usePageBuilder();
   const hasSelection = Boolean(selectedSection || selectedBlock || selectedColumn);
-  const previewSection = themePreviewSection;
-  const previewTheme = themePreviewTheme;
-  const previewMode = themePreviewMode;
 
   return (
     <div
@@ -37,12 +34,12 @@ export function KangurCmsBuilderRightPanel({
           : 'w-80 translate-x-0 opacity-100'
       }`}
     >
-      {showThemePreview && previewTheme ? (
+      {showThemePreview && themePreviewTheme ? (
         <SidePanel position='right' width={320} isFocusMode={!state.currentPage}>
           <KangurThemePreviewPanel
-            section={previewSection}
-            theme={previewTheme}
-            mode={previewMode}
+            section={themePreviewSection}
+            theme={themePreviewTheme}
+            mode={themePreviewMode}
           />
         </SidePanel>
       ) : hasSelection ? (

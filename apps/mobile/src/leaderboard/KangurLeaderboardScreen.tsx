@@ -2,6 +2,7 @@ import { Link } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLeaderboard } from './useKangurMobileLeaderboard';
 
 const FILTER_SCROLL_STYLE = {
@@ -76,6 +77,7 @@ function SectionTitle({
 }
 
 export function KangurLeaderboardScreen(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
   const {
     error,
     isLoading,
@@ -119,14 +121,26 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
               }}
             >
               <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                Wróć
+                {copy({
+                  de: 'Zurück',
+                  en: 'Back',
+                  pl: 'Wróć',
+                })}
               </Text>
             </Pressable>
           </Link>
 
           <SectionTitle
-            title='Ranking'
-            subtitle='Mobilny ranking korzysta z tych samych kontraktów wyników i logiki mapowania rankingu co wspólny Kangur.'
+            title={copy({
+              de: 'Rangliste',
+              en: 'Leaderboard',
+              pl: 'Ranking',
+            })}
+            subtitle={copy({
+              de: 'Die mobile Rangliste nutzt dieselben Ergebnisverträge und dieselbe Zuordnungslogik wie der gemeinsame Kangur.',
+              en: 'The mobile leaderboard uses the same score contracts and leaderboard mapping logic as shared Kangur.',
+              pl: 'Mobilny ranking korzysta z tych samych kontraktów wyników i logiki mapowania rankingu co wspólny Kangur.',
+            })}
           />
         </View>
 
@@ -145,7 +159,11 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
         >
           <View style={{ gap: 8 }}>
             <Text style={{ color: '#0f172a', fontWeight: '700', fontSize: 16 }}>
-              Tryb
+              {copy({
+                de: 'Modus',
+                en: 'Mode',
+                pl: 'Tryb',
+              })}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={FILTER_SCROLL_STYLE}>
               {operationOptions.map((option) => (
@@ -163,7 +181,11 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
 
           <View style={{ gap: 8 }}>
             <Text style={{ color: '#0f172a', fontWeight: '700', fontSize: 16 }}>
-              Gracze
+              {copy({
+                de: 'Spieler',
+                en: 'Players',
+                pl: 'Gracze',
+              })}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={FILTER_SCROLL_STYLE}>
               {userOptions.map((option) => (
@@ -187,7 +209,11 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#64748b', fontSize: 13 }}>
-              Widoczne wyniki: {visibleCount}
+              {copy({
+                de: `Sichtbare Ergebnisse: ${visibleCount}`,
+                en: `Visible results: ${visibleCount}`,
+                pl: `Widoczne wyniki: ${visibleCount}`,
+              })}
             </Text>
             <Pressable
               accessibilityRole='button'
@@ -201,7 +227,13 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#ffffff', fontWeight: '700' }}>Odśwież</Text>
+              <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                {copy({
+                  de: 'Aktualisieren',
+                  en: 'Refresh',
+                  pl: 'Odśwież',
+                })}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -216,8 +248,16 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           >
             <Text style={{ color: '#334155', fontSize: 15 }}>
               {isRestoringAuth
-                ? 'Przywracamy sesję ucznia i ranking...'
-                : 'Ładujemy ranking...'}
+                ? copy({
+                    de: 'Die Schulersitzung und die Rangliste werden wiederhergestellt...',
+                    en: 'Restoring the learner session and leaderboard...',
+                    pl: 'Przywracamy sesję ucznia i ranking...',
+                  })
+                : copy({
+                    de: 'Die Rangliste wird geladen...',
+                    en: 'Loading leaderboard...',
+                    pl: 'Ładujemy ranking...',
+                  })}
             </Text>
           </View>
         ) : error ? (
@@ -230,11 +270,19 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#991b1b', fontWeight: '800', fontSize: 16 }}>
-              Ranking niedostępny
+              {copy({
+                de: 'Rangliste nicht verfügbar',
+                en: 'Leaderboard unavailable',
+                pl: 'Ranking niedostępny',
+              })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 21 }}>
-              {error} Uruchom webowe API Kangura pod skonfigurowanym adresem, a potem
-              odśwież widok.
+              {error}{' '}
+              {copy({
+                de: 'Starte die Kangur-Web-API unter der konfigurierten Adresse und aktualisiere dann die Ansicht.',
+                en: 'Start the Kangur web API at the configured address and then refresh the view.',
+                pl: 'Uruchom webowe API Kangura pod skonfigurowanym adresem, a potem odśwież widok.',
+              })}
             </Text>
           </View>
         ) : items.length === 0 ? (
@@ -246,7 +294,11 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             }}
           >
             <Text style={{ color: '#334155', fontSize: 15 }}>
-              Żaden wynik nie pasuje do obecnych filtrów.
+              {copy({
+                de: 'Kein Ergebnis passt zu den aktuellen Filtern.',
+                en: 'No result matches the current filters.',
+                pl: 'Żaden wynik nie pasuje do obecnych filtrów.',
+              })}
             </Text>
           </View>
         ) : (

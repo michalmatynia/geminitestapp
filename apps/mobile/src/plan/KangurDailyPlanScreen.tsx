@@ -4,6 +4,7 @@ import { Link, type Href } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   formatKangurMobileScoreDateTime,
   formatKangurMobileScoreOperation,
@@ -123,6 +124,8 @@ function FocusCard({
   practiceHref: Href;
   title: string;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+
   return (
     <View
       style={{
@@ -136,12 +139,16 @@ function FocusCard({
     >
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
       <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        {formatKangurMobileScoreOperation(operation.operation)}
+        {formatKangurMobileScoreOperation(operation.operation, locale)}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{description}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Pill
-          label={`Średnio ${operation.averageAccuracyPercent}%`}
+          label={copy({
+            de: `Durchschnitt ${operation.averageAccuracyPercent}%`,
+            en: `Average ${operation.averageAccuracyPercent}%`,
+            pl: `Średnio ${operation.averageAccuracyPercent}%`,
+          })}
           tone={{
             backgroundColor: accentColor === '#b91c1c' ? '#fef2f2' : '#ecfdf5',
             borderColor: accentColor === '#b91c1c' ? '#fecaca' : '#a7f3d0',
@@ -149,7 +156,11 @@ function FocusCard({
           }}
         />
         <Pill
-          label={`Sesje ${operation.sessions}`}
+          label={copy({
+            de: `Sitzungen ${operation.sessions}`,
+            en: `Sessions ${operation.sessions}`,
+            pl: `Sesje ${operation.sessions}`,
+          })}
           tone={{
             backgroundColor: '#f1f5f9',
             borderColor: '#cbd5e1',
@@ -159,9 +170,33 @@ function FocusCard({
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton href={practiceHref} label='Trenuj teraz' tone='primary' />
-        {lessonHref ? <LinkButton href={lessonHref} label='Otwórz lekcję' /> : null}
-        <LinkButton href={historyHref} label='Historia trybu' />
+        <LinkButton
+          href={practiceHref}
+          label={copy({
+            de: 'Jetzt trainieren',
+            en: 'Practice now',
+            pl: 'Trenuj teraz',
+          })}
+          tone='primary'
+        />
+        {lessonHref ? (
+          <LinkButton
+            href={lessonHref}
+            label={copy({
+              de: 'Lektion öffnen',
+              en: 'Open lesson',
+              pl: 'Otwórz lekcję',
+            })}
+          />
+        ) : null}
+        <LinkButton
+          href={historyHref}
+          label={copy({
+            de: 'Modusverlauf',
+            en: 'Mode history',
+            pl: 'Historia trybu',
+          })}
+        />
       </View>
     </View>
   );
@@ -197,14 +232,7 @@ const getPriorityTone = (
 };
 
 const getPriorityLabel = (priority: KangurAssignmentPlan['priority']): string => {
-  if (priority === 'high') {
-    return 'Priorytet wysoki';
-  }
-  if (priority === 'medium') {
-    return 'Priorytet średni';
-  }
-
-  return 'Priorytet niski';
+  return priority;
 };
 
 function AssignmentRow({
@@ -214,6 +242,8 @@ function AssignmentRow({
   assignment: KangurAssignmentPlan;
   href: Href | null;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+
   return (
     <View
       style={{
@@ -225,7 +255,29 @@ function AssignmentRow({
         gap: 8,
       }}
     >
-      <Pill label={getPriorityLabel(assignment.priority)} tone={getPriorityTone(assignment.priority)} />
+      <Pill
+        label={copy({
+          de:
+            getPriorityLabel(assignment.priority) === 'high'
+              ? 'Hohe Priorität'
+              : getPriorityLabel(assignment.priority) === 'medium'
+                ? 'Mittlere Priorität'
+                : 'Niedrige Priorität',
+          en:
+            getPriorityLabel(assignment.priority) === 'high'
+              ? 'High priority'
+              : getPriorityLabel(assignment.priority) === 'medium'
+                ? 'Medium priority'
+                : 'Low priority',
+          pl:
+            getPriorityLabel(assignment.priority) === 'high'
+              ? 'Priorytet wysoki'
+              : getPriorityLabel(assignment.priority) === 'medium'
+                ? 'Priorytet średni'
+                : 'Priorytet niski',
+        })}
+        tone={getPriorityTone(assignment.priority)}
+      />
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
         {assignment.title}
       </Text>
@@ -233,12 +285,16 @@ function AssignmentRow({
         {assignment.description}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        Cel: {assignment.target}
+        {copy({
+          de: `Ziel: ${assignment.target}`,
+          en: `Goal: ${assignment.target}`,
+          pl: `Cel: ${assignment.target}`,
+        })}
       </Text>
       {href ? (
         <LinkButton
           href={href}
-          label={translateKangurMobileActionLabel(assignment.action.label)}
+          label={translateKangurMobileActionLabel(assignment.action.label, locale)}
           tone='primary'
         />
       ) : (
@@ -252,7 +308,12 @@ function AssignmentRow({
           }}
         >
           <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(assignment.action.label)} · wkrotce
+            {translateKangurMobileActionLabel(assignment.action.label, locale)} ·{' '}
+            {copy({
+              de: 'bald',
+              en: 'soon',
+              pl: 'wkrotce',
+            })}
           </Text>
         </View>
       )}
@@ -271,6 +332,7 @@ function RecentResultRow({
   practiceHref: Href;
   result: KangurScore;
 }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
   const accuracyPercent = getKangurMobileScoreAccuracyPercent(result);
 
   return (
@@ -294,10 +356,10 @@ function RecentResultRow({
       >
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {formatKangurMobileScoreOperation(result.operation)}
+            {formatKangurMobileScoreOperation(result.operation, locale)}
           </Text>
           <Text style={{ color: '#64748b', fontSize: 12 }}>
-            {formatKangurMobileScoreDateTime(result.created_date)}
+            {formatKangurMobileScoreDateTime(result.created_date, locale)}
           </Text>
         </View>
         <Pill
@@ -313,15 +375,40 @@ function RecentResultRow({
         />
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton href={practiceHref} label='Trenuj ponownie' tone='primary' />
-        {lessonHref ? <LinkButton href={lessonHref} label='Otwórz lekcję' /> : null}
-        <LinkButton href={historyHref} label='Historia trybu' />
+        <LinkButton
+          href={practiceHref}
+          label={copy({
+            de: 'Erneut trainieren',
+            en: 'Train again',
+            pl: 'Trenuj ponownie',
+          })}
+          tone='primary'
+        />
+        {lessonHref ? (
+          <LinkButton
+            href={lessonHref}
+            label={copy({
+              de: 'Lektion öffnen',
+              en: 'Open lesson',
+              pl: 'Otwórz lekcję',
+            })}
+          />
+        ) : null}
+        <LinkButton
+          href={historyHref}
+          label={copy({
+            de: 'Modusverlauf',
+            en: 'Mode history',
+            pl: 'Historia trybu',
+          })}
+        />
       </View>
     </View>
   );
 }
 
 export function KangurDailyPlanScreen(): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
   const {
     assignmentItems,
     authError,
@@ -361,27 +448,53 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Zurück',
+                  en: 'Back',
+                  pl: 'Wróć',
+                })}
+              </Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Plan dnia
+              {copy({
+                de: 'Tagesplan',
+                en: 'Daily plan',
+                pl: 'Plan dnia',
+              })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
-              Jedno miejsce na dziś
+              {copy({
+                de: 'Ein Ort für heute',
+                en: 'One place for today',
+                pl: 'Jedno miejsce na dziś',
+              })}
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {isLoadingAuth && !isAuthenticated
-                ? 'Przywracamy sesję ucznia oraz ostatni plan oparty na wynikach i postępie.'
-                : `Skupiony plan nauki dla ${displayName}, złożony z treningu, lekcji i najważniejszych wyników.`}
+                ? copy({
+                    de: 'Die Schulersitzung und der letzte Plan auf Basis von Ergebnissen und Fortschritt werden wiederhergestellt.',
+                    en: 'Restoring the learner session and the latest plan based on scores and progress.',
+                    pl: 'Przywracamy sesję ucznia oraz ostatni plan oparty na wynikach i postępie.',
+                  })
+                : copy({
+                    de: `Ein fokussierter Lernplan für ${displayName} aus Training, Lektionen und den wichtigsten Ergebnissen.`,
+                    en: `A focused learning plan for ${displayName}, built from practice, lessons, and the most important results.`,
+                    pl: `Skupiony plan nauki dla ${displayName}, złożony z treningu, lekcji i najważniejszych wyników.`,
+                  })}
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <LinkButton
                 href='/practice?operation=mixed'
-                label='Uruchom trening mieszany'
+                label={copy({
+                  de: 'Gemischtes Training starten',
+                  en: 'Start mixed practice',
+                  pl: 'Uruchom trening mieszany',
+                })}
                 tone='primary'
               />
               <Pressable
@@ -398,23 +511,42 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   paddingVertical: 10,
                 }}
               >
-                <Text style={{ color: '#0f172a', fontWeight: '700' }}>Odśwież plan</Text>
+                <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                  {copy({
+                    de: 'Plan aktualisieren',
+                    en: 'Refresh plan',
+                    pl: 'Odśwież plan',
+                  })}
+                </Text>
               </Pressable>
             </View>
 
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze
-                zsynchronizowane wyniki i wskazówki treningowe.
+                {copy({
+                  de: 'Die Schulersitzung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan synchronisierte Ergebnisse und Trainingshinweise.',
+                  en: 'Restoring the learner session. Once it is ready, the plan will load synchronized results and training guidance.',
+                  pl: 'Przywracamy sesję ucznia. Gdy będzie gotowa, plan pobierze zsynchronizowane wyniki i wskazówki treningowe.',
+                })}
               </Text>
             ) : !isAuthenticated ? (
               supportsLearnerCredentials ? (
                 <View style={{ gap: 10 }}>
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Zaloguj ucznia na ekranie głównym, aby pobrać wyniki, fokus
-                    treningowy i zsynchronizowaną historię.
+                    {copy({
+                      de: 'Melde den Schuler auf dem Startbildschirm an, um Ergebnisse, Trainingsfokus und synchronisierten Verlauf zu laden.',
+                      en: 'Sign in the learner on the home screen to load results, training focus, and synchronized history.',
+                      pl: 'Zaloguj ucznia na ekranie głównym, aby pobrać wyniki, fokus treningowy i zsynchronizowaną historię.',
+                    })}
                   </Text>
-                  <LinkButton href='/' label='Otwórz ekran logowania' />
+                  <LinkButton
+                    href='/'
+                    label={copy({
+                      de: 'Anmeldebildschirm öffnen',
+                      en: 'Open auth screen',
+                      pl: 'Otwórz ekran logowania',
+                    })}
+                  />
                 </View>
               ) : (
                 <Pressable
@@ -431,7 +563,11 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    Zaloguj sesję demo
+                    {copy({
+                      de: 'Demo-Sitzung anmelden',
+                      en: 'Sign in demo session',
+                      pl: 'Zaloguj sesję demo',
+                    })}
                   </Text>
                 </Pressable>
               )
@@ -444,42 +580,76 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-              Fokus treningowy
+              {copy({
+                de: 'Trainingsfokus',
+                en: 'Training focus',
+                pl: 'Fokus treningowy',
+              })}
             </Text>
             {isLoading ? (
-              <Text style={{ color: '#475569' }}>Ładujemy fokus oparty na wynikach...</Text>
+              <Text style={{ color: '#475569' }}>
+                {copy({
+                  de: 'Der ergebnisbasierte Fokus wird geladen...',
+                  en: 'Loading score-based focus...',
+                  pl: 'Ładujemy fokus oparty na wynikach...',
+                })}
+              </Text>
             ) : scoreError ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Zaloguj ucznia, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.
+                {copy({
+                  de: 'Melde den Schuler an, um Hinweise für den stärksten und schwächsten Modus freizuschalten.',
+                  en: 'Sign in the learner to unlock guidance for the strongest and weakest modes.',
+                  pl: 'Zaloguj ucznia, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.',
+                })}
               </Text>
             ) : !weakestFocus && !strongestFocus ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Ukończ jedną zsynchronizowaną sesję, aby zbudować pierwszy fokus treningowy.
+                {copy({
+                  de: 'Schließe eine synchronisierte Sitzung ab, um den ersten Trainingsfokus aufzubauen.',
+                  en: 'Complete one synchronized session to build the first training focus.',
+                  pl: 'Ukończ jedną zsynchronizowaną sesję, aby zbudować pierwszy fokus treningowy.',
+                })}
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
                 {weakestFocus ? (
                   <FocusCard
                     accentColor='#b91c1c'
-                    description='To obecnie najsłabszy zsynchronizowany tryb. Zacznij od krótkiej sesji celowanej, a potem wróć do pasującej lekcji, jeśli będzie trzeba.'
+                    description={copy({
+                      de: 'Das ist aktuell der schwächste synchronisierte Modus. Starte mit einer kurzen gezielten Sitzung und kehre bei Bedarf zur passenden Lektion zurück.',
+                      en: 'This is currently the weakest synchronized mode. Start with a short targeted session and then return to the matching lesson if needed.',
+                      pl: 'To obecnie najsłabszy zsynchronizowany tryb. Zacznij od krótkiej sesji celowanej, a potem wróć do pasującej lekcji, jeśli będzie trzeba.',
+                    })}
                     historyHref={weakestFocus.historyHref}
                     lessonHref={weakestFocus.lessonHref}
                     operation={weakestFocus.operation}
                     practiceHref={weakestFocus.practiceHref}
-                    title='Do powtórki'
+                    title={copy({
+                      de: 'Zum Wiederholen',
+                      en: 'Needs review',
+                      pl: 'Do powtórki',
+                    })}
                   />
                 ) : null}
                 {strongestFocus ? (
                   <FocusCard
                     accentColor='#047857'
-                    description='Ten tryb jest teraz najbardziej stabilny. Użyj go do szybkiego podbicia pewności albo lekkiej rozgrzewki.'
+                    description={copy({
+                      de: 'Dieser Modus ist gerade am stabilsten. Nutze ihn für einen schnellen Selbstvertrauensschub oder ein kurzes Aufwärmen.',
+                      en: 'This mode is the most stable right now. Use it for a quick confidence boost or a light warm-up.',
+                      pl: 'Ten tryb jest teraz najbardziej stabilny. Użyj go do szybkiego podbicia pewności albo lekkiej rozgrzewki.',
+                    })}
                     historyHref={strongestFocus.historyHref}
                     lessonHref={strongestFocus.lessonHref}
                     operation={strongestFocus.operation}
                     practiceHref={strongestFocus.practiceHref}
-                    title='Najmocniejszy tryb'
+                    title={copy({
+                      de: 'Stärkster Modus',
+                      en: 'Strongest mode',
+                      pl: 'Najmocniejszy tryb',
+                    })}
                   />
                 ) : null}
               </View>
@@ -488,12 +658,19 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
 
           <Card>
             <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-              Zadania
+              {copy({
+                de: 'Aufgaben',
+                en: 'Assignments',
+                pl: 'Zadania',
+              })}
             </Text>
             {assignmentItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Brak jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj trening,
-                aby wygenerować pierwszy plan kolejnych kroków.
+                {copy({
+                  de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere ein Training, um den ersten Plan der nächsten Schritte zu erzeugen.',
+                  en: 'There are no local assignments yet. Open lessons or complete practice to generate the first plan of next steps.',
+                  pl: 'Brak jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj trening, aby wygenerować pierwszy plan kolejnych kroków.',
+                })}
               </Text>
             ) : (
               <View style={{ gap: 12 }}>
@@ -518,22 +695,46 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               }}
             >
               <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                Ostatnie wyniki
+                {copy({
+                  de: 'Letzte Ergebnisse',
+                  en: 'Recent results',
+                  pl: 'Ostatnie wyniki',
+                })}
               </Text>
-              <LinkButton href={createKangurResultsHref()} label='Otwórz historię' />
+              <LinkButton
+                href={createKangurResultsHref()}
+                label={copy({
+                  de: 'Verlauf öffnen',
+                  en: 'Open history',
+                  pl: 'Otwórz historię',
+                })}
+              />
             </View>
             {isLoading ? (
-              <Text style={{ color: '#475569' }}>Ładujemy ostatnie wyniki...</Text>
+              <Text style={{ color: '#475569' }}>
+                {copy({
+                  de: 'Die letzten Ergebnisse werden geladen...',
+                  en: 'Loading recent results...',
+                  pl: 'Ładujemy ostatnie wyniki...',
+                })}
+              </Text>
             ) : !isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki.
+                {copy({
+                  de: 'Melde die Schulersitzung an, um hier synchronisierte Ergebnisse zu sehen.',
+                  en: 'Sign in the learner session to see synchronized results here.',
+                  pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj zsynchronizowane wyniki.',
+                })}
               </Text>
             ) : scoreError ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
             ) : recentResultItems.length === 0 ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
-                Brak jeszcze zsynchronizowanych wyników. Ukończ jedną sesję,
-                aby wypełnić tę sekcję.
+                {copy({
+                  de: 'Es gibt noch keine synchronisierten Ergebnisse. Schließe eine Sitzung ab, um diesen Bereich zu füllen.',
+                  en: 'There are no synchronized results yet. Complete one session to fill this section.',
+                  pl: 'Brak jeszcze zsynchronizowanych wyników. Ukończ jedną sesję, aby wypełnić tę sekcję.',
+                })}
               </Text>
             ) : (
               <View style={{ gap: 12 }}>

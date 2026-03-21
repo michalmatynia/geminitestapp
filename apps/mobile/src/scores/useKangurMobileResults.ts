@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   buildKangurMobileOperationPerformance,
   buildKangurMobileScoreSummary,
@@ -31,6 +32,7 @@ type UseKangurMobileResultsResult = {
 export const useKangurMobileResults = (
   options: UseKangurMobileResultsOptions = {},
 ): UseKangurMobileResultsResult => {
+  const { copy } = useKangurMobileI18n();
   const scoresQuery = useKangurMobileScoreHistory({
     limit: 40,
     sort: '-created_date',
@@ -60,7 +62,11 @@ export const useKangurMobileResults = (
     availableOperations,
     error:
       scoresQuery.error instanceof Error
-        ? 'Nie udało się pobrać historii wyników.'
+        ? copy({
+            de: 'Der Ergebnisverlauf konnte nicht geladen werden.',
+            en: 'Could not load the score history.',
+            pl: 'Nie udało się pobrać historii wyników.',
+          })
         : null,
     isEnabled: scoresQuery.isEnabled,
     isLoading: scoresQuery.isLoading,

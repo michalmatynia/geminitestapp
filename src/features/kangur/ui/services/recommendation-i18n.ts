@@ -1,9 +1,18 @@
+import type { KangurProgressTranslate } from '@/features/kangur/ui/services/progress-i18n';
+
 type RecommendationTranslationValues = Record<string, string | number>;
 
 export type RecommendationTranslate = (
   key: string,
   values?: RecommendationTranslationValues
 ) => string;
+
+export type KangurRecommendationLocalizerDto = {
+  locale?: string | null;
+  translate?: RecommendationTranslate;
+  progressTranslate?: KangurProgressTranslate;
+};
+export type KangurRecommendationLocalizer = KangurRecommendationLocalizerDto;
 
 const ACTIVITY_LABEL_KEY_BY_PRIMARY: Record<string, string> = {
   adding: 'addition',

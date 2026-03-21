@@ -11,7 +11,7 @@ import type {
   KangurDuelStatus,
 } from '@kangur/contracts';
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -623,18 +623,24 @@ export function KangurDuelsScreen(): React.JSX.Element {
     signIn,
     supportsLearnerCredentials,
   } = useKangurMobileAuth();
-  const sessionId =
-    resolveSessionIdParam(params.sessionId) ?? resolveSessionIdParam(params.join);
+  const routeSessionId = resolveSessionIdParam(params.sessionId);
+  const joinSessionId = routeSessionId
+    ? null
+    : resolveSessionIdParam(params.join);
+  const sessionId = routeSessionId;
   const isSpectatingRoute = resolveSpectateParam(params.spectate);
   const lobby = useKangurMobileDuelsLobby();
   const chat = useKangurMobileDuelLobbyChat();
   const duel = useKangurMobileDuelSession(sessionId, {
     spectate: isSpectatingRoute,
   });
+  const attemptedJoinSessionIdRef = useRef<string | null>(null);
   const activeLearnerId =
     authSession.user?.activeLearner?.id ?? authSession.user?.id ?? null;
   const [chatDraft, setChatDraft] = useState('');
   const [chatActionError, setChatActionError] = useState<string | null>(null);
+  const [routeJoinError, setRouteJoinError] = useState<string | null>(null);
+  const [isJoiningFromRoute, setIsJoiningFromRoute] = useState(false);
   const lobbyChatPreview = chat.messages.slice(-LOBBY_CHAT_PREVIEW_LIMIT);
   const chatRemainingChars = Math.max(0, chat.maxMessageLength - chatDraft.length);
   const canSendChatMessage =
@@ -657,6 +663,52 @@ export function KangurDuelsScreen(): React.JSX.Element {
   const openLobby = (): void => {
     router.replace(createKangurDuelsHref());
   };
+
+  const joinSessionFromRoute = async (): Promise<void> => {
+    if (!joinSessionId) {
+      return;
+    }
+
+    setRouteJoinError(null);
+    setIsJoiningFromRoute(true);
+
+    try {
+      const nextSessionId = await lobby.joinDuel(joinSessionId);
+      if (nextSessionId) {
+        openSession(nextSessionId);
+        return;
+      }
+
+      setRouteJoinError(
+        lobby.actionError ?? 'Nie udało się dołączyć do zaproszenia do pojedynku.',
+      );
+    } finally {
+      setIsJoiningFromRoute(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!joinSessionId || routeSessionId || isSpectatingRoute) {
+      return;
+    }
+
+    if (!lobby.isAuthenticated || lobby.isLoadingAuth) {
+      return;
+    }
+
+    if (attemptedJoinSessionIdRef.current === joinSessionId) {
+      return;
+    }
+
+    attemptedJoinSessionIdRef.current = joinSessionId;
+    void joinSessionFromRoute();
+  }, [
+    isSpectatingRoute,
+    joinSessionId,
+    lobby.isAuthenticated,
+    lobby.isLoadingAuth,
+    routeSessionId,
+  ]);
 
   const handleLobbyChatSend = async (): Promise<void> => {
     setChatActionError(null);
@@ -694,6 +746,77 @@ export function KangurDuelsScreen(): React.JSX.Element {
       tone='secondary'
     />
   );
+
+  if (joinSessionId && !routeSessionId && !isSpectatingRoute) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
+        <ScrollView
+          contentContainerStyle={{
+            gap: 18,
+            paddingHorizontal: 20,
+            paddingVertical: 24,
+          }}
+        >
+          <View style={{ gap: 14 }}>
+            <ActionButton label='Wróć do lobby' onPress={openLobby} tone='ghost' />
+            <SectionTitle
+              title='Dołączanie do zaproszenia'
+              subtitle='Link z parametrem join przyjmuje prywatne zaproszenie i po powodzeniu otwiera aktywną sesję pojedynku.'
+            />
+          </View>
+
+          {!lobby.isAuthenticated && !lobby.isLoadingAuth ? (
+            <Card>
+              <MessageCard
+                title='Zaloguj sesję ucznia'
+                description='Prywatne zaproszenie do pojedynku wymaga aktywnej sesji ucznia.'
+              />
+              {createLoginCallToAction('Przejdź do logowania')}
+            </Card>
+          ) : isJoiningFromRoute || lobby.isActionPending ? (
+            <Card>
+              <MessageCard
+                title='Dołączamy do pojedynku'
+                description='Akceptujemy prywatne zaproszenie i pobieramy pełny stan sesji.'
+              />
+            </Card>
+          ) : routeJoinError || lobby.actionError ? (
+            <Card>
+              <MessageCard
+                title='Nie udało się przyjąć zaproszenia'
+                description={
+                  routeJoinError ??
+                  lobby.actionError ??
+                  'Spróbuj ponownie albo wróć do lobby pojedynków.'
+                }
+                tone='error'
+              />
+              <View style={{ gap: 8 }}>
+                <ActionButton
+                  label='Spróbuj ponownie'
+                  onPress={joinSessionFromRoute}
+                  stretch
+                />
+                <ActionButton
+                  label='Wróć do lobby'
+                  onPress={openLobby}
+                  stretch
+                  tone='secondary'
+                />
+              </View>
+            </Card>
+          ) : (
+            <Card>
+              <MessageCard
+                title='Przygotowujemy sesję'
+                description='Jeśli link jest poprawny, za chwilę otworzy się ekran pojedynku.'
+              />
+            </Card>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   if (sessionId) {
     return (

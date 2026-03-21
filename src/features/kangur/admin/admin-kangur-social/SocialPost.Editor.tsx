@@ -7,17 +7,15 @@ import {
   Input,
   Textarea,
 } from '@/features/kangur/shared/ui';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import type {
+  KangurSocialPost,
+  KangurSocialPostEditorStateDto,
+} from '@/shared/contracts/kangur-social-posts';
 import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import { SocialPostVisuals } from './SocialPost.Visuals';
 
-type SocialPostEditorState = {
-  titlePl: string;
-  titleEn: string;
-  bodyPl: string;
-  bodyEn: string;
-};
+type SocialPostEditorState = KangurSocialPostEditorStateDto;
 
 export type SocialPostEditorProps = {
   activePost: KangurSocialPost | null;

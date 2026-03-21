@@ -52,7 +52,6 @@ export const prefetchKangurPageContentStore = async (
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
-    gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
     meta: {
       source: 'kangur.hooks.prefetchKangurPageContentStore',
       operation: 'list',
@@ -62,7 +61,7 @@ export const prefetchKangurPageContentStore = async (
       tags: ['kangur', 'page-content'],
       description: 'Prefetches Kangur page content.',
     },
-  });
+  })();
 };
 
 export const useKangurPageContentStore = (

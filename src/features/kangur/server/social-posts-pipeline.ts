@@ -10,6 +10,7 @@ import {
   buildKangurSocialPostCombinedBody,
   kangurSocialPostSchema,
   type KangurSocialDocUpdatesResponse,
+  type KangurSocialPostEditorStateDto,
   type KangurSocialPost,
 } from '@/shared/contracts/kangur-social-posts';
 import type {
@@ -36,12 +37,7 @@ import {
   upsertKangurSocialPost,
 } from './social-posts-repository';
 
-type EditorState = {
-  titlePl: string;
-  titleEn: string;
-  bodyPl: string;
-  bodyEn: string;
-};
+type EditorState = KangurSocialPostEditorStateDto;
 
 export type RunKangurSocialPostPipelineInput = {
   postId: string;

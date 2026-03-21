@@ -216,7 +216,7 @@ export default function HomeScreen(): React.JSX.Element {
             Kangur mobilnie
           </Text>
           <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
-            Mobilna wersja wspolnego flow Kangura. W tym workspace sa juz
+            Mobilna wersja wspolnego flow Kangura. W tej aplikacji sa juz
             podpiete lekcje, profil, wyniki, plan dnia i ranking.
           </Text>
         </View>

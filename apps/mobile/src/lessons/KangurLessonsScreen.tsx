@@ -519,8 +519,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 </View>
               ) : (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  Wlasciwa tresc tej lekcji nie jest jeszcze przeniesiona do React Native. Ten
-                  ekran zamyka za to luke nawigacyjna i pokazuje prawidlowy stan opanowania.
+                  Wlasciwa tresc tej lekcji nie jest jeszcze przeniesiona do mobilnej aplikacji.
+                  Ten ekran zamyka za to luke nawigacyjna i pokazuje prawidlowy stan opanowania.
                 </Text>
               )}
               <Pressable

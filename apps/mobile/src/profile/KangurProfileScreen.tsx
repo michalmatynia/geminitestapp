@@ -601,7 +601,7 @@ export function KangurProfileScreen(): React.JSX.Element {
 
             {isLoadingAuth && !isAuthenticated ? (
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Sprawdzamy zapisany learner session. Po zakonczeniu przywrocimy
+                Sprawdzamy zapisana sesje ucznia. Po zakonczeniu przywrocimy
                 zsynchronizowane wyniki i lokalny postep.
               </Text>
             ) : !isAuthenticated ? (

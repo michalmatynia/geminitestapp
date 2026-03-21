@@ -93,3 +93,4 @@ docker.md
 # Testing
 /docs/metrics
 /tmp
+/output/playwright

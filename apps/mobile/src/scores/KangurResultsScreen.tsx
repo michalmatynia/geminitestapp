@@ -533,8 +533,8 @@ export function KangurResultsScreen(): React.JSX.Element {
                       Pelna lista
                     </Text>
                     <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      Historia korzysta z tego samego learner-scoped zapytania co profil i ekran
-                      glowny.
+                      Historia korzysta z tego samego zapytania ograniczonego do ucznia co profil
+                      i ekran glowny.
                     </Text>
                   </View>
                   <Pressable

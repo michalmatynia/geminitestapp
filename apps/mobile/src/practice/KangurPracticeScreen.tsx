@@ -769,7 +769,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      {isLastQuestion ? 'Finish practice' : 'Next question'}
+                      {isLastQuestion ? 'Zakoncz trening' : 'Nastepne pytanie'}
                     </Text>
                   </Pressable>
                 </View>

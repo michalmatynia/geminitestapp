@@ -8,6 +8,10 @@ type SettingsCache = {
   fetchedAt: number;
 };
 
+type SettingsHttpError = Error & {
+  status?: number;
+};
+
 const SETTINGS_CACHE_TTL_MS = 120_000;
 const LITE_SETTINGS_CACHE_TTL_MS = 120_000;
 const SETTINGS_FETCH_RETRY_DELAY_MS = 250;
@@ -29,6 +33,25 @@ const cloneSettings = (data: SettingRecord[]): SettingRecord[] =>
 
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));
+
+const createHttpStatusError = (message: string, status: number): SettingsHttpError => {
+  const error = new Error(message) as SettingsHttpError;
+  error.status = status;
+  return error;
+};
+
+const readHttpStatus = (error: unknown): number | null => {
+  if (typeof error !== 'object' || error === null || !('status' in error)) {
+    return null;
+  }
+  const status = (error as { status?: unknown }).status;
+  return typeof status === 'number' ? status : null;
+};
+
+const isUnauthorizedSettingsError = (error: unknown): boolean => {
+  const status = readHttpStatus(error);
+  return status === 401 || status === 403;
+};
 
 const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -130,7 +153,7 @@ async function fetchSettingsFromApi(
       credentials: 'include',
     });
     if (!res.ok) {
-      throw new Error(`Failed to fetch settings (${res.status})`);
+      throw createHttpStatusError(`Failed to fetch settings (${res.status})`, res.status);
     }
     return (await res.json()) as SettingRecord[];
   } catch (error: unknown) {
@@ -175,33 +198,40 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to fetch lite settings (${res.status})`);
+      throw createHttpStatusError(`Failed to fetch lite settings (${res.status})`, res.status);
     }
     return (await res.json()) as SettingRecord[];
   } catch (error: unknown) {
     const normalizedError = toError(error);
+    const isExpectedUnauthorized = isUnauthorizedSettingsError(error);
     if (liteSettingsCache) {
-      logSettingsFetchError(
-        'fetchLiteSettingsFromApi',
-        'Failed to fetch lite settings, using cached data.',
-        normalizedError
-      );
+      if (!isExpectedUnauthorized) {
+        logSettingsFetchError(
+          'fetchLiteSettingsFromApi',
+          'Failed to fetch lite settings, using cached data.',
+          normalizedError
+        );
+      }
       return liteSettingsCache.data;
     }
     const snapshot = getLiteSnapshot();
     if (snapshot && snapshot.length > 0) {
-      logSettingsFetchError(
-        'fetchLiteSettingsFromApi',
-        'Failed to fetch lite settings, using in-memory snapshot.',
-        normalizedError
-      );
+      if (!isExpectedUnauthorized) {
+        logSettingsFetchError(
+          'fetchLiteSettingsFromApi',
+          'Failed to fetch lite settings, using in-memory snapshot.',
+          normalizedError
+        );
+      }
       return cloneSettings(snapshot);
     }
-    logSettingsFetchError(
-      'fetchLiteSettingsFromApi',
-      'Failed to fetch lite settings, returning empty list.',
-      normalizedError
-    );
+    if (!isExpectedUnauthorized) {
+      logSettingsFetchError(
+        'fetchLiteSettingsFromApi',
+        'Failed to fetch lite settings, returning empty list.',
+        normalizedError
+      );
+    }
     return [];
   }
 }

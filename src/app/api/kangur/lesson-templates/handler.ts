@@ -29,7 +29,7 @@ export async function getKangurLessonTemplatesHandler(
 
   return NextResponse.json(templates, {
     headers: {
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
     },
   });
 }

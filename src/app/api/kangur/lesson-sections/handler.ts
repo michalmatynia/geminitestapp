@@ -40,7 +40,7 @@ export async function getKangurLessonSectionsHandler(
 
   return NextResponse.json(sections, {
     headers: {
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
     },
   });
 }

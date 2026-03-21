@@ -133,9 +133,11 @@ export const withKangurClientError = async <T>(
   try {
     return await task();
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    const resolvedReport = typeof report === 'function' ? report(error) : report;
     const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      void ErrorSystem.captureException(error);
+    }
+    const resolvedReport = typeof report === 'function' ? report(error) : report;
     if (shouldReport) {
       reportKangurClientError(error, resolvedReport);
     }
@@ -157,9 +159,11 @@ export const withKangurClientErrorSync = <T>(
   try {
     return task();
   } catch (error) {
-    void ErrorSystem.captureException(error);
-    const resolvedReport = typeof report === 'function' ? report(error) : report;
     const shouldReport = options.shouldReport?.(error) ?? true;
+    if (shouldReport) {
+      void ErrorSystem.captureException(error);
+    }
+    const resolvedReport = typeof report === 'function' ? report(error) : report;
     if (shouldReport) {
       reportKangurClientError(error, resolvedReport);
     }

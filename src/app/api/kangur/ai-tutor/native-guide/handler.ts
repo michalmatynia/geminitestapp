@@ -33,7 +33,7 @@ export async function getKangurAiTutorNativeGuideHandler(
 
   return NextResponse.json(store, {
     headers: {
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
     },
   });
 }

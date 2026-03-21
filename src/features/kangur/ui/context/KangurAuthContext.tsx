@@ -141,6 +141,7 @@ export const KangurAuthProvider = ({ children }: { children: ReactNode }): React
           async () => await kangurPlatform.auth.me(),
           {
             fallback: null,
+            shouldReport: (error) => !isKangurAuthStatusError(error),
             onError: (error) => {
               if (authRequestVersionRef.current !== requestVersion) {
                 return;

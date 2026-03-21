@@ -16,6 +16,9 @@ import {
   toNumberValue,
   toStringValue,
 } from './base-exporter-template-mappings';
+import { getLookupEntries } from './base-exporter/lookup-resolvers';
+import { getProductProducerValues } from './base-exporter/product-resolvers';
+import { normalizeProducerTargetField } from './base-exporter/template-helpers';
 
 import type {
   ImageBase64Mode,
@@ -142,6 +145,13 @@ const mergeTextFields = (
 
   const pushValue = (key: string, value: unknown): void => {
     if (value === null || value === undefined) return;
+    if (typeof value === 'string') {
+      const trimmedValue = value.trim();
+      if (trimmedValue || value === '') {
+        setNestedValue(nextTextFields, key, trimmedValue);
+      }
+      return;
+    }
     const stringValue = toStringValue(value);
     if (!stringValue) return;
     setNestedValue(nextTextFields, key, stringValue);
@@ -243,6 +253,35 @@ const mergeNumericFields = (
   }
 };
 
+const hasExplicitProducerTemplateMapping = (mappings: ExportTemplateMapping[]): boolean =>
+  mappings.some((mapping: ExportTemplateMapping) =>
+    normalizeProducerTargetField(String(mapping.sourceKey ?? '')) !== null
+  );
+
+const resolveDefaultMappedProducerIds = (
+  product: ProductWithImages,
+  producerExternalIdByInternalId?: Record<string, string>
+): string[] => {
+  if (!producerExternalIdByInternalId) {
+    return [];
+  }
+
+  const externalProducerIds = new Set(
+    getLookupEntries(producerExternalIdByInternalId).map(([, externalId]) => externalId.toLowerCase())
+  );
+  if (externalProducerIds.size === 0) {
+    return [];
+  }
+
+  const { producerIds } = getProductProducerValues(
+    product,
+    undefined,
+    producerExternalIdByInternalId
+  );
+
+  return producerIds.filter((producerId: string) => externalProducerIds.has(producerId.toLowerCase()));
+};
+
 /**
  * Build Base.com product data from internal product
  * Applies default mapping + optional template mappings
@@ -285,9 +324,18 @@ export async function buildBaseProductData(
   if (!imagesOnly) {
     const categoryId = typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
     const textFields: Record<string, string> = {};
+    const explicitProducerTemplateMapping = hasExplicitProducerTemplateMapping(mappings);
+    const mappedProducerIds = explicitProducerTemplateMapping
+      ? []
+      : resolveDefaultMappedProducerIds(product, options?.producerExternalIdByInternalId);
     if (product.name_en) textFields['name'] = product.name_en;
     if (product.description_en) textFields['description'] = product.description_en;
     if (categoryId) baseData['category_id'] = categoryId;
+    if (mappedProducerIds.length === 1) {
+      baseData['producer_id'] = mappedProducerIds[0];
+    } else if (mappedProducerIds.length > 1) {
+      baseData['producer_ids'] = mappedProducerIds;
+    }
     if (Object.keys(textFields).length > 0) {
       baseData['text_fields'] = textFields;
     }

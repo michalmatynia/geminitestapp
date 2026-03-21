@@ -75,7 +75,8 @@ export const getProductParameterValue = (
     if (fallback) return fallback;
   }
 
-  return null;
+  // Preserve attached-but-empty product attributes during export.
+  return '';
 };
 
 export const getProducerEntryId = (entry: ProducerEntry): string | null => {

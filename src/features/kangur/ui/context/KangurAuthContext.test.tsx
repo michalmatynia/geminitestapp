@@ -20,8 +20,60 @@ const {
   selectLearnerMock,
 } = vi.hoisted(() => ({
   logKangurClientErrorMock: globalThis.__kangurClientErrorMocks().logKangurClientErrorMock,
-  withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
-  withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
+  withKangurClientError: vi.fn(
+    async <T,>(
+      report: { context?: Record<string, unknown> },
+      task: () => Promise<T>,
+      options: {
+        fallback: T | (() => T);
+        onError?: (error: unknown) => void;
+        shouldReport?: (error: unknown) => boolean;
+        shouldRethrow?: (error: unknown) => boolean;
+      }
+    ): Promise<T> => {
+      try {
+        return await task();
+      } catch (error) {
+        if (options.shouldReport?.(error) ?? true) {
+          logKangurClientErrorMock(error, { ...(report.context ?? {}) });
+        }
+        options.onError?.(error);
+        if (options.shouldRethrow?.(error)) {
+          throw error;
+        }
+        return typeof options.fallback === 'function'
+          ? (options.fallback as () => T)()
+          : options.fallback;
+      }
+    }
+  ),
+  withKangurClientErrorSync: vi.fn(
+    <T,>(
+      report: { context?: Record<string, unknown> },
+      task: () => T,
+      options: {
+        fallback: T | (() => T);
+        onError?: (error: unknown) => void;
+        shouldReport?: (error: unknown) => boolean;
+        shouldRethrow?: (error: unknown) => boolean;
+      }
+    ): T => {
+      try {
+        return task();
+      } catch (error) {
+        if (options.shouldReport?.(error) ?? true) {
+          logKangurClientErrorMock(error, { ...(report.context ?? {}) });
+        }
+        options.onError?.(error);
+        if (options.shouldRethrow?.(error)) {
+          throw error;
+        }
+        return typeof options.fallback === 'function'
+          ? (options.fallback as () => T)()
+          : options.fallback;
+      }
+    }
+  ),
   useRouterMock: vi.fn(),
   routerPushMock: vi.fn(),
   routerRefreshMock: vi.fn(),
@@ -201,6 +253,23 @@ it('exposes assignment access only when auth resolves an active learner session'
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
       expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
     });
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('still reports unexpected auth bootstrap failures', async () => {
+    meMock.mockRejectedValueOnce(new Error('boom'));
+
+    render(
+      <KangurAuthProvider>
+        <AuthProbe />
+      </KangurAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
   });
 
   it('drops parent-assignment access immediately after logout', async () => {

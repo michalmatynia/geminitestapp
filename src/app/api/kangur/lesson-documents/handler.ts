@@ -17,7 +17,7 @@ export async function getKangurLessonDocumentsHandler(): Promise<Response> {
 
   return NextResponse.json(documents, {
     headers: {
-      'Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
     },
   });
 }

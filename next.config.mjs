@@ -225,6 +225,7 @@ const nextConfig = {
     return config;
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     qualities: [75, 90],
     localPatterns: [
       // Allow signed/download-style local image URLs that use query params.

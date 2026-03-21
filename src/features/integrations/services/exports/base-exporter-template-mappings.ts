@@ -13,6 +13,7 @@ import {
 import {
   toStringValue,
   toNumberValue,
+  parseParameterSourceKey,
   normalizeProducerTargetField,
   normalizeTagTargetField,
   NUMERIC_TARGET_FIELDS,
@@ -45,6 +46,7 @@ export const resolveBaseExporterTemplateMappings = (
   for (const mapping of mappings) {
     const targetField = mapping.targetField.trim();
     if (!targetField) continue;
+    const parameterSource = parseParameterSourceKey(mapping.sourceKey);
 
     const sourceValue = getProductValue(
       product,
@@ -114,7 +116,16 @@ export const resolveBaseExporterTemplateMappings = (
     }
 
     if (NUMERIC_TARGET_FIELDS.has(targetField.toLowerCase())) {
+      if (parameterSource && sourceValue === '') {
+        result[targetField] = null;
+        continue;
+      }
       result[targetField] = toNumberValue(sourceValue);
+      continue;
+    }
+
+    if (parameterSource && sourceValue === '') {
+      result[targetField] = '';
       continue;
     }
 

@@ -19,6 +19,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     stock: 5,
     weight: null,
     ean: null,
+    producers: [],
     images: [],
     imageLinks: [],
     imageBase64s: [],
@@ -37,11 +38,113 @@ describe('buildBaseProductData', () => {
     expect(result['category_id']).toBe('base-cat-77');
   });
 
+  it('includes the mapped Base producer id in full exports when no producer template mapping exists', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      }),
+      [],
+      null,
+      {
+        producerExternalIdByInternalId: {
+          'producer-1': 'base-producer-77',
+        },
+      }
+    );
+
+    expect(result['producer_id']).toBe('base-producer-77');
+  });
+
+  it('does not include producer ids by default when no Base producer mapping exists', async () => {
+    const result = await buildBaseProductData(
+      createProduct({
+        producers: [
+          {
+            productId: 'product-1',
+            producerId: 'producer-1',
+            assignedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    expect(result['producer_id']).toBeUndefined();
+    expect(result['producer_ids']).toBeUndefined();
+  });
+
   it('does not include category_id during images-only exports', async () => {
     const result = await buildBaseProductData(createProduct(), [], null, {
       imagesOnly: true,
     });
 
     expect(result['category_id']).toBeUndefined();
+  });
+
+  it('exports attached empty parameters as empty product attributes', async () => {
+    const result = await buildBaseProductData(createProduct({
+      parameters: [
+        {
+          parameterId: 'material',
+          value: null,
+        },
+      ],
+    }), [
+      {
+        sourceKey: 'text_fields.features.Material',
+        targetField: 'parameter:material',
+      },
+    ]);
+
+    expect(result['text_fields']).toEqual({
+      name: 'Product 1',
+      features: {
+        Material: '',
+      },
+    });
+  });
+
+  it('does not export parameter attributes when the parameter is missing on the product', async () => {
+    const result = await buildBaseProductData(createProduct(), [
+      {
+        sourceKey: 'text_fields.features.Material',
+        targetField: 'parameter:material',
+      },
+    ]);
+
+    expect(result['text_fields']).toEqual({
+      name: 'Product 1',
+    });
+  });
+
+  it('exports attached empty localized parameters as empty product attributes', async () => {
+    const result = await buildBaseProductData(createProduct({
+      parameters: [
+        {
+          parameterId: 'material',
+          value: null,
+          valuesByLanguage: {
+            pl: '',
+          },
+        },
+      ],
+    }), [
+      {
+        sourceKey: 'text_fields.features.Material',
+        targetField: 'parameter:material|pl',
+      },
+    ]);
+
+    expect(result['text_fields']).toEqual({
+      name: 'Product 1',
+      features: {
+        Material: '',
+      },
+    });
   });
 });

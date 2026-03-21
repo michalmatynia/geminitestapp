@@ -18,6 +18,8 @@ import {
 } from '@/features/kangur/config/routing';
 import { logKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
+
+const kangurPlatform = getKangurPlatform();
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
@@ -191,7 +193,6 @@ export function KangurLearnerProfileRuntimeProvider({
   const { user, navigateToLogin } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
   const progress = useKangurProgressState();
-  const kangurPlatform = useMemo(() => getKangurPlatform(), []);
   const hasUser = Boolean(user);
   const [scores, setScores] = useState<KangurScoreRecord[]>([]);
   const [isLoadingScores, setIsLoadingScores] = useState(true);
@@ -290,7 +291,6 @@ export function KangurLearnerProfileRuntimeProvider({
     };
   }, [
     hasUser,
-    kangurPlatform,
     loadScoresErrorLabel,
     subject,
     user?.activeLearner?.id,

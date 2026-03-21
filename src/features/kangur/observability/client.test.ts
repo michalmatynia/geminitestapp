@@ -4,9 +4,10 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { logClientErrorMock, setClientErrorBaseContextMock } = vi.hoisted(() => ({
+const { logClientErrorMock, setClientErrorBaseContextMock, captureExceptionMock } = vi.hoisted(() => ({
   logClientErrorMock: vi.fn(),
   setClientErrorBaseContextMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () => ({
@@ -14,11 +15,19 @@ vi.mock('@/features/kangur/shared/utils/observability/client-error-logger', () =
   setClientErrorBaseContext: setClientErrorBaseContextMock,
 }));
 
+vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
+}));
+
 import {
   clearKangurClientObservabilityContext,
   logKangurClientError,
   setKangurClientObservabilityContext,
   trackKangurClientEvent,
+  withKangurClientError,
+  withKangurClientErrorSync,
 } from './client';
 
 describe('kangur client observability', () => {
@@ -29,6 +38,93 @@ describe('kangur client observability', () => {
       configurable: true,
       value: undefined,
     });
+  });
+
+  it('skips system capture and client reporting when shouldReport returns false', async () => {
+    const authError = Object.assign(new Error('Authentication required'), { status: 401 });
+    const onErrorMock = vi.fn();
+
+    await expect(
+      withKangurClientError(
+        {
+          source: 'kangur.auth',
+          action: 'check-app-state',
+          description: 'Fetches the current Kangur auth session.',
+        },
+        async () => {
+          throw authError;
+        },
+        {
+          fallback: null,
+          shouldReport: () => false,
+          onError: onErrorMock,
+        }
+      )
+    ).resolves.toBeNull();
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logClientErrorMock).not.toHaveBeenCalled();
+    expect(onErrorMock).toHaveBeenCalledWith(authError);
+  });
+
+  it('skips sync system capture and client reporting when shouldReport returns false', () => {
+    const authError = Object.assign(new Error('Authentication required'), { status: 401 });
+    const onErrorMock = vi.fn();
+
+    expect(
+      withKangurClientErrorSync(
+        {
+          source: 'kangur.auth',
+          action: 'append-auth-mode',
+          description: 'Adds auth mode to the Kangur login href.',
+        },
+        () => {
+          throw authError;
+        },
+        {
+          fallback: 'fallback',
+          shouldReport: () => false,
+          onError: onErrorMock,
+        }
+      )
+    ).toBe('fallback');
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logClientErrorMock).not.toHaveBeenCalled();
+    expect(onErrorMock).toHaveBeenCalledWith(authError);
+  });
+
+  it('still captures and reports unexpected errors', async () => {
+    const unexpectedError = new Error('Unexpected failure');
+
+    await expect(
+      withKangurClientError(
+        {
+          source: 'kangur.auth',
+          action: 'check-app-state',
+          description: 'Fetches the current Kangur auth session.',
+        },
+        async () => {
+          throw unexpectedError;
+        },
+        {
+          fallback: null,
+        }
+      )
+    ).resolves.toBeNull();
+
+    expect(captureExceptionMock).toHaveBeenCalledWith(unexpectedError);
+    expect(logClientErrorMock).toHaveBeenCalledWith(
+      unexpectedError,
+      expect.objectContaining({
+        context: expect.objectContaining({
+          feature: 'kangur',
+          service: 'kangur.client',
+          source: 'kangur.auth',
+          action: 'check-app-state',
+        }),
+      })
+    );
   });
 
   it('logs client errors with Kangur default context tags', () => {

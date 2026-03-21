@@ -21,7 +21,10 @@ import { savePromptExploderDraftPrompt } from '@/shared/lib/prompt-exploder/brid
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { ValidatorFormatterToggle, useToast } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { cloneSerializableValue } from './right-sidebar-utils';
 import {
@@ -207,13 +210,10 @@ export function ControlPromptModal(): React.JSX.Element {
       );
       return nextPrompt;
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'ControlPromptModal',
-          action: 'preparePromptForExtraction',
-          level: 'error',
-        },
+      logClientCatch(error, {
+        source: 'ControlPromptModal',
+        action: 'preparePromptForExtraction',
+        level: 'error',
       });
       toast(
         error instanceof Error

@@ -80,10 +80,6 @@ type RoundState = {
   bins: Partial<Record<PrepositionBinId, PrepositionToken[]>>;
 };
 
-type FeedbackState = KangurMiniGameFeedback;
-
-type EnglishPrepositionsSortGameProps = KangurMiniGameFinishProps;
-
 const BINS: Record<
   PrepositionBinId,
   { label: string; accent: KangurAccent; emoji: string }
@@ -262,7 +258,7 @@ const buildExpectedCounts = (round: Round): Partial<Record<PrepositionBinId, num
 export default function EnglishPrepositionsSortGame({
   finishLabel,
   onFinish,
-}: EnglishPrepositionsSortGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
@@ -271,7 +267,7 @@ export default function EnglishPrepositionsSortGame({
   const [checked, setChecked] = useState(false);
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);

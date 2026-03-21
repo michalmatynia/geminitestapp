@@ -6,7 +6,7 @@ import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type { AiNode, Edge, PromptConfig } from '@/shared/lib/ai-paths';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { Button, Textarea, Alert, FormField } from '@/shared/ui';
+import { Button, Textarea, Alert, FormField, insetPanelVariants } from '@/shared/ui';
 
 import {
   useAiPathGraph,
@@ -214,7 +214,9 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
           placeholder='Describe the product: {{title}}'
          aria-label='Describe the product: {{title}}' title='Describe the product: {{title}}'/>
       </FormField>
-      <div className='rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50 text-[11px] text-gray-400`}
+      >
         <div className='flex items-center justify-between gap-2 text-gray-300'>
           <span>Available placeholders</span>
           <Button

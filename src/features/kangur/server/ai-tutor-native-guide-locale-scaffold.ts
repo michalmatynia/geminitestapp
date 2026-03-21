@@ -1,3 +1,4 @@
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import {
   mergeKangurAiTutorNativeGuideStore,
   parseKangurAiTutorNativeGuideStore,
@@ -7,8 +8,6 @@ import {
 import type { KangurAiTutorFollowUpAction } from '@/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type PlainRecord = Record<string, unknown>;
 
 type GuideEntryOverlay = Partial<
   Pick<
@@ -43,7 +42,7 @@ type ComparableNativeGuideEntry = Pick<
 
 export type KangurAiTutorNativeGuideTranslationStatus = KangurAiTutorTranslationStatusDto;
 
-const isPlainObject = (value: unknown): value is PlainRecord =>
+const isPlainObject = (value: unknown): value is UnknownRecordDto =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const cloneValue = <T>(value: T): T => {

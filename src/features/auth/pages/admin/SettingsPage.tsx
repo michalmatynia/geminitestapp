@@ -24,6 +24,7 @@ import {
   Alert,
   SelectSimple,
   UI_GRID_RELAXED_CLASSNAME,
+  insetPanelVariants,
 } from '@/shared/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -446,7 +447,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 {mfaSetupMutation.isPending ? 'Starting...' : 'Start MFA setup'}
               </Button>
               {mfaSecret ? (
-                <div className='rounded-md border border-border bg-card/40 p-3 text-xs text-gray-300 space-y-2'>
+                <div
+                  className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-2 border-border text-xs text-gray-300`}
+                >
                   <div>Secret: {mfaSecret}</div>
                   {mfaOtpAuth ? <div>OTP URL: {mfaOtpAuth}</div> : null}
                 </div>

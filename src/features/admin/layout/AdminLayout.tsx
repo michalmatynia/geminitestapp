@@ -272,7 +272,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
           </div>
         </header>
         <main
-          id='app-content'
+          id='kangur-main-content'
           tabIndex={-1}
           className={`${mainClassName} focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
         >

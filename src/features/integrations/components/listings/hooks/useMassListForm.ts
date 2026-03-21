@@ -11,7 +11,7 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { massListProductFormSchema } from '@/features/integrations/validations/listing-forms';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { useMassListProductModalViewContext } from '../mass-list-modal/context/MassListProductModalViewContext';
@@ -92,14 +92,11 @@ export function useMassListForm() {
           });
         }
       } catch (e: unknown) {
-        logClientError(e);
-        logClientError(e, {
-          context: {
-            source: 'MassListProductModal',
-            action: 'listProduct',
-            productId,
-            integrationId,
-          },
+        logClientCatch(e, {
+          source: 'MassListProductModal',
+          action: 'listProduct',
+          productId,
+          integrationId,
         });
         errors++;
       }

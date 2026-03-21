@@ -20,7 +20,7 @@ import {
   UI_GRID_RELAXED_CLASSNAME,
   useToast,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 function createPromptId(): string {
@@ -140,9 +140,9 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
       });
       toast('Prompts saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminImageStudioPromptsPage', action: 'savePrompts' },
+      logClientCatch(error, {
+        source: 'AdminImageStudioPromptsPage',
+        action: 'savePrompts',
       });
       toast('Failed to save prompts.', { variant: 'error' });
     }

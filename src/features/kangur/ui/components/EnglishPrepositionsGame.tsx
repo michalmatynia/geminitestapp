@@ -160,10 +160,6 @@ const ROUNDS: ClickRound[] = [
 
 const TOTAL_ROUNDS = ROUNDS.length;
 
-type FeedbackState = KangurMiniGameFeedback;
-
-type EnglishPrepositionsGameProps = KangurMiniGameFinishProps;
-
 const getPrepositionsRoundMessage = (
   translate: ReturnType<typeof useTranslations>,
   roundId: string,
@@ -192,13 +188,13 @@ const renderRoundVisual = (visual: ClickRound['visual']): React.JSX.Element => {
 export default function EnglishPrepositionsGame({
   finishLabel,
   onFinish,
-}: EnglishPrepositionsGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);

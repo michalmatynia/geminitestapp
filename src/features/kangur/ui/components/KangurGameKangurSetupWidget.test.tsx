@@ -12,7 +12,7 @@ const { getRecommendedKangurModeMock, useKangurGameRuntimeMock } = vi.hoisted(()
 
 const { localeState } = vi.hoisted(() => ({
   localeState: {
-    value: 'pl' as 'de' | 'en' | 'pl',
+    value: 'pl' as 'de' | 'en' | 'pl' | 'uk',
   },
 }));
 
@@ -130,6 +130,27 @@ describe('KangurGameKangurSetupWidget', () => {
     );
     expect(text).not.toBeNull();
     expect(text).toHaveTextContent('Mathe-Kanguru');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to Ukrainian Kangaroo setup copy when translations are unavailable', () => {
+    localeState.value = 'uk';
+
+    render(<KangurGameKangurSetupWidget />);
+
+    const art = screen.getByTestId('kangur-kangur-heading-art');
+    const text = art.querySelector('text');
+
+    expect(
+      screen.getByRole('heading', { name: 'Налаштування сесії Математичного Кенгуру' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('mock-kangur-stage-description')).toHaveTextContent(
+      'Підготуйте сесію Математичного Кенгуру.'
+    );
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Математичний Кенгуру');
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');

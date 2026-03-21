@@ -14,7 +14,7 @@ test('products list exposes search and actions accessibly and passes the accessi
     timeout: 15_000,
   });
 
-  const main = page.locator('#app-content');
+  const main = page.locator('#kangur-main-content');
   await expect(main).toBeVisible({ timeout: 15_000 });
   await expect(main).toHaveAttribute('tabindex', '-1');
 
@@ -33,7 +33,7 @@ test('products list exposes search and actions accessibly and passes the accessi
   await expect(skipLink).toBeFocused();
 
   await skipLink.press('Enter');
-  await expect(page).toHaveURL(/#app-content$/);
+  await expect(page).toHaveURL(/#kangur-main-content$/);
   await expect(main).toBeFocused();
 
   await expectPageToHaveNoAxeViolations(page, {

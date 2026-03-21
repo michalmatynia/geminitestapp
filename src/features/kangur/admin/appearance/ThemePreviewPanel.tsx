@@ -426,7 +426,7 @@ export function ThemePreviewPanel({
 
             {/* Nav bar */}
             <div style={navStyle}>
-              {copy.navItems.map((label, i) => (
+              {copy.navItems.map((label: string, i: number) => (
                 <span
                   key={label}
                   style={
@@ -468,7 +468,7 @@ export function ThemePreviewPanel({
 
             {/* Home action cards */}
             <div style={{ display: 'flex', gap: 4 }}>
-              {copy.homeActions.map((a) => (
+              {copy.homeActions.map((a: (typeof copy.homeActions)[number]) => (
                 <HomeActionCard key={a.id} actionId={a.id} label={a.label} emoji={a.emoji} />
               ))}
             </div>
@@ -579,7 +579,7 @@ export function ThemePreviewPanel({
                 overflow: 'hidden',
               }}
             >
-              {copy.dropdownItems.map((item, i) => (
+              {copy.dropdownItems.map((item: string, i: number) => (
                 <div
                   key={item}
                   style={{
@@ -799,7 +799,7 @@ export function ThemePreviewPanel({
 
             {/* Chips */}
             <div style={{ display: 'flex', gap: 3, marginLeft: 21 }}>
-              {copy.chatChips.map((chip) => (
+              {copy.chatChips.map((chip: string) => (
                 <span key={chip} style={{
                   background: 'var(--kangur-chat-chip-background)',
                   border: '1px solid var(--kangur-chat-chip-border)',
@@ -874,7 +874,7 @@ export function ThemePreviewPanel({
               padding: 3,
               gap: 2,
             }}>
-              {copy.segmentedLabels.map((label, i) => (
+              {copy.segmentedLabels.map((label: string, i: number) => (
                 <div key={label} style={{
                   flex: 1,
                   textAlign: 'center',

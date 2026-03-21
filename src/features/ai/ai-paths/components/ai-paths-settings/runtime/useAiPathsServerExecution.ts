@@ -13,7 +13,7 @@ import {
   notifyAiPathRunEnqueued,
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { prepareEnqueuePayload, performEnqueue } from './server-execution/enqueue-logic';
 import { useServerRunStream } from './server-execution/useServerRunStream';
@@ -282,8 +282,12 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
 
       } catch (error) {
-        logClientError(error);
-        logClientError(error, { context: { source: 'useAiPathsServerExecution', action: 'runServerStream', pathId: args.activePathId, triggerNodeId: triggerNode.id } });
+        logClientCatch(error, {
+          source: 'useAiPathsServerExecution',
+          action: 'runServerStream',
+          pathId: args.activePathId,
+          triggerNodeId: triggerNode.id,
+        });
         finalizeRun('failed', { message: 'Failed to initiate server run.' });
       }
     },

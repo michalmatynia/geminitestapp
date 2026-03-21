@@ -4,7 +4,16 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RegexConfig } from '@/shared/lib/ai-paths';
-import { Button, FormField, Hint, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
+import {
+  Button,
+  FormField,
+  Hint,
+  Input,
+  Label,
+  SelectSimple,
+  ToggleRow,
+  insetPanelVariants,
+} from '@/shared/ui';
 
 import { extractRegexLiteral, normalizeRegexFlags } from '../regex-node-config-preview';
 
@@ -113,7 +122,9 @@ export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.
         </div>
       </div>
 
-      <div className='rounded-md border border-border bg-card/50 p-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50`}
+      >
         <div className='flex flex-wrap items-end gap-2'>
           <div className='flex-1 min-w-[200px]'>
             <FormField label='Save Regex Template'>

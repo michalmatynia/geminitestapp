@@ -13,6 +13,7 @@ import {
   type CaseResolverDroppedAsset,
   type CaseResolverDroppedDocument,
 } from '@/shared/contracts/case-resolver';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 
 import {
@@ -28,9 +29,6 @@ import {
   resolvePromptConfig,
 } from './case-resolver-canvas-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastFn = (message: string, options?: { variant?: 'error' | 'warning' | 'success' }) => void;
 
 type CreateCaseResolverCanvasDropHandlersInput = {
   addNode: (node: AiNode) => void;

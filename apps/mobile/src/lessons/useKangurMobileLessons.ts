@@ -1,6 +1,7 @@
 import {
   buildKangurLessonMasteryUpdate,
   checkKangurNewBadges,
+  getKangurPracticeOperationForLessonComponent,
   getKangurLessonMasteryPresentation,
   getLocalizedKangurPortableLessons,
   resolveFocusedKangurLessonId,
@@ -8,15 +9,25 @@ import {
   type KangurPortableLesson,
 } from '@kangur/core';
 import { createDefaultKangurProgressState } from '@kangur/contracts';
+import type { Href } from 'expo-router';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { createKangurPracticeHref } from '../practice/practiceHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 
 type KangurMobileLessonItem = {
+  checkpointSummary: {
+    attempts: number;
+    bestScorePercent: number;
+    lastCompletedAt: string;
+    lastScorePercent: number;
+    masteryPercent: number;
+  } | null;
   isFocused: boolean;
   lesson: KangurPortableLesson;
   mastery: KangurLessonMasteryPresentation;
+  practiceHref: Href | null;
 };
 
 type UseKangurMobileLessonsResult = {
@@ -59,11 +70,31 @@ export const useKangurMobileLessons = (
 
   const lessons = useMemo(
     () =>
-      portableLessons.map((lesson) => ({
-        isFocused: lesson.id === selectedLessonId,
-        lesson,
-        mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),
-      })),
+      portableLessons.map((lesson) => {
+        const checkpoint = progress.lessonMastery[lesson.componentId];
+        const practiceOperation = getKangurPracticeOperationForLessonComponent(
+          lesson.componentId,
+        );
+
+        return {
+          checkpointSummary:
+            typeof checkpoint?.lastCompletedAt === 'string'
+              ? {
+                  attempts: checkpoint.attempts,
+                  bestScorePercent: checkpoint.bestScorePercent,
+                  lastCompletedAt: checkpoint.lastCompletedAt,
+                  lastScorePercent: checkpoint.lastScorePercent,
+                  masteryPercent: checkpoint.masteryPercent,
+                }
+              : null,
+          isFocused: lesson.id === selectedLessonId,
+          lesson,
+          mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),
+          practiceHref: practiceOperation
+            ? createKangurPracticeHref(practiceOperation)
+            : null,
+        };
+      }),
     [locale, portableLessons, progress, selectedLessonId],
   );
 

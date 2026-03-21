@@ -31,11 +31,9 @@ type KangurLessonActivityBlockProps = {
   renderMode?: 'lesson' | 'editor';
 };
 
-type ActivityGameProps = KangurMiniGameFinishActionProps;
-
 const ACTIVITY_COMPONENTS: Record<
   KangurLessonActivityBlockType['activityId'],
-  React.ComponentType<ActivityGameProps>
+  React.ComponentType<KangurMiniGameFinishActionProps>
 > = {
   'adding-ball': AddingBallGame,
   'adding-synthesis': AddingSynthesisGame,

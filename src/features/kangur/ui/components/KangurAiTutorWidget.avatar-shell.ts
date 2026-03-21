@@ -8,18 +8,17 @@ import type {
   GuidedTutorTarget,
   PendingSelectionResponse,
   SectionExplainContext,
+  TutorGuidedMode,
   TutorPanelShellMode,
   TutorPoint,
 } from './KangurAiTutorWidget.types';
-
-type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 
 export function useKangurAiTutorAvatarShellActions(input: {
   canonicalTutorModalVisible: boolean;
   closeChat: () => void;
   guestIntroHelpVisible: boolean;
   guestIntroVisible: boolean;
-  guidedMode: GuidedMode;
+  guidedMode: TutorGuidedMode;
   guidedTutorTarget: GuidedTutorTarget | null;
   handleCloseChat: (reason: 'toggle' | 'header' | 'outside') => void;
   handleCloseLauncherPrompt: () => void;

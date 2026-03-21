@@ -53,11 +53,17 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT_INPUT = {
         test: 'Test',
         game: 'Gra',
         lesson: 'Lekcja',
+        profile: 'Profil',
+        parent_dashboard: 'Panel rodzica',
+        auth: 'Logowanie',
       },
       contextFallbackTargets: {
         test: 'Nowe pytanie testowe',
         game: 'Nowy etap gry',
         lesson: 'Nowy fragment lekcji',
+        profile: 'Nowy panel profilu',
+        parent_dashboard: 'Nowy panel rodzica',
+        auth: 'Ekran logowania',
       },
     },
     guestIntro: {

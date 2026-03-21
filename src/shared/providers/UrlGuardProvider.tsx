@@ -34,11 +34,62 @@ const normalizeNavigationUrl = (input: string, host: string): string => {
   return trimmed;
 };
 
+type MutableMethodTarget = {
+  descriptor: PropertyDescriptor;
+  target: object;
+};
+
+const resolveMutableMethodTarget = (
+  instance: object,
+  method: string
+): MutableMethodTarget | null => {
+  const ownDescriptor = Object.getOwnPropertyDescriptor(instance, method);
+  if (ownDescriptor) {
+    if (ownDescriptor.writable || ownDescriptor.configurable) {
+      return { target: instance, descriptor: ownDescriptor };
+    }
+    return null;
+  }
+
+  const prototype = Object.getPrototypeOf(instance) as object | null;
+  if (!prototype) return null;
+
+  const prototypeDescriptor = Object.getOwnPropertyDescriptor(prototype, method);
+  if (!prototypeDescriptor) return null;
+  if (!prototypeDescriptor.writable && !prototypeDescriptor.configurable) {
+    return null;
+  }
+
+  return {
+    target: prototype,
+    descriptor: prototypeDescriptor,
+  };
+};
+
+const overrideMethod = <TMethod extends (...args: never[]) => unknown>(
+  instance: object,
+  method: string,
+  replacement: TMethod
+): (() => void) | null => {
+  const resolved = resolveMutableMethodTarget(instance, method);
+  if (!resolved) return null;
+
+  Object.defineProperty(resolved.target, method, {
+    ...resolved.descriptor,
+    value: replacement,
+  });
+
+  return (): void => {
+    Object.defineProperty(resolved.target, method, resolved.descriptor);
+  };
+};
+
 export function UrlGuardProvider(): null {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const host = window.location.host;
     const hostPrefix = `/${host}`;
+    const restoreCallbacks: Array<() => void> = [];
 
     const normalizedPath = normalizeBadHostPath(host, window.location.pathname);
     if (normalizedPath) {
@@ -78,8 +129,12 @@ export function UrlGuardProvider(): null {
     try {
       const originalAssign = window.location.assign.bind(window.location);
       const originalReplace = window.location.replace.bind(window.location);
-      window.location.assign = wrap(originalAssign);
-      window.location.replace = wrap(originalReplace);
+
+      const restoreAssign = overrideMethod(window.location, 'assign', wrap(originalAssign));
+      const restoreReplace = overrideMethod(window.location, 'replace', wrap(originalReplace));
+
+      if (restoreAssign) restoreCallbacks.push(restoreAssign);
+      if (restoreReplace) restoreCallbacks.push(restoreReplace);
     } catch (error) {
       logClientError(error);
     
@@ -114,8 +169,20 @@ export function UrlGuardProvider(): null {
     try {
       const originalPush = window.history.pushState.bind(window.history);
       const originalReplaceState = window.history.replaceState.bind(window.history);
-      window.history.pushState = wrapHistory(originalPush, 'pushState');
-      window.history.replaceState = wrapHistory(originalReplaceState, 'replaceState');
+
+      const restorePushState = overrideMethod(
+        window.history,
+        'pushState',
+        wrapHistory(originalPush, 'pushState')
+      );
+      const restoreReplaceState = overrideMethod(
+        window.history,
+        'replaceState',
+        wrapHistory(originalReplaceState, 'replaceState')
+      );
+
+      if (restorePushState) restoreCallbacks.push(restorePushState);
+      if (restoreReplaceState) restoreCallbacks.push(restoreReplaceState);
     } catch (error) {
       logClientError(error);
     
@@ -147,6 +214,9 @@ export function UrlGuardProvider(): null {
 
     return (): void => {
       window.removeEventListener('click', onClick, true);
+      for (const restore of restoreCallbacks.reverse()) {
+        restore();
+      }
     };
   }, []);
 

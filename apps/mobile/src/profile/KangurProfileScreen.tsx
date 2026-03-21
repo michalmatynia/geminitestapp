@@ -18,6 +18,10 @@ import {
   useKangurMobileI18n,
 } from '../i18n/kangurMobileI18n';
 import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
+import {
+  useKangurMobileLessonCheckpoints,
+  type KangurMobileLessonCheckpointItem,
+} from '../lessons/useKangurMobileLessonCheckpoints';
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import {
@@ -30,6 +34,7 @@ import { useKangurMobileLearnerProfile } from './useKangurMobileLearnerProfile';
 
 const RESULTS_ROUTE = createKangurResultsHref();
 const DUELS_ROUTE = createKangurDuelsHref();
+const LESSONS_ROUTE = '/lessons' as Href;
 
 type Tone = {
   backgroundColor: string;
@@ -387,6 +392,109 @@ function MasteryInsightRow({
   );
 }
 
+function LessonCheckpointRow({
+  item,
+}: {
+  item: KangurMobileLessonCheckpointItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const masteryTone = getMasteryTone(item.masteryPercent);
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 10,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {item.emoji} {item.title}
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+            {copy({
+              de: `Letztes Ergebnis: ${item.lastScorePercent}% · Versuche ${item.attempts}`,
+              en: `Last score: ${item.lastScorePercent}% · attempts ${item.attempts}`,
+              pl: `Ostatni wynik: ${item.lastScorePercent}% · próby ${item.attempts}`,
+            })}
+          </Text>
+        </View>
+        <Pill label={`${item.masteryPercent}%`} tone={masteryTone} />
+      </View>
+
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Zuletzt gespeichert: ${formatProfileDateTime(item.lastCompletedAt, locale)} · bestes Ergebnis ${item.bestScorePercent}%`,
+          en: `Last saved: ${formatProfileDateTime(item.lastCompletedAt, locale)} · best score ${item.bestScorePercent}%`,
+          pl: `Ostatni zapis: ${formatProfileDateTime(item.lastCompletedAt, locale)} · najlepszy wynik ${item.bestScorePercent}%`,
+        })}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Link href={item.lessonHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#1d4ed8',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {copy({
+                de: 'Zur Lektion zurück',
+                en: 'Return to lesson',
+                pl: 'Wróć do lekcji',
+              })}
+              {`: ${item.title}`}
+            </Text>
+          </Pressable>
+        </Link>
+
+        {item.practiceHref ? (
+          <Link href={item.practiceHref} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Danach trainieren',
+                  en: 'Practice after',
+                  pl: 'Potem trenuj',
+                })}
+                {`: ${item.title}`}
+              </Text>
+            </Pressable>
+          </Link>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 function SessionRow({
   session,
 }: {
@@ -629,6 +737,7 @@ function AssignmentRow({
 export function KangurProfileScreen(): React.JSX.Element {
   const router = useRouter();
   const { copy, locale } = useKangurMobileI18n();
+  const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 3 });
   const {
     assignments,
     authError,
@@ -1135,6 +1244,64 @@ export function KangurProfileScreen(): React.JSX.Element {
                         de: 'Duelle öffnen',
                         en: 'Open duels',
                         pl: 'Otwórz pojedynki',
+                      })}
+                    </Text>
+                  </Pressable>
+                </Link>
+              </View>
+            )}
+          </Card>
+
+          <Card>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Letzte Lektions-Checkpoints',
+                  en: 'Recent lesson checkpoints',
+                  pl: 'Ostatnie checkpointy lekcji',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Das Profil zeigt die zuletzt lokal gespeicherten Lektionsstände, damit du genau an der letzten Stelle wieder einsteigen kannst.',
+                  en: 'The profile shows the most recently saved lesson states so you can resume exactly where the latest lesson was stored.',
+                  pl: 'Profil pokazuje ostatnio zapisane stany lekcji, aby można było wrócić dokładnie do miejsca ostatniego zapisu.',
+                })}
+              </Text>
+            </View>
+
+            {lessonCheckpoints.recentCheckpoints.length === 0 ? (
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit er hier erscheint.',
+                  en: 'There are no saved checkpoints yet. Open a lesson and save the first state so it appears here.',
+                  pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby pojawił się tutaj.',
+                })}
+              </Text>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {lessonCheckpoints.recentCheckpoints.map((item) => (
+                  <LessonCheckpointRow key={item.componentId} item={item} />
+                ))}
+
+                <Link href={LESSONS_ROUTE} asChild>
+                  <Pressable
+                    accessibilityRole='button'
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      backgroundColor: '#ffffff',
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                    }}
+                  >
+                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                      {copy({
+                        de: 'Lektionen öffnen',
+                        en: 'Open lessons',
+                        pl: 'Otwórz lekcje',
                       })}
                     </Text>
                   </Pressable>

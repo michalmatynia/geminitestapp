@@ -46,7 +46,7 @@ for (const routeEntry of routes) {
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
     }
 
-    const main = page.locator('#app-content');
+    const main = page.locator('#kangur-main-content');
     await expect(main).toBeVisible({ timeout: MAIN_READY_TIMEOUT_MS });
     await expect(main).toHaveAttribute('tabindex', '-1', { timeout: MAIN_READY_TIMEOUT_MS });
 
@@ -55,7 +55,7 @@ for (const routeEntry of routes) {
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/#app-content$/);
+    await expect(page).toHaveURL(/#kangur-main-content$/);
     await expect(main).toBeFocused();
 
     if (routeEntry.readySelector) {

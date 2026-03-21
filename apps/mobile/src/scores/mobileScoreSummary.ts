@@ -35,92 +35,6 @@ export type KangurMobileTrainingFocus = {
   weakestOperation: KangurMobileOperationPerformance | null;
 };
 
-const KANGUR_MOBILE_OPERATION_LABELS: Record<
-  string,
-  KangurMobileLocalizedValue<string>
-> = {
-  addition: {
-    de: 'Addition',
-    en: 'Addition',
-    pl: 'Dodawanie',
-  },
-  all: {
-    de: 'Alle',
-    en: 'All',
-    pl: 'Wszystkie',
-  },
-  calendar: {
-    de: 'Kalender',
-    en: 'Calendar',
-    pl: 'Kalendarz',
-  },
-  clock: {
-    de: 'Uhr',
-    en: 'Clock',
-    pl: 'Zegar',
-  },
-  decimals: {
-    de: 'Dezimalzahlen',
-    en: 'Decimals',
-    pl: 'Ulamki',
-  },
-  division: {
-    de: 'Division',
-    en: 'Division',
-    pl: 'Dzielenie',
-  },
-  logical_analogies: {
-    de: 'Analogien',
-    en: 'Analogies',
-    pl: 'Analogie',
-  },
-  logical_classification: {
-    de: 'Klassifikation',
-    en: 'Classification',
-    pl: 'Klasyfikacja',
-  },
-  logical_patterns: {
-    de: 'Muster und Reihen',
-    en: 'Patterns and sequences',
-    pl: 'Wzorce i ciagi',
-  },
-  logical_reasoning: {
-    de: 'Schlussfolgern',
-    en: 'Reasoning',
-    pl: 'Wnioskowanie',
-  },
-  logical_thinking: {
-    de: 'Logisches Denken',
-    en: 'Logical thinking',
-    pl: 'Myslenie logiczne',
-  },
-  mixed: {
-    de: 'Gemischt',
-    en: 'Mixed',
-    pl: 'Mieszane',
-  },
-  multiplication: {
-    de: 'Multiplikation',
-    en: 'Multiplication',
-    pl: 'Mnozenie',
-  },
-  powers: {
-    de: 'Potenzen',
-    en: 'Powers',
-    pl: 'Potegi',
-  },
-  roots: {
-    de: 'Wurzeln',
-    en: 'Roots',
-    pl: 'Pierwiastki',
-  },
-  subtraction: {
-    de: 'Subtraktion',
-    en: 'Subtraction',
-    pl: 'Odejmowanie',
-  },
-};
-
 const KANGUR_MOBILE_SCORE_FAMILY_LABELS: Record<
   KangurMobileScorePracticeFamily,
   KangurMobileLocalizedValue<string>
@@ -349,9 +263,7 @@ export const buildKangurMobileScoreSummary = (
 export const formatKangurMobileScoreOperation = (
   value: string,
   locale: KangurMobileLocale = 'pl',
-): string =>
-  KANGUR_MOBILE_OPERATION_LABELS[value]?.[locale] ??
-  getKangurLeaderboardOperationInfo(value).label;
+): string => getKangurLeaderboardOperationInfo(value, locale).label;
 
 export const formatKangurMobileScoreFamily = (
   family: KangurMobileScorePracticeFamily,

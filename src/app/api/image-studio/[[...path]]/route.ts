@@ -7,7 +7,6 @@ import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error'
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type {
   CatchAllRouteDefinition as RouteDefinition,
-  CatchAllRouteHandler as RouteHandler,
   CatchAllRouteMethod as HttpMethod,
   CatchAllRouteModule as RouteModule,
   CatchAllRouteParams as Params,

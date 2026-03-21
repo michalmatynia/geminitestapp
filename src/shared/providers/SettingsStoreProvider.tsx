@@ -43,6 +43,13 @@ const parseNumber = (value: string | undefined, fallback?: number): number | und
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const resolveCurrentPathname = (pathname: string | null): string => {
+  if (typeof window !== 'undefined' && typeof window.location.pathname === 'string') {
+    return window.location.pathname;
+  }
+  return pathname ?? '';
+};
+
 export function SettingsStoreProvider({
   children,
   mode = 'lite',
@@ -55,10 +62,11 @@ export function SettingsStoreProvider({
   canReadAdminSettings?: boolean;
 }): React.JSX.Element {
   const pathname = usePathname();
+  const currentPathname = resolveCurrentPathname(pathname);
   const useAdmin = mode === 'admin';
   const allowAdminSettings = canReadAdminSettings ?? true;
   const shouldUseAdminSettings = useAdmin && allowAdminSettings;
-  const isAdminRoute = pathname.startsWith('/admin');
+  const isAdminRoute = currentPathname.startsWith('/admin');
   const shouldSuppressLiteQuery = suppressOwnQuery || (!useAdmin && isAdminRoute);
   const shouldSuppressAdminQuery = suppressOwnQuery;
   const adminQuery = useSettingsMap({
@@ -76,7 +84,7 @@ export function SettingsStoreProvider({
   const refetch = settingsQuery.refetch;
 
   const value = useMemo<SettingsStoreValue>(() => {
-    const map = mapData ?? new Map<string, string>();
+    const map = mapData instanceof Map ? mapData : new Map<string, string>();
     return {
       map,
       isLoading,

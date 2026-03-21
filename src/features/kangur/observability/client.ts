@@ -2,16 +2,14 @@ import { readClientCookie, setClientCookie } from '@/shared/lib/browser/client-c
 import {
   logClientError,
   setClientErrorBaseContext,
+  type ClientErrorContext,
 } from '@/features/kangur/shared/utils/observability/client-error-logger';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-
-type KangurClientErrorContext = Record<string, unknown>;
-type KangurClientEventContext = Record<string, unknown>;
 export type KangurClientErrorReport = {
   source: string;
   action: string;
   description: string;
-  context?: KangurClientErrorContext;
+  context?: ClientErrorContext;
 };
 
 type KangurClientErrorHandlingOptions<T> = {
@@ -79,7 +77,7 @@ const getTimeZone = (): string | null => {
   }
 };
 
-const getConnectionInfo = (): Record<string, unknown> | null => {
+const getConnectionInfo = (): ClientErrorContext | null => {
   if (typeof navigator === 'undefined') {
     return null;
   }
@@ -105,7 +103,7 @@ const getConnectionInfo = (): Record<string, unknown> | null => {
 
 export const logKangurClientError = (
   error: unknown,
-  context: KangurClientErrorContext = {}
+  context: ClientErrorContext = {}
 ): void => {
   logClientError(error, {
     context: {
@@ -204,7 +202,7 @@ export const clearKangurClientObservabilityContext = (): void => {
 
 export const trackKangurClientEvent = (
   name: string,
-  context: KangurClientEventContext = {}
+  context: ClientErrorContext = {}
 ): void => {
   if (!ENABLE_KANGUR_EVENT_ANALYTICS || typeof window === 'undefined') {
     return;

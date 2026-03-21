@@ -1,5 +1,5 @@
 import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { buildSkuAutoIncrementSequenceBundle } from '@/features/products/lib/validatorSemanticPresets';
 
 import { createSequenceGroupId, getPatternSequence } from '../helpers';
@@ -50,12 +50,9 @@ export const handleCreateSkuAutoIncrementSequence = async (args: {
     }));
     notifySuccess('SKU auto-increment sequence created.');
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'useValidatorSettingsController',
-        action: 'createSkuAutoIncrementSequence',
-      },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createSkuAutoIncrementSequence',
     });
     notifyError(
       error instanceof Error ? error.message : 'Failed to create SKU auto-increment sequence.'

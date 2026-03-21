@@ -6,6 +6,7 @@ const KANGUR_DUELS_WORDMARK_LABELS = {
   de: 'Duell-Lobby',
   en: 'Duels lobby',
   pl: 'Lobby pojedynkow',
+  uk: 'Лобі дуелей',
 } as const;
 
 const getKangurDuelsWordmarkLabel = (locale: string | null | undefined): string => {
@@ -14,6 +15,8 @@ const getKangurDuelsWordmarkLabel = (locale: string | null | undefined): string 
       return KANGUR_DUELS_WORDMARK_LABELS.de;
     case 'en':
       return KANGUR_DUELS_WORDMARK_LABELS.en;
+    case 'uk':
+      return KANGUR_DUELS_WORDMARK_LABELS.uk;
     default:
       return KANGUR_DUELS_WORDMARK_LABELS.pl;
   }

@@ -13,11 +13,7 @@ import {
   type ImageStudioUpscaleStrategy,
   type ImageStudioUpscaleSmoothingQuality,
 } from '@/shared/contracts/image-studio';
-
-type UpscaleSourceLimitValidation = {
-  ok: boolean;
-  reason?: 'non_positive_dimensions' | 'max_side_exceeded' | 'max_pixels_exceeded';
-};
+import type { ImageStudioSourceLimitValidation } from './types';
 
 export const normalizeUpscaleScale = (scale: number): number => {
   if (!Number.isFinite(scale)) return Number.NaN;
@@ -79,7 +75,7 @@ export const buildUpscaleRequestRelationType = (requestId: string): string =>
 export const validateUpscaleSourceDimensions = (
   width: number,
   height: number
-): UpscaleSourceLimitValidation => {
+): ImageStudioSourceLimitValidation => {
   if (!(width > 0 && height > 0)) {
     return { ok: false, reason: 'non_positive_dimensions' };
   }

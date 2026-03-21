@@ -11,6 +11,7 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import {
   formatDurationMs,
@@ -21,7 +22,75 @@ import {
 import { useAiPathsErrorState } from '../hooks/useAiPathsErrorState';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+type RuntimeAnalysisCardProps = {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+  titleClassName?: string;
+};
 
+type RuntimeAnalysisStatLineProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+type RuntimeAnalysisTraceActionChipProps = {
+  children: React.ReactNode;
+  onClick: () => void;
+  title: string;
+  tone: 'sky' | 'rose';
+};
+
+function RuntimeAnalysisCard({
+  title,
+  children,
+  className,
+  titleClassName,
+}: RuntimeAnalysisCardProps): React.JSX.Element {
+  return (
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className={cn('border-border/60 bg-card/60', className)}
+    >
+      <div className={cn('text-[10px] uppercase text-gray-500', titleClassName)}>{title}</div>
+      {children}
+    </Card>
+  );
+}
+
+function RuntimeAnalysisStatLine({
+  children,
+  className,
+}: RuntimeAnalysisStatLineProps): React.JSX.Element {
+  return <div className={cn('mt-1 text-gray-400', className)}>{children}</div>;
+}
+
+function RuntimeAnalysisTraceActionChip({
+  children,
+  onClick,
+  title,
+  tone,
+}: RuntimeAnalysisTraceActionChipProps): React.JSX.Element {
+  const toneClassName =
+    tone === 'sky'
+      ? 'border-sky-500/40 bg-sky-500/10 text-sky-100 hover:bg-sky-500/20'
+      : 'border-rose-500/40 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20';
+
+  return (
+    <button
+      type='button'
+      className={cn(
+        'rounded border px-1.5 py-0.5 text-[10px]',
+        toneClassName
+      )}
+      onClick={onClick}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const { runtimeRunStatus, runtimeNodeStatuses } = useRuntimeState();
@@ -211,34 +280,30 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
       </div>
 
       <div className='grid gap-2 sm:grid-cols-3'>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
-          <div className='text-[10px] uppercase text-gray-500'>Run Status</div>
+        <RuntimeAnalysisCard title='Run Status'>
           <div className='mt-1 text-sm text-white'>{formatStatusLabel(runtimeRunStatus)}</div>
-        </Card>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
-          <div className='text-[10px] uppercase text-gray-500'>Live Nodes</div>
+        </RuntimeAnalysisCard>
+        <RuntimeAnalysisCard title='Live Nodes'>
           <div className='mt-1 text-sm text-white'>{runtimeNodeLiveStates.length}</div>
-        </Card>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
-          <div className='text-[10px] uppercase text-gray-500'>Storage</div>
+        </RuntimeAnalysisCard>
+        <RuntimeAnalysisCard title='Storage'>
           <div className='mt-1 text-sm text-white'>
             {runtimeAnalyticsEnabled ? (runtimeAnalyticsQuery.data?.storage ?? '—') : 'disabled'}
           </div>
-        </Card>
+        </RuntimeAnalysisCard>
       </div>
 
       <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4'>
         {(['running', 'queued', 'polling', 'completed', 'failed', 'cached'] as const).map(
           (status) => (
-            <Card
+            <RuntimeAnalysisCard
               key={status}
-              variant='subtle-compact'
-              padding='sm'
               className='border-border/60 bg-card/60 px-2 py-1'
+              title={formatStatusLabel(status)}
+              titleClassName='text-gray-500'
             >
-              <span className='text-gray-500'>{formatStatusLabel(status)}:</span>{' '}
-              <span className='text-gray-200'>{runtimeNodeStatusCounts[status] ?? 0}</span>
-            </Card>
+              <div className='text-gray-200'>{runtimeNodeStatusCounts[status] ?? 0}</div>
+            </RuntimeAnalysisCard>
           )
         )}
       </div>
@@ -266,141 +331,121 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
       )}
 
       {!runtimeAnalyticsEnabled ? (
-        <Card
-          variant='subtle-compact'
-          padding='sm'
-          className='border-border/60 bg-card/60 p-3 text-[11px] text-gray-300'
+        <RuntimeAnalysisCard
+          title='Runtime Analytics'
+          className='p-3 text-[11px] text-gray-300'
         >
           Runtime analytics is disabled in AI Brain. Live runtime state can still appear above, but
           24h runtime summaries and trace samples are not queried.
-        </Card>
+        </RuntimeAnalysisCard>
       ) : (
         <div className='grid gap-2 sm:grid-cols-4'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'
-          >
-            <div className='text-[10px] uppercase text-gray-500'>Runs (24h)</div>
+          <RuntimeAnalysisCard title='Runs (24h)' className='p-2 text-[11px] text-gray-300'>
             <div className='mt-1 text-sm text-white'>
               {runtimeAnalyticsQuery.data?.runs.total ?? 0}
             </div>
-            <div className='mt-1 text-gray-400'>
+            <RuntimeAnalysisStatLine>
               Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
-            </div>
-          </Card>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'
+            </RuntimeAnalysisStatLine>
+          </RuntimeAnalysisCard>
+          <RuntimeAnalysisCard
+            title='Portable Engine (24h)'
+            className='p-2 text-[11px] text-gray-300'
           >
-            <div className='text-[10px] uppercase text-gray-500'>Portable Engine (24h)</div>
             <div className='mt-1 text-sm text-white'>
               {portableEngineAnalytics?.source ?? 'unavailable'}
             </div>
-            <div className='mt-1 text-gray-200'>
+            <RuntimeAnalysisStatLine className='text-gray-200'>
               Attempts {portableEngineAnalytics?.totals.attempts ?? 0} · Success{' '}
               {formatPercent(portableEngineAnalytics?.totals.successRate ?? 0)}
-            </div>
-            <div className='mt-1 text-gray-400'>
+            </RuntimeAnalysisStatLine>
+            <RuntimeAnalysisStatLine>
               Failures {portableEngineAnalytics?.totals.failures ?? 0} (R{' '}
               {portableEngineAnalytics?.failureStageCounts.resolve ?? 0} · V{' '}
               {portableEngineAnalytics?.failureStageCounts.validation ?? 0} · RT{' '}
               {portableEngineAnalytics?.failureStageCounts.runtime ?? 0})
-            </div>
+            </RuntimeAnalysisStatLine>
             {latestPortableEngineFailure ? (
-              <div className='mt-1 text-gray-500'>
+              <RuntimeAnalysisStatLine className='text-gray-500'>
                 Latest {latestPortableEngineFailure.runner} {latestPortableEngineFailure.stage} ·{' '}
                 {latestPortableEngineFailure.surface}
-              </div>
+              </RuntimeAnalysisStatLine>
             ) : null}
-          </Card>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/60 text-[11px] text-gray-300'
-          >
-            <div className='text-[10px] uppercase text-gray-500'>Run Runtime (24h)</div>
-            <div className='mt-1 text-gray-200'>
+          </RuntimeAnalysisCard>
+          <RuntimeAnalysisCard title='Run Runtime (24h)' className='text-[11px] text-gray-300'>
+            <RuntimeAnalysisStatLine className='text-gray-200'>
               Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
-            </div>
-            <div className='mt-1 text-gray-400'>
+            </RuntimeAnalysisStatLine>
+            <RuntimeAnalysisStatLine>
               p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
-            </div>
+            </RuntimeAnalysisStatLine>
             <div className='mt-2 text-[10px] uppercase text-gray-500'>Node spans</div>
-            <div className='mt-1 text-gray-200'>
+            <RuntimeAnalysisStatLine className='text-gray-200'>
               Runs sampled {runtimeAnalyticsQuery.data?.traces.sampledRuns ?? 0} · spans{' '}
               {runtimeAnalyticsQuery.data?.traces.sampledSpans ?? 0}
-            </div>
-            <div className='mt-1 text-gray-400'>
+            </RuntimeAnalysisStatLine>
+            <RuntimeAnalysisStatLine>
               Span avg {formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} · p95{' '}
               {formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}
-            </div>
+            </RuntimeAnalysisStatLine>
             {runtimeAnalyticsQuery.data?.traces.slowestSpan ? (
-              <div className='mt-1 text-gray-500'>
+              <RuntimeAnalysisStatLine className='text-gray-500'>
                 Slowest {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (
                 {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeType}) ·{' '}
                 {formatDurationMs(runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs)}
-              </div>
+              </RuntimeAnalysisStatLine>
             ) : null}
             {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
-              <div className='mt-1 text-gray-500'>
+              <RuntimeAnalysisStatLine className='text-gray-500'>
                 <div>Top slow:</div>
                 <div className='mt-1 flex flex-wrap gap-1'>
                   {runtimeAnalyticsQuery.data?.traces.topSlowNodes
                     .slice(0, 2)
                     .map((entry: AiPathRuntimeTraceSlowNode) => (
-                      <button
+                      <RuntimeAnalysisTraceActionChip
                         key={`slow-${entry.nodeId}-${entry.nodeType}`}
-                        type='button'
-                        className='rounded border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-100 hover:bg-sky-500/20'
+                        tone='sky'
                         onClick={() => {
                           void handleInspectTraceNode(entry.nodeId, 'all');
                         }}
                         title='Open latest run detail for this node'
                       >
                         {entry.nodeId} ({formatDurationMs(entry.avgDurationMs)} avg)
-                      </button>
+                      </RuntimeAnalysisTraceActionChip>
                     ))}
                 </div>
-              </div>
+              </RuntimeAnalysisStatLine>
             ) : null}
             {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
-              <div className='mt-1 text-gray-500'>
+              <RuntimeAnalysisStatLine className='text-gray-500'>
                 <div>Top failed:</div>
                 <div className='mt-1 flex flex-wrap gap-1'>
                   {runtimeAnalyticsQuery.data?.traces.topFailedNodes
                     .slice(0, 2)
                     .map((entry: AiPathRuntimeTraceFailedNode) => (
-                      <button
+                      <RuntimeAnalysisTraceActionChip
                         key={`failed-${entry.nodeId}-${entry.nodeType}`}
-                        type='button'
-                        className='rounded border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-100 hover:bg-rose-500/20'
+                        tone='rose'
                         onClick={() => {
                           void handleInspectTraceNode(entry.nodeId, 'failed');
                         }}
                         title='Open latest failed run detail for this node'
                       >
                         {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
-                      </button>
+                      </RuntimeAnalysisTraceActionChip>
                     ))}
                 </div>
-              </div>
+              </RuntimeAnalysisStatLine>
             ) : null}
-          </Card>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/60 text-[11px] text-gray-300'
-          >
-            <div className='text-[10px] uppercase text-gray-500'>Kernel coverage (24h)</div>
-            <div className='mt-1 text-gray-200'>
+          </RuntimeAnalysisCard>
+          <RuntimeAnalysisCard title='Kernel coverage (24h)' className='text-[11px] text-gray-300'>
+            <RuntimeAnalysisStatLine className='text-gray-200'>
               Coverage {runtimeKernelRunsWithParity}/{runtimeKernelSampledRuns} (
               {formatPercent(runtimeKernelRunsCoverageRate)})
-            </div>
-            <div className='mt-1 text-gray-400'>
+            </RuntimeAnalysisStatLine>
+            <RuntimeAnalysisStatLine>
               History entries {runtimeKernelSampledHistoryEntries}
-            </div>
+            </RuntimeAnalysisStatLine>
             <div className='mt-2 text-gray-200'>
               v3 {formatPercent(runtimeKernelV3Rate)} · compatibility{' '}
               {formatPercent(runtimeKernelCompatibilityRate)} · unknown{' '}
@@ -450,7 +495,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
                 </div>
               </div>
             ) : null}
-          </Card>
+          </RuntimeAnalysisCard>
         </div>
       )}
     </Card>

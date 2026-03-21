@@ -1,8 +1,10 @@
 import {
   KANGUR_LEADERBOARD_OPERATION_OPTIONS,
   KANGUR_LEADERBOARD_USER_OPTIONS,
+  buildKangurLeaderboardItems,
   filterKangurLeaderboardScores,
-  getKangurLeaderboardOperationInfo,
+  getKangurLeaderboardOperationOptions,
+  getKangurLeaderboardUserOptions,
   type KangurLeaderboardItem,
   type KangurLeaderboardUserFilter,
 } from '@kangur/core';
@@ -12,7 +14,6 @@ import { useMemo, useState } from 'react';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
-import { formatKangurMobileScoreOperation } from '../scores/mobileScoreSummary';
 
 type UseKangurMobileLeaderboardOptions = {
   enabled?: boolean;
@@ -36,49 +37,6 @@ type UseKangurMobileLeaderboardResult = {
 };
 
 const LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'] as const;
-
-const getKangurMobileLeaderboardUserFilterLabel = (
-  value: KangurLeaderboardUserFilter,
-  locale: ReturnType<typeof useKangurMobileI18n>['locale'],
-): string => {
-  if (value === 'registered') {
-    return {
-      de: 'Angemeldet',
-      en: 'Registered',
-      pl: 'Zalogowani',
-    }[locale];
-  }
-
-  if (value === 'anonymous') {
-    return {
-      de: 'Anonym',
-      en: 'Anonymous',
-      pl: 'Anonimowi',
-    }[locale];
-  }
-
-  return {
-    de: 'Alle',
-    en: 'All',
-    pl: 'Wszyscy',
-  }[locale];
-};
-
-const getKangurMobileLeaderboardAccountLabel = (
-  isRegistered: boolean,
-  locale: ReturnType<typeof useKangurMobileI18n>['locale'],
-): string =>
-  isRegistered
-    ? {
-        de: 'Angemeldet',
-        en: 'Registered',
-        pl: 'Zalogowany',
-      }[locale]
-    : {
-        de: 'Anonym',
-        en: 'Anonymous',
-        pl: 'Anonim',
-      }[locale];
 
 export const useKangurMobileLeaderboard = (
   options: UseKangurMobileLeaderboardOptions = {},
@@ -124,71 +82,28 @@ export const useKangurMobileLeaderboard = (
   );
 
   const operationOptions = useMemo(
-    () =>
-      KANGUR_LEADERBOARD_OPERATION_OPTIONS.map((option) => ({
-        ...option,
-        label:
-          option.id === 'all'
-            ? copy({
-                de: 'Alle',
-                en: 'All',
-                pl: 'Wszystkie',
-              })
-            : formatKangurMobileScoreOperation(option.id, locale),
-      })),
-    [copy, locale],
+    () => getKangurLeaderboardOperationOptions(locale),
+    [locale],
   );
 
   const userOptions = useMemo(
-    () =>
-      KANGUR_LEADERBOARD_USER_OPTIONS.map((option) => ({
-        ...option,
-        label: getKangurMobileLeaderboardUserFilterLabel(option.id, locale),
-      })),
+    () => getKangurLeaderboardUserOptions(locale),
     [locale],
   );
 
   const items = useMemo(
     () =>
-      visibleScores.map((score, index) => {
-        const operationInfo = getKangurLeaderboardOperationInfo(score.operation);
-        const operationLabel = formatKangurMobileScoreOperation(
-          score.operation,
-          locale,
-        );
-        const isRegistered = Boolean(score.created_by);
-        const isCurrentUser =
-          (Boolean(session.user?.activeLearner?.id) &&
-            score.learner_id === session.user?.activeLearner?.id) ||
-          (Boolean(session.user?.email) && score.created_by === session.user?.email);
-        const accountLabel = getKangurMobileLeaderboardAccountLabel(
-          isRegistered,
-          locale,
-        );
-
-        return {
-          accountLabel,
-          currentUserBadgeLabel: copy({
-            de: 'Du',
-            en: 'You',
-            pl: 'Ty',
-          }),
-          id: score.id,
-          isCurrentUser,
-          isMedal: index < LEADERBOARD_MEDALS.length,
-          isRegistered,
-          metaLabel: `${operationInfo.emoji} ${operationLabel} · ${accountLabel}`,
-          operationEmoji: operationInfo.emoji,
-          operationLabel,
-          operationSummary: `${operationInfo.emoji} ${operationLabel}`,
-          playerName: score.player_name,
-          rank: index + 1,
-          rankLabel: LEADERBOARD_MEDALS[index] ?? `${index + 1}.`,
-          scoreLabel: `${score.score}/${score.total_questions}`,
-          timeLabel: `${score.time_taken}s`,
-        } satisfies KangurLeaderboardItem;
-      }),
-    [copy, locale, session.user?.activeLearner?.id, session.user?.email, visibleScores],
+      buildKangurLeaderboardItems({
+        currentLearnerId: session.user?.activeLearner?.id,
+        currentUserEmail: session.user?.email,
+        locale,
+        scores: visibleScores,
+      }).map((item, index) => ({
+        ...item,
+        isMedal: index < LEADERBOARD_MEDALS.length,
+        rankLabel: LEADERBOARD_MEDALS[index] ?? `${index + 1}.`,
+      })),
+    [locale, session.user?.activeLearner?.id, session.user?.email, visibleScores],
   );
 
   return {

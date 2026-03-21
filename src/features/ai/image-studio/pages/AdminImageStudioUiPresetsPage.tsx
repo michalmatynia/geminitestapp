@@ -20,7 +20,7 @@ import {
   UI_GRID_RELAXED_CLASSNAME,
   useToast,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
@@ -49,9 +49,9 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         });
         toast('Active UI preset updated.', { variant: 'success' });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'AdminImageStudioUiPresetsPage', action: 'setActive' },
+        logClientCatch(error, {
+          source: 'AdminImageStudioUiPresetsPage',
+          action: 'setActive',
         });
         toast('Failed to update active UI preset.', { variant: 'error' });
       }
@@ -74,9 +74,9 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         });
         toast('UI preset deleted.', { variant: 'success' });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'AdminImageStudioUiPresetsPage', action: 'deletePreset' },
+        logClientCatch(error, {
+          source: 'AdminImageStudioUiPresetsPage',
+          action: 'deletePreset',
         });
         toast('Failed to delete UI preset.', { variant: 'error' });
       }

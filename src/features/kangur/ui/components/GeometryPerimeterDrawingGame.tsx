@@ -64,8 +64,6 @@ import type {
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type GeometryPerimeterDrawingGameProps = KangurMiniGameFinishProps;
-
 type PerimeterRound = {
   id: string;
   shape: 'square' | 'rectangle';
@@ -73,8 +71,6 @@ type PerimeterRound = {
   b?: number;
   emoji: string;
 };
-
-type FeedbackState = KangurMiniGameInformationalFeedback | null;
 
 const ROUNDS: PerimeterRound[] = [
   {
@@ -195,7 +191,7 @@ const gridAlignmentRatio = (points: Point2d[], tolerance: number): number => {
 export default function GeometryPerimeterDrawingGame({
   finishLabel,
   onFinish,
-}: GeometryPerimeterDrawingGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const summaryFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'lesson');
   const handleFinish = onFinish;
@@ -208,7 +204,7 @@ export default function GeometryPerimeterDrawingGame({
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const strokesRef = useRef<Point2d[][]>([]);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);

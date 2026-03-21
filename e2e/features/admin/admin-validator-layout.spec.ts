@@ -269,7 +269,7 @@ test.describe('Admin validator browser regressions', () => {
     await expect(page.getByText('Regex Pattern Table')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Category From Segment 4' })).toBeVisible();
 
-    await expect(page.locator('#app-content')).toHaveScreenshot(
+    await expect(page.locator('#kangur-main-content')).toHaveScreenshot(
       'admin-global-validator-patterns-shell.png',
       {
         animations: 'disabled',
@@ -283,7 +283,7 @@ test.describe('Admin validator browser regressions', () => {
     await expect(page.getByRole('tablist', { name: 'Validation pattern lists' })).toHaveCount(0);
     await expect(page.getByText('Documentation Tooltips')).toBeVisible();
 
-    await expect(page.locator('#app-content')).toHaveScreenshot(
+    await expect(page.locator('#kangur-main-content')).toHaveScreenshot(
       'admin-global-validator-settings-shell.png',
       {
         animations: 'disabled',
@@ -321,7 +321,7 @@ test.describe('Admin validator browser regressions', () => {
     await expect(page.getByText('Add New List')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Select validator list Product Patterns' })).toBeVisible();
 
-    await expect(page.locator('#app-content')).toHaveScreenshot(
+    await expect(page.locator('#kangur-main-content')).toHaveScreenshot(
       'admin-validator-lists-shell.png',
       {
         animations: 'disabled',
@@ -335,7 +335,7 @@ test.describe('Admin validator browser regressions', () => {
     await expect(page.getByText('Add New List')).toHaveCount(0);
     await expect(page.getByText('Documentation Tooltips')).toBeVisible();
 
-    await expect(page.locator('#app-content')).toHaveScreenshot(
+    await expect(page.locator('#kangur-main-content')).toHaveScreenshot(
       'admin-validator-lists-settings-shell.png',
       {
         animations: 'disabled',

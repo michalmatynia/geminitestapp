@@ -7,7 +7,7 @@ import {
   buildProductValidationSemanticOperationPresetLabel,
   PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS,
 } from '@/shared/lib/products/utils/validator-semantic-operations';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   buildUniqueLabel,
@@ -105,12 +105,9 @@ export const handleCreateLatestPriceStockSequence = async (args: {
 
     notifySuccess('Latest price & stock sequence created or updated.');
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'useValidatorSettingsController',
-        action: 'createLatestPriceStockSequence',
-      },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createLatestPriceStockSequence',
     });
     notifyError(
       error instanceof Error ? error.message : 'Failed to create latest price & stock sequence.'

@@ -12,6 +12,7 @@ import {
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
+  type StudioSlotRecord,
   updateImageStudioSlot,
 } from '@/features/ai/server';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
@@ -40,7 +41,6 @@ const payloadSchema = z.object({
 });
 
 const uploadsRoot = path.join(studioRoot, 'masks');
-type SourceSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
@@ -97,7 +97,7 @@ function buildMaskFolderPath(
   return prefix ? `${prefix}/${suffix}` : suffix;
 }
 
-async function loadSourceBuffer(sourceSlot: SourceSlotRecord): Promise<Buffer> {
+async function loadSourceBuffer(sourceSlot: StudioSlotRecord): Promise<Buffer> {
   const base64Candidate =
     typeof sourceSlot.imageBase64 === 'string' && sourceSlot.imageBase64.trim().startsWith('data:')
       ? sourceSlot.imageBase64.trim()

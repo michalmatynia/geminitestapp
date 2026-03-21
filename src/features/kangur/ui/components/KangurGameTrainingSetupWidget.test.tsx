@@ -12,7 +12,7 @@ const { getRecommendedTrainingSetupMock, useKangurGameRuntimeMock } = vi.hoisted
 
 const { localeState } = vi.hoisted(() => ({
   localeState: {
-    value: 'pl' as 'de' | 'en' | 'pl',
+    value: 'pl' as 'de' | 'en' | 'pl' | 'uk',
   },
 }));
 
@@ -140,6 +140,25 @@ describe('KangurGameTrainingSetupWidget', () => {
     );
     expect(text).not.toBeNull();
     expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to Ukrainian training copy when translations are unavailable', () => {
+    localeState.value = 'uk';
+
+    render(<KangurGameTrainingSetupWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const text = art.querySelector('text');
+
+    expect(screen.getByRole('heading', { name: 'Налаштування тренування' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-training-stage-description')).toHaveTextContent(
+      'Налаштуйте змішане тренування й виберіть діапазон запитань.'
+    );
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Тренування');
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');

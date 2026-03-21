@@ -8,6 +8,7 @@ import type { Point2d } from '@/shared/contracts/geometry';
 
 export type TutorSurface = KangurAiTutorSurface;
 export type TutorPanelShellMode = 'default' | 'minimal';
+export type TutorGuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 
 export type TutorPoint = Point2d;
 

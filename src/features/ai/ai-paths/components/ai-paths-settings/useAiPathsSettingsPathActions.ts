@@ -4,6 +4,8 @@ import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
@@ -39,22 +41,6 @@ import {
 } from '../AiPathsSettingsUtils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type ConfirmFn = (input: {
-  title: string;
-  message: string;
-  confirmText: string;
-  isDangerous: boolean;
-  onConfirm: () => void | Promise<void>;
-}) => void;
-
-type ToastFn = (
-  message: string,
-  options?: {
-    variant?: 'info' | 'success' | 'warning' | 'error';
-  }
-) => void;
-
 type UseAiPathsSettingsPathActionsInput = {
   activePathId: string | null;
   isPathLocked: boolean;
@@ -73,7 +59,7 @@ type UseAiPathsSettingsPathActionsInput = {
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
-  confirm: ConfirmFn;
+  confirm: (config: ConfirmConfig) => void;
   toast: ToastFn;
 };
 

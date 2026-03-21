@@ -59,8 +59,6 @@ import {
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type LogicalAnalogiesRelationGameProps = KangurMiniGameFinishProps;
-
 type RoundState = {
   pool: LogicalAnalogyRelationToken[];
   slots: Record<string, LogicalAnalogyRelationToken[]>;
@@ -133,7 +131,7 @@ const buildTokenClassName = ({
 export default function LogicalAnalogiesRelationGame({
   finishLabel,
   onFinish,
-}: LogicalAnalogiesRelationGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const t = (
     key: string,

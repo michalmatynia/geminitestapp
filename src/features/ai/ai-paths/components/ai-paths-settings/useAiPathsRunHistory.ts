@@ -21,6 +21,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 
 import {
   normalizeRunDetail,
@@ -29,12 +30,6 @@ import {
 } from '../job-queue-panel-utils';
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastFn = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-) => void;
 
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;

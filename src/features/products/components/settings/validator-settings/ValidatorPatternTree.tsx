@@ -11,7 +11,7 @@ import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { PatternNodeItem } from './pattern-tree/PatternNodeItem';
 import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderNodeItem';
@@ -149,14 +149,11 @@ export function ValidatorPatternTree(): React.JSX.Element {
           try {
             await reorderPatternsMutationRef.current.mutateAsync({ updates });
           } catch (error: unknown) {
-            logClientError(error);
-            logClientError(error, {
-              context: {
-                source: 'ValidatorPatternTree',
-                action: 'reorder',
-                operationType: tx.operation.type,
-                updateCount: updates.length,
-              },
+            logClientCatch(error, {
+              source: 'ValidatorPatternTree',
+              action: 'reorder',
+              operationType: tx.operation.type,
+              updateCount: updates.length,
             });
             throw error instanceof Error ? error : new Error('Failed to reorder patterns.');
           }

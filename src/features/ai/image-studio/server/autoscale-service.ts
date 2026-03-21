@@ -31,8 +31,7 @@ import {
   isClientAutoScaleMode,
   isServerAutoScaleMode,
 } from './image-handler-utils';
-
-import type { StudioSlotRecord } from './upscale/types';
+import type { StudioSlotRecord } from './types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

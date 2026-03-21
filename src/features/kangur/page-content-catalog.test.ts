@@ -36,11 +36,26 @@ describe('page-content-catalog', () => {
     );
   });
 
-  it('returns the started Ukrainian page-content translation while keeping catalog fallbacks', () => {
+  it('returns localized Ukrainian page-content copy for the main UI-facing entries', () => {
     const entry = getEntry('uk', 'learner-profile-overview');
+    const reviewEntry = getEntry('uk', 'tests-review');
+    const tutorEntry = getEntry('uk', 'parent-dashboard-ai-tutor');
+    const masteryEntry = getEntry('uk', 'learner-profile-mastery');
 
     expect(entry.title).toBe('Огляд результатів');
     expect(entry.summary).toBe('Головні сигнали дня: точність, місія, ціль і значки в одному місці.');
+    expect(reviewEntry.title).toBe('Огляд відповіді');
+    expect(reviewEntry.summary).toBe(
+      'Порівняйте свій вибір із правильною відповіддю та прочитайте коротке пояснення.'
+    );
+    expect(tutorEntry.title).toBe('Tutor-AI для батьків');
+    expect(tutorEntry.summary).toBe(
+      'Інтерпретуйте дані учня та керуйте доступністю підтримки AI з одного місця.'
+    );
+    expect(masteryEntry.title).toBe('Опанування уроків');
+    expect(masteryEntry.summary).toBe(
+      'Перегляньте теми для повторення та найсильніші сторони на основі збережених уроків.'
+    );
   });
 
   it('builds English lesson-library fragments from localized lesson catalog defaults', () => {
@@ -63,5 +78,27 @@ describe('page-content-catalog', () => {
     expect(clockFragment?.explanation).toBe('Stunden, Minuten und volle Uhrzeit auf einer analogen Uhr.');
     expect(clockFragment?.triggerPhrases).toContain('Uhr');
     expect(clockFragment?.triggerPhrases).not.toContain('Nauka zegara');
+  });
+
+  it('builds Ukrainian lesson-library fragments from localized lesson catalog defaults', () => {
+    const entry = getEntry('uk', 'lessons-library');
+    const clockFragment = entry.fragments.find((fragment) => fragment.id === 'lesson:clock');
+    const reactFragment = entry.fragments.find(
+      (fragment) => fragment.id === 'lesson:webdev_react_components'
+    );
+
+    expect(clockFragment).toBeTruthy();
+    expect(clockFragment?.text).toBe('Годинник');
+    expect(clockFragment?.explanation).toBe('Години, хвилини й точний час на аналоговому годиннику.');
+    expect(clockFragment?.triggerPhrases).toContain('Годинник');
+    expect(clockFragment?.triggerPhrases).not.toContain('Nauka zegara');
+
+    expect(reactFragment).toBeTruthy();
+    expect(reactFragment?.text).toBe('Основи компонентів');
+    expect(reactFragment?.explanation).toBe(
+      'Вивчіть основи компонентів і будуйте інтерфейси в React 19.2.'
+    );
+    expect(reactFragment?.triggerPhrases).toContain('Основи компонентів');
+    expect(reactFragment?.triggerPhrases).not.toContain('Component Basics');
   });
 });

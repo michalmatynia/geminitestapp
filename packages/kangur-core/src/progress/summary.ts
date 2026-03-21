@@ -100,9 +100,10 @@ export const getNextLockedBadge = (
   progress: KangurProgressState,
   options: {
     badges?: KangurBadgeStatus[];
+    locale?: string | null | undefined;
   } = {},
 ): KangurBadgeStatus | null => {
-  const badgeStatuses = options.badges ?? getProgressBadges(progress);
+  const badgeStatuses = options.badges ?? getProgressBadges(progress, options.locale);
   const locked = badgeStatuses.filter((badge) => !badge.isUnlocked);
   if (locked.length === 0) {
     return null;
@@ -156,7 +157,7 @@ export const getRecommendedSessionMomentum = (
   } = {},
 ): KangurRecommendedSessionMomentum => {
   const completed = progress.recommendedSessionsCompleted ?? 0;
-  const badges = (options.badges ?? getProgressBadges(progress)).filter((badge) =>
+  const badges = (options.badges ?? getProgressBadges(progress, options.locale)).filter((badge) =>
     GUIDED_BADGE_IDS.has(badge.id),
   );
   const nextBadge = badges.find((badge) => !badge.isUnlocked);

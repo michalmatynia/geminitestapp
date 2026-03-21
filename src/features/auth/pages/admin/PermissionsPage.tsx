@@ -26,6 +26,7 @@ import {
   LoadingState,
   FormField,
   UI_GRID_ROOMY_CLASSNAME,
+  insetPanelVariants,
 } from '@/shared/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -252,7 +253,10 @@ function AuthPermissionsForm({
           <CardContent className='space-y-4'>
             <div className='space-y-3'>
               {permissions.map((permission: AuthPermission) => (
-                <div key={permission.id} className='rounded-md border border-border bg-card/40 p-3'>
+                <div
+                  key={permission.id}
+                  className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border`}
+                >
                   <div className='flex items-start justify-between gap-3'>
                     <div>
                       <div className='text-sm font-semibold text-white'>{permission.name}</div>

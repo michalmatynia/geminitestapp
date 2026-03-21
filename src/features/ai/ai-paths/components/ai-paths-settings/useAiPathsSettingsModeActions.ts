@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import type {
   AiNode,
   Edge,
@@ -24,14 +25,6 @@ import {
   createDefaultPathConfig,
 } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastFn = (
-  message: string,
-  options?: {
-    variant?: 'info' | 'success' | 'warning' | 'error';
-  }
-) => void;
 
 type UseAiPathsSettingsModeActionsInput = {
   activePathId: string | null;

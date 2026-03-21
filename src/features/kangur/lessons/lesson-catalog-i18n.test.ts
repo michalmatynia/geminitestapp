@@ -13,6 +13,10 @@ describe('lesson-catalog-i18n', () => {
   it('returns locale-specific lesson titles when the source copy is the default catalog text', () => {
     expect(getLocalizedKangurLessonTitle('clock', 'en', 'Nauka zegara')).toBe('Clock');
     expect(getLocalizedKangurLessonTitle('clock', 'de', 'Nauka zegara')).toBe('Uhr');
+    expect(getLocalizedKangurLessonTitle('clock', 'uk', 'Nauka zegara')).toBe('Годинник');
+    expect(getLocalizedKangurLessonTitle('english_articles', 'uk', 'English: Articles')).toBe(
+      'Англійська: артиклі'
+    );
   });
 
   it('keeps custom lesson titles intact instead of overwriting Mongo-edited copy', () => {
@@ -21,7 +25,7 @@ describe('lesson-catalog-i18n', () => {
     );
   });
 
-  it('returns localized lesson descriptions for English and German locales and keeps Polish fallback for pl', () => {
+  it('returns localized lesson descriptions for English, German, and Ukrainian core lessons and keeps Polish fallback for pl', () => {
     expect(
       getLocalizedKangurLessonDescription(
         'webdev_react_components',
@@ -45,6 +49,36 @@ describe('lesson-catalog-i18n', () => {
         'Poznaj podstawy komponentów i buduj interfejsy w React 19.2.'
       )
     ).toBe('Poznaj podstawy komponentów i buduj interfejsy w React 19.2.');
+
+    expect(
+      getLocalizedKangurLessonDescription(
+        'clock',
+        'uk',
+        'Godziny, minuty i pełny czas na zegarze analogowym'
+      )
+    ).toBe('Години, хвилини й точний час на аналоговому годиннику.');
+  });
+
+  it('returns Ukrainian technical lesson metadata for grown-ups lesson catalogs', () => {
+    expect(getLocalizedKangurLessonTitle('webdev_react_components', 'uk', 'Component Basics')).toBe(
+      'Основи компонентів'
+    );
+
+    expect(
+      getLocalizedKangurLessonDescription(
+        'webdev_react_components',
+        'uk',
+        'Poznaj podstawy komponentów i buduj interfejsy w React 19.2.'
+      )
+    ).toBe('Вивчіть основи компонентів і будуйте інтерфейси в React 19.2.');
+
+    expect(
+      getLocalizedKangurLessonTitle(
+        'agentic_coding_codex_5_4',
+        'uk',
+        'Agentic Coding Foundations'
+      )
+    ).toBe('Основи агентного програмування');
   });
 
   it('returns localized subject labels for English, German, and Ukrainian locales', () => {

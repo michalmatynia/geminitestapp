@@ -3,6 +3,7 @@
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -35,7 +36,6 @@ import type {
   CaseViewMode,
 } from './types';
 
-export type ToastFn = (message: string, options?: { variant?: string }) => void;
 type WaitForCaseAvailabilityOptions = Parameters<typeof waitForCaseAvailability>[1]['options'];
 
 export type UseAdminCaseResolverCasesActionsArgs = {

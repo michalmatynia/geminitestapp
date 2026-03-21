@@ -22,7 +22,7 @@ test('case resolver exposes tree controls accessibly and passes the accessibilit
     }
   }
 
-  const main = page.locator('#app-content');
+  const main = page.locator('#kangur-main-content');
   await expect(main).toBeVisible({ timeout: 30_000 });
   await expect(main).toHaveAttribute('tabindex', '-1');
 
@@ -44,7 +44,7 @@ test('case resolver exposes tree controls accessibly and passes the accessibilit
   await expect(skipLink).toBeFocused();
 
   await skipLink.press('Enter');
-  await expect(page).toHaveURL(/#app-content$/);
+  await expect(page).toHaveURL(/#kangur-main-content$/);
   await expect(main).toBeFocused();
 
   await expectPageToHaveNoAxeViolations(page, {

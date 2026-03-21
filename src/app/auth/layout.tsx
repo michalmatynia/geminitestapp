@@ -12,7 +12,7 @@ export default function AuthPublicLayout({
     <NextIntlClientProvider>
       <AuthProvider mode='public'>
         <main
-          id='app-content'
+          id='kangur-main-content'
           tabIndex={-1}
           className='min-h-screen bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
         >

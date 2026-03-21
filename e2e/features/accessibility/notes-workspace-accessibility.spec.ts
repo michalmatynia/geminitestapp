@@ -14,7 +14,7 @@ test('notes workspace exposes list controls accessibly and passes the accessibil
 
   await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 
-  const main = page.locator('#app-content');
+  const main = page.locator('#kangur-main-content');
   await expect(main).toBeVisible();
   await expect(main).toHaveAttribute('tabindex', '-1');
 

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Button, Hint, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import { Hint, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
 import type { RunHistoryFilterView } from './run-history-panel';
+import { RunHistoryPillButton } from './RunHistoryPillButton';
 
 interface RunHistoryFilterControlsProps {
   runFilter: RunHistoryFilterView;
@@ -29,27 +30,22 @@ export function RunHistoryFilterControls(
           <Hint size='xs' uppercase={false} className='font-semibold text-white'>
             Run History
           </Hint>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+          <RunHistoryPillButton
             onClick={onRefresh}
             disabled={isRefreshing}
+            inactiveClassName='text-gray-200 hover:bg-muted/60'
           >
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </Button>
+          </RunHistoryPillButton>
         </div>
         <div className='flex items-center gap-2 text-[10px]'>
-          <Button
-            type='button'
-            className={`rounded-md border px-2 py-1 ${
-              compareMode
-                ? 'border-sky-500/60 bg-sky-500/10 text-sky-100'
-                : 'text-gray-300 hover:bg-muted/60'
-            }`}
+          <RunHistoryPillButton
+            active={compareMode}
+            activeClassName='border-sky-500/60 bg-sky-500/10 text-sky-100'
             onClick={onToggleCompareMode}
           >
             {compareMode ? 'Exit compare' : 'Compare runs'}
-          </Button>
+          </RunHistoryPillButton>
         </div>
       </div>
       <div className='mb-3 flex flex-wrap gap-2'>
@@ -60,18 +56,13 @@ export function RunHistoryFilterControls(
           { id: 'dead', label: 'Dead-letter' },
         ].map(
           (filter: { id: string; label: string }): React.JSX.Element => (
-            <Button
+            <RunHistoryPillButton
               key={filter.id}
-              type='button'
-              className={`rounded-md border px-2 py-1 text-[10px] ${
-                runFilter === filter.id
-                  ? 'border-emerald-500/50 text-emerald-200'
-                  : 'text-gray-300 hover:bg-muted/60'
-              }`}
+              active={runFilter === filter.id}
               onClick={(): void => onSetRunFilter(filter.id as RunHistoryFilterView)}
             >
               {filter.label}
-            </Button>
+            </RunHistoryPillButton>
           )
         )}
       </div>

@@ -5,15 +5,8 @@ import {
   DOCS_JOBS_SNIPPET,
   DOCS_WIRING_SNIPPET,
 } from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastFn = (
-  message: string,
-  options?: {
-    variant?: 'info' | 'success' | 'warning' | 'error';
-  }
-) => void;
 
 type UseAiPathsSettingsDocsActionsInput = {
   toast: ToastFn;

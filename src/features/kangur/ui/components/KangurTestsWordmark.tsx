@@ -6,6 +6,7 @@ const KANGUR_TESTS_WORDMARK_LABELS = {
   de: 'Prüfungen',
   en: 'Tests',
   pl: 'Testy',
+  uk: 'Тести',
 } as const;
 
 const getKangurTestsWordmarkLabel = (locale: string | null | undefined): string => {
@@ -14,6 +15,8 @@ const getKangurTestsWordmarkLabel = (locale: string | null | undefined): string 
       return KANGUR_TESTS_WORDMARK_LABELS.de;
     case 'en':
       return KANGUR_TESTS_WORDMARK_LABELS.en;
+    case 'uk':
+      return KANGUR_TESTS_WORDMARK_LABELS.uk;
     default:
       return KANGUR_TESTS_WORDMARK_LABELS.pl;
   }

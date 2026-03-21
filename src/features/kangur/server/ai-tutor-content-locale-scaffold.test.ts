@@ -31,6 +31,8 @@ describe('ai tutor content locale scaffold', () => {
     expect(content.quickActions.review.questionLabel).toBe('Review answer');
     expect(content.parentDashboard.guardrailsTitle).toBe('Parent guardrails');
     expect(content.moods.neutral.label).toBe('Neutral');
+    expect(content.panelChrome.surfaceLabels.profile).toBe('Profile');
+    expect(content.panelChrome.contextFallbackTargets.auth).toBe('Sign-in screen');
     expect(content.common.defaultTutorName).toBe(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.defaultTutorName
     );
@@ -52,6 +54,25 @@ describe('ai tutor content locale scaffold', () => {
     expect(content.quickActions.review.questionLabel).toBe('Antwort besprechen');
     expect(content.parentDashboard.guardrailsTitle).toBe('Guardrails der Eltern');
     expect(content.moods.neutral.description).toContain('stabiler Ausgangspunkt');
+    expect(content.panelChrome.surfaceLabels.parent_dashboard).toBe('Eltern-Dashboard');
+    expect(content.panelChrome.contextFallbackTargets.auth).toBe('Anmeldebildschirm');
+  });
+
+  it('builds a Ukrainian scaffold with localized tutor surface labels', () => {
+    const content = buildKangurAiTutorContentLocaleScaffold({
+      locale: 'uk',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+    });
+
+    expect(content.locale).toBe('uk');
+    expect(content.panelChrome.surfaceLabels.profile).toBe('Профіль');
+    expect(content.panelChrome.surfaceLabels.parent_dashboard).toBe('Панель для батьків');
+    expect(content.panelChrome.surfaceLabels.auth).toBe('Вхід');
+    expect(content.panelChrome.contextFallbackTargets.profile).toBe('Нова панель профілю');
+    expect(content.panelChrome.contextFallbackTargets.auth).toBe('Екран входу');
+    expect(content.common.openTutorAria).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.openTutorAria
+    );
   });
 
   it('preserves manual target translations when they differ from the source locale', () => {

@@ -43,6 +43,9 @@ const resolveLocaleInstruction = (locale: string): string => {
   if (!normalizedLocale || normalizedLocale.startsWith('pl')) {
     return 'Speak in natural Polish for children learning math.';
   }
+  if (normalizedLocale.startsWith('uk')) {
+    return 'Speak in natural Ukrainian for children learning math.';
+  }
   if (normalizedLocale.startsWith('en')) {
     return 'Speak in natural English for children learning math.';
   }

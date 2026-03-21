@@ -9,7 +9,6 @@ import {
   type ImageStudioCenterRequest,
   type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server';
 import {
   centerAndScaleObjectByLayout,
   centerObjectByAlpha,
@@ -21,6 +20,7 @@ import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
+import type { StudioSlotRecord } from '@/features/ai/image-studio/server/types';
 import type { UploadedClientCenterImage } from '@/shared/contracts/image-studio';
 
 import { centerBadRequest, isClientCenterMode, isServerCenterMode } from './image-handler-utils';
@@ -30,8 +30,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const STRICT_SERVER_CENTER_ENABLED =
   process.env['IMAGE_STUDIO_CENTER_SERVER_AUTHORITATIVE'] !== 'false';
-
-type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 
 export type CenterProcessingResult = {
   outputBuffer: Buffer;

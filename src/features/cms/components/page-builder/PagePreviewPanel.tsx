@@ -9,7 +9,10 @@ import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { Button, SelectSimple, useToast, Badge } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PageSelectorBar } from './PageSelectorBar';
@@ -303,13 +306,10 @@ export function PagePreviewPanel(): React.ReactNode {
       }
       previewWindow.location.href = targetUrl;
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'PagePreviewPanel',
-          action: 'saveBeforePreview',
-          pageId: state.currentPage.id,
-        },
+      logClientCatch(error, {
+        source: 'PagePreviewPanel',
+        action: 'saveBeforePreview',
+        pageId: state.currentPage.id,
       });
       toast('Save before preview failed. Try again.', { variant: 'error' });
     }

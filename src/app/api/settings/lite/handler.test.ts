@@ -4,16 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { getMongoDbMock } = vi.hoisted(() => ({
+const { getMongoDbMock, getMongoClientMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
+  getMongoClientMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
+  getMongoClient: getMongoClientMock,
 }));
 
 vi.mock('next/headers', () => ({
   headers: vi.fn().mockReturnValue(new Headers()),
+}));
+
+vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+  assertSettingsManageAccess: vi.fn(async () => undefined),
 }));
 
 import { GET_handler, clearLiteSettingsServerCache } from './handler';

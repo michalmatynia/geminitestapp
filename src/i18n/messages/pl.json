@@ -391,6 +391,15 @@
     "result": {
       "leaderboardLabel": "Ranking po rundzie"
     },
+    "questionWidget": {
+      "scoreLabel": "Wynik",
+      "roundAccuracy": "Skuteczność rundy: {percent}%",
+      "perfectRun": "Perfekt w toku",
+      "recommendation": "Polecony kierunek: {title}",
+      "guidedProjection": "Po tej rundzie: {summary}",
+      "dailyQuest": "Misja dnia: {summary}",
+      "nextBadge": "Następna odznaka: {summary}"
+    },
     "operationSelector": {
       "title": "Grajmy!",
       "intro": {

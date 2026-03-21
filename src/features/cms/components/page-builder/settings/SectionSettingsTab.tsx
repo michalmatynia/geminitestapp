@@ -10,7 +10,7 @@ import {
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -127,9 +127,9 @@ export function SectionSettingsTab(): React.JSX.Element | null {
       setSectionTemplateCategory('');
       toast('Section saved as template.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'SectionSettingsTab', action: 'saveSectionTemplate' },
+      logClientCatch(error, {
+        source: 'SectionSettingsTab',
+        action: 'saveSectionTemplate',
       });
       toast('Failed to save section template.', { variant: 'error' });
     }

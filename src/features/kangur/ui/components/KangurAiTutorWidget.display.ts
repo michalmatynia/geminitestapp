@@ -28,6 +28,7 @@ import type {
   GuidedTutorTarget,
   PendingSelectionResponse,
   SectionExplainContext,
+  TutorGuidedMode,
   TutorHomeOnboardingStep,
   TutorSurface,
 } from './KangurAiTutorWidget.types';
@@ -39,8 +40,6 @@ const SECTION_DROP_TARGET_PADDING_Y = 12;
 type TutorAnchorRegistry = {
   anchors: KangurTutorAnchorRegistration[];
 } | null;
-
-type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 
 const buildHomeOnboardingStepDefinitions = (
   tutorContent: KangurAiTutorContent
@@ -362,7 +361,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
     isSectionGuidedTutorMode ||
     (!isTutorHidden && isOpen && !isAskModalState && sectionResponsePending !== null);
 
-  const guidedMode: GuidedMode = homeOnboardingStep
+  const guidedMode: TutorGuidedMode = homeOnboardingStep
     ? 'home_onboarding'
     : isSelectionGuidedTutorMode
       ? 'selection'

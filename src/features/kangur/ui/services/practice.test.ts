@@ -4,6 +4,7 @@ import {
   completeKangurPracticeSession,
   generateKangurLogicPracticeQuestions,
   generateTrainingQuestions,
+  getKangurPracticeOperationConfig,
   getKangurPracticeOperationForLessonComponent,
   isKangurLogicPracticeOperation,
   resolveKangurLessonFocusForPracticeOperation,
@@ -175,6 +176,29 @@ describe('shared practice helpers', () => {
       category: 'logical_patterns',
     });
     expect(questions[0]?.choices).toContain(questions[0]?.answer);
+  });
+
+  it('localizes practice operation labels and logic question banks for English and German', () => {
+    expect(getKangurPracticeOperationConfig('mixed', 'en').label).toBe('Mixed practice');
+    expect(getKangurPracticeOperationConfig('logical_patterns', 'de').label).toBe(
+      'Muster und Reihen',
+    );
+
+    const [englishQuestion] = generateKangurLogicPracticeQuestions(
+      'logical_thinking',
+      1,
+      'en',
+    );
+    const [germanQuestion] = generateKangurLogicPracticeQuestions(
+      'logical_reasoning',
+      1,
+      'de',
+    );
+
+    expect(englishQuestion?.question).toContain('Which element best completes the pattern');
+    expect(englishQuestion?.choices).toContain(englishQuestion?.answer);
+    expect(germanQuestion?.question).toContain('Wenn eine Zahl gerade ist');
+    expect(germanQuestion?.choices).toContain(germanQuestion?.answer);
   });
 
   it('tracks logic practice as lesson-linked mastery work', () => {

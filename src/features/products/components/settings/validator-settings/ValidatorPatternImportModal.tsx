@@ -8,7 +8,10 @@ import type {
 } from '@/features/products/api/settings';
 import { useImportValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { JSONImportModal, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { VALIDATOR_SAMPLE_IMPORT_JSON } from './validator-documentation-clipboard';
 
@@ -170,12 +173,9 @@ export function ValidatorPatternImportModal({
         variant: 'success',
       });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'ValidatorPatternImportModal',
-          action: 'previewImport',
-        },
+      logClientCatch(error, {
+        source: 'ValidatorPatternImportModal',
+        action: 'previewImport',
       });
       toast(error instanceof Error ? error.message : 'Import preview failed.', {
         variant: 'error',
@@ -212,12 +212,9 @@ export function ValidatorPatternImportModal({
         { variant: 'success' }
       );
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'ValidatorPatternImportModal',
-          action: 'applyImport',
-        },
+      logClientCatch(error, {
+        source: 'ValidatorPatternImportModal',
+        action: 'applyImport',
       });
       toast(error instanceof Error ? error.message : 'Failed to apply import.', {
         variant: 'error',

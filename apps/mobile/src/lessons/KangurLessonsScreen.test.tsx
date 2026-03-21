@@ -12,6 +12,7 @@ const {
   getKangurPortableLessonBodyMock,
   replaceMock,
   useLessonsScreenBootStateMock,
+  useKangurMobileLessonCheckpointsMock,
   useKangurMobileLessonsDuelsMock,
   useKangurMobileLessonsMock,
   useLocalSearchParamsMock,
@@ -20,6 +21,7 @@ const {
   getKangurPortableLessonBodyMock: vi.fn(),
   replaceMock: vi.fn(),
   useLessonsScreenBootStateMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileLessonsDuelsMock: vi.fn(),
   useKangurMobileLessonsMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
@@ -69,6 +71,7 @@ vi.mock('expo-router', () => ({
 }));
 
 vi.mock('@kangur/core', () => ({
+  getLocalizedKangurMetadataBadgeName: vi.fn((badgeId: string) => badgeId),
   getKangurPortableLessonBody: getKangurPortableLessonBodyMock,
   getKangurPracticeOperationForLessonComponent: vi.fn(() => 'clock'),
 }));
@@ -79,6 +82,10 @@ vi.mock('./useLessonsScreenBootState', () => ({
 
 vi.mock('./useKangurMobileLessons', () => ({
   useKangurMobileLessons: useKangurMobileLessonsMock,
+}));
+
+vi.mock('./useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
 vi.mock('./useKangurMobileLessonsDuels', () => ({
@@ -99,6 +106,13 @@ const renderLessonsScreen = (locale?: 'pl' | 'en' | 'de') =>
   );
 
 const mockLessonItem = {
+  checkpointSummary: {
+    attempts: 4,
+    bestScorePercent: 100,
+    lastCompletedAt: '2026-03-20T12:00:00.000Z',
+    lastScorePercent: 90,
+    masteryPercent: 92,
+  },
   isFocused: true,
   lesson: {
     componentId: 'clock',
@@ -111,6 +125,12 @@ const mockLessonItem = {
     badgeAccent: 'emerald',
     statusLabel: 'Opanowane 100%',
     summaryLabel: 'Swietnie radzisz sobie z odczytywaniem godzin.',
+  },
+  practiceHref: {
+    pathname: '/practice',
+    params: {
+      operation: 'time_compare',
+    },
   },
 };
 
@@ -172,6 +192,9 @@ describe('KangurLessonsScreen', () => {
       lessons: [mockLessonItem],
       saveLessonCheckpoint: vi.fn(),
       selectedLesson: mockLessonItem,
+    });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
     });
     useKangurMobileLessonsDuelsMock.mockReturnValue({
       actionError: null,
@@ -236,6 +259,32 @@ describe('KangurLessonsScreen', () => {
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
 
     renderLessonsScreen();
 
@@ -249,6 +298,16 @@ describe('KangurLessonsScreen', () => {
       ),
     ).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Kontynuuj lekcje')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Ostatni lokalny checkpoint')).toBeTruthy();
+    expect(screen.getByText('Wynik 90% • najlepszy 100%')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcję: Nauka zegara')).toBeTruthy();
+    expect(screen.getByText('Uruchom trening: Nauka zegara')).toBeTruthy();
     expect(screen.getByText('TWÓJ WYNIK W POJEDYNKACH')).toBeTruthy();
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
@@ -294,7 +353,7 @@ describe('KangurLessonsScreen', () => {
   it('saves a local lesson checkpoint from the current section coverage', () => {
     const saveLessonCheckpointMock = vi.fn().mockReturnValue({
       countsAsLessonCompletion: false,
-      newBadges: [],
+      newBadges: ['lesson_hero'],
       scorePercent: 50,
     });
     useLessonsScreenBootStateMock.mockReturnValue(false);
@@ -338,5 +397,6 @@ describe('KangurLessonsScreen', () => {
     expect(
       screen.getByText('Checkpoint lekcji zapisano lokalnie z wynikiem 50%.'),
     ).toBeTruthy();
+    expect(screen.getByText('Nowa odznaka: lesson_hero')).toBeTruthy();
   });
 });

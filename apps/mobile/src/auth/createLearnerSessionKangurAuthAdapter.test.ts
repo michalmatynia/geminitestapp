@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMobileDevelopmentKangurStorage } from '../storage/createMobileDevelopmentKangurStorage';
-import { createLearnerSessionKangurAuthAdapter } from './createLearnerSessionKangurAuthAdapter';
+import {
+  createLearnerSessionKangurAuthAdapter,
+  KANGUR_MOBILE_AUTH_ERROR_CODES,
+} from './createLearnerSessionKangurAuthAdapter';
 import {
   KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
   KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY,
@@ -94,9 +97,11 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
       storage: createMobileDevelopmentKangurStorage(),
     });
 
-    await expect(adapter.signIn()).rejects.toThrow(
-      'Learner login name and password are required',
-    );
+    await expect(adapter.signIn()).rejects.toMatchObject({
+      code: KANGUR_MOBILE_AUTH_ERROR_CODES.missingCredentials,
+      message:
+        'Learner login name and password are required for native Kangur sign-in.',
+    });
   });
 
   it('signs in through learner-signin and resolves the server session', async () => {
@@ -161,7 +166,11 @@ describe('createLearnerSessionKangurAuthAdapter', () => {
           password: 'secret',
         },
       }),
-    ).rejects.toThrow('Learner sign-in did not produce a persisted mobile session');
+    ).rejects.toMatchObject({
+      code: KANGUR_MOBILE_AUTH_ERROR_CODES.missingPersistedSession,
+      message:
+        'Learner sign-in did not produce a persisted mobile session. Check cookie/session support for the current device runtime.',
+    });
   });
 
   it('clears the stored learner session on sign-out', async () => {

@@ -16,8 +16,7 @@ import {
 } from './KangurAiTutorGuidedLayout';
 import { getExpandedRect } from './KangurAiTutorWidget.helpers';
 import { AVATAR_SIZE, EDGE_GAP, type TutorMotionPosition, type TutorMotionProfile } from './KangurAiTutorWidget.shared';
-
-type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
+import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
 type GuidedPlacement = 'top' | 'bottom' | 'left' | 'right';
 const GUIDED_CALLOUT_FOCUS_PROTECTED_AREA_RATIO_LIMIT = 18;
 const GUIDED_SELECTION_CALLOUT_EDGE_BUFFER = EDGE_GAP * 2;
@@ -71,7 +70,7 @@ export function useKangurAiTutorGuidedShellState(input: {
   activeSectionProtectedRect: DOMRect | null;
   activeSelectionProtectedRect: DOMRect | null;
   guidedFocusRect: DOMRect | null;
-  guidedMode: GuidedMode;
+  guidedMode: TutorGuidedMode;
   guidedSelectionGlowRects: DOMRect[];
   guidedSelectionSpotlightRect: DOMRect | null;
   hoveredSectionProtectedRect: DOMRect | null;

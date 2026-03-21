@@ -14,7 +14,7 @@ import {
 } from '@/features/ai/ai-paths/config/query-presets';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
-import { Button, Label, Textarea, SelectSimple, Input, Card } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, Input, Card, insetPanelVariants } from '@/shared/ui';
 
 import {
   formatCollectionLabel,
@@ -294,7 +294,9 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
         <DatabaseQueryInputControls />
 
         {operation === 'update' && (
-          <div className='space-y-3 rounded-md border border-border bg-card/40 p-3'>
+          <div
+            className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border`}
+          >
             <Label className='text-xs text-gray-400'>
               Sample JSON (fetch to enable Field Mapping)
             </Label>

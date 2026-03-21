@@ -81,8 +81,6 @@ type ShapeRound = {
 
 type GeometryDifficultyId = 'starter' | 'pro';
 
-type FeedbackState = KangurMiniGameInformationalFeedback | null;
-
 const SHAPE_ROUND_LIBRARY: Record<GeometryShapeId, ShapeRound> = {
   circle: {
     id: 'circle',
@@ -309,7 +307,7 @@ export default function GeometryDrawingGame({
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [keyboardCursor, setKeyboardCursor] = useState<Point2d>(KEYBOARD_CURSOR_START);

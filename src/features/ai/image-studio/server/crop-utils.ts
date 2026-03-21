@@ -11,11 +11,7 @@ import {
 } from '@/shared/contracts/image-studio';
 
 import type { Region } from 'sharp';
-
-type CropSourceLimitValidation = {
-  ok: boolean;
-  reason?: 'non_positive_dimensions' | 'max_side_exceeded' | 'max_pixels_exceeded';
-};
+import type { ImageStudioSourceLimitValidation } from './types';
 
 const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
 
@@ -90,7 +86,7 @@ export const buildCropRequestRelationType = (requestId: string): string =>
 export const validateCropSourceDimensions = (
   width: number,
   height: number
-): CropSourceLimitValidation => {
+): ImageStudioSourceLimitValidation => {
   if (!(width > 0 && height > 0)) {
     return { ok: false, reason: 'non_positive_dimensions' };
   }

@@ -16,10 +16,9 @@ import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
-
-type Params = { id: string };
 
 export const querySchema = z.object({
   domainId: optionalTrimmedQueryString(),

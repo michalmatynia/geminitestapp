@@ -9,6 +9,7 @@ import {
   Label,
   SelectSimple,
   ToggleRow,
+  insetPanelVariants,
 } from '@/shared/ui';
 import type { SelectSimpleOption } from '@/shared/contracts/ui';
 
@@ -56,7 +57,9 @@ export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): 
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} bg-card/50 text-[11px] text-gray-400`}
+      >
         Local templates live on this node. Global templates are shared across all nodes/paths.
       </div>
 

@@ -105,6 +105,46 @@ const KANGUR_METADATA_BADGE_DESCRIPTIONS: Record<string, KangurProgressLocalized
 
 const KANGUR_PROGRESS_BADGE_NAMES: Record<string, KangurProgressLocalizedValue> = {
   ...KANGUR_METADATA_BADGE_NAMES,
+  perfect_10: {
+    de: 'Perfektes Ergebnis',
+    en: 'Perfect score',
+    pl: 'Idealny wynik',
+  },
+  lesson_hero: {
+    de: 'Lektionsheld',
+    en: 'Lesson hero',
+    pl: 'Bohater lekcji',
+  },
+  clock_master: {
+    de: 'Uhrmeister',
+    en: 'Clock master',
+    pl: 'Mistrz zegara',
+  },
+  geometry_artist: {
+    de: 'Formenkünstler',
+    en: 'Shape artist',
+    pl: 'Artysta figur',
+  },
+  ten_games: {
+    de: 'Zehn Spiele',
+    en: 'Ten games',
+    pl: 'Dziesiątka',
+  },
+  xp_500: {
+    de: 'Halbes Tausend XP',
+    en: 'Half a thousand XP',
+    pl: 'Pół tysiąca XP',
+  },
+  xp_1000: {
+    de: 'Tausender',
+    en: 'Thousand club',
+    pl: 'Tysiącznik',
+  },
+  variety: {
+    de: 'Allrounder',
+    en: 'All-rounder',
+    pl: 'Wszechstronny',
+  },
   calendar_keeper: {
     de: 'Kalendermeister',
     en: 'Calendar master',
@@ -194,6 +234,46 @@ const KANGUR_PROGRESS_BADGE_NAMES: Record<string, KangurProgressLocalizedValue> 
 
 const KANGUR_PROGRESS_BADGE_DESCRIPTIONS: Record<string, KangurProgressLocalizedValue> = {
   ...KANGUR_METADATA_BADGE_DESCRIPTIONS,
+  perfect_10: {
+    de: 'Erreiche ein perfektes Ergebnis in einem Spiel',
+    en: 'Get a perfect score in a game',
+    pl: 'Zdobądź pełny wynik w grze',
+  },
+  lesson_hero: {
+    de: 'Schließe die erste Lektion ab',
+    en: 'Finish the first lesson',
+    pl: 'Ukończ pierwszą lekcję',
+  },
+  clock_master: {
+    de: 'Schließe das Uhrtraining mit 5/5 ab',
+    en: 'Finish the clock training with a 5/5 score',
+    pl: 'Ukończ trening zegara z wynikiem 5/5',
+  },
+  geometry_artist: {
+    de: 'Schließe das Geometrie-Formentraining perfekt ab',
+    en: 'Finish the geometry shapes training with a perfect score',
+    pl: 'Ukończ trening figur geometrycznych z pełnym wynikiem',
+  },
+  ten_games: {
+    de: 'Spiele 10 Spiele',
+    en: 'Play 10 games',
+    pl: 'Zagraj 10 gier',
+  },
+  xp_500: {
+    de: 'Sammle insgesamt 500 XP',
+    en: 'Earn 500 XP in total',
+    pl: 'Zdobądź 500 XP łącznie',
+  },
+  xp_1000: {
+    de: 'Sammle insgesamt 1000 XP',
+    en: 'Earn 1000 XP in total',
+    pl: 'Zdobądź 1000 XP łącznie',
+  },
+  variety: {
+    de: 'Spiele 5 verschiedene Operationen',
+    en: 'Play 5 different operations',
+    pl: 'Zagraj 5 różnych operacji',
+  },
   calendar_keeper: {
     de: 'Schließe das Kalendertraining perfekt ab',
     en: 'Finish the calendar training with a perfect score',
@@ -585,6 +665,207 @@ const KANGUR_ALL_GOALS_COMPLETED_LABEL: KangurProgressLocalizedValue = {
   de: 'Alle Ziele erreicht!',
   en: 'All goals completed!',
   pl: 'Wszystkie cele osiągnięte!',
+};
+
+const formatLocalizedFraction = (
+  current: number,
+  target: number,
+  singular: string,
+  plural: string,
+): string => `${current}/${target} ${target === 1 ? singular : plural}`;
+
+const getLocalizedKangurBadgeSummaryByKind = ({
+  kind,
+  current,
+  target,
+  locale,
+}: {
+  kind:
+    | 'game'
+    | 'perfectGame'
+    | 'lesson'
+    | 'perfect'
+    | 'streak'
+    | 'questions'
+    | 'percentGoal'
+    | 'games'
+    | 'xp'
+    | 'quest'
+    | 'round'
+    | 'types'
+    | 'sessions';
+  current: number;
+  target: number;
+  locale: KangurCoreLocale;
+}): string => {
+  if (locale === 'en') {
+    switch (kind) {
+      case 'game':
+      case 'games':
+        return formatLocalizedFraction(current, target, 'game', 'games');
+      case 'perfectGame':
+        return formatLocalizedFraction(current, target, 'perfect game', 'perfect games');
+      case 'lesson':
+        return formatLocalizedFraction(current, target, 'lesson', 'lessons');
+      case 'perfect':
+        return `${current}/${target} perfect`;
+      case 'streak':
+        return `${current}/${target} in a row`;
+      case 'questions':
+        return formatLocalizedFraction(current, target, 'question', 'questions');
+      case 'percentGoal':
+        return `${current}% / ${target}%`;
+      case 'xp':
+        return `${current}/${target} XP`;
+      case 'quest':
+        return formatLocalizedFraction(current, target, 'mission', 'missions');
+      case 'round':
+        return formatLocalizedFraction(current, target, 'round', 'rounds');
+      case 'types':
+        return `${current}/${target} types`;
+      case 'sessions':
+        return formatLocalizedFraction(current, target, 'session', 'sessions');
+    }
+  }
+
+  switch (kind) {
+    case 'game':
+    case 'games':
+      return formatLocalizedFraction(current, target, 'Spiel', 'Spiele');
+    case 'perfectGame':
+      return formatLocalizedFraction(current, target, 'perfektes Spiel', 'perfekte Spiele');
+    case 'lesson':
+      return formatLocalizedFraction(current, target, 'Lektion', 'Lektionen');
+    case 'perfect':
+      return `${current}/${target} perfekt`;
+    case 'streak':
+      return `${current}/${target} in Folge`;
+    case 'questions':
+      return formatLocalizedFraction(current, target, 'Frage', 'Fragen');
+    case 'percentGoal':
+      return `${current}% / ${target}%`;
+    case 'xp':
+      return `${current}/${target} XP`;
+    case 'quest':
+      return formatLocalizedFraction(current, target, 'Mission', 'Missionen');
+    case 'round':
+      return formatLocalizedFraction(current, target, 'Runde', 'Runden');
+    case 'types':
+      return `${current}/${target} Typen`;
+    case 'sessions':
+      return formatLocalizedFraction(current, target, 'Sitzung', 'Sitzungen');
+  }
+};
+
+const resolveKangurBadgeSummaryKind = (
+  badgeId: string,
+  target: number,
+):
+  | 'game'
+  | 'perfectGame'
+  | 'lesson'
+  | 'perfect'
+  | 'streak'
+  | 'questions'
+  | 'percentGoal'
+  | 'games'
+  | 'xp'
+  | 'quest'
+  | 'round'
+  | 'types'
+  | 'sessions'
+  | null => {
+  switch (badgeId) {
+    case 'first_game':
+    case 'english_first_game':
+      return 'game';
+    case 'perfect_10':
+      return 'perfectGame';
+    case 'lesson_hero':
+    case 'mastery_builder':
+    case 'english_articles_reader':
+    case 'english_mastery_builder':
+      return 'lesson';
+    case 'clock_master':
+    case 'calendar_keeper':
+    case 'geometry_artist':
+    case 'english_perfect':
+    case 'english_pronoun_pro':
+    case 'english_sorter_star':
+    case 'english_agreement_guardian':
+      return 'perfect';
+    case 'streak_3':
+      return 'streak';
+    case 'accuracy_ace':
+      return target >= 85 ? 'percentGoal' : 'questions';
+    case 'ten_games':
+    case 'english_grammar_collection':
+      return 'games';
+    case 'xp_500':
+    case 'xp_1000':
+      return 'xp';
+    case 'quest_starter':
+    case 'quest_keeper':
+      return 'quest';
+    case 'guided_step':
+    case 'guided_keeper':
+      return 'round';
+    case 'variety':
+      return 'types';
+    case 'english_sentence_builder':
+      return target >= 80 ? 'percentGoal' : 'sessions';
+    default:
+      return null;
+  }
+};
+
+export const getLocalizedKangurProgressBadgeName = (
+  badgeId: string,
+  fallbackName: string,
+  locale?: string | null | undefined,
+): string => {
+  const localized = KANGUR_PROGRESS_BADGE_NAMES[badgeId];
+  return localized ? localizeKangurCoreText(localized, locale) : fallbackName;
+};
+
+export const getLocalizedKangurProgressBadgeDescription = (
+  badgeId: string,
+  fallbackDescription: string,
+  locale?: string | null | undefined,
+): string => {
+  const localized = KANGUR_PROGRESS_BADGE_DESCRIPTIONS[badgeId];
+  return localized ? localizeKangurCoreText(localized, locale) : fallbackDescription;
+};
+
+export const getLocalizedKangurProgressBadgeSummary = ({
+  badgeId,
+  current,
+  target,
+  fallbackSummary,
+  locale,
+}: {
+  badgeId: string;
+  current: number;
+  target: number;
+  fallbackSummary: string;
+  locale?: string | null | undefined;
+}): string => {
+  const normalizedLocale = normalizeKangurCoreLocale(locale);
+  if (normalizedLocale === 'pl') {
+    return fallbackSummary;
+  }
+
+  const kind = resolveKangurBadgeSummaryKind(badgeId, target);
+  if (!kind) {
+    return fallbackSummary;
+  }
+
+  return getLocalizedKangurBadgeSummaryByKind({
+    kind,
+    current,
+    target,
+    locale: normalizedLocale,
+  });
 };
 
 export const getLocalizedKangurMetadataBadgeName = (

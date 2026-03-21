@@ -92,34 +92,34 @@ export default function ResultScreen({
         surface='solid'
         variant='soft'
       >
-        <dl className='space-y-3 text-lg'>
+        <div className='space-y-3 text-lg'>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>
+            <span className='[color:var(--kangur-page-muted-text)]'>
               {translations('resultScreen.stats.score')}
-            </dt>
-            <dd className='font-bold text-indigo-600'>
+            </span>
+            <span className='font-bold text-indigo-600'>
               {score} / {total}
-            </dd>
+            </span>
           </KangurPanelRow>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>
+            <span className='[color:var(--kangur-page-muted-text)]'>
               {translations('resultScreen.stats.accuracy')}
-            </dt>
-            <dd className='font-bold text-green-500'>{percent}%</dd>
+            </span>
+            <span className='font-bold text-green-500'>{percent}%</span>
           </KangurPanelRow>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>
+            <span className='[color:var(--kangur-page-muted-text)]'>
               {translations('resultScreen.stats.time')}
-            </dt>
-            <dd className='font-bold text-amber-500'>{timeTaken}s</dd>
+            </span>
+            <span className='font-bold text-amber-500'>{timeTaken}s</span>
           </KangurPanelRow>
           <KangurPanelRow className='text-left sm:items-center sm:justify-between'>
-            <dt className='[color:var(--kangur-page-muted-text)]'>
+            <span className='[color:var(--kangur-page-muted-text)]'>
               {translations('resultScreen.stats.topic')}
-            </dt>
-            <dd className='font-bold text-purple-500'>{operationLabel}</dd>
+            </span>
+            <span className='font-bold text-purple-500'>{operationLabel}</span>
           </KangurPanelRow>
-        </dl>
+        </div>
         <KangurProgressBar
           accent='indigo'
           animated

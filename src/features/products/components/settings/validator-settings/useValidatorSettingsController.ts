@@ -31,7 +31,10 @@ import {
   getProductValidationSemanticTransition,
 } from '@/shared/lib/products/utils/validator-semantic-state';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   buildPatternPayloadDiff,
@@ -360,13 +363,10 @@ export function useValidatorSettingsController() {
       setShowModal(false);
       setModalSemanticState(null);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useValidatorSettingsController',
-          action: 'savePattern',
-          editingId: editingPattern?.id,
-        },
+      logClientCatch(error, {
+        source: 'useValidatorSettingsController',
+        action: 'savePattern',
+        editingId: editingPattern?.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to save pattern.', {
         variant: 'error',
@@ -385,13 +385,10 @@ export function useValidatorSettingsController() {
           variant: 'success',
         });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useValidatorSettingsController',
-            action: 'togglePattern',
-            patternId: pattern.id,
-          },
+        logClientCatch(error, {
+          source: 'useValidatorSettingsController',
+          action: 'togglePattern',
+          patternId: pattern.id,
         });
         toast(error instanceof Error ? error.message : 'Failed to update pattern.', {
           variant: 'error',
@@ -407,13 +404,10 @@ export function useValidatorSettingsController() {
         await deletePattern.mutateAsync(id);
         toast('Pattern deleted.', { variant: 'success' });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useValidatorSettingsController',
-            action: 'deletePattern',
-            patternId: id,
-          },
+        logClientCatch(error, {
+          source: 'useValidatorSettingsController',
+          action: 'deletePattern',
+          patternId: id,
         });
         toast(error instanceof Error ? error.message : 'Failed to delete pattern.', {
           variant: 'error',
@@ -434,9 +428,9 @@ export function useValidatorSettingsController() {
       await updateSettings.mutateAsync(updates);
       toast('Settings updated.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useValidatorSettingsController', action: 'updateSettings' },
+      logClientCatch(error, {
+        source: 'useValidatorSettingsController',
+        action: 'updateSettings',
       });
       toast(error instanceof Error ? error.message : 'Failed to update settings.', {
         variant: 'error',
@@ -481,9 +475,10 @@ export function useValidatorSettingsController() {
       try {
         await reorderPatterns.mutateAsync({ updates });
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useValidatorSettingsController', action: 'reorder', patternId },
+        logClientCatch(error, {
+          source: 'useValidatorSettingsController',
+          action: 'reorder',
+          patternId,
         });
         toast(error instanceof Error ? error.message : 'Failed to reorder patterns.', {
           variant: 'error',

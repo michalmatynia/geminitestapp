@@ -6,15 +6,10 @@ import type {
   ImageRetryPreset,
   BaseImportPreflightIssue,
 } from '@/shared/contracts/integrations';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastFn = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-) => void;
 
 type RefetchResult<TData = unknown> = {
   data?: TData;

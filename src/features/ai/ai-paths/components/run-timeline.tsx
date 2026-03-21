@@ -10,6 +10,8 @@ import type {
 import { formatDurationMs } from '@/shared/lib/ai-paths';
 import type { StatusVariant } from '@/shared/contracts/ui';
 import { Button, Tooltip, StatusBadge, Alert } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   buildRuntimeDurationRows,
@@ -17,8 +19,6 @@ import {
   type RuntimeTraceDurationRow,
   type RuntimeTraceTimelineItem,
 } from './run-trace-utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 type TimelineFilter = 'run' | 'node' | 'event';
 
@@ -60,6 +60,63 @@ const formatMetadata = (metadata?: Record<string, unknown> | null): string | nul
     return error instanceof Error ? error.message : String(error);
   }
 };
+
+function RunTimelineControlButton(props: {
+  children: React.ReactNode;
+  active?: boolean;
+  onClick: () => void;
+}): React.JSX.Element {
+  const { children, active = false, onClick } = props;
+
+  return (
+    <Button
+      type='button'
+      className={cn(
+        'rounded-md border px-2 py-1 text-[10px]',
+        active ? 'border-emerald-500/50 text-emerald-200' : 'text-gray-300 hover:bg-muted/60'
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function RunTimelineEmptyState({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return (
+    <div className='mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400'>
+      {children}
+    </div>
+  );
+}
+
+function RunTimelineExtremaStat(props: {
+  prefix: 'Fastest' | 'Slowest';
+  label: 'Min' | 'Max';
+  row: RuntimeTraceDurationRow | null;
+  valueMs: number | null;
+}): React.JSX.Element {
+  const { prefix, label, row, valueMs } = props;
+
+  if (!row) {
+    return <span>{label} —</span>;
+  }
+
+  const tooltipLabel = `${prefix}: ${row.label} · ${formatDurationMs(row.durationMs)}`;
+
+  return (
+    <Tooltip content={tooltipLabel}>
+      <button
+        type='button'
+        className='cursor-help rounded-sm bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
+        aria-label={tooltipLabel}
+        title={tooltipLabel}
+      >
+        {label} {formatDurationMs(valueMs) ?? '—'}
+      </button>
+    </Tooltip>
+  );
+}
 
 export function RunTimeline(props: {
   run: AiPathRunRecord;
@@ -318,23 +375,19 @@ export function RunTimeline(props: {
         <div className='text-[11px] uppercase text-gray-500'>Filters</div>
         <div className='flex flex-wrap items-center gap-2'>
           <StatusBadge status='Persisted' variant='success' size='sm' className='font-bold' />
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
+          <RunTimelineControlButton
             onClick={() => {
               setVisibleSections({ run: true, node: true, event: true });
               setStatusSort('count');
             }}
           >
             Restore defaults
-          </Button>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
+          </RunTimelineControlButton>
+          <RunTimelineControlButton
             onClick={() => setVisibleSections({ run: true, node: true, event: true })}
           >
             Filters only
-          </Button>
+          </RunTimelineControlButton>
           {[
             { id: 'run', label: `Run (${runEntryCount})` },
             { id: 'node', label: `Nodes (${nodeEntryCount})` },
@@ -342,18 +395,13 @@ export function RunTimeline(props: {
           ].map((filter: { id: string; label: string }): React.JSX.Element => {
             const active = visibleSections[filter.id as TimelineFilter];
             return (
-              <Button
+              <RunTimelineControlButton
                 key={filter.id}
-                type='button'
-                className={`rounded-md border px-2 py-1 text-[10px] ${
-                  active
-                    ? 'border-emerald-500/50 text-emerald-200'
-                    : 'text-gray-300 hover:bg-muted/60'
-                }`}
+                active={active}
                 onClick={() => toggleSection(filter.id as TimelineFilter)}
               >
                 {filter.label}
-              </Button>
+              </RunTimelineControlButton>
             );
           })}
         </div>
@@ -371,52 +419,19 @@ export function RunTimeline(props: {
           </div>
           <div className='mt-1 text-[11px] text-gray-500'>
             Total {formatDurationMs(durationStats.total) ?? '—'} · Avg{' '}
-            {formatDurationMs(durationStats.average) ?? '—'} ·{' '}
-            {minMaxNodeDuration.min ? (
-              <Tooltip
-                content={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
-                  minMaxNodeDuration.min.durationMs
-                )}`}
-              >
-                <button
-                  type='button'
-                  className='cursor-help rounded-sm bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
-                  aria-label={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
-                    minMaxNodeDuration.min.durationMs
-                  )}`}
-                  title={`Fastest: ${minMaxNodeDuration.min.label} · ${formatDurationMs(
-                    minMaxNodeDuration.min.durationMs
-                  )}`}
-                >
-                  Min {formatDurationMs(durationStats.min) ?? '—'}
-                </button>
-              </Tooltip>
-            ) : (
-              <span>Min —</span>
-            )}{' '}
+            {formatDurationMs(durationStats.average) ?? '—'} · <RunTimelineExtremaStat
+              prefix='Fastest'
+              label='Min'
+              row={minMaxNodeDuration.min}
+              valueMs={durationStats.min}
+            />{' '}
             ·{' '}
-            {minMaxNodeDuration.max ? (
-              <Tooltip
-                content={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
-                  minMaxNodeDuration.max.durationMs
-                )}`}
-              >
-                <button
-                  type='button'
-                  className='cursor-help rounded-sm bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
-                  aria-label={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
-                    minMaxNodeDuration.max.durationMs
-                  )}`}
-                  title={`Slowest: ${minMaxNodeDuration.max.label} · ${formatDurationMs(
-                    minMaxNodeDuration.max.durationMs
-                  )}`}
-                >
-                  Max {formatDurationMs(durationStats.max) ?? '—'}
-                </button>
-              </Tooltip>
-            ) : (
-              <span>Max —</span>
-            )}{' '}
+            <RunTimelineExtremaStat
+              prefix='Slowest'
+              label='Max'
+              row={minMaxNodeDuration.max}
+              valueMs={durationStats.max}
+            />{' '}
             · Timed {durationStats.timedCount}/{durationStats.totalCount}
           </div>
           {sortedDurationByStatus.length > 0 ? (
@@ -437,18 +452,13 @@ export function RunTimeline(props: {
                   }): React.JSX.Element => {
                     const active = statusSort === option.id;
                     return (
-                      <Button
+                      <RunTimelineControlButton
                         key={option.id}
-                        type='button'
-                        className={`rounded-md border px-2 py-1 text-[10px] ${
-                          active
-                            ? 'border-emerald-500/50 text-emerald-200'
-                            : 'text-gray-300 hover:bg-muted/60'
-                        }`}
+                        active={active}
                         onClick={() => setStatusSort(option.id)}
                       >
                         {option.label}
-                      </Button>
+                      </RunTimelineControlButton>
                     );
                   }
                 )}
@@ -550,9 +560,7 @@ export function RunTimeline(props: {
           <div className='text-[11px] text-gray-500'>{filteredTimelineItems.length} entries</div>
         </div>
         {filteredTimelineItems.length === 0 ? (
-          <div className='mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400'>
-            Timeline is empty for the current filters.
-          </div>
+          <RunTimelineEmptyState>Timeline is empty for the current filters.</RunTimelineEmptyState>
         ) : (
           <div className='mt-3 max-h-[320px] overflow-auto rounded-md border border-border bg-black/20 p-4'>
             <div className='relative border-l border-border/60 pl-4'>
@@ -618,9 +626,7 @@ export function RunTimeline(props: {
             ) : null}
           </div>
           {sortedEvents.length === 0 ? (
-            <div className='mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400'>
-              No logs captured for this run yet.
-            </div>
+            <RunTimelineEmptyState>No logs captured for this run yet.</RunTimelineEmptyState>
           ) : (
             <div className='mt-3 max-h-[360px] overflow-auto rounded-md border border-border bg-black/20'>
               <div className='divide-y divide-border/70'>

@@ -10,6 +10,7 @@ const {
   completeKangurPracticeSessionMock,
   generateKangurLogicPracticeQuestionsMock,
   generateTrainingQuestionsMock,
+  getLocalizedKangurMetadataBadgeNameMock,
   getKangurPracticeOperationConfigMock,
   isKangurLogicPracticeOperationMock,
   resolveKangurPracticeOperationMock,
@@ -17,6 +18,7 @@ const {
   useQueryClientMock,
   useRouterMock,
   useKangurMobileAuthMock,
+  useKangurMobileLessonCheckpointsMock,
   useKangurMobilePracticeDuelsMock,
   useKangurMobileRuntimeMock,
   useKangurPracticeSyncProofMock,
@@ -24,6 +26,7 @@ const {
   completeKangurPracticeSessionMock: vi.fn(),
   generateKangurLogicPracticeQuestionsMock: vi.fn(),
   generateTrainingQuestionsMock: vi.fn(),
+  getLocalizedKangurMetadataBadgeNameMock: vi.fn(),
   getKangurPracticeOperationConfigMock: vi.fn(),
   isKangurLogicPracticeOperationMock: vi.fn(),
   resolveKangurPracticeOperationMock: vi.fn(),
@@ -31,6 +34,7 @@ const {
   useQueryClientMock: vi.fn(),
   useRouterMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobilePracticeDuelsMock: vi.fn(),
   useKangurMobileRuntimeMock: vi.fn(),
   useKangurPracticeSyncProofMock: vi.fn(),
@@ -40,6 +44,7 @@ vi.mock('@kangur/core', () => ({
   completeKangurPracticeSession: completeKangurPracticeSessionMock,
   generateKangurLogicPracticeQuestions: generateKangurLogicPracticeQuestionsMock,
   generateTrainingQuestions: generateTrainingQuestionsMock,
+  getLocalizedKangurMetadataBadgeName: getLocalizedKangurMetadataBadgeNameMock,
   getKangurPracticeOperationConfig: getKangurPracticeOperationConfigMock,
   isKangurLogicPracticeOperation: isKangurLogicPracticeOperationMock,
   resolveKangurPracticeOperation: resolveKangurPracticeOperationMock,
@@ -67,6 +72,10 @@ vi.mock('../lessons/lessonHref', () => ({
   createKangurLessonHrefForPracticeOperation: vi.fn(() => '/lessons?focus=clock'),
 }));
 
+vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
+}));
+
 vi.mock('../plan/planHref', () => ({
   createKangurPlanHref: vi.fn(() => '/plan'),
 }));
@@ -83,7 +92,15 @@ vi.mock('./useKangurMobilePracticeDuels', () => ({
   useKangurMobilePracticeDuels: useKangurMobilePracticeDuelsMock,
 }));
 
+import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 import { KangurPracticeScreen } from './KangurPracticeScreen';
+
+const renderPracticeScreen = (locale: 'pl' | 'en' | 'de' = 'pl') =>
+  render(
+    <KangurMobileI18nProvider locale={locale}>
+      <KangurPracticeScreen />
+    </KangurMobileI18nProvider>,
+  );
 
 describe('KangurPracticeScreen', () => {
   beforeEach(() => {
@@ -130,6 +147,9 @@ describe('KangurPracticeScreen', () => {
         surfaces: [],
       },
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
+    });
     useKangurMobilePracticeDuelsMock.mockReturnValue({
       actionError: null,
       createRematch: vi.fn(),
@@ -146,12 +166,20 @@ describe('KangurPracticeScreen', () => {
     });
 
     resolveKangurPracticeOperationMock.mockReturnValue('clock');
-    getKangurPracticeOperationConfigMock.mockReturnValue({
-      categories: ['clock'],
-      kind: 'time',
-      label: 'Zegar',
-    });
+    getKangurPracticeOperationConfigMock.mockImplementation(
+      (_operation: string, locale: 'pl' | 'en' | 'de' = 'pl') => ({
+        categories: ['clock'],
+        kind: 'time',
+        label:
+          locale === 'de'
+            ? 'Uhr'
+            : locale === 'en'
+              ? 'Clock'
+              : 'Zegar',
+      }),
+    );
     isKangurLogicPracticeOperationMock.mockReturnValue(false);
+    getLocalizedKangurMetadataBadgeNameMock.mockImplementation((badgeId: string) => badgeId);
     generateKangurLogicPracticeQuestionsMock.mockReturnValue([]);
     generateTrainingQuestionsMock.mockReturnValue([
       {
@@ -172,7 +200,7 @@ describe('KangurPracticeScreen', () => {
   });
 
   it('renders the main training shell and first question for the practice route', () => {
-    render(<KangurPracticeScreen />);
+    renderPracticeScreen();
 
     expect(screen.getByText('Trening mobilny')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
@@ -186,6 +214,19 @@ describe('KangurPracticeScreen', () => {
       ),
     ).toBeTruthy();
     expect(screen.queryByText('Podsumowanie')).toBeNull();
+  });
+
+  it('renders the mobile practice chrome in English when the locale changes', () => {
+    renderPracticeScreen('en');
+
+    expect(screen.getByText('Mobile practice')).toBeTruthy();
+    expect(screen.getByText('Clock')).toBeTruthy();
+    expect(screen.getByText('Question 1 of 1')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Choose one answer. The result will be saved locally after the whole run finishes.',
+      ),
+    ).toBeTruthy();
   });
 
   it('shows the synced completion summary after finishing a short run', async () => {
@@ -223,8 +264,34 @@ describe('KangurPracticeScreen', () => {
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
 
-    render(<KangurPracticeScreen />);
+    renderPracticeScreen();
 
     fireEvent.click(screen.getByText('7:00'));
 
@@ -239,6 +306,12 @@ describe('KangurPracticeScreen', () => {
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Kontynuuj lekcje')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Zobacz historię trybu')).toBeTruthy();
     expect(screen.getByText('Otwórz plan dnia')).toBeTruthy();
     expect(screen.queryByText('Failed to fetch')).toBeNull();

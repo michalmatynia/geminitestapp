@@ -4,7 +4,15 @@ import React, { useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
-import { Button, Input, SelectSimple, ToggleRow, FormField, CompactEmptyState } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  SelectSimple,
+  ToggleRow,
+  FormField,
+  CompactEmptyState,
+  insetPanelVariants,
+} from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -131,7 +139,9 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-md border border-border bg-card/50 p-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50`}
+      >
         <div className='text-[11px] text-gray-400'>Operations</div>
         <div className='mt-3 space-y-3'>
           {operations.length === 0 ? (
@@ -144,7 +154,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
             operations.map((operation: StringMutatorOperation, index: number) => (
               <div
                 key={`${operation.type}-${index}`}
-                className='rounded-md border border-border bg-card/40 p-3'
+                className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border`}
               >
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='flex items-center gap-2'>

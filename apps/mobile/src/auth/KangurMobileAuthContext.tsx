@@ -15,7 +15,10 @@ import {
   type PropsWithChildren,
 } from 'react';
 
-import { createLearnerSessionKangurAuthAdapter } from './createLearnerSessionKangurAuthAdapter';
+import {
+  createLearnerSessionKangurAuthAdapter,
+  KANGUR_MOBILE_AUTH_ERROR_CODES,
+} from './createLearnerSessionKangurAuthAdapter';
 import { createDevelopmentKangurAuthAdapter } from './createDevelopmentKangurAuthAdapter';
 import { invalidateKangurMobileAuthQueries } from './invalidateKangurMobileAuthQueries';
 import {
@@ -23,6 +26,7 @@ import {
 } from './mobileAuthMode';
 import { resolveKangurMobileDeveloperConfig } from '../config/mobileDeveloperConfig';
 import { resolveKangurMobilePublicConfig } from '../config/mobilePublicConfig';
+import { type KangurMobileLocale, useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 
 type KangurMobileAuthContextValue = {
@@ -45,19 +49,59 @@ type KangurMobileAuthContextValue = {
 const KangurMobileAuthContext =
   createContext<KangurMobileAuthContextValue | null>(null);
 
-const toAuthErrorMessage = (error: unknown): string => {
+const resolveAuthErrorCode = (error: unknown): string | null =>
+  typeof error === 'object' &&
+  error &&
+  'code' in error &&
+  typeof error.code === 'string'
+    ? error.code
+    : null;
+
+const toAuthErrorMessage = (
+  error: unknown,
+  locale: KangurMobileLocale,
+): string => {
   if (!(error instanceof Error)) {
-    return 'Nie udało się odświeżyć sesji ucznia.';
+    return {
+      de: 'Die Lernenden-Sitzung konnte nicht aktualisiert werden.',
+      en: 'Could not refresh the learner session.',
+      pl: 'Nie udało się odświeżyć sesji ucznia.',
+    }[locale];
   }
 
   const message = error.message.trim();
+  const errorCode = resolveAuthErrorCode(error);
   if (!message) {
-    return 'Nie udało się odświeżyć sesji ucznia.';
+    return {
+      de: 'Die Lernenden-Sitzung konnte nicht aktualisiert werden.',
+      en: 'Could not refresh the learner session.',
+      pl: 'Nie udało się odświeżyć sesji ucznia.',
+    }[locale];
+  }
+
+  if (errorCode === KANGUR_MOBILE_AUTH_ERROR_CODES.missingCredentials) {
+    return {
+      de: 'Gib den Lernenden-Login und das Passwort ein, um dich anzumelden.',
+      en: 'Enter the learner login and password to sign in.',
+      pl: 'Podaj login i hasło ucznia, aby się zalogować.',
+    }[locale];
+  }
+
+  if (errorCode === KANGUR_MOBILE_AUTH_ERROR_CODES.missingPersistedSession) {
+    return {
+      de: 'Die Lernenden-Sitzung konnte auf diesem Gerät nicht gespeichert werden. Prüfe die Cookie- und Sitzungsunterstützung der aktuellen Laufzeit.',
+      en: 'The learner session could not be persisted on this device. Check cookie and session support for the current runtime.',
+      pl: 'Sesja ucznia nie została zapisana na tym urządzeniu. Sprawdź obsługę cookies i sesji w aktualnym środowisku.',
+    }[locale];
   }
 
   const normalizedMessage = message.toLowerCase();
   if (normalizedMessage === 'failed to fetch' || normalizedMessage.includes('networkerror')) {
-    return 'Nie udało się połączyć z API Kangura.';
+    return {
+      de: 'Die Verbindung zur Kangur-API konnte nicht hergestellt werden.',
+      en: 'Could not connect to the Kangur API.',
+      pl: 'Nie udało się połączyć z API Kangura.',
+    }[locale];
   }
 
   return message;
@@ -68,6 +112,7 @@ export function KangurMobileAuthProvider({
   adapter,
 }: PropsWithChildren<{ adapter?: KangurAuthAdapter }>): React.JSX.Element {
   const { apiClient, storage } = useKangurMobileRuntime();
+  const { locale } = useKangurMobileI18n();
   const queryClient = useQueryClient();
   const authMode = resolveKangurMobilePublicConfig().authMode;
   const developerConfig = resolveKangurMobileDeveloperConfig();
@@ -108,7 +153,7 @@ export function KangurMobileAuthProvider({
       setSession(nextSession);
       await invalidateKangurMobileAuthQueries(queryClient);
     } catch (error) {
-      setAuthError(toAuthErrorMessage(error));
+      setAuthError(toAuthErrorMessage(error, locale));
     } finally {
       setIsLoadingAuth(false);
     }
@@ -122,7 +167,7 @@ export function KangurMobileAuthProvider({
       setSession(nextSession);
       await invalidateKangurMobileAuthQueries(queryClient);
     } catch (error) {
-      setAuthError(toAuthErrorMessage(error));
+      setAuthError(toAuthErrorMessage(error, locale));
     } finally {
       setIsLoadingAuth(false);
     }
@@ -136,7 +181,7 @@ export function KangurMobileAuthProvider({
       setSession(nextSession);
       await invalidateKangurMobileAuthQueries(queryClient);
     } catch (error) {
-      setAuthError(toAuthErrorMessage(error));
+      setAuthError(toAuthErrorMessage(error, locale));
     } finally {
       setIsLoadingAuth(false);
     }
@@ -202,6 +247,7 @@ export function KangurMobileAuthProvider({
       developerAutoSignInEnabled,
       hasAttemptedDeveloperAutoSignIn,
       isLoadingAuth,
+      locale,
       session,
       supportsLearnerCredentials,
     ],

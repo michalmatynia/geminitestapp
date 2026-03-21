@@ -6,7 +6,8 @@ import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
-import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, FormField, insetPanelVariants } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import {
   useDatabaseConstructorActionsContext,
@@ -43,6 +44,74 @@ const normalizeParameterInferenceTargetPath = (value: unknown): string | undefin
     ? trimmed
     : CANONICAL_PARAMETER_INFERENCE_TARGET_PATH;
 };
+
+type DatabaseSettingsSectionProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+function DatabaseSettingsSection({
+  children,
+  className,
+}: DatabaseSettingsSectionProps): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        insetPanelVariants({ radius: 'compact', padding: 'sm' }),
+        'space-y-3 border-border bg-card/30',
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+type DatabaseToggleRowProps = {
+  label: string;
+  enabled: boolean;
+  onToggle: () => void;
+};
+
+function DatabaseToggleRow({
+  label,
+  enabled,
+  onToggle,
+}: DatabaseToggleRowProps): React.JSX.Element {
+  return (
+    <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+      <span>{label}</span>
+      <Button type='button' variant={enabled ? 'success' : 'default'} size='xs' onClick={onToggle}>
+        {enabled ? 'Enabled' : 'Disabled'}
+      </Button>
+    </div>
+  );
+}
+
+type DatabaseCollectionTypeFieldProps = {
+  entityType?: string;
+  onValueChange: (value: string) => void;
+};
+
+function DatabaseCollectionTypeField({
+  entityType,
+  onValueChange,
+}: DatabaseCollectionTypeFieldProps): React.JSX.Element {
+  return (
+    <FormField label='Collection Type'>
+      <SelectSimple
+        size='sm'
+        variant='subtle'
+        value={entityType ?? 'products'}
+        onValueChange={onValueChange}
+        options={DB_COLLECTION_SELECT_OPTIONS}
+        placeholder='Collection type'
+        ariaLabel='Collection type'
+        title='Collection type'
+      />
+    </FormField>
+  );
+}
 
 export function DatabaseSettingsTab(): React.JSX.Element | null {
   const { availablePorts, bundleKeys, mappings, uniqueTargetPathOptions, operation } =
@@ -123,7 +192,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
       )}
 
       {operation === 'update' && (
-        <div className='space-y-3 rounded-md border border-border bg-card/30 p-3'>
+        <DatabaseSettingsSection>
           <FormField
             label='Update Payload Mode'
             description='Custom mode uses the update template. Mapping mode writes fields from explicit source ports and paths.'
@@ -220,25 +289,19 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               )}
             </div>
           )}
-        </div>
+        </DatabaseSettingsSection>
       )}
 
       {operation === 'insert' && !databaseConfig.useMongoActions && (
         <div className='space-y-4'>
-          <FormField label='Collection Type'>
-            <SelectSimple
-              size='sm'
-              variant='subtle'
-              value={databaseConfig.entityType ?? 'products'}
-              onValueChange={(value: string): void =>
-                updateSelectedNodeConfig({
-                  database: { ...databaseConfig, entityType: value },
-                })
-              }
-              options={DB_COLLECTION_SELECT_OPTIONS}
-              placeholder='Collection type'
-             ariaLabel='Collection type' title='Collection type'/>
-          </FormField>
+          <DatabaseCollectionTypeField
+            entityType={databaseConfig.entityType}
+            onValueChange={(value: string): void =>
+              updateSelectedNodeConfig({
+                database: { ...databaseConfig, entityType: value },
+              })
+            }
+          />
 
           <FormField
             label='Payload Source'
@@ -300,20 +363,14 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
       )}
 
       {operation === 'delete' && !databaseConfig.useMongoActions && (
-        <FormField label='Collection Type'>
-          <SelectSimple
-            size='sm'
-            variant='subtle'
-            value={databaseConfig.entityType ?? 'products'}
-            onValueChange={(value: string): void =>
-              updateSelectedNodeConfig({
-                database: { ...databaseConfig, entityType: value },
-              })
-            }
-            options={DB_COLLECTION_SELECT_OPTIONS}
-            placeholder='Collection type'
-           ariaLabel='Collection type' title='Collection type'/>
-        </FormField>
+        <DatabaseCollectionTypeField
+          entityType={databaseConfig.entityType}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              database: { ...databaseConfig, entityType: value },
+            })
+          }
+        />
       )}
 
       {(operation === 'insert' || operation === 'update' || operation === 'delete') && (
@@ -341,7 +398,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
       )}
 
       {operation === 'update' && (
-        <div className='space-y-3 rounded-md border border-border bg-card/30 p-3'>
+        <DatabaseSettingsSection>
           <div className='flex items-center justify-between'>
             <Label className='text-xs text-gray-400'>Parameter Inference Guard</Label>
             <Button
@@ -404,36 +461,24 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                  aria-label='e.g. definitions or data.items' title='e.g. definitions or data.items'/>
               </FormField>
 
-              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
-                <span>Enforce option labels</span>
-                <Button
-                  type='button'
-                  variant={guard.enforceOptionLabels ? 'success' : 'default'}
-                  size='xs'
-                  onClick={(): void =>
-                    updateGuard({ enforceOptionLabels: !guard.enforceOptionLabels })
-                  }
-                >
-                  {guard.enforceOptionLabels ? 'Enabled' : 'Disabled'}
-                </Button>
-              </div>
+              <DatabaseToggleRow
+                label='Enforce option labels'
+                enabled={Boolean(guard.enforceOptionLabels)}
+                onToggle={(): void =>
+                  updateGuard({ enforceOptionLabels: !guard.enforceOptionLabels })
+                }
+              />
 
-              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
-                <span>Allow unknown parameter IDs</span>
-                <Button
-                  type='button'
-                  variant={guard.allowUnknownParameterIds ? 'success' : 'default'}
-                  size='xs'
-                  onClick={(): void =>
-                    updateGuard({ allowUnknownParameterIds: !guard.allowUnknownParameterIds })
-                  }
-                >
-                  {guard.allowUnknownParameterIds ? 'Enabled' : 'Disabled'}
-                </Button>
-              </div>
+              <DatabaseToggleRow
+                label='Allow unknown parameter IDs'
+                enabled={Boolean(guard.allowUnknownParameterIds)}
+                onToggle={(): void =>
+                  updateGuard({ allowUnknownParameterIds: !guard.allowUnknownParameterIds })
+                }
+              />
             </div>
           )}
-        </div>
+        </DatabaseSettingsSection>
       )}
     </div>
   );

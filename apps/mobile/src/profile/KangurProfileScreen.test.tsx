@@ -10,11 +10,13 @@ import { KangurMobileI18nProvider } from '../i18n/kangurMobileI18n';
 
 const {
   replaceMock,
+  useKangurMobileLessonCheckpointsMock,
   useKangurMobileLearnerProfileMock,
   useKangurMobileProfileDuelsMock,
   useRouterMock,
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileLearnerProfileMock: vi.fn(),
   useKangurMobileProfileDuelsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -31,6 +33,10 @@ vi.mock('./useKangurMobileLearnerProfile', () => ({
 
 vi.mock('./useKangurMobileProfileDuels', () => ({
   useKangurMobileProfileDuels: useKangurMobileProfileDuelsMock,
+}));
+
+vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
 import { KangurProfileScreen } from './KangurProfileScreen';
@@ -98,6 +104,9 @@ describe('KangurProfileScreen', () => {
         recommendations: [],
         recentSessions: [],
       },
+    });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
     });
     useKangurMobileProfileDuelsMock.mockReturnValue({
       actionError: null,
@@ -291,6 +300,54 @@ describe('KangurProfileScreen', () => {
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+        {
+          attempts: 4,
+          bestScorePercent: 96,
+          componentId: 'clock',
+          emoji: '🕒',
+          lastCompletedAt: '2026-03-21T08:18:00.000Z',
+          lastScorePercent: 96,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          masteryPercent: 94,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          title: 'Zegar',
+        },
+      ],
+    });
 
     renderProfileScreen();
 
@@ -302,6 +359,11 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
     expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik: 70% · próby 3')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Plan na dziś')).toBeTruthy();
     expect(screen.getByText('Ostatnie sesje')).toBeTruthy();
     expect(screen.getByText('Zegar')).toBeTruthy();
@@ -329,6 +391,7 @@ describe('KangurProfileScreen', () => {
     expect(screen.getByText('Schülerprofil')).toBeTruthy();
     expect(screen.getByText('Anfaenger 🐣')).toBeTruthy();
     expect(screen.getByText('Duelle')).toBeTruthy();
+    expect(screen.getByText('Letzte Lektions-Checkpoints')).toBeTruthy();
     expect(screen.getByText('Plan für heute')).toBeTruthy();
     expect(screen.getByText('Aufgaben für jetzt')).toBeTruthy();
     expect(screen.getByText('Ergebnisverlauf')).toBeTruthy();

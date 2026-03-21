@@ -75,7 +75,7 @@ test('kangur admin routes share the consolidated shell chrome', async ({ page })
     await expect(page.getByRole('navigation', { name: /breadcrumb/i })).toContainText(
       route.breadcrumb
     );
-    await expect(page.locator('#app-content')).toBeVisible();
+    await expect(page.locator('#kangur-main-content')).toBeVisible();
 
     await route.assertSurface(page);
   }

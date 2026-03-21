@@ -7,6 +7,7 @@ import {
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
 import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { isDescendantCaseId } from '../utils';
@@ -14,8 +15,6 @@ import { waitForCaseAvailability } from './case-availability';
 
 import type { CaseResolverCaseListConfirmationState } from '../types';
 import type * as React from 'react';
-
-type ToastFn = (message: string, options?: { variant?: string }) => void;
 
 export const handleCreateCaseImpl = async (args: {
   caseDraft: Partial<CaseResolverFile>;

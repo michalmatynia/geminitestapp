@@ -53,8 +53,6 @@ import type {
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type AddingSynthesisGameProps = KangurMiniGameFinishActionProps;
-
 type GamePhase = 'intro' | 'playing' | 'summary';
 type FeedbackKind = AddingSynthesisTimingGrade | 'wrong' | 'miss';
 
@@ -114,7 +112,7 @@ const getFeedbackAccent = (kind: FeedbackKind): 'emerald' | 'amber' | 'rose' => 
 
 export default function AddingSynthesisGame({
   onFinish,
-}: AddingSynthesisGameProps): React.JSX.Element {
+}: KangurMiniGameFinishActionProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const t = (
     key: string,

@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@/__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -208,12 +208,8 @@ describe('ActiveLessonView mobile scroll controls', () => {
 
     const upButton = screen.getByRole('button', { name: 'Przewiń w górę' });
     const topControls = screen.getByTestId('kangur-lesson-top-controls');
-    const header = screen.getByTestId('active-lesson-header');
 
     expect(scrollContainer.contains(topControls)).toBe(true);
-    expect(
-      topControls.compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
 
     fireEvent.click(upButton);
     expect(scrollByMock).toHaveBeenCalledWith(

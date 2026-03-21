@@ -13,6 +13,7 @@ import {
   Alert,
   Badge,
   Button,
+  Card,
   FormSection,
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';

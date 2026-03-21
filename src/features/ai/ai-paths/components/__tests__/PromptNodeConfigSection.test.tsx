@@ -107,6 +107,7 @@ vi.mock('@/shared/ui', () => ({
       Alert: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
         <div>{children}</div>
       ),
+      insetPanelVariants: () => 'rounded border border-border/60 bg-card/40 p-3',
       FormField: ({
         label,
         description,

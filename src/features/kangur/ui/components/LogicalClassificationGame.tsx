@@ -56,8 +56,6 @@ import {
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type LogicalClassificationGameProps = KangurMiniGameFinishProps;
-
 type RoundState = {
   pool: ClassificationItem[];
   bins: Record<string, ClassificationItem[]>;
@@ -283,7 +281,7 @@ function DraggableToken({
 export default function LogicalClassificationGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
-}: LogicalClassificationGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const summaryFinishLabel =
     finishLabel === 'Wróć do tematów'

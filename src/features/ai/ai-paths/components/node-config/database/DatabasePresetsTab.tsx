@@ -5,7 +5,8 @@ import React from 'react';
 
 import type { DatabasePresetOption } from '@/shared/contracts/database';
 import type { DbQueryPreset } from '@/shared/lib/ai-paths';
-import { Button, Input, Label, Textarea } from '@/shared/ui';
+import { Button, Input, Label, Textarea, insetPanelVariants } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {
@@ -13,6 +14,44 @@ import {
   useDatabasePresetsTabStateContext,
 } from './DatabasePresetsTabContext';
 import { useAiPathPresets } from '../../AiPathConfigContext';
+
+type DatabasePresetPanelProps = {
+  title: string;
+  countLabel: React.ReactNode;
+  children: React.ReactNode;
+};
+
+function DatabasePresetPanel({
+  title,
+  countLabel,
+  children,
+}: DatabasePresetPanelProps): React.JSX.Element {
+  return (
+    <div
+      className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50`}
+    >
+      <div className='flex items-center justify-between'>
+        <Label className='text-xs text-gray-400'>{title}</Label>
+        <span className='text-[10px] text-gray-500'>{countLabel}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+type DatabasePresetCardProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+function DatabasePresetCard({
+  children,
+  className,
+}: DatabasePresetCardProps): React.JSX.Element {
+  return (
+    <div className={cn('rounded-md border border-border bg-card/60 p-2', className)}>{children}</div>
+  );
+}
 
 export function DatabasePresetsTab(): React.JSX.Element {
   const { builtInPresets } = useDatabasePresetsTabStateContext();
@@ -52,23 +91,24 @@ export function DatabasePresetsTab(): React.JSX.Element {
     <div className='space-y-4'>
       {/* Built-in Presets Section */}
       {builtInPresets && builtInPresets.length > 0 && (
-        <div className='rounded-md border border-border bg-card/50 p-3'>
-          <div className='flex items-center justify-between'>
-            <Label className='text-xs text-gray-400'>Built-in Presets</Label>
-            <span className='text-[10px] text-gray-500'>
+        <DatabasePresetPanel
+          title='Built-in Presets'
+          countLabel={
+            <>
               {
                 builtInPresets.filter((p: DatabasePresetOption): boolean => p.id !== 'custom')
                   .length
               }{' '}
               presets
-            </span>
-          </div>
+            </>
+          }
+        >
           <div className='mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2'>
             {builtInPresets
               .filter((p: DatabasePresetOption): boolean => p.id !== 'custom')
               .map(
                 (preset: DatabasePresetOption): React.JSX.Element => (
-                  <div key={preset.id} className='rounded-md border border-border bg-card/60 p-2'>
+                  <DatabasePresetCard key={preset.id}>
                     <div className='flex flex-col gap-1'>
                       <div className='flex items-center justify-between'>
                         <span className='text-xs font-medium text-white'>{preset.label}</span>
@@ -84,19 +124,15 @@ export function DatabasePresetsTab(): React.JSX.Element {
                       </div>
                       <span className='text-[10px] text-gray-400'>{preset.description}</span>
                     </div>
-                  </div>
+                  </DatabasePresetCard>
                 )
               )}
           </div>
-        </div>
+        </DatabasePresetPanel>
       )}
 
       {/* User Query Presets Section */}
-      <div className='rounded-md border border-border bg-card/50 p-3'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs text-gray-400'>Saved Query Presets</Label>
-          <span className='text-[10px] text-gray-500'>{dbQueryPresets.length} presets</span>
-        </div>
+      <DatabasePresetPanel title='Saved Query Presets' countLabel={`${dbQueryPresets.length} presets`}>
         {dbQueryPresets.length === 0 ? (
           <div className='mt-3 text-xs text-gray-500'>No query presets saved.</div>
         ) : (
@@ -105,7 +141,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
               const draftName = queryNameDrafts[preset.id] ?? preset.name;
               const nameChanged = draftName.trim() !== preset.name.trim();
               return (
-                <div key={preset.id} className='rounded-md border border-border bg-card/60 p-2'>
+                <DatabasePresetCard key={preset.id}>
                   <div className='flex flex-wrap items-center gap-2'>
                     <Input
                       className='h-7 flex-1 rounded-md border border-border bg-card/70 text-xs text-white'
@@ -149,12 +185,12 @@ export function DatabasePresetsTab(): React.JSX.Element {
                       Delete
                     </Button>
                   </div>
-                </div>
+                </DatabasePresetCard>
               );
             })}
           </div>
         )}
-      </div>
+      </DatabasePresetPanel>
 
       <DetailModal
         isOpen={Boolean(activePreset)}

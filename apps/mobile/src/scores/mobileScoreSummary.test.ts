@@ -73,6 +73,7 @@ describe('mobileScoreSummary', () => {
       'Wnioskowanie',
     );
     expect(formatKangurMobileScoreOperation('clock')).toBe('Zegar');
+    expect(formatKangurMobileScoreOperation('all', 'de')).toBe('Alle');
     expect(formatKangurMobileScoreFamily('time')).toBe('Trening czasu');
     expect(formatKangurMobileScoreOperation('clock', 'en')).toBe('Clock');
     expect(formatKangurMobileScoreOperation('logical_reasoning', 'de')).toBe(

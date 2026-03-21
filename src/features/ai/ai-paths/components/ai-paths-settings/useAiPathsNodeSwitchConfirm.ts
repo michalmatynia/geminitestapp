@@ -1,28 +1,13 @@
 import { useCallback } from 'react';
-
-type ConfirmFn = (input: {
-  title: string;
-  message: string;
-  confirmText: string;
-  cancelText?: string;
-  isDangerous: boolean;
-  onConfirm: () => void;
-  onCancel?: () => void;
-}) => void;
-
-type ToastFn = (
-  message: string,
-  options?: {
-    variant?: 'info' | 'success' | 'warning' | 'error';
-  }
-) => void;
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 type UseAiPathsNodeSwitchConfirmInput = {
   configOpen: boolean;
   nodeConfigDirty: boolean;
   selectedNodeId: string | null;
   setNodeConfigDirty: (dirty: boolean) => void;
-  confirm: ConfirmFn;
+  confirm: (config: ConfirmConfig) => void;
   toast: ToastFn;
 };
 

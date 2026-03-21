@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { DIFFICULTY_CONFIG } from '@kangur/core';
+import { useTranslations } from 'next-intl';
 
 import { QuestionCard } from '@/features/kangur/ui/components/game';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
@@ -15,8 +16,12 @@ import {
   getNextLockedBadge,
   getRecommendedSessionProjection,
 } from '@/features/kangur/ui/services/progress';
+import { translateKangurProgressWithFallback } from '@/features/kangur/ui/services/progress-i18n';
 
 export function KangurGameQuestionWidget(): React.JSX.Element | null {
+  const gamePageTranslations = useTranslations('KangurGamePage');
+  const operationSelectorTranslations = useTranslations('KangurOperationSelector');
+  const runtimeTranslations = useTranslations('KangurProgressRuntime');
   const {
     activePracticeAssignment,
     activeSessionRecommendation,
@@ -39,11 +44,25 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
   const roundAccuracy =
     answeredQuestions > 0 ? Math.round((score / answeredQuestions) * 100) : null;
   const perfectRunInProgress = answeredQuestions > 0 && score === answeredQuestions;
-  const currentQuest = getCurrentKangurDailyQuest(progress, { subject });
-  const nextBadge = getNextLockedBadge(progress);
+  const currentQuest = getCurrentKangurDailyQuest(progress, {
+    subject,
+    translate: runtimeTranslations,
+  });
+  const progressLocalizer = { translate: runtimeTranslations };
+  const nextBadge = getNextLockedBadge(progress, progressLocalizer);
   const guidedProjection = activeSessionRecommendation
-    ? getRecommendedSessionProjection(progress, true)
+    ? getRecommendedSessionProjection(progress, true, progressLocalizer)
     : null;
+  const scoreLabel = translateKangurProgressWithFallback(
+    gamePageTranslations,
+    'questionWidget.scoreLabel',
+    'Wynik',
+  );
+  const difficultyLabel = translateKangurProgressWithFallback(
+    operationSelectorTranslations,
+    `difficulty.${difficulty}`,
+    DIFFICULTY_CONFIG[difficulty]?.label ?? difficulty,
+  );
 
   const tutorContentId = activePracticeAssignment?.id
     ? `game:assignment:${activePracticeAssignment.id}`
@@ -95,10 +114,11 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
       ) : null}
       <div className='flex w-full max-w-md flex-wrap items-center justify-between gap-2 px-2'>
         <span className='break-words font-semibold [color:var(--kangur-page-muted-text)]'>
-          ⭐ Wynik: <span className='font-bold text-indigo-600'>{score}</span>
+          ⭐ {scoreLabel}:{' '}
+          <span className='font-bold text-indigo-600'>{score}</span>
         </span>
         <span className='break-words font-semibold [color:var(--kangur-page-muted-text)]'>
-          {DIFFICULTY_CONFIG[difficulty]?.emoji} {DIFFICULTY_CONFIG[difficulty]?.label}
+          {DIFFICULTY_CONFIG[difficulty]?.emoji} {difficultyLabel}
         </span>
       </div>
       <div
@@ -112,7 +132,12 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-accuracy'
             size='sm'
           >
-            Skuteczność rundy: {roundAccuracy}%
+            {translateKangurProgressWithFallback(
+              gamePageTranslations,
+              'questionWidget.roundAccuracy',
+              'Skuteczność rundy: {percent}%',
+              { percent: roundAccuracy },
+            )}
           </KangurStatusChip>
         ) : null}
         {perfectRunInProgress ? (
@@ -122,7 +147,11 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-perfect-run'
             size='sm'
           >
-            Perfekt w toku
+            {translateKangurProgressWithFallback(
+              gamePageTranslations,
+              'questionWidget.perfectRun',
+              'Perfekt w toku',
+            )}
           </KangurStatusChip>
         ) : null}
         {activeSessionRecommendation ? (
@@ -132,7 +161,12 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-recommendation'
             size='sm'
           >
-            Polecony kierunek: {activeSessionRecommendation.title}
+            {translateKangurProgressWithFallback(
+              gamePageTranslations,
+              'questionWidget.recommendation',
+              'Polecony kierunek: {title}',
+              { title: activeSessionRecommendation.title },
+            )}
           </KangurStatusChip>
         ) : null}
         {activeSessionRecommendation && guidedProjection ? (
@@ -142,7 +176,12 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-guided'
             size='sm'
           >
-            Po tej rundzie: {guidedProjection.projected.summary}
+            {translateKangurProgressWithFallback(
+              gamePageTranslations,
+              'questionWidget.guidedProjection',
+              'Po tej rundzie: {summary}',
+              { summary: guidedProjection.projected.summary },
+            )}
           </KangurStatusChip>
         ) : null}
         {currentQuest ? (
@@ -158,7 +197,12 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-quest'
             size='sm'
           >
-            Misja dnia: {currentQuest.progress.summary}
+            {translateKangurProgressWithFallback(
+              gamePageTranslations,
+              'questionWidget.dailyQuest',
+              'Misja dnia: {summary}',
+              { summary: currentQuest.progress.summary },
+            )}
           </KangurStatusChip>
         ) : null}
         {nextBadge ? (
@@ -168,7 +212,12 @@ export function KangurGameQuestionWidget(): React.JSX.Element | null {
             data-testid='kangur-game-question-next-badge'
             size='sm'
           >
-            Następna odznaka: {nextBadge.summary}
+            {translateKangurProgressWithFallback(
+              gamePageTranslations,
+              'questionWidget.nextBadge',
+              'Następna odznaka: {summary}',
+              { summary: nextBadge.summary },
+            )}
           </KangurStatusChip>
         ) : null}
       </div>

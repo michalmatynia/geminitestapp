@@ -2,19 +2,21 @@ import React from 'react';
 import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths';
 import {
-  Button,
   Label,
   StatusBadge,
   Card,
   JsonViewer,
   CollapsibleSection,
+  insetPanelVariants,
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import {
   readRuntimeTraceSummary,
   type RunTracePayloadDiff,
   type RunTraceComparison,
   type RunTraceComparisonRow,
 } from './run-trace-utils';
+import { RunHistoryPillButton } from './RunHistoryPillButton';
 
 interface RunComparisonToolProps {
   primaryRun: AiPathRunRecord;
@@ -25,6 +27,309 @@ interface RunComparisonToolProps {
   onToggleResumeChangesOnly: () => void;
   compareInspectorRowKey: string | null;
   onSetCompareInspectorRowKey: (rowKey: string | null) => void;
+}
+
+type RunComparisonChipProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+type RunComparisonStatLineProps = {
+  label: string;
+  value: React.ReactNode;
+  valueClassName?: string;
+};
+
+type RunComparisonSummaryCardProps = {
+  run: AiPathRunRecord;
+  label: string;
+};
+
+type RunComparisonRowSummaryProps = {
+  row: RunTraceComparisonRow;
+  hasPayloadInspectorData: boolean;
+  compareInspectorRowKey: string | null;
+  onSetCompareInspectorRowKey: (rowKey: string | null) => void;
+  formatResumeComparisonLabel: (mode: string | null, decision: string | null) => string;
+};
+
+type RunComparisonInlineDiffSectionProps = {
+  row: RunTraceComparisonRow;
+};
+
+type RunComparisonLabeledCodeBlockProps = {
+  title: string;
+  value: string;
+  titleClassName?: string;
+  blockClassName?: string;
+};
+
+const getRuntimeSummary = (run: AiPathRunRecord | null) => {
+  return readRuntimeTraceSummary(run?.meta ?? null);
+};
+
+const getRuntimeFingerprint = (run: AiPathRunRecord | null): string | null => {
+  if (!run?.meta || typeof run.meta !== 'object') return null;
+  const raw = run.meta['runtimeFingerprint'];
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const getComparisonClassificationVariant = (
+  classification: RunTraceComparisonRow['classification']
+): 'error' | 'success' | 'warning' | 'neutral' => {
+  if (classification === 'regressed') return 'error';
+  if (classification === 'improved') return 'success';
+  if (classification === 'added' || classification === 'removed') return 'warning';
+  return 'neutral';
+};
+
+const getPayloadDiffChangeCount = (diff: RunTracePayloadDiff): number =>
+  diff.added.length + diff.removed.length + diff.changed.length;
+
+const buildComparisonInspectorDescription = (row: RunTraceComparisonRow): string =>
+  [
+    `A span: ${row.leftHistorySpanId ?? 'not captured'}`,
+    `B span: ${row.rightHistorySpanId ?? 'not captured'}`,
+  ].join(' · ');
+
+function RunComparisonChip({
+  children,
+  className,
+}: RunComparisonChipProps): React.JSX.Element {
+  return <span className={cn('rounded-full border px-2 py-px', className)}>{children}</span>;
+}
+
+function RunComparisonStatLine({
+  label,
+  value,
+  valueClassName,
+}: RunComparisonStatLineProps): React.JSX.Element {
+  return (
+    <div className='text-[10px] text-gray-400'>
+      {label}: <span className={valueClassName}>{value}</span>
+    </div>
+  );
+}
+
+function RunComparisonSummaryCard({
+  run,
+  label,
+}: RunComparisonSummaryCardProps): React.JSX.Element {
+  const traceSummary = getRuntimeSummary(run);
+  const fingerprint = getRuntimeFingerprint(run);
+  const summaryRows: Array<{ label: string; value: React.ReactNode; valueClassName?: string }> = [
+    {
+      label: 'Created',
+      value: run.createdAt ? new Date(run.createdAt).toLocaleString() : '–',
+    },
+    {
+      label: 'Finished',
+      value: run.finishedAt ? new Date(run.finishedAt).toLocaleString() : '–',
+    },
+    {
+      label: 'Runtime',
+      value: formatDurationMs(traceSummary?.durationMs ?? null) ?? 'n/a',
+    },
+    {
+      label: 'Iterations',
+      value:
+        typeof traceSummary?.iterationCount === 'number' ? traceSummary.iterationCount : 'n/a',
+    },
+    {
+      label: 'Trace source',
+      value: traceSummary?.source ?? 'n/a',
+    },
+    {
+      label: 'Node spans',
+      value: typeof traceSummary?.nodeSpanCount === 'number' ? traceSummary.nodeSpanCount : 'n/a',
+    },
+    {
+      label: 'Seed reuses',
+      value:
+        typeof traceSummary?.seededSpanCount === 'number' ? traceSummary.seededSpanCount : 'n/a',
+    },
+    {
+      label: 'Effect reuses',
+      value:
+        typeof traceSummary?.effectReplayCount === 'number' ? traceSummary.effectReplayCount : 'n/a',
+    },
+    {
+      label: 'Resume reuses',
+      value:
+        typeof traceSummary?.resumeReuseCount === 'number' ? traceSummary.resumeReuseCount : 'n/a',
+    },
+    {
+      label: 'Resume re-execs',
+      value:
+        typeof traceSummary?.resumeReexecutionCount === 'number'
+          ? traceSummary.resumeReexecutionCount
+          : 'n/a',
+    },
+    {
+      label: 'Retries',
+      value:
+        typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number'
+          ? `${run.retryCount}/${run.maxAttempts}`
+          : 'n/a',
+    },
+    {
+      label: 'Fingerprint',
+      value: fingerprint ? fingerprint : 'n/a',
+      valueClassName: 'font-mono',
+    },
+    {
+      label: 'Slowest span',
+      value: traceSummary?.slowestSpan
+        ? `${traceSummary.slowestSpan.nodeId ?? 'n/a'} · ${formatDurationMs(
+            traceSummary.slowestSpan.durationMs
+          )}`
+        : 'n/a',
+    },
+  ];
+
+  return (
+    <div className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-1`}>
+      <div className='flex items-center justify-between gap-2'>
+        <span className='font-semibold text-white'>{label}</span>
+        <RunComparisonChip className='border-border/70 text-[9px] uppercase text-gray-300'>
+          {run.status}
+        </RunComparisonChip>
+      </div>
+      {summaryRows.map((row) => (
+        <RunComparisonStatLine
+          key={`${run.id}-${row.label}`}
+          label={row.label}
+          value={row.value}
+          valueClassName={row.valueClassName}
+        />
+      ))}
+    </div>
+  );
+}
+
+function RunComparisonLabeledCodeBlock({
+  title,
+  value,
+  titleClassName,
+  blockClassName,
+}: RunComparisonLabeledCodeBlockProps): React.JSX.Element {
+  return (
+    <div>
+      <div className={cn('mb-1 text-[9px] uppercase text-gray-500', titleClassName)}>{title}</div>
+      <pre
+        className={cn(
+          'overflow-auto whitespace-pre-wrap break-words rounded border border-border/40 bg-black/30 p-2 text-[10px] text-gray-200',
+          blockClassName
+        )}
+      >
+        {value}
+      </pre>
+    </div>
+  );
+}
+
+function RunComparisonRowSummary({
+  row,
+  hasPayloadInspectorData,
+  compareInspectorRowKey,
+  onSetCompareInspectorRowKey,
+  formatResumeComparisonLabel,
+}: RunComparisonRowSummaryProps): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center justify-between gap-2'>
+      <div className='min-w-[180px] flex-1'>
+        <div className='text-[11px] text-white'>
+          {row.nodeTitle ?? row.nodeId}
+          {row.nodeType ? ` (${row.nodeType})` : ''}
+        </div>
+        <div className='text-[10px] text-gray-500'>
+          A: {row.leftStatus ?? '—'} · B: {row.rightStatus ?? '—'}
+        </div>
+        {row.leftHistorySpanId || row.rightHistorySpanId ? (
+          <div className='text-[10px] text-gray-500'>
+            hist A: {row.leftHistorySpanId ?? '—'} · hist B: {row.rightHistorySpanId ?? '—'}
+          </div>
+        ) : null}
+      </div>
+      <div className='flex flex-wrap items-center gap-2 text-[10px] text-gray-300'>
+        <StatusBadge
+          status={row.classification}
+          variant={getComparisonClassificationVariant(row.classification)}
+          size='sm'
+          className='font-bold'
+        />
+        <span>A {formatDurationMs(row.leftTotalMs)}</span>
+        <span>B {formatDurationMs(row.rightTotalMs)}</span>
+        <span>Δ {formatDurationMs(row.deltaMs)}</span>
+        <span>
+          spans {row.leftSpanCount}
+          {'->'}
+          {row.rightSpanCount}
+        </span>
+        {row.leftResumeDecision !== row.rightResumeDecision ||
+        row.leftResumeMode !== row.rightResumeMode ? (
+          <RunComparisonChip className='border-sky-500/40 bg-sky-500/10 text-sky-100'>
+            resume {formatResumeComparisonLabel(row.leftResumeMode, row.leftResumeDecision)}
+            {' -> '}
+            {formatResumeComparisonLabel(row.rightResumeMode, row.rightResumeDecision)}
+          </RunComparisonChip>
+        ) : null}
+        {row.inputDiff?.hasChanges ? (
+          <RunComparisonChip className='border-sky-500/40 bg-sky-500/10 text-sky-100'>
+            inputs {getPayloadDiffChangeCount(row.inputDiff)}
+          </RunComparisonChip>
+        ) : null}
+        {row.outputDiff?.hasChanges ? (
+          <RunComparisonChip className='border-emerald-500/40 bg-emerald-500/10 text-emerald-100'>
+            outputs {getPayloadDiffChangeCount(row.outputDiff)}
+          </RunComparisonChip>
+        ) : null}
+        {hasPayloadInspectorData ? (
+          <RunHistoryPillButton
+            variant='outline'
+            baseClassName='h-6 px-2 text-[10px]'
+            inactiveClassName=''
+            onClick={(): void =>
+              onSetCompareInspectorRowKey(compareInspectorRowKey === row.key ? null : row.key)
+            }
+          >
+            {compareInspectorRowKey === row.key ? 'Hide payloads' : 'Inspect payloads'}
+          </RunHistoryPillButton>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function RunComparisonInlineDiffSection({
+  row,
+}: RunComparisonInlineDiffSectionProps): React.JSX.Element | null {
+  if (!row.inputDiff?.hasChanges && !row.outputDiff?.hasChanges) {
+    return null;
+  }
+
+  return (
+    <div className='mt-2 space-y-2 border-t border-border/40 pt-2 text-[10px] text-gray-300'>
+      {row.inputDiff?.hasChanges ? (
+        <RunComparisonLabeledCodeBlock
+          title='Input diff'
+          value={row.inputDiff.lines.join('\n')}
+          titleClassName='uppercase text-sky-200'
+          blockClassName='border-sky-500/30 text-sky-50'
+        />
+      ) : null}
+      {row.outputDiff?.hasChanges ? (
+        <RunComparisonLabeledCodeBlock
+          title='Output diff'
+          value={row.outputDiff.lines.join('\n')}
+          titleClassName='uppercase text-emerald-200'
+          blockClassName='border-emerald-500/30 text-emerald-50'
+        />
+      ) : null}
+    </div>
+  );
 }
 
 export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Element {
@@ -38,18 +343,6 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
     compareInspectorRowKey,
     onSetCompareInspectorRowKey,
   } = props;
-
-  const getRuntimeSummary = (run: AiPathRunRecord | null) => {
-    return readRuntimeTraceSummary(run?.meta ?? null);
-  };
-
-  const getRuntimeFingerprint = (run: AiPathRunRecord | null): string | null => {
-    if (!run?.meta || typeof run.meta !== 'object') return null;
-    const raw = run.meta['runtimeFingerprint'];
-    if (typeof raw !== 'string') return null;
-    const trimmed = raw.trim();
-    return trimmed.length > 0 ? trimmed : null;
-  };
 
   const formatResumeComparisonLabel = (
     mode: string | null,
@@ -96,18 +389,18 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
       <div className={`rounded-lg border p-3 ${accentClassName}`}>
         <div className='mb-3 flex flex-wrap items-center gap-2 text-[10px]'>
           <span className='font-semibold uppercase tracking-wide'>{title}</span>
-          <span className={labelClassName + ' rounded-full px-2 py-px'}>
+          <RunComparisonChip className={labelClassName}>
             changed {diff?.changed.length ?? 0}
-          </span>
-          <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-px text-emerald-100'>
+          </RunComparisonChip>
+          <RunComparisonChip className='border-emerald-500/30 bg-emerald-500/10 text-emerald-100'>
             added {diff?.added.length ?? 0}
-          </span>
-          <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-px text-amber-100'>
+          </RunComparisonChip>
+          <RunComparisonChip className='border-amber-500/30 bg-amber-500/10 text-amber-100'>
             removed {diff?.removed.length ?? 0}
-          </span>
-          <span className='rounded-full border border-border/50 bg-black/20 px-2 py-px text-gray-300'>
+          </RunComparisonChip>
+          <RunComparisonChip className='border-border/50 bg-black/20 text-gray-300'>
             same {diff?.same.length ?? 0}
-          </span>
+          </RunComparisonChip>
         </div>
         {changedEntries.length > 0 ? (
           <div className='space-y-2'>
@@ -131,18 +424,8 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
                     </span>
                     <div className='font-mono text-[10px] text-gray-200'>{entry.key}</div>
                   </div>
-                  <div>
-                    <div className='mb-1 text-[9px] uppercase text-gray-500'>Run A</div>
-                    <pre className='overflow-auto whitespace-pre-wrap break-words rounded border border-border/40 bg-black/30 p-2 text-[10px] text-gray-200'>
-                      {entry.leftLabel ?? '—'}
-                    </pre>
-                  </div>
-                  <div>
-                    <div className='mb-1 text-[9px] uppercase text-gray-500'>Run B</div>
-                    <pre className='overflow-auto whitespace-pre-wrap break-words rounded border border-border/40 bg-black/30 p-2 text-[10px] text-gray-200'>
-                      {entry.rightLabel ?? '—'}
-                    </pre>
-                  </div>
+                  <RunComparisonLabeledCodeBlock title='Run A' value={entry.leftLabel ?? '—'} />
+                  <RunComparisonLabeledCodeBlock title='Run B' value={entry.rightLabel ?? '—'} />
                 </div>
               );
             })}
@@ -177,88 +460,8 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
       <div className='grid gap-3 sm:grid-cols-2'>
         {[primaryRun, secondaryRun].map(
           (run: AiPathRunRecord, index: number): React.JSX.Element => {
-            const traceSummary = getRuntimeSummary(run);
-            const fingerprint = getRuntimeFingerprint(run);
             const label = index === 0 ? 'Run A' : 'Run B';
-            return (
-              <div
-                key={run.id}
-                className='rounded-md border border-border/60 bg-card/40 p-3 space-y-1'
-              >
-                <div className='flex items-center justify-between gap-2'>
-                  <span className='font-semibold text-white'>{label}</span>
-                  <span className='rounded-full border border-border/70 px-2 py-px text-[9px] uppercase text-gray-300'>
-                    {run.status}
-                  </span>
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Created: {run.createdAt ? new Date(run.createdAt).toLocaleString() : '–'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Finished: {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : '–'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Runtime: {formatDurationMs(traceSummary?.durationMs ?? null) ?? 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Iterations:{' '}
-                  {typeof traceSummary?.iterationCount === 'number'
-                    ? traceSummary.iterationCount
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Trace source: {traceSummary?.source ?? 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Node spans:{' '}
-                  {typeof traceSummary?.nodeSpanCount === 'number'
-                    ? traceSummary.nodeSpanCount
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Seed reuses:{' '}
-                  {typeof traceSummary?.seededSpanCount === 'number'
-                    ? traceSummary.seededSpanCount
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Effect reuses:{' '}
-                  {typeof traceSummary?.effectReplayCount === 'number'
-                    ? traceSummary.effectReplayCount
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Resume reuses:{' '}
-                  {typeof traceSummary?.resumeReuseCount === 'number'
-                    ? traceSummary.resumeReuseCount
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Resume re-execs:{' '}
-                  {typeof traceSummary?.resumeReexecutionCount === 'number'
-                    ? traceSummary.resumeReexecutionCount
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Retries:{' '}
-                  {typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number'
-                    ? `${run.retryCount}/${run.maxAttempts}`
-                    : 'n/a'}
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Fingerprint:{' '}
-                  <span className='font-mono'>{fingerprint ? fingerprint : 'n/a'}</span>
-                </div>
-                <div className='text-[10px] text-gray-400'>
-                  Slowest span:{' '}
-                  {traceSummary?.slowestSpan
-                    ? `${traceSummary.slowestSpan.nodeId ?? 'n/a'} · ${formatDurationMs(
-                      traceSummary.slowestSpan.durationMs
-                    )}`
-                    : 'n/a'}
-                </div>
-              </div>
-            );
+            return <RunComparisonSummaryCard key={run.id} run={run} label={label} />;
           }
         )}
       </div>
@@ -274,15 +477,12 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
               <span>Added: {traceComparison.addedCount}</span>
               <span>Removed: {traceComparison.removedCount}</span>
               <span>Payload changes: {traceComparison.payloadChangedCount}</span>
-              <Button
-                type='button'
-                size='xs'
+              <RunHistoryPillButton
                 variant='outline'
-                className={`h-6 px-2 text-[10px] ${
-                  compareResumeChangesOnly
-                    ? 'border-sky-500/50 bg-sky-500/10 text-sky-100'
-                    : ''
-                }`}
+                baseClassName='h-6 px-2 text-[10px]'
+                active={compareResumeChangesOnly}
+                activeClassName='border-sky-500/50 bg-sky-500/10 text-sky-100'
+                inactiveClassName=''
                 disabled={
                   traceComparison.resumeModeChangeCount === 0 &&
                   traceComparison.resumeDecisionChangeCount === 0
@@ -290,36 +490,36 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
                 onClick={onToggleResumeChangesOnly}
               >
                 {compareResumeChangesOnly ? 'Show all rows' : 'Resume changes only'}
-              </Button>
+              </RunHistoryPillButton>
             </div>
           </div>
           <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
-            <span className='rounded-full border border-border/60 bg-black/20 px-2 py-px'>
+            <RunComparisonChip className='border-border/60 bg-black/20'>
               Duration delta (B-A): {formatDurationMs(traceComparison.durationDeltaMs)}
-            </span>
-            <span className='rounded-full border border-border/60 bg-black/20 px-2 py-px'>
+            </RunComparisonChip>
+            <RunComparisonChip className='border-border/60 bg-black/20'>
               Iteration delta: {traceComparison.iterationDelta ?? 'n/a'}
-            </span>
-            <span className='rounded-full border border-border/60 bg-black/20 px-2 py-px'>
+            </RunComparisonChip>
+            <RunComparisonChip className='border-border/60 bg-black/20'>
               Span delta: {traceComparison.spanDelta ?? 'n/a'}
-            </span>
+            </RunComparisonChip>
           </div>
           <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
-            <span className='rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-px text-sky-100'>
+            <RunComparisonChip className='border-sky-500/30 bg-sky-500/10 text-sky-100'>
               Resume mode changes: {traceComparison.resumeModeChangeCount}
-            </span>
-            <span className='rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-px text-sky-100'>
+            </RunComparisonChip>
+            <RunComparisonChip className='border-sky-500/30 bg-sky-500/10 text-sky-100'>
               Resume decision changes: {traceComparison.resumeDecisionChangeCount}
-            </span>
-            <span className='rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-px text-sky-100'>
+            </RunComparisonChip>
+            <RunComparisonChip className='border-sky-500/30 bg-sky-500/10 text-sky-100'>
               Resumed nodes Δ (B-A): {traceComparison.resumedNodeDelta ?? 'n/a'}
-            </span>
-            <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-px text-emerald-100'>
+            </RunComparisonChip>
+            <RunComparisonChip className='border-emerald-500/30 bg-emerald-500/10 text-emerald-100'>
               Reused Δ (B-A): {traceComparison.reusedNodeDelta ?? 'n/a'}
-            </span>
-            <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-px text-amber-100'>
+            </RunComparisonChip>
+            <RunComparisonChip className='border-amber-500/30 bg-amber-500/10 text-amber-100'>
               Re-exec Δ (B-A): {traceComparison.reexecutedNodeDelta ?? 'n/a'}
-            </span>
+            </RunComparisonChip>
           </div>
           <div className='mt-2 text-[10px] text-gray-500'>
             Rows with replay or resume behavior changes are listed first within each diff class.
@@ -336,126 +536,21 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
                   row.leftOutputs,
                   row.rightOutputs,
                 ].some((value) => value !== null && value !== undefined);
-                const inspectorDescription = [
-                  `A span: ${row.leftHistorySpanId ?? 'not captured'}`,
-                  `B span: ${row.rightHistorySpanId ?? 'not captured'}`,
-                ].join(' · ');
+                const inspectorDescription = buildComparisonInspectorDescription(row);
 
                 return (
                   <div
                     key={row.key}
                     className='rounded-md border border-border/50 bg-black/20 px-3 py-2'
                   >
-                    <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <div className='min-w-[180px] flex-1'>
-                        <div className='text-[11px] text-white'>
-                          {row.nodeTitle ?? row.nodeId}
-                          {row.nodeType ? ` (${row.nodeType})` : ''}
-                        </div>
-                        <div className='text-[10px] text-gray-500'>
-                          A: {row.leftStatus ?? '—'} · B: {row.rightStatus ?? '—'}
-                        </div>
-                        {row.leftHistorySpanId || row.rightHistorySpanId ? (
-                          <div className='text-[10px] text-gray-500'>
-                            hist A: {row.leftHistorySpanId ?? '—'} · hist B:{' '}
-                            {row.rightHistorySpanId ?? '—'}
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className='flex flex-wrap items-center gap-2 text-[10px] text-gray-300'>
-                        <StatusBadge
-                          status={row.classification}
-                          variant={
-                            row.classification === 'regressed'
-                              ? 'error'
-                              : row.classification === 'improved'
-                                ? 'success'
-                                : row.classification === 'added' ||
-                                    row.classification === 'removed'
-                                  ? 'warning'
-                                  : 'neutral'
-                          }
-                          size='sm'
-                          className='font-bold'
-                        />
-                        <span>A {formatDurationMs(row.leftTotalMs)}</span>
-                        <span>B {formatDurationMs(row.rightTotalMs)}</span>
-                        <span>Δ {formatDurationMs(row.deltaMs)}</span>
-                        <span>
-                          spans {row.leftSpanCount}
-                          {'->'}
-                          {row.rightSpanCount}
-                        </span>
-                        {row.leftResumeDecision !== row.rightResumeDecision ||
-                        row.leftResumeMode !== row.rightResumeMode ? (
-                            <span className='rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-px text-sky-100'>
-                            resume{' '}
-                              {formatResumeComparisonLabel(
-                                row.leftResumeMode,
-                                row.leftResumeDecision
-                              )}
-                              {' -> '}
-                              {formatResumeComparisonLabel(
-                                row.rightResumeMode,
-                                row.rightResumeDecision
-                              )}
-                            </span>
-                          ) : null}
-                        {row.inputDiff?.hasChanges ? (
-                          <span className='rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-px text-sky-100'>
-                            inputs{' '}
-                            {row.inputDiff.added.length +
-                              row.inputDiff.removed.length +
-                              row.inputDiff.changed.length}
-                          </span>
-                        ) : null}
-                        {row.outputDiff?.hasChanges ? (
-                          <span className='rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-px text-emerald-100'>
-                            outputs{' '}
-                            {row.outputDiff.added.length +
-                              row.outputDiff.removed.length +
-                              row.outputDiff.changed.length}
-                          </span>
-                        ) : null}
-                        {hasPayloadInspectorData ? (
-                          <Button
-                            type='button'
-                            size='xs'
-                            variant='outline'
-                            className='h-6 px-2 text-[10px]'
-                            onClick={(): void =>
-                              onSetCompareInspectorRowKey(
-                                compareInspectorRowKey === row.key ? null : row.key
-                              )
-                            }
-                          >
-                            {compareInspectorRowKey === row.key
-                              ? 'Hide payloads'
-                              : 'Inspect payloads'}
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
-                    {row.inputDiff?.hasChanges || row.outputDiff?.hasChanges ? (
-                      <div className='mt-2 space-y-2 border-t border-border/40 pt-2 text-[10px] text-gray-300'>
-                        {row.inputDiff?.hasChanges ? (
-                          <div>
-                            <div className='mb-1 uppercase text-sky-200'>Input diff</div>
-                            <pre className='overflow-auto rounded border border-sky-500/30 bg-black/30 p-2 text-[10px] text-sky-50'>
-                              {row.inputDiff.lines.join('\n')}
-                            </pre>
-                          </div>
-                        ) : null}
-                        {row.outputDiff?.hasChanges ? (
-                          <div>
-                            <div className='mb-1 uppercase text-emerald-200'>Output diff</div>
-                            <pre className='overflow-auto rounded border border-emerald-500/30 bg-black/30 p-2 text-[10px] text-emerald-50'>
-                              {row.outputDiff.lines.join('\n')}
-                            </pre>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
+                    <RunComparisonRowSummary
+                      row={row}
+                      hasPayloadInspectorData={hasPayloadInspectorData}
+                      compareInspectorRowKey={compareInspectorRowKey}
+                      onSetCompareInspectorRowKey={onSetCompareInspectorRowKey}
+                      formatResumeComparisonLabel={formatResumeComparisonLabel}
+                    />
+                    <RunComparisonInlineDiffSection row={row} />
                     {compareInspectorRowKey === row.key ? (
                       <CollapsibleSection
                         title='Payload Inspector'
@@ -480,26 +575,32 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
                             )}
                           </div>
                           <div className='grid gap-3 lg:grid-cols-2'>
-                            {renderPayloadInspectorPane(
-                              'Run A Inputs',
-                              row.leftInputs,
-                              'No captured input payload for Run A.'
-                            )}
-                            {renderPayloadInspectorPane(
-                              'Run B Inputs',
-                              row.rightInputs,
-                              'No captured input payload for Run B.'
-                            )}
-                            {renderPayloadInspectorPane(
-                              'Run A Outputs',
-                              row.leftOutputs,
-                              'No captured output payload for Run A.'
-                            )}
-                            {renderPayloadInspectorPane(
-                              'Run B Outputs',
-                              row.rightOutputs,
-                              'No captured output payload for Run B.'
-                            )}
+                            {[
+                              {
+                                title: 'Run A Inputs',
+                                data: row.leftInputs,
+                                emptyLabel: 'No captured input payload for Run A.',
+                              },
+                              {
+                                title: 'Run B Inputs',
+                                data: row.rightInputs,
+                                emptyLabel: 'No captured input payload for Run B.',
+                              },
+                              {
+                                title: 'Run A Outputs',
+                                data: row.leftOutputs,
+                                emptyLabel: 'No captured output payload for Run A.',
+                              },
+                              {
+                                title: 'Run B Outputs',
+                                data: row.rightOutputs,
+                                emptyLabel: 'No captured output payload for Run B.',
+                              },
+                            ].map((pane) => (
+                              <React.Fragment key={`${row.key}-${pane.title}`}>
+                                {renderPayloadInspectorPane(pane.title, pane.data, pane.emptyLabel)}
+                              </React.Fragment>
+                            ))}
                           </div>
                         </div>
                       </CollapsibleSection>

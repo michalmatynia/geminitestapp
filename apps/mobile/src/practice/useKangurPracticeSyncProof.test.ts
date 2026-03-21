@@ -79,11 +79,11 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     expect(snapshot.matchedScoreId).toBe('score-1');
     expect(snapshot.surfaces).toEqual([
       expect.objectContaining({
-        label: 'Historia wynikow',
+        label: 'Historia wyników',
         status: 'ready',
       }),
       expect.objectContaining({
-        label: 'Postep profilu',
+        label: 'Postęp profilu',
         status: 'ready',
       }),
       expect.objectContaining({
@@ -116,11 +116,11 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     expect(snapshot.matchedScoreId).toBeNull();
     expect(snapshot.surfaces).toEqual([
       expect.objectContaining({
-        label: 'Historia wynikow',
+        label: 'Historia wyników',
         status: 'missing',
       }),
       expect.objectContaining({
-        label: 'Postep profilu',
+        label: 'Postęp profilu',
         status: 'missing',
       }),
       expect.objectContaining({
@@ -132,5 +132,33 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
         status: 'missing',
       }),
     ]);
+  });
+
+  it('localizes snapshot labels and details for English surfaces', () => {
+    const snapshot = buildKangurPracticeSyncProofSnapshot({
+      expectedCorrectAnswers: 8,
+      expectedTotalQuestions: 8,
+      leaderboardItems: [createLeaderboardItem({ currentUserBadgeLabel: 'You' })],
+      locale: 'en',
+      operation: 'clock',
+      progress: {
+        ...createDefaultKangurProgressState(),
+        gamesPlayed: 2,
+        operationsPlayed: ['clock'],
+      },
+      runStartedAt: Date.parse('2026-03-20T19:35:00.000Z'),
+      scores: [createScore()],
+    });
+
+    expect(snapshot.surfaces[0]).toMatchObject({
+      label: 'Result history',
+      status: 'ready',
+    });
+    expect(snapshot.surfaces[1]?.detail).toContain('Mode saved locally');
+    expect(snapshot.surfaces[2]).toMatchObject({
+      label: 'Daily plan',
+      status: 'ready',
+    });
+    expect(snapshot.surfaces[3]?.detail).toContain('You');
   });
 });

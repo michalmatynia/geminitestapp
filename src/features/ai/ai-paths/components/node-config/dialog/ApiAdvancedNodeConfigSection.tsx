@@ -1,7 +1,7 @@
 'use client';
 
 import type { AdvancedApiConfig } from '@/shared/lib/ai-paths';
-import { Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
+import { Input, SelectSimple, Textarea, ToggleRow, FormField, insetPanelVariants } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -270,7 +270,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         </FormField>
       )}
 
-      <div className='rounded-md border border-border bg-card/40 p-3'>
+      <div className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border`}>
         <FormField label='Auth mode'>
           <SelectSimple
             size='sm'
@@ -427,7 +427,9 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
 
-      <div className='rounded-md border border-border bg-card/40 p-3 space-y-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border`}
+      >
         <ToggleRow
           label='Enable retry'
           checked={config.retryEnabled !== false}
@@ -520,7 +522,9 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
 
-      <div className='rounded-md border border-border bg-card/40 p-3 space-y-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border`}
+      >
         <FormField label='Pagination'>
           <div className='grid gap-3 sm:grid-cols-2'>
             <SelectSimple
@@ -659,7 +663,9 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
 
-      <div className='rounded-md border border-border bg-card/40 p-3 space-y-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border`}
+      >
         <ToggleRow
           label='Enable rate limit guard'
           checked={Boolean(config.rateLimitEnabled)}
@@ -725,7 +731,9 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
 
-      <div className='rounded-md border border-border bg-card/40 p-3 space-y-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border`}
+      >
         <ToggleRow
           label='Enable idempotency header'
           checked={Boolean(config.idempotencyEnabled)}

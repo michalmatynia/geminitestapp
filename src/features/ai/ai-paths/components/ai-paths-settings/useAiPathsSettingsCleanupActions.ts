@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui';
+import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import type {
   AiNode,
   Edge,
@@ -20,20 +21,11 @@ import type {
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-type ConfirmFn = (input: {
-  title: string;
-  message: string;
-  confirmText: string;
-  isDangerous: boolean;
-  onConfirm: () => void | Promise<void>;
-}) => void;
-
 type UseAiPathsSettingsCleanupActionsInput = {
   activePathId: string | null;
   isPathLocked: boolean;
   toast: Toast;
-  confirm: ConfirmFn;
+  confirm: (config: ConfirmConfig) => void;
   runtimeState: RuntimeState;
   resetRuntimeDiagnostics: () => void;
   edges: Edge[];

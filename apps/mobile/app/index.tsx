@@ -21,6 +21,18 @@ import { getKangurHomeAuthBoundaryViewModel } from '../src/home/homeAuthBoundary
 import { useKangurMobileHomeDuelsPresence } from '../src/home/useKangurMobileHomeDuelsPresence';
 import { useKangurMobileHomeDuelsRematches } from '../src/home/useKangurMobileHomeDuelsRematches';
 import { useKangurMobileHomeDuelsLeaderboard } from '../src/home/useKangurMobileHomeDuelsLeaderboard';
+import {
+  useKangurMobileHomeAssignments,
+  type KangurMobileHomeAssignmentItem,
+} from '../src/home/useKangurMobileHomeAssignments';
+import {
+  useKangurMobileHomeLessonMastery,
+  type KangurMobileHomeLessonMasteryItem,
+} from '../src/home/useKangurMobileHomeLessonMastery';
+import {
+  useKangurMobileHomeLessonCheckpoints,
+  type KangurMobileHomeLessonCheckpointItem,
+} from '../src/home/useKangurMobileHomeLessonCheckpoints';
 import { useKangurMobileHomeDuelsSpotlight } from '../src/home/useKangurMobileHomeDuelsSpotlight';
 import { useKangurMobileRecentResults } from '../src/home/useKangurMobileRecentResults';
 import { useKangurMobileHomeDuelsInvites } from '../src/home/useKangurMobileHomeDuelsInvites';
@@ -30,6 +42,7 @@ import { createKangurLessonHref } from '../src/lessons/lessonHref';
 import { createKangurPlanHref } from '../src/plan/planHref';
 import { createKangurPracticeHref } from '../src/practice/practiceHref';
 import { useKangurMobileRuntime } from '../src/providers/KangurRuntimeContext';
+import { translateKangurMobileActionLabel } from '../src/shared/translateKangurMobileActionLabel';
 import {
   createKangurResultsHref,
 } from '../src/scores/resultsHref';
@@ -394,6 +407,302 @@ function FocusCard({
   );
 }
 
+function SummaryChip({
+  accent,
+  label,
+}: {
+  accent: 'amber' | 'blue' | 'emerald' | 'rose';
+  label: string;
+}): React.JSX.Element {
+  const tone =
+    accent === 'emerald'
+      ? {
+          backgroundColor: '#ecfdf5',
+          borderColor: '#a7f3d0',
+          textColor: '#047857',
+        }
+      : accent === 'amber'
+        ? {
+            backgroundColor: '#fff7ed',
+            borderColor: '#fdba74',
+            textColor: '#c2410c',
+          }
+        : accent === 'rose'
+          ? {
+              backgroundColor: '#fef2f2',
+              borderColor: '#fecaca',
+              textColor: '#b91c1c',
+            }
+        : {
+            backgroundColor: '#eef2ff',
+            borderColor: '#c7d2fe',
+            textColor: '#4338ca',
+          };
+
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        backgroundColor: tone.backgroundColor,
+        borderColor: tone.borderColor,
+        borderRadius: 999,
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function AssignmentCard({
+  item,
+}: {
+  item: KangurMobileHomeAssignmentItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const priorityAccent =
+    item.assignment.priority === 'high'
+      ? 'rose'
+      : item.assignment.priority === 'medium'
+        ? 'amber'
+        : 'blue';
+
+  return (
+    <View
+      style={{
+        backgroundColor: '#f8fafc',
+        borderColor: '#e2e8f0',
+        borderRadius: 20,
+        borderWidth: 1,
+        gap: 10,
+        padding: 14,
+      }}
+    >
+      <SummaryChip
+        accent={priorityAccent}
+        label={copy({
+          de:
+            item.assignment.priority === 'high'
+              ? 'Hohe Priorität'
+              : item.assignment.priority === 'medium'
+                ? 'Mittlere Priorität'
+                : 'Niedrige Priorität',
+          en:
+            item.assignment.priority === 'high'
+              ? 'High priority'
+              : item.assignment.priority === 'medium'
+                ? 'Medium priority'
+                : 'Low priority',
+          pl:
+            item.assignment.priority === 'high'
+              ? 'Priorytet wysoki'
+              : item.assignment.priority === 'medium'
+                ? 'Priorytet średni'
+                : 'Priorytet niski',
+        })}
+      />
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+        {item.assignment.title}
+      </Text>
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {item.assignment.description}
+      </Text>
+      <Text style={{ color: '#64748b', lineHeight: 20 }}>
+        {copy({
+          de: `Ziel: ${item.assignment.target}`,
+          en: `Goal: ${item.assignment.target}`,
+          pl: `Cel: ${item.assignment.target}`,
+        })}
+      </Text>
+      {item.href ? (
+        <OutlineLink
+          href={item.href}
+          hint={item.assignment.description}
+          label={translateKangurMobileActionLabel(item.assignment.action.label, locale)}
+        />
+      ) : (
+        <View
+          style={{
+            alignSelf: 'flex-start',
+            borderRadius: 999,
+            backgroundColor: '#e2e8f0',
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ color: '#475569', fontWeight: '700' }}>
+            {translateKangurMobileActionLabel(item.assignment.action.label, locale)} ·{' '}
+            {copy({
+              de: 'bald',
+              en: 'soon',
+              pl: 'wkrotce',
+            })}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function LessonMasteryCard({
+  insight,
+  title,
+}: {
+  insight: KangurMobileHomeLessonMasteryItem;
+  title: string;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const lastLessonLabel = insight.lastCompletedAt
+    ? formatHomeRelativeAge(insight.lastCompletedAt, locale)
+    : copy({
+        de: 'noch nicht gespeichert',
+        en: 'not saved yet',
+        pl: 'jeszcze nie zapisano',
+      });
+
+  return (
+    <View
+      style={{
+        backgroundColor: '#f8fafc',
+        borderColor: '#e2e8f0',
+        borderRadius: 20,
+        borderWidth: 1,
+        gap: 10,
+        padding: 14,
+      }}
+    >
+      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+        {insight.emoji} {insight.title}
+      </Text>
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: `Beherrschung ${insight.masteryPercent}% • Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
+          en: `Mastery ${insight.masteryPercent}% • Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
+          pl: `Opanowanie ${insight.masteryPercent}% • Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
+        })}
+      </Text>
+      <Text style={{ color: '#64748b', lineHeight: 20 }}>
+        {copy({
+          de: `Bestes Ergebnis ${insight.bestScorePercent}% • letzte Lektion ${lastLessonLabel}`,
+          en: `Best score ${insight.bestScorePercent}% • last lesson ${lastLessonLabel}`,
+          pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia lekcja ${lastLessonLabel}`,
+        })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <OutlineLink
+          href={insight.lessonHref}
+          hint={copy({
+            de: `Öffnet die Lektion ${insight.title}.`,
+            en: `Opens the ${insight.title} lesson.`,
+            pl: `Otwiera lekcję ${insight.title}.`,
+          })}
+          label={`${copy({
+            de: 'Lektion öffnen',
+            en: 'Open lesson',
+            pl: 'Otwórz lekcję',
+          })}: ${insight.title}`}
+        />
+        {insight.practiceHref ? (
+          <OutlineLink
+            href={insight.practiceHref}
+            hint={copy({
+              de: `Öffnet das Training für ${insight.title}.`,
+              en: `Opens practice for ${insight.title}.`,
+              pl: `Otwiera trening dla ${insight.title}.`,
+            })}
+            label={`${copy({
+              de: 'Trainieren',
+              en: 'Practice',
+              pl: 'Trenuj',
+            })}: ${insight.title}`}
+          />
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function LessonCheckpointCard({
+  item,
+}: {
+  item: KangurMobileHomeLessonCheckpointItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+
+  return (
+    <View
+      style={{
+        backgroundColor: '#f8fafc',
+        borderColor: '#e2e8f0',
+        borderRadius: 20,
+        borderWidth: 1,
+        gap: 10,
+        padding: 14,
+      }}
+    >
+      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+        {copy({
+          de: `Letzter Checkpoint ${formatHomeRelativeAge(item.lastCompletedAt, locale)}`,
+          en: `Last checkpoint ${formatHomeRelativeAge(item.lastCompletedAt, locale)}`,
+          pl: `Ostatni checkpoint ${formatHomeRelativeAge(item.lastCompletedAt, locale)}`,
+        })}
+      </Text>
+      <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+        {item.emoji} {item.title}
+      </Text>
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
+          en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
+          pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
+        })}
+      </Text>
+      <Text style={{ color: '#64748b', lineHeight: 20 }}>
+        {copy({
+          de: `Bestes Ergebnis ${item.bestScorePercent}% • Versuche ${item.attempts}`,
+          en: `Best score ${item.bestScorePercent}% • attempts ${item.attempts}`,
+          pl: `Najlepszy wynik ${item.bestScorePercent}% • próby ${item.attempts}`,
+        })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <OutlineLink
+          href={item.lessonHref}
+          hint={copy({
+            de: `Öffnet die zuletzt gespeicherte Lektion ${item.title}.`,
+            en: `Opens the most recently saved ${item.title} lesson.`,
+            pl: `Otwiera ostatnio zapisaną lekcję ${item.title}.`,
+          })}
+          label={`${copy({
+            de: 'Zur Lektion zurück',
+            en: 'Return to lesson',
+            pl: 'Wróć do lekcji',
+          })}: ${item.title}`}
+        />
+        {item.practiceHref ? (
+          <OutlineLink
+            href={item.practiceHref}
+            hint={copy({
+              de: `Öffnet ein passendes Training nach ${item.title}.`,
+              en: `Opens matching practice after ${item.title}.`,
+              pl: `Otwiera pasujący trening po ${item.title}.`,
+            })}
+            label={`${copy({
+              de: 'Danach trainieren',
+              en: 'Practice after',
+              pl: 'Potem trenuj',
+            })}: ${item.title}`}
+          />
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 function formatHomeRelativeAge(
   isoString: string,
   locale: 'pl' | 'en' | 'de',
@@ -475,6 +784,9 @@ export default function HomeScreen(): React.JSX.Element {
   const recentResults = useKangurMobileRecentResults();
   const duelInvites = useKangurMobileHomeDuelsInvites();
   const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
+  const homeAssignments = useKangurMobileHomeAssignments();
+  const lessonCheckpoints = useKangurMobileHomeLessonCheckpoints();
+  const lessonMastery = useKangurMobileHomeLessonMastery();
   const duelPresence = useKangurMobileHomeDuelsPresence();
   const duelRematches = useKangurMobileHomeDuelsRematches();
   const duelSpotlight = useKangurMobileHomeDuelsSpotlight();
@@ -1993,6 +2305,184 @@ export default function HomeScreen(): React.JSX.Element {
                   })}
                 </Text>
               ) : null}
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Lektionsbeherrschung',
+            en: 'Lesson mastery',
+            pl: 'Opanowanie lekcji',
+          })}
+        >
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Lokale Lektions-Checkpoints und abgeschlossene mobile Lektionen aktualisieren diesen Überblick sofort.',
+              en: 'Local lesson checkpoints and completed mobile lessons update this overview immediately.',
+              pl: 'Lokalne checkpointy lekcji i ukończone mobilne lekcje aktualizują ten przegląd od razu.',
+            })}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <SummaryChip
+              accent='blue'
+              label={copy({
+                de: `Verfolgt ${lessonMastery.trackedLessons}`,
+                en: `Tracked ${lessonMastery.trackedLessons}`,
+                pl: `Śledzone ${lessonMastery.trackedLessons}`,
+              })}
+            />
+            <SummaryChip
+              accent='emerald'
+              label={copy({
+                de: `Beherrscht ${lessonMastery.masteredLessons}`,
+                en: `Mastered ${lessonMastery.masteredLessons}`,
+                pl: `Opanowane ${lessonMastery.masteredLessons}`,
+              })}
+            />
+            <SummaryChip
+              accent='amber'
+              label={copy({
+                de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
+                en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
+                pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
+              })}
+            />
+          </View>
+
+          {lessonMastery.trackedLessons === 0 ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Es gibt noch keine gespeicherten Lektionsversuche. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
+                en: 'There are no saved lesson attempts yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
+                pl: 'Nie ma jeszcze zapisanych prób lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
+              })}
+            </Text>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {lessonMastery.weakest[0] ? (
+                <LessonMasteryCard
+                  insight={lessonMastery.weakest[0]}
+                  title={copy({
+                    de: 'Zum Wiederholen',
+                    en: 'Needs review',
+                    pl: 'Do powtórki',
+                  })}
+                />
+              ) : (
+                <Text style={{ color: '#475569', lineHeight: 20 }}>
+                  {copy({
+                    de: 'Alle verfolgten Lektionen sind aktuell auf einem sicheren Niveau.',
+                    en: 'All tracked lessons are currently at a safe level.',
+                    pl: 'Wszystkie śledzone lekcje są obecnie na bezpiecznym poziomie.',
+                  })}
+                </Text>
+              )}
+
+              {lessonMastery.strongest[0] ? (
+                <LessonMasteryCard
+                  insight={lessonMastery.strongest[0]}
+                  title={copy({
+                    de: 'Stärkste Lektion',
+                    en: 'Strongest lesson',
+                    pl: 'Najmocniejsza lekcja',
+                  })}
+                />
+              ) : null}
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Letzte Lektions-Checkpoints',
+            en: 'Recent lesson checkpoints',
+            pl: 'Ostatnie checkpointy lekcji',
+          })}
+        >
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Jeder lokal gespeicherte Checkpoint oder Lektionsabschluss erscheint hier sofort, damit du direkt an der zuletzt gespeicherten Stelle weitermachen kannst.',
+              en: 'Every locally saved checkpoint or lesson completion appears here right away so you can resume from the most recently saved lesson.',
+              pl: 'Każdy lokalnie zapisany checkpoint albo ukończenie lekcji pojawia się tutaj od razu, aby można było wrócić do ostatnio zapisanej lekcji.',
+            })}
+          </Text>
+          {lessonCheckpoints.recentCheckpoints.length === 0 ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit die letzten Lektionen hier erscheinen.',
+                en: 'There are no saved checkpoints yet. Open a lesson and save the first checkpoint so recent lessons appear here.',
+                pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.',
+              })}
+            </Text>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {lessonCheckpoints.recentCheckpoints.map((item) => (
+                <LessonCheckpointCard
+                  key={item.componentId}
+                  item={item}
+                />
+              ))}
+              <OutlineLink
+                href={LESSONS_ROUTE}
+                hint={copy({
+                  de: 'Öffnet den vollständigen Lektionskatalog.',
+                  en: 'Opens the full lessons catalog.',
+                  pl: 'Otwiera pełny katalog lekcji.',
+                })}
+                label={copy({
+                  de: 'Alle Lektionen öffnen',
+                  en: 'Open all lessons',
+                  pl: 'Otwórz wszystkie lekcje',
+                })}
+              />
+            </View>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title={copy({
+            de: 'Nächste Schritte',
+            en: 'Next steps',
+            pl: 'Następne kroki',
+          })}
+        >
+          <Text style={{ color: '#475569', lineHeight: 20 }}>
+            {copy({
+              de: 'Kurze Aufgaben aus lokalem Lernfortschritt und gespeicherten Lektionen, damit du direkt vom Dashboard weitermachen kannst.',
+              en: 'Short tasks from local learning progress and saved lessons so you can continue straight from the dashboard.',
+              pl: 'Krótkie zadania z lokalnego postępu i zapisanych lekcji, aby można było kontynuować naukę prosto z dashboardu.',
+            })}
+          </Text>
+          {homeAssignments.assignmentItems.length === 0 ? (
+            <Text style={{ color: '#475569', lineHeight: 20 }}>
+              {copy({
+                de: 'Es gibt noch keine lokalen Aufgaben. Öffne eine Lektion oder schließe ein Training ab, um sie zu erzeugen.',
+                en: 'There are no local tasks yet. Open a lesson or finish practice to generate them.',
+                pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcję albo ukończ trening, aby je wygenerować.',
+              })}
+            </Text>
+          ) : (
+            <View style={{ gap: 12 }}>
+              {homeAssignments.assignmentItems.map((item) => (
+                <AssignmentCard
+                  key={item.assignment.id}
+                  item={item}
+                />
+              ))}
+              <OutlineLink
+                href={PLAN_ROUTE}
+                hint={copy({
+                  de: 'Öffnet den vollständigen Tagesplan mit der erweiterten Aufgabenliste.',
+                  en: 'Opens the full daily plan with the extended task list.',
+                  pl: 'Otwiera pełny plan dnia z rozszerzoną listą zadań.',
+                })}
+                label={copy({
+                  de: 'Vollen Tagesplan öffnen',
+                  en: 'Open full daily plan',
+                  pl: 'Otwórz pełny plan dnia',
+                })}
+              />
             </View>
           )}
         </SectionCard>

@@ -17,8 +17,11 @@ const {
   bulkReplaceProductCatalogsMock: vi.fn(),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
+}));
+
+vi.mock('@/features/products/server', () => ({
   getCatalogRepository: getCatalogRepositoryMock,
   getProductRepository: getProductRepositoryMock,
   CachedProductService: {

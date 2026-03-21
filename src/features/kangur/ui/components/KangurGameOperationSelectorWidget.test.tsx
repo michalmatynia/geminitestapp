@@ -23,7 +23,7 @@ const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
 
 const { localeState } = vi.hoisted(() => ({
   localeState: {
-    value: 'pl' as 'de' | 'en' | 'pl',
+    value: 'pl' as 'de' | 'en' | 'pl' | 'uk',
   },
 }));
 
@@ -97,14 +97,17 @@ vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
 
 vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
+    description,
     title,
     visualTitle,
   }: {
+    description?: React.ReactNode;
     title: string;
     visualTitle?: React.ReactNode;
   }) => (
     <div data-testid='mock-operation-intro'>
       <span>{title}</span>
+      {description ? <span>{description}</span> : null}
       {visualTitle}
     </div>
   ),
@@ -489,6 +492,49 @@ describe('KangurGameOperationSelectorWidget', () => {
     expect(intro).toHaveTextContent('Training einrichten');
     expect(text).not.toBeNull();
     expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to Ukrainian play copy when translations are unavailable', () => {
+    localeState.value = 'uk';
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Граймо!');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Граймо!');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to Ukrainian training copy when translations are unavailable', () => {
+    localeState.value = 'uk';
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Налаштування тренування');
+    expect(intro).toHaveTextContent('Налаштуйте змішане тренування й виберіть діапазон запитань.');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Тренування');
     expect(text).toHaveAttribute('font-size', '68');
     expect(text).not.toHaveAttribute('textLength');
     expect(text).not.toHaveAttribute('lengthAdjust');

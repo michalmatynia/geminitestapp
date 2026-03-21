@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Alert, Button, InsetPanel, StatusBadge } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import {
   formatDurationMs,
@@ -24,6 +25,46 @@ type JobQueueOverviewProps = {
   onClearHistory: () => void;
 };
 
+type QueueOverviewCardProps = {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+};
+
+function QueueOverviewCard({
+  title,
+  children,
+  className,
+}: QueueOverviewCardProps): React.JSX.Element {
+  return (
+    <InsetPanel
+      radius='compact'
+      padding='sm'
+      className={cn('bg-card/50 text-xs text-gray-300 border-border/60', className)}
+    >
+      <div className='text-[10px] uppercase text-gray-500'>{title}</div>
+      {children}
+    </InsetPanel>
+  );
+}
+
+function QueueOverviewMiniCard({
+  title,
+  children,
+  className,
+}: QueueOverviewCardProps): React.JSX.Element {
+  return (
+    <InsetPanel
+      radius='compact'
+      padding='none'
+      className={cn('bg-card/60 p-2 text-[11px] text-gray-300 border-border/60', className)}
+    >
+      <div className='text-[10px] uppercase text-gray-500'>{title}</div>
+      {children}
+    </InsetPanel>
+  );
+}
+
 export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Element {
   const {
     queueStatus,
@@ -43,8 +84,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
   return (
     <>
       <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Worker</div>
+        <QueueOverviewCard title='Worker'>
           <div className='mt-1 flex items-center gap-2 text-sm text-white'>
             {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
             {queueStatus?.running ? <RunningIndicator label='Active' /> : null}
@@ -52,26 +92,23 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
           <div className='mt-1 text-[11px] text-gray-400'>
             Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
           </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Concurrency</div>
+        </QueueOverviewCard>
+        <QueueOverviewCard title='Concurrency'>
           <div className='mt-1 text-sm text-white'>{queueStatus?.concurrency ?? '-'}</div>
           <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
             <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
             {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label='Busy' /> : null}
           </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Last poll</div>
+        </QueueOverviewCard>
+        <QueueOverviewCard title='Last poll'>
           <div className='mt-1 text-sm text-white'>
             {formatUtcClockTime(queueStatus?.lastPollTime)}
           </div>
           <div className='mt-1 text-[11px] text-gray-400'>
             Age: {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
           </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Status</div>
+        </QueueOverviewCard>
+        <QueueOverviewCard title='Status'>
           <div className='mt-1 text-sm text-white'>
             {queueStatusFetching ? 'Refreshing...' : 'Live'}
           </div>
@@ -94,9 +131,8 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
               className='mt-2 font-bold'
             />
           ) : null}
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
+        </QueueOverviewCard>
+        <QueueOverviewCard title='Queue Depth'>
           <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0} queued</div>
           <div className='mt-1 text-[11px] text-gray-400'>
             Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
@@ -135,9 +171,8 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
               <span>Runtime analytics disabled</span>
             )}
           </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Brain Analytics Queue</div>
+        </QueueOverviewCard>
+        <QueueOverviewCard title='Brain Analytics Queue'>
           <div className='mt-1 flex items-center gap-2 text-sm text-white'>
             {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
             {queueStatus?.brainQueue?.running ? <RunningIndicator label='Active' /> : null}
@@ -170,7 +205,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
               Runtime analytics disabled in AI Brain.
             </div>
           )}
-        </div>
+        </QueueOverviewCard>
       </div>
 
       {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
@@ -248,24 +283,21 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
               </div>
             </div>
             <div className='grid gap-2 md:grid-cols-3'>
-              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
-                <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
+              <QueueOverviewMiniCard title='Queue Depth'>
                 <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0}</div>
                 <div className='mt-1 text-[10px] text-gray-400'>
                   Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
                 </div>
-              </div>
-              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
-                <div className='text-[10px] uppercase text-gray-500'>Throughput</div>
+              </QueueOverviewMiniCard>
+              <QueueOverviewMiniCard title='Throughput'>
                 <div className='mt-1 text-sm text-white'>
                   {queueStatus?.throughputPerMinute ?? 0}/min
                 </div>
                 <div className='mt-1 text-[10px] text-gray-400'>
                   Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
                 </div>
-              </div>
-              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
-                <div className='text-[10px] uppercase text-gray-500'>Runtime</div>
+              </QueueOverviewMiniCard>
+              <QueueOverviewMiniCard title='Runtime'>
                 {runtimeAnalyticsEnabled ? (
                   <>
                     <div className='mt-1 text-sm text-white'>
@@ -279,7 +311,7 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
                 ) : (
                   <div className='mt-1 text-[10px] text-gray-400'>Runtime analytics disabled.</div>
                 )}
-              </div>
+              </QueueOverviewMiniCard>
             </div>
           </div>
         ) : null}

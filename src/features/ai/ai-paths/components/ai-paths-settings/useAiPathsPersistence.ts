@@ -26,7 +26,10 @@ import {
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   normalizeHistoryRetentionOptionsMax,
@@ -107,9 +110,10 @@ export function useAiPathsPersistence(
     try {
       return JSON.stringify(value);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useAiPathsPersistence', action: 'stringifyForStorage', label },
+      logClientCatch(error, {
+        source: 'useAiPathsPersistence',
+        action: 'stringifyForStorage',
+        label,
       });
       return '';
     }
@@ -126,13 +130,10 @@ export function useAiPathsPersistence(
       try {
         return sanitizePathConfig(config);
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useAiPathsPersistence',
-            action: 'sanitizePrefetchedPathConfig',
-            pathId,
-          },
+        logClientCatch(error, {
+          source: 'useAiPathsPersistence',
+          action: 'sanitizePrefetchedPathConfig',
+          pathId,
         });
         return null;
       }
@@ -260,25 +261,19 @@ export function useAiPathsPersistence(
                 fallbackName
               );
             } catch (error) {
-              logClientError(error);
-              logClientError(error, {
-                context: {
-                  source: 'useAiPathsPersistence',
-                  action: 'parsePathConfig',
-                  pathId: resolvedActivePathId,
-                },
+              logClientCatch(error, {
+                source: 'useAiPathsPersistence',
+                action: 'parsePathConfig',
+                pathId: resolvedActivePathId,
               });
             }
           }
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'useAiPathsPersistence',
-              action: 'loadActivePathConfig',
-              pathId: resolvedActivePathId,
-              level: 'warn',
-            },
+          logClientCatch(error, {
+            source: 'useAiPathsPersistence',
+            action: 'loadActivePathConfig',
+            pathId: resolvedActivePathId,
+            level: 'warn',
           });
         }
         const stageBDurationMs = Date.now() - stageBStartedAt;
@@ -507,13 +502,10 @@ export function useAiPathsPersistence(
               });
               hydratedConfigs[pathId] = sanitized;
             } catch (error) {
-              logClientError(error);
-              logClientError(error, {
-                context: {
-                  source: 'useAiPathsPersistence',
-                  action: 'prefetchParsePathConfig',
-                  pathId,
-                },
+              logClientCatch(error, {
+                source: 'useAiPathsPersistence',
+                action: 'prefetchParsePathConfig',
+                pathId,
               });
             }
           });
@@ -530,14 +522,11 @@ export function useAiPathsPersistence(
             });
           }
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              source: 'useAiPathsPersistence',
-              action: 'prefetchPathConfigBatch',
-              batchSize: batch.length,
-              level: 'warn',
-            },
+          logClientCatch(error, {
+            source: 'useAiPathsPersistence',
+            action: 'prefetchPathConfigBatch',
+            batchSize: batch.length,
+            level: 'warn',
           });
         }
       }

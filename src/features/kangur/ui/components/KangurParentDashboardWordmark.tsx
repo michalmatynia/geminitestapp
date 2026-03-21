@@ -6,6 +6,7 @@ const KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS = {
   de: 'Elterndashboard',
   en: 'Parent dashboard',
   pl: 'Panel rodzica',
+  uk: 'Панель для батьків',
 } as const;
 
 const getKangurParentDashboardWordmarkLabel = (locale: string | null | undefined): string => {
@@ -14,6 +15,8 @@ const getKangurParentDashboardWordmarkLabel = (locale: string | null | undefined
       return KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS.de;
     case 'en':
       return KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS.en;
+    case 'uk':
+      return KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS.uk;
     default:
       return KANGUR_PARENT_DASHBOARD_WORDMARK_LABELS.pl;
   }

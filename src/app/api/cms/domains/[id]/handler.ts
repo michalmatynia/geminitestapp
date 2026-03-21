@@ -3,9 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/server';
 import { cmsDomainUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import type { IdDto as ApiParams } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-
-type ApiParams = { id: string };
 
 export async function PUT_handler(
   req: NextRequest,

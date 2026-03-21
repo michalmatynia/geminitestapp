@@ -43,7 +43,7 @@ export default async function RootLayout({
     <html lang={DEFAULT_SITE_I18N_CONFIG.defaultLocale} suppressHydrationWarning>
       <body suppressHydrationWarning className={cn('max-w-full overflow-x-hidden font-sans')}>
         <NextIntlClientProvider>
-          <a href='#app-content' className='app-skip-link'>
+          <a href='#kangur-main-content' className='app-skip-link'>
             {commonTranslations('skipToMainContent')}
           </a>
           <RootClientShell>{children}</RootClientShell>

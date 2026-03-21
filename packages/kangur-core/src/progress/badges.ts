@@ -1,6 +1,11 @@
 import type { KangurProgressState } from '@kangur/contracts';
 
-import { getLocalizedKangurProgressBadgeTrackLabel } from '../progress-i18n';
+import {
+  getLocalizedKangurProgressBadgeDescription,
+  getLocalizedKangurProgressBadgeName,
+  getLocalizedKangurProgressBadgeSummary,
+  getLocalizedKangurProgressBadgeTrackLabel,
+} from '../progress-i18n';
 
 export type KangurBadgeTrackKey =
   | 'onboarding'
@@ -534,6 +539,7 @@ export const BADGES: KangurBadge[] = [
 export const getBadgeProgress = (
   progress: KangurProgressState,
   badge: KangurBadge,
+  locale?: string | null | undefined,
 ): KangurBadgeProgress => {
   const details = badge.progress(progress);
   const target = Math.max(1, Math.round(details.target));
@@ -542,24 +548,36 @@ export const getBadgeProgress = (
   return {
     current,
     target,
-    summary: details.summary,
+    summary: getLocalizedKangurProgressBadgeSummary({
+      badgeId: badge.id,
+      current,
+      target,
+      fallbackSummary: details.summary,
+      locale,
+    }),
     isUnlocked: current >= target,
     progressPercent: clampPercent((Math.min(current, target) / target) * 100),
   };
 };
 
-export const getProgressBadges = (progress: KangurProgressState): KangurBadgeStatus[] =>
+export const getProgressBadges = (
+  progress: KangurProgressState,
+  locale?: string | null | undefined,
+): KangurBadgeStatus[] =>
   BADGES.map((badge) => ({
     ...badge,
-    ...getBadgeProgress(progress, badge),
+    name: getLocalizedKangurProgressBadgeName(badge.id, badge.name, locale),
+    desc: getLocalizedKangurProgressBadgeDescription(badge.id, badge.desc, locale),
+    ...getBadgeProgress(progress, badge, locale),
   }));
 
 export const getVisibleProgressBadges = (
   progress: KangurProgressState,
   options: KangurVisibleBadgeOptions = {},
+  locale?: string | null | undefined,
 ): KangurBadgeStatus[] => {
   const { maxLocked = 3, minimumLockedProgressPercent = 25 } = options;
-  const badgeStatuses = getProgressBadges(progress);
+  const badgeStatuses = getProgressBadges(progress, locale);
   const visibleLockedBadgeIds = new Set(
     badgeStatuses
       .filter(
@@ -591,9 +609,10 @@ export const getVisibleProgressBadges = (
 export const getProgressBadgeTrackSummaries = (
   progress: KangurProgressState,
   options: KangurBadgeTrackOptions = {},
+  locale?: string | null | undefined,
 ): KangurBadgeTrackSummary[] => {
   const { maxTracks = 4, minimumTrackProgressPercent = 25 } = options;
-  const badgeStatuses = getProgressBadges(progress);
+  const badgeStatuses = getProgressBadges(progress, locale);
   return Object.entries(BADGE_TRACK_META)
     .map(([key, meta]) => {
       const badges = badgeStatuses.filter((badge) => badge.track === key);
@@ -623,7 +642,11 @@ export const getProgressBadgeTrackSummaries = (
 
       return {
         key: key as KangurBadgeTrackKey,
-        label: meta.label,
+        label: getLocalizedKangurProgressBadgeTrackLabel(
+          key as KangurBadgeTrackKey,
+          meta.label,
+          locale,
+        ),
         emoji: meta.emoji,
         unlockedCount,
         totalCount: badges.length,

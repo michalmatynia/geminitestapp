@@ -1,6 +1,45 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { loadSiteMessages } from '@/i18n/messages';
+
+const rawEnglishMessages = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'src/i18n/messages/en.json'), 'utf8'),
+) as unknown;
+
+const rawUkrainianMessages = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'src/i18n/messages/uk.json'), 'utf8'),
+) as unknown;
+
+function collectMissingKeys(source: unknown, target: unknown, path: string[] = []): string[] {
+  if (Array.isArray(source)) {
+    if (!Array.isArray(target)) {
+      return [path.join('.')];
+    }
+
+    return source.flatMap((item, index) =>
+      index < target.length
+        ? collectMissingKeys(item, target[index], [...path, String(index)])
+        : [[...path, String(index)].join('.')],
+    );
+  }
+
+  if (source && typeof source === 'object') {
+    if (!target || typeof target !== 'object' || Array.isArray(target)) {
+      return [path.join('.')];
+    }
+
+    return Object.entries(source as Record<string, unknown>).flatMap(([key, value]) =>
+      Object.prototype.hasOwnProperty.call(target, key)
+        ? collectMissingKeys(value, (target as Record<string, unknown>)[key], [...path, key])
+        : [[...path, key].join('.')],
+    );
+  }
+
+  return [];
+}
 
 describe('site messages', () => {
   it('merges Ukrainian overrides on top of configured fallbacks', async () => {
@@ -205,12 +244,13 @@ describe('site messages', () => {
     expect(messages.AuthApi.emailVerificationRequired).toBe(
       'Потрібне підтвердження електронної пошти.',
     );
+    expect(messages.FallbackHome.Header.brand).toBe('Вітрина');
+    expect(messages.FallbackHome.Products.addProducts).toBe('Додати товари');
+    expect(messages.Product.fallbackTitle).toBe('Продукт');
+    expect(messages.Product.backToStorefront).toBe('Назад до вітрини');
   });
 
-  it('falls back to English for untranslated Ukrainian sections before Polish', async () => {
-    const messages = await loadSiteMessages('uk');
-
-    expect(messages.Product.fallbackTitle).toBe('Product');
-    expect(messages.Product.backToStorefront).toBe('Back to storefront');
+  it('covers every English message key in the Ukrainian source bundle', () => {
+    expect(collectMissingKeys(rawEnglishMessages, rawUkrainianMessages)).toEqual([]);
   });
 });

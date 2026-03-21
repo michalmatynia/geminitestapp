@@ -48,6 +48,7 @@ vi.mock('@/shared/ui', async () => {
         <div>{description}</div>
       </div>
     ),
+    insetPanelVariants: () => 'rounded border border-border/60 bg-card/40 p-3',
     CompactEmptyState: ({ title, description }: { title: string; description: string }) => (
       <div>
         <div>{title}</div>

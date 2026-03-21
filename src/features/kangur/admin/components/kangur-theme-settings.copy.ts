@@ -169,6 +169,69 @@ const SECTION_COPY: Record<
       subtitle: 'Dostrój miękkość cieni szklanego panelu i kart.',
     },
   },
+  uk: {
+    corePalette: {
+      title: 'Основна палітра',
+      subtitle: 'Спільні тони для акцентів, тексту та станів зворотного звʼязку в Kangur.',
+    },
+    textOverrides: {
+      title: 'Перевизначення тексту',
+      subtitle: 'Необовʼязкові перевизначення кольорів тексту сторінки, карток і навігації.',
+    },
+    logoLoader: {
+      title: 'Лого і лоадер',
+      subtitle: 'Налаштуйте градієнти логотипа Kangur, які використовуються в лоадері та навігації.',
+    },
+    backgroundsSurfaces: {
+      title: 'Тла і поверхні',
+      subtitle: 'Базові кольори сторінки, панелей, карток і оболонки чату.',
+    },
+    buttons: {
+      title: 'Кнопки',
+      subtitle: 'Кольори основних і другорядних CTA, що використовуються у storefront.',
+    },
+    buttonShadows: {
+      title: 'Тіні кнопок',
+      subtitle: 'Зовнішні тіні для оболонки основних і другорядних кнопок.',
+    },
+    gelEffects: {
+      title: 'Гелеві ефекти',
+      subtitle: 'Блік, внутрішні тіні, тінь тексту й зовнішнє сяйво для гелевих кнопок.',
+    },
+    navigationPills: {
+      title: 'Навігаційні pills',
+      subtitle: 'Стиль pills для бокової панелі й вкладок у звичайному та активному стані.',
+    },
+    gradients: {
+      title: 'Градієнти',
+      subtitle: 'Акцентні градієнти для плиток уроків, бейджів і декоративних підсвіток.',
+    },
+    homeActions: {
+      title: 'Дії головної сторінки',
+      subtitle:
+        'Оформіть чотири головні кнопки сторінки (іконки залишаються без змін). Порожнє поле зберігає типовий тон.',
+    },
+    progressBars: {
+      title: 'Смужки прогресу',
+      subtitle: 'Кольори треку для індикаторів прогресу в Kangur.',
+    },
+    inputs: {
+      title: 'Поля',
+      subtitle: 'Кольори поля пошуку, відповіді та підказки тутору.',
+    },
+    typographyLayout: {
+      title: 'Типографіка і макет',
+      subtitle: 'Шрифти, ритм базового тексту й ширина сторінки, які використовує оболонка Kangur.',
+    },
+    shapeSpacing: {
+      title: 'Форма і відступи',
+      subtitle: 'Спільні радіуси для панелей, навігації, кнопок і полів.',
+    },
+    shadowsDepth: {
+      title: 'Тіні і глибина',
+      subtitle: 'Налаштуйте мʼякість тіней скляної панелі та карток.',
+    },
+  },
 };
 
 const MODE_COPY: Record<
@@ -235,6 +298,32 @@ const MODE_COPY: Record<
       toastMessage: 'Motyw nocny przywrócony do domyślnych ustawień.',
     },
   },
+  uk: {
+    daily: {
+      label: 'Денна тема',
+      resetLabel: 'Відновити денну тему',
+      resetDescription: 'Перезаписує цю тему типовим денним пресетом.',
+      toastMessage: 'Денну тему відновлено до типових налаштувань.',
+    },
+    dawn: {
+      label: 'Світанкова тема',
+      resetLabel: 'Відновити світанкову тему',
+      resetDescription: 'Перезаписує цю тему типовим пресетом світанку.',
+      toastMessage: 'Світанкову тему відновлено до типових налаштувань.',
+    },
+    sunset: {
+      label: 'Тема заходу',
+      resetLabel: 'Відновити тему заходу',
+      resetDescription: 'Перезаписує цю тему типовим пресетом заходу.',
+      toastMessage: 'Тему заходу відновлено до типових налаштувань.',
+    },
+    nightly: {
+      label: 'Нічна тема',
+      resetLabel: 'Відновити нічну тему',
+      resetDescription: 'Перезаписує цю тему типовим нічним пресетом.',
+      toastMessage: 'Нічну тему відновлено до типових налаштувань.',
+    },
+  },
 };
 
 const FONT_WEIGHT_OPTIONS_BY_LOCALE: Record<
@@ -257,6 +346,14 @@ const FONT_WEIGHT_OPTIONS_BY_LOCALE: Record<
     { value: '700', label: 'Gruby (700)' },
     { value: '800', label: 'Bardzo gruby (800)' },
   ],
+  uk: [
+    { value: '300', label: 'Легка (300)' },
+    { value: '400', label: 'Звичайна (400)' },
+    { value: '500', label: 'Середня (500)' },
+    { value: '600', label: 'Напівжирна (600)' },
+    { value: '700', label: 'Жирна (700)' },
+    { value: '800', label: 'Дуже жирна (800)' },
+  ],
 };
 
 const HOME_ACTION_GROUP_LABELS: Record<
@@ -273,6 +370,12 @@ const HOME_ACTION_GROUP_LABELS: Record<
     lessons: 'Lekcje',
     play: 'Graj',
     training: 'Trening',
+    kangur: 'Kangur',
+  },
+  uk: {
+    lessons: 'Уроки',
+    play: 'Грай',
+    training: 'Тренування',
     kangur: 'Kangur',
   },
 };
@@ -322,6 +425,28 @@ const HOME_ACTION_TOKEN_LABELS: Record<KangurThemeSettingsLocale, Record<string,
     UnderlayShadowColor: 'Cien podkladu',
     SurfaceShadowColor: 'Cien powierzchni',
   },
+  uk: {
+    TextColor: 'Колір тексту',
+    TextActiveColor: 'Колір активного тексту',
+    LabelStart: 'Початок градієнта мітки',
+    LabelMid: 'Середина градієнта мітки',
+    LabelEnd: 'Кінець градієнта мітки',
+    LabelStartActive: 'Початок активного градієнта мітки',
+    LabelMidActive: 'Середина активного градієнта мітки',
+    LabelEndActive: 'Кінець активного градієнта мітки',
+    AccentStart: 'Початок градієнта акценту',
+    AccentMid: 'Середина градієнта акценту',
+    AccentEnd: 'Кінець градієнта акценту',
+    UnderlayStart: 'Початок градієнта підкладки',
+    UnderlayMid: 'Середина градієнта підкладки',
+    UnderlayEnd: 'Кінець градієнта підкладки',
+    UnderlayTintStart: 'Початок тонування підкладки',
+    UnderlayTintMid: 'Середина тонування підкладки',
+    UnderlayTintEnd: 'Кінець тонування підкладки',
+    AccentShadowColor: 'Тінь акценту',
+    UnderlayShadowColor: 'Тінь підкладки',
+    SurfaceShadowColor: 'Тінь поверхні',
+  },
 };
 
 const PANEL_COPY: Record<
@@ -358,6 +483,17 @@ const PANEL_COPY: Record<
     auto: 'Auto',
     progressTrackColorPickerAria: 'Wybierak koloru toru postępu',
     progressTrackColorValueAria: 'Wartość koloru toru postępu',
+  },
+  uk: {
+    autosaveTitle: 'Автозбереження',
+    autosaveDescription:
+      'Зміни в цьому редакторі автоматично зберігаються в Mongo і живлять live-тему Kangur. Ця панель показує лише ті токени, які сьогодні мапить публічний runtime Kangur, тому кожне поле тут має реальний ефект у storefront.',
+    restoreDefaultButton: 'Відновити типові',
+    restoring: 'Відновлюю...',
+    resetError: 'Не вдалося відновити тему.',
+    auto: 'Авто',
+    progressTrackColorPickerAria: 'Вибір кольору смужки прогресу',
+    progressTrackColorValueAria: 'Значення кольору смужки прогресу',
   },
 };
 
@@ -482,6 +618,127 @@ const PL_FIELD_LABELS: Record<string, string> = {
   'Card Shadow X': 'Cien karty X',
 };
 
+const UK_FIELD_LABELS: Record<string, string> = {
+  'Primary Accent': 'Основний акцент',
+  'Secondary Accent': 'Другорядний акцент',
+  'Warning Accent': 'Акцент попередження',
+  'Success Accent': 'Акцент успіху',
+  'Primary Text': 'Основний текст',
+  'Muted Text': 'Приглушений текст',
+  'Page Text Override': 'Перевизначення тексту сторінки',
+  'Page Muted Text Override': 'Перевизначення приглушеного тексту сторінки',
+  'Card Text Override': 'Перевизначення тексту картки',
+  'Navigation Text Override': 'Перевизначення тексту навігації',
+  'Navigation Active Text Override': 'Перевизначення активного тексту навігації',
+  'Navigation Hover Text Override': 'Перевизначення hover-тексту навігації',
+  'Wordmark Start': 'Початок напису логотипа',
+  'Wordmark Mid': 'Середина напису логотипа',
+  'Wordmark End': 'Кінець напису логотипа',
+  'Ring Start': 'Початок обвідки',
+  'Ring End': 'Кінець обвідки',
+  'Accent Start': 'Початок акценту',
+  'Accent End': 'Кінець акценту',
+  'Inner Glow Start': 'Початок внутрішнього сяйва',
+  'Inner Glow End': 'Кінець внутрішнього сяйва',
+  'Logo Shadow': 'Тінь логотипа',
+  'Logo Glint': 'Блік логотипа',
+  'Page Background': 'Тло сторінки',
+  'Surface Background': 'Тло поверхні',
+  'Card Background': 'Тло картки',
+  'Container Background': 'Тло контейнера',
+  'Panel Gradient Start': 'Початок градієнта панелі',
+  'Panel Gradient End': 'Кінець градієнта панелі',
+  'Panel Transparency': 'Прозорість панелі',
+  'Base Border': 'Базова рамка',
+  'Surface Border': 'Рамка поверхні',
+  'Primary Button Background': 'Тло основної кнопки',
+  'Primary Button Text': 'Текст основної кнопки',
+  'Secondary Button Background': 'Тло другорядної кнопки',
+  'Secondary Button Text': 'Текст другорядної кнопки',
+  'Outline Border': 'Рамка outline',
+  'Button Padding X': 'Padding X кнопки',
+  'Button Padding Y': 'Padding Y кнопки',
+  'Button Font Size': 'Розмір шрифту кнопки',
+  'Button Font Weight': 'Товщина шрифту кнопки',
+  'Button Border Width': 'Ширина рамки кнопки',
+  'Button Border Opacity': 'Прозорість рамки кнопки',
+  'Shadow Opacity': 'Прозорість тіні',
+  'Shadow X': 'Тінь X',
+  'Shadow Y': 'Тінь Y',
+  'Shadow Blur': 'Розмиття тіні',
+  'Gloss Opacity': 'Прозорість блиску',
+  'Gloss Height': 'Висота блиску',
+  'Gloss Angle': 'Кут блиску',
+  'Top Highlight': 'Верхнє підсвічування',
+  'Inner Shadow Opacity': 'Прозорість внутрішньої тіні',
+  'Inner Shadow Blur': 'Розмиття внутрішньої тіні',
+  'Inner Shadow Y': 'Внутрішня тінь Y',
+  'Text Shadow Opacity': 'Прозорість тіні тексту',
+  'Text Shadow Y': 'Тінь тексту Y',
+  'Text Shadow Blur': 'Розмиття тіні тексту',
+  'Outer Glow Opacity': 'Прозорість зовнішнього сяйва',
+  'Outer Glow Spread': 'Поширення зовнішнього сяйва',
+  'Navbar Gradient Start': 'Початок градієнта навігації',
+  'Navbar Gradient End': 'Кінець градієнта навігації',
+  'Navbar Transparency': 'Прозорість навігації',
+  'Pill Background': 'Тло pill',
+  'Pill Text': 'Текст pill',
+  'Active Pill Background': 'Тло активної pill',
+  'Active Pill Text': 'Текст активної pill',
+  'Pill Padding X': 'Padding X pill',
+  'Pill Padding Y': 'Padding Y pill',
+  'Pill Font Size': 'Розмір шрифту pill',
+  'Indigo Gradient Start': 'Початок градієнта індиго',
+  'Indigo Gradient End': 'Кінець градієнта індиго',
+  'Violet Gradient Start': 'Початок фіолетового градієнта',
+  'Violet Gradient End': 'Кінець фіолетового градієнта',
+  'Emerald Gradient Start': 'Початок смарагдового градієнта',
+  'Emerald Gradient End': 'Кінець смарагдового градієнта',
+  'Sky Gradient Start': 'Початок небесного градієнта',
+  'Sky Gradient End': 'Кінець небесного градієнта',
+  'Amber Gradient Start': 'Початок бурштинового градієнта',
+  'Amber Gradient End': 'Кінець бурштинового градієнта',
+  'Rose Gradient Start': 'Початок рожевого градієнта',
+  'Rose Gradient End': 'Кінець рожевого градієнта',
+  'Teal Gradient Start': 'Початок бірюзового градієнта',
+  'Teal Gradient End': 'Кінець бірюзового градієнта',
+  'Slate Gradient Start': 'Початок сланцевого градієнта',
+  'Slate Gradient End': 'Кінець сланцевого градієнта',
+  'Progress Track': 'Трек прогресу',
+  'Input Background': 'Тло поля',
+  'Input Text': 'Текст поля',
+  'Input Border': 'Рамка поля',
+  'Input Placeholder': 'Placeholder поля',
+  'Input Height': 'Висота поля',
+  'Input Font Size': 'Розмір шрифту поля',
+  'Heading Font': 'Шрифт заголовків',
+  'Body Font': 'Шрифт тексту',
+  'Base Font Size': 'Базовий розмір шрифту',
+  'Body Line Height': 'Висота рядка тексту',
+  'Heading Line Height': 'Висота рядка заголовка',
+  'Page Width': 'Ширина сторінки',
+  'Shared Gap Scale': 'Спільний масштаб відступів',
+  'Page Padding Top': 'Padding сторінки зверху',
+  'Page Padding Right': 'Padding сторінки праворуч',
+  'Page Padding Bottom': 'Padding сторінки знизу',
+  'Page Padding Left': 'Padding сторінки ліворуч',
+  'Panel Radius': 'Радіус панелі',
+  'Card Radius': 'Радіус картки',
+  'Panel Inner Padding': 'Внутрішній padding панелі',
+  'Navigation Pill Radius': 'Радіус навігаційної pill',
+  'Button Radius': 'Радіус кнопки',
+  'Button Border Radius': 'Радіус рамки кнопки',
+  'Input Radius': 'Радіус поля',
+  'Panel Shadow Opacity': 'Прозорість тіні панелі',
+  'Panel Shadow Blur': 'Розмиття тіні панелі',
+  'Panel Shadow Y': 'Тінь панелі Y',
+  'Panel Shadow X': 'Тінь панелі X',
+  'Card Shadow Opacity': 'Прозорість тіні картки',
+  'Card Shadow Blur': 'Розмиття тіні картки',
+  'Card Shadow Y': 'Тінь картки Y',
+  'Card Shadow X': 'Тінь картки X',
+};
+
 const PL_FIELD_HELPER_TEXTS: Record<string, string> = {
   'Leave empty to use the Primary Text color.':
     'Zostaw puste, aby uzyc koloru glownego tekstu.',
@@ -515,8 +772,45 @@ const PL_FIELD_HELPER_TEXTS: Record<string, string> = {
     'Zostaw puste, aby Kangur sam dobral kolor toru dla biezacego trybu.',
 };
 
+const UK_FIELD_HELPER_TEXTS: Record<string, string> = {
+  'Leave empty to use the Primary Text color.':
+    'Залиште порожнім, щоб використати колір основного тексту.',
+  'Leave empty to use the Muted Text color.':
+    'Залиште порожнім, щоб використати колір приглушеного тексту.',
+  'Controls text color inside soft cards.':
+    'Керує кольором тексту всередині мʼяких карток.',
+  'Overrides the top navigation text color.':
+    'Перевизначає колір тексту верхньої навігації.',
+  'Overrides the active navigation text color.':
+    'Перевизначає колір активного тексту навігації.',
+  'Overrides the hover navigation text color.':
+    'Перевизначає колір hover-тексту навігації.',
+  'Leave empty to derive from the active palette.':
+    'Залиште порожнім, щоб вивести колір з активної палітри.',
+  'CSS color or gradient (e.g. #ff8a3d or linear-gradient(...)).':
+    'Колір CSS або градієнт (наприклад, #ff8a3d або linear-gradient(...)).',
+  'CSS color or gradient (e.g. #ffffff or linear-gradient(...)).':
+    'Колір CSS або градієнт (наприклад, #ffffff або linear-gradient(...)).',
+  'White-to-transparent gloss overlay covering the top portion of the button.':
+    'Білий до прозорого блиск, що покриває верхню частину кнопки.',
+  'Bright inset line along the top edge of the button.':
+    'Яскрава внутрішня лінія вздовж верхнього краю кнопки.',
+  'Dark inset shadow at the bottom edge for depth.':
+    'Темна внутрішня тінь біля нижнього краю для відчуття глибини.',
+  'Raised or embossed text effect.':
+    'Ефект опуклого або тисненого тексту.',
+  'Colored halo around the button. Distinct from drop shadow.':
+    'Кольорове сяйво навколо кнопки, окреме від зовнішньої тіні.',
+  'Leave empty to let Kangur pick a track color based on the current mode.':
+    'Залиште порожнім, щоб Kangur сам підібрав колір треку для поточного режиму.',
+};
+
 const PL_FIELD_PLACEHOLDERS: Record<string, string> = {
   Auto: 'Auto',
+};
+
+const UK_FIELD_PLACEHOLDERS: Record<string, string> = {
+  Auto: 'Авто',
 };
 
 export const resolveKangurThemeSettingsLocale = (
@@ -540,20 +834,24 @@ export const localizeKangurThemeField = <T extends object>(
   locale: KangurThemeSettingsLocale,
   field: SettingsPanelField<T>
 ): SettingsPanelField<T> => {
-  if (locale !== 'pl') {
+  if (locale === 'en') {
     return field;
   }
 
+  const fieldLabels = locale === 'uk' ? UK_FIELD_LABELS : PL_FIELD_LABELS;
+  const fieldHelpers = locale === 'uk' ? UK_FIELD_HELPER_TEXTS : PL_FIELD_HELPER_TEXTS;
+  const fieldPlaceholders = locale === 'uk' ? UK_FIELD_PLACEHOLDERS : PL_FIELD_PLACEHOLDERS;
+
   return {
     ...field,
-    label: PL_FIELD_LABELS[field.label] ?? field.label,
+    label: fieldLabels[field.label] ?? field.label,
     helperText:
       typeof field.helperText === 'string'
-        ? (PL_FIELD_HELPER_TEXTS[field.helperText] ?? field.helperText)
+        ? (fieldHelpers[field.helperText] ?? field.helperText)
         : field.helperText,
     placeholder:
       typeof field.placeholder === 'string'
-        ? (PL_FIELD_PLACEHOLDERS[field.placeholder] ?? field.placeholder)
+        ? (fieldPlaceholders[field.placeholder] ?? field.placeholder)
         : field.placeholder,
   };
 };

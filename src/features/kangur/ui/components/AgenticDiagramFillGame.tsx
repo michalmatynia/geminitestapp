@@ -83,8 +83,6 @@ type DiagramGameConfig = {
   renderSvg: () => React.JSX.Element;
 };
 
-type FeedbackState = KangurMiniGameInformationalFeedback | null;
-
 type AgenticDiagramFillGameProps = {
   gameId: AgenticDiagramGameId;
   accent?: KangurAccent;
@@ -137,7 +135,10 @@ const pointsInsideRatio = (points: Point2d[], rect: Rect, padding = 0): number =
   return inside / points.length;
 };
 
-const evaluateDiagramDrawing = (target: DiagramTarget, points: Point2d[]): FeedbackState => {
+const evaluateDiagramDrawing = (
+  target: DiagramTarget,
+  points: Point2d[]
+): KangurMiniGameInformationalFeedback | null => {
   if (points.length < MIN_POINTS) {
     return {
       kind: 'error',
@@ -587,7 +588,7 @@ export function AgenticDiagramFillGame({
   const isDrawingRef = useRef(false);
 
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
 
   const strokeWidth = isCoarsePointer ? 6 : 4;
   const minPointDistance = isCoarsePointer ? 4 : 2.5;

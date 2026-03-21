@@ -7,7 +7,7 @@ import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/T
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { AdminCmsPageLayout, Alert } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreateThemePage(): React.JSX.Element {
@@ -27,9 +27,10 @@ export default function CreateThemePage(): React.JSX.Element {
       await createTheme.mutateAsync(validation.data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
-      logClientError(submitError);
-      logClientError(submitError, {
-        context: { source: 'CreateThemePage', action: 'createTheme', name: data.name },
+      logClientCatch(submitError, {
+        source: 'CreateThemePage',
+        action: 'createTheme',
+        name: data.name,
       });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create theme.');
     }

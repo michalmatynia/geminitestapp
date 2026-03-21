@@ -37,6 +37,24 @@ describe('kangur ai tutor content contract', () => {
     expect(parsed.narrator.registrySourceLabel).toBe(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.narrator.registrySourceLabel
     );
+    expect(parsed.panelChrome.surfaceLabels.profile).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.surfaceLabels.profile
+    );
+    expect(parsed.panelChrome.surfaceLabels.parent_dashboard).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.surfaceLabels.parent_dashboard
+    );
+    expect(parsed.panelChrome.surfaceLabels.auth).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.surfaceLabels.auth
+    );
+    expect(parsed.panelChrome.contextFallbackTargets.profile).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.contextFallbackTargets.profile
+    );
+    expect(parsed.panelChrome.contextFallbackTargets.parent_dashboard).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.contextFallbackTargets.parent_dashboard
+    );
+    expect(parsed.panelChrome.contextFallbackTargets.auth).toBe(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.contextFallbackTargets.auth
+    );
     expect(parsed.usageApi.availabilityErrors.emailUnverified).toBe(
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.usageApi.availabilityErrors.emailUnverified
     );

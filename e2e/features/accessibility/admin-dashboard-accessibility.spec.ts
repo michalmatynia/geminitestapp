@@ -12,7 +12,7 @@ test('admin dashboard exposes shell landmarks and passes the accessibility smoke
 
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
-  const main = page.locator('#app-content');
+  const main = page.locator('#kangur-main-content');
   await expect(main).toBeVisible();
   await expect(main).toHaveAttribute('tabindex', '-1');
 

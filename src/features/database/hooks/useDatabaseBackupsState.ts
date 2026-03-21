@@ -20,7 +20,10 @@ import {
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { useToast } from '@/shared/ui';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   parseDatabaseEngineBackupScheduleSetting,

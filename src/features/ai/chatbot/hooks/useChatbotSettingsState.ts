@@ -10,7 +10,10 @@ import {
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { useSaveChatbotSettings } from './useChatbotMutations';
 import { useChatbotSettings } from './useChatbotQueries';
@@ -229,12 +232,9 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       setSettingsSnapshot(resolved);
       setSettingsDirty(false);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useChatbotSettingsState.loadChatbotSettings',
-          key: CHATBOT_SETTINGS_KEY,
-        },
+      logClientCatch(error, {
+        source: 'useChatbotSettingsState.loadChatbotSettings',
+        key: CHATBOT_SETTINGS_KEY,
       });
       toast(error instanceof Error ? error.message : 'Invalid chatbot settings payload.', {
         variant: 'error',

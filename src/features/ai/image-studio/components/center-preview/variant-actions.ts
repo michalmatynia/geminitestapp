@@ -4,6 +4,7 @@ import type {
   ImageStudioSlotRecord,
   StudioSlotsResponse,
 } from '@/shared/contracts/image-studio';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathRuns, invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -15,10 +16,6 @@ import type { VariantTooltipState } from './VariantTooltipPortal';
 import type { QueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastVariant = 'error' | 'info' | 'success';
-type ToastFn = (message: string, options?: { variant?: ToastVariant }) => void;
 
 type TemporaryUpload = {
   id: string;

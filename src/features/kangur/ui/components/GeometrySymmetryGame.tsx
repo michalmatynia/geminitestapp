@@ -78,10 +78,6 @@ import {
 } from './GeometrySymmetryGame.canvas';
 import type { SymmetryRound } from './GeometrySymmetryGame.types';
 
-type GeometrySymmetryGameProps = KangurMiniGameFinishActionProps;
-
-type FeedbackState = KangurMiniGameInformationalFeedback | null;
-
 const distance = (a: Point2d, b: Point2d): number =>
   Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -112,7 +108,7 @@ const localizeSymmetryRound = (
 
 export default function GeometrySymmetryGame({
   onFinish,
-}: GeometrySymmetryGameProps): React.JSX.Element {
+}: KangurMiniGameFinishActionProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const translateWithFallback = useCallback(
     (key: string, fallback: string, values?: Record<string, string | number>): string =>
@@ -131,7 +127,7 @@ export default function GeometrySymmetryGame({
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
   const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const strokesRef = useRef<Point2d[][]>([]);
   const [isPointerDrawing, setIsPointerDrawing] = useState(false);

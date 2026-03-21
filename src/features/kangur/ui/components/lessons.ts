@@ -34,8 +34,6 @@ type LessonProps = {
   onBack?: () => void;
 };
 
-type CalendarTrainingGameProps = KangurMiniGameFinishActionProps;
-
 export const ClockLesson = ClockLessonView as ComponentType<LessonProps>;
 export const CalendarLesson = CalendarLessonView as ComponentType<LessonProps>;
 export const AddingLesson = AddingLessonView as ComponentType<LessonProps>;
@@ -68,4 +66,4 @@ export const EnglishSentenceStructureLesson =
 export const EnglishSubjectVerbAgreementLesson =
   EnglishSubjectVerbAgreementLessonView as ComponentType<LessonProps>;
 export const CalendarTrainingGame =
-  CalendarTrainingGameView as ComponentType<CalendarTrainingGameProps>;
+  CalendarTrainingGameView as ComponentType<KangurMiniGameFinishActionProps>;

@@ -10,7 +10,7 @@ for (const route of publicAuthRoutes) {
   }) => {
     await page.goto(route);
 
-    const main = page.locator('#app-content');
+    const main = page.locator('#kangur-main-content');
     await expect(main).toBeVisible();
     await expect(main).toHaveAttribute('tabindex', '-1');
 
@@ -19,7 +19,7 @@ for (const route of publicAuthRoutes) {
     await expect(skipLink).toBeFocused();
 
     await skipLink.press('Enter');
-    await expect(page).toHaveURL(/#app-content$/);
+    await expect(page).toHaveURL(/#kangur-main-content$/);
     await expect(main).toBeFocused();
 
     await expectPageToHaveNoAxeViolations(page, {

@@ -28,7 +28,10 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { buildTriggerContext } from './trigger-event-context';
 import { handleAiPathTriggerInvalidation } from './trigger-event-invalidation';
@@ -100,7 +103,6 @@ export function useAiPathTriggerEvent(): {
           settingsData = settingsLoad.settingsData;
           settingsLoadMode = settingsLoad.mode;
         } catch (settingsError) {
-          logClientError(settingsError);
           const errorMessage =
             settingsError instanceof Error ? settingsError.message : String(settingsError);
           const timeoutCode = isTimeoutMessage(errorMessage) ? 'settings_preload_timeout' : null;
@@ -108,13 +110,11 @@ export function useAiPathTriggerEvent(): {
             isAppError(settingsError) && settingsError.meta ? settingsError.meta : null;
           const preferredPathSettingsMissing =
             appErrorMeta?.['reason'] === 'preferred_path_config_missing';
-          logClientError(settingsError, {
-            context: {
-              source: 'useAiPathTriggerEvent',
-              action: 'loadTriggerSettingsData',
-              timeoutCode,
-              preferredPathId: args.preferredPathId ?? null,
-            },
+          logClientCatch(settingsError, {
+            source: 'useAiPathTriggerEvent',
+            action: 'loadTriggerSettingsData',
+            timeoutCode,
+            preferredPathId: args.preferredPathId ?? null,
           });
           toast(
             timeoutCode
@@ -156,17 +156,14 @@ export function useAiPathTriggerEvent(): {
           uiState = selection.uiState;
           missingPreferredPathId = selection.missingPreferredPathId;
         } catch (selectionError) {
-          logClientError(selectionError);
           const message =
             selectionError instanceof Error
               ? selectionError.message
               : 'AI Path trigger settings are invalid.';
-          logClientError(selectionError, {
-            context: {
-              source: 'useAiPathTriggerEvent',
-              action: 'resolveTriggerSelection',
-              triggerEventId,
-            },
+          logClientCatch(selectionError, {
+            source: 'useAiPathTriggerEvent',
+            action: 'resolveTriggerSelection',
+            triggerEventId,
           });
           toast(message, { variant: 'error' });
           args.onProgress?.({
@@ -240,13 +237,10 @@ export function useAiPathTriggerEvent(): {
           try {
             entityJson = args.getEntityJson();
           } catch (entityJsonError) {
-            logClientError(entityJsonError);
-            logClientError(entityJsonError, {
-              context: {
-                source: 'useAiPathTriggerEvent',
-                action: 'getEntityJson',
-                triggerEventId,
-              },
+            logClientCatch(entityJsonError, {
+              source: 'useAiPathTriggerEvent',
+              action: 'getEntityJson',
+              triggerEventId,
             });
           }
         }
@@ -568,17 +562,14 @@ export function useAiPathTriggerEvent(): {
           });
         });
       } catch (error) {
-        logClientError(error);
         const message =
           error instanceof Error && error.message.trim().length > 0
             ? error.message
             : 'An unexpected error occurred while starting AI Path.';
-        logClientError(error, {
-          context: {
-            source: 'useAiPathTriggerEvent',
-            action: 'fireError',
-            triggerEventId,
-          },
+        logClientCatch(error, {
+          source: 'useAiPathTriggerEvent',
+          action: 'fireError',
+          triggerEventId,
         });
         toast(message, { variant: 'error' });
         args.onProgress?.({

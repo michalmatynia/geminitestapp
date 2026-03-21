@@ -3,7 +3,6 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 import {
-  Button,
   Label,
   SelectSimple,
   StatusBadge,
@@ -14,6 +13,7 @@ import {
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { RunHistoryEntries } from './RunHistoryEntries';
+import { RunHistoryPillButton } from './RunHistoryPillButton';
 
 interface RunHistoryListProps {
   runs: AiPathRunRecord[];
@@ -132,47 +132,40 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 {compareMode && (
                   <div className='mr-2 flex flex-col items-end gap-1 text-[9px] text-gray-400'>
-                    <Button
-                      type='button'
+                    <RunHistoryPillButton
+                      active={isPrimary}
                       variant='outline'
-                      className={`h-6 px-2 ${
-                        isPrimary
-                          ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100'
-                          : 'border-border text-gray-300 hover:bg-muted/60'
-                      }`}
+                      baseClassName='h-6 px-2'
+                      activeClassName='border-emerald-500/60 bg-emerald-500/10 text-emerald-100'
+                      inactiveClassName='border-border text-gray-300 hover:bg-muted/60'
                       onClick={(): void =>
                         onSetPrimaryRunId(isPrimary ? null : run.id)
                       }
                     >
                       {isPrimary ? 'Primary (A)' : 'Set A'}
-                    </Button>
-                    <Button
-                      type='button'
+                    </RunHistoryPillButton>
+                    <RunHistoryPillButton
+                      active={isSecondary}
                       variant='outline'
-                      className={`h-6 px-2 ${
-                        isSecondary
-                          ? 'border-amber-500/60 bg-amber-500/10 text-amber-100'
-                          : 'border-border text-gray-300 hover:bg-muted/60'
-                      }`}
+                      baseClassName='h-6 px-2'
+                      activeClassName='border-amber-500/60 bg-amber-500/10 text-amber-100'
+                      inactiveClassName='border-border text-gray-300 hover:bg-muted/60'
                       onClick={(): void =>
                         onSetSecondaryRunId(isSecondary ? null : run.id)
                       }
                       disabled={isPrimary}
                     >
                       {isSecondary ? 'Secondary (B)' : 'Set B'}
-                    </Button>
+                    </RunHistoryPillButton>
                   </div>
                 )}
-                <Button
-                  type='button'
-                  className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+                <RunHistoryPillButton
                   onClick={(): void => onOpenRunDetail(run.id)}
+                  inactiveClassName='text-gray-200 hover:bg-muted/60'
                 >
                   Details
-                </Button>
-                <Button
-                  type='button'
-                  className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+                </RunHistoryPillButton>
+                <RunHistoryPillButton
                   onClick={(): void => {
                     onExpandedRunHistory((prev: Record<string, boolean>) => ({
                       ...prev,
@@ -185,39 +178,37 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                       }));
                     }
                   }}
+                  inactiveClassName='text-gray-200 hover:bg-muted/60'
                 >
                   {historyOpen ? 'Hide history' : 'History'}
-                </Button>
+                </RunHistoryPillButton>
                 {(run.status === 'failed' ||
                   run.status === 'paused' ||
                   run.status === 'handoff_ready') && (
-                  <Button
-                    type='button'
-                    className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
+                  <RunHistoryPillButton
                     onClick={(): void => onResumeRun(run.id, 'resume')}
+                    inactiveClassName='text-amber-200 hover:bg-amber-500/10'
                   >
                     Resume
-                  </Button>
+                  </RunHistoryPillButton>
                 )}
-                <Button
-                  type='button'
-                  className='rounded-md border px-2 py-1 text-[10px] text-sky-200 hover:bg-sky-500/10'
+                <RunHistoryPillButton
                   onClick={(): void => onResumeRun(run.id, 'replay')}
+                  inactiveClassName='text-sky-200 hover:bg-sky-500/10'
                 >
                   Replay
-                </Button>
+                </RunHistoryPillButton>
                 {run.status === 'blocked_on_lease' && (
                   <>
-                    <Button
-                      type='button'
-                      className='rounded-md border px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/10'
+                    <RunHistoryPillButton
                       onClick={(): void => onHandoffRun(run.id)}
                       disabled={handoffStateByRunId[run.id] === 'pending'}
+                      inactiveClassName='text-blue-200 hover:bg-blue-500/10'
                     >
                       {handoffStateByRunId[run.id] === 'pending'
                         ? 'Marking...'
                         : 'Mark handoff-ready'}
-                    </Button>
+                    </RunHistoryPillButton>
                     {handoffStateByRunId[run.id] === 'success' ? (
                       <span className='text-[10px] text-blue-200'>
                         Handoff requested. Refreshing status...
@@ -228,22 +219,20 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                 {(run.status === 'queued' ||
                   run.status === 'running' ||
                   run.status === 'blocked_on_lease') && (
-                  <Button
-                    type='button'
-                    className='rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10'
+                  <RunHistoryPillButton
                     onClick={(): void => onCancelRun(run.id)}
+                    inactiveClassName='text-rose-200 hover:bg-rose-500/10'
                   >
                     Cancel
-                  </Button>
+                  </RunHistoryPillButton>
                 )}
                 {run.status === 'dead_lettered' && (
-                  <Button
-                    type='button'
-                    className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
+                  <RunHistoryPillButton
                     onClick={(): void => onRequeueDeadLetter(run.id)}
+                    inactiveClassName='text-amber-200 hover:bg-amber-500/10'
                   >
                     Requeue
-                  </Button>
+                  </RunHistoryPillButton>
                 )}
               </div>
             </div>

@@ -20,9 +20,8 @@ import type {
   TutorMotionProfile,
   TutorPanelSnapState,
 } from './KangurAiTutorWidget.shared';
+import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
 import type { Transition } from 'framer-motion';
-
-type GuidedMode = 'home_onboarding' | 'selection' | 'section' | 'auth' | null;
 type EdgePlacement = 'top' | 'bottom' | 'left' | 'right';
 
 type ReducedMotionTransitions = {
@@ -78,7 +77,7 @@ export type KangurAiTutorPortalContextValue = {
   diagnostics: {
     canonicalTutorModalVisible: boolean;
     contextualTutorMode: string | null;
-    guidedMode: GuidedMode;
+    guidedMode: TutorGuidedMode;
     guestIntroShouldRender: boolean;
     isMinimalPanelMode: boolean;
     isOpen: boolean;
@@ -114,7 +113,7 @@ export type KangurAiTutorPortalContextValue = {
     detail: string;
     entryDirection: TutorHorizontalSide;
     headerLabel: string;
-    mode: GuidedMode;
+    mode: TutorGuidedMode;
     placement: EdgePlacement;
     prefersReducedMotion: boolean;
     reducedMotionTransitions: ReducedMotionTransitions;
@@ -205,7 +204,7 @@ export type KangurAiTutorPortalContextValue = {
     onSelectionActionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
   };
   spotlights: {
-    guidedMode: GuidedMode;
+    guidedMode: TutorGuidedMode;
     prefersReducedMotion: boolean;
     reducedMotionTransitions: ReducedMotionTransitions;
     sectionContextSpotlightStyle: CSSProperties | null;

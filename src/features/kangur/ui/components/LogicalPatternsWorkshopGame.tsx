@@ -56,8 +56,6 @@ import {
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type LogicalPatternsWorkshopGameProps = KangurMiniGameFinishProps;
-
 type RoundState = {
   pool: LogicalPatternTile[];
   slots: Record<string, LogicalPatternTile[]>;
@@ -216,7 +214,7 @@ const resolveTileByValue = (
 export default function LogicalPatternsWorkshopGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
-}: LogicalPatternsWorkshopGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const summaryFinishLabel =
     finishLabel === 'Wróć do tematów'

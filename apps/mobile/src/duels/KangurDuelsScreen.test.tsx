@@ -17,6 +17,7 @@ const {
   useKangurMobileDuelLobbyChatMock,
   useKangurMobileDuelsLobbyMock,
   useKangurMobileDuelSessionMock,
+  useKangurMobileLessonCheckpointsMock,
 } = vi.hoisted(() => ({
   useLocalSearchParamsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -26,6 +27,7 @@ const {
   useKangurMobileDuelLobbyChatMock: vi.fn(),
   useKangurMobileDuelsLobbyMock: vi.fn(),
   useKangurMobileDuelSessionMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
 }));
 
 vi.mock('expo-router', () => ({
@@ -52,6 +54,10 @@ vi.mock('./useKangurMobileDuelSession', () => ({
 
 vi.mock('./duelInviteShare', () => ({
   shareKangurDuelInvite: shareKangurDuelInviteMock,
+}));
+
+vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
 import { KangurDuelsScreen } from './KangurDuelsScreen';
@@ -152,6 +158,9 @@ describe('KangurDuelsScreen', () => {
       session: null,
       spectatorCount: 0,
       submitAnswer: vi.fn(),
+    });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
     });
   });
 
@@ -328,6 +337,28 @@ describe('KangurDuelsScreen', () => {
       refresh: vi.fn(),
       sendMessage: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 91,
+          componentId: 'clock',
+          emoji: '⏰',
+          lastCompletedAt: '2026-03-21T08:18:00.000Z',
+          lastScorePercent: 84,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'clock' },
+          },
+          masteryPercent: 88,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'time_compare' },
+          },
+          title: 'Zegar i czas',
+        },
+      ],
+    });
 
     renderDuelsScreen();
 
@@ -348,6 +379,11 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Gra 2 z 3 · ukończone gry: 1')).toBeTruthy();
     expect(screen.getByText('Obserwuj pojedynek')).toBeTruthy();
     expect(screen.getByText('Wyniki dueli')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Kontynuuj lekcje')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Zegar i czas')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
     expect(screen.getByText('Ola Quiz')).toBeTruthy();
   });
@@ -563,6 +599,28 @@ describe('KangurDuelsScreen', () => {
       spectatorCount: 1,
       submitAnswer: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 2,
+          bestScorePercent: 78,
+          componentId: 'addition',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:20:00.000Z',
+          lastScorePercent: 75,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'addition' },
+          },
+          masteryPercent: 76,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'addition' },
+          },
+          title: 'Dodawanie w pamięci',
+        },
+      ],
+    });
 
     renderDuelsScreen();
 
@@ -579,6 +637,9 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Reakcje')).toBeTruthy();
     expect(screen.getByText('Wyślij szybką reakcję bez opuszczania pojedynku.')).toBeTruthy();
     expect(screen.getByText('Minimalna liczba graczy do startu: 2')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie w pamięci')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Opuść pojedynek')).toBeTruthy();
   });
 

@@ -33,4 +33,15 @@ describe('KangurParentDashboardWordmark', () => {
     expect(text).toHaveTextContent('Elterndashboard');
     expect(text).toHaveAttribute('font-size', '68');
   });
+
+  it('renders the Ukrainian parent dashboard wordmark as SVG text', () => {
+    const { container } = render(<KangurParentDashboardWordmark locale='uk' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Панель для батьків');
+    expect(text).toHaveAttribute('font-size', '68');
+  });
 });

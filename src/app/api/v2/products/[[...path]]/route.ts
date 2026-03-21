@@ -6,9 +6,8 @@ import type { NextRequest } from 'next/server';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type {
-  CatchAllRouteDefinition as RouteDefinition,
+  CatchAllRouteDefinition,
   CatchAllOptionalRoutePatternToken as PatternToken,
-  CatchAllRouteHandler as RouteHandler,
   CatchAllRouteMethod as HttpMethod,
   CatchAllRouteModule as RouteModule,
   CatchAllRouteParams as Params,
@@ -71,6 +70,8 @@ import * as productImagesLinkToFile from '../[id]/images/link-to-file/route-hand
 import * as productImagesById from '../[id]/images/[imageFileId]/route-handler';
 import * as productStudio from '../[id]/studio/route-handler';
 import * as productStudioAction from '../[id]/studio/[action]/route-handler';
+
+type RouteDefinition = CatchAllRouteDefinition<PatternToken>;
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 

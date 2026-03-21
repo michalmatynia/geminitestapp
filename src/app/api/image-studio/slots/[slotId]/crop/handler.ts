@@ -25,7 +25,11 @@ import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
 } from '@/features/ai/server';
-import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
+import {
+  createImageStudioSlots,
+  getImageStudioSlotById,
+  type StudioSlotRecord,
+} from '@/features/ai/server';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import type { UploadedClientCropImage } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -41,8 +45,6 @@ const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const CROP_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CROP_PIPELINE_VERSION']?.trim() || 'v2';
 const STRICT_SERVER_CROP_ENABLED =
   process.env['IMAGE_STUDIO_CROP_SERVER_AUTHORITATIVE'] !== 'false';
-
-type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 
 type CropProcessingResult = {
   outputBuffer: Buffer;

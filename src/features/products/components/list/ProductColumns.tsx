@@ -539,7 +539,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Button
         variant='ghost'
         onClick={(): void => column.toggleSorting()}
-        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
       >
         Name
         <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
@@ -564,7 +563,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <Button
           variant='ghost'
           onClick={(): void => column.toggleSorting()}
-          aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
         >
           Price{' '}
           <span className='ml-1 text-xs text-muted-foreground' suppressHydrationWarning>
@@ -585,7 +583,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Button
         variant='ghost'
         onClick={(): void => column.toggleSorting()}
-        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
       >
         Stock
         <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />
@@ -602,7 +599,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       <Button
         variant='ghost'
         onClick={(): void => column.toggleSorting()}
-        aria-sort={column.getIsSorted() === 'asc' ? 'ascending' : column.getIsSorted() === 'desc' ? 'descending' : 'none'}
       >
         Created At
         <ArrowUpDown className='ml-2 size-4' aria-hidden='true' />

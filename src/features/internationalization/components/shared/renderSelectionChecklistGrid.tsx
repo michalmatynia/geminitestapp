@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Checkbox, Hint, Label } from '@/shared/ui';
+import { Checkbox, Hint, Label, insetPanelVariants } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type SelectionChecklistItem = {
@@ -27,7 +27,8 @@ export function renderSelectionChecklistGrid({
   return (
     <div
       className={cn(
-        'grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3',
+        insetPanelVariants({ radius: 'compact', padding: 'sm' }),
+        'grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border-border bg-card/50',
         className
       )}
     >

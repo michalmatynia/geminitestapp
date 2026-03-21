@@ -7,6 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
+  useKangurMobileLessonCheckpoints,
+  type KangurMobileLessonCheckpointItem,
+} from '../lessons/useKangurMobileLessonCheckpoints';
+import {
   formatKangurMobileScoreDateTime,
   formatKangurMobileScoreOperation,
   getKangurMobileScoreAccuracyPercent,
@@ -409,11 +413,94 @@ function RecentResultRow({
   );
 }
 
+function LessonCheckpointRow({
+  item,
+}: {
+  item: KangurMobileLessonCheckpointItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 10,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+            {item.emoji} {item.title}
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
+              en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
+              pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
+            })}
+          </Text>
+        </View>
+        <Pill
+          label={`${item.bestScorePercent}%`}
+          tone={{
+            backgroundColor: '#eef2ff',
+            borderColor: '#c7d2fe',
+            textColor: '#4338ca',
+          }}
+        />
+      </View>
+
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
+          en: `Last saved ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
+          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
+        })}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <LinkButton
+          href={item.lessonHref}
+          label={`${copy({
+            de: 'Zur Lektion zurück',
+            en: 'Return to lesson',
+            pl: 'Wróć do lekcji',
+          })}: ${item.title}`}
+          tone='primary'
+        />
+        {item.practiceHref ? (
+          <LinkButton
+            href={item.practiceHref}
+            label={`${copy({
+              de: 'Danach trainieren',
+              en: 'Practice after',
+              pl: 'Potem trenuj',
+            })}: ${item.title}`}
+          />
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+const LESSONS_ROUTE = '/lessons' as Href;
 const DUELS_ROUTE = createKangurDuelsHref();
 
 export function KangurDailyPlanScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
+  const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const {
     assignmentItems,
     authError,
@@ -875,6 +962,52 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                     href={href}
                   />
                 ))}
+              </View>
+            )}
+          </Card>
+
+          <Card>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Letzte Lektions-Checkpoints',
+                  en: 'Recent lesson checkpoints',
+                  pl: 'Ostatnie checkpointy lekcji',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Die letzten lokal gespeicherten Lektionen helfen dir, vor dem nächsten Training genau an der letzten Stelle weiterzumachen.',
+                  en: 'The most recently saved lessons help you resume exactly from the last saved point before the next practice block.',
+                  pl: 'Ostatnio zapisane lekcje pomagają wrócić dokładnie do ostatniego miejsca przed kolejnym blokiem treningowym.',
+                })}
+              </Text>
+            </View>
+
+            {lessonCheckpoints.recentCheckpoints.length === 0 ? (
+              <Text style={{ color: '#475569', lineHeight: 22 }}>
+                {copy({
+                  de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit sie hier erscheinen.',
+                  en: 'There are no saved checkpoints yet. Open a lesson and save the first state so they appear here.',
+                  pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby pojawiły się tutaj.',
+                })}
+              </Text>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {lessonCheckpoints.recentCheckpoints.map((item) => (
+                  <LessonCheckpointRow
+                    key={item.componentId}
+                    item={item}
+                  />
+                ))}
+                <LinkButton
+                  href={LESSONS_ROUTE}
+                  label={copy({
+                    de: 'Lektionen öffnen',
+                    en: 'Open lessons',
+                    pl: 'Otwórz lekcje',
+                  })}
+                />
               </View>
             )}
           </Card>

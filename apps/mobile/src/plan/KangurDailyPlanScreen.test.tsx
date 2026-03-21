@@ -10,11 +10,13 @@ const {
   replaceMock,
   useKangurMobileDailyPlanDuelsMock,
   useKangurMobileDailyPlanMock,
+  useKangurMobileLessonCheckpointsMock,
   useRouterMock,
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   useKangurMobileDailyPlanDuelsMock: vi.fn(),
   useKangurMobileDailyPlanMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
   useRouterMock: vi.fn(),
 }));
 
@@ -29,6 +31,10 @@ vi.mock('./useKangurMobileDailyPlan', () => ({
 
 vi.mock('./useKangurMobileDailyPlanDuels', () => ({
   useKangurMobileDailyPlanDuels: useKangurMobileDailyPlanDuelsMock,
+}));
+
+vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
 import { KangurDailyPlanScreen } from './KangurDailyPlanScreen';
@@ -67,6 +73,9 @@ describe('KangurDailyPlanScreen', () => {
       opponents: [],
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
+    });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
     });
   });
 
@@ -197,6 +206,32 @@ describe('KangurDailyPlanScreen', () => {
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
 
     render(<KangurDailyPlanScreen />);
 
@@ -216,6 +251,11 @@ describe('KangurDailyPlanScreen', () => {
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
 
     fireEvent.click(screen.getByText('Szybki rewanż'));
 

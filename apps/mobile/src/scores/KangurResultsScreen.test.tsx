@@ -9,12 +9,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   replaceMock,
   useLocalSearchParamsMock,
+  useKangurMobileLessonCheckpointsMock,
   useKangurMobileResultsMock,
   useKangurMobileResultsDuelsMock,
   useRouterMock,
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   useLocalSearchParamsMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileResultsMock: vi.fn(),
   useKangurMobileResultsDuelsMock: vi.fn(),
   useRouterMock: vi.fn(),
@@ -32,6 +34,10 @@ vi.mock('./useKangurMobileResults', () => ({
 
 vi.mock('./useKangurMobileResultsDuels', () => ({
   useKangurMobileResultsDuels: useKangurMobileResultsDuelsMock,
+}));
+
+vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
 import { KangurResultsScreen } from './KangurResultsScreen';
@@ -74,6 +80,9 @@ describe('KangurResultsScreen', () => {
       opponents: [],
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
+    });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
     });
   });
 
@@ -180,6 +189,32 @@ describe('KangurResultsScreen', () => {
       pendingOpponentLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
 
     render(<KangurResultsScreen />);
 
@@ -194,6 +229,11 @@ describe('KangurResultsScreen', () => {
     expect(screen.getByText('#2 Ada Learner')).toBeTruthy();
     expect(screen.getByText('Leo Mentor')).toBeTruthy();
     expect(screen.getByText('Szybki rewanż')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.getByText('Pełna lista')).toBeTruthy();
     expect(screen.getByText('Trening czasu')).toBeTruthy();
     expect(screen.queryByText('Przywracamy sesję ucznia i historię wyników.')).toBeNull();

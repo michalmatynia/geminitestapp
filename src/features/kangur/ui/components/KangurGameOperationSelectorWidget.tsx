@@ -762,20 +762,29 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
       }),
     [locale, normalizedProgress, runtimeTranslations, trainingSetupTranslations]
   );
+  const operationSelectorFallbackTitle = normalizedLocale === 'uk' ? 'Граймо!' : 'Grajmy!';
+  const trainingSetupFallbackTitle =
+    normalizedLocale === 'uk' ? 'Налаштування тренування' : 'Trening mieszany';
+  const trainingSetupFallbackWordmarkLabel =
+    normalizedLocale === 'uk' ? 'Тренування' : normalizedLocale === 'pl' ? 'Trening' : 'Training';
+  const trainingSetupFallbackDescription =
+    normalizedLocale === 'uk'
+      ? 'Налаштуйте змішане тренування й виберіть діапазон запитань.'
+      : 'Dobierz poziom, kategorie i liczbę pytań do jednej sesji.';
   const operationSelectorTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'operationSelector.title',
-    'Grajmy!'
+    operationSelectorFallbackTitle
   );
   const trainingSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.label',
-    'Trening mieszany'
+    trainingSetupFallbackTitle
   );
   const trainingWordmarkLabel = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.wordmarkLabel',
-    normalizedLocale === 'pl' ? 'Trening' : 'Training'
+    trainingSetupFallbackWordmarkLabel
   );
   const lessonsQuery = useKangurLessons({ subject, ageGroup, enabledOnly: true });
   const emptyLessonsRefetchedForSubject = useRef<KangurLessonSubject | null>(null);
@@ -1173,7 +1182,7 @@ export function KangurGameOperationSelectorWidget(): React.JSX.Element | null {
             description={translateRecommendationWithFallback(
               gamePageTranslations,
               'screens.training.description',
-              'Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+              trainingSetupFallbackDescription
             )}
             headingAs='h3'
             headingSize='md'

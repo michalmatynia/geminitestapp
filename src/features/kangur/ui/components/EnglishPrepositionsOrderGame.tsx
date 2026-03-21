@@ -64,10 +64,6 @@ type OrderRound = {
   target: string;
 };
 
-type FeedbackState = KangurMiniGameFeedback;
-
-type EnglishPrepositionsOrderGameProps = KangurMiniGameFinishProps;
-
 const ROUNDS: OrderRound[] = [
   {
     id: 'time-start',
@@ -220,7 +216,7 @@ const countCorrectPositions = (round: OrderRound, tokens: OrderToken[]): number 
 export default function EnglishPrepositionsOrderGame({
   finishLabel,
   onFinish,
-}: EnglishPrepositionsOrderGameProps): React.JSX.Element {
+}: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
@@ -229,7 +225,7 @@ export default function EnglishPrepositionsOrderGame({
   const [checked, setChecked] = useState(false);
   const [roundCorrect, setRoundCorrect] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
-  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [feedback, setFeedback] = useState<KangurMiniGameFeedback | null>(null);
   const [done, setDone] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);

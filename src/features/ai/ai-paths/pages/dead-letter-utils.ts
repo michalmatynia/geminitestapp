@@ -3,6 +3,7 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
 } from '@/shared/contracts/ai-paths';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 
 export const PAGE_SIZES = [10, 25, 50];
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -61,8 +62,6 @@ type RequeueResult = {
   requeued: number;
   errors?: Array<{ runId: string; error: string }>;
 };
-
-type ToastFn = (message: string, options: { variant: 'success' | 'error' }) => void;
 
 export const showRequeueResultToast = (
   toast: ToastFn,

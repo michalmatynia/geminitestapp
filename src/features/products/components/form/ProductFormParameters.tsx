@@ -8,6 +8,7 @@ import { useProductFormParameters } from '@/features/products/context/ProductFor
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
+import { insetPanelVariants } from '@/shared/ui';
 import {
   Alert,
   Button,
@@ -303,7 +304,7 @@ export default function ProductFormParameters(): React.JSX.Element {
               return (
                 <div
                   key={`${entry.parameterId || 'new'}-${index}`}
-                  className='flex flex-col gap-3 rounded-md border border-border bg-card/40 p-3'
+                  className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} flex flex-col gap-3 border-border`}
                 >
                   <div className='flex flex-col gap-3 md:flex-row md:items-center'>
                     <div className='w-full md:w-64'>

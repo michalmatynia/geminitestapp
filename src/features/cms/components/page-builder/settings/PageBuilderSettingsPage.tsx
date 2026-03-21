@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Card, PanelHeader, useToast, LoadingState, ToggleRow } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY = 'page_builder_show_extract_placeholder';
 export const PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY =
@@ -53,9 +53,9 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
       setLocalSectionDropPlaceholder(null);
       toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'PageBuilderSettingsPage', action: 'saveSettings' },
+      logClientCatch(error, {
+        source: 'PageBuilderSettingsPage',
+        action: 'saveSettings',
       });
       const message = error instanceof Error ? error.message : 'Failed to save settings';
       toast(message, { variant: 'error' });

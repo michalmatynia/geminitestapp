@@ -11,7 +11,7 @@ export interface SkipToContentLinkProps {
 }
 
 export function SkipToContentLink({
-  targetId = 'app-content',
+  targetId = 'kangur-main-content',
   className,
   children = 'Skip to content',
 }: SkipToContentLinkProps): React.JSX.Element {

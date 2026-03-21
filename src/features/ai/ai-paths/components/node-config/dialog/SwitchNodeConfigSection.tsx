@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { SwitchConfig, SwitchCaseConfig } from '@/shared/lib/ai-paths';
-import { Button, FormField, Input, Label } from '@/shared/ui';
+import { Button, FormField, Input, Label, insetPanelVariants } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -71,7 +71,7 @@ export function SwitchNodeConfigSection(): React.JSX.Element | null {
         {(config.cases ?? []).map((c, index) => (
           <div
             key={c.id ?? index}
-            className='space-y-2 rounded-md border border-border bg-card/40 p-3'
+            className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-2 border-border`}
           >
             <div className='flex items-center justify-between gap-2'>
               <span className='text-xs font-semibold text-white'>Case {index + 1}</span>

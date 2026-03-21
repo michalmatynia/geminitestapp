@@ -8,7 +8,6 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type {
   CatchAllRouteDefinition,
   CatchAllOptionalRoutePatternToken as RoutePatternToken,
-  CatchAllRouteHandler as RouteHandler,
   CatchAllRouteMethod as HttpMethod,
   CatchAllRouteModule as RouteModule,
   CatchAllRouteParams as Params,
@@ -38,6 +37,7 @@ import * as teachingCollectionDocumentById from '../teaching/collections/[collec
 import * as teachingCollectionSearch from '../teaching/collections/[collectionId]/search/route-handler';
 
 type RouteDefinition = CatchAllRouteDefinition<RoutePatternToken>;
+type RoutePattern = RoutePatternToken[];
 
 const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 

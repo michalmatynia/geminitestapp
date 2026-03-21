@@ -141,6 +141,10 @@ describe('useKangurMobileLeaderboard', () => {
     });
 
     expect(result.current.items[0]?.isCurrentUser).toBe(true);
+    expect(result.current.items[0]?.currentUserBadgeLabel).toBe('Ty');
+    expect(result.current.items[0]?.metaLabel).toBe('🔢 Wzorce i ciagi · Zalogowany');
+    expect(result.current.operationOptions[0]?.label).toBe('Wszystkie');
+    expect(result.current.userOptions[0]?.label).toBe('Wszyscy');
     expect(result.current.isRestoringAuth).toBe(false);
   });
 

@@ -4,11 +4,10 @@ import { getCategoryMappingRepository } from '@/features/integrations/services/c
 import {
   categoryMappingUpdateInputSchema,
 } from '@/shared/contracts/integrations';
+import type { IdDto as Params } from '@/shared/contracts/base';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-
-type Params = { id: string };
 
 /**
  * GET /api/marketplace/mappings/[id]

@@ -16,7 +16,10 @@ import {
   LoadingState,
   CollapsibleSection,
 } from '@/shared/ui';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   getControlPanelColumns,

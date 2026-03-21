@@ -26,7 +26,10 @@ import {
   type AgentPersona,
 } from '@/shared/contracts/agents';
 import { AdminAgentCreatorBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 export function AgentPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -116,9 +119,10 @@ export function AgentPersonasPage(): React.JSX.Element {
       ]);
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AgentPersonasPage', action: 'savePersona', personaId: draft.id },
+      logClientCatch(error, {
+        source: 'AgentPersonasPage',
+        action: 'savePersona',
+        personaId: draft.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to save personas.', {
         variant: 'error',
@@ -137,9 +141,10 @@ export function AgentPersonasPage(): React.JSX.Element {
       ]);
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AgentPersonasPage', action: 'deletePersona', personaId: persona.id },
+      logClientCatch(error, {
+        source: 'AgentPersonasPage',
+        action: 'deletePersona',
+        personaId: persona.id,
       });
       toast(error instanceof Error ? error.message : 'Failed to delete persona.', {
         variant: 'error',

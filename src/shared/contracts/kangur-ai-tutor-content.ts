@@ -79,11 +79,17 @@ export const kangurAiTutorContentSchema = z.object({
       test: tutorCopySchema,
       game: tutorCopySchema,
       lesson: tutorCopySchema,
+      profile: tutorCopySchema,
+      parent_dashboard: tutorCopySchema,
+      auth: tutorCopySchema,
     }),
     contextFallbackTargets: z.object({
       test: tutorCopySchema,
       game: tutorCopySchema,
       lesson: tutorCopySchema,
+      profile: tutorCopySchema,
+      parent_dashboard: tutorCopySchema,
+      auth: tutorCopySchema,
     }),
   }),
   guestIntro: z.object({

@@ -25,7 +25,7 @@ test('cms builder exposes shell controls accessibly and passes the accessibility
     }
   }
 
-  const main = page.locator('#app-content');
+  const main = page.locator('#kangur-main-content');
   await expect(main).toBeVisible({ timeout: 60_000 });
   await expect(main).toHaveAttribute('tabindex', '-1');
 
@@ -82,7 +82,7 @@ test('cms builder exposes shell controls accessibly and passes the accessibility
   await expect(skipLink).toBeFocused();
 
   await skipLink.press('Enter');
-  await expect(page).toHaveURL(/#app-content$/);
+  await expect(page).toHaveURL(/#kangur-main-content$/);
   await expect(main).toBeFocused();
 
   await expectPageToHaveNoAxeViolations(page, {

@@ -17,7 +17,15 @@ import {
   findPlaywrightTemplateByScript,
   PLAYWRIGHT_SCRIPT_TEMPLATES,
 } from '@/shared/lib/ai-paths/core/playwright/script-templates';
-import { Button, Input, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  LoadingState,
+  SelectSimple,
+  Textarea,
+  FormField,
+  insetPanelVariants,
+} from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -334,7 +342,9 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
         </Button>
       </div>
 
-      <div className='rounded-md border border-border/70 bg-card/40 p-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border/70`}
+      >
         <FormField
           label='Script Template'
           description='Start from a tested automation pattern and customize it.'

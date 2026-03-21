@@ -6,7 +6,7 @@ import {
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { FormSection, ValidatorFormatterToggle } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 
@@ -24,9 +24,9 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
     try {
       await updateSettings.mutateAsync({ enabledByDefault: enabled });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ValidatorDefaultPanel', action: 'toggleDefault' },
+      logClientCatch(error, {
+        source: 'ValidatorDefaultPanel',
+        action: 'toggleDefault',
       });
     }
   };
@@ -35,9 +35,9 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
     try {
       await updateSettings.mutateAsync({ formatterEnabledByDefault: enabled });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'ValidatorDefaultPanel', action: 'toggleFormatterDefault' },
+      logClientCatch(error, {
+        source: 'ValidatorDefaultPanel',
+        action: 'toggleFormatterDefault',
       });
     }
   };

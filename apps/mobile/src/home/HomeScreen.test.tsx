@@ -16,6 +16,9 @@ const {
   useKangurMobileAuthMock,
   useKangurMobileHomeDuelsLeaderboardMock,
   useKangurMobileHomeDuelsInvitesMock,
+  useKangurMobileHomeAssignmentsMock,
+  useKangurMobileHomeLessonCheckpointsMock,
+  useKangurMobileHomeLessonMasteryMock,
   useKangurMobileHomeDuelsPresenceMock,
   useKangurMobileHomeDuelsRematchesMock,
   useKangurMobileHomeDuelsSpotlightMock,
@@ -30,6 +33,9 @@ const {
   useKangurMobileAuthMock: vi.fn(),
   useKangurMobileHomeDuelsLeaderboardMock: vi.fn(),
   useKangurMobileHomeDuelsInvitesMock: vi.fn(),
+  useKangurMobileHomeAssignmentsMock: vi.fn(),
+  useKangurMobileHomeLessonCheckpointsMock: vi.fn(),
+  useKangurMobileHomeLessonMasteryMock: vi.fn(),
   useKangurMobileHomeDuelsPresenceMock: vi.fn(),
   useKangurMobileHomeDuelsRematchesMock: vi.fn(),
   useKangurMobileHomeDuelsSpotlightMock: vi.fn(),
@@ -66,6 +72,18 @@ vi.mock('./useKangurMobileHomeDuelsInvites', () => ({
 
 vi.mock('./useKangurMobileHomeDuelsLeaderboard', () => ({
   useKangurMobileHomeDuelsLeaderboard: useKangurMobileHomeDuelsLeaderboardMock,
+}));
+
+vi.mock('./useKangurMobileHomeAssignments', () => ({
+  useKangurMobileHomeAssignments: useKangurMobileHomeAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileHomeLessonCheckpoints', () => ({
+  useKangurMobileHomeLessonCheckpoints: useKangurMobileHomeLessonCheckpointsMock,
+}));
+
+vi.mock('./useKangurMobileHomeLessonMastery', () => ({
+  useKangurMobileHomeLessonMastery: useKangurMobileHomeLessonMasteryMock,
 }));
 
 vi.mock('./useKangurMobileHomeDuelsPresence', () => ({
@@ -147,6 +165,19 @@ describe('HomeScreen', () => {
       error: null,
       isLoading: false,
       refresh: vi.fn(),
+    });
+    useKangurMobileHomeAssignmentsMock.mockReturnValue({
+      assignmentItems: [],
+    });
+    useKangurMobileHomeLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
+    });
+    useKangurMobileHomeLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 0,
+      masteredLessons: 0,
+      strongest: [],
+      trackedLessons: 0,
+      weakest: [],
     });
     useKangurMobileHomeDuelsPresenceMock.mockReturnValue({
       actionError: null,
@@ -425,6 +456,157 @@ describe('HomeScreen', () => {
       pendingLearnerId: null,
       refresh: vi.fn(),
     });
+    useKangurMobileHomeAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'adding',
+              },
+            },
+            description:
+              'To jeden z najsłabszych obszarów (58%). Potrzebna jest szybka powtórka i kolejna próba.',
+            id: 'lesson-retry-adding',
+            priority: 'high',
+            target: '1 powtórka + wynik min. 75%',
+            title: '➕ Powtórka: Dodawanie',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+        },
+        {
+          assignment: {
+            action: {
+              label: 'Practice now',
+              page: 'Game',
+              query: {
+                operation: 'addition',
+              },
+            },
+            description:
+              'Po powtórkach uruchom trening celowany, aby od razu sprawdzić najsłabszy obszar w praktyce.',
+            id: 'mixed-practice',
+            priority: 'medium',
+            target: '8 pytań',
+            title: 'Trening celowany',
+          },
+          href: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+        },
+      ],
+    });
+    useKangurMobileHomeLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+        {
+          attempts: 5,
+          bestScorePercent: 100,
+          componentId: 'clock',
+          emoji: '🕒',
+          lastCompletedAt: '2026-03-21T08:10:00.000Z',
+          lastScorePercent: 100,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          masteryPercent: 96,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          title: 'Zegar',
+        },
+      ],
+    });
+    useKangurMobileHomeLessonMasteryMock.mockReturnValue({
+      lessonsNeedingPractice: 1,
+      masteredLessons: 1,
+      strongest: [
+        {
+          attempts: 5,
+          bestScorePercent: 100,
+          componentId: 'clock',
+          emoji: '🕒',
+          lastCompletedAt: '2026-03-21T08:06:00.000Z',
+          lastScorePercent: 100,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+          masteryPercent: 96,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'clock',
+            },
+          },
+          title: 'Zegar',
+        },
+      ],
+      trackedLessons: 2,
+      weakest: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:02:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: {
+              focus: 'adding',
+            },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: {
+              operation: 'addition',
+            },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+    });
     useKangurMobileTrainingFocusMock.mockReturnValue({
       error: null,
       isEnabled: true,
@@ -488,10 +670,32 @@ describe('HomeScreen', () => {
 
     expect(screen.getByText('Status: zalogowany')).toBeTruthy();
     expect(screen.getByText('Użytkownik: Ada Learner (uczen)')).toBeTruthy();
-    expect(screen.getByText('Do powtórki')).toBeTruthy();
+    expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Najmocniejszy tryb')).toBeTruthy();
     expect(screen.getByText('Historia trybu: Dodawanie')).toBeTruthy();
     expect(screen.getAllByText('Historia trybu: Zegar').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Śledzone 2')).toBeTruthy();
+    expect(screen.getByText('Opanowane 1')).toBeTruthy();
+    expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
+    expect(screen.getAllByText('➕ Dodawanie').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('🕒 Zegar').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Otwórz lekcję: Dodawanie').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Ostatni wynik 70% • opanowanie 68%')).toBeTruthy();
+    expect(screen.getByText('Najlepszy wynik 72% • próby 3')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Otwórz wszystkie lekcje')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('➕ Powtórka: Dodawanie')).toBeTruthy();
+    expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
+    expect(screen.getByText('Cel: 1 powtórka + wynik min. 75%')).toBeTruthy();
+    expect(screen.getByText('Trening celowany')).toBeTruthy();
+    expect(screen.getByText('Trenuj teraz')).toBeTruthy();
+    expect(screen.getByText('Otwórz pełny plan dnia')).toBeTruthy();
     expect(screen.getByText('7/8 poprawnych')).toBeTruthy();
     expect(screen.getByText('Pojedynki')).toBeTruthy();
     expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();

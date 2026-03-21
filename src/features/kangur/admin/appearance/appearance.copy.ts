@@ -35,10 +35,20 @@ export type AppearanceCatalogSortOption =
   | 'name-asc'
   | 'name-desc';
 
-const PRESET_LABELS = {
-  dailyCrystal: 'Daily Crystal (preset)',
-  nightlyCrystal: 'Nightly Crystal (preset)',
-} as const;
+const PRESET_LABELS: Record<AppearanceAdminLocale, { dailyCrystal: string; nightlyCrystal: string }> = {
+  en: {
+    dailyCrystal: 'Daily Crystal (preset)',
+    nightlyCrystal: 'Nightly Crystal (preset)',
+  },
+  pl: {
+    dailyCrystal: 'Daily Crystal (preset)',
+    nightlyCrystal: 'Nightly Crystal (preset)',
+  },
+  uk: {
+    dailyCrystal: 'Daily Crystal (пресет)',
+    nightlyCrystal: 'Nightly Crystal (пресет)',
+  },
+};
 
 const SECTION_COPY: Record<
   AppearanceAdminLocale,
@@ -136,6 +146,52 @@ const SECTION_COPY: Record<
       subtitle: 'Wspólne konfiguracje cieni dla kontenerów i kart.',
     },
   },
+  uk: {
+    corePalette: {
+      title: 'Основна палітра',
+      subtitle: 'Кольори бренду, тони тексту та стани зворотного звʼязку в Kangur.',
+    },
+    textOverrides: {
+      title: 'Перевизначення тексту',
+      subtitle: 'Необовʼязкові перевизначення кольорів тексту сторінки, карток і навігації.',
+    },
+    logoLoader: {
+      title: 'Лого і лоадер',
+      subtitle: 'Налаштуйте градієнти логотипа Kangur, які використовуються в лоадері та навігації.',
+    },
+    layoutRadii: {
+      title: 'Макет і радіуси',
+      subtitle: 'Відступи сторінки, заокруглення кутів і вирівнювання панелей.',
+    },
+    gradientsTransparency: {
+      title: 'Градієнти і прозорість',
+      subtitle: 'Налаштуйте тла панелей і прозорість навігації.',
+    },
+    typography: {
+      title: 'Типографіка',
+      subtitle: 'Шрифти, що використовуються в заголовках і основному тексті.',
+    },
+    buttonsGlobal: {
+      title: 'Кнопки (глобально)',
+      subtitle: 'Спільні налаштування для основних і другорядних кнопок.',
+    },
+    buttonShadows: {
+      title: 'Тіні кнопок',
+      subtitle: 'Зовнішні тіні для основних і другорядних кнопок.',
+    },
+    gelGlassEffects: {
+      title: 'Гелеві та скляні ефекти',
+      subtitle: 'Налаштування сучасних glass і gel ефектів.',
+    },
+    homeActionButtons: {
+      title: 'Кнопки дій головної сторінки',
+      subtitle: 'Спеціальні перевизначення для головних карток дій на ігровій сторінці.',
+    },
+    dropShadows: {
+      title: 'Тіні',
+      subtitle: 'Спільні конфігурації тіней для контейнерів і карток.',
+    },
+  },
 };
 
 const OPTION_LABELS: Record<AppearanceAdminLocale, Record<string, string>> = {
@@ -164,6 +220,31 @@ const OPTION_LABELS: Record<AppearanceAdminLocale, Record<string, string>> = {
     linear: 'Liniowe',
     left: 'Lewa',
     right: 'Prawa',
+  },
+  uk: {
+    '300': 'Легка (300)',
+    '400': 'Звичайна (400)',
+    '500': 'Середня (500)',
+    '600': 'Напівжирна (600)',
+    '700': 'Жирна (700)',
+    '800': 'Дуже жирна (800)',
+    inherit: 'Успадкувати',
+    'system-ui': 'Системний інтерфейс',
+    none: 'Немає',
+    small: 'Малий',
+    medium: 'Середній',
+    large: 'Великий',
+    'vertical-lift': 'Вертикальний підйом',
+    scale: 'Масштаб',
+    glow: 'Сяйво',
+    border: 'Підсвітка рамки',
+    ease: 'Плавно',
+    'ease-in': 'Плавний вхід',
+    'ease-out': 'Плавний вихід',
+    'ease-in-out': 'Плавний вхід і вихід',
+    linear: 'Лінійно',
+    left: 'Ліва',
+    right: 'Права',
   },
 };
 
@@ -253,6 +334,90 @@ const FIELD_LABELS: Record<AppearanceAdminLocale, Record<string, string>> = {
     cardShadowBlur: 'Rozmycie cienia karty',
     cardShadowOpacity: 'Nieprzezroczystosc cienia karty',
   },
+  uk: {
+    primaryColor: 'Основний акцент',
+    secondaryColor: 'Другорядний акцент',
+    accentColor: 'Акцент попередження',
+    successColor: 'Успіх',
+    errorColor: 'Помилка / деструктивне',
+    textColor: 'Основний текст',
+    mutedTextColor: 'Приглушений текст',
+    pageTextColor: 'Перевизначення тексту сторінки',
+    pageMutedTextColor: 'Перевизначення приглушеного тексту сторінки',
+    cardTextColor: 'Перевизначення тексту картки',
+    navTextColor: 'Перевизначення тексту навігації',
+    navActiveTextColor: 'Перевизначення активного тексту навігації',
+    navHoverTextColor: 'Перевизначення hover-тексту навігації',
+    logoWordStart: 'Початок напису логотипа',
+    logoWordMid: 'Середина напису логотипа',
+    logoWordEnd: 'Кінець напису логотипа',
+    logoRingStart: 'Початок обвідки',
+    logoRingEnd: 'Кінець обвідки',
+    logoAccentStart: 'Початок акценту',
+    logoAccentEnd: 'Кінець акценту',
+    logoInnerStart: 'Початок внутрішнього сяйва логотипа',
+    logoInnerEnd: 'Кінець внутрішнього сяйва логотипа',
+    logoShadow: 'Тінь логотипа',
+    logoGlint: 'Блік логотипа',
+    pagePadding: 'Типовий padding сторінки',
+    pagePaddingTop: 'Padding сторінки зверху',
+    pagePaddingBottom: 'Padding сторінки знизу',
+    gridGutter: 'Відступ сітки',
+    cardRadius: 'Радіус кута картки',
+    containerPaddingInner: 'Внутрішній padding контейнера',
+    panelGradientStart: 'Початок градієнта панелі',
+    panelGradientEnd: 'Кінець градієнта панелі',
+    panelTransparency: 'Непрозорість панелі (0-1)',
+    navGradientStart: 'Початок градієнта навігації',
+    navGradientEnd: 'Кінець градієнта навігації',
+    navTransparency: 'Непрозорість навігації (0-1)',
+    headingFont: 'Шрифт заголовка',
+    bodyFont: 'Шрифт тексту',
+    baseSize: 'Базовий розмір шрифту',
+    headingWeight: 'Товщина заголовка',
+    bodyWeight: 'Товщина тексту',
+    lineHeight: 'Висота рядка тексту',
+    headingLineHeight: 'Висота рядка заголовка',
+    btnPrimaryBg: 'Тло основної кнопки',
+    btnPrimaryText: 'Текст основної кнопки',
+    btnSecondaryBg: 'Тло другорядної кнопки',
+    btnSecondaryText: 'Текст другорядної кнопки',
+    btnOutlineBorder: 'Колір рамки outline',
+    btnRadius: 'Радіус кута кнопки',
+    btnBorderRadius: 'Радіус рамки кнопки',
+    btnFontSize: 'Розмір шрифту кнопки',
+    btnFontWeight: 'Товщина шрифту кнопки',
+    btnPaddingX: 'Padding X кнопки',
+    btnPaddingY: 'Padding Y кнопки',
+    btnBorderWidth: 'Ширина рамки кнопки',
+    btnBorderOpacity: 'Непрозорість рамки кнопки (0-100)',
+    btnShadowX: 'Тінь кнопки X',
+    btnShadowY: 'Тінь кнопки Y',
+    btnShadowBlur: 'Розмиття тіні кнопки',
+    btnShadowOpacity: 'Непрозорість тіні кнопки (0-1)',
+    btnGlossOpacity: 'Непрозорість блиску',
+    btnGlossHeight: 'Висота блиску (%)',
+    btnGlossAngle: 'Кут блиску (deg)',
+    btnGlossColor: 'Колір тонування блиску',
+    btnInsetHighlightOpacity: 'Непрозорість внутрішнього підсвічування',
+    btnInsetShadowOpacity: 'Непрозорість внутрішньої тіні',
+    btnInsetShadowBlur: 'Розмиття внутрішньої тіні',
+    btnInsetShadowY: 'Внутрішня тінь Y',
+    btnTextShadowOpacity: 'Непрозорість тіні тексту',
+    btnTextShadowY: 'Тінь тексту Y',
+    btnTextShadowBlur: 'Розмиття тіні тексту',
+    btnGlowOpacity: 'Непрозорість сяйва кнопки',
+    btnGlowSpread: 'Поширення сяйва кнопки',
+    btnGlowColor: 'Перевизначення кольору сяйва',
+    containerShadowX: 'Тінь панелі X',
+    containerShadowY: 'Тінь панелі Y',
+    containerShadowBlur: 'Розмиття тіні панелі',
+    containerShadowOpacity: 'Непрозорість тіні панелі',
+    cardShadowX: 'Тінь картки X',
+    cardShadowY: 'Тінь картки Y',
+    cardShadowBlur: 'Розмиття тіні картки',
+    cardShadowOpacity: 'Непрозорість тіні картки',
+  },
 };
 
 const FIELD_HELPERS: Record<AppearanceAdminLocale, Record<string, string>> = {
@@ -264,6 +429,14 @@ const FIELD_HELPERS: Record<AppearanceAdminLocale, Record<string, string>> = {
     navTextColor: 'Nadpisuje kolor tekstu gornej nawigacji.',
     navActiveTextColor: 'Nadpisuje kolor aktywnego tekstu nawigacji.',
     navHoverTextColor: 'Nadpisuje kolor tekstu hover nawigacji.',
+  },
+  uk: {
+    pageTextColor: 'Залиште порожнім, щоб використати колір основного тексту.',
+    pageMutedTextColor: 'Залиште порожнім, щоб використати колір приглушеного тексту.',
+    cardTextColor: 'Керує кольором тексту всередині мʼяких карток.',
+    navTextColor: 'Перевизначає колір тексту верхньої навігації.',
+    navActiveTextColor: 'Перевизначає колір активного тексту навігації.',
+    navHoverTextColor: 'Перевизначає колір тексту hover у навігації.',
   },
 };
 
@@ -286,6 +459,23 @@ const FIELD_PLACEHOLDERS: Record<AppearanceAdminLocale, Record<string, string>> 
     btnSecondaryBg: 'Auto',
     btnGlowColor: 'Auto (tlo przycisku)',
   },
+  uk: {
+    pageTextColor: 'Авто',
+    pageMutedTextColor: 'Авто',
+    cardTextColor: 'Авто',
+    navTextColor: 'Авто',
+    navActiveTextColor: 'Авто',
+    navHoverTextColor: 'Авто',
+    pagePaddingTop: 'Авто',
+    pagePaddingBottom: 'Авто',
+    panelGradientStart: 'Авто',
+    panelGradientEnd: 'Авто',
+    navGradientStart: 'Авто',
+    navGradientEnd: 'Авто',
+    btnPrimaryBg: 'Авто',
+    btnSecondaryBg: 'Авто',
+    btnGlowColor: 'Авто (тло кнопки)',
+  },
 };
 
 const HOME_ACTION_GROUP_LABELS: Record<
@@ -302,6 +492,12 @@ const HOME_ACTION_GROUP_LABELS: Record<
     lessons: 'Lekcje',
     play: 'Graj',
     training: 'Trening',
+    kangur: 'Kangur',
+  },
+  uk: {
+    lessons: 'Уроки',
+    play: 'Грай',
+    training: 'Тренування',
     kangur: 'Kangur',
   },
 };
@@ -350,6 +546,28 @@ const HOME_ACTION_TOKEN_LABELS: Record<AppearanceAdminLocale, Record<string, str
     AccentShadowColor: 'Cien akcentu',
     UnderlayShadowColor: 'Cien podkladu',
     SurfaceShadowColor: 'Cien powierzchni',
+  },
+  uk: {
+    TextColor: 'Колір тексту',
+    TextActiveColor: 'Колір активного тексту',
+    LabelStart: 'Початок градієнта мітки',
+    LabelMid: 'Середина градієнта мітки',
+    LabelEnd: 'Кінець градієнта мітки',
+    LabelStartActive: 'Початок активного градієнта мітки',
+    LabelMidActive: 'Середина активного градієнта мітки',
+    LabelEndActive: 'Кінець активного градієнта мітки',
+    AccentStart: 'Початок градієнта акценту',
+    AccentMid: 'Середина градієнта акценту',
+    AccentEnd: 'Кінець градієнта акценту',
+    UnderlayStart: 'Початок градієнта підкладки',
+    UnderlayMid: 'Середина градієнта підкладки',
+    UnderlayEnd: 'Кінець градієнта підкладки',
+    UnderlayTintStart: 'Початок тонування підкладки',
+    UnderlayTintMid: 'Середина тонування підкладки',
+    UnderlayTintEnd: 'Кінець тонування підкладки',
+    AccentShadowColor: 'Тінь акценту',
+    UnderlayShadowColor: 'Тінь підкладки',
+    SurfaceShadowColor: 'Тінь поверхні',
   },
 };
 
@@ -422,6 +640,40 @@ const PAGE_COPY = {
     },
     notAssigned: 'Nieprzypisany',
   },
+  uk: {
+    breadcrumbs: ['Admin', 'Kangur', 'Налаштування', 'Вигляд'],
+    shellTitle: 'Вигляд Kangur',
+    shellDescription: 'Зосереджена панель редагування для уроків, тестів і операцій із вмістом.',
+    backToSettings: 'Повернутися до налаштувань',
+    saveTheme: 'Зберегти тему',
+    saving: 'Зберігаю...',
+    selectedTheme: 'Вибрана тема',
+    selectedThemeAria: 'Вибрана тема',
+    unsavedChanges: 'Незбережені зміни',
+    assignThemeToSlot: (themeName: string) => `Призначити тему "${themeName}" до слоту`,
+    presetReadOnly:
+      'Цей пресет Crystal доступний лише для читання, але ви все одно можете призначити його до слоту вище.',
+    factoryReadOnly: 'Це фабрична тема Kangur. Вона доступна лише для читання.',
+    restoreDefaults: 'Відновити типові',
+    statusTitle: 'Статус',
+    statusBadges: {
+      readOnly: 'Лише читання',
+      unsaved: 'Незбережені зміни',
+      saved: 'Збережено',
+    },
+    statusItems: {
+      theme: 'Тема',
+      type: 'Тип',
+      assignedSlots: 'Призначені слоти',
+    },
+    themeTypes: {
+      factory: 'Фабрична',
+      preset: 'Пресет',
+      builtin: 'Вбудована',
+      custom: 'Власна',
+    },
+    notAssigned: 'Не призначено',
+  },
 } as const;
 
 const MODE_SELECTOR_COPY = {
@@ -437,6 +689,12 @@ const MODE_SELECTOR_COPY = {
       'Wybierz, który system wizualny (jasny lub ciemny) ma być ładowany domyślnie przy starcie aplikacji.',
     selectAriaLabel: 'Wybierz startowy tryb wyglądu',
   },
+  uk: {
+    title: 'Стартова система',
+    description:
+      'Виберіть, яку візуальну систему (світлу чи темну) потрібно завантажувати за замовчуванням під час запуску застосунку.',
+    selectAriaLabel: 'Виберіть стартовий режим вигляду',
+  },
 } as const;
 
 const MODE_OPTION_LABELS: Record<AppearanceAdminLocale, Record<KangurStorefrontAppearanceMode, string>> = {
@@ -451,6 +709,12 @@ const MODE_OPTION_LABELS: Record<AppearanceAdminLocale, Record<KangurStorefrontA
     dawn: 'Motyw świtowy',
     sunset: 'Motyw zachodu',
     dark: 'Motyw nocny',
+  },
+  uk: {
+    default: 'Денна тема',
+    dawn: 'Світанкова тема',
+    sunset: 'Тема заходу',
+    dark: 'Нічна тема',
   },
 };
 
@@ -474,6 +738,16 @@ const IMPORT_EXPORT_COPY = {
     exportSuccess: 'Konfiguracja motywu skopiowana do schowka.',
     importError: 'Nieprawidłowy format danych w schowku.',
     importSuccess: 'Motyw wczytany ze schowka. Pamiętaj o zapisaniu zmian.',
+  },
+  uk: {
+    title: 'Імпорт / Експорт',
+    description: 'Переносьте конфігурації тем між середовищами за допомогою буфера обміну.',
+    exportButton: 'Експортувати в буфер обміну',
+    importButton: 'Імпортувати з буфера обміну',
+    exportError: 'Не вдалося скопіювати конфігурацію.',
+    exportSuccess: 'Конфігурацію теми скопійовано в буфер обміну.',
+    importError: 'Неправильний формат даних у буфері обміну.',
+    importSuccess: 'Тему завантажено з буфера обміну. Не забудьте зберегти зміни.',
   },
 } as const;
 
@@ -565,6 +839,50 @@ const THEME_CATALOG_COPY = {
     ] as const satisfies ReadonlyArray<LabeledOptionDto<AppearanceCatalogSortOption>>,
     dateLocale: 'pl-PL',
     compareLocale: 'pl',
+  },
+  uk: {
+    openButton: (count: number) => `Каталог тем (${count})`,
+    modalTitle: 'Каталог збережених тем',
+    saveCurrentAsNew: 'Зберегти поточну тему як нову',
+    themeNamePlaceholder: 'Назва теми...',
+    themeNameAria: 'Назва теми',
+    save: 'Зберегти',
+    filterCatalog: 'Фільтрувати каталог',
+    searchPlaceholder: 'Шукати тему за назвою...',
+    searchAria: 'Фільтрувати теми в каталозі',
+    sortLabel: 'Сортування',
+    sortAria: 'Сортування каталогу тем',
+    countSummary: (visible: number, total: number) => `Показано ${visible} з ${total} тем`,
+    defaultSortHint: 'За замовчуванням: новіші теми зверху',
+    savedBadge: 'Збережена',
+    createdLabel: 'Створено',
+    updatedLabel: 'Оновлено',
+    selected: 'Вибрана',
+    load: 'Завантажити',
+    duplicating: 'Дублюю...',
+    duplicate: 'Дублювати',
+    deleteAria: 'Видалити тему з каталогу',
+    emptyCatalog: 'У каталозі немає збережених тем.',
+    emptyFilters: 'Немає тем, що відповідають поточним фільтрам.',
+    noDate: 'немає дати',
+    createDefaultName: 'Нова тема',
+    duplicateSuffix: 'копія',
+    createError: 'Не вдалося зберегти тему.',
+    createSuccess: 'Нову тему додано до каталогу.',
+    duplicateError: 'Не вдалося дублювати тему.',
+    duplicateSuccess: 'Тему дубльовано.',
+    deleteError: 'Не вдалося видалити тему.',
+    deleteSuccess: 'Тему видалено.',
+    confirmDelete: 'Ви впевнені, що хочете видалити цю тему з каталогу?',
+    sortOptions: [
+      { value: 'created-desc', label: 'Найновіші' },
+      { value: 'created-asc', label: 'Найстаріші' },
+      { value: 'updated-desc', label: 'Нещодавно оновлені' },
+      { value: 'name-asc', label: 'Назва A-Z' },
+      { value: 'name-desc', label: 'Назва Z-A' },
+    ] as const satisfies ReadonlyArray<LabeledOptionDto<AppearanceCatalogSortOption>>,
+    dateLocale: 'uk-UA',
+    compareLocale: 'uk',
   },
 } as const;
 
@@ -701,6 +1019,72 @@ const PREVIEW_COPY = {
     controlLabel: 'Kontrolka',
     previewInputAria: 'pole podglądu',
   },
+  uk: {
+    targetLabels: {
+      current: 'Перегляд',
+      daily: 'День',
+      dawn: 'Світанок',
+      sunset: 'Захід',
+      nightly: 'Ніч',
+    },
+    groupAriaLabel: 'Перегляд теми',
+    sectionLabels: {
+      page: 'Сторінка і навігація',
+      buttons: 'Кнопки',
+      cards: 'Картки і поля',
+      colors: 'Кольори і градієнти',
+      chat: 'Чат',
+      components: 'Компоненти',
+    },
+    navItems: ['Курси', 'Результати', 'Профіль'],
+    homeActions: [
+      { id: 'lessons', label: 'Уроки', emoji: '\ud83d\udcda' },
+      { id: 'play', label: 'Грай', emoji: '\ud83c\udfae' },
+      { id: 'training', label: 'Тренування', emoji: '\ud83c\udfc6' },
+      { id: 'kangur', label: 'Kangur', emoji: '\ud83e\udd98' },
+    ],
+    pageHeading: 'Абетка - 6 років',
+    pageSubtext: 'Літери, склади й перші слова.',
+    buttonLabels: {
+      primary: 'Основна',
+      hover: 'Hover',
+      secondary: 'Другорядна',
+      surface: 'Поверхня',
+      warning: 'Попередження',
+      success: 'Успіх',
+    },
+    lessonTitle: 'Урок 3 - Дроби',
+    lessonMeta: '12 вправ · 45 хв',
+    continueLabel: 'Продовжити',
+    resultsLabel: 'Результати',
+    searchPlaceholder: 'Шукати вправу...',
+    studentOneName: 'Anna Kowalska',
+    studentOneMeta: 'Прогрес: 74% · №12 у класі',
+    studentTwoName: 'Jan Nowak',
+    studentTwoMeta: '1 240 балів',
+    profileLabel: 'Профіль',
+    dropdownItems: ['Звичайні дроби', 'Десяткові дроби', 'Відсотки'],
+    accentGradientsLabel: 'Градієнти акцентів',
+    accentGradientNames: ['Індиго', 'Фіолетовий', 'Смарагдовий', 'Небесний', 'Бурштиновий', 'Рожевий', 'Бірюзовий', 'Сланцевий'],
+    logoPaletteLabel: 'Палітра лого',
+    logoPaletteNames: ['Початок напису', 'Середина напису', 'Кінець напису', 'Початок обвідки', 'Кінець обвідки', 'Початок акценту', 'Кінець акценту'],
+    badgesLabel: 'Позначки',
+    badges: ['Нове', '-20%', 'Готово', 'Важливо', 'Інфо', 'VIP'],
+    assistantName: 'AI-помічник',
+    assistantStatus: 'online',
+    assistantGreeting: 'Привіт! Чим я можу допомогти сьогодні?',
+    assistantHint: 'Підказка: запитайте про дроби',
+    userPrompt: 'Поясни мені десяткові дроби',
+    successMessage: 'Відповідь успішно згенеровано',
+    chatChips: ['Більше', 'Квіз'],
+    composerPlaceholder: 'Напишіть повідомлення...',
+    elevatedLabel: 'Піднятий',
+    subtleLabel: 'Делікатний',
+    segmentedLabels: ['День', 'Тиждень', 'Місяць'],
+    disabledFieldLabel: 'Вимкнене поле',
+    controlLabel: 'Елемент керування',
+    previewInputAria: 'поле перегляду',
+  },
 } as const;
 
 const CONTEXT_COPY = {
@@ -729,6 +1113,19 @@ const CONTEXT_COPY = {
     saveFactoryError: 'Nie można zapisać zmian w motywie fabrycznym.',
     saveError: 'Błąd zapisu motywu.',
     saveSuccess: 'Motyw został zapisany.',
+  },
+  uk: {
+    defaultModeSaveError: 'Не вдалося зберегти стартову тему за замовчуванням.',
+    defaultModeSaveSuccess: 'Стартову тему за замовчуванням оновлено.',
+    unsavedSwitchConfirm:
+      'У поточній темі є незбережені зміни. Ви впевнені, що хочете переключитися?',
+    assignError: 'Не вдалося призначити тему.',
+    assignSuccess: (slotLabel: string) => `Тему призначено до слоту "${slotLabel}".`,
+    unassignError: 'Не вдалося відвʼязати тему.',
+    unassignSuccess: (slotLabel: string) => `Слот "${slotLabel}" відновлено до фабричних налаштувань.`,
+    saveFactoryError: 'Не можна зберігати зміни у фабричній темі.',
+    saveError: 'Не вдалося зберегти тему.',
+    saveSuccess: 'Тему збережено.',
   },
 } as const;
 
@@ -770,6 +1167,12 @@ export const getAppearanceSlotLabel = (
       sunset: 'Zmierzch',
       nightly: 'Noc',
     },
+    uk: {
+      daily: 'День',
+      dawn: 'Світанок',
+      sunset: 'Захід',
+      nightly: 'Ніч',
+    },
   };
 
   return labels[locale][slot];
@@ -785,8 +1188,8 @@ export const getAppearanceThemeSelectionLabel = (
   id: ThemeSelectionId,
   catalog: ReadonlyArray<{ id: string; name: string }>
 ): string => {
-  if (id === PRESET_DAILY_CRYSTAL_ID) return PRESET_LABELS.dailyCrystal;
-  if (id === PRESET_NIGHTLY_CRYSTAL_ID) return PRESET_LABELS.nightlyCrystal;
+  if (id === PRESET_DAILY_CRYSTAL_ID) return PRESET_LABELS[locale].dailyCrystal;
+  if (id === PRESET_NIGHTLY_CRYSTAL_ID) return PRESET_LABELS[locale].nightlyCrystal;
 
   const labels: Record<
     AppearanceAdminLocale,
@@ -811,6 +1214,16 @@ export const getAppearanceThemeSelectionLabel = (
       [FACTORY_DAWN_ID]: 'Motyw switowy (fabryczny)',
       [FACTORY_SUNSET_ID]: 'Motyw zachodu (fabryczny)',
       [FACTORY_NIGHTLY_ID]: 'Motyw nocny (fabryczny)',
+    },
+    uk: {
+      [BUILTIN_DAILY_ID]: 'Денна тема (вбудована)',
+      [BUILTIN_DAWN_ID]: 'Світанкова тема (вбудована)',
+      [BUILTIN_SUNSET_ID]: 'Тема заходу (вбудована)',
+      [BUILTIN_NIGHTLY_ID]: 'Нічна тема (вбудована)',
+      [FACTORY_DAILY_ID]: 'Денна тема (фабрична)',
+      [FACTORY_DAWN_ID]: 'Світанкова тема (фабрична)',
+      [FACTORY_SUNSET_ID]: 'Тема заходу (фабрична)',
+      [FACTORY_NIGHTLY_ID]: 'Нічна тема (фабрична)',
     },
   };
 

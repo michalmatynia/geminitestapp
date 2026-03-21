@@ -12,7 +12,10 @@ import {
   getRecentAiPathRunEnqueue,
   rememberRecentAiPathRunEnqueue,
 } from '@/shared/lib/query-invalidation';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   getLatestEventTimestamp,
@@ -275,13 +278,10 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              service: 'ai-paths',
-              action: 'parseRunStreamPayload',
-              runId,
-            },
+          logClientCatch(error, {
+            service: 'ai-paths',
+            action: 'parseRunStreamPayload',
+            runId,
           });
         }      });
 
@@ -301,13 +301,10 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              service: 'ai-paths',
-              action: 'parseNodesStreamPayload',
-              runId,
-            },
+          logClientCatch(error, {
+            service: 'ai-paths',
+            action: 'parseNodesStreamPayload',
+            runId,
           });
         }      });
 
@@ -341,13 +338,10 @@ export function useJobQueueRealtime({
             };
           });
         } catch (error) {
-          logClientError(error);
-          logClientError(error, {
-            context: {
-              service: 'ai-paths',
-              action: 'parseEventsStreamPayload',
-              runId,
-            },
+          logClientCatch(error, {
+            service: 'ai-paths',
+            action: 'parseEventsStreamPayload',
+            runId,
           });
         }      });
 

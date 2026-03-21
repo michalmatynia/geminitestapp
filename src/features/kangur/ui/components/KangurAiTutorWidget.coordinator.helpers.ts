@@ -124,11 +124,11 @@ export const getTutorSurfaceLabel = (
     case 'lesson':
       return tutorContent.panelChrome.surfaceLabels.lesson;
     case 'profile':
-      return 'Profil';
+      return tutorContent.panelChrome.surfaceLabels.profile;
     case 'parent_dashboard':
-      return 'Panel rodzica';
+      return tutorContent.panelChrome.surfaceLabels.parent_dashboard;
     case 'auth':
-      return 'Logowanie';
+      return tutorContent.panelChrome.surfaceLabels.auth;
     default:
       return tutorContent.panelChrome.surfaceLabels.lesson;
   }
@@ -146,11 +146,11 @@ export const getTutorContextFallbackTarget = (
     case 'lesson':
       return tutorContent.panelChrome.contextFallbackTargets.lesson;
     case 'profile':
-      return 'Nowy panel profilu';
+      return tutorContent.panelChrome.contextFallbackTargets.profile;
     case 'parent_dashboard':
-      return 'Nowy panel rodzica';
+      return tutorContent.panelChrome.contextFallbackTargets.parent_dashboard;
     case 'auth':
-      return 'Ekran logowania';
+      return tutorContent.panelChrome.contextFallbackTargets.auth;
     default:
       return tutorContent.panelChrome.contextFallbackTargets.lesson;
   }

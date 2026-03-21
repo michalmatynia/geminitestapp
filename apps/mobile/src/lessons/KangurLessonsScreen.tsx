@@ -1,6 +1,6 @@
 import {
+  getLocalizedKangurMetadataBadgeName,
   getKangurPortableLessonBody,
-  getKangurPracticeOperationForLessonComponent,
 } from '@kangur/core';
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -8,7 +8,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import {
+  getKangurMobileLocaleTag,
+  useKangurMobileI18n,
+} from '../i18n/kangurMobileI18n';
+import {
+  useKangurMobileLessonCheckpoints,
+  type KangurMobileLessonCheckpointItem,
+} from './useKangurMobileLessonCheckpoints';
 import { useKangurMobileLessonsDuels } from './useKangurMobileLessonsDuels';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
@@ -195,6 +202,118 @@ function Pill({
   );
 }
 
+function LessonCheckpointRow({
+  item,
+}: {
+  item: KangurMobileLessonCheckpointItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 10,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {item.emoji} {item.title}
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
+              en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
+              pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
+            })}
+          </Text>
+        </View>
+        <Pill
+          label={`${item.bestScorePercent}%`}
+          tone={{
+            backgroundColor: '#eef2ff',
+            borderColor: '#c7d2fe',
+            textColor: '#4338ca',
+          }}
+        />
+      </View>
+
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: 'Zuletzt gespeichert',
+          en: 'Last saved',
+          pl: 'Ostatni zapis',
+        })}{' '}
+        {new Intl.DateTimeFormat(getKangurMobileLocaleTag(locale), {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date(item.lastCompletedAt))}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Link href={item.lessonHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {copy({
+                de: 'Zur Lektion zurück',
+                en: 'Return to lesson',
+                pl: 'Wróć do lekcji',
+              })}
+              {`: ${item.title}`}
+            </Text>
+          </Pressable>
+        </Link>
+        {item.practiceHref ? (
+          <Link href={item.practiceHref} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Danach trainieren',
+                  en: 'Practice after',
+                  pl: 'Potem trenuj',
+                })}
+                {`: ${item.title}`}
+              </Text>
+            </Pressable>
+          </Link>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 const getMasteryTone = (badgeAccent: string): Tone => {
   if (badgeAccent === 'emerald') {
     return {
@@ -231,6 +350,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
+  const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
     typeof rawFocusParam === 'string' ? rawFocusParam.trim().toLowerCase() || null : null;
@@ -254,14 +374,11 @@ export function KangurLessonsScreen(): React.JSX.Element {
     !isPreparingLessonsView && selectedLesson
       ? getKangurPortableLessonBody(selectedLesson.lesson.componentId, locale)
       : null;
-  const selectedPracticeOperation =
-    !isPreparingLessonsView && selectedLesson
-      ? getKangurPracticeOperationForLessonComponent(selectedLesson.lesson.componentId)
-      : null;
   const lessonDuels = useKangurMobileLessonsDuels();
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const [savedLessonCheckpoint, setSavedLessonCheckpoint] = useState<{
     countsAsLessonCompletion: boolean;
+    newBadges: string[];
     scorePercent: number;
   } | null>(null);
   const duelSectionDescription = selectedLesson
@@ -301,14 +418,8 @@ export function KangurLessonsScreen(): React.JSX.Element {
   const activeSection =
     selectedLessonBody?.sections[Math.min(activeSectionIndex, selectedLessonBody.sections.length - 1)] ??
     null;
-  const selectedPracticeHref: Href | null = selectedPracticeOperation
-    ? {
-        pathname: '/practice',
-        params: {
-          operation: selectedPracticeOperation,
-        },
-      }
-    : null;
+  const selectedPracticeHref: Href | null =
+    !isPreparingLessonsView && selectedLesson ? selectedLesson.practiceHref : null;
   const selectedLessonCheckpoint =
     !isPreparingLessonsView && selectedLesson && selectedLessonBody
       ? (() => {
@@ -689,19 +800,58 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       ) : null}
 
                       {savedLessonCheckpoint ? (
-                        <Text style={{ color: '#0f766e', fontSize: 14, lineHeight: 20 }}>
-                          {savedLessonCheckpoint.countsAsLessonCompletion
-                            ? copy({
-                                de: `Der Lektionsabschluss wurde mit ${savedLessonCheckpoint.scorePercent}% lokal gespeichert.`,
-                                en: `The lesson completion was saved locally with ${savedLessonCheckpoint.scorePercent}%.`,
-                                pl: `Ukończenie lekcji zapisano lokalnie z wynikiem ${savedLessonCheckpoint.scorePercent}%.`,
-                              })
-                            : copy({
-                                de: `Der Lektions-Checkpoint wurde mit ${savedLessonCheckpoint.scorePercent}% lokal gespeichert.`,
-                                en: `The lesson checkpoint was saved locally with ${savedLessonCheckpoint.scorePercent}%.`,
-                                pl: `Checkpoint lekcji zapisano lokalnie z wynikiem ${savedLessonCheckpoint.scorePercent}%.`,
-                              })}
-                        </Text>
+                        <View style={{ gap: 8 }}>
+                          <Text style={{ color: '#0f766e', fontSize: 14, lineHeight: 20 }}>
+                            {savedLessonCheckpoint.countsAsLessonCompletion
+                              ? copy({
+                                  de: `Der Lektionsabschluss wurde mit ${savedLessonCheckpoint.scorePercent}% lokal gespeichert.`,
+                                  en: `The lesson completion was saved locally with ${savedLessonCheckpoint.scorePercent}%.`,
+                                  pl: `Ukończenie lekcji zapisano lokalnie z wynikiem ${savedLessonCheckpoint.scorePercent}%.`,
+                                })
+                              : copy({
+                                  de: `Der Lektions-Checkpoint wurde mit ${savedLessonCheckpoint.scorePercent}% lokal gespeichert.`,
+                                  en: `The lesson checkpoint was saved locally with ${savedLessonCheckpoint.scorePercent}%.`,
+                                  pl: `Checkpoint lekcji zapisano lokalnie z wynikiem ${savedLessonCheckpoint.scorePercent}%.`,
+                                })}
+                          </Text>
+                          {savedLessonCheckpoint.newBadges.length > 0 ? (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                              {savedLessonCheckpoint.newBadges.map((badgeId) => (
+                                <View
+                                  key={badgeId}
+                                  style={{
+                                    borderRadius: 999,
+                                    borderWidth: 1,
+                                    borderColor: '#c7d2fe',
+                                    backgroundColor: '#eef2ff',
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 7,
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      color: '#4338ca',
+                                      fontSize: 12,
+                                      fontWeight: '700',
+                                    }}
+                                  >
+                                    {copy({
+                                      de: 'Neues Abzeichen',
+                                      en: 'New badge',
+                                      pl: 'Nowa odznaka',
+                                    })}
+                                    :{' '}
+                                    {getLocalizedKangurMetadataBadgeName(
+                                      badgeId,
+                                      locale,
+                                      badgeId,
+                                    )}
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
+                          ) : null}
+                        </View>
                       ) : null}
 
                       <Pressable
@@ -774,7 +924,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   })}
                 </Text>
               </Pressable>
-              {selectedPracticeOperation ? (
+              {selectedPracticeHref ? (
                 <Link href={selectedPracticeHref!} asChild>
                   <Pressable
                     accessibilityRole='button'
@@ -820,6 +970,70 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   pl: 'Pokazujemy pełny katalog, aby można było przejść dalej ręcznie.',
                 })}
               </Text>
+            </Card>
+          ) : null}
+
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Letzte Lektions-Checkpoints',
+                  en: 'Recent lesson checkpoints',
+                  pl: 'Ostatnie checkpointy lekcji',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Weiter mit Lektionen',
+                  en: 'Continue with lessons',
+                  pl: 'Kontynuuj lekcje',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Die zuletzt lokal gespeicherten Lektionen bleiben hier griffbereit, damit du direkt in das naechste Lesen oder passende Training wechseln kannst.',
+                  en: 'The most recently saved lessons stay visible here so you can jump straight into the next reading block or matching practice.',
+                  pl: 'Ostatnio zapisane lekcje są tutaj pod ręką, aby można było od razu przejść do kolejnego czytania albo pasującego treningu.',
+                })}
+              </Text>
+
+              {lessonCheckpoints.recentCheckpoints.length === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Es gibt noch keine gespeicherten Checkpoints. Oeffne eine Lektion und speichere den ersten Stand, damit er hier erscheint.',
+                    en: 'There are no saved checkpoints yet. Open a lesson and save the first state so it appears here.',
+                    pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby pojawił się tutaj.',
+                  })}
+                </Text>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {lessonCheckpoints.recentCheckpoints.map((item) => (
+                    <LessonCheckpointRow key={item.componentId} item={item} />
+                  ))}
+                  <Link href='/lessons' asChild>
+                    <Pressable
+                      accessibilityRole='button'
+                      style={{
+                        alignSelf: 'flex-start',
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: '#cbd5e1',
+                        backgroundColor: '#ffffff',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                      }}
+                    >
+                      <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                        {copy({
+                          de: 'Lektionen öffnen',
+                          en: 'Open lessons',
+                          pl: 'Otwórz lekcje',
+                        })}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                </View>
+              )}
             </Card>
           ) : null}
 
@@ -1066,45 +1280,157 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   };
 
                   return (
-                    <Link href={href} key={item.lesson.id} asChild>
-                      <Pressable
-                        accessibilityRole='button'
-                        onPress={() => {
-                          setDismissedFocusToken(null);
-                        }}
-                        style={{
-                          borderRadius: 22,
-                          borderWidth: 1,
-                          borderColor: item.isFocused ? '#1d4ed8' : '#e2e8f0',
-                          backgroundColor: item.isFocused ? '#eff6ff' : '#f8fafc',
-                          padding: 16,
-                          gap: 10,
-                        }}
-                      >
-                        <View
+                    <View
+                      key={item.lesson.id}
+                      style={{
+                        borderRadius: 22,
+                        borderWidth: 1,
+                        borderColor: item.isFocused ? '#1d4ed8' : '#e2e8f0',
+                        backgroundColor: item.isFocused ? '#eff6ff' : '#f8fafc',
+                        padding: 16,
+                        gap: 10,
+                      }}
+                    >
+                      <Link href={href} asChild>
+                        <Pressable
+                          accessibilityRole='button'
+                          onPress={() => {
+                            setDismissedFocusToken(null);
+                          }}
                           style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            gap: 12,
+                            gap: 10,
                           }}
                         >
-                          <View style={{ flex: 1, gap: 4 }}>
-                            <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                              {item.lesson.emoji} {item.lesson.title}
-                            </Text>
-                            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                              {item.lesson.description}
-                            </Text>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              gap: 12,
+                            }}
+                          >
+                            <View style={{ flex: 1, gap: 4 }}>
+                              <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                                {item.lesson.emoji} {item.lesson.title}
+                              </Text>
+                              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                                {item.lesson.description}
+                              </Text>
+                            </View>
+                            <Pill label={item.mastery.statusLabel} tone={masteryTone} />
                           </View>
-                          <Pill label={item.mastery.statusLabel} tone={masteryTone} />
-                        </View>
 
-                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                          {item.mastery.summaryLabel}
-                        </Text>
-                      </Pressable>
-                    </Link>
+                          <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                            {item.mastery.summaryLabel}
+                          </Text>
+
+                          {item.checkpointSummary ? (
+                            <View
+                              style={{
+                                borderRadius: 18,
+                                borderWidth: 1,
+                                borderColor: '#bfdbfe',
+                                backgroundColor: '#eff6ff',
+                                padding: 12,
+                                gap: 6,
+                              }}
+                            >
+                              <Text
+                                style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '700' }}
+                              >
+                                {copy({
+                                  de: 'Letzter lokaler Checkpoint',
+                                  en: 'Latest local checkpoint',
+                                  pl: 'Ostatni lokalny checkpoint',
+                                })}
+                              </Text>
+                              <Text style={{ color: '#0f172a', fontSize: 13, lineHeight: 18 }}>
+                                {copy({
+                                  de: `Zuletzt gespeichert ${new Intl.DateTimeFormat(
+                                    getKangurMobileLocaleTag(locale),
+                                    {
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short',
+                                    },
+                                  ).format(new Date(item.checkpointSummary.lastCompletedAt))}`,
+                                  en: `Last saved ${new Intl.DateTimeFormat(
+                                    getKangurMobileLocaleTag(locale),
+                                    {
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short',
+                                    },
+                                  ).format(new Date(item.checkpointSummary.lastCompletedAt))}`,
+                                  pl: `Ostatni zapis ${new Intl.DateTimeFormat(
+                                    getKangurMobileLocaleTag(locale),
+                                    {
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short',
+                                    },
+                                  ).format(new Date(item.checkpointSummary.lastCompletedAt))}`,
+                                })}
+                              </Text>
+                              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+                                {copy({
+                                  de: `Ergebnis ${item.checkpointSummary.lastScorePercent}% • bestes ${item.checkpointSummary.bestScorePercent}%`,
+                                  en: `Score ${item.checkpointSummary.lastScorePercent}% • best ${item.checkpointSummary.bestScorePercent}%`,
+                                  pl: `Wynik ${item.checkpointSummary.lastScorePercent}% • najlepszy ${item.checkpointSummary.bestScorePercent}%`,
+                                })}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </Pressable>
+                      </Link>
+
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        <Link href={href} asChild>
+                          <Pressable
+                            accessibilityRole='button'
+                            onPress={() => {
+                              setDismissedFocusToken(null);
+                            }}
+                            style={{
+                              alignSelf: 'flex-start',
+                              borderRadius: 999,
+                              backgroundColor: '#0f172a',
+                              paddingHorizontal: 14,
+                              paddingVertical: 10,
+                            }}
+                          >
+                            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                              {`${copy({
+                                de: 'Lektion öffnen',
+                                en: 'Open lesson',
+                                pl: 'Otwórz lekcję',
+                              })}: ${item.lesson.title}`}
+                            </Text>
+                          </Pressable>
+                        </Link>
+                        {item.practiceHref ? (
+                          <Link href={item.practiceHref} asChild>
+                            <Pressable
+                              accessibilityRole='button'
+                              style={{
+                                alignSelf: 'flex-start',
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: '#cbd5e1',
+                                backgroundColor: '#ffffff',
+                                paddingHorizontal: 14,
+                                paddingVertical: 10,
+                              }}
+                            >
+                              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                                {`${copy({
+                                  de: 'Training starten',
+                                  en: 'Start practice',
+                                  pl: 'Uruchom trening',
+                                })}: ${item.lesson.title}`}
+                              </Text>
+                            </Pressable>
+                          </Link>
+                        ) : null}
+                      </View>
+                    </View>
                   );
                 })}
               </View>

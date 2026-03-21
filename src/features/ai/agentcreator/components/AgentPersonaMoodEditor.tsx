@@ -30,7 +30,10 @@ import {
   useToast,
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { AgentPersonaMoodAvatar } from './AgentPersonaMoodAvatar';
 
@@ -138,13 +141,10 @@ export function AgentPersonaMoodEditor({
     try {
       await deletePersonaAvatar(normalizedFileId);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AgentPersonaMoodEditor',
-          action: 'deleteDraftAvatarFile',
-          fileId: normalizedFileId,
-        },
+      logClientCatch(error, {
+        source: 'AgentPersonaMoodEditor',
+        action: 'deleteDraftAvatarFile',
+        fileId: normalizedFileId,
       });
     }
   };
@@ -160,13 +160,10 @@ export function AgentPersonaMoodEditor({
     try {
       await deletePersonaAvatarThumbnail(normalizedRef);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'AgentPersonaMoodEditor',
-          action: 'deleteDraftAvatarThumbnail',
-          thumbnailRef: normalizedRef,
-        },
+      logClientCatch(error, {
+        source: 'AgentPersonaMoodEditor',
+        action: 'deleteDraftAvatarThumbnail',
+        thumbnailRef: normalizedRef,
       });
     }
   };
@@ -268,9 +265,10 @@ export function AgentPersonaMoodEditor({
       await replaceMoodWithUpload(moodId, file);
       toast('Avatar uploaded.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AgentPersonaMoodEditor', action: 'uploadAvatar', moodId },
+      logClientCatch(error, {
+        source: 'AgentPersonaMoodEditor',
+        action: 'uploadAvatar',
+        moodId,
       });
       toast(error instanceof Error ? error.message : 'Failed to upload avatar.', {
         variant: 'error',
@@ -300,9 +298,10 @@ export function AgentPersonaMoodEditor({
       setImportValues((current) => ({ ...current, [moodId]: '' }));
       toast('Avatar imported.', { variant: 'success' });
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AgentPersonaMoodEditor', action: 'importAvatar', moodId },
+      logClientCatch(error, {
+        source: 'AgentPersonaMoodEditor',
+        action: 'importAvatar',
+        moodId,
       });
       toast(error instanceof Error ? error.message : 'Failed to import avatar.', {
         variant: 'error',

@@ -1,5 +1,5 @@
 import type { ProductValidationPattern, SequenceGroupDraft } from '@/shared/contracts/products';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   createSequenceGroupId,
@@ -47,9 +47,9 @@ export const handleSaveSequenceGroup = async (args: {
     );
     notifySuccess(`Group "${normalizedLabel}" saved.`);
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'saveSequenceGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'saveSequenceGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to save sequence group.');
   }
@@ -79,9 +79,9 @@ export const handleUngroup = async (args: {
     );
     notifySuccess('Group members ungrouped.');
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'ungroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'ungroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to ungroup patterns.');
   }
@@ -118,9 +118,9 @@ export const handleMoveGroup = async (args: {
       })
     );
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'moveGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'moveGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to move group.');
   }
@@ -171,9 +171,9 @@ export const handleReorderInGroup = async (args: {
       })
     );
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'reorderInGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'reorderInGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to reorder patterns in group.');
   }
@@ -200,9 +200,9 @@ export const handleMoveToGroup = async (args: {
       },
     });
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'moveToGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'moveToGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to move pattern to group.');
   }
@@ -252,9 +252,9 @@ export const handleRemoveFromGroup = async (args: {
 
     await Promise.all(updates);
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'removeFromGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'removeFromGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to remove pattern from group.');
   }
@@ -285,9 +285,9 @@ export const handleCreateGroup = async (args: {
       )
     );
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'createGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to create group.');
   }
@@ -312,9 +312,9 @@ export const handleRenameGroup = async (args: {
       )
     );
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'renameGroup' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'renameGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to rename group.');
   }
@@ -340,9 +340,9 @@ export const handleUpdateGroupDebounce = async (args: {
       )
     );
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: { source: 'useValidatorSettingsController', action: 'updateGroupDebounce' },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'updateGroupDebounce',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to update group debounce.');
   }

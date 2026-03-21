@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Label, Textarea } from '@/shared/ui';
+import { Label, Textarea, insetPanelVariants } from '@/shared/ui';
 
 export type RegexPreviewSectionProps = {
   sampleLines: string[];
@@ -37,13 +37,17 @@ export function RegexPreviewSection(props: RegexPreviewSectionProps): React.JSX.
         placeholder='Paste example strings here (one per line). Leave empty to use runtime inputs.'
        title='Paste example strings here (one per line). Leave empty to use runtime inputs.'/>
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-        <div className='rounded-md border border-border bg-card/50 p-3'>
+        <div
+          className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50`}
+        >
           <div className='text-[11px] text-gray-300'>Matches</div>
           <pre className='mt-2 max-h-48 overflow-auto rounded bg-card/70 p-2 text-[11px] text-gray-200 whitespace-pre-wrap break-all'>
             {JSON.stringify(preview.matches, null, 2)}
           </pre>
         </div>
-        <div className='rounded-md border border-border bg-card/50 p-3'>
+        <div
+          className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50`}
+        >
           <div className='text-[11px] text-gray-300'>
             {isExtractMode ? 'Extracted Value (value port)' : 'Grouped Output'}
           </div>

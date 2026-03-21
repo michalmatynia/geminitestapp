@@ -3,8 +3,13 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
+
 import { KANGUR_AI_TUTOR_UI_ROOT_ATTRIBUTE } from './KangurAiTutorUiBoundary.shared';
 import {
+  getContextSwitchNotice,
+  getTutorContextFallbackTarget,
+  getTutorSurfaceLabel,
   isSelectionWithinTutorUi,
   isTargetWithinTutorUi,
 } from './KangurAiTutorWidget.coordinator.helpers';
@@ -60,5 +65,83 @@ describe('KangurAiTutorWidget.coordinator helpers', () => {
     document.body.append(tutorRoot);
 
     expect(isTargetWithinTutorUi(button)).toBe(true);
+  });
+
+  it('uses localized tutor surface labels for profile, parent dashboard, and auth surfaces', () => {
+    const tutorContent = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      panelChrome: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome,
+        surfaceLabels: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.surfaceLabels,
+          profile: 'Профіль',
+          parent_dashboard: 'Панель для батьків',
+          auth: 'Вхід',
+        },
+      },
+    };
+
+    expect(getTutorSurfaceLabel('profile', tutorContent)).toBe('Профіль');
+    expect(getTutorSurfaceLabel('parent_dashboard', tutorContent)).toBe('Панель для батьків');
+    expect(getTutorSurfaceLabel('auth', tutorContent)).toBe('Вхід');
+  });
+
+  it('uses localized tutor context fallback targets for profile, parent dashboard, and auth surfaces', () => {
+    const tutorContent = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      panelChrome: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome,
+        contextFallbackTargets: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.contextFallbackTargets,
+          profile: 'Нова панель профілю',
+          parent_dashboard: 'Нова батьківська панель',
+          auth: 'Екран входу',
+        },
+      },
+    };
+
+    expect(getTutorContextFallbackTarget('profile', tutorContent)).toBe('Нова панель профілю');
+    expect(getTutorContextFallbackTarget('parent_dashboard', tutorContent)).toBe(
+      'Нова батьківська панель'
+    );
+    expect(getTutorContextFallbackTarget('auth', tutorContent)).toBe('Екран входу');
+  });
+
+  it('builds a localized context switch notice for auth surfaces without a title', () => {
+    const tutorContent = {
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      panelChrome: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome,
+        surfaceLabels: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.surfaceLabels,
+          auth: 'Вхід',
+        },
+        contextFallbackTargets: {
+          ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.panelChrome.contextFallbackTargets,
+          auth: 'Екран входу',
+        },
+      },
+      contextSwitch: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.contextSwitch,
+        title: 'Нове місце допомоги',
+      },
+    };
+
+    expect(
+      getContextSwitchNotice({
+        tutorContent,
+        surface: 'auth',
+        title: null,
+        contentId: null,
+        questionProgressLabel: null,
+        questionId: null,
+        assignmentSummary: null,
+        assignmentId: null,
+      })
+    ).toEqual({
+      title: 'Нове місце допомоги',
+      target: 'Екран входу',
+      detail: null,
+    });
   });
 });

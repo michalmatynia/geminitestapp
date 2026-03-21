@@ -1,7 +1,7 @@
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { buildNameMirrorPolishSequenceBundle } from '@/features/products/lib/validatorSemanticPresets';
 
 
@@ -41,12 +41,9 @@ export const handleCreateNameLengthMirrorPattern = async (args: {
       );
     }
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'useValidatorSettingsController',
-        action: 'createNameLengthMirrorPattern',
-      },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createNameLengthMirrorPattern',
     });
     notifyError(
       error instanceof Error ? error.message : 'Failed to create name segment dimension patterns.'
@@ -85,12 +82,9 @@ export const handleCreateNameCategoryMirrorPattern = async (args: {
       );
     }
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'useValidatorSettingsController',
-        action: 'createNameCategoryMirrorPattern',
-      },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createNameCategoryMirrorPattern',
     });
     notifyError(
       error instanceof Error ? error.message : 'Failed to create name segment category pattern.'
@@ -130,12 +124,9 @@ export const handleCreateNameMirrorPolishSequence = async (args: {
 
     notifySuccess('English -> Polish name mirror sequence created.');
   } catch (error) {
-    logClientError(error);
-    logClientError(error, {
-      context: {
-        source: 'useValidatorSettingsController',
-        action: 'createNameMirrorPolishSequence',
-      },
+    logClientCatch(error, {
+      source: 'useValidatorSettingsController',
+      action: 'createNameMirrorPolishSequence',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to create name mirror sequence.');
   }

@@ -2,6 +2,7 @@ import {
   completeKangurPracticeSession,
   generateKangurLogicPracticeQuestions,
   generateTrainingQuestions,
+  getLocalizedKangurMetadataBadgeName,
   getKangurPracticeOperationConfig,
   isKangurLogicPracticeOperation,
   resolveKangurPracticeOperation,
@@ -19,10 +20,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { createKangurDuelsHref } from '../duels/duelsHref';
+import {
+  getKangurMobileLocaleTag,
+  useKangurMobileI18n,
+  type KangurMobileLocale,
+} from '../i18n/kangurMobileI18n';
 import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
+import {
+  useKangurMobileLessonCheckpoints,
+  type KangurMobileLessonCheckpointItem,
+} from '../lessons/useKangurMobileLessonCheckpoints';
 import { createKangurPlanHref } from '../plan/planHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { createKangurResultsHref } from '../scores/resultsHref';
+import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import {
   buildAwaitingAuthRetryState,
   buildLocalOnlySyncState,
@@ -44,6 +55,7 @@ const PRACTICE_QUESTION_COUNT = 8;
 
 const resolvePracticePlayerName = (
   session: ReturnType<typeof useKangurMobileAuth>['session'],
+  locale: KangurMobileLocale,
 ): string => {
   const activeLearnerName = session.user?.activeLearner?.displayName?.trim();
   if (activeLearnerName) {
@@ -55,7 +67,114 @@ const resolvePracticePlayerName = (
     return fullName;
   }
 
-  return 'Uczeń mobilny';
+  return {
+    de: 'Mobiler Lernender',
+    en: 'Mobile learner',
+    pl: 'Uczeń mobilny',
+  }[locale];
+};
+
+const formatPracticeProgressLabel = (
+  current: number,
+  total: number,
+  locale: KangurMobileLocale,
+): string =>
+  ({
+    de: `Frage ${current} von ${total}`,
+    en: `Question ${current} of ${total}`,
+    pl: `Pytanie ${current} z ${total}`,
+  })[locale];
+
+const formatPracticeResultLabel = (
+  correctAnswers: number,
+  totalQuestions: number,
+  locale: KangurMobileLocale,
+): string =>
+  ({
+    de: `Ergebnis: ${correctAnswers}/${totalQuestions}`,
+    en: `Score: ${correctAnswers}/${totalQuestions}`,
+    pl: `Wynik: ${correctAnswers}/${totalQuestions}`,
+  })[locale];
+
+const formatPracticeSummaryMeta = (
+  completion: KangurPracticeCompletionResult,
+  locale: KangurMobileLocale,
+): string => {
+  const base = {
+    de: `Trefferquote ${completion.scorePercent}% · XP +${completion.xpGained}`,
+    en: `Accuracy ${completion.scorePercent}% · XP +${completion.xpGained}`,
+    pl: `Skuteczność ${completion.scorePercent}% · XP +${completion.xpGained}`,
+  }[locale];
+
+  if (!completion.isPerfect) {
+    return base;
+  }
+
+  return `${base} · ${
+    {
+      de: 'Perfektes Spiel',
+      en: 'Perfect game',
+      pl: 'Perfekcyjna gra',
+    }[locale]
+  }`;
+};
+
+const formatPracticeAnswerFeedback = (
+  isChoiceCorrect: boolean,
+  answer: string,
+  locale: KangurMobileLocale,
+): string =>
+  isChoiceCorrect
+    ? {
+        de: 'Richtige Antwort.',
+        en: 'Correct answer.',
+        pl: 'Dobra odpowiedź.',
+      }[locale]
+    : {
+        de: `Richtige Antwort: ${answer}.`,
+        en: `Correct answer: ${answer}.`,
+        pl: `Poprawna odpowiedź: ${answer}.`,
+      }[locale];
+
+const formatPracticeDuelRecord = (
+  entry: {
+    losses: number;
+    ties: number;
+    wins: number;
+  },
+  locale: KangurMobileLocale,
+): string =>
+  ({
+    de: `Siege ${entry.wins} • Niederlagen ${entry.losses} • Unentschieden ${entry.ties}`,
+    en: `Wins ${entry.wins} • Losses ${entry.losses} • Ties ${entry.ties}`,
+    pl: `Wygrane ${entry.wins} • Porażki ${entry.losses} • Remisy ${entry.ties}`,
+  })[locale];
+
+const getPracticeKindDescription = (
+  kind: 'arithmetic' | 'logic' | 'time',
+  locale: KangurMobileLocale,
+): string => {
+  if (kind === 'logic') {
+    return {
+      de: 'Dies ist das erste mobile Logikquiz in der App. Es nutzt textbasierte Multiple-Choice-Fragen und denselben Fortschritts- und Ergebnisweg wie das Arithmetiktraining.',
+      en: 'This is the first mobile logic quiz in the app. It uses text-based multiple-choice questions and the same progress and score path as arithmetic practice.',
+      pl: 'To pierwszy mobilny quiz logiczny w aplikacji. Korzysta z tekstowych pytań wielokrotnego wyboru i tej samej ścieżki zapisu postępu oraz wyników co trening arytmetyczny.',
+    }[locale];
+  }
+
+  if (kind === 'time') {
+    return {
+      de: 'Dies ist ein leichtes mobiles Zeit- und Kalendertraining. Es verwendet weiterhin einfache Multiple-Choice-Fragen und denselben Fortschritts- sowie Ergebnisweg.',
+      en: 'This is a lightweight mobile time and calendar practice mode. It still uses simple multiple-choice questions and the same progress and score path.',
+      pl: 'To lekki mobilny trening czasu i kalendarza. Nadal korzysta z prostych pytań wielokrotnego wyboru oraz tej samej ścieżki postępu i wyników.',
+    }[locale];
+  }
+
+  return {
+    de: 'Dies ist der erste mobile Ersatz fuer den Hauptspielmodus. Im Moment umfasst er ein leichtes Multiple-Choice-Training fuer die Grundoperationen.',
+    en: 'This is the first mobile fallback for the main game mode. For now it covers lightweight multiple-choice practice for the basic operations.',
+    pl: 'To pierwszy mobilny zamiennik głównego trybu gry. Na razie obejmuje lekki trening pytań wielokrotnego wyboru dla podstawowych operacji.',
+  }[locale];
 };
 
 function Card({
@@ -130,6 +249,124 @@ function ChoiceButton({
   );
 }
 
+function LessonCheckpointRow({
+  item,
+}: {
+  item: KangurMobileLessonCheckpointItem;
+}): React.JSX.Element {
+  const { copy, localeTag } = useKangurMobileI18n();
+
+  return (
+    <View
+      style={{
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#ffffff',
+        padding: 12,
+        gap: 8,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {item.emoji} {item.title}
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
+              en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
+              pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
+            })}
+          </Text>
+        </View>
+        <View
+          style={{
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: '#c7d2fe',
+            backgroundColor: '#eef2ff',
+            paddingHorizontal: 12,
+            paddingVertical: 7,
+          }}
+        >
+          <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
+            {item.bestScorePercent}%
+          </Text>
+        </View>
+      </View>
+
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: 'Zuletzt gespeichert',
+          en: 'Last saved',
+          pl: 'Ostatni zapis',
+        })}{' '}
+        {new Intl.DateTimeFormat(localeTag, {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date(item.lastCompletedAt))}
+      </Text>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Link href={item.lessonHref} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 12,
+              paddingVertical: 9,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {copy({
+                de: 'Zur Lektion zurück',
+                en: 'Return to lesson',
+                pl: 'Wróć do lekcji',
+              })}
+              {`: ${item.title}`}
+            </Text>
+          </Pressable>
+        </Link>
+        {item.practiceHref ? (
+          <Link href={item.practiceHref} asChild>
+            <Pressable
+              accessibilityRole='button'
+              style={{
+                alignSelf: 'flex-start',
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                backgroundColor: '#ffffff',
+                paddingHorizontal: 12,
+                paddingVertical: 9,
+              }}
+            >
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {copy({
+                  de: 'Danach trainieren',
+                  en: 'Practice after',
+                  pl: 'Potem trenuj',
+                })}
+                {`: ${item.title}`}
+              </Text>
+            </Pressable>
+          </Link>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 type PendingPracticeScoreSyncInput = {
   completedRunId: number;
   correctAnswers: number;
@@ -138,6 +375,9 @@ type PendingPracticeScoreSyncInput = {
 };
 
 export function KangurPracticeScreen(): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const localeTag = getKangurMobileLocaleTag(locale);
+  const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
   const params = useLocalSearchParams<{
     debugAutoComplete?: string | string[];
     debugRedirectTo?: string | string[];
@@ -156,7 +396,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
   const operation = resolveKangurPracticeOperation(
     typeof rawOperation === 'string' ? rawOperation : null,
   );
-  const operationConfig = getKangurPracticeOperationConfig(operation);
+  const operationConfig = getKangurPracticeOperationConfig(operation, locale);
   const queryClient = useQueryClient();
   const { isLoadingAuth, session } = useKangurMobileAuth();
   const { apiClient, progressStore } = useKangurMobileRuntime();
@@ -181,6 +421,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
         return generateKangurLogicPracticeQuestions(
           operation,
           PRACTICE_QUESTION_COUNT,
+          locale,
         );
       }
 
@@ -190,7 +431,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
         PRACTICE_QUESTION_COUNT,
       );
     },
-    [operation, operationConfig.categories, runId],
+    [locale, operation, operationConfig.categories, runId],
   );
 
   const currentQuestion = questions[currentIndex] ?? null;
@@ -232,16 +473,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
     if (session.status !== 'authenticated') {
       if (isLoadingAuth) {
         pendingScoreSyncRef.current = input;
-        setScoreSyncState(buildAwaitingAuthRetryState());
+        setScoreSyncState(buildAwaitingAuthRetryState(locale));
         return;
       }
 
-      setScoreSyncState(buildLocalOnlySyncState('auth'));
+      setScoreSyncState(buildLocalOnlySyncState('auth', locale));
       return;
     }
 
     pendingScoreSyncRef.current = null;
-    setScoreSyncState(buildSyncingState());
+    setScoreSyncState(buildSyncingState(locale));
 
     const timeTakenSeconds = Math.max(
       0,
@@ -250,7 +491,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
 
     try {
       await apiClient.createScore({
-        player_name: resolvePracticePlayerName(session),
+        player_name: resolvePracticePlayerName(session, locale),
         score: input.correctAnswers,
         operation: input.operation,
         subject: 'maths',
@@ -263,7 +504,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
         return;
       }
 
-      setScoreSyncState(buildSyncedState());
+      setScoreSyncState(buildSyncedState(locale));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: ['kangur-mobile', 'leaderboard'],
@@ -286,16 +527,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
           : null;
 
       if (status === 401 || status === 403) {
-        setScoreSyncState(buildLocalOnlySyncState('expected-error'));
+        setScoreSyncState(buildLocalOnlySyncState('expected-error', locale));
         return;
       }
 
       if (error instanceof TypeError) {
-        setScoreSyncState(buildLocalOnlySyncState('expected-error'));
+        setScoreSyncState(buildLocalOnlySyncState('expected-error', locale));
         return;
       }
 
-      setScoreSyncState(buildUnexpectedSyncFailureState());
+      setScoreSyncState(buildUnexpectedSyncFailureState(locale));
     }
   };
 
@@ -353,14 +594,14 @@ export function KangurPracticeScreen(): React.JSX.Element {
 
     if (session.status !== 'authenticated') {
       pendingScoreSyncRef.current = null;
-      setScoreSyncState(buildLocalOnlySyncState('auth'));
+      setScoreSyncState(buildLocalOnlySyncState('auth', locale));
       return;
     }
 
     const pendingInput = pendingScoreSyncRef.current;
     pendingScoreSyncRef.current = null;
     void syncScoreRecord(pendingInput);
-  }, [isLoadingAuth, session.status, syncScoreRecord]);
+  }, [isLoadingAuth, locale, session.status, syncScoreRecord]);
 
   useEffect(() => {
     if (!debugAutoCompleteMode || completion || hasAppliedDebugAutoCompleteRef.current) {
@@ -447,37 +688,42 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 paddingVertical: 10,
               }}
             >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>Wróć</Text>
+              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                {translateKangurMobileActionLabel('Back', locale)}
+              </Text>
             </Pressable>
           </Link>
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-              Trening mobilny
+              {copy({
+                de: 'Mobiles Training',
+                en: 'Mobile practice',
+                pl: 'Trening mobilny',
+              })}
             </Text>
             <Text style={{ color: '#0f172a', fontSize: 28, fontWeight: '800' }}>
               {operationConfig.label}
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
-              {operationConfig.kind === 'logic'
-                ? 'To pierwszy mobilny quiz logiczny w aplikacji. Korzysta z tekstowych pytań wielokrotnego wyboru i tej samej ścieżki zapisu postępu oraz wyników co trening arytmetyczny.'
-                : operationConfig.kind === 'time'
-                  ? 'To lekki mobilny trening czasu i kalendarza. Nadal korzysta z prostych pytań wielokrotnego wyboru oraz tej samej ścieżki postępu i wyników.'
-                  : 'To pierwszy mobilny zamiennik głównego trybu gry. Na razie obejmuje lekki trening pytań wielokrotnego wyboru dla podstawowych operacji.'}
+              {getPracticeKindDescription(operationConfig.kind, locale)}
             </Text>
           </Card>
 
           {completion ? (
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Podsumowanie
+                {copy({
+                  de: 'Zusammenfassung',
+                  en: 'Summary',
+                  pl: 'Podsumowanie',
+                })}
               </Text>
               <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
-                Wynik: {correctAnswers}/{questions.length}
+                {formatPracticeResultLabel(correctAnswers, questions.length, locale)}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Skuteczność {completion.scorePercent}% · XP +{completion.xpGained}
-                {completion.isPerfect ? ' · Perfekcyjna gra' : ''}
+                {formatPracticeSummaryMeta(completion, locale)}
               </Text>
               {scoreSyncState ? (
                 <View
@@ -512,15 +758,26 @@ export function KangurPracticeScreen(): React.JSX.Element {
                   }}
                 >
                   <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                    Deweloperski podgląd synchronizacji
+                    {copy({
+                      de: 'Entwickler-Synchronisierungsvorschau',
+                      en: 'Developer sync proof',
+                      pl: 'Deweloperski podgląd synchronizacji',
+                    })}
                   </Text>
                   <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
-                    To sprawdza te same mobilne źródła danych, które zasilają
-                    wyniki, profil, plan dnia i ranking.
+                    {copy({
+                      de: 'Das prueft dieselben mobilen Datenquellen, die Ergebnisse, Profil, Tagesplan und Rangliste speisen.',
+                      en: 'This checks the same mobile data sources that feed scores, profile, daily plan, and leaderboard.',
+                      pl: 'To sprawdza te same mobilne źródła danych, które zasilają wyniki, profil, plan dnia i ranking.',
+                    })}
                   </Text>
                   {practiceSyncProof.isLoading ? (
                     <Text style={{ color: '#1e3a8a', fontSize: 13, lineHeight: 18 }}>
-                      Odświeżamy podgląd synchronizacji...
+                      {copy({
+                        de: 'Synchronisierungsvorschau wird aktualisiert...',
+                        en: 'Refreshing the sync proof...',
+                        pl: 'Odświeżamy podgląd synchronizacji...',
+                      })}
                     </Text>
                   ) : (
                     <View style={{ gap: 8 }}>
@@ -547,7 +804,17 @@ export function KangurPracticeScreen(): React.JSX.Element {
                             }}
                           >
                             {surface.label}:{' '}
-                            {surface.status === 'ready' ? 'gotowe' : 'brak'}
+                            {surface.status === 'ready'
+                              ? copy({
+                                  de: 'bereit',
+                                  en: 'ready',
+                                  pl: 'gotowe',
+                                })
+                              : copy({
+                                  de: 'fehlt',
+                                  en: 'missing',
+                                  pl: 'brak',
+                                })}
                           </Text>
                           <Text
                             style={{
@@ -584,7 +851,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#1d4ed8', fontWeight: '700' }}>
-                      Odśwież podgląd
+                      {translateKangurMobileActionLabel('Refresh proof', locale)}
                     </Text>
                   </Pressable>
                 </View>
@@ -603,7 +870,12 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-                      Nowa odznaka: {badgeId}
+                      {copy({
+                        de: 'Neues Abzeichen',
+                        en: 'New badge',
+                        pl: 'Nowa odznaka',
+                      })}
+                      : {getLocalizedKangurMetadataBadgeName(badgeId, locale, badgeId)}
                     </Text>
                   </View>
                 ))}
@@ -619,18 +891,34 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 }}
               >
                 <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                  Po treningu
+                  {copy({
+                    de: 'Nach dem Training',
+                    en: 'After practice',
+                    pl: 'Po treningu',
+                  })}
                 </Text>
                 <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                  Pojedynki
+                  {copy({
+                    de: 'Duelle',
+                    en: 'Duels',
+                    pl: 'Pojedynki',
+                  })}
                 </Text>
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  Po zakończeniu serii możesz od razu wejść do pojedynków albo wrócić do ostatnich rywali.
+                  {copy({
+                    de: 'Nach der Runde kannst du direkt zu den Duellen wechseln oder zu deinen letzten Gegnern zurueckkehren.',
+                    en: 'After the run you can jump straight into duels or return to your latest opponents.',
+                    pl: 'Po zakończeniu serii możesz od razu wejść do pojedynków albo wrócić do ostatnich rywali.',
+                  })}
                 </Text>
 
                 {practiceDuels.isRestoringAuth || practiceDuels.isLoading ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Pobieramy podsumowanie pojedynków po treningu.
+                    {copy({
+                      de: 'Duellzusammenfassung nach dem Training wird geladen.',
+                      en: 'Loading the post-practice duel summary.',
+                      pl: 'Pobieramy podsumowanie pojedynków po treningu.',
+                    })}
                   </Text>
                 ) : practiceDuels.error ? (
                   <View style={{ gap: 10 }}>
@@ -651,13 +939,21 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                        Odśwież pojedynki
+                        {copy({
+                          de: 'Duelle aktualisieren',
+                          en: 'Refresh duels',
+                          pl: 'Odśwież pojedynki',
+                        })}
                       </Text>
                     </Pressable>
                   </View>
                 ) : !practiceDuels.isAuthenticated ? (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.
+                    {copy({
+                      de: 'Melde eine Lernenden-Sitzung an, um hier dein Duellergebnis und schnelle Rueckspiele zu sehen.',
+                      en: 'Sign in the learner session to see your duel result and quick rematches here.',
+                      pl: 'Zaloguj sesję ucznia, aby zobaczyć tutaj wynik w pojedynkach i szybkie rewanże.',
+                    })}
                   </Text>
                 ) : (
                   <View style={{ gap: 12 }}>
@@ -673,18 +969,26 @@ export function KangurPracticeScreen(): React.JSX.Element {
                         }}
                       >
                         <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                          TWÓJ WYNIK W POJEDYNKACH
+                          {copy({
+                            de: 'DEIN DUELLERGEBNIS',
+                            en: 'YOUR DUEL RESULT',
+                            pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                          })}
                         </Text>
                         <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
                           #{practiceDuels.currentRank} {practiceDuels.currentEntry.displayName}
                         </Text>
                         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                          Wygrane {practiceDuels.currentEntry.wins} • Porażki {practiceDuels.currentEntry.losses} • Remisy {practiceDuels.currentEntry.ties}
+                          {formatPracticeDuelRecord(practiceDuels.currentEntry, locale)}
                         </Text>
                       </View>
                     ) : (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                        Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.
+                        {copy({
+                          de: 'Dein Konto ist im sichtbaren Ausschnitt der Duellrangliste noch nicht vorhanden.',
+                          en: 'Your account is not in the visible slice of the duel leaderboard yet.',
+                          pl: 'Twojego konta nie ma jeszcze w widocznym wycinku rankingu pojedynków.',
+                        })}
                       </Text>
                     )}
 
@@ -696,7 +1000,11 @@ export function KangurPracticeScreen(): React.JSX.Element {
 
                     {practiceDuels.opponents.length === 0 ? (
                       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                        Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.
+                        {copy({
+                          de: 'Es gibt noch keine letzten Gegner. Schliesse dein erstes Duell ab, um hier schnelle Rueckspiele freizuschalten.',
+                          en: 'There are no recent opponents yet. Finish the first duel to unlock quick rematches here.',
+                          pl: 'Nie ma jeszcze ostatnich rywali. Zakończ pierwszy pojedynek, aby odblokować tutaj szybkie rewanże.',
+                        })}
                       </Text>
                     ) : (
                       <View style={{ gap: 10 }}>
@@ -716,8 +1024,12 @@ export function KangurPracticeScreen(): React.JSX.Element {
                               {opponent.displayName}
                             </Text>
                             <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                              Ostatni pojedynek{' '}
-                              {new Intl.DateTimeFormat('pl', {
+                              {copy({
+                                de: 'Letztes Duell',
+                                en: 'Last duel',
+                                pl: 'Ostatni pojedynek',
+                              })}{' '}
+                              {new Intl.DateTimeFormat(localeTag, {
                                 dateStyle: 'medium',
                                 timeStyle: 'short',
                               }).format(new Date(opponent.lastPlayedAt))}
@@ -742,8 +1054,16 @@ export function KangurPracticeScreen(): React.JSX.Element {
                             >
                               <Text style={{ color: '#ffffff', fontWeight: '700' }}>
                                 {practiceDuels.pendingOpponentLearnerId === opponent.learnerId
-                                  ? 'Wysyłanie rewanżu...'
-                                  : 'Szybki rewanż'}
+                                  ? copy({
+                                      de: 'Rueckspiel wird gesendet...',
+                                      en: 'Sending rematch...',
+                                      pl: 'Wysyłanie rewanżu...',
+                                    })
+                                  : copy({
+                                      de: 'Schnelles Rueckspiel',
+                                      en: 'Quick rematch',
+                                      pl: 'Szybki rewanż',
+                                    })}
                               </Text>
                             </Pressable>
                           </View>
@@ -765,13 +1085,89 @@ export function KangurPracticeScreen(): React.JSX.Element {
                         }}
                       >
                         <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                          Otwórz pojedynki
+                          {copy({
+                            de: 'Duelle oeffnen',
+                            en: 'Open duels',
+                            pl: 'Otwórz pojedynki',
+                          })}
                         </Text>
                       </Pressable>
                     </Link>
                   </View>
                 )}
               </View>
+
+              <View
+                style={{
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  backgroundColor: '#f8fafc',
+                  padding: 14,
+                  gap: 10,
+                }}
+              >
+                <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                  {copy({
+                    de: 'Letzte Lektions-Checkpoints',
+                    en: 'Recent lesson checkpoints',
+                    pl: 'Ostatnie checkpointy lekcji',
+                  })}
+                </Text>
+                <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+                  {copy({
+                    de: 'Weiter mit Lektionen',
+                    en: 'Continue with lessons',
+                    pl: 'Kontynuuj lekcje',
+                  })}
+                </Text>
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Nach der Runde kannst du direkt zu den zuletzt gespeicherten Lektionen zurückspringen und dann passend weitertrainieren.',
+                    en: 'After the run you can jump back to the most recently saved lessons and then continue with matching practice.',
+                    pl: 'Po zakończeniu serii możesz wrócić do ostatnio zapisanych lekcji i potem dalej trenować w pasującym trybie.',
+                  })}
+                </Text>
+
+                {lessonCheckpoints.recentCheckpoints.length === 0 ? (
+                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({
+                      de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit er hier erscheint.',
+                      en: 'There are no saved checkpoints yet. Open a lesson and save the first state so it appears here.',
+                      pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby pojawił się tutaj.',
+                    })}
+                  </Text>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    {lessonCheckpoints.recentCheckpoints.map((item) => (
+                      <LessonCheckpointRow key={item.componentId} item={item} />
+                    ))}
+                    <Link href='/lessons' asChild>
+                      <Pressable
+                        accessibilityRole='button'
+                        style={{
+                          alignSelf: 'flex-start',
+                          borderRadius: 999,
+                          borderWidth: 1,
+                          borderColor: '#cbd5e1',
+                          backgroundColor: '#ffffff',
+                          paddingHorizontal: 14,
+                          paddingVertical: 10,
+                        }}
+                      >
+                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+                          {copy({
+                            de: 'Lektionen öffnen',
+                            en: 'Open lessons',
+                            pl: 'Otwórz lekcje',
+                          })}
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  </View>
+                )}
+              </View>
+
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 <Pressable
                   accessibilityRole='button'
@@ -783,7 +1179,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     paddingVertical: 10,
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>Zagraj ponownie</Text>
+                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                    {translateKangurMobileActionLabel('Train again', locale)}
+                  </Text>
                 </Pressable>
                 <Link
                   href={createKangurResultsHref({
@@ -803,7 +1201,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Zobacz historię trybu
+                      {translateKangurMobileActionLabel('View mode history', locale)}
                     </Text>
                   </Pressable>
                 </Link>
@@ -821,7 +1219,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       }}
                     >
                       <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                        Otwórz pasującą lekcję
+                        {translateKangurMobileActionLabel('Open matching lesson', locale)}
                       </Text>
                     </Pressable>
                   </Link>
@@ -839,7 +1237,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
                     }}
                   >
                     <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      Otwórz plan dnia
+                      {translateKangurMobileActionLabel('Open daily plan', locale)}
                     </Text>
                   </Pressable>
                 </Link>
@@ -853,7 +1251,9 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       paddingVertical: 10,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>Wróć do profilu</Text>
+                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                      {translateKangurMobileActionLabel('Back to profile', locale)}
+                    </Text>
                   </Pressable>
                 </Link>
               </View>
@@ -861,7 +1261,7 @@ export function KangurPracticeScreen(): React.JSX.Element {
           ) : currentQuestion ? (
             <Card>
               <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                Pytanie {currentIndex + 1} z {questions.length}
+                {formatPracticeProgressLabel(currentIndex + 1, questions.length, locale)}
               </Text>
               <View
                 style={{
@@ -883,7 +1283,11 @@ export function KangurPracticeScreen(): React.JSX.Element {
                 {currentQuestion.question}
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                Wybierz jedną odpowiedź. Wynik zapisze się lokalnie po zakończeniu całej serii.
+                {copy({
+                  de: 'Waehle eine Antwort. Das Ergebnis wird lokal gespeichert, sobald die ganze Runde beendet ist.',
+                  en: 'Choose one answer. The result will be saved locally after the whole run finishes.',
+                  pl: 'Wybierz jedną odpowiedź. Wynik zapisze się lokalnie po zakończeniu całej serii.',
+                })}
               </Text>
 
               <View style={{ gap: 10 }}>
@@ -924,9 +1328,11 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       lineHeight: 20,
                     }}
                   >
-                    {isChoiceCorrect
-                      ? 'Dobra odpowiedź.'
-                      : `Poprawna odpowiedź: ${String(currentQuestion.answer)}.`}
+                    {formatPracticeAnswerFeedback(
+                      isChoiceCorrect,
+                      String(currentQuestion.answer),
+                      locale,
+                    )}
                   </Text>
                   <Pressable
                     accessibilityRole='button'
@@ -938,11 +1344,21 @@ export function KangurPracticeScreen(): React.JSX.Element {
                       paddingHorizontal: 14,
                       paddingVertical: 10,
                     }}
-                  >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      {isLastQuestion ? 'Zakończ trening' : 'Następne pytanie'}
-                    </Text>
-                  </Pressable>
+                    >
+                      <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+                        {isLastQuestion
+                          ? copy({
+                              de: 'Training beenden',
+                              en: 'Finish practice',
+                              pl: 'Zakończ trening',
+                            })
+                          : copy({
+                              de: 'Naechste Frage',
+                              en: 'Next question',
+                              pl: 'Następne pytanie',
+                            })}
+                      </Text>
+                    </Pressable>
                 </View>
               ) : null}
             </Card>

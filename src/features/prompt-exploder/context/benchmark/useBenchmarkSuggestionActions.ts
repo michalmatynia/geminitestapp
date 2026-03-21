@@ -6,6 +6,7 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -24,11 +25,6 @@ import type {
   PromptExploderSettingsActions,
   PromptExploderSettingsState,
 } from '../SettingsContext';
-
-type ToastFn = (
-  message: string,
-  options?: { variant?: 'error' | 'info' | 'success' | 'warning' }
-) => void;
 
 type BenchmarkSuggestionActionDependencies = Pick<
   PromptExploderSettingsState,

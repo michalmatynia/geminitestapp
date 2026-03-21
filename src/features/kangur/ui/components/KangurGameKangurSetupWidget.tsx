@@ -32,10 +32,22 @@ export function KangurGameKangurSetupWidget({
       }),
     [locale, progress, recommendationTranslations]
   );
+  const kangurSetupFallbackTitle =
+    normalizedLocale === 'uk' ? 'Налаштування сесії Математичного Кенгуру' : 'Kangur';
+  const kangurSetupFallbackWordmarkLabel =
+    normalizedLocale === 'uk'
+      ? 'Математичний Кенгуру'
+      : normalizedLocale === 'de'
+        ? 'Mathe-Kanguru'
+        : 'Math Kangaroo';
+  const kangurSetupFallbackDescription =
+    normalizedLocale === 'uk'
+      ? 'Підготуйте сесію Математичного Кенгуру.'
+      : 'Wybierz edycję konkursu i zestaw zadań do rozwiązania.';
   const kangurSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.kangur_setup.label',
-    'Kangur'
+    kangurSetupFallbackTitle
   );
   const kangurWordmarkLabel =
     normalizedLocale === 'pl'
@@ -43,7 +55,7 @@ export function KangurGameKangurSetupWidget({
       : translateRecommendationWithFallback(
           gameHomeActionTranslations,
           'actions.kangur',
-          normalizedLocale === 'de' ? 'Mathe-Kanguru' : 'Math Kangaroo'
+          kangurSetupFallbackWordmarkLabel
         );
   const resolvedOnBack = onBack ?? handleHome;
 
@@ -56,7 +68,7 @@ export function KangurGameKangurSetupWidget({
       description={translateRecommendationWithFallback(
         gamePageTranslations,
         'screens.kangur_setup.description',
-        'Wybierz edycję konkursu i zestaw zadań do rozwiązania.'
+        kangurSetupFallbackDescription
       )}
       momentumMode='kangur'
       onBack={resolvedOnBack}

@@ -31,4 +31,15 @@ describe('KangurDuelsWordmark', () => {
     expect(text).toHaveTextContent('Duell-Lobby');
     expect(text).toHaveAttribute('font-size', '68');
   });
+
+  it('renders the Ukrainian duels wordmark as SVG text', () => {
+    const { container } = render(<KangurDuelsWordmark locale='uk' />);
+    const svg = container.querySelector('svg');
+    const text = svg?.querySelector('text');
+
+    expect(svg).not.toBeNull();
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Лобі дуелей');
+    expect(text).toHaveAttribute('font-size', '68');
+  });
 });

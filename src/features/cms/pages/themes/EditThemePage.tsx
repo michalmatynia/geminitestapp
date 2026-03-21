@@ -8,7 +8,7 @@ import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries'
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import type { CmsTheme, CmsThemeUpdateRequestDto } from '@/shared/contracts/cms';
 import { AdminCmsPageLayout, Alert, LoadingState } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.Element {
@@ -41,9 +41,10 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
       await updateTheme.mutateAsync({ id, input });
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
-      logClientError(submitError);
-      logClientError(submitError, {
-        context: { source: 'EditThemePage', action: 'saveTheme', themeId: id },
+      logClientCatch(submitError, {
+        source: 'EditThemePage',
+        action: 'saveTheme',
+        themeId: id,
       });
       setError(submitError instanceof Error ? submitError.message : 'Failed to save theme.');
     }

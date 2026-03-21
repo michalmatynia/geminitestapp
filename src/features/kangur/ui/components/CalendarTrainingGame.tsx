@@ -43,8 +43,6 @@ import type {
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type CalendarTrainingGameProps = KangurMiniGameFinishActionProps;
-
 type CalendarQuestion = {
   question: string;
   answer: string;
@@ -145,7 +143,7 @@ const TOTAL = 6;
 
 export default function CalendarTrainingGame({
   onFinish,
-}: CalendarTrainingGameProps): React.JSX.Element {
+}: KangurMiniGameFinishActionProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
   const [questions] = useState(() => Array.from({ length: TOTAL }, generateQuestion));
   const [current, setCurrent] = useState(0);

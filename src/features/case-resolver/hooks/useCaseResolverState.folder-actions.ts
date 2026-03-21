@@ -7,6 +7,8 @@ import type {
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { Toast as CaseResolverToast } from '@/shared/contracts/ui';
+import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 import { normalizeFolderPath, normalizeFolderPaths, renameFolderPath } from '../settings';
 import { deleteCaseResolverNodeFileSnapshot } from '../workspace-persistence';
@@ -15,14 +17,6 @@ import {
   removeOwnedFolderRecordsWithinPath,
   renameOwnedFolderRecordsWithinPath,
 } from './useCaseResolverState.helpers';
-
-type ConfirmFn = (input: {
-  title: string;
-  message: string;
-  confirmText: string;
-  isDangerous: boolean;
-  onConfirm: () => void;
-}) => void;
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;
@@ -36,13 +30,8 @@ type UpdateWorkspaceFn = (
   options?: UpdateWorkspaceOptions
 ) => void;
 
-type CaseResolverToast = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'warning' | 'info' }
-) => void;
-
 type UseCaseResolverStateFolderActionsInput = {
-  confirm: ConfirmFn;
+  confirm: (config: ConfirmConfig) => void;
   toast: CaseResolverToast;
   updateWorkspace: UpdateWorkspaceFn;
   workspace: CaseResolverWorkspace;

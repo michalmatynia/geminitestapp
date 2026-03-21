@@ -17,7 +17,16 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
-import { Badge, Button, Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
+import {
+  Badge,
+  Button,
+  Input,
+  SelectSimple,
+  Textarea,
+  ToggleRow,
+  FormField,
+  insetPanelVariants,
+} from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -368,7 +377,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
       </FormField>
 
       {config.source === 'global_stack' ? (
-        <div className='space-y-3 rounded-md border border-border/60 bg-card/40 p-3'>
+        <div className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3`}>
           <FormField label='Validation Stack'>
             <SelectSimple
               size='sm'
@@ -400,7 +409,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
           </p>
         </div>
       ) : (
-        <div className='space-y-3 rounded-md border border-border/60 bg-card/40 p-3'>
+        <div className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3`}>
           <FormField label='Path-Local List Name'>
             <Input
               variant='subtle'

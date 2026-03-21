@@ -2,6 +2,7 @@ import type { KangurPracticeOperation } from '@kangur/core';
 import { createDefaultKangurProgressState } from '@kangur/contracts';
 import { useMemo, useSyncExternalStore } from 'react';
 
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLeaderboard } from '../leaderboard/useKangurMobileLeaderboard';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
@@ -39,6 +40,7 @@ export const useKangurPracticeSyncProof = ({
   runStartedAt,
 }: UseKangurPracticeSyncProofOptions): UseKangurPracticeSyncProofResult => {
   const { progressStore } = useKangurMobileRuntime();
+  const { copy, locale } = useKangurMobileI18n();
   const progress = useSyncExternalStore(
     progressStore.subscribeToProgress,
     progressStore.loadProgress,
@@ -63,6 +65,7 @@ export const useKangurPracticeSyncProof = ({
       expectedCorrectAnswers,
       expectedTotalQuestions,
       leaderboardItems: leaderboard.items,
+      locale,
       operation,
       progress,
       runStartedAt,
@@ -73,6 +76,7 @@ export const useKangurPracticeSyncProof = ({
     expectedCorrectAnswers,
     expectedTotalQuestions,
     leaderboard.items,
+    locale,
     operation,
     progress,
     runStartedAt,
@@ -83,7 +87,11 @@ export const useKangurPracticeSyncProof = ({
     error:
       leaderboard.error ??
       (scoresQuery.error instanceof Error
-        ? 'Nie udało się odświeżyć podglądu synchronizacji.'
+        ? copy({
+            de: 'Die Synchronisierungsvorschau konnte nicht aktualisiert werden.',
+            en: 'Could not refresh the sync proof.',
+            pl: 'Nie udało się odświeżyć podglądu synchronizacji.',
+          })
         : null),
     isEnabled: enabled,
     isLoading: enabled && (scoresQuery.isLoading || leaderboard.isLoading),

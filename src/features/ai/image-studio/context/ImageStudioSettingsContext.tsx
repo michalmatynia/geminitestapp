@@ -28,7 +28,10 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { useProjectsState } from './ProjectsContext';
@@ -269,9 +272,9 @@ export function ImageStudioSettingsProvider({
       );
       onSaved?.();
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminImageStudioSettingsPage', action: 'saveSettings' },
+      logClientCatch(error, {
+        source: 'AdminImageStudioSettingsPage',
+        action: 'saveSettings',
       });
       toast('Failed to save Image Studio settings.', { variant: 'error' });
     }

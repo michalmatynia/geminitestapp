@@ -23,6 +23,14 @@ type CreateLearnerSessionKangurAuthAdapterOptions = {
   storage: KangurClientStorageAdapter;
 };
 
+export const KANGUR_MOBILE_AUTH_ERROR_CODES = {
+  missingCredentials: 'kangur.mobile.auth.missing_credentials',
+  missingPersistedSession: 'kangur.mobile.auth.missing_persisted_session',
+} as const;
+
+export type KangurMobileAuthErrorCode =
+  (typeof KANGUR_MOBILE_AUTH_ERROR_CODES)[keyof typeof KANGUR_MOBILE_AUTH_ERROR_CODES];
+
 const createAnonymousLearnerSession = (): KangurAuthSession =>
   createAnonymousKangurAuthSession('native-learner-session');
 
@@ -62,11 +70,24 @@ const persistResolvedLearnerSession = (
   }
 };
 
+const createAuthAdapterError = (
+  code: KangurMobileAuthErrorCode,
+  message: string,
+): Error & { code: KangurMobileAuthErrorCode } => {
+  const error = new Error(message) as Error & { code: KangurMobileAuthErrorCode };
+  error.code = code;
+  return error;
+};
+
 const createMissingCredentialsError = (): Error =>
-  new Error('Learner login name and password are required for native Kangur sign-in.');
+  createAuthAdapterError(
+    KANGUR_MOBILE_AUTH_ERROR_CODES.missingCredentials,
+    'Learner login name and password are required for native Kangur sign-in.',
+  );
 
 const createMissingPersistedSessionError = (): Error =>
-  new Error(
+  createAuthAdapterError(
+    KANGUR_MOBILE_AUTH_ERROR_CODES.missingPersistedSession,
     'Learner sign-in did not produce a persisted mobile session. Check cookie/session support for the current device runtime.',
   );
 

@@ -5,7 +5,10 @@ import {
   type AiPathsSettingRecord,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import {
   USER_PREFERENCES_STALE_MS,
@@ -56,13 +59,10 @@ export function usePreferencePersistence(
       try {
         await persistUserPreferences(pathId);
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useAiPathsPersistence',
-            action: 'persistActivePathPreference',
-            pathId,
-          },
+        logClientCatch(error, {
+          source: 'useAiPathsPersistence',
+          action: 'persistActivePathPreference',
+          pathId,
         });
       }
     },

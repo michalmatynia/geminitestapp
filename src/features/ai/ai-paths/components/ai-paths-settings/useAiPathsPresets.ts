@@ -12,6 +12,7 @@ import type {
   DbQueryPreset,
   Edge,
 } from '@/shared/contracts/ai-paths';
+import type { Toast as ToastFn } from '@/shared/contracts/ui';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import {
   BUNDLE_INPUT_PORTS,
@@ -26,12 +27,6 @@ import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-clien
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-type ToastFn = (
-  message: string,
-  options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>
-) => void;
 
 type UseAiPathsPresetsArgs = {
   nodes: AiNode[];

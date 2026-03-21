@@ -391,6 +391,15 @@
     "result": {
       "leaderboardLabel": "Ranking after the round"
     },
+    "questionWidget": {
+      "scoreLabel": "Score",
+      "roundAccuracy": "Round accuracy: {percent}%",
+      "perfectRun": "Perfect run in progress",
+      "recommendation": "Recommended direction: {title}",
+      "guidedProjection": "After this round: {summary}",
+      "dailyQuest": "Mission of the day: {summary}",
+      "nextBadge": "Next badge: {summary}"
+    },
     "operationSelector": {
       "title": "Let's play!",
       "intro": {

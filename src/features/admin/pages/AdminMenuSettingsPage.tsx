@@ -40,6 +40,7 @@ import {
   ToggleRow,
   FolderTreePanel,
   UI_GRID_ROOMY_CLASSNAME,
+  insetPanelVariants,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -565,7 +566,9 @@ function MenuBuilderSection(): React.JSX.Element {
           />
           <div className='mt-3 max-h-80 space-y-2 overflow-auto pr-2'>
             {filteredLibraryItems.length === 0 ? (
-              <p className='rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400'>
+              <p
+                className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border text-xs text-gray-400`}
+              >
                 No matching menu items.
               </p>
             ) : (

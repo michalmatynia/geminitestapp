@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface BackfillProjectResult {
   projectId: string;
@@ -97,9 +97,9 @@ export function useMaintenanceActions({
 
       setBackfillResultText(`${summary}\n\nPer project:\n${perProject || '- none'}`);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'AdminImageStudioSettingsPage', action: 'runCardBackfill' },
+      logClientCatch(error, {
+        source: 'AdminImageStudioSettingsPage',
+        action: 'runCardBackfill',
       });
       toast(error instanceof Error ? error.message : 'Failed to run card backfill.', {
         variant: 'error',

@@ -24,6 +24,7 @@ import type {
   ImageStudioCenterLayoutConfig,
   ImageStudioCenterObjectBounds,
 } from '@/shared/contracts/image-studio';
+import type { ImageStudioSourceLimitValidation } from './types';
 
 export type ImageStudioAutoScalerResult = {
   outputBuffer: Buffer;
@@ -62,11 +63,6 @@ type ImageStudioAnalysisSummary = {
   objectAreaPercent: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
   suggestedPlan: ImageStudioAutoScalePlan;
-};
-
-type AutoScalerSourceLimitValidation = {
-  ok: boolean;
-  reason?: 'non_positive_dimensions' | 'max_side_exceeded' | 'max_pixels_exceeded';
 };
 
 const ensureValidDimensions = (width: number, height: number): void => {
@@ -121,7 +117,7 @@ export const buildAutoScalerRequestRelationType = (requestId: string): string =>
 export const validateAutoScalerSourceDimensions = (
   width: number,
   height: number
-): AutoScalerSourceLimitValidation => {
+): ImageStudioSourceLimitValidation => {
   if (!(width > 0 && height > 0)) {
     return { ok: false, reason: 'non_positive_dimensions' };
   }

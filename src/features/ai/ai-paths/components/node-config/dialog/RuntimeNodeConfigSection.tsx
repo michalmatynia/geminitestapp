@@ -1,7 +1,15 @@
 'use client';
 
 import type { NodeCacheMode, NodeCacheScope, NodeSideEffectPolicy } from '@/shared/lib/ai-paths';
-import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  MultiSelect,
+  SelectSimple,
+  ToggleRow,
+  FormField,
+  insetPanelVariants,
+} from '@/shared/ui';
 
 import {
   useAiPathOrchestrator,
@@ -112,7 +120,9 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   };
 
   return (
-    <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
+    <div
+      className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border bg-card/50`}
+    >
       <FormField label='Execution cache'>
         <SelectSimple
           size='sm'

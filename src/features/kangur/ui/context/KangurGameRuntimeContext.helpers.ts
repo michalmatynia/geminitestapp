@@ -242,7 +242,11 @@ export const buildKangurCompletedGameOutcome = ({
     awardedXp += questClaim.xpAwarded;
     awardedBreakdown.push({
       kind: 'daily_quest',
-      label: 'Misja dnia',
+      label: translateKangurProgressWithFallback(
+        progressTranslate,
+        'rewardBreakdown.dailyQuest',
+        'Misja dnia',
+      ),
       xp: questClaim.xpAwarded,
     });
     finalProgress = questBonusResult.updated;

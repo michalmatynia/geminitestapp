@@ -9,7 +9,7 @@ import type {
   ChatbotSessionsData as UseChatbotSessionManagerReturn,
 } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useCreateChatbotSession, useDeleteChatbotSession } from './useChatbotMutations';
 import { useChatbotSessions } from './useChatbotQueries';
@@ -48,9 +48,8 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
         });
         setCurrentSessionId(data.sessionId);
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useChatbotSessionManager.createNewSession' },
+        logClientCatch(error, {
+          source: 'useChatbotSessionManager.createNewSession',
         });
         toast('Failed to create new chat session', { variant: 'error' });
       }
@@ -66,12 +65,9 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
           setCurrentSessionId(sessions.find((s) => s.id !== id)?.id || null);
         }
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: {
-            source: 'useChatbotSessionManager.deleteSession',
-            sessionId: id,
-          },
+        logClientCatch(error, {
+          source: 'useChatbotSessionManager.deleteSession',
+          sessionId: id,
         });
         toast('Failed to delete chat session', { variant: 'error' });
       }

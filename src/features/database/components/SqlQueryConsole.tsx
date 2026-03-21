@@ -5,7 +5,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import { Button, Textarea, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientCatch,
+  logClientError,
+} from '@/shared/utils/observability/client-error-logger';
 
 import { useDatabaseConfig } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';

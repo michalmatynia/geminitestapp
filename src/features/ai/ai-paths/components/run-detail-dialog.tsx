@@ -25,6 +25,20 @@ import { readRuntimeTraceSummary } from './run-trace-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 
+type RunDetailFieldProps = {
+  label: string;
+  children: React.ReactNode;
+};
+
+function RunDetailField({ label, children }: RunDetailFieldProps): React.JSX.Element {
+  return (
+    <div>
+      <span className='text-[10px] uppercase text-gray-500'>{label}</span>
+      {children}
+    </div>
+  );
+}
+
 export function RunDetailDialog(): React.JSX.Element {
   const [isMarkingHandoff, setIsMarkingHandoff] = useState(false);
   const [handoffRequested, setHandoffRequested] = useState(false);
@@ -184,8 +198,7 @@ export function RunDetailDialog(): React.JSX.Element {
       ) : runDetail ? (
         <div className='space-y-4 text-xs text-gray-300'>
           <div className='grid gap-2 sm:grid-cols-2'>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Status</span>
+            <RunDetailField label='Status'>
               <div className='flex flex-wrap items-center gap-2 text-sm'>
                 <span>{runDetail.run.status}</span>
                 {isScheduledRun ? (
@@ -194,9 +207,8 @@ export function RunDetailDialog(): React.JSX.Element {
                   </span>
                 ) : null}
               </div>
-            </div>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Stream</span>
+            </RunDetailField>
+            <RunDetailField label='Stream'>
               <div className='flex flex-wrap items-center gap-2 text-sm'>
                 <span>{runStreamStatus}</span>
                 <Button
@@ -207,35 +219,30 @@ export function RunDetailDialog(): React.JSX.Element {
                   {runStreamPaused ? 'Resume stream' : 'Pause stream'}
                 </Button>
               </div>
-            </div>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Run ID</span>
+            </RunDetailField>
+            <RunDetailField label='Run ID'>
               <div className='font-mono text-[11px]'>{runDetail.run.id}</div>
-            </div>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Runtime Fingerprint</span>
+            </RunDetailField>
+            <RunDetailField label='Runtime Fingerprint'>
               <div className='font-mono text-[11px]'>{runtimeFingerprint ?? 'n/a'}</div>
-            </div>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Created</span>
+            </RunDetailField>
+            <RunDetailField label='Created'>
               <div>
                 {runDetail.run.createdAt ? new Date(runDetail.run.createdAt).toLocaleString() : '-'}
               </div>
-            </div>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Started</span>
+            </RunDetailField>
+            <RunDetailField label='Started'>
               <div>
                 {runDetail.run.startedAt ? new Date(runDetail.run.startedAt).toLocaleString() : '-'}
               </div>
-            </div>
-            <div>
-              <span className='text-[10px] uppercase text-gray-500'>Finished</span>
+            </RunDetailField>
+            <RunDetailField label='Finished'>
               <div>
                 {runDetail.run.finishedAt
                   ? new Date(runDetail.run.finishedAt).toLocaleString()
                   : '-'}
               </div>
-            </div>
+            </RunDetailField>
           </div>
           {runDetail.run.status === 'blocked_on_lease' ? (
             <Alert variant='warning' className='px-3 py-2 text-[11px]'>

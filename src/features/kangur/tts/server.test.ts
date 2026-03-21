@@ -274,6 +274,31 @@ describe('kangur tts server', () => {
     );
   });
 
+  it('passes the Ukrainian lesson locale into synthesis instructions', async () => {
+    readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
+      if (key === 'openai_api_key') return 'test-openai-key';
+      if (key === KANGUR_LESSON_AUDIO_CACHE_SETTING_KEY) return null;
+      return null;
+    });
+
+    await ensureKangurLessonNarrationAudio({
+      script: {
+        lessonId: 'counting-uk',
+        title: 'Лічба',
+        description: '',
+        locale: 'uk-UA',
+        segments: [{ id: 'segment-1', text: 'Порахуємо від одного до пʼяти.' }],
+      },
+      voice: 'coral',
+    });
+
+    expect(audioSpeechCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: expect.stringContaining('Ukrainian'),
+      })
+    );
+  });
+
   it('adds registry surface context to synthesis instructions when provided', async () => {
     readStoredSettingValueMock.mockImplementation(async (key: string): Promise<string | null> => {
       if (key === 'openai_api_key') return 'test-openai-key';

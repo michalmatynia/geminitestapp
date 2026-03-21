@@ -20,7 +20,7 @@ import {
   SearchableList,
   ToggleRow,
 } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {
@@ -66,9 +66,10 @@ export default function CreatePagePage(): React.JSX.Element {
       await createPage.mutateAsync(input);
       router.push('/admin/cms/pages');
     } catch (submitError: unknown) {
-      logClientError(submitError);
-      logClientError(submitError, {
-        context: { source: 'CreatePagePage', action: 'createPage', name },
+      logClientCatch(submitError, {
+        source: 'CreatePagePage',
+        action: 'createPage',
+        name,
       });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create page.');
     }

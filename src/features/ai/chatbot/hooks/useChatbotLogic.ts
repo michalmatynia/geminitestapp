@@ -15,7 +15,7 @@ import {
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import * as chatbotApi from '../api';
 
@@ -235,8 +235,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setCurrentSessionId(data.sessions[0]?.id ?? null);
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'useChatbotLogic.fetchSessions' } });
+      logClientCatch(error, { source: 'useChatbotLogic.fetchSessions' });
       toast('Failed to load chat sessions', { variant: 'error' });
     } finally {
       setSessionsLoading(false);
@@ -248,9 +247,9 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       const session = await chatbotApi.fetchChatbotSession(id);
       setMessages(session?.messages || []);
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useChatbotLogic.loadSessionMessages', sessionId: id },
+      logClientCatch(error, {
+        source: 'useChatbotLogic.loadSessionMessages',
+        sessionId: id,
       });
     }
   }, []);
@@ -265,8 +264,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setCurrentSessionId(data.sessionId);
       setMessages([]);
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'useChatbotLogic.createNewSession' } });
+      logClientCatch(error, { source: 'useChatbotLogic.createNewSession' });
       toast('Failed to create new chat session', { variant: 'error' });
     }
   }, [currentSettings, fetchSessions, toast]);
@@ -280,9 +278,9 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
           setCurrentSessionId(sessions[0]?.id || null);
         }
       } catch (error: unknown) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useChatbotLogic.deleteSession', sessionId: id },
+        logClientCatch(error, {
+          source: 'useChatbotLogic.deleteSession',
+          sessionId: id,
         });
         toast('Failed to delete chat session', { variant: 'error' });
       }
@@ -347,12 +345,9 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setSettingsSnapshot(nextSettings);
       setSettingsDirty(false);
     } catch (error) {
-      logClientError(error);
-      logClientError(error, {
-        context: {
-          source: 'useChatbotLogic.loadChatbotSettings',
-          key: CHATBOT_SETTINGS_KEY,
-        },
+      logClientCatch(error, {
+        source: 'useChatbotLogic.loadChatbotSettings',
+        key: CHATBOT_SETTINGS_KEY,
       });
       toast(error instanceof Error ? error.message : 'Invalid chatbot settings payload.', {
         variant: 'error',
@@ -410,8 +405,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setSettingsSnapshot(payload);
       toast('Chatbot settings saved.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'useChatbotLogic.saveChatbotSettings' } });
+      logClientCatch(error, { source: 'useChatbotLogic.saveChatbotSettings' });
       const message = error instanceof Error ? error.message : 'Failed to save settings.';
       toast(message, { variant: 'error' });
     } finally {
@@ -459,8 +453,10 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, { context: { source: 'useChatbotLogic.sendMessage', sessionId } });
+      logClientCatch(error, {
+        source: 'useChatbotLogic.sendMessage',
+        sessionId,
+      });
       toast('Failed to send message', { variant: 'error' });
     } finally {
       setIsSending(false);

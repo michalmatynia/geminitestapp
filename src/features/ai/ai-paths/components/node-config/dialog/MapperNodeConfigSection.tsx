@@ -8,7 +8,7 @@ import {
   getValueAtMappingPath,
   parsePathList,
 } from '@/shared/lib/ai-paths';
-import { Input, SelectSimple, Textarea, FormField } from '@/shared/ui';
+import { Input, SelectSimple, Textarea, FormField, insetPanelVariants } from '@/shared/ui';
 
 import {
   useAiPathOrchestrator,
@@ -117,7 +117,9 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-md border border-border bg-card/50 p-3'>
+      <div
+        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border bg-card/50`}
+      >
         <div className='text-[11px] text-gray-400 font-semibold mb-3 uppercase tracking-wider'>
           Live Preview
         </div>

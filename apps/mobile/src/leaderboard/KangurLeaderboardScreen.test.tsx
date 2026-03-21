@@ -9,11 +9,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   replaceMock,
   useKangurMobileLeaderboardDuelsMock,
+  useKangurMobileLessonCheckpointsMock,
   useKangurMobileLeaderboardMock,
   useRouterMock,
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   useKangurMobileLeaderboardDuelsMock: vi.fn(),
+  useKangurMobileLessonCheckpointsMock: vi.fn(),
   useKangurMobileLeaderboardMock: vi.fn(),
   useRouterMock: vi.fn(),
 }));
@@ -29,6 +31,10 @@ vi.mock('./useKangurMobileLeaderboard', () => ({
 
 vi.mock('./useKangurMobileLeaderboardDuels', () => ({
   useKangurMobileLeaderboardDuels: useKangurMobileLeaderboardDuelsMock,
+}));
+
+vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
+  useKangurMobileLessonCheckpoints: useKangurMobileLessonCheckpointsMock,
 }));
 
 import { KangurLeaderboardScreen } from './KangurLeaderboardScreen';
@@ -72,6 +78,9 @@ describe('KangurLeaderboardScreen', () => {
       isLoading: false,
       pendingLearnerId: null,
       refresh: vi.fn(),
+    });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [],
     });
   });
 
@@ -184,6 +193,28 @@ describe('KangurLeaderboardScreen', () => {
       ],
       visibleCount: 1,
     });
+    useKangurMobileLessonCheckpointsMock.mockReturnValue({
+      recentCheckpoints: [
+        {
+          attempts: 3,
+          bestScorePercent: 91,
+          componentId: 'clock',
+          emoji: '⏰',
+          lastCompletedAt: '2026-03-21T08:18:00.000Z',
+          lastScorePercent: 84,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'clock' },
+          },
+          masteryPercent: 88,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'time_compare' },
+          },
+          title: 'Zegar i czas',
+        },
+      ],
+    });
 
     render(<KangurLeaderboardScreen />);
 
@@ -199,6 +230,11 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Maja Sprint')).toBeTruthy();
     expect(screen.getByText('Rzuć wyzwanie')).toBeTruthy();
     expect(screen.getByText('Otwórz pojedynki')).toBeTruthy();
+    expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
+    expect(screen.getByText('Kontynuuj lekcje')).toBeTruthy();
+    expect(screen.getByText('Wróć do lekcji: Zegar i czas')).toBeTruthy();
+    expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
     expect(screen.queryByText('Przywracamy sesję ucznia i ranking...')).toBeNull();
 
     fireEvent.click(screen.getByText('Rzuć wyzwanie'));

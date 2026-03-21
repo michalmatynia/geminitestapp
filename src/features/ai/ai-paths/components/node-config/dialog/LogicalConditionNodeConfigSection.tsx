@@ -7,7 +7,7 @@ import type {
   LogicalConditionItem,
   LogicalConditionOperator,
 } from '@/shared/lib/ai-paths';
-import { Button, FormField, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, FormField, Input, Label, SelectSimple, insetPanelVariants } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 
@@ -116,7 +116,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
           return (
             <div
               key={condition.id ?? index}
-              className='rounded-md border border-border bg-card/40 p-3 space-y-3'
+              className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} space-y-3 border-border`}
             >
               <div className='flex items-center justify-between gap-2'>
                 <span className='text-xs font-semibold text-white'>Condition {index + 1}</span>

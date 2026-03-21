@@ -1,9 +1,8 @@
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 import { parseKangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-
-type PartialRecord = Record<string, unknown>;
 
 export type KangurAiTutorContentTranslatableSectionKey = Exclude<
   keyof KangurAiTutorContent,
@@ -12,7 +11,7 @@ export type KangurAiTutorContentTranslatableSectionKey = Exclude<
 
 export type KangurAiTutorContentTranslationStatus = KangurAiTutorTranslationStatusDto;
 
-const isPlainObject = (value: unknown): value is PartialRecord =>
+const isPlainObject = (value: unknown): value is UnknownRecordDto =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const cloneValue = <T>(value: T): T => {
@@ -31,7 +30,7 @@ const deepMerge = (base: unknown, override: unknown): unknown => {
   }
 
   if (isPlainObject(base) && isPlainObject(override)) {
-    const next: PartialRecord = {};
+    const next: UnknownRecordDto = {};
 
     for (const [key, baseValue] of Object.entries(base)) {
       next[key] = deepMerge(baseValue, override[key]);
@@ -136,11 +135,17 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
         test: 'Test',
         game: 'Game',
         lesson: 'Lesson',
+        profile: 'Profile',
+        parent_dashboard: 'Parent dashboard',
+        auth: 'Sign in',
       },
       contextFallbackTargets: {
         test: 'New test question',
         game: 'New game step',
         lesson: 'New lesson fragment',
+        profile: 'New profile panel',
+        parent_dashboard: 'New parent dashboard',
+        auth: 'Sign-in screen',
       },
     },
     guestIntro: {
@@ -793,11 +798,17 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
         test: 'Test',
         game: 'Spiel',
         lesson: 'Lektion',
+        profile: 'Profil',
+        parent_dashboard: 'Eltern-Dashboard',
+        auth: 'Anmeldung',
       },
       contextFallbackTargets: {
         test: 'Neue Testfrage',
         game: 'Neuer Spielschritt',
         lesson: 'Neuer Lernabschnitt',
+        profile: 'Neues Profilpanel',
+        parent_dashboard: 'Neues Eltern-Dashboard',
+        auth: 'Anmeldebildschirm',
       },
     },
     guestIntro: {
@@ -1446,6 +1457,46 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
       previewAlt: 'Zeichnung',
       attachedLabel: 'Zeichnung angehängt',
       messageLabel: 'Gezeichnet',
+    },
+  },
+  uk: {
+    locale: 'uk',
+    panelChrome: {
+      detachFromContextAria: 'Перестати стежити за поточним вмістом',
+      detachFromContextLabel: 'Відкріпити',
+      followingContextLabel: 'Стежить за вмістом',
+      moveToContextAria: 'Перемістити панель поруч із поточним вмістом',
+      moveToContextLabel: 'Поруч із вмістом',
+      moodPrefix: 'Настрій',
+      resetPositionAria: 'Відновити стандартну позицію панелі',
+      resetPositionLabel: 'Скинути позицію',
+      snapPreviewPrefix: 'Відпустіть, щоб пристикувати',
+      snapTargets: {
+        bottom: 'вниз',
+        bottomLeft: 'у нижній лівий кут',
+        bottomRight: 'у нижній правий кут',
+        left: 'до лівого краю',
+        right: 'до правого краю',
+        top: 'вгору',
+        topLeft: 'у верхній лівий кут',
+        topRight: 'у верхній правий кут',
+      },
+      surfaceLabels: {
+        test: 'Тест',
+        game: 'Гра',
+        lesson: 'Урок',
+        profile: 'Профіль',
+        parent_dashboard: 'Панель для батьків',
+        auth: 'Вхід',
+      },
+      contextFallbackTargets: {
+        test: 'Нове тестове запитання',
+        game: 'Новий крок гри',
+        lesson: 'Новий фрагмент уроку',
+        profile: 'Нова панель профілю',
+        parent_dashboard: 'Нова батьківська панель',
+        auth: 'Екран входу',
+      },
     },
   },
 };

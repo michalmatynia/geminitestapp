@@ -73,6 +73,19 @@ describe('useKangurMobileLessons', () => {
     expect(result.current.selectedLesson?.mastery.summaryLabel).toContain(
       'bestes Ergebnis 100%',
     );
+    expect(result.current.selectedLesson?.checkpointSummary).toEqual({
+      attempts: 4,
+      bestScorePercent: 100,
+      lastCompletedAt: '2026-03-20T12:00:00.000Z',
+      lastScorePercent: 90,
+      masteryPercent: 92,
+    });
+    expect(result.current.selectedLesson?.practiceHref).toEqual({
+      pathname: '/practice',
+      params: {
+        operation: 'clock',
+      },
+    });
   });
 
   it('saves a completed lesson checkpoint into mobile progress', () => {

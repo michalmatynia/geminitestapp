@@ -18,11 +18,7 @@ import {
   type ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
 import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio';
-
-type CenterSourceLimitValidation = {
-  ok: boolean;
-  reason?: 'non_positive_dimensions' | 'max_side_exceeded' | 'max_pixels_exceeded';
-};
+import type { ImageStudioSourceLimitValidation } from './types';
 
 export const normalizeCenterBoundsForFingerprint = (
   bounds: ImageStudioCenterObjectBounds | null | undefined
@@ -94,7 +90,7 @@ export const buildCenterRequestRelationType = (requestId: string): string =>
 export const validateCenterSourceDimensions = (
   width: number,
   height: number
-): CenterSourceLimitValidation => {
+): ImageStudioSourceLimitValidation => {
   if (!(width > 0 && height > 0)) {
     return { ok: false, reason: 'non_positive_dimensions' };
   }

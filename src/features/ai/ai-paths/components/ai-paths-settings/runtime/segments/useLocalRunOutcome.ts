@@ -5,7 +5,7 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import type { PathConfig, PathDebugSnapshot, RuntimeState } from '@/shared/lib/ai-paths';
 import { PATH_DEBUG_PREFIX, appendLocalRun } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { buildActivePathConfig, buildDebugSnapshot, safeJsonStringify } from '../utils';
 
@@ -33,9 +33,10 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           [pathId]: snapshot,
         }));
       } catch (error) {
-        logClientError(error);
-        logClientError(error, {
-          context: { source: 'useAiPathsLocalExecution', action: 'persistDebugSnapshot', pathId },
+        logClientCatch(error, {
+          source: 'useAiPathsLocalExecution',
+          action: 'persistDebugSnapshot',
+          pathId,
         });
       }
     },

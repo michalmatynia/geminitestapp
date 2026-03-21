@@ -7,7 +7,7 @@ import type {
   ChatbotMessagesData as UseChatbotMessagesStateReturn,
 } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useSendChatMessage } from './useChatbotMutations';
 import { useChatbotSession } from './useChatbotQueries';
@@ -66,9 +66,9 @@ export function useChatbotMessagesState(sessionId: string | null): UseChatbotMes
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
-      logClientError(error);
-      logClientError(error, {
-        context: { source: 'useChatbotMessagesState.sendMessage', sessionId },
+      logClientCatch(error, {
+        source: 'useChatbotMessagesState.sendMessage',
+        sessionId,
       });
       toast('Failed to send message', { variant: 'error' });
     } finally {

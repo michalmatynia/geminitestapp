@@ -17,6 +17,18 @@ type RunHistoryEntriesProps = {
   onReplayFromEntry?: (entry: RuntimeHistoryEntry) => void;
 };
 
+type RunHistoryDataPanelProps = {
+  title: string;
+  value: unknown;
+  badge?: React.ReactNode;
+};
+
+type RunHistoryConnectionsPanelProps = {
+  title: string;
+  links?: RuntimeHistoryLink[] | null;
+  emptyMessage: string;
+};
+
 const formatHistoryValue = (value: unknown): string => {
   if (value === undefined) return '-';
   if (value === null) return 'null';
@@ -55,6 +67,56 @@ const buildExecutionMetadataChips = (entry: RuntimeHistoryEntry): string[] =>
     entry.resumeSourceSpanId ? `resumeSource=${entry.resumeSourceSpanId}` : null,
     entry.resumeSourceStatus ? `resumeStatus=${entry.resumeSourceStatus}` : null,
   ].filter((value): value is string => Boolean(value));
+
+function RunHistoryDataPanel({
+  title,
+  value,
+  badge,
+}: RunHistoryDataPanelProps): React.JSX.Element {
+  return (
+    <div>
+      <div className='flex items-center justify-between text-[11px] uppercase text-gray-500'>
+        <span>{title}</span>
+        {badge}
+      </div>
+      <pre className='mt-2 max-h-64 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
+        {formatPortData(value)}
+      </pre>
+    </div>
+  );
+}
+
+function RunHistoryConnectionsPanel({
+  title,
+  links,
+  emptyMessage,
+}: RunHistoryConnectionsPanelProps): React.JSX.Element {
+  return (
+    <div>
+      <div className='text-[11px] uppercase text-gray-500'>{title}</div>
+      {links && links.length > 0 ? (
+        <ul className='mt-2 space-y-1'>
+          {links.map((link: RuntimeHistoryLink, idx: number) => (
+            <li key={`${link.nodeId}-${idx}`}>
+              {link.nodeTitle ?? link.nodeId}
+              {link.nodeType ? ` (${link.nodeType})` : ''}
+              {link.fromPort || link.toPort ? (
+                <span className='text-gray-500'>
+                  {' '}
+                  {link.fromPort ?? 'default'}
+                  {' -> '}
+                  {link.toPort ?? 'default'}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className='mt-2 text-gray-500'>{emptyMessage}</div>
+      )}
+    </div>
+  );
+}
 
 export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Element {
   const { entries, emptyMessage, showNodeLabel, onReplayFromEntry } = props;
@@ -188,74 +250,31 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
               </div>
             )}
             <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 lg:grid-cols-2`}>
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>Inputs</div>
-                <pre className='mt-2 max-h-64 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
-                  {formatPortData(entry.inputs)}
-                </pre>
-              </div>
-              <div>
-                <div className='flex items-center justify-between text-[11px] uppercase text-gray-500'>
-                  <span>Outputs</span>
-                  {Array.isArray(entry.outputs?.['__logs']) &&
+              <RunHistoryDataPanel title='Inputs' value={entry.inputs} />
+              <RunHistoryDataPanel
+                title='Outputs'
+                value={entry.outputs}
+                badge={
+                  Array.isArray(entry.outputs?.['__logs']) &&
                   (entry.outputs['__logs'] as unknown[]).length > 0 ? (
-                      <span className='rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-px text-[10px] font-mono normal-case text-sky-100'>
+                    <span className='rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-px text-[10px] font-mono normal-case text-sky-100'>
                       Logs: {(entry.outputs['__logs'] as unknown[]).length}
-                      </span>
-                    ) : null}
-                </div>
-                <pre className='mt-2 max-h-64 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
-                  {formatPortData(entry.outputs)}
-                </pre>
-              </div>
+                    </span>
+                  ) : null
+                }
+              />
             </div>
             <div className={`${UI_GRID_RELAXED_CLASSNAME} mt-3 lg:grid-cols-2 text-xs text-gray-400`}>
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>From</div>
-                {entry.inputsFrom && entry.inputsFrom.length > 0 ? (
-                  <ul className='mt-2 space-y-1'>
-                    {entry.inputsFrom.map((link: RuntimeHistoryLink, idx: number) => (
-                      <li key={`${link.nodeId}-${idx}`}>
-                        {link.nodeTitle ?? link.nodeId}
-                        {link.nodeType ? ` (${link.nodeType})` : ''}
-                        {link.fromPort || link.toPort ? (
-                          <span className='text-gray-500'>
-                            {' '}
-                            {link.fromPort ?? 'default'}
-                            {' -> '}
-                            {link.toPort ?? 'default'}
-                          </span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className='mt-2 text-gray-500'>No upstream connections.</div>
-                )}
-              </div>
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>To</div>
-                {entry.outputsTo && entry.outputsTo.length > 0 ? (
-                  <ul className='mt-2 space-y-1'>
-                    {entry.outputsTo.map((link: RuntimeHistoryLink, idx: number) => (
-                      <li key={`${link.nodeId}-${idx}`}>
-                        {link.nodeTitle ?? link.nodeId}
-                        {link.nodeType ? ` (${link.nodeType})` : ''}
-                        {link.fromPort || link.toPort ? (
-                          <span className='text-gray-500'>
-                            {' '}
-                            {link.fromPort ?? 'default'}
-                            {' -> '}
-                            {link.toPort ?? 'default'}
-                          </span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className='mt-2 text-gray-500'>No downstream connections.</div>
-                )}
-              </div>
+              <RunHistoryConnectionsPanel
+                title='From'
+                links={entry.inputsFrom}
+                emptyMessage='No upstream connections.'
+              />
+              <RunHistoryConnectionsPanel
+                title='To'
+                links={entry.outputsTo}
+                emptyMessage='No downstream connections.'
+              />
             </div>
           </div>
         );

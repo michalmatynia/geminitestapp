@@ -27,15 +27,23 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
       }),
     [locale, progress, recommendationTranslations]
   );
+  const trainingSetupFallbackTitle =
+    normalizedLocale === 'uk' ? 'Налаштування тренування' : 'Trening mieszany';
+  const trainingSetupFallbackWordmarkLabel =
+    normalizedLocale === 'uk' ? 'Тренування' : normalizedLocale === 'pl' ? 'Trening' : 'Training';
+  const trainingSetupFallbackDescription =
+    normalizedLocale === 'uk'
+      ? 'Налаштуйте змішане тренування й виберіть діапазон запитань.'
+      : 'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.';
   const trainingSetupTitle = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.label',
-    'Trening mieszany'
+    trainingSetupFallbackTitle
   );
   const trainingWordmarkLabel = translateRecommendationWithFallback(
     gamePageTranslations,
     'screens.training.wordmarkLabel',
-    normalizedLocale === 'pl' ? 'Trening' : 'Training'
+    trainingSetupFallbackWordmarkLabel
   );
 
   if (screen !== 'training') {
@@ -58,7 +66,7 @@ export function KangurGameTrainingSetupWidget(): React.JSX.Element | null {
       description={translateRecommendationWithFallback(
         gamePageTranslations,
         'screens.training.description',
-        'Dobierz poziom, kategorie i liczbe pytan do jednej sesji.'
+        trainingSetupFallbackDescription
       )}
       momentumMode='training'
       onBack={handleHome}

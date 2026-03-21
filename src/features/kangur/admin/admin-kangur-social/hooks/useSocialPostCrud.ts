@@ -25,6 +25,8 @@ import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+
 import { parseDatetimeLocal, type EditorState } from '../AdminKangurSocialPage.Constants';
 
 type SocialPostCrudDeps = {
@@ -108,9 +110,18 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       if (error instanceof ApiError && error.status === 404) {
         let refreshedPosts: KangurSocialPost[] | null = null;
         try {
-          const refetchResult = await queryClient.fetchQuery<KangurSocialPost[]>({
+          const refetchResult = await fetchQueryV2<KangurSocialPost[], KangurSocialPost[]>(queryClient, {
             queryKey,
             staleTime: 0,
+            meta: {
+              source: 'kangur.admin.social.useSocialPostCrud.deletePost',
+              operation: 'list',
+              resource: 'kangur.social-posts',
+              domain: 'kangur',
+              queryKey,
+              tags: ['kangur', 'social-posts'],
+              description: 'Refetches social posts after 404 on delete.',
+            },
           });
           refreshedPosts = refetchResult ?? null;
         } catch {

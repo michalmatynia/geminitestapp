@@ -13,6 +13,7 @@ import {
   type KangurPageContentEntry,
   type KangurPageContentStore,
 } from '@/features/kangur/shared/contracts/kangur-page-content';
+import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { api } from '@/shared/lib/api-client';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -47,11 +48,20 @@ export const prefetchKangurPageContentStore = async (
 
   const resolvedLocale = resolveKangurPageContentLocale(locale);
 
-  await queryClient.prefetchQuery({
+  await prefetchQueryV2(queryClient, {
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
+    meta: {
+      source: 'kangur.hooks.prefetchKangurPageContentStore',
+      operation: 'list',
+      resource: 'kangur.page-content',
+      domain: 'kangur',
+      queryKey: createKangurPageContentQueryKey(resolvedLocale),
+      tags: ['kangur', 'page-content'],
+      description: 'Prefetches Kangur page content.',
+    },
   });
 };
 

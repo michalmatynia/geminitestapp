@@ -16,8 +16,8 @@ import {
 import {
   buildKangurAiTutorNativeGuideTranslationStatusByEntryId,
   summarizeKangurAiTutorNativeGuideTranslationStatuses,
-  type KangurAiTutorNativeGuideTranslationStatus,
 } from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
+import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
@@ -34,7 +34,6 @@ import {
 import { KangurAiTutorNativeGuideEntryEditor } from './KangurAiTutorNativeGuideEntryEditor';
 import { KangurAiTutorNativeGuideEntryList } from './KangurAiTutorNativeGuideEntryList';
 import { KangurAiTutorNativeGuideValidationSummary } from './KangurAiTutorNativeGuideValidationSummary';
-
 
 const AI_TUTOR_NATIVE_GUIDE_EDITOR_LOCALE = 'pl';
 const AI_TUTOR_NATIVE_GUIDE_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().filter(
@@ -95,7 +94,7 @@ type NativeGuideManifestCoverageRow = {
 
 type EntryTranslationStatus = {
   locale: string;
-  status: KangurAiTutorNativeGuideTranslationStatus;
+  status: KangurAiTutorTranslationStatusDto;
 };
 
 export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
@@ -254,7 +253,7 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   const translationStatusesByLocale = useMemo(() => {
     const sourceStore = parsedState.store;
     if (!sourceStore) {
-      return new Map<string, Map<string, KangurAiTutorNativeGuideTranslationStatus>>();
+      return new Map<string, Map<string, KangurAiTutorTranslationStatusDto>>();
     }
 
     return new Map(

@@ -260,7 +260,106 @@ const EN_COPY: KangurCmsDefaultsCopy = {
   },
 };
 
+const DE_COPY: KangurCmsDefaultsCopy = {
+  shared: {
+    trainingSetupTitle: 'Training einrichten',
+    operationSelectorTitle: 'Operation waehlen',
+    leaderboard: {
+      title: 'Bestenliste',
+      description: 'Top-Ergebnisse der Lernenden aus den letzten 7 Tagen.',
+      playerFallback: 'Spieler',
+      metaFallback: '🎲 Gemischt · Anonym',
+    },
+  },
+  lessons: {
+    title: 'Lektionen',
+    description:
+      'Dieser Bildschirm wird bereits im CMS-Builder aufgebaut. Aendere Layout, Texte und Widget-Platzierung, ohne zum Seitencode zurueckzugehen.',
+    priorityAssignmentsTitle: 'Prioritaetsaufgaben',
+    priorityAssignmentsEmpty: 'Keine aktiven Prioritaeten.',
+  },
+  game: {
+    guest: {
+      playerLabel: 'Name des Spielers',
+      playerPlaceholder: 'Gib deinen Namen ein...',
+      loginCopy: 'Melde dich an, damit dein Ergebnis in der Bestenliste erscheint.',
+      loginButton: 'Anmelden',
+    },
+    spotlight: {
+      priority: 'Hohe Prioritaet',
+      title: 'Aufgabe der Eltern',
+      description: 'Kehre zur Aufgabe zurueck und setze die Challenge fort.',
+      progressLabel: '0 % abgeschlossen',
+      actionLabel: 'Aufgabe fortsetzen',
+    },
+    priorityPanel: {
+      title: 'Prioritaetsaufgaben',
+      countLabel: '0 Aufgaben',
+      itemPriority: 'Hohe Prioritaet',
+      itemTitle: 'Aufgabe',
+      itemDescription: 'Aufgabenbeschreibung.',
+      itemProgressLabel: '0 % abgeschlossen',
+      itemActionLabel: 'Aufgabe fortsetzen',
+      emptyMessage: 'Keine aktiven Elternaufgaben.',
+    },
+    actions: {
+      title: 'Was moechtest du tun?',
+      description:
+        'Dieses Panel ist bereits aus CMS-Bloecken aufgebaut. Aendere Bezeichnungen, Reihenfolge und Aktionen, ohne zum Code zurueckzugehen.',
+      lessonsLabel: 'Lektionen',
+      playLabel: 'Los geht\'s!',
+      duelsLabel: 'Duelle',
+      kangurLabel: 'Mathe-Kanguru',
+    },
+    progress: {
+      levelTitle: 'Anfaenger',
+      summary: 'Level 1 · 0 XP insgesamt',
+      currentXp: '0 XP',
+      remainingXp: 'Bis Level 2: 100 XP',
+      gamesLabel: 'Spiele',
+      lessonsLabel: 'Lektionen',
+      badgesLabel: 'Abzeichen',
+    },
+    homeLeaderboard: {
+      title: 'Top-Ergebnisse',
+      description:
+        'Diese Bestenliste wird jetzt aus CMS-Bloecken zusammengesetzt. Aendere Filter, Texte und Darstellung, ohne zum Widget zurueckzugehen.',
+    },
+    result: {
+      assignmentEyebrow: 'Aufgabe der Eltern',
+      assignmentTitle: 'Prioritaetsaufgabe',
+      assignmentDescription: 'Kehre zur Aufgabe zurueck und setze die Challenge fort.',
+      assignmentProgressLabel: '0 % abgeschlossen',
+      assignmentActionLabel: 'Aufgabe fortsetzen',
+      starsLabel: '1 / 3 Sterne',
+      title: 'Stark gemacht, Spieler!',
+      message: 'Gute Arbeit! Uebung bringt Fortschritt.',
+      scoreMetric: 'Punktzahl',
+      accuracyMetric: 'Genauigkeit',
+      timeMetric: 'Zeit',
+      topicMetric: 'Thema',
+      topicFallback: 'Gemischtes Training',
+      restartLabel: 'Noch einmal spielen',
+      homeLabel: 'Startseite',
+      leaderboardTitle: 'Bestenliste',
+      leaderboardDescription:
+        'Nach Spielende kannst du diese Rangliste weiterhin aus dem CMS-Builder heraus umbauen.',
+    },
+  },
+};
+
 export const resolveKangurCmsDefaultsCopy = (
   locale?: string | null
-): KangurCmsDefaultsCopy =>
-  normalizeSiteLocale(locale ?? 'pl') === 'pl' ? PL_COPY : EN_COPY;
+): KangurCmsDefaultsCopy => {
+  const normalizedLocale = normalizeSiteLocale(locale ?? 'pl');
+
+  if (normalizedLocale === 'pl') {
+    return PL_COPY;
+  }
+
+  if (normalizedLocale === 'de') {
+    return DE_COPY;
+  }
+
+  return EN_COPY;
+};

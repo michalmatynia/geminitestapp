@@ -56,7 +56,8 @@ export const ErrorSystem = {
       // If it's an Agent Run, log to Agent Audit
       if (context.runId) {
         try {
-          const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
+          // Dynamic import from public entrypoint to avoid deep coupling
+          const { logAgentAudit } = await import('@/features/ai/server');
           await logAgentAudit(context.runId, 'error', message, {
             errorId: context.errorId || 'unknown',
             ...context,
@@ -97,7 +98,8 @@ export const ErrorSystem = {
 
       if (context.runId) {
         try {
-          const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
+          // Dynamic import from public entrypoint to avoid deep coupling
+          const { logAgentAudit } = await import('@/features/ai/server');
           await logAgentAudit(context.runId, 'warning', message, context);
         } catch (auditError) {
           logClientError(auditError);

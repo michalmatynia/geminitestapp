@@ -3,6 +3,7 @@ import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import type { KangurStorefrontAppearanceMode } from '@/features/kangur/storefront-appearance-settings';
+import type { KangurAdminLocaleDto as AppearanceAdminLocale } from '../kangur-admin-locale';
 import {
   BUILTIN_DAILY_ID,
   BUILTIN_DAWN_ID,
@@ -20,8 +21,6 @@ import {
   type AppearanceSlot,
   type ThemeSelectionId,
 } from './AppearancePage.constants';
-
-export type AppearanceAdminLocale = 'en' | 'pl';
 export type AppearancePreviewSection =
   | 'page'
   | 'buttons'

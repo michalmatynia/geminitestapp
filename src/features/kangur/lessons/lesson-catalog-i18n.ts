@@ -15,6 +15,8 @@ type LessonCopyOverride = {
   description?: string;
 };
 
+type KangurLessonCatalogLocale = 'pl' | 'en' | 'de';
+
 const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   alphabet_rysuj_litery: 'Trace the letters',
   alphabet_syllables: 'Syllables and words',
@@ -30,11 +32,33 @@ const ENGLISH_LESSON_SECTION_LABELS: Record<string, string> = {
   english_grammar: 'Grammar',
 };
 
+const GERMAN_LESSON_SECTION_LABELS: Record<string, string> = {
+  alphabet_rysuj_litery: 'Buchstaben nachspuren',
+  alphabet_syllables: 'Silben und Woerter',
+  alphabet_first_words: 'Erste Woerter',
+  alphabet_matching: 'Buchstaben zuordnen',
+  alphabet_sequence: 'Buchstabenreihenfolge',
+  geometry_shapes: 'Geometrische Formen',
+  maths_time: 'Zeit',
+  maths_arithmetic: 'Arithmetik',
+  maths_geometry: 'Geometrie',
+  maths_logic: 'Logisches Denken',
+  english_basics_section: 'Grundlagen',
+  english_grammar: 'Grammatik',
+};
+
 const ENGLISH_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
   Gra: 'Game',
   Lekcja: 'Lesson',
   Section: 'Section',
   Subsection: 'Subsection',
+};
+
+const GERMAN_LESSON_SECTION_TYPE_LABELS: Record<string, string> = {
+  Gra: 'Spiel',
+  Lekcja: 'Lektion',
+  Section: 'Abschnitt',
+  Subsection: 'Unterabschnitt',
 };
 
 const ENGLISH_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
@@ -46,10 +70,25 @@ const ENGLISH_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
   agentic_coding: 'Agentic Coding',
 };
 
+const GERMAN_SUBJECT_LABELS: Record<KangurLessonSubject, string> = {
+  alphabet: 'Alphabet',
+  geometry: 'Formen',
+  maths: 'Mathe',
+  english: 'Englisch',
+  web_development: 'Webentwicklung',
+  agentic_coding: 'Agentic Coding',
+};
+
 const ENGLISH_AGE_GROUP_LABELS: Record<KangurLessonAgeGroup, string> = {
   six_year_old: 'Age 6',
   ten_year_old: 'Age 10',
   grown_ups: 'Adults',
+};
+
+const GERMAN_AGE_GROUP_LABELS: Record<KangurLessonAgeGroup, string> = {
+  six_year_old: '6 Jahre',
+  ten_year_old: '10 Jahre',
+  grown_ups: 'Erwachsene',
 };
 
 const SUBJECT_LABEL_MAP = new Map<KangurLessonSubject, string>(
@@ -324,8 +363,279 @@ const ENGLISH_LESSON_COPY_OVERRIDES: Partial<
   },
 };
 
-const shouldUseEnglishOverrides = (locale: string | null | undefined): boolean =>
-  normalizeSiteLocale(locale) !== 'pl';
+const GERMAN_LESSON_COPY_OVERRIDES: Partial<
+  Record<KangurLessonComponentId, LessonCopyOverride>
+> = {
+  alphabet_basics: {
+    title: 'Buchstaben nachspuren',
+    description: 'Spure Buchstaben nach und uebe praezise Handbewegungen.',
+  },
+  alphabet_copy: {
+    title: 'Buchstaben abschreiben',
+    description: 'Schreibe Buchstaben unter der Vorlage ab und uebe fliessendes Schreiben.',
+  },
+  alphabet_syllables: {
+    title: 'Silben und Woerter',
+    description: 'Verbinde Buchstaben zu Silben und lies deine ersten Woerter.',
+  },
+  alphabet_words: {
+    title: 'Erste Woerter',
+    description: 'Erkenne Buchstaben am Anfang einfacher Woerter.',
+  },
+  alphabet_matching: {
+    title: 'Buchstaben zuordnen',
+    description: 'Ordne Gross- und Kleinbuchstaben zu Paaren.',
+  },
+  alphabet_sequence: {
+    title: 'Buchstabenreihenfolge',
+    description: 'Ordne Buchstaben in der richtigen Reihenfolge an.',
+  },
+  geometry_shape_recognition: {
+    title: 'Geometrie',
+    description: 'Uebe, Kreise, Quadrate, Dreiecke, Rechtecke, Ovale und Rauten zu erkennen.',
+  },
+  clock: {
+    title: 'Uhr',
+    description: 'Stunden, Minuten und volle Uhrzeit auf einer analogen Uhr.',
+  },
+  calendar: {
+    title: 'Kalender',
+    description: 'Tage, Monate, Daten und Jahreszeiten.',
+  },
+  adding: {
+    title: 'Addition',
+    description: 'Einstellige, zweistellige Addition und ein Ballspiel.',
+  },
+  subtracting: {
+    title: 'Subtraktion',
+    description: 'Einstellige, zweistellige Subtraktion und Reste.',
+  },
+  multiplication: {
+    title: 'Multiplikation',
+    description: 'Einmaleins und Strategien zur Multiplikation.',
+  },
+  division: {
+    title: 'Division',
+    description: 'Grundlagen der Division und Reste.',
+  },
+  geometry_basics: {
+    title: 'Grundlagen der Geometrie',
+    description: 'Punkte, Strecken, Seiten und Winkel.',
+  },
+  geometry_shapes: {
+    title: 'Geometrische Formen',
+    description: 'Lerne Formen und zeichne sie im Spiel.',
+  },
+  geometry_symmetry: {
+    title: 'Symmetrie',
+    description: 'Symmetrieachsen und Spiegelungen.',
+  },
+  geometry_perimeter: {
+    title: 'Umfang',
+    description: 'Berechne Seitenlaengen Schritt fuer Schritt.',
+  },
+  logical_thinking: {
+    title: 'Logisches Denken',
+    description: 'Ordnung, Regeln und Beobachtung.',
+  },
+  logical_patterns: {
+    title: 'Muster',
+    description: 'Wiederkehrende Folgen und Rhythmen.',
+  },
+  logical_classification: {
+    title: 'Klassifikation',
+    description: 'Gruppieren, sortieren und das unpassende Element finden.',
+  },
+  logical_reasoning: {
+    title: 'Schlussfolgern',
+    description: 'Wenn... dann... Schritt fuer Schritt denken.',
+  },
+  logical_analogies: {
+    title: 'Analogien',
+    description: 'Finde dieselbe Beziehung in einem neuen Kontext.',
+  },
+  english_basics: {
+    title: 'Englisch: Grundlagen',
+    description: 'Begruessungen und erste Saetze.',
+  },
+  english_parts_of_speech: {
+    description: 'Personal- und Possessivpronomen mit Mathe-Beispielen.',
+  },
+  english_sentence_structure: {
+    title: 'Englisch: Satzbau',
+    description: 'Wortstellung, Fragen und das Verbinden von Ideen.',
+  },
+  english_subject_verb_agreement: {
+    title: 'Englisch: Subjekt-Verb-Kongruenz',
+    description: 'Subjekt-Verb-Kongruenz im Present Simple und die haeufigsten Fallen.',
+  },
+  english_articles: {
+    description: 'A, an, the und der Nullartikel im Englischen.',
+  },
+  english_prepositions_time_place: {
+    description: 'Praepositionen fuer Zeit und Ort in praktischen Beispielen.',
+  },
+  webdev_react_components: {
+    description: 'Lerne die Grundlagen von Komponenten und baue Oberflaechen in React 19.2.',
+  },
+  webdev_react_dom_components: {
+    description: 'Lerne die Grundlagen von React-DOM-Komponenten und der Arbeit mit DOM-Elementen.',
+  },
+  webdev_react_hooks: {
+    description: 'Lerne die Grundlagen von Hooks und baue Logik in React 19.2.',
+  },
+  webdev_react_dom_hooks: {
+    description: 'Lerne React-DOM-Hooks fuer bessere Formulare und Interaktionen.',
+  },
+  webdev_react_apis: {
+    description: 'Lerne die zentralen React-APIs und begleitende Werkzeuge.',
+  },
+  webdev_react_dom_apis: {
+    description: 'Lerne die zentralen React-DOM-APIs und wie Portale funktionieren.',
+  },
+  webdev_react_dom_client_apis: {
+    description: 'Lerne die React-DOM-Client-APIs: createRoot und hydrateRoot.',
+  },
+  webdev_react_dom_server_apis: {
+    description: 'Lerne die React-DOM-APIs fuer serverseitiges Rendern.',
+  },
+  webdev_react_dom_static_apis: {
+    description: 'Lerne die statischen React-DOM-APIs zum Erzeugen von HTML.',
+  },
+  webdev_react_compiler_config: {
+    description: 'Lerne die Konfiguration des React Compilers und Grundlagen der Optimierung.',
+  },
+  webdev_react_compiler_directives: {
+    description: 'Lerne Compiler-Direktiven und wie du sie steuerst.',
+  },
+  webdev_react_compiler_libraries: {
+    description: 'Lerne Bibliotheken und Integrationen kennen, die den Compiler unterstuetzen.',
+  },
+  webdev_react_performance_tracks: {
+    description: 'Lerne Performance-Tracks und Metriken in React.',
+  },
+  webdev_react_lints: {
+    description: 'Lerne die grundlegenden Lint-Regeln in React.',
+  },
+  webdev_react_rules: {
+    description: 'Lerne die wichtigsten React-Regeln und bewaehrte Praktiken.',
+  },
+  webdev_react_server_components: {
+    description: 'Lerne Server Components und die Trennung zwischen Server und Client.',
+  },
+  webdev_react_server_functions: {
+    description: 'Lerne Server Functions und sichere serverseitige Aktionen.',
+  },
+  webdev_react_server_directives: {
+    description: 'Lerne Server-Direktiven und Code-Grenzen.',
+  },
+  webdev_react_router: {
+    description: 'Lerne die Grundlagen von Routing in React.',
+  },
+  webdev_react_setup: {
+    description: 'Lerne die Grundlagen von Konfiguration und Ausfuehrung von React.',
+  },
+  webdev_react_state_management: {
+    description: 'Lerne die Grundlagen des State-Managements in React.',
+  },
+  agentic_coding_codex_5_4: {
+    description: 'Was agentisches Coding ist und wie du die richtige Denkweise entwickelst.',
+  },
+  agentic_coding_codex_5_4_fit: {
+    description: 'Wo Codex glaenzt und wo Vorsicht noetig ist.',
+  },
+  agentic_coding_codex_5_4_surfaces: {
+    description: 'CLI, IDE, Cloud und API - die passende Oberflaeche waehlen.',
+  },
+  agentic_coding_codex_5_4_operating_model: {
+    description: 'Goal/Context/Constraints/Done plus Planung, Ausfuehrung und Verifikation.',
+  },
+  agentic_coding_codex_5_4_prompting: {
+    description: 'Kontext, Planung und kuerzere Prompts in der Praxis.',
+  },
+  agentic_coding_codex_5_4_responses: {
+    description: 'Responses API, Tool-Aufrufe und strukturierte Ausgaben in der Praxis.',
+  },
+  agentic_coding_codex_5_4_agents_md: {
+    description: 'Repo-Regeln, Kommandos und eine Definition of Done an einem Ort.',
+  },
+  agentic_coding_codex_5_4_approvals: {
+    description: 'Sandboxing, Freigaben und Steuerung des Netzwerkzugriffs.',
+  },
+  agentic_coding_codex_5_4_safety: {
+    description: 'Berechtigungen, Freigaben und Sandboxing ohne unnoetiges Risiko.',
+  },
+  agentic_coding_codex_5_4_config_layers: {
+    description: 'Konfigurationsebenen, Profile und Projektvertrauen.',
+  },
+  agentic_coding_codex_5_4_rules: {
+    description: 'Kommando-Allowlist, Prefix-Regeln und Policy-Tests.',
+  },
+  agentic_coding_codex_5_4_web_citations: {
+    description: 'Wann du im Web suchen und wie du Quellen angeben solltest.',
+  },
+  agentic_coding_codex_5_4_tooling: {
+    description: 'Websuche, Dateisuche, Computer Use und Tool Search.',
+  },
+  agentic_coding_codex_5_4_response_contract: {
+    description: 'Antwortstruktur, Listenformatierung und Zitierregeln.',
+  },
+  agentic_coding_codex_5_4_ai_documentation: {
+    description: 'Ein gemeinsames Format fuer Prioritaeten, Evidenz und Rollout.',
+  },
+  agentic_coding_codex_5_4_delegation: {
+    description: 'Sub-Agenten, Parallelitaet und Kontrolle des Scopes.',
+  },
+  agentic_coding_codex_5_4_models: {
+    description: 'Die passenden Modelle und Reasoning-Stufen fuer verschiedene Aufgaben waehlen.',
+  },
+  agentic_coding_codex_5_4_cli_ide: {
+    description: 'Shortcuts, Befehle und Best Practices fuer Terminal und Editor.',
+  },
+  agentic_coding_codex_5_4_app_workflows: {
+    description: 'Worktrees, Automatisierungen und Git-Werkzeuge in der App.',
+  },
+  agentic_coding_codex_5_4_skills: {
+    description: 'Von manuellen Ablaeufen zu Skills und Automatisierung.',
+  },
+  agentic_coding_codex_5_4_mcp_integrations: {
+    description: 'Externe Tools, Kontext und sichere Integrationen.',
+  },
+  agentic_coding_codex_5_4_automations: {
+    description: 'Taktung, Worktrees und Sandboxing fuer Hintergrundarbeit.',
+  },
+  agentic_coding_codex_5_4_state_scale: {
+    description: 'Gespraechszustand, Hintergrundmodus, Kompaktierung und Prompt-Caching.',
+  },
+  agentic_coding_codex_5_4_review: {
+    description: 'Tests, Diff-Review und Qualitaets-Checklisten.',
+  },
+  agentic_coding_codex_5_4_long_horizon: {
+    description: 'Spezifikationen, Meilensteine und Drift-Kontrolle bei langen Aufgaben.',
+  },
+  agentic_coding_codex_5_4_dos_donts: {
+    description: 'Die wichtigsten Regeln fuer die Arbeit mit einem Agenten.',
+  },
+  agentic_coding_codex_5_4_non_engineers: {
+    description: 'Wie du delegierst, ohne Vollzeit-Entwickler zu sein.',
+  },
+  agentic_coding_codex_5_4_prompt_patterns: {
+    description: 'Prompt-Vorlagen fuer Bugfixes, Refactorings und PR-Review.',
+  },
+  agentic_coding_codex_5_4_rollout: {
+    description: 'Codex schrittweise in einem Team ausrollen.',
+  },
+};
+
+const resolveKangurLessonCatalogLocale = (
+  locale: string | null | undefined
+): KangurLessonCatalogLocale => {
+  const normalizedLocale = normalizeSiteLocale(locale);
+  if (normalizedLocale === 'pl' || normalizedLocale === 'de') {
+    return normalizedLocale;
+  }
+  return 'en';
+};
 
 const shouldApplyOverride = (
   componentId: string,
@@ -346,7 +656,9 @@ const resolveLessonOverride = (
   field: keyof LessonCopyOverride,
   fallbackValue: string
 ): string => {
-  if (!shouldUseEnglishOverrides(locale)) {
+  const catalogLocale = resolveKangurLessonCatalogLocale(locale);
+
+  if (catalogLocale === 'pl') {
     return fallbackValue;
   }
 
@@ -354,7 +666,13 @@ const resolveLessonOverride = (
     return fallbackValue;
   }
 
-  return ENGLISH_LESSON_COPY_OVERRIDES[componentId as KangurLessonComponentId]?.[field] ?? fallbackValue;
+  return (
+    (catalogLocale === 'de'
+      ? GERMAN_LESSON_COPY_OVERRIDES[componentId as KangurLessonComponentId]?.[field]
+      : undefined) ??
+    ENGLISH_LESSON_COPY_OVERRIDES[componentId as KangurLessonComponentId]?.[field] ??
+    fallbackValue
+  );
 };
 
 export const getLocalizedKangurLessonTitle = (
@@ -375,7 +693,17 @@ export const getLocalizedKangurSubjectLabel = (
   fallbackLabel?: string
 ): string => {
   const sourceLabel = fallbackLabel ?? SUBJECT_LABEL_MAP.get(subject) ?? subject;
-  return shouldUseEnglishOverrides(locale) ? ENGLISH_SUBJECT_LABELS[subject] ?? sourceLabel : sourceLabel;
+  const catalogLocale = resolveKangurLessonCatalogLocale(locale);
+
+  if (catalogLocale === 'pl') {
+    return sourceLabel;
+  }
+
+  return (
+    (catalogLocale === 'de' ? GERMAN_SUBJECT_LABELS[subject] : undefined) ??
+    ENGLISH_SUBJECT_LABELS[subject] ??
+    sourceLabel
+  );
 };
 
 export const getLocalizedKangurAgeGroupLabel = (
@@ -384,7 +712,17 @@ export const getLocalizedKangurAgeGroupLabel = (
   fallbackLabel?: string
 ): string => {
   const sourceLabel = fallbackLabel ?? AGE_GROUP_LABEL_MAP.get(ageGroup) ?? ageGroup;
-  return shouldUseEnglishOverrides(locale) ? ENGLISH_AGE_GROUP_LABELS[ageGroup] ?? sourceLabel : sourceLabel;
+  const catalogLocale = resolveKangurLessonCatalogLocale(locale);
+
+  if (catalogLocale === 'pl') {
+    return sourceLabel;
+  }
+
+  return (
+    (catalogLocale === 'de' ? GERMAN_AGE_GROUP_LABELS[ageGroup] : undefined) ??
+    ENGLISH_AGE_GROUP_LABELS[ageGroup] ??
+    sourceLabel
+  );
 };
 
 export const getLocalizedKangurLessonSectionLabel = (
@@ -392,17 +730,34 @@ export const getLocalizedKangurLessonSectionLabel = (
   locale: string | null | undefined,
   fallbackLabel: string
 ): string => {
-  if (!shouldUseEnglishOverrides(locale)) {
+  const catalogLocale = resolveKangurLessonCatalogLocale(locale);
+
+  if (catalogLocale === 'pl') {
     return fallbackLabel;
   }
 
-  return ENGLISH_LESSON_SECTION_LABELS[sectionId] ?? fallbackLabel;
+  return (
+    (catalogLocale === 'de' ? GERMAN_LESSON_SECTION_LABELS[sectionId] : undefined) ??
+    ENGLISH_LESSON_SECTION_LABELS[sectionId] ??
+    fallbackLabel
+  );
 };
 
 export const getLocalizedKangurLessonSectionTypeLabel = (
   locale: string | null | undefined,
   fallbackTypeLabel: string
-): string =>
-  shouldUseEnglishOverrides(locale)
-    ? ENGLISH_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel] ?? fallbackTypeLabel
-    : fallbackTypeLabel;
+): string => {
+  const catalogLocale = resolveKangurLessonCatalogLocale(locale);
+
+  if (catalogLocale === 'pl') {
+    return fallbackTypeLabel;
+  }
+
+  return (
+    (catalogLocale === 'de'
+      ? GERMAN_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel]
+      : undefined) ??
+    ENGLISH_LESSON_SECTION_TYPE_LABELS[fallbackTypeLabel] ??
+    fallbackTypeLabel
+  );
+};

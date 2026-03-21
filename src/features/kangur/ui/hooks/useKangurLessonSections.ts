@@ -1,9 +1,6 @@
 'use client';
 
-import type {
-  KangurLessonAgeGroup,
-  KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonCollectionFilterDto } from '@/features/kangur/shared/contracts/kangur';
 import {
   kangurLessonSectionsSchema,
   type KangurLessonSection,
@@ -15,10 +12,7 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-type LessonSectionsQueryOptions = {
-  subject?: KangurLessonSubject;
-  ageGroup?: KangurLessonAgeGroup;
-  enabledOnly?: boolean;
+type LessonSectionsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
 

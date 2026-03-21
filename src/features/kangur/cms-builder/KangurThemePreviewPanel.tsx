@@ -4,11 +4,11 @@ import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
+import type { KangurThemeMode } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { Badge } from '@/features/kangur/shared/ui';
 import {
   KANGUR_THEME_PREVIEW_SECTION_IDS,
-  type KangurThemeMode,
 } from '@/features/kangur/admin/components/kangur-theme-settings.copy';
 import { KANGUR_CENTER_ROW_SPACED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 

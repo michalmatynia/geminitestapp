@@ -1,5 +1,6 @@
 import type { KangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
 import { parseKangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type PartialRecord = Record<string, unknown>;
@@ -9,12 +10,7 @@ export type KangurAiTutorContentTranslatableSectionKey = Exclude<
   'locale' | 'version'
 >;
 
-export type KangurAiTutorContentTranslationStatus =
-  | 'source-locale'
-  | 'missing'
-  | 'source-copy'
-  | 'scaffolded'
-  | 'manual';
+export type KangurAiTutorContentTranslationStatus = KangurAiTutorTranslationStatusDto;
 
 const isPlainObject = (value: unknown): value is PartialRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

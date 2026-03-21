@@ -18,6 +18,7 @@ import {
   KANGUR_DEFAULT_THEME,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
+  type KangurThemeMode,
 } from '@/features/kangur/theme-settings';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsFieldRenderProps } from '@/shared/contracts/ui/settings';
@@ -35,13 +36,9 @@ import {
   localizeKangurThemeField,
   mapKangurThemeSectionToPreviewSection,
   resolveKangurThemeSettingsLocale,
-  type KangurThemeMode as KangurThemeModeType,
   type KangurThemePreviewSectionId,
   type KangurThemeSectionId,
 } from './kangur-theme-settings.copy';
-
-
-export type KangurThemeMode = KangurThemeModeType;
 type ThemeMode = KangurThemeMode;
 
 const KANGUR_THEME_SECTIONS: Array<{

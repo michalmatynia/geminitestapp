@@ -6,7 +6,6 @@ import { validateKangurAiTutorOnboardingContent } from '@/features/kangur/ai-tut
 import {
   buildKangurAiTutorContentTranslationStatusBySectionKey,
   summarizeKangurAiTutorContentTranslationStatuses,
-  type KangurAiTutorContentTranslationStatus,
   type KangurAiTutorContentTranslatableSectionKey,
 } from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
 import {
@@ -14,6 +13,7 @@ import {
   parseKangurAiTutorContent,
   type KangurAiTutorContent,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { api } from '@/shared/lib/api-client';
@@ -26,7 +26,6 @@ import {
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
-
 
 const AI_TUTOR_CONTENT_EDITOR_LOCALE = 'pl';
 const AI_TUTOR_CONTENT_TRANSLATION_LOCALES = getEnabledSiteLocaleCodes().filter(
@@ -66,11 +65,11 @@ const stringifyAiTutorContent = (content: KangurAiTutorContent): string =>
 
 type SectionTranslationStatus = {
   locale: string;
-  status: KangurAiTutorContentTranslationStatus;
+  status: KangurAiTutorTranslationStatusDto;
 };
 
 type SectionTranslationFilterStatus = Extract<
-  KangurAiTutorContentTranslationStatus,
+  KangurAiTutorTranslationStatusDto,
   'manual' | 'scaffolded' | 'source-copy'
 >;
 
@@ -84,7 +83,7 @@ const AI_TUTOR_CONTENT_TRANSLATION_FILTER_OPTIONS = [
 }>;
 
 const getTranslationStatusBadgeVariant = (
-  status: KangurAiTutorContentTranslationStatus
+  status: KangurAiTutorTranslationStatusDto
 ): 'outline' | 'secondary' | 'warning' => {
   switch (status) {
     case 'manual':
@@ -120,7 +119,7 @@ const getTranslationStatusFilterButtonVariant = (
 
 const formatTranslationStatusLabel = (
   locale: string,
-  status: KangurAiTutorContentTranslationStatus
+  status: KangurAiTutorTranslationStatusDto
 ): string => {
   switch (status) {
     case 'manual':
@@ -294,7 +293,10 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
   const translationStatusesByLocale = useMemo(() => {
     const sourceContent = parsedAiTutorContentState.content;
     if (!sourceContent) {
-      return new Map<string, Map<KangurAiTutorContentTranslatableSectionKey, KangurAiTutorContentTranslationStatus>>();
+      return new Map<
+        string,
+        Map<KangurAiTutorContentTranslatableSectionKey, KangurAiTutorTranslationStatusDto>
+      >();
     }
 
     return new Map(

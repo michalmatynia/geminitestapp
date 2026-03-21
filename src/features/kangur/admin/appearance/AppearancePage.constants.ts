@@ -10,13 +10,13 @@ import {
   KANGUR_DAILY_CRYSTAL_THEME,
   KANGUR_NIGHTLY_CRYSTAL_THEME,
 } from '@/features/kangur/theme-settings';
+import type { KangurThemeMode } from '@/features/kangur/theme-settings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
-
-export type AppearanceSlot = 'daily' | 'dawn' | 'sunset' | 'nightly';
+export type AppearanceSlot = KangurThemeMode;
 
 export const SLOT_ORDER: AppearanceSlot[] = ['daily', 'dawn', 'sunset', 'nightly'];
 

@@ -98,6 +98,13 @@ export type KangurLessonSubject = z.infer<typeof kangurLessonSubjectSchema>;
 export const kangurLessonAgeGroupSchema = z.enum(['six_year_old', 'ten_year_old', 'grown_ups']);
 export type KangurLessonAgeGroup = z.infer<typeof kangurLessonAgeGroupSchema>;
 
+export const kangurLessonCollectionFilterSchema = z.object({
+  subject: kangurLessonSubjectSchema.optional(),
+  ageGroup: kangurLessonAgeGroupSchema.optional(),
+  enabledOnly: z.boolean().optional(),
+});
+export type KangurLessonCollectionFilterDto = z.infer<typeof kangurLessonCollectionFilterSchema>;
+
 export const kangurSubjectFocusSchema = z.object({
   subject: kangurLessonSubjectSchema,
 });

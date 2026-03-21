@@ -2,9 +2,8 @@
 
 import type {
   KangurLesson,
-  KangurLessonAgeGroup,
+  KangurLessonCollectionFilterDto,
   KangurLessonDocumentStore,
-  KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 import {
   kangurLessonsSchema,
@@ -18,10 +17,7 @@ import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { normalizeKangurLessonDocumentStore } from '@/features/kangur/lesson-documents';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 
-type LessonsQueryOptions = {
-  subject?: KangurLessonSubject;
-  ageGroup?: KangurLessonAgeGroup;
-  enabledOnly?: boolean;
+type LessonsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
 

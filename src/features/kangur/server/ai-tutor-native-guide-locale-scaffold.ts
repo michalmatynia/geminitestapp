@@ -5,6 +5,7 @@ import {
   type KangurAiTutorNativeGuideStore,
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
 import type { KangurAiTutorFollowUpAction } from '@/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type PlainRecord = Record<string, unknown>;
@@ -40,12 +41,7 @@ type ComparableNativeGuideEntry = Pick<
   | 'triggerPhrases'
 >;
 
-export type KangurAiTutorNativeGuideTranslationStatus =
-  | 'source-locale'
-  | 'missing'
-  | 'source-copy'
-  | 'scaffolded'
-  | 'manual';
+export type KangurAiTutorNativeGuideTranslationStatus = KangurAiTutorTranslationStatusDto;
 
 const isPlainObject = (value: unknown): value is PlainRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

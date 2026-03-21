@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React, { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -13,8 +14,13 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
-import { Button, FormModal, Skeleton } from '@/shared/ui';
+import {
+  useDefaultExportConnection,
+  useIntegrationsWithConnections,
+} from '@/shared/hooks/useIntegrationQueries';
+import { Button, FormModal, IntegrationSelector, Skeleton } from '@/shared/ui';
 
 export { buildTriggeredProductEntityJson };
 const ProductForm = dynamic(() => import('./ProductForm'), {
@@ -25,13 +31,6 @@ const ProductForm = dynamic(() => import('./ProductForm'), {
 const FileManager = dynamic(() => import('@/features/files/public'), {
   ssr: false,
 });
-
-const SelectIntegrationModal = dynamic(
-  () => import('@/features/integrations'),
-  {
-    ssr: false,
-  }
-);
 
 type TriggerButtonBarProps = ComponentProps<
   typeof import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').TriggerButtonBar
@@ -175,6 +174,113 @@ function EditProductSkeletonContent(): React.JSX.Element {
         Please wait while complete product data is loaded.
       </p>
     </div>
+  );
+}
+
+function ProductIntegrationSelectionModal(props: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (integrationId: string, connectionId: string) => void;
+}): React.JSX.Element | null {
+  const { isOpen, onClose, onSelect } = props;
+  const { data: integrationsData = [], isLoading } = useIntegrationsWithConnections();
+  const { data: preferredConnection } = useDefaultExportConnection();
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState('');
+  const [selectedConnectionId, setSelectedConnectionId] = useState('');
+
+  const integrations = React.useMemo(
+    (): IntegrationWithConnections[] =>
+      integrationsData.filter(
+        (integration: IntegrationWithConnections) => integration.connections.length > 0
+      ),
+    [integrationsData]
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (integrations.length === 0) {
+      if (selectedIntegrationId !== '') setSelectedIntegrationId('');
+      if (selectedConnectionId !== '') setSelectedConnectionId('');
+      return;
+    }
+
+    const hasSelectedIntegration = integrations.some(
+      (integration: IntegrationWithConnections) => integration.id === selectedIntegrationId
+    );
+
+    if (!hasSelectedIntegration) {
+      setSelectedIntegrationId(integrations[0]?.id ?? '');
+    }
+  }, [integrations, isOpen, selectedConnectionId, selectedIntegrationId]);
+
+  useEffect(() => {
+    if (!isOpen || !selectedIntegrationId) return;
+
+    const integration = integrations.find(
+      (entry: IntegrationWithConnections) => entry.id === selectedIntegrationId
+    );
+    const connectionIds = integration?.connections.map((connection) => connection.id) ?? [];
+
+    if (connectionIds.length === 0) {
+      if (selectedConnectionId !== '') setSelectedConnectionId('');
+      return;
+    }
+
+    if (selectedConnectionId && connectionIds.includes(selectedConnectionId)) {
+      return;
+    }
+
+    const preferredConnectionId = preferredConnection?.connectionId ?? null;
+    if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
+      setSelectedConnectionId(preferredConnectionId);
+      return;
+    }
+
+    setSelectedConnectionId(connectionIds[0] ?? '');
+  }, [integrations, isOpen, preferredConnection?.connectionId, selectedConnectionId, selectedIntegrationId]);
+
+  const handleContinue = useCallback((): void => {
+    if (selectedIntegrationId && selectedConnectionId) {
+      onSelect(selectedIntegrationId, selectedConnectionId);
+    }
+  }, [onSelect, selectedConnectionId, selectedIntegrationId]);
+
+  if (!isOpen) return null;
+
+  return (
+    <FormModal
+      open={isOpen}
+      onClose={onClose}
+      title='Select Marketplace / Integration'
+      size='md'
+      onSave={handleContinue}
+      saveText='Continue'
+      isSaveDisabled={!selectedIntegrationId || !selectedConnectionId}
+    >
+      <div className='space-y-4'>
+        {isLoading ? (
+          <p className='text-sm text-muted-foreground'>Loading integrations...</p>
+        ) : integrations.length === 0 ? (
+          <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
+            <p className='text-sm text-yellow-200'>No connected integrations</p>
+            <p className='mt-2 text-xs text-yellow-300/70'>
+              <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
+                Set up an integration first
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <IntegrationSelector
+            integrations={integrations}
+            selectedIntegrationId={selectedIntegrationId}
+            onIntegrationChange={setSelectedIntegrationId}
+            selectedConnectionId={selectedConnectionId}
+            onConnectionChange={setSelectedConnectionId}
+          />
+        )}
+      </div>
+    </FormModal>
   );
 }
 
@@ -400,9 +506,8 @@ export function ProductModals(): React.JSX.Element {
       )}
 
       {showIntegrationModal && (
-        <SelectIntegrationModal
+        <ProductIntegrationSelectionModal
           isOpen={showIntegrationModal}
-          onSuccess={() => {}}
           onClose={onCloseIntegrationModal}
           onSelect={onSelectIntegrationFromModal}
         />

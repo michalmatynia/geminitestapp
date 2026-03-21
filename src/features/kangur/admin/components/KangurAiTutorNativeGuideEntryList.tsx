@@ -1,10 +1,10 @@
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
-import type { KangurAiTutorNativeGuideTranslationStatus } from '@/features/kangur/server/ai-tutor-native-guide-locale-scaffold';
+import type { KangurAiTutorTranslationStatusDto } from '@/shared/contracts/kangur-ai-tutor-locale-scaffold';
 import { Badge, Card } from '@/features/kangur/shared/ui';
 
 type EntryTranslationStatus = {
   locale: string;
-  status: KangurAiTutorNativeGuideTranslationStatus;
+  status: KangurAiTutorTranslationStatusDto;
 };
 
 type Props = {
@@ -17,7 +17,7 @@ type Props = {
 };
 
 const getTranslationStatusBadgeVariant = (
-  status: KangurAiTutorNativeGuideTranslationStatus
+  status: KangurAiTutorTranslationStatusDto
 ): 'outline' | 'secondary' | 'warning' => {
   switch (status) {
     case 'manual':
@@ -34,7 +34,7 @@ const getTranslationStatusBadgeVariant = (
 
 const formatTranslationStatusLabel = (
   locale: string,
-  status: KangurAiTutorNativeGuideTranslationStatus
+  status: KangurAiTutorTranslationStatusDto
 ): string => {
   switch (status) {
     case 'manual':

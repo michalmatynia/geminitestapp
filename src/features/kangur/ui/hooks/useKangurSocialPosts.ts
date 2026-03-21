@@ -137,7 +137,7 @@ export const useDeleteKangurSocialPost = (): MutationResult<KangurSocialPost, st
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.useDeleteKangurSocialPost',
-      operation: 'delete',
+      operation: 'action',
       resource: 'kangur.social-posts',
       domain: 'kangur',
       tags: ['kangur', 'social-posts', 'delete'],
@@ -232,7 +232,7 @@ export const useUnpublishKangurSocialPost = (): MutationResult<KangurSocialPost,
     invalidate: invalidateSocialPosts,
     meta: {
       source: 'kangur.hooks.useUnpublishKangurSocialPost',
-      operation: 'delete',
+      operation: 'action',
       resource: 'kangur.social-posts.unpublish',
       domain: 'kangur',
       tags: ['kangur', 'social-posts', 'unpublish'],

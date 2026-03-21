@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-21T09:12:00.900Z
+Generated at: 2026-03-21T10:39:08.225Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -17,9 +17,9 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | Route | LOC |
 | --- | ---: |
 | `src/app/api/v2/products/[[...path]]/route.ts` | 282 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 271 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 230 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
 | `src/app/api/databases/[[...path]]/route.ts` | 204 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 169 |
@@ -31,11 +31,11 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/kangur/auth/parent-magic-link/exchange/route.ts` | 33 |
 | `src/app/api/kangur/auth/parent-magic-link/request/route.ts` | 33 |
 | `src/app/api/v2/metadata/[type]/[id]/route.ts` | 25 |
+| `src/app/api/cms/slugs/[id]/route.ts` | 24 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
 | `src/app/api/drafts/[id]/route.ts` | 23 |
 | `src/app/api/kangur/auth/me/route.ts` | 23 |
 | `src/app/api/ai/schema/[entity]/route.ts` | 22 |
-| `src/app/api/assets3d/[id]/route.ts` | 22 |
 
 ## Top App Pages by LOC
 
@@ -51,23 +51,23 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/(frontend)/preview/[id]/page.tsx` | 40 |
 | `src/app/(frontend)/kangur/login/page.tsx` | 37 |
 | `src/app/[locale]/(frontend)/kangur/(app)/[[...slug]]/page.tsx` | 37 |
+| `src/app/(admin)/admin/products/settings/page.tsx` | 29 |
 | `src/app/(frontend)/kangur/(app)/[[...slug]]/page.tsx` | 28 |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 21 |
 | `src/app/[locale]/(frontend)/products/[id]/page.tsx` | 20 |
+| `src/app/(admin)/admin/ai-paths/queue/page.tsx` | 15 |
 | `src/app/(frontend)/products/[id]/page.tsx` | 15 |
 | `src/app/(admin)/admin/chatbot/context/page.tsx` | 14 |
 | `src/app/(admin)/admin/chatbot/page.tsx` | 14 |
 | `src/app/(admin)/admin/integrations/marketplaces/page.tsx` | 14 |
 | `src/app/(admin)/admin/integrations/page.tsx` | 14 |
-| `src/app/(admin)/admin/notes/notebooks/page.tsx` | 14 |
-| `src/app/(admin)/admin/settings/playwright/page.tsx` | 14 |
 
 ## Recommended First Runtime Profiling Targets
 
 - `src/app/api/v2/products/[[...path]]/route.ts`
-- `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/image-studio/[[...path]]/route.ts`
 - `src/app/api/v2/integrations/[[...path]]/route.ts`
+- `src/app/api/agentcreator/[[...path]]/route.ts`
 - `src/app/api/ai-paths/[[...path]]/route.ts`
 - `src/app/api/databases/[[...path]]/route.ts`
 - `src/app/api/chatbot/[[...path]]/route.ts`

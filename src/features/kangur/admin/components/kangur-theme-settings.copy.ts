@@ -2,9 +2,8 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { SettingsPanelField } from '@/features/kangur/shared/ui/templates/SettingsPanelBuilder';
-
-export type KangurThemeMode = 'daily' | 'dawn' | 'sunset' | 'nightly';
-export type KangurThemeSettingsLocale = 'en' | 'pl';
+import type { KangurThemeMode } from '@/features/kangur/theme-settings';
+import type { KangurAdminLocaleDto as KangurThemeSettingsLocale } from '../kangur-admin-locale';
 export type KangurThemePreviewSectionId =
   | 'corePalette'
   | 'textOverrides'

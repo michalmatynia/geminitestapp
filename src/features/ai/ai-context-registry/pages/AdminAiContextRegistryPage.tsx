@@ -185,7 +185,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
     enabled: Boolean(selectedId),
     meta: {
       source: 'ai-context-registry.page.related',
-      operation: 'detail',
+      operation: 'list',
       resource: 'ai.context-registry.related',
       domain: 'ai',
       queryKey: QUERY_KEYS.ai.contextRegistry.related(selectedId),
@@ -207,7 +207,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
     enabled: selectedNode?.kind === 'collection',
     meta: {
       source: 'ai-context-registry.page.schema',
-      operation: 'detail',
+      operation: 'list',
       resource: 'ai.context-registry.schema',
       domain: 'ai',
       queryKey: QUERY_KEYS.ai.contextRegistry.schema(selectedNode?.id ?? null),
@@ -246,7 +246,7 @@ export function AdminAiContextRegistryPage(): React.JSX.Element {
     enabled: Boolean(bundleRequest),
     meta: {
       source: 'ai-context-registry.page.bundle',
-      operation: 'detail',
+      operation: 'list',
       resource: 'ai.context-registry.bundle',
       domain: 'ai',
       queryKey: QUERY_KEYS.ai.contextRegistry.bundle(JSON.stringify(bundleRequest ?? null)),

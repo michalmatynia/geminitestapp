@@ -351,6 +351,165 @@ const ENGLISH_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageCont
   },
 };
 
+const GERMAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageContentCopyOverride>> = {
+  'game-home-actions': {
+    title: 'Aktivitaet waehlen',
+    summary: 'Wechsle zu einer Lektion, einem schnellen Spiel, gemischtem Training oder zur Mathe-Kanguru-Challenge.',
+  },
+  'game-home-leaderboard': {
+    title: 'Top-Ergebnisse',
+    summary: 'Sieh, wer die meisten Punkte holt und wie weit der naechste Ranglistenplatz entfernt ist.',
+  },
+  'game-home-progress': {
+    title: 'Lernfortschritt',
+    summary: 'Sieh Level, Serien, Genauigkeit und die naechsten Abzeichen an einem Ort.',
+  },
+  'parent-dashboard-guest-hero': {
+    title: 'Eltern- / Lehrer-Dashboard',
+    summary: 'Sieh, wie du die Betreuungsperspektive freischaltest und zu einem Konto mit Elternrechten wechselst.',
+  },
+  'parent-dashboard-hero': {
+    title: 'Eltern-Dashboard',
+    summary: 'Dies ist das Entscheidungszentrum der Betreuungsperson: Waehle einen Lernenden und oeffne den Tab mit dem benoetigten Kontext.',
+  },
+  'parent-dashboard-learner-management': {
+    title: 'Profile verwalten, ohne das Dashboard zu verlassen',
+    summary: 'Eltern melden sich mit E-Mail an, waehrend Lernende eigene Nutzernamen und Passwoerter erhalten.',
+  },
+  'parent-dashboard-tabs': {
+    title: 'Dashboard-Tabs',
+    summary: 'Wechsle zwischen Ergebnissen, Fortschritt, Aufgaben, Monitoring und Tutor-AI-Einstellungen.',
+  },
+  'parent-dashboard-progress': {
+    title: 'Lernfortschritt',
+    summary: 'Pruefe Lernrhythmus, Level, Tagesmission und die wichtigste naechste Richtung.',
+  },
+  'parent-dashboard-scores': {
+    title: 'Ergebnisse des Lernenden',
+    summary: 'Pruefe letzte Spiele, Genauigkeit und Bereiche, die jetzt eine Wiederholung brauchen.',
+  },
+  'parent-dashboard-assignments': {
+    title: 'Aufgaben des Lernenden',
+    summary: 'Setze Prioritaeten, pruefe zugewiesene Arbeit und StudiQ-Vorschlaege.',
+  },
+  'parent-dashboard-monitoring': {
+    title: 'Aufgaben-Monitoring',
+    summary: 'Verfolge den Fortschritt zugewiesener Arbeit und der StudiQ-Vorschlaege.',
+  },
+  'parent-dashboard-ai-tutor': {
+    title: 'Tutor-AI fuer Eltern',
+    summary: 'Interpretiere Lernerdaten und steuere die Verfuegbarkeit der KI-Unterstuetzung an einem Ort.',
+  },
+  'login-page-form': {
+    title: 'Anmelden',
+    summary: 'Melde dich mit der E-Mail der Eltern oder dem Nutzernamen des Lernenden an. Den Kontotyp erkennen wir nach dem Klick auf Anmelden.',
+  },
+  'login-page-identifier-field': {
+    title: 'E-Mail der Eltern oder Nutzername des Lernenden',
+    summary: 'Gib die E-Mail der Eltern oder den Nutzernamen des Lernenden ein. Den Kontotyp erkennen wir nach dem Klick auf Anmelden.',
+  },
+  'shared-nav-create-account-action': {
+    title: 'Konto erstellen',
+    summary: 'Starte den Elternkonto-Ablauf, ohne die aktuelle Seite zu verlassen.',
+  },
+  'shared-nav-login-action': {
+    title: 'Anmelden',
+    summary: 'Oeffne den Eltern- oder Lernenden-Login von jeder Kangur-Seite.',
+  },
+  'lessons-list-intro': {
+    title: 'Lektionen',
+    summary: 'Waehle ein Thema und springe direkt in Uebung oder Wiederholung.',
+  },
+  'lessons-library': {
+    title: 'Lektionsbibliothek',
+    summary: 'Waehle ein Thema und beginne Lernen oder Wiederholen in deinem Tempo.',
+  },
+  'lessons-list-empty-state': {
+    title: 'Keine aktiven Lektionen',
+    summary: 'Aktiviere Lektionen im Admin-Bereich, damit sie hier erscheinen.',
+  },
+  'lessons-active-header': {
+    title: 'Aktuelle Lektion',
+    summary: 'Gehe Thema fuer Thema durch, hoere dir das Material an und pruefe, ob hier eine Elternaufgabe wartet.',
+  },
+  'lessons-active-assignment': {
+    title: 'Aufgabe der Eltern',
+    summary: 'Dieser Bereich zeigt, ob die Lektion eine aktive Prioritaet der Eltern hat oder schon abgeschlossen wurde.',
+  },
+  'lessons-active-document': {
+    title: 'Lektionsmaterial',
+    summary: 'Lies das gespeicherte Lektionsdokument Schritt fuer Schritt und kehre waehrend der Uebung dazu zurueck.',
+  },
+  'lessons-active-secret-panel': {
+    title: 'Verstecktes Finale',
+    summary: 'Die goldene Kapsel hat ein Finale am Ende der Reihe freigeschaltet. Du bist direkt im versteckten Ende gelandet.',
+  },
+  'lessons-active-empty-document': {
+    title: 'Kein gespeicherter Lektionsinhalt',
+    summary: 'Diese Lektion nutzt den Dokumentmodus, aber es wurden noch keine Inhaltsbloecke gespeichert.',
+  },
+  'lessons-active-navigation': {
+    title: 'Lektionsnavigation',
+    summary: 'Wechsle zur vorherigen oder naechsten Lektion, ohne zur gesamten Liste zurueckzugehen.',
+  },
+  'tests-empty-state': {
+    title: 'Keine veroeffentlichten Fragen',
+    summary: 'Dieses Set hat noch keine aktiven Testfragen. Komm spaeter wieder oder waehle ein anderes Set.',
+  },
+  'tests-question': {
+    title: 'Testfrage',
+    summary: 'Waehle eine Antwort und pruefe danach die Erklaerung und den richtigen Gedankengang.',
+  },
+  'tests-selection': {
+    title: 'Deine ausgewaehlte Antwort',
+    summary: 'Das ist die Antwort, die vor der Ergebnispruefung gewaehlt wurde. Der Tutor kann erklaeren, was diese Wahl bedeutet und was du noch einmal pruefen solltest.',
+  },
+  'tests-review': {
+    title: 'Antwortauswertung',
+    summary: 'Vergleiche deine Wahl mit der richtigen Antwort und lies die kurze Erklaerung.',
+  },
+  'tests-summary': {
+    title: 'Testzusammenfassung',
+    summary: 'Pruefe das Endergebnis und gehe zu den Fragen zurueck, um deine Antworten zu analysieren.',
+  },
+  'learner-profile-hero': {
+    title: 'Lernendenprofil',
+    summary: 'Pruefe Meilensteine, Aktivitaet und naechste Schritte fuer den aktuellen Lernenden.',
+  },
+  'learner-profile-level-progress': {
+    title: 'Levelfortschritt',
+    summary: 'Sieh das aktuelle Level, die gesamten XP und die verbleibende Distanz bis zur naechsten Schwelle.',
+  },
+  'learner-profile-overview': {
+    title: 'Ergebnisuebersicht',
+    summary: 'Die wichtigsten Signale des Tages: Genauigkeit, Mission, Ziel und Abzeichen in einer Ansicht.',
+  },
+  'learner-profile-recommendations': {
+    title: 'Plan fuer heute',
+    summary: 'Eine kurze Liste naechster Schritte auf Basis letzter Ergebnisse und Aktivitaet.',
+  },
+  'learner-profile-assignments': {
+    title: 'Vorschlaege der Eltern',
+    summary: 'Aufgaben und Hinweise der Eltern, die zuerst erledigt werden sollten.',
+  },
+  'learner-profile-performance': {
+    title: 'Leistung des Lernenden',
+    summary: 'Sieh den Rhythmus der letzten sieben Tage und die Genauigkeit jeder Operation.',
+  },
+  'learner-profile-sessions': {
+    title: 'Sitzungsverlauf',
+    summary: 'Pruefe letzte Versuche und die Abzeichenpfade, die durch regelmaessiges Spielen aufgebaut wurden.',
+  },
+  'learner-profile-ai-tutor-mood': {
+    title: 'Tutor-AI-Stimmung',
+    summary: 'Sieh den aktuellen Unterstuetzungston, das Vertrauensniveau und den Zeitpunkt der letzten Aktualisierung.',
+  },
+  'learner-profile-mastery': {
+    title: 'Lektionsbeherrschung',
+    summary: 'Pruefe Themen fuer Wiederholungen und die staerksten Bereiche auf Basis gespeicherter Lektionen.',
+  },
+};
+
 const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   KangurLessonComponentId,
   {
@@ -851,16 +1010,29 @@ const dedupeOrdered = (values: readonly string[]): string[] => {
   return normalized;
 };
 
-const shouldUseEnglishPageContent = (locale: string | null | undefined): boolean =>
-  normalizeSiteLocale(locale) !== 'pl';
+const resolveKangurPageContentLocale = (locale: string | null | undefined): 'pl' | 'en' | 'de' => {
+  const normalizedLocale = normalizeSiteLocale(locale);
+  if (normalizedLocale === 'pl' || normalizedLocale === 'de') {
+    return normalizedLocale;
+  }
+  return 'en';
+};
 
 const resolvePageContentCopyOverride = (
   entryId: string,
   locale: string | null | undefined
-): KangurPageContentCopyOverride | undefined =>
-  shouldUseEnglishPageContent(locale)
-    ? ENGLISH_PAGE_CONTENT_COPY_OVERRIDES[entryId]
-    : PAGE_CONTENT_COPY_OVERRIDES[entryId];
+): KangurPageContentCopyOverride | undefined => {
+  const contentLocale = resolveKangurPageContentLocale(locale);
+
+  if (contentLocale === 'pl') {
+    return PAGE_CONTENT_COPY_OVERRIDES[entryId];
+  }
+
+  return (
+    (contentLocale === 'de' ? GERMAN_PAGE_CONTENT_COPY_OVERRIDES[entryId] : undefined) ??
+    ENGLISH_PAGE_CONTENT_COPY_OVERRIDES[entryId]
+  );
+};
 
 const resolveLessonLibraryAliases = (
   locale: string | null | undefined,
@@ -870,7 +1042,7 @@ const resolveLessonLibraryAliases = (
   detailAliases: readonly string[] | undefined,
   normalizedComponentId: string
 ): string[] =>
-  shouldUseEnglishPageContent(locale)
+  resolveKangurPageContentLocale(locale) !== 'pl'
     ? dedupeOrdered([
         lessonTitle,
         lessonDescription,
@@ -886,7 +1058,7 @@ const resolveLessonLibraryTriggerPhrases = (
   detailTriggerPhrases: readonly string[] | undefined,
   normalizedComponentId: string
 ): string[] =>
-  shouldUseEnglishPageContent(locale)
+  resolveKangurPageContentLocale(locale) !== 'pl'
     ? dedupeOrdered([
         lessonTitle,
         lessonDescription,
@@ -913,7 +1085,7 @@ const buildLessonLibraryFragments = (locale = 'pl'): KangurPageContentFragment[]
       locale,
       lesson.description
     );
-    const detail = shouldUseEnglishPageContent(locale)
+    const detail = resolveKangurPageContentLocale(locale) !== 'pl'
       ? ({
           explanation: lessonDescription,
           triggerPhrases: [],

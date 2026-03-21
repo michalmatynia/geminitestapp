@@ -203,5 +203,6 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Historia trybu: Dodawanie')).toBeTruthy();
     expect(screen.getAllByText('Historia trybu: Zegar').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('7/8 poprawnych')).toBeTruthy();
+    expect(screen.getByText('Pojedynki')).toBeTruthy();
   });
 });

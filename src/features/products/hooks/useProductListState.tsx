@@ -14,7 +14,6 @@ import { useUserPreferences } from '@/features/products/hooks/useUserPreferences
 import * as queuedProductOps from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
-import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import { useToast } from '@/shared/ui';
 
 

@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-21T10:16:15.563Z
+Generated at: 2026-03-21T10:39:04.716Z
 
 ## Snapshot
 
-- Source files: 7098
-- Source lines: 1157263
+- Source files: 7102
+- Source lines: 1157762
 - use client files: 2
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -32,10 +32,10 @@ Generated at: 2026-03-21T10:16:15.563Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 281 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 251 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 282 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
 | `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 230 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
 | `src/app/api/databases/[[...path]]/route.ts` | 204 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 169 |
@@ -62,12 +62,12 @@ Generated at: 2026-03-21T10:16:15.563Z
 | --- | ---: |
 | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1708 |
 | `src/features/kangur/ui/components/AddingLesson.tsx` | 1688 |
-| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1570 |
+| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1566 |
 | `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1540 |
-| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1270 |
+| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1266 |
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1219 |
 | `src/features/kangur/ui/pages/Game.tsx` | 1143 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1129 |
+| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1131 |
 | `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
 | `src/features/kangur/page-content-catalog.ts` | 1105 |
 | `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1086 |
@@ -78,5 +78,5 @@ Generated at: 2026-03-21T10:16:15.563Z
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 1041 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 1035 |
 | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1031 |
-| `src/shared/contracts/cms.ts` | 1024 |
+| `src/shared/contracts/cms.ts` | 1023 |
 | `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1000 |

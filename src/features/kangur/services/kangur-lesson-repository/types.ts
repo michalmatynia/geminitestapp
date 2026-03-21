@@ -1,14 +1,9 @@
 import type {
+  KangurLessonCollectionFilterDto,
   KangurLesson,
-  KangurLessonAgeGroup,
-  KangurLessonSubject,
 } from '@kangur/contracts';
 
-export type KangurLessonListInput = {
-  subject?: KangurLessonSubject;
-  ageGroup?: KangurLessonAgeGroup;
-  enabledOnly?: boolean;
-};
+export type KangurLessonListInput = KangurLessonCollectionFilterDto;
 
 export type KangurLessonRepository = {
   listLessons: (input?: KangurLessonListInput) => Promise<KangurLesson[]>;

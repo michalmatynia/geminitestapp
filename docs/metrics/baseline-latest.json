@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-21T10:16:15.563Z",
+  "generatedAt": "2026-03-21T10:39:04.716Z",
   "source": {
-    "totalFiles": 7098,
-    "totalLines": 1157263,
+    "totalFiles": 7102,
+    "totalLines": 1157762,
     "useClientFiles": 2,
     "filesOver800": 0,
     "filesOver1000": 0,
@@ -26,11 +26,7 @@
     "topRouteHotspots": [
       {
         "path": "src/app/api/v2/products/[[...path]]/route.ts",
-        "lines": 281
-      },
-      {
-        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
-        "lines": 251
+        "lines": 282
       },
       {
         "path": "src/app/api/image-studio/[[...path]]/route.ts",
@@ -39,6 +35,10 @@
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
         "lines": 232
+      },
+      {
+        "path": "src/app/api/agentcreator/[[...path]]/route.ts",
+        "lines": 230
       },
       {
         "path": "src/app/api/ai-paths/[[...path]]/route.ts",
@@ -85,6 +85,10 @@
         "lines": 25
       },
       {
+        "path": "src/app/api/cms/slugs/[id]/route.ts",
+        "lines": 24
+      },
+      {
         "path": "src/app/api/auth/users/[id]/route.ts",
         "lines": 23
       },
@@ -98,10 +102,6 @@
       },
       {
         "path": "src/app/api/ai/schema/[entity]/route.ts",
-        "lines": 22
-      },
-      {
-        "path": "src/app/api/assets3d/[id]/route.ts",
         "lines": 22
       }
     ]
@@ -132,8 +132,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 1406,
-        "lines": 303704
+        "files": 1407,
+        "lines": 304037
       },
       {
         "feature": "ai",
@@ -153,7 +153,7 @@
       {
         "feature": "products",
         "files": 254,
-        "lines": 51219
+        "lines": 51316
       },
       {
         "feature": "integrations",
@@ -202,8 +202,8 @@
       },
       {
         "feature": "observability",
-        "files": 28,
-        "lines": 5714
+        "files": 29,
+        "lines": 5719
       },
       {
         "feature": "viewer3d",
@@ -228,7 +228,7 @@
       {
         "feature": "drafter",
         "files": 12,
-        "lines": 2817
+        "lines": 2717
       },
       {
         "feature": "document-editor",
@@ -468,7 +468,7 @@
       },
       {
         "path": "src/features/kangur/server/ai-tutor-content-locale-scaffold.ts",
-        "lines": 1570
+        "lines": 1566
       },
       {
         "path": "src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx",
@@ -476,7 +476,7 @@
       },
       {
         "path": "src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts",
-        "lines": 1270
+        "lines": 1266
       },
       {
         "path": "src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx",
@@ -488,7 +488,7 @@
       },
       {
         "path": "src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx",
-        "lines": 1129
+        "lines": 1131
       },
       {
         "path": "src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts",
@@ -532,7 +532,7 @@
       },
       {
         "path": "src/shared/contracts/cms.ts",
-        "lines": 1024
+        "lines": 1023
       },
       {
         "path": "src/features/kangur/ui/components/GeometryDrawingGame.tsx",
@@ -555,12 +555,12 @@
         "lines": 987
       },
       {
-        "path": "src/features/kangur/admin/appearance/appearance.copy.ts",
+        "path": "src/features/kangur/server/knowledge-graph/retrieval.ts",
         "lines": 984
       },
       {
-        "path": "src/features/kangur/server/knowledge-graph/retrieval.ts",
-        "lines": 984
+        "path": "src/features/kangur/admin/appearance/appearance.copy.ts",
+        "lines": 983
       },
       {
         "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",

@@ -688,6 +688,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           const response = await createErrorResponseWithTiming(
             error,
             request,
+            handlerContext,
             options
           );
           if (handlerContext.rateLimitHeaders) {

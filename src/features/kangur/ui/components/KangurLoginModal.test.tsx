@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createTestQueryClient } from '@/__tests__/test-utils';
 
 const { useKangurLoginModalMock } = vi.hoisted(() => ({
   useKangurLoginModalMock: vi.fn(),

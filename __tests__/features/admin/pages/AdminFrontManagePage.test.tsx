@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor, fireEvent } from '@/__tests__/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { render } from '@/__tests__/test-utils';
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';
 import { useSettingsMap, useUpdateSetting, useLiteSettingsMap } from '@/shared/hooks/use-settings';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';

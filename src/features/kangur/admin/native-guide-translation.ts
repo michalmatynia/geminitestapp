@@ -100,7 +100,7 @@ export const exportGuideEntriesToXliff = (
   xml += `<xliff version="2.0" srcLang="${sourceLanguage}" trgLang="${targetLanguage}" xmlns="urn:oasis:names:tc:xliff:document:2.0">\n`;
   xml += '  <file id="kangur-native-guides" type="plaintext">\n';
 
-  entries.forEach((entry, index) => {
+  entries.forEach((entry, _index) => {
     const groupId = `group-${entry.id}`;
     xml += `    <group id="${groupId}" name="Entry: ${entry.title}">\n`;
 
@@ -164,13 +164,14 @@ export const importGuideEntriesFromXliff = (
     // Simple XML parsing - in production, use a proper XML parser
     const translationMap = new Map<string, string>();
 
-    // Match patterns like <target>translated text</target>
-    const targetPattern = /<target>([\s\S]*?)<\/target>/g;
     const unitPattern = /<unit id="([\w-]+)">[\s\S]*?<target>([\s\S]*?)<\/target>/g;
 
     let match;
     while ((match = unitPattern.exec(xliffString)) !== null) {
       const unitId = match[1];
+      if (!unitId) {
+        continue;
+      }
       const targetText = unescapeXml(match[2]?.trim() || '');
       if (targetText) {
         translationMap.set(unitId, targetText);
@@ -195,9 +196,9 @@ export const importGuideEntriesFromXliff = (
         const translatedHints: string[] = [];
         entry.hints.forEach((_, hintIndex) => {
           const translated = translationMap.get(`${groupId}-hint-${hintIndex}`);
-          translatedHints.push(translated || entry.hints[hintIndex]);
+          translatedHints.push(translated || entry.hints[hintIndex] || '');
         });
-        if (translatedHints.some((h) => h !== entry.hints[translatedHints.indexOf(h)])) {
+        if (translatedHints.some((hint, index) => hint !== (entry.hints[index] || ''))) {
           translations.hints = translatedHints;
         }
       }
@@ -207,9 +208,13 @@ export const importGuideEntriesFromXliff = (
         const translatedPhrases: string[] = [];
         entry.triggerPhrases.forEach((_, phraseIndex) => {
           const translated = translationMap.get(`${groupId}-phrase-${phraseIndex}`);
-          translatedPhrases.push(translated || entry.triggerPhrases[phraseIndex]);
+          translatedPhrases.push(translated || entry.triggerPhrases[phraseIndex] || '');
         });
-        if (translatedPhrases.some((p) => p !== entry.triggerPhrases[translatedPhrases.indexOf(p)])) {
+        if (
+          translatedPhrases.some(
+            (phrase, index) => phrase !== (entry.triggerPhrases[index] || ''),
+          )
+        ) {
           translations.triggerPhrases = translatedPhrases;
         }
       }

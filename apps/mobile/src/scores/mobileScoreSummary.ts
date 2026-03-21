@@ -240,12 +240,12 @@ export const formatKangurMobileScoreFamily = (
   family: KangurMobileScorePracticeFamily,
 ): string => {
   if (family === 'logic') {
-    return 'Logic practice';
+    return 'Trening logiczny';
   }
   if (family === 'time') {
-    return 'Time practice';
+    return 'Trening czasu';
   }
-  return 'Arithmetic practice';
+  return 'Trening arytmetyczny';
 };
 
 export const formatKangurMobileScoreDateTime = (value: string): string => {

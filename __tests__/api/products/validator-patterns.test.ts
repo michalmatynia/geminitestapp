@@ -347,6 +347,9 @@ describe('validator-pattern routes', () => {
       'pattern-1',
       expect.objectContaining({
         replacementAutoApply: true,
+      }),
+      expect.objectContaining({
+        semanticAuditSource: 'manual_save',
       })
     );
   });

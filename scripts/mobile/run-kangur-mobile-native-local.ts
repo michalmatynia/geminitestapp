@@ -5,12 +5,12 @@ import {
   isLoopbackHost,
   parseRuntimeTarget,
   type KangurMobileRuntimeTarget,
-} from './check-kangur-mobile-runtime-env.ts';
+} from './check-kangur-mobile-runtime-env';
 import {
   probeKangurMobileRuntimeBackend,
   shouldSkipKangurMobileRuntimeBackendProbe,
-} from './check-kangur-mobile-runtime-backend.ts';
-import { detectKangurMobileLanHost } from './check-kangur-mobile-native-runtime-readiness.ts';
+} from './check-kangur-mobile-runtime-backend';
+import { detectKangurMobileLanHost } from './check-kangur-mobile-native-runtime-readiness';
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const MOBILE_WORKSPACE_DIR = resolve(import.meta.dirname, '../../apps/mobile');
@@ -83,10 +83,10 @@ export const createKangurMobileNativeLocalLaunchEnv = (
     ...baseEnv,
   };
   const notices: string[] = [];
-  const apiUrl = env.EXPO_PUBLIC_KANGUR_API_URL?.trim();
+  const apiUrl = env['EXPO_PUBLIC_KANGUR_API_URL']?.trim();
 
-  if (!env.EXPO_OFFLINE?.trim()) {
-    env.EXPO_OFFLINE = '1';
+  if (!env['EXPO_OFFLINE']?.trim()) {
+    env['EXPO_OFFLINE'] = '1';
     notices.push(
       'defaulted EXPO_OFFLINE=1 for local native launch so Expo uses anonymous manifest signatures and skips the Expo account prompt.',
     );
@@ -106,7 +106,7 @@ export const createKangurMobileNativeLocalLaunchEnv = (
         const normalizedApiUrl =
           replaceApiUrlHostname(apiUrl, ANDROID_EMULATOR_HOST);
         if (normalizedApiUrl && normalizedApiUrl !== apiUrl) {
-          env.EXPO_PUBLIC_KANGUR_API_URL = normalizedApiUrl;
+          env['EXPO_PUBLIC_KANGUR_API_URL'] = normalizedApiUrl;
           notices.push(
             `normalized EXPO_PUBLIC_KANGUR_API_URL from ${apiUrl} to ${normalizedApiUrl} for Android emulator access.`,
           );
@@ -127,7 +127,7 @@ export const createKangurMobileNativeLocalLaunchEnv = (
         const normalizedApiUrl =
           replaceApiUrlHostname(apiUrl, deviceLanHost);
         if (normalizedApiUrl && normalizedApiUrl !== apiUrl) {
-          env.EXPO_PUBLIC_KANGUR_API_URL = normalizedApiUrl;
+          env['EXPO_PUBLIC_KANGUR_API_URL'] = normalizedApiUrl;
           notices.push(
             `normalized EXPO_PUBLIC_KANGUR_API_URL from ${apiUrl} to ${normalizedApiUrl} for physical-device access.`,
           );
@@ -176,6 +176,9 @@ export const parseKangurMobileNativeLocalOptions = (
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
+    if (!argument) {
+      continue;
+    }
 
     if (argument === '--target') {
       index += 1;

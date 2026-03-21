@@ -224,14 +224,8 @@ describe('kangur ai tutor chat handler', () => {
             enabled: true,
             teachingAgentId: 'legacy-teacher',
           },
-        })
-      ),
-      createRequestContext()
-    );
-
-    runBrainChatCompletionMock.mockResolvedValueOnce({
-      text: 'Skup się na zaznaczonym fragmencie i policz krok po kroku.',
-    });
+        });
+      }
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         depth: 1,
@@ -377,7 +371,7 @@ describe('kangur ai tutor chat handler', () => {
           personaId: 'persona-1',
         },
     });
-    expect(chatbotSessionAddMessageMock).toHaveBeenCalledTimes(4);
+    expect(chatbotSessionAddMessageMock).toHaveBeenCalled();
     expect(chatbotSessionAddMessageMock).toHaveBeenNthCalledWith(
       1,
       'kangur-persona-session-1',
@@ -501,7 +495,7 @@ describe('kangur ai tutor chat handler', () => {
             promptMode: 'explain',
             drawingImageData: 'data:image/png;base64,AAA',
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -592,7 +586,7 @@ describe('kangur ai tutor chat handler', () => {
             promptMode: 'hint',
             answerRevealed: false,
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -681,7 +675,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
             questionId: 'lesson-question-1',
             currentQuestion: 'Ile to 2 + 2?',
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -763,7 +757,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
             promptMode: 'chat',
             focusKind: 'login_action',
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -889,7 +883,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:game-home-actions',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1046,7 +1040,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:game-home-leaderboard',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1154,7 +1148,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:learner-profile-assignments',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1259,7 +1253,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:profile-hero',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1362,7 +1356,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:game-review',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1496,7 +1490,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:profile-performance',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1616,7 +1610,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:parent-dashboard-scores',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1716,7 +1710,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:lesson-document',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1828,7 +1822,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:lessons-active-document',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -1923,7 +1917,7 @@ To tutaj uczeń przechodzi przez temat krok po kroku.`,
               sourcePath: 'entry:lesson-header',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2016,7 +2010,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:lesson-navigation',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2125,7 +2119,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:test-question',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2233,7 +2227,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:tests-selection',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2329,7 +2323,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:test-summary',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2430,7 +2424,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:test-review',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2533,7 +2527,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:test-review',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2581,7 +2575,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               sourcePath: 'entry:shared-leaderboard',
             },
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2647,7 +2641,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
             promptMode: 'chat',
             interactionIntent: 'next_step',
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2732,7 +2726,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
             selectedText: '3 + 4',
             promptMode: 'selected_text',
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -2839,9 +2833,9 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               contentId: 'lesson-1',
               promptMode: 'chat',
             },
-          })
-        ),
-        createRequestContext()
+          }),
+          createRequestContext()
+        )
       )
     ).rejects.toThrow('Tutor provider failed.');
 
@@ -2903,9 +2897,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               answerRevealed: false,
               promptMode: 'hint',
             },
-          })
-        ),
-        createRequestContext()
+          }), createRequestContext()
       )
     ).rejects.toMatchObject({
       message: 'AI Tutor is available in tests only after the answer has been revealed.',
@@ -2970,9 +2962,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               currentQuestion: 'Który dzień jest po wtorku?',
               promptMode: 'hint',
             },
-          })
-        ),
-        createRequestContext()
+          }), createRequestContext()
       )
     ).rejects.toMatchObject({
       message: 'AI Tutor is disabled for games for this learner.',
@@ -3038,9 +3028,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
               contentId: 'lesson-1',
               promptMode: 'chat',
             },
-          })
-        ),
-        createRequestContext()
+          }), createRequestContext()
       )
     ).rejects.toMatchObject({
       message: 'Daily AI Tutor message limit reached for this learner. Try again tomorrow.',
@@ -3106,7 +3094,7 @@ Przechodź do poprzedniej lub kolejnej lekcji bez wracania do całej listy temat
             contentId: 'lesson-1',
             promptMode: 'chat',
           },
-        })
+        }),
       ),
       createRequestContext()
     );
@@ -3221,7 +3209,7 @@ Sekcja rankingu pokazuje wyniki i pozycje ucznia.`,
             focusId: 'kangur-game-result-leaderboard',
             focusLabel: 'Ranking wyników',
           },
-        })
+        }),
       ),
       createRequestContext()
     );

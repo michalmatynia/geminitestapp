@@ -1,4 +1,4 @@
-import type { KangurMobileRuntimeTarget } from './check-kangur-mobile-runtime-env.ts';
+import type { KangurMobileRuntimeTarget } from './check-kangur-mobile-runtime-env';
 
 export type KangurMobileNativeValidationChecklistTarget =
   | 'all'

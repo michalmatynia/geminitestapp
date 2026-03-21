@@ -49,45 +49,55 @@ export const resolveValidatedEnvValue = (
   return value;
 };
 
+const getTrimmedEnvValue = (
+  env: NodeJS.ProcessEnv,
+  key: string,
+): string | null => env[key]?.trim() || null;
+
 export const createKangurExpoConfig = (
   env: NodeJS.ProcessEnv,
   baseConfig: Partial<ExpoConfig> = {},
 ): ExpoConfig => {
-  const name = env.KANGUR_EXPO_NAME?.trim() || DEFAULT_KANGUR_EXPO_NAME;
-  const slug = env.KANGUR_EXPO_SLUG?.trim() || DEFAULT_KANGUR_EXPO_SLUG;
-  const scheme = env.KANGUR_EXPO_SCHEME?.trim() || DEFAULT_KANGUR_EXPO_SCHEME;
-  const version = env.KANGUR_EXPO_VERSION?.trim() || DEFAULT_KANGUR_EXPO_VERSION;
+  const name = getTrimmedEnvValue(env, 'KANGUR_EXPO_NAME') || DEFAULT_KANGUR_EXPO_NAME;
+  const slug = getTrimmedEnvValue(env, 'KANGUR_EXPO_SLUG') || DEFAULT_KANGUR_EXPO_SLUG;
+  const scheme =
+    getTrimmedEnvValue(env, 'KANGUR_EXPO_SCHEME') || DEFAULT_KANGUR_EXPO_SCHEME;
+  const version =
+    getTrimmedEnvValue(env, 'KANGUR_EXPO_VERSION') || DEFAULT_KANGUR_EXPO_VERSION;
   const iosBundleIdentifier =
     resolveValidatedEnvValue(
-      env.KANGUR_IOS_BUNDLE_IDENTIFIER?.trim() ||
+      getTrimmedEnvValue(env, 'KANGUR_IOS_BUNDLE_IDENTIFIER') ||
         DEFAULT_KANGUR_IOS_BUNDLE_IDENTIFIER,
       IOS_BUNDLE_IDENTIFIER_PATTERN,
       'KANGUR_IOS_BUNDLE_IDENTIFIER',
     ) ?? DEFAULT_KANGUR_IOS_BUNDLE_IDENTIFIER;
   const androidPackage =
     resolveValidatedEnvValue(
-      env.KANGUR_ANDROID_PACKAGE?.trim() || DEFAULT_KANGUR_ANDROID_PACKAGE,
+      getTrimmedEnvValue(env, 'KANGUR_ANDROID_PACKAGE') ||
+        DEFAULT_KANGUR_ANDROID_PACKAGE,
       ANDROID_PACKAGE_PATTERN,
       'KANGUR_ANDROID_PACKAGE',
     ) ?? DEFAULT_KANGUR_ANDROID_PACKAGE;
-  const owner = env.KANGUR_EXPO_OWNER?.trim() || null;
+  const owner = getTrimmedEnvValue(env, 'KANGUR_EXPO_OWNER');
   const projectId = resolveValidatedEnvValue(
-    env.KANGUR_EXPO_PROJECT_ID?.trim() || null,
+    getTrimmedEnvValue(env, 'KANGUR_EXPO_PROJECT_ID'),
     UUID_PATTERN,
     'KANGUR_EXPO_PROJECT_ID',
   );
-  const apiUrl = env.EXPO_PUBLIC_KANGUR_API_URL?.trim() || null;
+  const apiUrl = getTrimmedEnvValue(env, 'EXPO_PUBLIC_KANGUR_API_URL');
   const authMode =
-    env.EXPO_PUBLIC_KANGUR_AUTH_MODE?.trim().toLowerCase() ===
+    getTrimmedEnvValue(env, 'EXPO_PUBLIC_KANGUR_AUTH_MODE')?.toLowerCase() ===
     'learner-session'
       ? 'learner-session'
       : DEFAULT_KANGUR_MOBILE_AUTH_MODE;
+  const devAutoSignInFlag = getTrimmedEnvValue(env, 'KANGUR_DEV_AUTO_SIGN_IN');
   const devAutoSignIn =
-    env.KANGUR_DEV_AUTO_SIGN_IN?.trim().toLowerCase() === 'true' ||
-    env.KANGUR_DEV_AUTO_SIGN_IN?.trim() === '1';
-  const devLearnerLogin = env.KANGUR_DEV_LEARNER_LOGIN?.trim() || null;
-  const devLearnerPassword =
-    env.KANGUR_DEV_LEARNER_PASSWORD?.trim() || null;
+    devAutoSignInFlag?.toLowerCase() === 'true' || devAutoSignInFlag === '1';
+  const devLearnerLogin = getTrimmedEnvValue(env, 'KANGUR_DEV_LEARNER_LOGIN');
+  const devLearnerPassword = getTrimmedEnvValue(
+    env,
+    'KANGUR_DEV_LEARNER_PASSWORD',
+  );
 
   return {
     ...baseConfig,
@@ -160,22 +170,21 @@ export const analyzeKangurMobileBuildEnv = (
   const iosBundleIdentifier = config.ios?.bundleIdentifier ?? null;
   const androidPackage = config.android?.package ?? null;
   const owner = config.owner ?? null;
+  const extra =
+    config.extra && typeof config.extra === 'object'
+      ? (config.extra as Record<string, unknown>)
+      : null;
+  const eas =
+    extra && extra['eas'] && typeof extra['eas'] === 'object'
+      ? (extra['eas'] as Record<string, unknown>)
+      : null;
   const projectId =
-    config.extra &&
-    typeof config.extra === 'object' &&
-    'eas' in config.extra &&
-    config.extra.eas &&
-    typeof config.extra.eas === 'object' &&
-    'projectId' in config.extra.eas &&
-    typeof config.extra.eas.projectId === 'string'
-      ? config.extra.eas.projectId
+    eas && typeof eas['projectId'] === 'string'
+      ? eas['projectId']
       : null;
   const apiUrl =
-    config.extra &&
-    typeof config.extra === 'object' &&
-    'kangurApiUrl' in config.extra &&
-    typeof config.extra.kangurApiUrl === 'string'
-      ? config.extra.kangurApiUrl
+    extra && typeof extra['kangurApiUrl'] === 'string'
+      ? extra['kangurApiUrl']
       : null;
 
   const addIssue = (

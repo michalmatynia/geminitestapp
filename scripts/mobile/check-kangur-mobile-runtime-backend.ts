@@ -1,14 +1,14 @@
 import { execFile } from 'node:child_process';
 import { networkInterfaces } from 'node:os';
-import * as mobilePublicConfigSharedModule from '../../apps/mobile/src/config/mobilePublicConfig.shared.ts';
+import * as mobilePublicConfigSharedModule from '../../apps/mobile/src/config/mobilePublicConfig.shared';
 import type {
   KangurMobilePublicConfig,
   KangurMobilePublicConfigSources,
-} from '../../apps/mobile/src/config/mobilePublicConfig.shared.ts';
+} from '../../apps/mobile/src/config/mobilePublicConfig.shared';
 import {
   isLoopbackHost,
   type KangurMobileRuntimeTarget,
-} from './check-kangur-mobile-runtime-env.ts';
+} from './check-kangur-mobile-runtime-env';
 
 export type KangurMobileRuntimeBackendReport = {
   apiUrl: string | null;
@@ -90,6 +90,17 @@ const mobilePublicConfigShared =
 
 const resolveKangurMobilePublicConfigFromSources =
   mobilePublicConfigShared.resolveKangurMobilePublicConfigFromSources;
+
+const getKangurMobilePublicConfigResolver =
+  (): KangurMobilePublicConfigResolver => {
+    if (typeof resolveKangurMobilePublicConfigFromSources !== 'function') {
+      throw new Error(
+        '[kangur-mobile-runtime-backend] Missing resolveKangurMobilePublicConfigFromSources export.',
+      );
+    }
+
+    return resolveKangurMobilePublicConfigFromSources;
+  };
 
 export const parseKangurMobileRuntimeBackendTarget = (
   argv: string[] = process.argv.slice(2),
@@ -178,9 +189,9 @@ export const resolveKangurMobileRuntimeBackendApiUrl = (
     localLaunchEnv?: boolean;
   } = {},
 ): string | null => {
-  const config = resolveKangurMobilePublicConfigFromSources({
-    envApiUrl: env.EXPO_PUBLIC_KANGUR_API_URL,
-    envAuthMode: env.EXPO_PUBLIC_KANGUR_AUTH_MODE,
+  const config = getKangurMobilePublicConfigResolver()({
+    envApiUrl: env['EXPO_PUBLIC_KANGUR_API_URL'],
+    envAuthMode: env['EXPO_PUBLIC_KANGUR_AUTH_MODE'],
   });
   const apiUrl = config.apiUrl;
 
@@ -219,7 +230,7 @@ export const createKangurMobileRuntimeBackendProbeUrl = (
 
 export const shouldSkipKangurMobileRuntimeBackendProbe = (
   env: NodeJS.ProcessEnv = process.env,
-): boolean => env.CODEX_SANDBOX_NETWORK_DISABLED === '1';
+): boolean => env['CODEX_SANDBOX_NETWORK_DISABLED'] === '1';
 
 export const createKangurMobileRuntimeBackendNextSteps = (
   target: KangurMobileRuntimeTarget,

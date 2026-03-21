@@ -17,6 +17,9 @@ export const parseKangurMobileExportSmokeLocalOptions = (
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
+    if (!argument) {
+      continue;
+    }
 
     if (argument === '--skip-export') {
       skipExport = true;
@@ -68,9 +71,9 @@ export const resolveKangurMobileExportSmokeRuntimeEnv = ({
   baseUrl: string;
   env?: NodeJS.ProcessEnv;
 }): KangurMobileExportSmokeRuntimeEnv => ({
-  apiUrl: env.EXPO_PUBLIC_KANGUR_API_URL?.trim() || DEFAULT_API_URL,
+  apiUrl: env['EXPO_PUBLIC_KANGUR_API_URL']?.trim() || DEFAULT_API_URL,
   authMode: 'learner-session',
-  smokeBaseUrl: env.KANGUR_MOBILE_SMOKE_BASE_URL?.trim() || baseUrl,
+  smokeBaseUrl: env['KANGUR_MOBILE_SMOKE_BASE_URL']?.trim() || baseUrl,
 });
 
 const parsePort = (rawPort: string): number => {

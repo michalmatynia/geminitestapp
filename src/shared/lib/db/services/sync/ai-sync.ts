@@ -1,5 +1,11 @@
 import type { SyncHandler } from './types';
 import type {
+  MongoProductAiJobDoc,
+  MongoAiPathRunDoc,
+  MongoAiPathRunNodeDoc,
+  MongoAiPathRunEventDoc,
+} from '../database-sync-types';
+import type {
   Prisma,
   ProductAiJobStatus,
   AiPathRunStatus,
@@ -8,24 +14,24 @@ import type {
 } from '@prisma/client';
 
 export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
-  const docs = await mongo.collection('product_ai_jobs').find({}).toArray();
+  const docs = await mongo.collection<MongoProductAiJobDoc>('product_ai_jobs').find({}).toArray();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.ProductAiJobCreateManyInput | null => {
+    .map((doc): Prisma.ProductAiJobCreateManyInput | null => {
       const id = normalizeId(doc as unknown as Record<string, unknown>);
-      const productId = (doc as { productId?: string }).productId;
+      const productId = doc.productId;
       if (!id || !productId) return null;
-      const rawType = (doc as { type?: unknown }).type;
+      const rawType = doc.type;
       return {
         id,
         productId,
-        status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
+        status: (doc.status as ProductAiJobStatus) ?? 'pending',
         type: typeof rawType === 'string' && rawType.trim().length > 0 ? rawType : 'unknown',
-        payload: ((doc as { payload?: unknown }).payload ?? {}) as Prisma.InputJsonValue,
-        result: ((doc as { result?: unknown }).result ?? null) as Prisma.InputJsonValue,
-        errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
-        finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
+        payload: (doc.payload ?? {}) as Prisma.InputJsonValue,
+        result: (doc.result ?? null) as Prisma.InputJsonValue,
+        errorMessage: doc.errorMessage ?? null,
+        createdAt: doc.createdAt ?? new Date(),
+        startedAt: toDate(doc.startedAt),
+        finishedAt: toDate(doc.finishedAt),
       };
     })
     .filter((item): item is Prisma.ProductAiJobCreateManyInput => item !== null);
@@ -41,38 +47,34 @@ export const syncAiPathRuns: SyncHandler = async ({
   toDate,
   toJsonValue,
 }) => {
-  const docs = await mongo.collection('ai_path_runs').find({}).toArray();
+  const docs = await mongo.collection<MongoAiPathRunDoc>('ai_path_runs').find({}).toArray();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.AiPathRunCreateManyInput | null => {
+    .map((doc): Prisma.AiPathRunCreateManyInput | null => {
       const id = normalizeId(doc as unknown as Record<string, unknown>);
       if (!id) return null;
       return {
         id,
-        userId: (doc as { userId?: string | null }).userId ?? null,
-        pathId: (doc as { pathId?: string }).pathId ?? '',
-        pathName: (doc as { pathName?: string | null }).pathName ?? null,
-        status: ((doc as { status?: string }).status as AiPathRunStatus) ?? 'queued',
-        triggerEvent: (doc as { triggerEvent?: string | null }).triggerEvent ?? null,
-        triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
-        triggerContext: toJsonValue(
-          (doc as { triggerContext?: unknown }).triggerContext ?? null
-        ) as Prisma.InputJsonValue,
-        graph: toJsonValue((doc as { graph?: unknown }).graph ?? null) as Prisma.InputJsonValue,
-        runtimeState: toJsonValue(
-          (doc as { runtimeState?: unknown }).runtimeState ?? null
-        ) as Prisma.InputJsonValue,
-        meta: toJsonValue((doc as { meta?: unknown }).meta ?? null) as Prisma.InputJsonValue,
-        entityId: (doc as { entityId?: string | null }).entityId ?? null,
-        entityType: (doc as { entityType?: string | null }).entityType ?? null,
-        errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
-        retryCount: (doc as { retryCount?: number | null }).retryCount ?? 0,
-        maxAttempts: (doc as { maxAttempts?: number | null }).maxAttempts ?? 3,
-        nextRetryAt: toDate((doc as { nextRetryAt?: Date | string | null }).nextRetryAt),
-        deadLetteredAt: toDate((doc as { deadLetteredAt?: Date | string | null }).deadLetteredAt),
-        startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
-        finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        userId: doc.userId ?? null,
+        pathId: doc.pathId ?? '',
+        pathName: doc.pathName ?? null,
+        status: (doc.status as AiPathRunStatus) ?? 'queued',
+        triggerEvent: doc.triggerEvent ?? null,
+        triggerNodeId: doc.triggerNodeId ?? null,
+        triggerContext: toJsonValue(doc.triggerContext ?? null) as Prisma.InputJsonValue,
+        graph: toJsonValue(doc.graph ?? null) as Prisma.InputJsonValue,
+        runtimeState: toJsonValue(doc.runtimeState ?? null) as Prisma.InputJsonValue,
+        meta: toJsonValue(doc.meta ?? null) as Prisma.InputJsonValue,
+        entityId: doc.entityId ?? null,
+        entityType: doc.entityType ?? null,
+        errorMessage: doc.errorMessage ?? null,
+        retryCount: doc.retryCount ?? 0,
+        maxAttempts: doc.maxAttempts ?? 3,
+        nextRetryAt: toDate(doc.nextRetryAt),
+        deadLetteredAt: toDate(doc.deadLetteredAt),
+        startedAt: toDate(doc.startedAt),
+        finishedAt: toDate(doc.finishedAt),
+        createdAt: doc.createdAt ?? new Date(),
+        updatedAt: doc.updatedAt ?? new Date(),
       };
     })
     .filter((item): item is Prisma.AiPathRunCreateManyInput => item !== null);
@@ -90,29 +92,27 @@ export const syncAiPathRunNodes: SyncHandler = async ({
   toDate,
   toJsonValue,
 }) => {
-  const docs = await mongo.collection('ai_path_run_nodes').find({}).toArray();
+  const docs = await mongo.collection<MongoAiPathRunNodeDoc>('ai_path_run_nodes').find({}).toArray();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.AiPathRunNodeCreateManyInput | null => {
+    .map((doc): Prisma.AiPathRunNodeCreateManyInput | null => {
       const id = normalizeId(doc as unknown as Record<string, unknown>);
-      const runId = (doc as { runId?: string }).runId;
+      const runId = doc.runId;
       if (!id || !runId) return null;
       return {
         id,
         runId,
-        nodeId: (doc as { nodeId?: string }).nodeId ?? '',
-        nodeType: (doc as { nodeType?: string }).nodeType ?? '',
-        nodeTitle: (doc as { nodeTitle?: string | null }).nodeTitle ?? null,
-        status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? 'pending',
-        attempt: (doc as { attempt?: number }).attempt ?? 0,
-        inputs: toJsonValue((doc as { inputs?: unknown }).inputs ?? null) as Prisma.InputJsonValue,
-        outputs: toJsonValue(
-          (doc as { outputs?: unknown }).outputs ?? null
-        ) as Prisma.InputJsonValue,
-        errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-        updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-        startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
-        finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
+        nodeId: doc.nodeId ?? '',
+        nodeType: doc.nodeType ?? '',
+        nodeTitle: doc.nodeTitle ?? null,
+        status: (doc.status as AiPathNodeStatus) ?? 'pending',
+        attempt: doc.attempt ?? 0,
+        inputs: toJsonValue(doc.inputs ?? null) as Prisma.InputJsonValue,
+        outputs: toJsonValue(doc.outputs ?? null) as Prisma.InputJsonValue,
+        errorMessage: doc.errorMessage ?? null,
+        createdAt: doc.createdAt ?? new Date(),
+        updatedAt: doc.updatedAt ?? new Date(),
+        startedAt: toDate(doc.startedAt),
+        finishedAt: toDate(doc.finishedAt),
       };
     })
     .filter((item): item is Prisma.AiPathRunNodeCreateManyInput => item !== null);
@@ -127,21 +127,22 @@ export const syncAiPathRunEvents: SyncHandler = async ({
   normalizeId,
   toJsonValue,
 }) => {
-  const docs = await mongo.collection('ai_path_run_events').find({}).toArray();
+  const docs = await mongo
+    .collection<MongoAiPathRunEventDoc>('ai_path_run_events')
+    .find({})
+    .toArray();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.AiPathRunEventCreateManyInput | null => {
+    .map((doc): Prisma.AiPathRunEventCreateManyInput | null => {
       const id = normalizeId(doc as unknown as Record<string, unknown>);
-      const runId = (doc as { runId?: string }).runId;
+      const runId = doc.runId;
       if (!id || !runId) return null;
       return {
         id,
         runId,
-        level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
-        message: (doc as { message?: string }).message ?? '',
-        metadata: toJsonValue(
-          (doc as { metadata?: unknown }).metadata ?? null
-        ) as Prisma.InputJsonValue,
-        createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+        level: (doc.level as AiPathRunEventLevel) ?? 'info',
+        message: doc.message ?? '',
+        metadata: toJsonValue(doc.metadata ?? null) as Prisma.InputJsonValue,
+        createdAt: doc.createdAt ?? new Date(),
       };
     })
     .filter((item): item is Prisma.AiPathRunEventCreateManyInput => item !== null);
@@ -167,9 +168,11 @@ export const syncProductAiJobsPrismaToMongo: SyncHandler = async ({ mongo, prism
     startedAt: row.startedAt ?? null,
     finishedAt: row.finishedAt ?? null,
   }));
-  const collection = mongo.collection('product_ai_jobs');
+  const collection = mongo.collection<MongoProductAiJobDoc>('product_ai_jobs');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) {
+    await collection.insertMany(docs as unknown as MongoProductAiJobDoc[]);
+  }
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -204,9 +207,11 @@ export const syncAiPathRunsPrismaToMongo: SyncHandler = async ({ mongo, prisma }
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('ai_path_runs');
+  const collection = mongo.collection<MongoAiPathRunDoc>('ai_path_runs');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) {
+    await collection.insertMany(docs as unknown as MongoAiPathRunDoc[]);
+  }
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -233,9 +238,11 @@ export const syncAiPathRunNodesPrismaToMongo: SyncHandler = async ({ mongo, pris
     startedAt: row.startedAt ?? null,
     finishedAt: row.finishedAt ?? null,
   }));
-  const collection = mongo.collection('ai_path_run_nodes');
+  const collection = mongo.collection<MongoAiPathRunNodeDoc>('ai_path_run_nodes');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) {
+    await collection.insertMany(docs as unknown as MongoAiPathRunNodeDoc[]);
+  }
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -254,9 +261,11 @@ export const syncAiPathRunEventsPrismaToMongo: SyncHandler = async ({ mongo, pri
     metadata: row.metadata ?? null,
     createdAt: row.createdAt,
   }));
-  const collection = mongo.collection('ai_path_run_events');
+  const collection = mongo.collection<MongoAiPathRunEventDoc>('ai_path_run_events');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) {
+    await collection.insertMany(docs as unknown as MongoAiPathRunEventDoc[]);
+  }
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,

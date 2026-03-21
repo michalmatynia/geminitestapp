@@ -2,7 +2,6 @@ import { screen, fireEvent } from '@/__tests__/test-utils';
 import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { render } from '@/__tests__/test-utils';
 import { ComponentTreePanel } from '@/features/cms/components/page-builder/ComponentTreePanel';
 import { useCmsPages, useCmsPage } from '@/features/cms/hooks/useCmsQueries';
 

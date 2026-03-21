@@ -1,71 +1,46 @@
+import type { SyncHandler } from './types';
 import type {
   MongoChatbotSessionDoc,
   MongoChatbotJobDoc,
-  MongoChatbotMessageDoc,
 } from '../database-sync-types';
-import type { SyncHandler } from './types';
 import type { Prisma, ChatbotJobStatus } from '@prisma/client';
 
-export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
-  const docs: MongoChatbotSessionDoc[] = (await mongo
-    .collection('chatbot_sessions')
+export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normalizeId }) => {
+  const docs = await mongo
+    .collection<MongoChatbotSessionDoc>('chatbot_sessions')
     .find({})
-    .toArray()) as unknown as MongoChatbotSessionDoc[];
-  const sessions = docs
-    .map(
-      (
-        doc
-      ): (Prisma.ChatbotSessionCreateManyInput & { messages: MongoChatbotMessageDoc[] }) | null => {
-        const id = normalizeId(doc as unknown as Record<string, unknown>);
-        if (!id) return null;
-        return {
-          id,
-          title: doc.title ?? null,
-          createdAt: toDate(doc.createdAt) ?? new Date(),
-          updatedAt: toDate(doc.updatedAt) ?? new Date(),
-          messages: Array.isArray(doc.messages)
-            ? doc.messages.map((message) => ({
-              role: message.role,
-              content: message.content,
-              createdAt: toDate(message.createdAt) ?? new Date(),
-            }))
-            : [],
-        };
-      }
-    )
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .toArray();
+  const data = docs
+    .map((doc): Prisma.ChatbotSessionCreateManyInput | null => {
+      const id = normalizeId(doc as unknown as Record<string, unknown>);
+      if (!id) return null;
+      return {
+        id,
+        title: doc.title ?? null,
+        createdAt: doc.createdAt ?? new Date(),
+        updatedAt: doc.updatedAt ?? new Date(),
+      };
+    })
+    .filter((item): item is Prisma.ChatbotSessionCreateManyInput => item !== null);
 
-  await prisma.chatbotMessage.deleteMany();
-  const deletedSessions = await prisma.chatbotSession.deleteMany();
-
-  const sessionData = sessions.map((session) => ({
-    id: session.id,
-    title: session.title,
-    createdAt: session.createdAt,
-    updatedAt: session.updatedAt,
-  })) as Prisma.ChatbotSessionCreateManyInput[];
-  const createdSessions = sessionData.length
-    ? await prisma.chatbotSession.createMany({ data: sessionData })
-    : { count: 0 };
-
-  const messageData = sessions.flatMap((session) =>
-    session.messages.map((message, index: number) => ({
-      id: `${session.id}-${index}`,
-      sessionId: session.id,
+  const messages = docs.flatMap((doc) => {
+    const sessionId = normalizeId(doc as unknown as Record<string, unknown>);
+    if (!sessionId || !doc.messages) return [];
+    return doc.messages.map((message) => ({
+      sessionId,
       role: message.role,
       content: message.content,
-      createdAt: toDate(message.createdAt) ?? session.createdAt,
-    }))
-  ) as Prisma.ChatbotMessageCreateManyInput[];
-  if (messageData.length) {
-    await prisma.chatbotMessage.createMany({ data: messageData });
-  }
+      createdAt: message.createdAt ?? doc.createdAt ?? new Date(),
+    }));
+  });
 
-  return {
-    sourceCount: sessions.length,
-    targetDeleted: deletedSessions.count,
-    targetInserted: createdSessions.count,
-  };
+  await prisma.chatbotMessage.deleteMany();
+  const deleted = await prisma.chatbotSession.deleteMany();
+  const created = data.length ? await prisma.chatbotSession.createMany({ data }) : { count: 0 };
+  if (messages.length) {
+    await prisma.chatbotMessage.createMany({ data: messages });
+  }
+  return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 export const syncChatbotJobs: SyncHandler = async ({
@@ -75,7 +50,7 @@ export const syncChatbotJobs: SyncHandler = async ({
   toDate,
   toJsonValue,
 }) => {
-  const docs: MongoChatbotJobDoc[] = await mongo.collection('chatbot_jobs').find({}).toArray();
+  const docs = await mongo.collection<MongoChatbotJobDoc>('chatbot_jobs').find({}).toArray();
   const data = docs
     .map((doc): Prisma.ChatbotJobCreateManyInput | null => {
       const id = normalizeId(doc as unknown as Record<string, unknown>);
@@ -86,12 +61,10 @@ export const syncChatbotJobs: SyncHandler = async ({
         sessionId,
         status: (doc.status as ChatbotJobStatus) ?? 'pending',
         model: doc.model ?? null,
-        payload: (toJsonValue
-          ? toJsonValue(doc.payload ?? null)
-          : (doc.payload ?? null)) as Prisma.InputJsonValue,
+        payload: toJsonValue(doc.payload) as Prisma.InputJsonValue,
         resultText: doc.resultText ?? null,
         errorMessage: doc.errorMessage ?? null,
-        createdAt: toDate(doc.createdAt) ?? new Date(),
+        createdAt: doc.createdAt ?? new Date(),
         startedAt: toDate(doc.startedAt),
         finishedAt: toDate(doc.finishedAt),
       };
@@ -104,57 +77,54 @@ export const syncChatbotJobs: SyncHandler = async ({
 
 // --- Prisma to Mongo handlers ---
 
-export const syncChatbotSessionsPrismaToMongo: SyncHandler = async ({
-  mongo,
-  prisma,
-  toObjectIdMaybe,
-}) => {
-  const sessions = await prisma.chatbotSession.findMany({
-    include: { messages: { orderBy: { createdAt: 'asc' } } },
+export const syncChatbotSessionsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
+  const rows = await prisma.chatbotSession.findMany({
+    include: { messages: true },
   });
-  const docs = sessions.map((session) => ({
-    _id: toObjectIdMaybe(session.id),
-    title: session.title ?? null,
-    messages: session.messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-      createdAt: message.createdAt,
+  const docs = rows.map((row) => ({
+    _id: row.id,
+    id: row.id,
+    title: row.title,
+    messages: row.messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+      createdAt: msg.createdAt,
     })),
-    createdAt: session.createdAt,
-    updatedAt: session.updatedAt,
-    settings: null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('chatbot_sessions');
+  const collection = mongo.collection<MongoChatbotSessionDoc>('chatbot_sessions');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) {
+    await collection.insertMany(docs as unknown as MongoChatbotSessionDoc[]);
+  }
   return {
-    sourceCount: sessions.length,
+    sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
     targetInserted: docs.length,
   };
 };
 
-export const syncChatbotJobsPrismaToMongo: SyncHandler = async ({
-  mongo,
-  prisma,
-  toObjectIdMaybe,
-}) => {
+export const syncChatbotJobsPrismaToMongo: SyncHandler = async ({ mongo, prisma }) => {
   const rows = await prisma.chatbotJob.findMany();
   const docs = rows.map((row) => ({
-    _id: toObjectIdMaybe(row.id),
+    _id: row.id,
+    id: row.id,
     sessionId: row.sessionId,
     status: row.status,
-    model: row.model ?? null,
-    payload: row.payload ?? null,
-    resultText: row.resultText ?? null,
-    errorMessage: row.errorMessage ?? null,
+    model: row.model,
+    payload: row.payload,
+    resultText: row.resultText,
+    errorMessage: row.errorMessage,
     createdAt: row.createdAt,
     startedAt: row.startedAt ?? null,
     finishedAt: row.finishedAt ?? null,
   }));
-  const collection = mongo.collection('chatbot_jobs');
+  const collection = mongo.collection<MongoChatbotJobDoc>('chatbot_jobs');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) {
+    await collection.insertMany(docs as unknown as MongoChatbotJobDoc[]);
+  }
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,

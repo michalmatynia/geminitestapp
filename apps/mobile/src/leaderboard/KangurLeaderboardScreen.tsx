@@ -126,7 +126,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
 
           <SectionTitle
             title='Ranking'
-            subtitle='Mobilny ranking korzysta z tych samych kontraktow wynikow i mapowania leaderboardu co wspolny Kangur.'
+            subtitle='Mobilny ranking korzysta z tych samych kontraktow wynikow i logiki mapowania rankingu co wspolny Kangur.'
           />
         </View>
 

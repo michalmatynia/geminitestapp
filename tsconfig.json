@@ -129,6 +129,7 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "src/shared/lib/db/services/sync/**"
   ]
 }

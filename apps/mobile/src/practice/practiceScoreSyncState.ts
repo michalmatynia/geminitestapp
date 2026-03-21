@@ -18,7 +18,7 @@ export const buildSyncingState = (): PracticeScoreSyncState => ({
 export const buildAwaitingAuthRetryState = (): PracticeScoreSyncState => ({
   status: 'awaiting-auth',
   message:
-    'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji learner-session, aby doslac go do Kangura.',
+    'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji ucznia, aby doslac go do Kangura.',
 });
 
 export const buildSyncedState = (): PracticeScoreSyncState => ({
@@ -33,7 +33,7 @@ export const buildLocalOnlySyncState = (
   status: 'local-only',
   message:
     reason === 'auth'
-      ? 'Wynik zapisano tylko lokalnie. Zaloguj sie w trybie learner-session, aby wysylac wyniki do Kangura.'
+      ? 'Wynik zapisano tylko lokalnie. Zaloguj sesje ucznia, aby wysylac wyniki do Kangura.'
       : 'Wynik zapisano tylko lokalnie. Sesja serwera nie byla gotowa do synchronizacji, wiec wynik nie trafil jeszcze do Kangura.',
 });
 

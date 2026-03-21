@@ -19,7 +19,7 @@ const DEMO_TIMESTAMP = '2026-03-20T00:00:00.000Z';
 const DEMO_LEARNER = {
   id: 'mobile-demo-learner',
   ownerUserId: 'mobile-demo-parent',
-  displayName: 'Mobile Demo Learner',
+  displayName: 'Uczen demo mobile',
   loginName: 'mobile-demo',
   status: 'active' as const,
   legacyUserKey: null,
@@ -30,7 +30,7 @@ const DEMO_LEARNER = {
 
 const DEMO_USER = {
   id: 'mobile-demo-parent',
-  full_name: 'Kangur Mobile Demo Parent',
+  full_name: 'Rodzic demo Kangur Mobile',
   email: 'mobile-demo@example.com',
   role: 'user' as const,
   actorType: 'parent' as const,

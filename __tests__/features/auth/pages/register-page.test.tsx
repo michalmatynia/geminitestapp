@@ -8,7 +8,6 @@ import { signIn } from 'next-auth/react';
 import { SessionProvider } from 'next-auth/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { render } from '@/__tests__/test-utils';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { useAuthRoleSettings, useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import RegisterPage from '@/features/auth/pages/public/RegisterPage';

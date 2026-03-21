@@ -94,3 +94,4 @@ docker.md
 /docs/metrics
 /tmp
 /output/playwright
+/.playwright-cli

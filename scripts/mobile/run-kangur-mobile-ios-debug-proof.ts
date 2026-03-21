@@ -91,18 +91,24 @@ export const parseKangurMobileIosDebugProofOptions = (
   let device = DEFAULT_DEVICE;
   let dryRun = false;
   let expoUrl =
-    process.env.KANGUR_MOBILE_NATIVE_PROOF_EXPO_URL?.trim() || DEFAULT_EXPO_URL;
+    process.env['KANGUR_MOBILE_NATIVE_PROOF_EXPO_URL']?.trim() ||
+    DEFAULT_EXPO_URL;
   let operation =
-    process.env.KANGUR_MOBILE_NATIVE_PROOF_OPERATION?.trim() || DEFAULT_OPERATION;
+    process.env['KANGUR_MOBILE_NATIVE_PROOF_OPERATION']?.trim() ||
+    DEFAULT_OPERATION;
   let outputDir =
-    process.env.KANGUR_MOBILE_NATIVE_PROOF_OUTPUT_DIR?.trim() || DEFAULT_OUTPUT_DIR;
-  let step = process.env.KANGUR_MOBILE_NATIVE_PROOF_STEP?.trim()
-    ? parseStep(process.env.KANGUR_MOBILE_NATIVE_PROOF_STEP)
+    process.env['KANGUR_MOBILE_NATIVE_PROOF_OUTPUT_DIR']?.trim() ||
+    DEFAULT_OUTPUT_DIR;
+  let step = process.env['KANGUR_MOBILE_NATIVE_PROOF_STEP']?.trim()
+    ? parseStep(process.env['KANGUR_MOBILE_NATIVE_PROOF_STEP'])
     : null;
   let waitMs = DEFAULT_WAIT_MS;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
+    if (!argument) {
+      continue;
+    }
 
     if (argument === '--dry-run') {
       dryRun = true;

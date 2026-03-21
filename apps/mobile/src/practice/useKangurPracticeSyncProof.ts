@@ -82,7 +82,9 @@ export const useKangurPracticeSyncProof = ({
   return {
     error:
       leaderboard.error ??
-      (scoresQuery.error instanceof Error ? 'Proof refresh failed.' : null),
+      (scoresQuery.error instanceof Error
+        ? 'Nie udalo sie odswiezyc podgladu synchronizacji.'
+        : null),
     isEnabled: enabled,
     isLoading: enabled && (scoresQuery.isLoading || leaderboard.isLoading),
     refresh: async () => {

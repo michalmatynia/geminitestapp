@@ -4,7 +4,9 @@ import { extname, normalize, resolve } from 'node:path';
 
 const DEFAULT_PORT = 8081;
 export const resolveMobileDistDir = (cwd: string = process.cwd()): string => {
-  const candidates = [resolve(cwd, 'dist'), resolve(cwd, 'apps/mobile/dist')];
+  const distCandidate = resolve(cwd, 'dist');
+  const appDistCandidate = resolve(cwd, 'apps/mobile/dist');
+  const candidates = [distCandidate, appDistCandidate];
 
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
@@ -12,7 +14,7 @@ export const resolveMobileDistDir = (cwd: string = process.cwd()): string => {
     }
   }
 
-  return candidates[1];
+  return appDistCandidate;
 };
 
 const DIST_DIR = resolveMobileDistDir();
@@ -104,8 +106,8 @@ const maybeStartServer = async (): Promise<void> => {
     process.exit(1);
   }
 
-  const port = parsePort(process.env.PORT ?? process.argv[2]);
-  const host = process.env.HOST?.trim() || '127.0.0.1';
+  const port = parsePort(process.env['PORT'] ?? process.argv[2]);
+  const host = process.env['HOST']?.trim() || '127.0.0.1';
 
   const server = createServer((request, response) => {
     const method = request.method ?? 'GET';

@@ -11,7 +11,6 @@ import type {
   ProductRecord,
   ProductFilters,
   ProductRepository,
-  CreateProduct,
   ProductCreateInput,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -414,7 +413,7 @@ async function createProduct(
 }
 
 async function bulkCreateProducts(
-  data: CreateProduct[],
+  data: ProductCreateInput[],
   options?: { provider?: ProductDbProvider; userId?: string }
 ): Promise<number> {
   if (data.length === 0) return 0;

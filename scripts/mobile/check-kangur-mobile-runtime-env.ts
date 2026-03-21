@@ -1,8 +1,8 @@
-import * as mobilePublicConfigSharedModule from '../../apps/mobile/src/config/mobilePublicConfig.shared.ts';
+import * as mobilePublicConfigSharedModule from '../../apps/mobile/src/config/mobilePublicConfig.shared';
 import type {
   KangurMobilePublicConfig,
   KangurMobilePublicConfigSources,
-} from '../../apps/mobile/src/config/mobilePublicConfig.shared.ts';
+} from '../../apps/mobile/src/config/mobilePublicConfig.shared';
 
 export type KangurMobileRuntimeTarget =
   | 'ios-simulator'
@@ -43,6 +43,17 @@ const mobilePublicConfigShared =
 
 const resolveKangurMobilePublicConfigFromSources =
   mobilePublicConfigShared.resolveKangurMobilePublicConfigFromSources;
+
+const getKangurMobilePublicConfigResolver =
+  (): KangurMobilePublicConfigResolver => {
+    if (typeof resolveKangurMobilePublicConfigFromSources !== 'function') {
+      throw new Error(
+        '[kangur-mobile-runtime-env] Missing resolveKangurMobilePublicConfigFromSources export.',
+      );
+    }
+
+    return resolveKangurMobilePublicConfigFromSources;
+  };
 
 export const parseRuntimeTarget = (
   argv: string[],
@@ -99,9 +110,9 @@ export const analyzeKangurMobileRuntimeEnv = (
   env: NodeJS.ProcessEnv,
   target: KangurMobileRuntimeTarget = 'device',
 ): KangurMobileRuntimeEnvReport => {
-  const config = resolveKangurMobilePublicConfigFromSources({
-    envApiUrl: env.EXPO_PUBLIC_KANGUR_API_URL,
-    envAuthMode: env.EXPO_PUBLIC_KANGUR_AUTH_MODE,
+  const config = getKangurMobilePublicConfigResolver()({
+    envApiUrl: env['EXPO_PUBLIC_KANGUR_API_URL'],
+    envAuthMode: env['EXPO_PUBLIC_KANGUR_AUTH_MODE'],
   });
   const issues: KangurMobileRuntimeEnvIssue[] = [];
 

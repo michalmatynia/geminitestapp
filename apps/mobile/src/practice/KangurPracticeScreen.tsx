@@ -53,7 +53,7 @@ const resolvePracticePlayerName = (
     return fullName;
   }
 
-  return 'Mobile learner';
+  return 'Uczen mobilny';
 };
 
 function Card({
@@ -453,10 +453,10 @@ export function KangurPracticeScreen(): React.JSX.Element {
             </Text>
             <Text style={{ color: '#475569', fontSize: 15, lineHeight: 22 }}>
               {operationConfig.kind === 'logic'
-                ? 'To pierwszy mobilny quiz logiczny w tym monorepo. Korzysta z tekstowych pytan wielokrotnego wyboru i tej samej sciezki zapisu postepu oraz wynikow co trening arytmetyczny.'
+                ? 'To pierwszy mobilny quiz logiczny w aplikacji. Korzysta z tekstowych pytan wielokrotnego wyboru i tej samej sciezki zapisu postepu oraz wynikow co trening arytmetyczny.'
                 : operationConfig.kind === 'time'
                   ? 'To lekki mobilny trening czasu i kalendarza. Nadal korzysta z prostych pytan wielokrotnego wyboru oraz tej samej sciezki postepu i wynikow.'
-                  : 'To pierwszy mobilny zamiennik dla czesci flow `Game`. Na razie obejmuje lekki trening pytan wielokrotnego wyboru dla podstawowych operacji.'}
+                  : 'To pierwszy mobilny zamiennik glownego trybu gry. Na razie obejmuje lekki trening pytan wielokrotnego wyboru dla podstawowych operacji.'}
             </Text>
           </Card>
 

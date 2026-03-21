@@ -11,7 +11,7 @@ export const DEFAULT_MOBILE_ENV_FILE_PATHS = [
 ];
 
 export const resolveMobileEnvFilePaths = (): string[] => {
-  const overridePath = process.env.KANGUR_MOBILE_ENV_FILE?.trim();
+  const overridePath = process.env['KANGUR_MOBILE_ENV_FILE']?.trim();
   if (overridePath) {
     if (isAbsolute(overridePath)) {
       return [overridePath];

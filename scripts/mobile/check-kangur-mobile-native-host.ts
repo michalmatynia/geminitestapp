@@ -3,12 +3,12 @@ import {
   analyzeKangurMobileAndroidToolchain,
   type KangurMobileAndroidToolchainReport,
   type KangurMobileAndroidToolchainState,
-} from './check-kangur-mobile-android-toolchain.ts';
+} from './check-kangur-mobile-android-toolchain';
 import {
   analyzeKangurMobileIosToolchain,
   type KangurMobileIosToolchainReport,
   type KangurMobileIosToolchainState,
-} from './check-kangur-mobile-ios-toolchain.ts';
+} from './check-kangur-mobile-ios-toolchain';
 
 export type KangurMobileNativeHostReport = {
   android: KangurMobileAndroidToolchainReport;
@@ -55,8 +55,8 @@ export const collectKangurMobileAndroidToolchainState =
 
     return {
       adbAvailable: adb.ok,
-      androidHome: env.ANDROID_HOME?.trim() || null,
-      androidSdkRoot: env.ANDROID_SDK_ROOT?.trim() || null,
+      androidHome: env['ANDROID_HOME']?.trim() || null,
+      androidSdkRoot: env['ANDROID_SDK_ROOT']?.trim() || null,
       emulatorAvailable: emulator.ok,
     };
   };

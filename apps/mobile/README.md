@@ -76,7 +76,10 @@ Runtime-checked on the exported preview:
 Notes from that route sweep:
 
 - all of the exported mobile routes above returned `200`
-- the lessons screen shows visible loading skeleton copy during boot
+- the major mobile routes now use consistent Polish UI copy on the main shell, profile, results, plan, leaderboard, and practice flows
+- score-family labels, demo-session names, and practice sync messages were also normalized to the same Polish copy style
+- the lessons routes still settle correctly for both `/lessons` and `/lessons?focus=clock`
+- the lessons loading skeleton had already been validated earlier; this later fast headless sweep did not catch the short-lived boot phase again
 - the profile screen no longer leaks raw `Failed to fetch`; it now shows a friendly localized API-connection message
 
 ## Environment

@@ -996,7 +996,7 @@ export function KangurProfileScreen(): React.JSX.Element {
               </Text>
               <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                 To lekka wersja planera zadan. Pelny panel przypisanych zadan zostanie przeniesiony
-                pozniej razem z trasami Game i Lessons.
+                pozniej razem z pelnymi trasami treningu i lekcji.
               </Text>
             </View>
 

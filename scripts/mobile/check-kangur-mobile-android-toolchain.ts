@@ -103,8 +103,8 @@ export const runKangurMobileAndroidToolchainCheck = (): void => {
   const emulator = runCommand('emulator', ['-version']);
   const report = analyzeKangurMobileAndroidToolchain({
     adbAvailable: adb.ok,
-    androidHome: process.env.ANDROID_HOME?.trim() || null,
-    androidSdkRoot: process.env.ANDROID_SDK_ROOT?.trim() || null,
+    androidHome: process.env['ANDROID_HOME']?.trim() || null,
+    androidSdkRoot: process.env['ANDROID_SDK_ROOT']?.trim() || null,
     emulatorAvailable: emulator.ok,
   });
 

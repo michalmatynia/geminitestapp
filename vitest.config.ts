@@ -56,6 +56,9 @@ export default defineConfig({
             '.next/**',
             ...mongoIntegrationTestFiles,
           ],
+          alias: {
+            '@/__tests__': path.resolve(__dirname, './__tests__'),
+          },
         },
       },
       {
@@ -69,6 +72,9 @@ export default defineConfig({
           include: mongoIntegrationTestFiles,
           exclude: [...configDefaults.exclude, ...bazelWorkspaceMirrorExcludes, 'e2e/**', '.next/**'],
           pool: 'forks',
+          alias: {
+            '@/__tests__': path.resolve(__dirname, './__tests__'),
+          },
         },
       },
     ],

@@ -332,3 +332,71 @@ export interface MongoProductDoc {
   tags?: Array<{ tagId: string; assignedAt?: Date }>;
   producers?: Array<{ producerId: string; assignedAt?: Date }>;
 }
+
+export interface MongoProductAiJobDoc {
+  _id?: ObjectId;
+  id?: string;
+  productId: string;
+  status?: string;
+  type?: string;
+  payload?: unknown;
+  result?: unknown;
+  errorMessage?: string | null;
+  createdAt?: Date;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+}
+
+export interface MongoAiPathRunDoc {
+  _id?: ObjectId;
+  id?: string;
+  userId?: string | null;
+  pathId: string;
+  pathName?: string | null;
+  status?: string;
+  triggerEvent?: string | null;
+  triggerNodeId?: string | null;
+  triggerContext?: unknown;
+  graph?: unknown;
+  runtimeState?: unknown;
+  meta?: unknown;
+  entityId?: string | null;
+  entityType?: string | null;
+  errorMessage?: string | null;
+  retryCount?: number | null;
+  maxAttempts?: number | null;
+  nextRetryAt?: Date | string | null;
+  deadLetteredAt?: Date | string | null;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface MongoAiPathRunNodeDoc {
+  _id?: ObjectId;
+  id?: string;
+  runId: string;
+  nodeId: string;
+  nodeType: string;
+  nodeTitle?: string | null;
+  status?: string;
+  attempt?: number;
+  inputs?: unknown;
+  outputs?: unknown;
+  errorMessage?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+}
+
+export interface MongoAiPathRunEventDoc {
+  _id?: ObjectId;
+  id?: string;
+  runId: string;
+  level?: string;
+  message?: string;
+  metadata?: unknown;
+  createdAt?: Date;
+}

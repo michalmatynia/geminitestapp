@@ -99,7 +99,8 @@ const requireEnvValue = (name: string): string => {
 };
 
 const main = async (): Promise<void> => {
-  const baseUrl = process.env.KANGUR_MOBILE_SMOKE_BASE_URL?.trim() || DEFAULT_BASE_URL;
+  const baseUrl =
+    process.env['KANGUR_MOBILE_SMOKE_BASE_URL']?.trim() || DEFAULT_BASE_URL;
   const loginName = requireEnvValue('KANGUR_MOBILE_SMOKE_LOGIN');
   const password = requireEnvValue('KANGUR_MOBILE_SMOKE_PASSWORD');
   const { chromium } = await import('playwright');
@@ -187,4 +188,3 @@ if (process.argv[1]?.includes('check-kangur-mobile-export-smoke.ts')) {
     process.exit(1);
   });
 }
-

@@ -98,6 +98,7 @@ export interface ApiHandlerOptions {
   paramsSchema?: ZodSchema;
   querySchema?: ZodSchema;
   requireCsrf?: boolean;
+  corsOrigins?: string[];
 }
 
 export type JsonParseResult<T = unknown> =

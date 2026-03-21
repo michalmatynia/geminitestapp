@@ -138,7 +138,7 @@ export const useKangurMobileLearnerProfile =
       isLoadingScores: isLoadingAuth || scoresQuery.isLoading,
       masteryInsights,
       recommendationsNote:
-        'Lessons, arithmetic practice, and the first logic quiz routes are now live on mobile. Canvas-heavy game modes still remain informational.',
+        'Na mobile dzialaja juz lekcje, trening arytmetyczny oraz pierwszy quiz logiczny. Bardziej rozbudowane tryby graficzne pozostaja jeszcze informacyjne.',
       refreshScores: scoresQuery.refresh,
       scoresError:
         scoresQuery.error instanceof Error

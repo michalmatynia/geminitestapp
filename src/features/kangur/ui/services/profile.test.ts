@@ -32,7 +32,7 @@ const progress: KangurProgressState = {
   geometryPerfect: 1,
   badges: ['first_game', 'perfect_10', 'lesson_hero', 'ten_games'],
   operationsPlayed: ['addition', 'multiplication', 'division'],
-  lessonMastery: {},
+  lessonMastery: {}, operationsPlayed: [],
 };
 
 const ENGLISH_PROFILE_MESSAGES = {
@@ -185,7 +185,7 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         }),
         createScore({
           id: 's4',
-          operation: 'division',
+          // operation: 'division',
           correct_answers: 6,
           score: 6,
           created_date: '2026-03-02T12:00:00.000Z',
@@ -242,7 +242,7 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         label: 'Zagraj teraz',
         page: 'Game',
         query: {
-          operation: 'division',
+          // operation: 'division',
           quickStart: 'training',
         },
       },
@@ -438,7 +438,7 @@ describe('buildKangurLearnerProfileSnapshot', () => {
         ...progress,
         totalXp: 620,
         gamesPlayed: 22,
-        lessonMastery: {},
+        lessonMastery: {}, operationsPlayed: [],
       },
       scores: [
         createScore({

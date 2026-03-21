@@ -4,19 +4,19 @@ import {
   isLoopbackHost,
   type KangurMobileRuntimeEnvReport,
   type KangurMobileRuntimeTarget,
-} from './check-kangur-mobile-runtime-env.ts';
+} from './check-kangur-mobile-runtime-env';
 import {
   collectKangurMobileAndroidToolchainState,
   collectKangurMobileIosToolchainState,
   createKangurMobileNativeHostReport,
   type KangurMobileNativeHostReport,
-} from './check-kangur-mobile-native-host.ts';
+} from './check-kangur-mobile-native-host';
 import {
   createKangurMobileRuntimeBackendProbeUrl,
   probeKangurMobileRuntimeBackend,
   shouldSkipKangurMobileRuntimeBackendProbe,
   type KangurMobileRuntimeBackendReport,
-} from './check-kangur-mobile-runtime-backend.ts';
+} from './check-kangur-mobile-runtime-backend';
 
 export type KangurMobileNativeRuntimeReadinessReport = {
   backend: KangurMobileRuntimeBackendReport;
@@ -244,7 +244,7 @@ export const createKangurMobileNativeRuntimeEnvForTarget = (
   const env = {
     ...baseEnv,
   };
-  const apiUrl = env.EXPO_PUBLIC_KANGUR_API_URL?.trim();
+  const apiUrl = env['EXPO_PUBLIC_KANGUR_API_URL']?.trim();
 
   if (!apiUrl) {
     return env;
@@ -257,7 +257,7 @@ export const createKangurMobileNativeRuntimeEnvForTarget = (
       const normalizedApiUrl =
         createApiUrlWithHostname(apiUrl, ANDROID_EMULATOR_HOST);
       if (normalizedApiUrl) {
-        env.EXPO_PUBLIC_KANGUR_API_URL = normalizedApiUrl;
+        env['EXPO_PUBLIC_KANGUR_API_URL'] = normalizedApiUrl;
       }
     }
 
@@ -269,7 +269,7 @@ export const createKangurMobileNativeRuntimeEnvForTarget = (
       const normalizedApiUrl =
         createApiUrlWithHostname(apiUrl, deviceLanHost);
       if (normalizedApiUrl) {
-        env.EXPO_PUBLIC_KANGUR_API_URL = normalizedApiUrl;
+        env['EXPO_PUBLIC_KANGUR_API_URL'] = normalizedApiUrl;
       }
     }
   } catch {
@@ -290,7 +290,7 @@ export const resolveKangurMobileNativeRuntimeBackendApiUrl = (
     localLaunchEnv?: boolean;
   } = {},
 ): string | null => {
-  const apiUrl = baseEnv.EXPO_PUBLIC_KANGUR_API_URL?.trim();
+  const apiUrl = baseEnv['EXPO_PUBLIC_KANGUR_API_URL']?.trim();
   if (!apiUrl) {
     return null;
   }
@@ -683,6 +683,11 @@ export const runKangurMobileNativeRuntimeReadinessCheck =
     } else {
       const scopedTarget = report.scope;
       const runtimeReport = fullReport.runtime[scopedTarget];
+      if (!runtimeReport) {
+        throw new Error(
+          `[kangur-mobile-native-runtime] Missing runtime report for scope ${scopedTarget}.`,
+        );
+      }
       console.log(
         `[kangur-mobile-native-runtime] host=${report.host.status} backend=${report.backend.status} runtime=${runtimeReport.status}`,
       );
@@ -690,6 +695,9 @@ export const runKangurMobileNativeRuntimeReadinessCheck =
 
     for (const target of Object.keys(report.runtime) as KangurMobileRuntimeTarget[]) {
       const runtimeReport = report.runtime[target];
+      if (!runtimeReport) {
+        continue;
+      }
       console.log(
         `[kangur-mobile-native-runtime] ${target} authMode=${runtimeReport.resolved.authMode} apiUrl=${runtimeReport.resolved.apiUrl ?? 'unset'}`,
       );

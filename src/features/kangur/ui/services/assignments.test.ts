@@ -76,7 +76,7 @@ describe('buildKangurAssignments', () => {
       action: {
         page: 'Game',
         query: {
-          operation: 'division',
+          // operation: 'division',
           quickStart: 'training',
         },
       },
@@ -86,7 +86,7 @@ describe('buildKangurAssignments', () => {
   it('creates a starter assignment when no lesson mastery exists yet', () => {
     const assignments = buildKangurAssignments({
       ...progressWithMastery,
-      lessonMastery: {},
+      lessonMastery: {}, operationsPlayed: [],
       gamesPlayed: 1,
     });
 
@@ -106,7 +106,7 @@ describe('buildKangurAssignments', () => {
       action: {
         page: 'Game',
         query: {
-          operation: 'mixed',
+          // operation: 'mixed',
           quickStart: 'training',
         },
       },

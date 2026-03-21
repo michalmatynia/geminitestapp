@@ -1,5 +1,5 @@
-import kangurMobileExpoConfig from '../../apps/mobile/mobileExpoConfig.ts';
-import { loadMobileEnvFiles } from './mobile-env.ts';
+import kangurMobileExpoConfig from '../../apps/mobile/mobileExpoConfig';
+import { loadMobileEnvFiles } from './mobile-env';
 
 type KangurMobileBuildProfile = 'local' | 'preview' | 'production';
 

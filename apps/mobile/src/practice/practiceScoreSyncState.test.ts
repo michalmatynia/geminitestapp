@@ -18,7 +18,7 @@ describe('practiceScoreSyncState', () => {
     expect(buildAwaitingAuthRetryState()).toEqual({
       status: 'awaiting-auth',
       message:
-        'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji learner-session, aby doslac go do Kangura.',
+        'Wynik zapisany lokalnie. Czekamy na odtworzenie sesji ucznia, aby doslac go do Kangura.',
     });
     expect(buildSyncedState()).toEqual({
       status: 'synced',
@@ -31,7 +31,7 @@ describe('practiceScoreSyncState', () => {
     expect(buildLocalOnlySyncState('auth')).toEqual({
       status: 'local-only',
       message:
-        'Wynik zapisano tylko lokalnie. Zaloguj sie w trybie learner-session, aby wysylac wyniki do Kangura.',
+        'Wynik zapisano tylko lokalnie. Zaloguj sesje ucznia, aby wysylac wyniki do Kangura.',
     });
     expect(buildLocalOnlySyncState('expected-error')).toEqual({
       status: 'local-only',

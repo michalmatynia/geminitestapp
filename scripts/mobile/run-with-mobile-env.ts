@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { loadMobileEnvFiles } from './mobile-env.ts';
+import { loadMobileEnvFiles } from './mobile-env';
 
 const command = process.argv[2];
 const args = process.argv.slice(3);
@@ -14,8 +14,8 @@ if (!command) {
 loadMobileEnvFiles();
 
 // Local mobile commands should not depend on Expo telemetry internals.
-if (!process.env.EXPO_NO_TELEMETRY) {
-  process.env.EXPO_NO_TELEMETRY = '1';
+if (!process.env['EXPO_NO_TELEMETRY']) {
+  process.env['EXPO_NO_TELEMETRY'] = '1';
 }
 
 const child = spawn(command, args, {

@@ -6,7 +6,6 @@ import React from 'react';
 import { fireEvent, screen, waitFor, within } from '@/__tests__/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { render } from '@/__tests__/test-utils';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 const {

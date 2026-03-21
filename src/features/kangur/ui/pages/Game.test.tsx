@@ -10,6 +10,7 @@ const {
   useKangurGameRuntimeMock,
   useKangurMobileBreakpointMock,
   useKangurPhoneSimulationMock,
+  routeNavigatorPushMock,
   homeHeroPropsMock,
   assignmentSpotlightPropsMock,
   homeActionsPropsMock,
@@ -22,6 +23,7 @@ const {
   useKangurGameRuntimeMock: vi.fn(),
   useKangurMobileBreakpointMock: vi.fn(),
   useKangurPhoneSimulationMock: vi.fn(),
+  routeNavigatorPushMock: vi.fn(),
   homeHeroPropsMock: vi.fn(),
   assignmentSpotlightPropsMock: vi.fn(),
   homeActionsPropsMock: vi.fn(),
@@ -84,6 +86,15 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPhoneSimulation', () => ({
   useKangurPhoneSimulation: () => useKangurPhoneSimulationMock(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
+  useKangurRouteNavigator: () => ({
+    back: vi.fn(),
+    prefetch: vi.fn(),
+    push: routeNavigatorPushMock,
+    replace: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -412,6 +423,7 @@ describe('Game page', () => {
     render(<Game />);
 
     expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wróć do lekcji' })).toBeInTheDocument();
 
     const scrollContainer = screen.getByTestId('kangur-game-phone-simulation-scroll-container');
     expect(scrollContainer.className).toContain('touch-pan-y');
@@ -454,6 +466,24 @@ describe('Game page', () => {
       expect(
         screen.getByTestId('kangur-game-phone-simulation-scroll-up')
       ).toBeInTheDocument();
+    });
+  });
+
+  it('returns to lessons from the mobile game controls', () => {
+    useKangurMobileBreakpointMock.mockReturnValue(true);
+    useKangurGameRuntimeMock.mockReturnValue({
+      ...buildRuntime('operation'),
+      progress: { totalXp: 1 },
+    });
+
+    render(<Game />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wróć do lekcji' }));
+
+    expect(routeNavigatorPushMock).toHaveBeenCalledWith('/kangur/lessons', {
+      acknowledgeMs: 110,
+      pageKey: 'Lessons',
+      sourceId: 'game-phone-simulation:back-to-lessons',
     });
   });
 

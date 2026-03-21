@@ -9,6 +9,7 @@ const mockState = vi.hoisted(() => ({
     source: value,
   })),
   logClientError: vi.fn(),
+  logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
@@ -19,6 +20,7 @@ vi.mock('@/shared/lib/ai-paths', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
+  logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
 }));
 
 describe('useAiPathsValidationActions', () => {
@@ -101,12 +103,9 @@ describe('useAiPathsValidationActions', () => {
     });
 
     expect(setItemSpy).toHaveBeenCalledWith('ai-paths:last-error', 'persist me');
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(1, failure);
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(2, failure, {
-      context: {
-        service: 'ai-paths',
-        action: 'persistLastError',
-      },
+    expect(mockState.logClientCatch).toHaveBeenCalledWith(failure, {
+      service: 'ai-paths',
+      action: 'persistLastError',
     });
   });
 

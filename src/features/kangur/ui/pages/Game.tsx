@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronsLeft } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
@@ -53,6 +53,7 @@ import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKang
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurPhoneSimulation } from '@/features/kangur/ui/hooks/useKangurPhoneSimulation';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
+import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
 import {
@@ -85,6 +86,7 @@ const GAME_TOP_RESET_SCREENS = new Set<KangurGameScreen>([
   'english_sentence_quiz',
   'english_parts_of_speech_quiz',
 ]);
+const GAME_MOBILE_BACK_TO_LESSONS_ACKNOWLEDGE_MS = 110;
 
 const focusGameScreenHeading = (heading: HTMLHeadingElement | null): void => {
   if (!heading) {
@@ -124,6 +126,7 @@ function GameContent(): React.JSX.Element {
     progress.lessonsCompleted > 0 ||
     (progress.dailyQuestsCompleted ?? 0) > 0;
   const { enabled: docsTooltipsEnabled } = useKangurDocsTooltips('home');
+  const routeNavigator = useKangurRouteNavigator();
   const prefersReducedMotion = useReducedMotion();
   const screenHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousScreenRef = useRef<KangurGameScreen | null>(null);
@@ -163,7 +166,9 @@ function GameContent(): React.JSX.Element {
     translations(`screens.${screenKey}.description`);
   const scrollUpLabel = translations('phoneSimulation.scrollUp');
   const scrollDownLabel = translations('phoneSimulation.scrollDown');
+  const backToLessonsLabel = translations('phoneSimulation.backToLessons');
   const currentScreenLabel = getScreenLabel(screen);
+  const lessonsHref = createPageUrl('Lessons', basePath);
   const learnerId = user?.activeLearner?.id ?? null;
   const activeGameAssignment = runtime.activePracticeAssignment ?? runtime.resultPracticeAssignment;
   const tutorActivityContentId = useMemo(() => {
@@ -678,6 +683,14 @@ function GameContent(): React.JSX.Element {
     [updateScrollButtons]
   );
 
+  const handleBackToLessons = useCallback((): void => {
+    routeNavigator.push(lessonsHref, {
+      acknowledgeMs: GAME_MOBILE_BACK_TO_LESSONS_ACKNOWLEDGE_MS,
+      pageKey: 'Lessons',
+      sourceId: 'game-phone-simulation:back-to-lessons',
+    });
+  }, [lessonsHref, routeNavigator]);
+
   useEffect(() => {
     if (previousScreenRef.current === null) {
       previousScreenRef.current = screen;
@@ -769,19 +782,34 @@ function GameContent(): React.JSX.Element {
               : 'w-full'
           )}
         >
-          {shouldUseGameMobileChrome && canScrollUp ? (
-            <KangurButton
-              fullWidth
-              size='sm'
-              variant='surface'
-              className='justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-              data-testid='kangur-game-phone-simulation-scroll-up'
-              onClick={() => handleScrollBy('up')}
-              aria-label={scrollUpLabel}
-            >
-              <ChevronUp className='h-4 w-4' aria-hidden='true' />
-              {scrollUpLabel}
-            </KangurButton>
+          {shouldUseGameMobileChrome ? (
+            <div data-testid='kangur-game-phone-simulation-top-controls' className='flex w-full gap-2'>
+              <KangurButton
+                size='sm'
+                variant='surface'
+                className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                data-testid='kangur-game-phone-simulation-back-to-lessons'
+                onClick={handleBackToLessons}
+                aria-label={backToLessonsLabel}
+                title={backToLessonsLabel}
+              >
+                <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
+                {backToLessonsLabel}
+              </KangurButton>
+              {canScrollUp ? (
+                <KangurButton
+                  size='sm'
+                  variant='surface'
+                  className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+                  data-testid='kangur-game-phone-simulation-scroll-up'
+                  onClick={() => handleScrollBy('up')}
+                  aria-label={scrollUpLabel}
+                >
+                  <ChevronUp className='h-4 w-4' aria-hidden='true' />
+                  {scrollUpLabel}
+                </KangurButton>
+              ) : null}
+            </div>
           ) : null}
           <div
             ref={shouldUseGameMobileChrome ? gameScrollRef : undefined}

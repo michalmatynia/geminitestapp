@@ -91,10 +91,10 @@ describe('useAiPathsErrorReporting', () => {
       });
     });
 
-    expect(mockState.logClientError).toHaveBeenCalledTimes(2);
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(1, failure);
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(2, failure, {
-      context: { source: 'useAiPathsErrorReporting', action: 'persistLastError' },
+    expect(mockState.logClientCatch).toHaveBeenCalledTimes(1);
+    expect(mockState.logClientCatch).toHaveBeenCalledWith(failure, {
+      source: 'useAiPathsErrorReporting',
+      action: 'persistLastError',
     });
   });
 

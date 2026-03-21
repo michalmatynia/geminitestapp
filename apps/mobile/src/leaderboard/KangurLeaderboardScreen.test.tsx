@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   useKangurMobileLeaderboardAssignmentsMock,
+  useKangurMobileLeaderboardLessonMasteryMock,
   replaceMock,
   useKangurMobileLeaderboardDuelsMock,
   useKangurMobileLessonCheckpointsMock,
@@ -15,6 +16,7 @@ const {
   useRouterMock,
 } = vi.hoisted(() => ({
   useKangurMobileLeaderboardAssignmentsMock: vi.fn(),
+  useKangurMobileLeaderboardLessonMasteryMock: vi.fn(),
   replaceMock: vi.fn(),
   useKangurMobileLeaderboardDuelsMock: vi.fn(),
   useKangurMobileLessonCheckpointsMock: vi.fn(),
@@ -33,6 +35,10 @@ vi.mock('./useKangurMobileLeaderboard', () => ({
 
 vi.mock('./useKangurMobileLeaderboardAssignments', () => ({
   useKangurMobileLeaderboardAssignments: useKangurMobileLeaderboardAssignmentsMock,
+}));
+
+vi.mock('./useKangurMobileLeaderboardLessonMastery', () => ({
+  useKangurMobileLeaderboardLessonMastery: useKangurMobileLeaderboardLessonMasteryMock,
 }));
 
 vi.mock('./useKangurMobileLeaderboardDuels', () => ({
@@ -90,6 +96,13 @@ describe('KangurLeaderboardScreen', () => {
     });
     useKangurMobileLeaderboardAssignmentsMock.mockReturnValue({
       assignmentItems: [],
+    });
+    useKangurMobileLeaderboardLessonMasteryMock.mockReturnValue({
+      masteredLessons: 0,
+      strongest: [],
+      trackedLessons: 0,
+      weakest: [],
+      lessonsNeedingPractice: 0,
     });
   });
 
@@ -250,6 +263,51 @@ describe('KangurLeaderboardScreen', () => {
         },
       ],
     });
+    useKangurMobileLeaderboardLessonMasteryMock.mockReturnValue({
+      masteredLessons: 1,
+      strongest: [
+        {
+          attempts: 4,
+          bestScorePercent: 100,
+          componentId: 'clock',
+          emoji: '🕒',
+          lastCompletedAt: '2026-03-21T08:20:00.000Z',
+          lastScorePercent: 96,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'clock' },
+          },
+          masteryPercent: 94,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'clock' },
+          },
+          title: 'Zegar',
+        },
+      ],
+      trackedLessons: 3,
+      weakest: [
+        {
+          attempts: 3,
+          bestScorePercent: 72,
+          componentId: 'adding',
+          emoji: '➕',
+          lastCompletedAt: '2026-03-21T08:12:00.000Z',
+          lastScorePercent: 70,
+          lessonHref: {
+            pathname: '/lessons',
+            params: { focus: 'adding' },
+          },
+          masteryPercent: 68,
+          practiceHref: {
+            pathname: '/practice',
+            params: { operation: 'addition' },
+          },
+          title: 'Dodawanie',
+        },
+      ],
+      lessonsNeedingPractice: 1,
+    });
 
     render(<KangurLeaderboardScreen />);
 
@@ -270,6 +328,10 @@ describe('KangurLeaderboardScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Opanowanie lekcji')).toBeTruthy();
+    expect(screen.getByText('Śledzone 3')).toBeTruthy();
+    expect(screen.getAllByText('Do powtórki').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Najmocniejsza lekcja')).toBeTruthy();
     expect(screen.getByText('Następne kroki')).toBeTruthy();
     expect(screen.getByText('Lokalne zadania po rankingu')).toBeTruthy();
     expect(screen.getByText('Domknij zegar')).toBeTruthy();

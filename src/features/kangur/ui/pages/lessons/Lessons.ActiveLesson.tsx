@@ -54,11 +54,9 @@ export function ActiveLessonView() {
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [isHubListActive, setIsHubListActive] = useState(false);
-  const [hasLessonBackAction, setHasLessonBackAction] = useState(false);
-  const defaultBackToTopicsLabel = translations('mobileControls.backToTopics');
+  const backToLessonsLabel = translations('mobileControls.backToLessons');
   const scrollUpLabel = translations('mobileControls.scrollUp');
   const scrollDownLabel = translations('mobileControls.scrollDown');
-  const [lessonBackLabel, setLessonBackLabel] = useState(defaultBackToTopicsLabel);
   const activeLessonId = activeLesson?.id ?? null;
 
   const secretHostLesson = orderedLessons.at(-1) ?? null;
@@ -86,28 +84,11 @@ export function ActiveLessonView() {
     const hubNode = container.querySelector('[data-kangur-lesson-hub="true"]');
     const nextIsHubActive = Boolean(hubNode);
     setIsHubListActive((prev) => (prev === nextIsHubActive ? prev : nextIsHubActive));
-    const backButton = container.querySelector('[data-kangur-lesson-back="true"]');
-    const hasBackAction = backButton instanceof HTMLButtonElement;
-    setHasLessonBackAction((prev) => (prev === hasBackAction ? prev : hasBackAction));
-    if (hasBackAction) {
-      const nextLabel =
-        backButton.getAttribute('data-kangur-lesson-back-label') ||
-        backButton.getAttribute('aria-label') ||
-        backButton.textContent?.trim() ||
-        defaultBackToTopicsLabel;
-      setLessonBackLabel((prev) => (prev === nextLabel ? prev : nextLabel));
-    } else {
-      setLessonBackLabel((prev) =>
-        prev === defaultBackToTopicsLabel ? prev : defaultBackToTopicsLabel
-      );
-    }
-  }, [activeLessonContentRef, defaultBackToTopicsLabel, handleSelectLesson]);
+  }, [activeLessonContentRef]);
 
   useEffect(() => {
     if (!activeLesson || !isMobile) {
       setIsHubListActive(false);
-      setHasLessonBackAction(false);
-      setLessonBackLabel(defaultBackToTopicsLabel);
       return;
     }
 
@@ -130,7 +111,7 @@ export function ActiveLessonView() {
       window.cancelAnimationFrame(frameId);
       mutationObserver?.disconnect();
     };
-  }, [activeLesson, activeLessonContentRef, defaultBackToTopicsLabel, isMobile, updateLessonContentState]);
+  }, [activeLesson, activeLessonContentRef, isMobile, updateLessonContentState]);
 
   const shouldLockScroll = Boolean(activeLesson) && isMobile && !isHubListActive;
 
@@ -341,21 +322,20 @@ export function ActiveLessonView() {
     </div>
   );
 
-  const topControlsSection = canScrollUp || hasLessonBackAction ? (
+  const topControlsSection = isMobile ? (
     <div data-testid='kangur-lesson-top-controls' className='flex w-full gap-2'>
-      {hasLessonBackAction ? (
-        <KangurButton
-          size='sm'
-          variant='surface'
-          className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
-          onClick={handleLessonBackAction}
-          aria-label={lessonBackLabel}
-          title={lessonBackLabel}
-        >
-          <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
-          <span className='sr-only'>{lessonBackLabel}</span>
-        </KangurButton>
-      ) : null}
+      <KangurButton
+        size='sm'
+        variant='surface'
+        className='flex-1 justify-center shadow-sm [border-color:var(--kangur-soft-card-border)]'
+        data-testid='kangur-lesson-back-to-lessons'
+        onClick={handleLessonBackAction}
+        aria-label={backToLessonsLabel}
+        title={backToLessonsLabel}
+      >
+        <ChevronsLeft className='h-4 w-4' aria-hidden='true' />
+        {backToLessonsLabel}
+      </KangurButton>
       {canScrollUp ? (
         <KangurButton
           size='sm'
@@ -413,6 +393,7 @@ export function ActiveLessonView() {
           </div>
         ) : (
           <>
+            {topControlsSection}
             {headerSection}
             {navigationSection}
             {lessonContentSection}

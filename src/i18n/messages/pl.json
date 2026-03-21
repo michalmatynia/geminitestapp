@@ -268,6 +268,7 @@
     "groupTypeLabel": "Grupa",
     "subsectionTypeLabel": "Podsekcja",
     "mobileControls": {
+      "backToLessons": "Wróć do lekcji",
       "backToTopics": "Wróć do tematów",
       "scrollUp": "Przewiń w górę",
       "scrollDown": "Przewiń w dół"
@@ -291,6 +292,7 @@
     "activityTitle": "Gra: {title}",
     "statusAnnouncement": "Widok: {label}",
     "phoneSimulation": {
+      "backToLessons": "Wróć do lekcji",
       "scrollUp": "Przewiń w górę",
       "scrollDown": "Przewiń w dół"
     },

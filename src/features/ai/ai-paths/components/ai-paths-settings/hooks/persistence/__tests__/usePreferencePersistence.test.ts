@@ -6,6 +6,7 @@ import { usePreferencePersistence } from '../usePreferencePersistence';
 const mockState = vi.hoisted(() => ({
   updateAiPathsSettingsBulk: vi.fn(),
   logClientError: vi.fn(),
+  logClientCatch: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({
@@ -18,6 +19,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
+  logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
 }));
 
 const createCore = () => ({
@@ -77,13 +79,10 @@ describe('usePreferencePersistence', () => {
       await result.current.persistActivePathPreference('path-9');
     });
 
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(1, failure);
-    expect(mockState.logClientError).toHaveBeenNthCalledWith(2, failure, {
-      context: {
-        source: 'useAiPathsPersistence',
-        action: 'persistActivePathPreference',
-        pathId: 'path-9',
-      },
+    expect(mockState.logClientCatch).toHaveBeenCalledWith(failure, {
+      source: 'useAiPathsPersistence',
+      action: 'persistActivePathPreference',
+      pathId: 'path-9',
     });
   });
 

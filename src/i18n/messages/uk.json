@@ -308,6 +308,7 @@
     "activityTitle": "Гра: {title}",
     "statusAnnouncement": "Перегляд: {label}",
     "phoneSimulation": {
+      "backToLessons": "Назад до уроків",
       "scrollUp": "Прокрутити вгору",
       "scrollDown": "Прокрутити вниз"
     },
@@ -434,6 +435,7 @@
     "groupTypeLabel": "Група",
     "subsectionTypeLabel": "Підрозділ",
     "mobileControls": {
+      "backToLessons": "Назад до уроків",
       "backToTopics": "Назад до тем",
       "scrollUp": "Прокрутити вгору",
       "scrollDown": "Прокрутити вниз"

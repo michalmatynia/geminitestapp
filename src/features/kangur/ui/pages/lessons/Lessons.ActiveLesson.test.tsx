@@ -190,10 +190,12 @@ describe('ActiveLessonView mobile scroll controls', () => {
     scrollContainer.scrollBy = scrollByMock;
     scrollContainer.scrollTo = scrollToMock;
 
+    const backToLessonsButton = screen.getByRole('button', { name: 'Wróć do lekcji' });
     const downButton = screen.getByRole('button', { name: 'Przewiń w dół' });
     expect(downButton.className).toContain(
       'var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))'
     );
+    expect(backToLessonsButton).toBeInTheDocument();
 
     fireEvent.click(downButton);
 
@@ -217,6 +219,9 @@ describe('ActiveLessonView mobile scroll controls', () => {
     expect(scrollByMock).toHaveBeenCalledWith(
       expect.objectContaining({ top: -240, behavior: 'smooth' })
     );
+
+    fireEvent.click(backToLessonsButton);
+    expect(handleSelectLesson).toHaveBeenCalledWith(null);
 
     scrollContainer.scrollTop = 300;
     await act(async () => {
@@ -311,10 +316,9 @@ describe('ActiveLessonView mobile scroll controls', () => {
     render(<ActiveLessonView />);
 
     await act(async () => {});
-    const mobileBackButton = document.querySelector('button[title="Wroc do tematow"]');
-    expect(mobileBackButton).toBeInstanceOf(HTMLButtonElement);
+    const mobileBackButton = screen.getByRole('button', { name: 'Wróć do lekcji' });
 
-    fireEvent.click(mobileBackButton as HTMLButtonElement);
+    fireEvent.click(mobileBackButton);
 
     expect(lessonDocumentBackClickMock).toHaveBeenCalledTimes(1);
     expect(handleSelectLesson).not.toHaveBeenCalled();

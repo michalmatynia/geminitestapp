@@ -1,7 +1,9 @@
 ---
 owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
-status: 'active'
+status: "active"
+scope: "ai-features"
+canonical: true
 doc_type: 'feature-guide'
 feature: 'image-studio'
 ---
@@ -238,7 +240,9 @@ Multi-step image generation process:
 interface GenerationJob {
   id: string;
   slotId: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
+  status: "active"
+scope: "ai-features"
+canonical: true
 
   input: {
     prompt: string;

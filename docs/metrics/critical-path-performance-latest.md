@@ -8,7 +8,7 @@ canonical: true
 ---
 # Critical Path Performance Report
 
-Generated at: 2026-03-21T09:38:31.854Z
+Generated at: 2026-03-21T16:42:44.564Z
 
 ## Summary
 
@@ -24,9 +24,9 @@ Generated at: 2026-03-21T09:38:31.854Z
 | --- | --- | ---: | ---: | ---: |
 | Authentication + Session Bootstrap (UI) | PASS | 2 | 110 | -108 |
 | Products CRUD + Listing Refresh (UI) | PASS | 2 | 40 | -38 |
-| Image Studio Generate + Preview (UI) | PASS | 24 | 180 | -156 |
+| Image Studio Generate + Preview (UI) | PASS | 22 | 180 | -158 |
 | AI Paths Run Execution (UI) | PASS | 16 | 60 | -44 |
-| Case Resolver OCR + Capture Mapping (UI) | PASS | 23 | 30 | -7 |
+| Case Resolver OCR + Capture Mapping (UI) | PASS | 24 | 30 | -6 |
 
 ## Critical API Route Budgets (LOC)
 
@@ -50,7 +50,7 @@ Generated at: 2026-03-21T09:38:31.854Z
 
 ### Image Studio Generate + Preview (UI)
 
-- `src/features/ai/image-studio/pages/AdminImageStudioPage.tsx`: 24 LOC | 0 branch points
+- `src/features/ai/image-studio/pages/AdminImageStudioPage.tsx`: 22 LOC | 0 branch points
 
 ### AI Paths Run Execution (UI)
 
@@ -58,7 +58,7 @@ Generated at: 2026-03-21T09:38:31.854Z
 
 ### Case Resolver OCR + Capture Mapping (UI)
 
-- `src/features/case-resolver/pages/AdminCaseResolverPage.tsx`: 23 LOC | 1 branch points
+- `src/features/case-resolver/pages/AdminCaseResolverPage.tsx`: 24 LOC | 1 branch points
 
 ## API File Breakdown
 
@@ -86,30 +86,30 @@ Generated at: 2026-03-21T09:38:31.854Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1708 |
-| `src/features/kangur/ui/components/AddingLesson.tsx` | 1688 |
-| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1570 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1540 |
-| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1270 |
-| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1219 |
-| `src/features/kangur/ui/pages/Game.tsx` | 1143 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1129 |
-| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
-| `src/features/kangur/page-content-catalog.ts` | 1105 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.tsx` | 1888 |
+| `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1701 |
+| `src/features/kangur/ui/components/AddingLesson.tsx` | 1681 |
+| `src/features/kangur/server/ai-tutor-content-locale-scaffold.ts` | 1617 |
+| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 1549 |
+| `src/features/kangur/page-content-catalog.ts` | 1461 |
+| `src/features/kangur/admin/appearance/appearance.copy.ts` | 1396 |
+| `src/features/kangur/server/ai-tutor-native-guide-locale-scaffold.ts` | 1265 |
+| `src/features/kangur/ui/pages/Game.tsx` | 1152 |
+| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
 
 ## Top API Route Hotspots (Reference)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 251 |
-| `src/app/api/image-studio/[[...path]]/route.ts` | 236 |
-| `src/app/api/v2/products/[[...path]]/route.ts` | 234 |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 232 |
-| `src/app/api/ai-paths/[[...path]]/route.ts` | 206 |
-| `src/app/api/databases/[[...path]]/route.ts` | 204 |
-| `src/app/api/chatbot/[[...path]]/route.ts` | 169 |
+| `src/app/api/v2/products/[[...path]]/route.ts` | 277 |
+| `src/app/api/image-studio/[[...path]]/route.ts` | 232 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 228 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 225 |
+| `src/app/api/ai-paths/[[...path]]/route.ts` | 202 |
+| `src/app/api/databases/[[...path]]/route.ts` | 200 |
+| `src/app/api/chatbot/[[...path]]/route.ts` | 165 |
 | `src/app/api/agent/leases/route.ts` | 122 |
-| `src/app/api/kangur/[[...path]]/route.ts` | 63 |
+| `src/app/api/kangur/[[...path]]/route.ts` | 62 |
 | `src/app/api/agent/resources/route.ts` | 59 |
 
 ## Notes

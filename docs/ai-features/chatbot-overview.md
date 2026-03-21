@@ -1,7 +1,9 @@
 ---
 owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
-status: 'active'
+status: "active"
+scope: "ai-features"
+canonical: true
 doc_type: 'feature-guide'
 feature: 'chatbot'
 ---

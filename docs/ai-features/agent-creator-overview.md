@@ -3,7 +3,8 @@ owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
 status: 'active'
 doc_type: 'feature-guide'
-feature: 'agent-creator'
+scope: 'ai-features'
+canonical: true
 ---
 
 # Agent Creator — Feature Overview
@@ -660,4 +661,3 @@ const runs = await getPersonaRuns({
 **Last Updated:** 2026-03-21
 **Status:** Comprehensive feature overview
 **Related Docs:** AI Features README, Chatbot integration, Agent Runtime integration
-

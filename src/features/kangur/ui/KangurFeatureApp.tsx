@@ -43,8 +43,8 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';
 
-const BOOT_SKELETON_MIN_VISIBLE_MS = 280;
-const NAVIGATION_SKELETON_DELAY_MS = 140;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
+const NAVIGATION_SKELETON_DELAY_MS = 60;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
 
 const AuthenticatedApp = (): JSX.Element | null => {

@@ -1,7 +1,9 @@
 ---
 owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
-status: 'active'
+status: "active"
+scope: "ai-features"
+canonical: true
 doc_type: 'feature-guide'
 feature: 'ai-insights'
 ---
@@ -254,7 +256,9 @@ interface AiInsight {
   // Metadata
   type: 'analytics' | 'runtime_analytics' | 'log_insight';
   category: string;
-  status: 'active' | 'archived' | 'dismissed';
+  status: "active"
+scope: "ai-features"
+canonical: true
 
   // Content
   title: string;
@@ -431,7 +435,9 @@ Body:
 
 Response:
 {
-  status: "generating",
+  status: "active"
+scope: "ai-features"
+canonical: true
   jobId: "job-123",
   estimatedTime: 30
 }

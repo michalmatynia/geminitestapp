@@ -3,7 +3,8 @@ owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
 status: 'active'
 doc_type: 'technical-guide'
-feature: 'agent-runtime'
+scope: 'ai-features'
+canonical: true
 ---
 
 # Agent Runtime — Execution Flow Guide
@@ -849,4 +850,3 @@ Step 2: Combine results
 **Last Updated:** 2026-03-21
 **Status:** Complete execution flow guide
 **Related Docs:** Agent Runtime overview, Tools guide, Approval gates guide
-

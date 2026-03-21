@@ -168,9 +168,12 @@ vi.mock('@/features/kangur/ui/components/Leaderboard', () => ({
   default: () => <div data-testid='leaderboard-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/progress', () => ({
-  PlayerProgressCard: () => <div data-testid='player-progress-widget' />,
-  XpToast: (props: unknown) => {
+vi.mock('@/features/kangur/ui/components/PlayerProgressCard', () => ({
+  default: () => <div data-testid='player-progress-widget' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/XpToast', () => ({
+  default: (props: unknown) => {
     xpToastPropsMock(props);
     return <div data-testid='xp-toast-widget' />;
   },
@@ -308,7 +311,7 @@ describe('Game page', () => {
     );
   });
 
-  it('keeps the home leaderboard and progress columns centered within the same 900px section', () => {
+  it('keeps the home leaderboard and progress columns centered within the same 900px section', async () => {
     useKangurGameRuntimeMock.mockReturnValue({
       ...buildRuntime('home'),
       canAccessParentAssignments: true,
@@ -325,6 +328,10 @@ describe('Game page', () => {
       'items-start',
       'xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]'
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('leaderboard-widget')).toBeInTheDocument();
+    });
     expect(screen.getByTestId('leaderboard-widget').parentElement).toHaveClass(
       'flex',
       'w-full',

@@ -2,7 +2,10 @@ import { useReducedMotion } from 'framer-motion';
 import { useContext, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
+import {
+  useActivateKangurAiTutorContent,
+  useKangurAiTutorContent,
+} from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurAiTutorActivationContext } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
@@ -21,6 +24,7 @@ import {
 } from './KangurAiTutorWidget.state';
 
 export function KangurAiTutorWidget(): React.JSX.Element | null {
+  useActivateKangurAiTutorContent();
   const prefersReducedMotion = useReducedMotion();
   const tutorContent = useKangurAiTutorContent();
   const { value: tutorRuntime } = useKangurAiTutorRuntime();

@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-03-18T19:19:43.875Z",
-  "status": "warn",
+  "generatedAt": "2026-03-21T16:44:25.386Z",
+  "status": "passed",
   "summary": {
-    "total": 1,
+    "total": 0,
     "errorCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "routeFileCount": 283,
-    "methodCount": 214,
+    "status": "passed",
+    "routeFileCount": 285,
+    "methodCount": 215,
     "publicRouteCount": 14,
     "protectedRouteCount": 200,
     "signedRouteCount": 0,
-    "actorRouteCount": 0
+    "actorRouteCount": 1
   },
   "routes": [
     {
@@ -897,6 +897,16 @@
       ]
     },
     {
+      "route": "kangur/auth/me",
+      "method": "GET",
+      "policyId": "kangur-actor-routes",
+      "expectedAccess": "actor",
+      "evidence": [
+        "access helper",
+        "actor/session resolver"
+      ]
+    },
+    {
       "route": "kangur/auth/parent-account/create",
       "method": "POST",
       "policyId": "default-protected",
@@ -1325,7 +1335,9 @@
       "method": "GET",
       "policyId": "default-protected",
       "expectedAccess": "protected",
-      "evidence": []
+      "evidence": [
+        "access helper"
+      ]
     },
     {
       "route": "settings/migrate/backfill-keys",
@@ -1628,29 +1640,7 @@
       "evidence": []
     }
   ],
-  "issues": [
-    {
-      "severity": "warn",
-      "ruleId": "authz-privileged-route-missing-explicit-permission-gate",
-      "message": "GET settings/lite relies on basic session auth without an explicit permission/access helper gate.",
-      "file": "src/app/api/settings/lite/route.ts",
-      "line": 10,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "policyId": "default-protected",
-        "warningPolicyId": "privileged-admin-surface",
-        "evidence": []
-      }
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "authz-privileged-route-missing-explicit-permission-gate",
-      "errorCount": 0,
-      "warningCount": 1,
-      "infoCount": 0
-    }
-  ],
-  "durationMs": 158
+  "issues": [],
+  "rules": [],
+  "durationMs": 166
 }

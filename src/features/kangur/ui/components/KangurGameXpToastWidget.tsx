@@ -1,4 +1,4 @@
-import { XpToast } from '@/features/kangur/ui/components/progress';
+import XpToast from '@/features/kangur/ui/components/XpToast';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 
 export function KangurGameXpToastWidget(): React.JSX.Element {

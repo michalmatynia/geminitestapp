@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-18'
+last_reviewed: '2026-03-21'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,19 +8,19 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-18T19:19:43.875Z
+Generated at: 2026-03-21T16:44:25.386Z
 
 ## Summary
 
-- Status: WARN
-- Route files scanned: 283
-- Route methods scanned: 214
+- Status: PASSED
+- Route files scanned: 285
+- Route methods scanned: 215
 - Public methods: 14
 - Protected methods: 200
 - Signed ingress methods: 0
-- Actor-scoped methods: 0
+- Actor-scoped methods: 1
 - Errors: 0
-- Warnings: 1
+- Warnings: 0
 
 ## Route Classification
 
@@ -144,6 +144,7 @@ Generated at: 2026-03-18T19:19:43.875Z
 | kangur/[[...path]] | DELETE | protected | - |
 | kangur/auth/learner-signin | POST | public | - |
 | kangur/auth/learner-signout | POST | public | `actor/session resolver` |
+| kangur/auth/me | GET | actor | `access helper`, `actor/session resolver` |
 | kangur/auth/parent-account/create | POST | protected | `auth()` |
 | kangur/auth/parent-account/resend | POST | protected | `auth()` |
 | kangur/auth/parent-email/verify | POST | protected | `auth()` |
@@ -202,7 +203,7 @@ Generated at: 2026-03-18T19:19:43.875Z
 | settings/cache | GET | protected | `access helper` |
 | settings/database/sync | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | settings/heavy | GET | protected | `access helper` |
-| settings/lite | GET | protected | - |
+| settings/lite | GET | protected | `access helper` |
 | settings/migrate/backfill-keys | POST | protected | `auth()`, `session.user`, `permission/isElevated` |
 | settings/providers | GET | protected | `access helper` |
 | settings | GET | protected | `access helper` |
@@ -245,13 +246,10 @@ Generated at: 2026-03-18T19:19:43.875Z
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| authz-privileged-route-missing-explicit-permission-gate | 0 | 1 | 0 |
 
 ## Issues
 
-| Severity | Rule | Location | Message |
-| --- | --- | --- | --- |
-| WARN | authz-privileged-route-missing-explicit-permission-gate | src/app/api/settings/lite/route.ts:10:14 | GET settings/lite relies on basic session auth without an explicit permission/access helper gate. |
+No authorization coverage issues detected.
 
 ## Notes
 

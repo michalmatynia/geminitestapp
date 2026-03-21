@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-17T09:39:38.918Z",
+  "generatedAt": "2026-03-21T16:43:30.071Z",
   "strictMode": true,
   "includeE2E": false,
   "allowInfraE2EFail": false,
@@ -7,23 +7,18 @@
   "unit": {
     "id": "kangur-unit",
     "command": "npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts",
-    "status": "pass",
-    "exitCode": 0,
-    "durationMs": 19098,
-    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests) 616ms\n     ✓ loads user scores and renders profile metrics  365ms\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 672ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  538ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 134ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 119ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (9 tests) 14ms\n ✓ |unit| src/features/kangur/settings.test.ts (16 tests) 13ms\n\n Test Files  6 passed (6)\n      Tests  43 passed (43)\n   Start at  10:39:20\n   Duration  18.09s (transform 4.56s, setup 746ms, import 13.05s, tests 1.57s, environment 2.09s)"
+    "status": "fail",
+    "exitCode": 1,
+    "durationMs": 22130,
+    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ❯ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests | 10 failed) 48ms\n     × renders a full-screen Kangur loading shell while auth state is loading 27ms\n     × renders nothing when auth is required 3ms\n     × renders lessons route content while auth/public settings are loading 2ms\n     × renders lessons route content while loading when pageKey is lowercased as lessons 1ms\n     × updates route transition key when navigating into lessons while loading 2ms\n     × renders the user-not-registered state for missing Kangur enrollment 1ms\n     × renders PageNotFound when requested page cannot be resolved 1ms\n     × renders the resolved Kangur page component for known routes 1ms\n     × renders learner profile shell when route resolves to LearnerProfile 4ms\n     × replays the content transition when the requested path changes 1ms\n ❯ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests | 4 failed) 49ms\n     × loads user scores and renders profile metrics 29ms\n     × keeps profile in local mode when user is not authenticated 6ms\n     × shows scores loading error when score provider fails 6ms\n     × treats score authorization errors as expected local-mode fallback 4ms\n ❯ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests | 2 failed) 24ms\n     × auto-opens the focused lesson when focus query maps to operation 17ms\n     × keeps lessons list view when focus query does not map to a lesson 3ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 132ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (10 tests) 16ms\n ✓ |unit| src/features/kangur/settings.test.ts (18 tests) 15ms\n\n⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders a full-screen Kangur loading shell while auth state is loading\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders nothing when auth is required\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders lessons route content while auth/public settings are loading\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders lessons route content while loading when pageKey is lowercased as lessons\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > updates route transition key when navigating into lessons while loading\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders the user-not-registered state for missing Kangur enrollment\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders PageNotFound when requested page cannot be resolved\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders the resolved Kangur page component for known routes\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > renders learner profile shell when route resolves to LearnerProfile\n FAIL  |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx > KangurFeatureApp shell behavior > replays the content transition when the requested path changes\nError: [vitest] No \"KangurAiTutorDeferredProvider\" export is defined on the \"@/features/kangur/ui/context/KangurAiTutorContext\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n\nvi.mock(import(\"@/features/kangur/ui/context/KangurAiTutorContext\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})\n\n ❯ KangurFeatureApp src/features/kangur/ui/KangurFeatureApp.tsx:311:28\n    309|                       <KangurContextRegistryPageBoundary>\n    310|                         <KangurAiTutorContentProvider>\n    311|                           <KangurAiTutorDeferredProvider>\n       |                            ^\n    312|                             <KangurTutorAnchorProvider>\n    313|                               <AuthenticatedApp />\n ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20\n ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22\n ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19\n ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18\n ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13\n ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22\n ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯\n\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > loads user scores and renders profile metrics\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > keeps profile in local mode when user is not authenticated\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > shows scores loading error when score provider fails\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > treats score authorization errors as expected local-mode fallback\nError: No QueryClient set, use QueryClientProvider to set one\n ❯ useQueryClient ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:15:11\n ❯ useBaseQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useBaseQuery.js:30:18\n ❯ useQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useQuery.js:7:10\n ❯ useKangurPageContentStore src/features/kangur/ui/hooks/useKangurPageContent.ts:80:10\n     78|   );\n     79| \n     80|   return useQuery<KangurPageContentStore, Error>({\n       |          ^\n     81|     queryKey: createKangurPageContentQueryKey(resolvedLocale),\n     82|     queryFn: () => fetchKangurPageContentStore(resolvedLocale),\n ❯ useKangurPageContentEntry src/features/kangur/ui/hooks/useKangurPageContent.ts:96:17\n ❯ KangurPrimaryNavigation src/features/kangur/ui/components/KangurPrimaryNavigation.tsx:201:41\n ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20\n ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22\n ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19\n ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯\n\n FAIL  |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx > Lessons page focus query support > auto-opens the focused lesson when focus query maps to operation\n FAIL  |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx > Lessons page focus query support > keeps lessons list view when focus query does not map to a lesson\nError: No QueryClient set, use QueryClientProvider to set one\n ❯ useQueryClient ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:15:11\n ❯ useBaseQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useBaseQuery.js:30:18\n ❯ useQuery ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/react-query/build/modern/useQuery.js:7:10\n ❯ useQueryFactoryV2 src/shared/lib/tanstack-factory-v2/hooks.ts:226:10\n    224|   );\n    225| \n    226|   return useQuery({\n       |          ^\n    227|     ...guardedOptions,\n    228|     queryKey: normalizedQueryKey,\n ❯ createListQueryV2 src/shared/lib/query-factories-v2.ts:92:10\n ❯ useKangurLessonTemplates src/features/kangur/ui/hooks/useKangurLessonTemplates.ts:69:3\n ❯ useLessonsLogic src/features/kangur/ui/pages/lessons/Lessons.hooks.ts:51:42\n ❯ LessonsProvider src/features/kangur/ui/pages/lessons/LessonsContext.tsx:12:17\n ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20\n ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯\n\n\n Test Files  3 failed | 3 passed (6)\n      Tests  16 failed | 30 passed (46)\n   Start at  17:43:08\n   Duration  21.04s (transform 5.54s, setup 947ms, import 16.94s, tests 283ms, environment 2.32s)"
   },
   "e2e": null,
   "bundleRisk": {
     "files": [
       {
-        "path": "src/features/kangur/ui/pages/Lessons.tsx",
-        "lines": 1022,
-        "bytes": 41663
-      },
-      {
         "path": "src/features/kangur/ui/pages/Game.tsx",
-        "lines": 978,
-        "bytes": 36480
+        "lines": 1152,
+        "bytes": 44746
       },
       {
         "path": "src/features/kangur/ui/services/kangur-questions-data.js",
@@ -31,14 +26,19 @@
         "bytes": 21289
       },
       {
-        "path": "src/features/kangur/ui/pages/LearnerProfile.tsx",
-        "lines": 423,
-        "bytes": 14808
+        "path": "src/features/kangur/ui/components/KangurGame.tsx",
+        "lines": 478,
+        "bytes": 15283
       },
       {
-        "path": "src/features/kangur/ui/components/KangurGame.tsx",
-        "lines": 428,
-        "bytes": 13515
+        "path": "src/features/kangur/ui/pages/LearnerProfile.tsx",
+        "lines": 210,
+        "bytes": 8649
+      },
+      {
+        "path": "src/features/kangur/ui/pages/Lessons.tsx",
+        "lines": 105,
+        "bytes": 3614
       },
       {
         "path": "src/features/kangur/ui/components/KangurIllustrations.ts",
@@ -46,11 +46,11 @@
         "bytes": 853
       }
     ],
-    "totalBytes": 128608,
-    "totalLines": 3194
+    "totalBytes": 94434,
+    "totalLines": 2288
   },
   "summary": {
-    "failedRuns": 0,
+    "failedRuns": 1,
     "infraFailures": 0
   }
 }

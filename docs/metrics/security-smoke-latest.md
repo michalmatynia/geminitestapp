@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-21'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Security Smoke Report
 
-Generated at: 2026-03-11T22:47:47.947Z
+Generated at: 2026-03-21T16:42:28.606Z
 
 ## Summary
 
@@ -20,10 +20,10 @@ Generated at: 2026-03-11T22:47:47.947Z
 
 | Suite | Status | Duration | Exit | Tests |
 | --- | --- | ---: | ---: | --- |
-| Auth Security Policy | PASS | 1.5s | 0 | `__tests__/features/auth/utils/auth-security.test.ts` |
-| Auth Encryption | PASS | 1.4s | 0 | `__tests__/features/auth/utils/auth-encryption.test.ts` |
-| Auth Verify Credentials API | PASS | 1.5s | 0 | `__tests__/features/auth/api/verify-credentials.test.ts` |
-| AI Paths Access Rate Limit | PASS | 1.9s | 0 | `src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts` |
+| Auth Security Policy | PASS | 2.5s | 0 | `__tests__/features/auth/utils/auth-security.test.ts` |
+| Auth Encryption | PASS | 2.1s | 0 | `__tests__/features/auth/utils/auth-encryption.test.ts` |
+| Auth Verify Credentials API | PASS | 2.5s | 0 | `__tests__/features/auth/api/verify-credentials.test.ts` |
+| AI Paths Access Rate Limit | PASS | 1.6s | 0 | `src/features/ai/ai-paths/server/__tests__/access.rate-limit.test.ts` |
 | Observability Log Redaction | PASS | 1.4s | 0 | `__tests__/shared/lib/observability/log-redaction.test.ts` |
 
 ## Notes

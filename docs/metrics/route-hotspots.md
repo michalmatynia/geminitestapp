@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-21T15:59:44.992Z
+Generated at: 2026-03-21T16:42:22.755Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 

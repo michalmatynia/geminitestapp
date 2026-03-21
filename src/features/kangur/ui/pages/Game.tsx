@@ -17,8 +17,9 @@ import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/Kangu
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/KangurPriorityAssignments';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
-import Leaderboard from '@/features/kangur/ui/components/Leaderboard';
-import { PlayerProgressCard, XpToast } from '@/features/kangur/ui/components/progress';
+const Leaderboard = dynamic(() => import('@/features/kangur/ui/components/Leaderboard'));
+const PlayerProgressCard = dynamic(() => import('@/features/kangur/ui/components/PlayerProgressCard'));
+const XpToast = dynamic(() => import('@/features/kangur/ui/components/XpToast'));
 
 // Lazy-load quiz/session widgets — only the active screen is downloaded
 const KangurGameCalendarTrainingWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameCalendarTrainingWidget').then(m => ({ default: m.KangurGameCalendarTrainingWidget })));

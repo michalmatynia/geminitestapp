@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -32,6 +33,13 @@ type Props = {
 
 const KangurAiTutorContentContext = createContext<KangurAiTutorContentContextValue | null>(null);
 
+/**
+ * Activation context — the AI tutor content API call is deferred until a
+ * consumer (typically the dynamically-loaded widget) calls `activate()`.
+ * Until then, `DEFAULT_KANGUR_AI_TUTOR_CONTENT` is used synchronously.
+ */
+const KangurAiTutorContentActivationContext = createContext<(() => void) | null>(null);
+
 export function KangurAiTutorContentProvider({
   children,
   locale = 'pl',
@@ -42,9 +50,14 @@ export function KangurAiTutorContentProvider({
     locale,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
+
+  const activate = useCallback(() => {
+    setIsActivated(true);
+  }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !isActivated) {
       return;
     }
 
@@ -95,7 +108,7 @@ export function KangurAiTutorContentProvider({
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, locale]);
+  }, [isAuthenticated, isActivated, locale]);
 
   const value = useMemo(
     () => ({
@@ -106,9 +119,11 @@ export function KangurAiTutorContentProvider({
   );
 
   return (
-    <KangurAiTutorContentContext.Provider value={value}>
-      {children}
-    </KangurAiTutorContentContext.Provider>
+    <KangurAiTutorContentActivationContext.Provider value={activate}>
+      <KangurAiTutorContentContext.Provider value={value}>
+        {children}
+      </KangurAiTutorContentContext.Provider>
+    </KangurAiTutorContentActivationContext.Provider>
   );
 }
 
@@ -121,4 +136,15 @@ export function useOptionalKangurAiTutorContent():
   | KangurAiTutorContentContextValue
   | null {
   return useContext(KangurAiTutorContentContext);
+}
+
+/**
+ * Call this hook to trigger the AI tutor content API fetch.
+ * Typically called from the dynamically-loaded AI tutor widget.
+ */
+export function useActivateKangurAiTutorContent(): void {
+  const activate = useContext(KangurAiTutorContentActivationContext);
+  useEffect(() => {
+    activate?.();
+  }, [activate]);
 }

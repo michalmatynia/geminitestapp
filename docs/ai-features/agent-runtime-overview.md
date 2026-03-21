@@ -3,7 +3,8 @@ owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
 status: 'active'
 doc_type: 'feature-guide'
-feature: 'agent-runtime'
+scope: 'ai-features'
+canonical: true
 ---
 
 # Agent Runtime — Architecture & Core Concepts
@@ -201,7 +202,7 @@ interface AgentRun {
   userId: string;
 
   // Execution state
-  status: 'pending' | 'running' | 'approved' | 'completed' | 'failed';
+  status: 'pending' | 'running' | 'approved' | 'completed' | 'failed' | 'cancelled';
   plan: AgentPlan;
   currentStepIndex: number;
 
@@ -246,7 +247,7 @@ interface ExecutionStep {
   tool: ToolDefinition;
   inputs: Record<string, unknown>;
   outputs?: Record<string, unknown>;
-  status: 'pending' | 'executed' | 'failed';
+  status: 'pending' | 'executed' | 'failed' | 'recovered';
   error?: string;
   timestamp: Date;
 }
@@ -395,4 +396,3 @@ Monitor Agent Runtime via:
 **Last Updated:** 2026-03-21
 **Status:** Comprehensive architecture overview
 **Related Docs:** AI Features README, Agent Creator overview
-

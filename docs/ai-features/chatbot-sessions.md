@@ -1,7 +1,9 @@
 ---
 owner: 'AI Platform Team'
 last_reviewed: '2026-03-21'
-status: 'active'
+status: "active"
+scope: "ai-features"
+canonical: true
 doc_type: 'technical-guide'
 feature: 'chatbot'
 ---
@@ -68,7 +70,9 @@ interface ChatbotSession {
   messageCount: number;
 
   // Status & metadata
-  status: 'active' | 'archived' | 'deleted';
+  status: "active"
+scope: "ai-features"
+canonical: true
   isStarred: boolean;
   tags: string[];
 
@@ -311,7 +315,9 @@ function ChatInput({ sessionId }: { sessionId: string }) {
     addMessageToUI({
       role: 'user',
       content: input,
-      status: 'sending',
+      status: "active"
+scope: "ai-features"
+canonical: true
     });
 
     try {
@@ -695,12 +701,16 @@ async function summarizeOldMessages(sessionId: string): Promise<void> {
 ```typescript
 // Indexes to create:
 db.sessions.createIndex({ userId: 1, createdAt: -1 });
-db.sessions.createIndex({ status: 1, lastActivityAt: -1 });
+db.sessions.createIndex({ status: "active"
+scope: "ai-features"
+canonical: true
 db.messages.createIndex({ sessionId: 1, timestamp: -1 });
 db.messages.createIndex({ sessionId: 1, role: 1 });
 
 // Queries will be fast:
-db.sessions.find({ userId, status: 'active' }).sort({ lastActivityAt: -1 });
+db.sessions.find({ userId, status: "active"
+scope: "ai-features"
+canonical: true
 db.messages.find({ sessionId }).sort({ timestamp: -1 }).limit(20);
 ```
 

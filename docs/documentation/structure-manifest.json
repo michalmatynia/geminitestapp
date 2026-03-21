@@ -123,6 +123,10 @@
       "mode": "complete_direct_files"
     },
     {
+      "path": "docs/ai-features",
+      "mode": "complete_direct_files"
+    },
+    {
       "path": "docs/ai-paths",
       "mode": "curated_references",
       "requiredReferences": [
@@ -233,6 +237,16 @@
   "requiredCanonicalDocs": [
     "docs/README.md",
     "docs/AGENTS.md",
+    "docs/ai-features/README.md",
+    "docs/ai-features/agent-creator-overview.md",
+    "docs/ai-features/agent-runtime-execution-flow.md",
+    "docs/ai-features/agent-runtime-overview.md",
+    "docs/ai-features/ai-insights-overview.md",
+    "docs/ai-features/chatbot-context.md",
+    "docs/ai-features/chatbot-overview.md",
+    "docs/ai-features/chatbot-sessions.md",
+    "docs/ai-features/image-studio-overview.md",
+    "docs/ai-features/integrations.md",
     "docs/OWNERS.md",
     "docs/CLAUDE.md",
     "docs/COPILOT.md",

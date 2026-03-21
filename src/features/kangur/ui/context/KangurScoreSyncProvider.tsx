@@ -83,10 +83,22 @@ export function KangurScoreSyncProvider({
       });
     };
 
-    void syncScores();
+    const scheduleSync =
+      typeof globalThis.requestIdleCallback === 'function'
+        ? globalThis.requestIdleCallback
+        : (cb: () => void) => setTimeout(cb, 1);
+
+    const idleHandle = scheduleSync(() => {
+      void syncScores();
+    });
 
     return () => {
       cancelled = true;
+      if (typeof globalThis.cancelIdleCallback === 'function') {
+        globalThis.cancelIdleCallback(idleHandle as number);
+      } else {
+        clearTimeout(idleHandle as ReturnType<typeof setTimeout>);
+      }
     };
   }, [isAuthenticated, isLoadingAuth, learnerKey]);
 

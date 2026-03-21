@@ -374,9 +374,7 @@ export function useKangurAiTutorGuidedDisplayState(input: {
   const guidedTargetLabel =
     guidedTargetAnchor?.metadata?.label?.trim() ||
     (isAuthGuidedTutorTarget(guidedTutorTarget)
-      ? guidedTutorTarget.authMode === 'create-account'
-        ? tutorContent.common.createAccountLabel
-        : tutorContent.common.signInLabel
+      ? tutorContent.common.signInLabel
       : null);
 
   const sectionGuidanceLabel = isSectionGuidedTutorTarget(guidedTutorTarget)

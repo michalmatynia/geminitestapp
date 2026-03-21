@@ -11,8 +11,8 @@ import {
 describe('Kangur tutor page coverage manifest', () => {
   it('keeps a stable inventory summary for the current Kangur UI', () => {
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_SUMMARY).toEqual({
-      total: 51,
-      nativeGuideReady: 51,
+      total: 50,
+      nativeGuideReady: 50,
       contextOnly: 0,
       contractGap: 0,
     });
@@ -24,7 +24,7 @@ describe('Kangur tutor page coverage manifest', () => {
   });
 
   it('tracks the current explicit tutor-anchor coverage points that are already Mongo-ready', () => {
-    expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO).toHaveLength(51);
+    expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO).toHaveLength(50);
     expect(KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.map((entry) => entry.id)).toEqual(
       expect.arrayContaining([
         'game-home-actions',
@@ -54,7 +54,6 @@ describe('Kangur tutor page coverage manifest', () => {
         'parent-dashboard-ai-tutor',
         'login-page-form',
         'login-page-identifier-field',
-        'shared-nav-create-account-action',
         'shared-nav-login-action',
       ])
     );

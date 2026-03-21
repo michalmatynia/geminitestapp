@@ -249,7 +249,7 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
         'In a moment I will explain this part of the page and show what is worth noticing.',
       selectionPreparingBadge: 'Preparing the explanation...',
       authTitles: {
-        createAccountNav: 'Click "{label}" at the top.',
+        createAccountNav: 'Click "{label}" at the top to open sign in.',
         signInNav: 'Click "{label}" at the top.',
         createAccountIdentifier: 'Enter the parent email here.',
         signInIdentifier: 'Enter the parent email or the student nickname here.',
@@ -258,7 +258,7 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
       },
       authDetails: {
         createAccountNav:
-          'This button opens parent account creation. First choose it in the navigation, and the form will appear afterward.',
+          'This opens sign in first. Then switch the form to parent account creation and enter the parent details.',
         signInNav:
           'This button opens sign in. First click it in the navigation, and only then enter the credentials.',
         createAccountIdentifier:
@@ -914,7 +914,7 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
         'Gleich erkläre ich diesen Teil der Seite und zeige, worauf man achten sollte.',
       selectionPreparingBadge: 'Die Erklärung wird vorbereitet...',
       authTitles: {
-        createAccountNav: 'Klicken Sie oben auf "{label}".',
+        createAccountNav: 'Klicken Sie oben auf "{label}", um die Anmeldung zu öffnen.',
         signInNav: 'Klicken Sie oben auf "{label}".',
         createAccountIdentifier: 'Geben Sie hier die E-Mail des Elternteils ein.',
         signInIdentifier:
@@ -924,7 +924,7 @@ const CONTENT_COPY_BY_LOCALE: Record<string, Partial<KangurAiTutorContent>> = {
       },
       authDetails: {
         createAccountNav:
-          'Diese Schaltfläche öffnet die Erstellung eines Elternkontos. Wählen Sie sie zuerst in der Navigation aus, danach erscheint das Formular.',
+          'Damit öffnen Sie zuerst die Anmeldung. Schalten Sie das Formular danach auf die Erstellung eines Elternkontos um und geben Sie die Daten des Elternteils ein.',
         signInNav:
           'Diese Schaltfläche öffnet die Anmeldung. Klicken Sie zuerst in der Navigation darauf und geben Sie erst dann die Daten ein.',
         createAccountIdentifier:

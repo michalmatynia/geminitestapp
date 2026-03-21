@@ -6,7 +6,7 @@ import type {
   ImageRetryPreset,
   BaseImportPreflightIssue,
 } from '@/shared/contracts/integrations';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -50,7 +50,7 @@ type RefreshImportParameterCacheMutationLike = {
 };
 
 export type ImportExportRuntimeActionsArgs = {
-  toast: ToastFn;
+  toast: Toast;
   setInventoriesEnabled: (enabled: boolean) => void;
   refetchInventories: RefetchFn<unknown[]>;
   inventoryId: string;

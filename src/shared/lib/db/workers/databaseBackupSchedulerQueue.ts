@@ -4,6 +4,7 @@ import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine
 import { tickDatabaseBackupScheduler } from '@/shared/lib/db/services/database-backup-scheduler';
 import { createManagedQueue } from '@/shared/lib/queue';
 import type {
+  ManagedQueueStatus,
   ScheduledTickJobData,
   SchedulerQueueState,
 } from '@/shared/lib/queue/scheduler-queue-types';
@@ -159,17 +160,7 @@ export const startDatabaseBackupSchedulerQueue = (): void => {
   syncRepeatSchedulerRegistration();
 };
 
-export const getDatabaseBackupSchedulerQueueStatus = async (): Promise<{
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeJobs: number;
-  waitingJobs: number;
-  failedJobs: number;
-  completedJobs: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-}> => {
+export const getDatabaseBackupSchedulerQueueStatus = async (): Promise<ManagedQueueStatus> => {
   const health = await queue.getHealthStatus();
   return {
     running: health.running ?? false,

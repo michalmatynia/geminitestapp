@@ -14,9 +14,6 @@ import {
   type ImageContentFrame,
   type MaskShapeForExport,
 } from '../generation-toolbar/GenerationToolbarImageUtils';
-
-
-export const CHARS_PER_TOKEN_ESTIMATE = 4;
 export const ACTION_HISTORY_MAX_STEPS = 50;
 export const CANVAS_RESIZE_MIN_PX = 64;
 export const CANVAS_RESIZE_MAX_PX = 32_768;
@@ -153,28 +150,6 @@ export const CANVAS_RESIZE_DIRECTION_OPTIONS: Array<
     label: 'Extend Down + Right',
     description: 'Adds new canvas area below and right of current content.',
   },
-];
-
-type ModelCostProfile = {
-  imageUsdPerImage: number;
-  inputUsdPer1KTokens: number;
-};
-
-const DEFAULT_MODEL_COST_PROFILE: ModelCostProfile = {
-  imageUsdPerImage: 0.03,
-  inputUsdPer1KTokens: 0.004,
-};
-
-const MODEL_COST_PROFILES: Array<{ prefix: string; profile: ModelCostProfile }> = [
-  { prefix: 'gpt-image-1', profile: { imageUsdPerImage: 0.04, inputUsdPer1KTokens: 0.006 } },
-  { prefix: 'gpt-5.2', profile: { imageUsdPerImage: 0.05, inputUsdPer1KTokens: 0.01 } },
-  { prefix: 'gpt-5', profile: { imageUsdPerImage: 0.045, inputUsdPer1KTokens: 0.009 } },
-  { prefix: 'gpt-4.1-mini', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.003 } },
-  { prefix: 'gpt-4.1', profile: { imageUsdPerImage: 0.028, inputUsdPer1KTokens: 0.005 } },
-  { prefix: 'gpt-4o-mini', profile: { imageUsdPerImage: 0.018, inputUsdPer1KTokens: 0.0025 } },
-  { prefix: 'gpt-4o', profile: { imageUsdPerImage: 0.026, inputUsdPer1KTokens: 0.0045 } },
-  { prefix: 'dall-e-3', profile: { imageUsdPerImage: 0.08, inputUsdPer1KTokens: 0.0 } },
-  { prefix: 'dall-e-2', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.0 } },
 ];
 
 export const cloneSerializableValue = <T>(value: T): T => {
@@ -339,19 +314,6 @@ export const resolveSequenceStepsForRun = (
     resolvedSteps,
     errors,
   };
-};
-
-export const estimatePromptTokens = (prompt: string): number => {
-  const trimmed = prompt.trim();
-  if (!trimmed) return 0;
-  return Math.max(1, Math.ceil(trimmed.length / CHARS_PER_TOKEN_ESTIMATE));
-};
-
-export const resolveModelCostProfile = (model: string): ModelCostProfile => {
-  const normalizedModel = model.trim().toLowerCase();
-  if (!normalizedModel) return DEFAULT_MODEL_COST_PROFILE;
-  const matched = MODEL_COST_PROFILES.find(({ prefix }) => normalizedModel.startsWith(prefix));
-  return matched ? matched.profile : DEFAULT_MODEL_COST_PROFILE;
 };
 
 export type StudioActionHistorySnapshot = {

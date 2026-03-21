@@ -175,9 +175,9 @@ const getSetupMomentumFallbackCopy = (
     return {
       quest: {
         label: 'Mission of the day',
-        titleCompleted: "Today's mission is ready to claim",
-        titleKangur: "This round can finish today's mission",
-        titleTraining: "This session advances today's mission",
+        titleCompleted: 'Today\'s mission is ready to claim',
+        titleKangur: 'This round can finish today\'s mission',
+        titleTraining: 'This session advances today\'s mission',
       },
       guided: {
         descriptionKangur: (badge, summary) =>

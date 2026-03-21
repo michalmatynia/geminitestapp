@@ -291,7 +291,8 @@ export function withPerformanceMiddleware(
     const start = performance.now();
 
     try {
-      const result = await handler(req, res, ...args);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const result = await (handler as Function)(req, res, ...args);
       const duration = performance.now() - start;
 
       performanceMonitor.record('request', duration, {

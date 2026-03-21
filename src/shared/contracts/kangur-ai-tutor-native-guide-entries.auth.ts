@@ -111,7 +111,7 @@ export const KANGUR_NATIVE_GUIDE_ENTRIES_AUTH: KangurAiTutorNativeGuideEntry[] =
     id: 'auth-create-account-action',
     surface: 'auth',
     focusKind: 'create_account_action',
-    focusIdPrefixes: ['kangur-auth-create-account-action'],
+    focusIdPrefixes: ['kangur-auth-login-action'],
     title: 'Akcja utworzenia konta',
     shortDescription:
       'Ten przycisk prowadzi rodzica do założenia nowego konta zamiast zwykłego logowania.',

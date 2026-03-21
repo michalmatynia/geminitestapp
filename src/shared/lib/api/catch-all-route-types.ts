@@ -1,7 +1,9 @@
 import type { NextRequest } from 'next/server';
 
+import type { StringRecordDto } from '@/shared/contracts/base';
+
 export type CatchAllRouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-export type CatchAllRouteParams = Record<string, string>;
+export type CatchAllRouteParams = StringRecordDto;
 export type CatchAllRoutePathParams = { path?: string[] | string };
 export type CatchAllRouteHandler<P extends CatchAllRouteParams = CatchAllRouteParams> = (
   request: NextRequest,

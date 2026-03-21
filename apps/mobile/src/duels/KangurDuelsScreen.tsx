@@ -27,8 +27,13 @@ import {
   type KangurMobileLessonCheckpointItem,
 } from '../lessons/useKangurMobileLessonCheckpoints';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
+import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { shareKangurDuelInvite } from './duelInviteShare';
 import { createKangurDuelsHref } from './duelsHref';
+import {
+  useKangurMobileDuelsAssignments,
+  type KangurMobileDuelsAssignmentItem,
+} from './useKangurMobileDuelsAssignments';
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
@@ -668,6 +673,169 @@ function LessonCheckpointsCard({
               pl: 'Otwórz lekcje',
             })}
           />
+        </View>
+      )}
+    </Card>
+  );
+}
+
+function DuelAssignmentRow({
+  item,
+}: {
+  item: KangurMobileDuelsAssignmentItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const priorityTone =
+    item.assignment.priority === 'high'
+      ? {
+          backgroundColor: '#fef2f2',
+          borderColor: '#fecaca',
+          textColor: '#b91c1c',
+        }
+      : item.assignment.priority === 'medium'
+        ? {
+            backgroundColor: '#fffbeb',
+            borderColor: '#fde68a',
+            textColor: '#b45309',
+          }
+        : {
+            backgroundColor: '#eff6ff',
+            borderColor: '#bfdbfe',
+            textColor: '#1d4ed8',
+          };
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 8,
+      }}
+    >
+      <Pill
+        label={copy({
+          de:
+            item.assignment.priority === 'high'
+              ? 'Hohe Priorität'
+              : item.assignment.priority === 'medium'
+                ? 'Mittlere Priorität'
+                : 'Niedrige Priorität',
+          en:
+            item.assignment.priority === 'high'
+              ? 'High priority'
+              : item.assignment.priority === 'medium'
+                ? 'Medium priority'
+                : 'Low priority',
+          pl:
+            item.assignment.priority === 'high'
+              ? 'Priorytet wysoki'
+              : item.assignment.priority === 'medium'
+                ? 'Priorytet średni'
+                : 'Priorytet niski',
+        })}
+        tone={priorityTone}
+      />
+
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+        {item.assignment.title}
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {item.assignment.description}
+      </Text>
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Ziel: ${item.assignment.target}`,
+          en: `Goal: ${item.assignment.target}`,
+          pl: `Cel: ${item.assignment.target}`,
+        })}
+      </Text>
+
+      {item.href ? (
+        <LinkButton
+          href={item.href}
+          label={translateKangurMobileActionLabel(item.assignment.action.label, locale)}
+          tone='primary'
+        />
+      ) : (
+        <Pill
+          label={`${translateKangurMobileActionLabel(item.assignment.action.label, locale)} · ${copy({
+            de: 'bald',
+            en: 'soon',
+            pl: 'wkrotce',
+          })}`}
+          tone={{
+            backgroundColor: '#e2e8f0',
+            borderColor: '#cbd5e1',
+            textColor: '#475569',
+          }}
+        />
+      )}
+    </View>
+  );
+}
+
+function NextStepsCard({
+  context,
+}: {
+  context: 'lobby' | 'session';
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  const duelAssignments = useKangurMobileDuelsAssignments();
+
+  return (
+    <Card>
+      <View style={{ gap: 4 }}>
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+          {copy({
+            de: 'Nächste Schritte',
+            en: 'Next steps',
+            pl: 'Następne kroki',
+          })}
+        </Text>
+        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+          {context === 'session'
+            ? copy({
+                de: 'Lokale Aufgaben neben dem Duell',
+                en: 'Local tasks beside the duel',
+                pl: 'Lokalne zadania obok pojedynku',
+              })
+            : copy({
+                de: 'Lokale Aufgaben aus der Lobby',
+                en: 'Local tasks from the lobby',
+                pl: 'Lokalne zadania z lobby',
+              })}
+        </Text>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+          {context === 'session'
+            ? copy({
+                de: 'Auch während einer Duellsitzung kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
+                en: 'Even during a duel session, you can jump straight into the next local tasks from your progress.',
+                pl: 'Nawet w trakcie sesji pojedynku możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+              })
+            : copy({
+                de: 'Zwischen Lobby, Suche und Rangliste kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
+                en: 'Between the lobby, search, and leaderboard, you can jump straight into the next local tasks from your progress.',
+                pl: 'Między lobby, wyszukiwaniem i rankingiem możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+              })}
+        </Text>
+      </View>
+
+      {duelAssignments.assignmentItems.length === 0 ? (
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+          {copy({
+            de: 'Es gibt noch keine lokalen Aufgaben. Öffne Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+            en: 'There are no local tasks yet. Open lessons or complete more practice to build the next plan.',
+            pl: 'Nie ma jeszcze lokalnych zadań. Otwórz lekcje albo wykonaj kolejne treningi, aby zbudować następny plan.',
+          })}
+        </Text>
+      ) : (
+        <View style={{ gap: 12 }}>
+          {duelAssignments.assignmentItems.map((item) => (
+            <DuelAssignmentRow key={item.assignment.id} item={item} />
+          ))}
         </View>
       )}
     </Card>
@@ -2296,6 +2464,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
               </Card>
 
               <LessonCheckpointsCard context='session' />
+              <NextStepsCard context='session' />
             </>
           )}
         </ScrollView>
@@ -3296,6 +3465,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
         </Card>
 
         <LessonCheckpointsCard context='lobby' />
+        <NextStepsCard context='lobby' />
       </ScrollView>
     </SafeAreaView>
   );

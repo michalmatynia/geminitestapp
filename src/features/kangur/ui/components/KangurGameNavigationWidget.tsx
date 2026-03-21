@@ -11,7 +11,7 @@ export function KangurGameNavigationWidget({
   visible = true,
 }: {
   visible?: boolean;
-} = {}): React.JSX.Element {
+} = {}): React.JSX.Element | null {
   const {
     basePath,
     handleHome,
@@ -31,7 +31,6 @@ export function KangurGameNavigationWidget({
       homeActive: screen === 'home',
       isAuthenticated: Boolean(user),
       onHomeClick: handleHome,
-      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: openLoginModal,
       onLogout: () => logout(false),

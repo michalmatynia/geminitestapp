@@ -4,7 +4,7 @@ import type {
   ImageStudioSlotRecord,
   StudioSlotsResponse,
 } from '@/shared/contracts/image-studio';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathRuns, invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -48,7 +48,7 @@ type LoadVariantIntoCanvasParams = {
   setTemporaryObjectUpload: (upload: TemporaryUpload) => void;
   setWorkingSlotId: (slotId: string | null) => void;
   slots: ImageStudioSlotRecord[];
-  toast: ToastFn;
+  toast: Toast;
   variant: VariantThumbnailInfo;
 };
 
@@ -64,7 +64,7 @@ type DeleteVariantFromCenterPreviewParams = {
   setDismissedVariantKeys: React.Dispatch<React.SetStateAction<Set<string>>>;
   setVariantTooltip: React.Dispatch<React.SetStateAction<VariantTooltipState | null>>;
   slots: ImageStudioSlotRecord[];
-  toast: ToastFn;
+  toast: Toast;
   variant: VariantThumbnailInfo;
 };
 

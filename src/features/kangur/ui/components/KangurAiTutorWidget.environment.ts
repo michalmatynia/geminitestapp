@@ -46,6 +46,7 @@ import {
   DESKTOP_BUBBLE_WIDTH,
   MOBILE_BUBBLE_WIDTH,
   type TutorMotionProfile,
+  type TutorReducedMotionPanelTransitions,
 } from './KangurAiTutorWidget.shared';
 
 import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
@@ -434,7 +435,7 @@ export function useKangurAiTutorWidgetEnvironment({
     () => getTutorMotionProfile(tutorSettings?.motionPresetId),
     [tutorSettings?.motionPresetId]
   );
-  const reducedMotionTransitions = useMemo(
+  const reducedMotionTransitions = useMemo<TutorReducedMotionPanelTransitions>(
     () => ({
       instant: { duration: 0 },
       stableState: { opacity: 1, y: 0, scale: 1 },

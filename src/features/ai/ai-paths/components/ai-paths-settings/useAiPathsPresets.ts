@@ -12,7 +12,7 @@ import type {
   DbQueryPreset,
   Edge,
 } from '@/shared/contracts/ai-paths';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import {
   BUNDLE_INPUT_PORTS,
@@ -35,7 +35,7 @@ type UseAiPathsPresetsArgs = {
   isPathLocked: boolean;
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };
-  toast: ToastFn;
+  toast: Toast;
   confirm: (config: ConfirmConfig) => void;
   reportAiPathsError: (
     error: unknown,

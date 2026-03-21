@@ -279,7 +279,6 @@ export default function Tests(): React.JSX.Element {
       currentPage: 'Tests' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
-      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: openLoginModal,
       onLogout: () => logout(false),

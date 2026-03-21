@@ -4,7 +4,7 @@ import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
@@ -60,7 +60,7 @@ type UseAiPathsSettingsPathActionsInput = {
     fallbackMessage?: string
   ) => void;
   confirm: (config: ConfirmConfig) => void;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 const SWITCH_PATH_FETCH_TIMEOUT_MS = 25_000;

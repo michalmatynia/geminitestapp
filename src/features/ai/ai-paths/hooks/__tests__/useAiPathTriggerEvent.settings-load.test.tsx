@@ -5,9 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { validationError } from '@/shared/errors/app-error';
 
-const { loadTriggerSettingsDataMock, logClientErrorMock, toastMock } = vi.hoisted(() => ({
+const { loadTriggerSettingsDataMock, logClientErrorMock, logClientCatchMock, toastMock } = vi.hoisted(() => ({
   loadTriggerSettingsDataMock: vi.fn(),
   logClientErrorMock: vi.fn(),
+  logClientCatchMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -47,6 +48,7 @@ vi.mock('@/shared/ui', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => logClientErrorMock(...args),
+  logClientCatch: (...args: unknown[]) => logClientCatchMock(...args),
 }));
 
 import { useAiPathTriggerEvent } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';

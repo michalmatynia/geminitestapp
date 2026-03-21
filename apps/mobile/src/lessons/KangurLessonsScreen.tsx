@@ -12,10 +12,15 @@ import {
   getKangurMobileLocaleTag,
   useKangurMobileI18n,
 } from '../i18n/kangurMobileI18n';
+import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import {
   useKangurMobileLessonCheckpoints,
   type KangurMobileLessonCheckpointItem,
 } from './useKangurMobileLessonCheckpoints';
+import {
+  useKangurMobileLessonsAssignments,
+  type KangurMobileLessonsAssignmentItem,
+} from './useKangurMobileLessonsAssignments';
 import { useKangurMobileLessonsDuels } from './useKangurMobileLessonsDuels';
 import { useKangurMobileLessons } from './useKangurMobileLessons';
 import { useLessonsScreenBootState } from './useLessonsScreenBootState';
@@ -314,6 +319,113 @@ function LessonCheckpointRow({
   );
 }
 
+function LessonsAssignmentRow({
+  item,
+}: {
+  item: KangurMobileLessonsAssignmentItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const priorityTone =
+    item.assignment.priority === 'high'
+      ? {
+          backgroundColor: '#fef2f2',
+          borderColor: '#fecaca',
+          textColor: '#b91c1c',
+        }
+      : item.assignment.priority === 'medium'
+        ? {
+            backgroundColor: '#fffbeb',
+            borderColor: '#fde68a',
+            textColor: '#b45309',
+          }
+        : {
+            backgroundColor: '#eff6ff',
+            borderColor: '#bfdbfe',
+            textColor: '#1d4ed8',
+          };
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f8fafc',
+        padding: 14,
+        gap: 8,
+      }}
+    >
+      <Pill
+        label={copy({
+          de:
+            item.assignment.priority === 'high'
+              ? 'Hohe Priorität'
+              : item.assignment.priority === 'medium'
+                ? 'Mittlere Priorität'
+                : 'Niedrige Priorität',
+          en:
+            item.assignment.priority === 'high'
+              ? 'High priority'
+              : item.assignment.priority === 'medium'
+                ? 'Medium priority'
+                : 'Low priority',
+          pl:
+            item.assignment.priority === 'high'
+              ? 'Priorytet wysoki'
+              : item.assignment.priority === 'medium'
+                ? 'Priorytet średni'
+                : 'Priorytet niski',
+        })}
+        tone={priorityTone}
+      />
+      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+        {item.assignment.title}
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {item.assignment.description}
+      </Text>
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Ziel: ${item.assignment.target}`,
+          en: `Goal: ${item.assignment.target}`,
+          pl: `Cel: ${item.assignment.target}`,
+        })}
+      </Text>
+      {item.href ? (
+        <Link href={item.href} asChild>
+          <Pressable
+            accessibilityRole='button'
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 999,
+              backgroundColor: '#0f172a',
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
+              {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
+            </Text>
+          </Pressable>
+        </Link>
+      ) : (
+        <Pill
+          label={`${translateKangurMobileActionLabel(item.assignment.action.label, locale)} · ${copy({
+            de: 'bald',
+            en: 'soon',
+            pl: 'wkrotce',
+          })}`}
+          tone={{
+            backgroundColor: '#e2e8f0',
+            borderColor: '#cbd5e1',
+            textColor: '#475569',
+          }}
+        />
+      )}
+    </View>
+  );
+}
+
 const getMasteryTone = (badgeAccent: string): Tone => {
   if (badgeAccent === 'emerald') {
     return {
@@ -351,6 +463,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string | string[] }>();
   const lessonCheckpoints = useKangurMobileLessonCheckpoints({ limit: 2 });
+  const lessonsAssignments = useKangurMobileLessonsAssignments();
   const rawFocusParam = Array.isArray(params.focus) ? params.focus[0] : params.focus;
   const normalizedRouteFocusToken =
     typeof rawFocusParam === 'string' ? rawFocusParam.trim().toLowerCase() || null : null;
@@ -1032,6 +1145,48 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       </Text>
                     </Pressable>
                   </Link>
+                </View>
+              )}
+            </Card>
+          ) : null}
+
+          {!isPreparingLessonsView ? (
+            <Card>
+              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({
+                  de: 'Nächste Schritte',
+                  en: 'Next steps',
+                  pl: 'Następne kroki',
+                })}
+              </Text>
+              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({
+                  de: 'Lokale Aufgaben nach Lektionen',
+                  en: 'Local tasks after lessons',
+                  pl: 'Lokalne zadania po lekcjach',
+                })}
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({
+                  de: 'Zwischen dem Lesen von Lektionen und den Duellen kannst du direkt in die nächsten lokalen Aufgaben aus deinem Fortschritt springen.',
+                  en: 'Between reading lessons and duels, you can jump straight into the next local tasks from your progress.',
+                  pl: 'Między czytaniem lekcji a pojedynkami możesz od razu wejść w kolejne lokalne zadania wynikające z Twojego postępu.',
+                })}
+              </Text>
+
+              {lessonsAssignments.assignmentItems.length === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                  {copy({
+                    de: 'Es gibt noch keine lokalen Aufgaben. Öffne weitere Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
+                    en: 'There are no local tasks yet. Open more lessons or complete more practice to build the next plan.',
+                    pl: 'Nie ma jeszcze lokalnych zadań. Otwórz kolejne lekcje albo wykonaj więcej treningów, aby zbudować następny plan.',
+                  })}
+                </Text>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {lessonsAssignments.assignmentItems.map((item) => (
+                    <LessonsAssignmentRow key={item.assignment.id} item={item} />
+                  ))}
                 </View>
               )}
             </Card>

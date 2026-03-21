@@ -3,7 +3,7 @@
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -87,7 +87,7 @@ export type UseAdminCaseResolverCasesActionsArgs = {
   setConfirmation: Dispatch<SetStateAction<CaseResolverCaseListConfirmationState>>;
   setCasesLoadState: (state: CaseResolverCasesLoadState) => void;
   setCasesLoadMessage: (message: string | null) => void;
-  toast: ToastFn;
+  toast: Toast;
   settingsStoreRefetchRef: MutableRefObject<() => void>;
 };
 

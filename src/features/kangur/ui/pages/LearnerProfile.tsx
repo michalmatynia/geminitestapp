@@ -190,7 +190,6 @@ export default function LearnerProfilePage(): React.JSX.Element {
       canManageLearners: Boolean(user?.canManageLearners),
       currentPage: 'LearnerProfile' as const,
       isAuthenticated: resolvedIsAuthenticated,
-      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onLogin: openLoginModal,
       onLogout: () => logout(false),
     }),

@@ -164,7 +164,7 @@ const getAssignmentFallbackCopy = (
       starter: {
         actionOpenLesson: 'Open lesson',
         description:
-          "Launch the first lesson to start collecting data about the learner's strengths.",
+          'Launch the first lesson to start collecting data about the learner\'s strengths.',
         progressLabel: 'Progress: 0/1 lesson',
         questLabel: 'Starter mission',
         target: '1 lesson',

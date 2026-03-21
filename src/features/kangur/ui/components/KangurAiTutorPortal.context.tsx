@@ -21,24 +21,12 @@ import type {
   TutorMotionProfile,
   TutorPanelChromeVariant,
   TutorPanelSnapState,
+  TutorReducedMotionAvatarTransitions,
+  TutorReducedMotionPanelTransitions,
+  TutorReducedMotionStableTransitions,
 } from './KangurAiTutorWidget.shared';
 import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
 import type { Transition } from 'framer-motion';
-
-type ReducedMotionTransitions = {
-  instant: {
-    duration: number;
-  };
-  stableState: {
-    opacity: number;
-    scale: number;
-    y: number;
-  };
-  staticSheetState: {
-    opacity: number;
-    y: number;
-  };
-};
 
 export type KangurAiTutorPortalContextValue = {
   avatar: {
@@ -59,7 +47,7 @@ export type KangurAiTutorPortalContextValue = {
     isOpen: boolean;
     motionProfile: TutorMotionProfile;
     prefersReducedMotion: boolean;
-    reducedMotionTransitions: ReducedMotionTransitions;
+    reducedMotionTransitions: TutorReducedMotionAvatarTransitions;
     rimColor: string;
     showFloatingAvatar: boolean;
     uiMode: string;
@@ -113,7 +101,7 @@ export type KangurAiTutorPortalContextValue = {
     mode: TutorGuidedMode;
     placement: TutorEdgePlacement;
     prefersReducedMotion: boolean;
-    reducedMotionTransitions: ReducedMotionTransitions;
+    reducedMotionTransitions: TutorReducedMotionStableTransitions;
     sectionGuidanceLabel: string | null;
     sectionResponsePendingKind: string | null;
     selectionPreview: string | null;
@@ -171,7 +159,7 @@ export type KangurAiTutorPortalContextValue = {
     panelTransition: Transition;
     pointerMarkerId: string;
     prefersReducedMotion: boolean;
-    reducedMotionTransitions: ReducedMotionTransitions;
+    reducedMotionTransitions: TutorReducedMotionPanelTransitions;
     sessionSurfaceLabel: string | null;
     showAttachedAvatarShell: boolean;
     suppressPanelSurface: boolean;
@@ -203,7 +191,7 @@ export type KangurAiTutorPortalContextValue = {
   spotlights: {
     guidedMode: TutorGuidedMode;
     prefersReducedMotion: boolean;
-    reducedMotionTransitions: ReducedMotionTransitions;
+    reducedMotionTransitions: TutorReducedMotionStableTransitions;
     sectionContextSpotlightStyle: CSSProperties | null;
     sectionDropHighlightStyle: CSSProperties | null;
     selectionGlowStyles: CSSProperties[];

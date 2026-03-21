@@ -14,7 +14,7 @@ export type GenerationCostEstimate = {
   outputCount: number;
 };
 
-const CHARS_PER_TOKEN_ESTIMATE = 4;
+export const CHARS_PER_TOKEN_ESTIMATE = 4;
 
 const DEFAULT_MODEL_COST_PROFILE: ModelCostProfile = {
   imageUsdPerImage: 0.03,

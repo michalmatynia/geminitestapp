@@ -145,21 +145,6 @@ export function ActiveLessonView() {
     };
   }, [shouldLockScroll, activeLessonId]);
 
-  useEffect(() => {
-    if (!shouldLockScroll) return undefined;
-    const node = activeLessonScrollRef.current;
-    if (!node) return undefined;
-    const preventScroll = (event: Event): void => {
-      event.preventDefault();
-    };
-    node.addEventListener('wheel', preventScroll, { passive: false });
-    node.addEventListener('touchmove', preventScroll, { passive: false });
-    return () => {
-      node.removeEventListener('wheel', preventScroll);
-      node.removeEventListener('touchmove', preventScroll);
-    };
-  }, [activeLessonId, activeLessonScrollRef, shouldLockScroll]);
-
   const updateScrollButtons = useCallback((): void => {
     const container = activeLessonScrollRef.current;
     if (!container) return;
@@ -404,7 +389,7 @@ export function ActiveLessonView() {
           <div className='w-full max-w-5xl flex flex-col gap-3 h-[calc(var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px))]'>
             <div
               ref={activeLessonScrollRef}
-              className={`flex-1 min-h-0 w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-none`}
+              className={`flex-1 min-h-0 w-full flex flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME} overflow-y-auto overscroll-contain touch-pan-y`}
               data-testid='kangur-lesson-scroll-container'
             >
               {topControlsSection}

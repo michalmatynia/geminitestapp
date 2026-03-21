@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { LabeledOptionDto, UnknownRecordDto } from '@/shared/contracts/base';
 import type {
   SettingsFieldsRendererProps,
   SettingsPanelField,
@@ -514,7 +514,7 @@ export interface SettingsPanelBuilderProps<
   showCancelButton?: boolean;
 }
 
-type SettingsPanelBuilderShape = Record<string, unknown>;
+type SettingsPanelBuilderShape = UnknownRecordDto;
 
 type SettingsPanelBuilderRuntimeValue = {
   open: boolean;

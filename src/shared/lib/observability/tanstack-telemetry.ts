@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import { classifyError } from '@/shared/errors/error-classifier';
 import type {
   TanstackCriticality,
@@ -63,7 +64,7 @@ type ApiErrorLike = {
   payload?: unknown;
 };
 
-type SerializableRecord = Record<string, unknown>;
+type SerializableRecord = UnknownRecordDto;
 
 const dedupeBucket = new Map<string, number>();
 const queuedEvents: TanstackTelemetryEvent[] = [];

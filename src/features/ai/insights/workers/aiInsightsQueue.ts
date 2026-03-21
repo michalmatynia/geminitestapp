@@ -5,6 +5,7 @@ import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 import type {
+  ManagedQueueStatus,
   RepeatableJobEntry,
   ScheduledTickJobData,
   SchedulerQueueState,
@@ -28,17 +29,7 @@ const AI_INSIGHTS_LOCK_DURATION_MS = parseMsFromEnv(
   60_000
 );
 
-type AiInsightsQueueStatus = {
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeJobs: number;
-  waitingJobs: number;
-  failedJobs: number;
-  completedJobs: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-};
+type AiInsightsQueueStatus = ManagedQueueStatus;
 
 const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
   running: false,

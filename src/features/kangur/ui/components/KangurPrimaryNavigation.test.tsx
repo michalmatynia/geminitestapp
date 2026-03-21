@@ -1311,9 +1311,8 @@ describe('KangurPrimaryNavigation', () => {
     );
   });
 
-  it('shows login and create-account actions when the user is not authenticated', () => {
+  it('shows the login action and hides create-account when the user is not authenticated', () => {
     const onLogin = vi.fn();
-    const onCreateAccount = vi.fn();
     const onGuestPlayerNameChange = vi.fn();
 
     render(
@@ -1322,7 +1321,6 @@ describe('KangurPrimaryNavigation', () => {
         currentPage='Game'
         guestPlayerName='Ala'
         isAuthenticated={false}
-        onCreateAccount={onCreateAccount}
         onGuestPlayerNameChange={onGuestPlayerNameChange}
         onLogin={onLogin}
         onLogout={vi.fn()}
@@ -1338,17 +1336,16 @@ describe('KangurPrimaryNavigation', () => {
     fireEvent.keyDown(screen.getByPlaceholderText('Wpisz imię gracza...'), {
       key: 'Enter',
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Utwórz konto' }));
     fireEvent.click(screen.getByRole('button', { name: /zaloguj się/i }));
 
     expect(onGuestPlayerNameChange).toHaveBeenCalledWith('Ola');
-    expect(onCreateAccount).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Utwórz konto' })).toBeNull();
     expect(onLogin).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Ala' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /profil/i })).toBeNull();
   });
 
-  it('registers tutor anchors on the anonymous auth actions', () => {
+  it('registers tutor anchors on the anonymous login action only', () => {
     render(
       <KangurTutorAnchorProvider>
         <KangurPrimaryNavigation
@@ -1356,7 +1353,6 @@ describe('KangurPrimaryNavigation', () => {
           currentPage='Game'
           guestPlayerName='Ala'
           isAuthenticated={false}
-          onCreateAccount={vi.fn()}
           onGuestPlayerNameChange={vi.fn()}
           onLogin={vi.fn()}
           onLogout={vi.fn()}
@@ -1368,31 +1364,21 @@ describe('KangurPrimaryNavigation', () => {
       'data-kangur-tutor-anchor-kind',
       'login_action'
     );
-    expect(screen.getByTestId('kangur-primary-nav-create-account')).toHaveAttribute(
-      'data-kangur-tutor-anchor-kind',
-      'create_account_action'
-    );
+    expect(screen.queryByTestId('kangur-primary-nav-create-account')).toBeNull();
     expect(screen.getByTestId('kangur-primary-nav-login')).toHaveAttribute(
       'data-kangur-tutor-anchor-surface',
       'auth'
     );
   });
 
-  it('uses Mongo-backed labels on the anonymous auth actions when available', () => {
-    useKangurPageContentEntryMock.mockImplementation((entryId: string) => ({
+  it('uses Mongo-backed labels on the anonymous login action when available', () => {
+    useKangurPageContentEntryMock.mockImplementation(() => ({
       data: undefined,
-      entry:
-        entryId === 'shared-nav-create-account-action'
-          ? {
-              id: 'shared-nav-create-account-action',
-              title: 'Utwórz konto',
-              summary: 'Załóż konto rodzica bez opuszczania tej strony.',
-            }
-          : {
-              id: 'shared-nav-login-action',
-              title: 'Zaloguj się',
-              summary: 'Otwórz logowanie rodzica lub ucznia z bieżącej strony.',
-            },
+      entry: {
+        id: 'shared-nav-login-action',
+        title: 'Zaloguj się',
+        summary: 'Otwórz logowanie rodzica lub ucznia z bieżącej strony.',
+      },
       error: null,
       isError: false,
       isFetched: true,
@@ -1410,17 +1396,13 @@ describe('KangurPrimaryNavigation', () => {
         currentPage='Game'
         guestPlayerName='Ala'
         isAuthenticated={false}
-        onCreateAccount={vi.fn()}
         onGuestPlayerNameChange={vi.fn()}
         onLogin={vi.fn()}
         onLogout={vi.fn()}
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Utwórz konto' })).toHaveAttribute(
-      'title',
-      'Załóż konto rodzica bez opuszczania tej strony.'
-    );
+    expect(screen.queryByRole('button', { name: 'Utwórz konto' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Zaloguj się' })).toHaveAttribute(
       'title',
       'Otwórz logowanie rodzica lub ucznia z bieżącej strony.'
@@ -1501,7 +1483,6 @@ describe('KangurPrimaryNavigation', () => {
         currentPage='Game'
         guestPlayerName='Ola'
         isAuthenticated={false}
-        onCreateAccount={vi.fn()}
         onGuestPlayerNameChange={onGuestPlayerNameChange}
         onLogin={vi.fn()}
         onLogout={vi.fn()}

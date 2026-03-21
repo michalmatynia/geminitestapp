@@ -14,6 +14,7 @@ const {
   replaceMock,
   shareKangurDuelInviteMock,
   useKangurMobileAuthMock,
+  useKangurMobileDuelsAssignmentsMock,
   useKangurMobileDuelLobbyChatMock,
   useKangurMobileDuelsLobbyMock,
   useKangurMobileDuelSessionMock,
@@ -24,6 +25,7 @@ const {
   replaceMock: vi.fn(),
   shareKangurDuelInviteMock: vi.fn(),
   useKangurMobileAuthMock: vi.fn(),
+  useKangurMobileDuelsAssignmentsMock: vi.fn(),
   useKangurMobileDuelLobbyChatMock: vi.fn(),
   useKangurMobileDuelsLobbyMock: vi.fn(),
   useKangurMobileDuelSessionMock: vi.fn(),
@@ -50,6 +52,10 @@ vi.mock('./useKangurMobileDuelLobbyChat', () => ({
 
 vi.mock('./useKangurMobileDuelSession', () => ({
   useKangurMobileDuelSession: useKangurMobileDuelSessionMock,
+}));
+
+vi.mock('./useKangurMobileDuelsAssignments', () => ({
+  useKangurMobileDuelsAssignments: useKangurMobileDuelsAssignmentsMock,
 }));
 
 vi.mock('./duelInviteShare', () => ({
@@ -161,6 +167,9 @@ describe('KangurDuelsScreen', () => {
     });
     useKangurMobileLessonCheckpointsMock.mockReturnValue({
       recentCheckpoints: [],
+    });
+    useKangurMobileDuelsAssignmentsMock.mockReturnValue({
+      assignmentItems: [],
     });
   });
 
@@ -359,6 +368,32 @@ describe('KangurDuelsScreen', () => {
         },
       ],
     });
+    useKangurMobileDuelsAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'clock',
+              },
+            },
+            description: 'Wroc do zegara i popraw ostatnie luki po grze.',
+            id: 'assignment-duels-lobby-1',
+            priority: 'high',
+            target: '1 lekcja',
+            title: 'Domknij zegar',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'clock',
+            },
+          },
+        },
+      ],
+    });
 
     renderDuelsScreen();
 
@@ -384,6 +419,12 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Wróć do lekcji: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Zegar i czas')).toBeTruthy();
     expect(screen.getByText('Otwórz lekcje')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Lokalne zadania z lobby')).toBeTruthy();
+    expect(screen.getByText('Domknij zegar')).toBeTruthy();
+    expect(screen.getByText('Priorytet wysoki')).toBeTruthy();
+    expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcję')).toBeTruthy();
     expect(screen.getByText('#1 Ola')).toBeTruthy();
     expect(screen.getByText('Ola Quiz')).toBeTruthy();
   });
@@ -621,6 +662,32 @@ describe('KangurDuelsScreen', () => {
         },
       ],
     });
+    useKangurMobileDuelsAssignmentsMock.mockReturnValue({
+      assignmentItems: [
+        {
+          assignment: {
+            action: {
+              label: 'Open lesson',
+              page: 'Lessons',
+              query: {
+                focus: 'addition',
+              },
+            },
+            description: 'Wroc do dodawania i zamknij lokalny plan po pojedynku.',
+            id: 'assignment-duels-session-1',
+            priority: 'high',
+            target: '1 lekcja',
+            title: 'Domknij dodawanie',
+          },
+          href: {
+            pathname: '/lessons',
+            params: {
+              focus: 'addition',
+            },
+          },
+        },
+      ],
+    });
 
     renderDuelsScreen();
 
@@ -640,6 +707,11 @@ describe('KangurDuelsScreen', () => {
     expect(screen.getByText('Ostatnie checkpointy lekcji')).toBeTruthy();
     expect(screen.getByText('Wróć do lekcji: Dodawanie w pamięci')).toBeTruthy();
     expect(screen.getByText('Potem trenuj: Dodawanie w pamięci')).toBeTruthy();
+    expect(screen.getByText('Następne kroki')).toBeTruthy();
+    expect(screen.getByText('Lokalne zadania obok pojedynku')).toBeTruthy();
+    expect(screen.getByText('Domknij dodawanie')).toBeTruthy();
+    expect(screen.getByText('Cel: 1 lekcja')).toBeTruthy();
+    expect(screen.getByText('Otwórz lekcję')).toBeTruthy();
     expect(screen.getByText('Opuść pojedynek')).toBeTruthy();
   });
 

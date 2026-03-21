@@ -1,7 +1,7 @@
 import { setImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
 import type { Toast } from '@/shared/contracts/ui';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { ImageStudioAssetDto, ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
 
 
@@ -35,13 +35,7 @@ type AsyncMutation<TInput, TResult> = {
   mutateAsync: (input: TInput) => Promise<TResult>;
 };
 
-type TemporaryObjectUploadDraft = {
-  id: string;
-  filepath: string;
-  filename?: string;
-  width?: number | null;
-  height?: number | null;
-};
+type TemporaryObjectUploadDraft = ImageStudioAssetDto;
 
 type CreateUploadHandlersDeps = {
   applyEnvironmentReferenceDraft: (asset: UploadAssetRecord) => void;

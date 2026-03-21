@@ -8,23 +8,14 @@ test('cms builder exposes shell controls accessibly and passes the accessibility
   page,
 }) => {
   test.setTimeout(360_000);
+  const builderNavigationTimeoutMs = 180_000;
   const builderUiTimeoutMs = 120_000;
 
   await mockCmsBuilderApis(page);
-  await ensureAdminSession(page, '/admin', {
-    destinationNavigationTimeoutMs: 60_000,
+  await ensureAdminSession(page, '/admin/cms/builder?pageId=page-1', {
+    destinationNavigationTimeoutMs: builderNavigationTimeoutMs,
     transitionTimeoutMs: 30_000,
   });
-  try {
-    await page.goto('/admin/cms/builder?pageId=page-1', {
-      waitUntil: 'domcontentloaded',
-      timeout: 120_000,
-    });
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes('Timeout')) {
-      throw error;
-    }
-  }
 
   const main = page.locator('#kangur-main-content');
   await expect(main).toBeVisible({ timeout: 60_000 });

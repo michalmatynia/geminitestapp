@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { getProductDetailQueryKey } from '@/shared/lib/product-query-keys';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
@@ -11,7 +11,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
 
 type UseAiPathsSettingsSamplesInput = {
-  toast: ToastFn;
+  toast: Toast;
 };
 
 type FetchUpdaterSampleVariables = {

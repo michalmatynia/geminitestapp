@@ -13,3 +13,15 @@ export type RepeatableJobEntry = {
   every?: number | null;
   key: string;
 };
+
+export type ManagedQueueStatus = {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  activeJobs: number;
+  waitingJobs: number;
+  failedJobs: number;
+  completedJobs: number;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+};

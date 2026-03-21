@@ -1,12 +1,13 @@
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import type { ClientErrorPayloadDto as ClientErrorPayload } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
 
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
-export type ClientErrorContext = Record<string, unknown>;
+export type ClientErrorContext = UnknownRecordDto;
 type SerializedContext =
-  | Record<string, unknown>
+  | UnknownRecordDto
   | { truncated: true; preview: string }
   | { error: string }
   | null;

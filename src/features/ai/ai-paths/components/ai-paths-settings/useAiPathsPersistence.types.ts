@@ -1,4 +1,4 @@
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import type {
   AiPathsSettingRecordDto,
   AiNode,
@@ -58,7 +58,7 @@ export type UseAiPathsPersistenceArgs = {
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 export type PersistSettingsPayload = AiPathsSettingRecordDto[];

@@ -11,6 +11,7 @@ const mockState = vi.hoisted(() => ({
   setLastError: vi.fn(),
   updateAiPathsSetting: vi.fn(),
   logClientError: vi.fn(),
+  logClientCatch: vi.fn(),
   safeStringify: vi.fn((value: unknown) => JSON.stringify(value)),
 }));
 
@@ -32,6 +33,7 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: (...args: unknown[]) => mockState.logClientError(...args),
+  logClientCatch: (...args: unknown[]) => mockState.logClientCatch(...args),
 }));
 
 import { useAiPathsErrorReporting } from '../useAiPathsErrorReporting';

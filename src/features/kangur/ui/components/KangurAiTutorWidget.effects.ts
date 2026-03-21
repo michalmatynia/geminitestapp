@@ -12,16 +12,10 @@ import type {
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
 import { areTutorSelectionTextsEquivalent } from './KangurAiTutorWidget.helpers';
 
-import type { ActiveTutorFocus, TutorMotionProfile, TutorQuickAction } from './KangurAiTutorWidget.shared';
+import type { ActiveTutorFocus, TutorMotionProfile } from './KangurAiTutorWidget.shared';
+import type { TutorProactiveNudge } from './KangurAiTutorPanelBody.context';
 import type { PendingSelectionResponse, SectionExplainContext } from './KangurAiTutorWidget.types';
 import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-
-type TutorProactiveNudge = {
-  mode: 'gentle' | 'coach';
-  title: string;
-  description: string;
-  action: TutorQuickAction;
-};
 
 export function useKangurAiTutorGuidanceCompletionEffects(input: {
   activeSelectedText: string | null;

@@ -36,26 +36,12 @@ import type {
   TutorPanelChromeVariant,
   TutorMotionProfile,
   TutorPanelSnapState,
+  TutorReducedMotionPanelTransitions,
 } from './KangurAiTutorWidget.shared';
 import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
 import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
-
-type ReducedMotionTransitions = {
-  instant: {
-    duration: number;
-  };
-  stableState: {
-    opacity: number;
-    scale: number;
-    y: number;
-  };
-  staticSheetState: {
-    opacity: number;
-    y: number;
-  };
-};
 
 type Props = {
   attachedAvatarStyle: CSSProperties;
@@ -98,7 +84,7 @@ type Props = {
   panelTransition: Transition;
   pointerMarkerId: string;
   prefersReducedMotion: boolean;
-  reducedMotionTransitions: ReducedMotionTransitions;
+  reducedMotionTransitions: TutorReducedMotionPanelTransitions;
   sessionSurfaceLabel: string | null;
   showAttachedAvatarShell: boolean;
   suppressPanelSurface: boolean;

@@ -50,7 +50,6 @@ function LessonsContent() {
     currentPage: 'Lessons' as const,
     guestPlayerName: user ? undefined : guestPlayerName,
     isAuthenticated: Boolean(user),
-    onCreateAccount: () => {}, // Handled by modal in original, simplified here
     onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
     onLogin: () => {},
     onLogout: () => logout(false),

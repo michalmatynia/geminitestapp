@@ -24,21 +24,13 @@ import {
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
-import type { TutorHorizontalSide } from './KangurAiTutorWidget.shared';
+import type {
+  TutorHorizontalSide,
+  TutorReducedMotionStableTransitions,
+} from './KangurAiTutorWidget.shared';
 import type { GuidedTutorTarget } from './KangurAiTutorWidget.types';
 import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type { CSSProperties, JSX } from 'react';
-
-type ReducedMotionTransitions = {
-  instant: {
-    duration: number;
-  };
-  stableState: {
-    opacity: number;
-    scale: number;
-    y: number;
-  };
-};
 
 type Props = {
   avatarPlacement: 'top' | 'bottom' | 'left' | 'right' | null;
@@ -53,7 +45,7 @@ type Props = {
   ) => void;
   placement: string;
   prefersReducedMotion: boolean;
-  reducedMotionTransitions: ReducedMotionTransitions;
+  reducedMotionTransitions: TutorReducedMotionStableTransitions;
   sectionGuidanceLabel: string | null;
   sectionResponsePendingKind: string | null;
   selectionPreview: string | null;

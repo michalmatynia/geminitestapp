@@ -89,10 +89,6 @@ const PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageContentCopyO
     title: 'Email rodzica albo nick ucznia',
     summary: 'Wpisz email rodzica albo nick ucznia. Typ konta wybierzemy po kliknięciu Zaloguj.',
   },
-  'shared-nav-create-account-action': {
-    title: 'Utwórz konto',
-    summary: 'Załóż konto rodzica bez opuszczania bieżącej strony.',
-  },
   'shared-nav-login-action': {
     title: 'Zaloguj się',
     summary: 'Otwórz logowanie rodzica lub ucznia z dowolnej strony Kangur.',
@@ -249,10 +245,6 @@ const ENGLISH_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageCont
     title: 'Parent email or learner username',
     summary: 'Enter the parent email or learner username. We detect the account type after you press Sign in.',
   },
-  'shared-nav-create-account-action': {
-    title: 'Create account',
-    summary: 'Open the parent account flow without leaving the current page.',
-  },
   'shared-nav-login-action': {
     title: 'Sign in',
     summary: 'Open the parent or learner sign-in flow from any Kangur page.',
@@ -407,10 +399,6 @@ const GERMAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<Record<string, KangurPageConte
   'login-page-identifier-field': {
     title: 'E-Mail der Eltern oder Nutzername des Lernenden',
     summary: 'Gib die E-Mail der Eltern oder den Nutzernamen des Lernenden ein. Den Kontotyp erkennen wir nach dem Klick auf Anmelden.',
-  },
-  'shared-nav-create-account-action': {
-    title: 'Konto erstellen',
-    summary: 'Starte den Elternkonto-Ablauf, ohne die aktuelle Seite zu verlassen.',
   },
   'shared-nav-login-action': {
     title: 'Anmelden',
@@ -579,10 +567,6 @@ const UKRAINIAN_PAGE_CONTENT_COPY_OVERRIDES: Partial<
     title: 'Електронна пошта батьків або нік учня',
     summary:
       'Введіть електронну пошту батьків або нік учня. Тип акаунта визначимо після натискання кнопки входу.',
-  },
-  'shared-nav-create-account-action': {
-    title: 'Створити акаунт',
-    summary: 'Відкрийте оформлення батьківського акаунта, не залишаючи поточну сторінку.',
   },
   'shared-nav-login-action': {
     title: 'Увійти',

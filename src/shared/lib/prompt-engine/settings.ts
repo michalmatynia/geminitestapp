@@ -744,7 +744,7 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
     logClientCatch(error, {
       source: 'prompt-engine.settings',
       action: 'normalizePromptEngineSettings',
-      valueType: typeof value,
+      valueType: typeof raw,
     });
     return defaultPromptEngineSettings;
   }

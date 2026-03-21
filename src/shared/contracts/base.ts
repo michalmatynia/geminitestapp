@@ -22,6 +22,8 @@ export type LocalizedDto = z.infer<typeof localizedSchema>;
 export type Localized<T = string> = Record<string, T | null>;
 export type UnknownRecordDto = Record<string, unknown>;
 export type UnknownRecord = UnknownRecordDto;
+export type StringRecordDto = Record<string, string>;
+export type StringRecord = StringRecordDto;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),

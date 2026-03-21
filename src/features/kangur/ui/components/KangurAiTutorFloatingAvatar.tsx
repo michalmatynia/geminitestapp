@@ -10,16 +10,11 @@ import type {
   TutorGuidedArrowhead,
   TutorMotionPosition,
   TutorMotionProfile,
+  TutorReducedMotionAvatarTransitions,
 } from './KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, MouseEvent, PointerEvent } from 'react';
 
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
-
-type ReducedMotionTransitions = {
-  instant: {
-    duration: number;
-  };
-};
 
 type Props = {
   ariaLabel: string;
@@ -46,7 +41,7 @@ type Props = {
   onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
   onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
   prefersReducedMotion: boolean;
-  reducedMotionTransitions: ReducedMotionTransitions;
+  reducedMotionTransitions: TutorReducedMotionAvatarTransitions;
   rimColor: string;
   showFloatingAvatar: boolean;
   uiMode: string;

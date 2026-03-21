@@ -10,7 +10,6 @@ import {
   LogOut,
   Menu,
   Trophy,
-  UserPlus,
   X,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -107,7 +106,6 @@ type KangurPrimaryNavigationProps = {
   homeActive?: boolean;
   isAuthenticated: boolean;
   navLabel?: string;
-  onCreateAccount?: () => void;
   onGuestPlayerNameChange?: (value: string) => void;
   onHomeClick?: () => void;
   onLogin?: () => void;
@@ -158,7 +156,6 @@ export function KangurPrimaryNavigation({
   homeActive = currentPage === 'Game',
   isAuthenticated,
   navLabel = 'Główna nawigacja Kangur',
-  onCreateAccount,
   onGuestPlayerNameChange,
   onHomeClick,
   onLogin,
@@ -201,11 +198,7 @@ export function KangurPrimaryNavigation({
   const mobileWideNavItemClassName =
     'max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center max-sm:px-3';
   const mobileAuthActionClassName = mobileNavItemClassName;
-  const { entry: createAccountActionContent } = useKangurPageContentEntry(
-    'shared-nav-create-account-action'
-  );
   const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
-  const createAccountActionRef = useRef<HTMLButtonElement | null>(null);
   const loginActionRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuPreviousFocusRef = useRef<HTMLElement | null>(null);
@@ -399,18 +392,6 @@ export function KangurPrimaryNavigation({
   };
 
   useKangurTutorAnchor({
-    id: 'kangur-auth-create-account-action',
-    kind: 'create_account_action',
-    ref: createAccountActionRef,
-    surface: 'auth',
-    enabled: !effectiveIsAuthenticated && Boolean(onCreateAccount),
-    priority: 140,
-    metadata: {
-      label: 'Utwórz konto',
-    },
-  });
-
-  useKangurTutorAnchor({
     id: 'kangur-auth-login-action',
     kind: 'login_action',
     ref: loginActionRef,
@@ -468,7 +449,7 @@ export function KangurPrimaryNavigation({
       return renderNavAction(buildActionWithClose(logoutAction, onActionClick));
     }
 
-    if (!onLogin && !onCreateAccount) {
+    if (!onLogin && !showGuestPlayerNameInput) {
       return null;
     }
 
@@ -511,29 +492,6 @@ export function KangurPrimaryNavigation({
             >
               <span className='truncate'>{guestPlayerName.trim()}</span>
             </KangurButton>
-          )
-        ) : null}
-        {onCreateAccount ? (
-          renderNavAction(
-            buildActionWithClose(
-              {
-                className: mobileAuthActionClassName,
-                content: (
-                  <>
-                    <UserPlus aria-hidden='true' className={ICON_CLASSNAME} strokeWidth={2.15} />
-                    <span className='truncate'>
-                      {createAccountActionContent?.title ?? 'Utwórz konto'}
-                    </span>
-                  </>
-                ),
-                docId: 'profile_create_account',
-                elementRef: createAccountActionRef,
-                onClick: onCreateAccount,
-                testId: 'kangur-primary-nav-create-account',
-                title: createAccountActionContent?.summary ?? undefined,
-              },
-              onActionClick
-            )
           )
         ) : null}
         {onLogin ? (

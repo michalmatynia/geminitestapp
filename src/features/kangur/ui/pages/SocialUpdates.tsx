@@ -96,7 +96,6 @@ export default function SocialUpdates(): React.JSX.Element {
       currentPage: 'SocialUpdates' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
-      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: openLoginModal,
       onLogout: () => logout(false),

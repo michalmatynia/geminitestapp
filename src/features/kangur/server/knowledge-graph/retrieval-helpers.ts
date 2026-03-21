@@ -194,7 +194,7 @@ export const resolveTutorContentCanonicalSection = (
         text: [
           content.guidedCallout.authTitles.createAccountNav,
           content.guidedCallout.authDetails.createAccountNav,
-          `Use the navigation action labeled "${content.common.createAccountLabel}".`,
+          `Use the navigation action labeled "${content.common.signInLabel}" and then switch to account creation.`,
         ].join('\n'),
         tags: [...hit.tags, 'mongo-canonical'],
       };

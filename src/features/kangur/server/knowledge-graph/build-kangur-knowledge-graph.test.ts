@@ -132,6 +132,11 @@ describe('buildKangurKnowledgeGraph', () => {
           to: 'anchor:kangur:login',
         }),
         expect.objectContaining({
+          kind: 'USES_ANCHOR',
+          from: 'flow:kangur:create-account',
+          to: 'anchor:kangur:login',
+        }),
+        expect.objectContaining({
           kind: 'HAS_REFERENCE',
           from: 'root:kangur:lessonContext',
           to: 'page:kangur-lessons',
@@ -153,6 +158,7 @@ describe('buildKangurKnowledgeGraph', () => {
         }),
       ])
     );
+    expect(snapshot.nodes.some((node) => node.id === 'anchor:kangur:create-account')).toBe(false);
   });
 
   it('respects the requested locale on generated nodes', () => {

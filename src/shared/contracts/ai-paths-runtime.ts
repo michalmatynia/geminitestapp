@@ -4,7 +4,7 @@ import { nodePortValueKindSchema, type AiNode, type Edge } from './ai-paths-core
 import { dtoBaseSchema } from './base';
 
 import type { ContextRegistryConsumerEnvelope } from './ai-context-registry';
-import type { Toast as ToastFn } from './ui';
+import type { Toast } from './ui';
 
 /**
  * AI Path Node Status
@@ -707,7 +707,7 @@ export const MAX_RUNTIME_EVENTS = 300;
 export const LOCAL_RUN_STEP_CHUNK = 5;
 export const AI_PATHS_ENTITY_STALE_MS = 30000;
 
-export type { ToastFn };
+export type { Toast };
 
 /**
  * AI Path Execution Node Handler Types
@@ -745,7 +745,7 @@ export interface NodeHandlerContext {
     entityId: string
   ) => Promise<Record<string, unknown> | null>;
   reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => void;
-  toast: ToastFn;
+  toast: Toast;
   simulationEntityType: string | null;
   simulationEntityId: string | null;
   resolvedEntity: Record<string, unknown> | null;

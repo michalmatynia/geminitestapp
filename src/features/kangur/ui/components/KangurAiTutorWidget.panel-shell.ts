@@ -21,6 +21,7 @@ import {
   type TutorMotionPosition,
   type TutorMotionProfile,
   type TutorPanelSnapState,
+  type TutorReducedMotionAvatarTransitions,
 } from './KangurAiTutorWidget.shared';
 import { getAttachedAvatarRectForSurface } from './KangurAiTutorAvatarAttachment';
 
@@ -32,12 +33,6 @@ type BubblePlacement = {
   strategy: TutorBubblePlacementStrategy;
   style: Record<string, number | string | undefined>;
   width?: number;
-};
-
-type ReducedMotionTransitions = {
-  instant: {
-    duration: number;
-  };
 };
 
 type GuidedTutorTargetLike = {
@@ -259,7 +254,7 @@ export function useKangurAiTutorPanelShellState(input: {
   panelShellMode: 'default' | 'minimal';
   panelSnapPreference: TutorPanelSnapState;
   prefersReducedMotion: boolean;
-  reducedMotionTransitions: ReducedMotionTransitions;
+  reducedMotionTransitions: TutorReducedMotionAvatarTransitions;
   showSectionGuidanceCallout: boolean;
   showSelectionGuidanceCallout: boolean;
   viewport: { width: number; height: number };

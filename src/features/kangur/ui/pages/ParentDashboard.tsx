@@ -338,7 +338,6 @@ function ParentDashboardContent(): React.JSX.Element {
       currentPage: 'ParentDashboard' as const,
       guestPlayerName: isAuthenticated ? undefined : guestPlayerName,
       isAuthenticated,
-      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: isAuthenticated ? undefined : setGuestPlayerName,
       onLogin: openLoginModal,
       onLogout: () => logout(false),

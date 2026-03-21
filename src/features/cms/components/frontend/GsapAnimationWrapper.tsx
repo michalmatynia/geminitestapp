@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useEffect, type ReactNode } from 'react';
 
 import type { GsapAnimationConfig, AnimationPreset, AnimationEasing } from '@/features/gsap';
 import { DEFAULT_ANIMATION_CONFIG, PARALLAX_DEFAULTS } from '@/features/gsap';
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import { getGsapFromVars } from '@/features/gsap';
 import { vectorShapesToPathWithBounds } from '@/shared/ui';
 
@@ -11,8 +12,8 @@ import { useBlockSettings } from './sections/FrontendBlockRenderer';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-type GSAPTweenVars = Record<string, unknown>;
-type GSAPStaggerVars = Record<string, unknown>;
+type GSAPTweenVars = UnknownRecordDto;
+type GSAPStaggerVars = UnknownRecordDto;
 
 interface GsapAnimationWrapperProps {
   config?: Partial<GsapAnimationConfig> | undefined;

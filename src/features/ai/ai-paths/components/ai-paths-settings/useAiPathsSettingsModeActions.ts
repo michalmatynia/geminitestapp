@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import type {
   AiNode,
   Edge,
@@ -60,7 +60,7 @@ type UseAiPathsSettingsModeActionsInput = {
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 export type UseAiPathsSettingsModeActionsReturn = {

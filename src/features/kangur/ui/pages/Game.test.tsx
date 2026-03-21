@@ -414,6 +414,8 @@ describe('Game page', () => {
     expect(screen.getByTestId('kangur-game-navigation-widget')).toBeInTheDocument();
 
     const scrollContainer = screen.getByTestId('kangur-game-phone-simulation-scroll-container');
+    expect(scrollContainer.className).toContain('touch-pan-y');
+    expect(scrollContainer.className).not.toContain('touch-none');
 
     Object.defineProperty(scrollContainer, 'clientHeight', {
       configurable: true,
@@ -484,6 +486,8 @@ describe('Game page', () => {
     expect(gameMain?.className).toContain(
       'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
     );
+    expect(scrollContainer.className).toContain('touch-pan-y');
+    expect(scrollContainer.className).not.toContain('touch-none');
 
     Object.defineProperty(scrollContainer, 'clientHeight', {
       configurable: true,

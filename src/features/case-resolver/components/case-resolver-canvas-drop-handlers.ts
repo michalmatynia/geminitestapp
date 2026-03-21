@@ -13,7 +13,7 @@ import {
   type CaseResolverDroppedAsset,
   type CaseResolverDroppedDocument,
 } from '@/shared/contracts/case-resolver';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 
 import {
@@ -47,7 +47,7 @@ type CreateCaseResolverCanvasDropHandlersInput = {
   pdfExtractionPresetId: CaseResolverPdfExtractionPresetId;
   availableFileIds: Set<string>;
   availableFilesById: Map<string, CaseResolverFile>;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 export const createCaseResolverCanvasDropHandlers = ({

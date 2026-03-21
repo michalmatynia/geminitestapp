@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 type UseAiPathsNodeSwitchConfirmInput = {
@@ -8,7 +8,7 @@ type UseAiPathsNodeSwitchConfirmInput = {
   selectedNodeId: string | null;
   setNodeConfigDirty: (dirty: boolean) => void;
   confirm: (config: ConfirmConfig) => void;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 export type UseAiPathsNodeSwitchConfirmReturn = {

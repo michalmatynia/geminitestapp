@@ -179,7 +179,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT_INPUT = {
         'Za chwilę wyjaśnię tę część strony i pokażę, na co warto zwrócić uwagę.',
       selectionPreparingBadge: 'Już przygotowuję wyjaśnienie…',
       authTitles: {
-        createAccountNav: 'U góry kliknij „{label}”.',
+        createAccountNav: 'U góry kliknij „{label}”, aby otworzyć logowanie.',
         signInNav: 'U góry kliknij „{label}”.',
         createAccountIdentifier: 'Tutaj wpisz e-mail rodzica.',
         signInIdentifier: 'Tutaj wpisz e-mail rodzica albo nick ucznia.',
@@ -188,7 +188,7 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT_INPUT = {
       },
       authDetails: {
         createAccountNav:
-          'Ten przycisk otworzy zakładanie konta rodzica. Najpierw wybierz go w nawigacji, a formularz pojawi się potem.',
+          'To otworzy logowanie. Następnie przełącz formularz na tworzenie konta rodzica i wpisz dane opiekuna.',
         signInNav:
           'Ten przycisk otworzy logowanie. Najpierw kliknij go w nawigacji, a dopiero potem wpiszesz dane.',
         createAccountIdentifier:

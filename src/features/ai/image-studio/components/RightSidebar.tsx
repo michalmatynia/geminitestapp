@@ -20,10 +20,12 @@ import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';
 import { ControlPromptModal } from './right-sidebar/ControlPromptModalImpl';
 import { ACTION_HISTORY_MAX_STEPS } from './right-sidebar/right-sidebar-utils';
 import {
-  formatCanvasSizeLabel,
-  CANVAS_SIZE_PRESET_OPTIONS,
   estimatePromptTokens,
   resolveModelCostProfile,
+} from '@/features/ai/image-studio/utils/generation-cost';
+import {
+  formatCanvasSizeLabel,
+  CANVAS_SIZE_PRESET_OPTIONS,
   cloneSerializableValue,
   parseCanvasSizePresetValue,
   type StudioActionHistorySnapshot,

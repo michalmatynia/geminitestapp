@@ -324,7 +324,7 @@ const getOperationSelectorFallbackCopy = (
 
   if (locale === 'de') {
     return {
-      operationSelectorTitle: "Los geht's!",
+      operationSelectorTitle: 'Los geht\'s!',
       trainingSetupTitle: 'Gemischtes Training',
       trainingSetupWordmarkLabel: 'Training',
       trainingSetupDescription:
@@ -494,7 +494,7 @@ const getOperationSelectorFallbackCopy = (
 
   if (locale === 'en') {
     return {
-      operationSelectorTitle: "Let's play!",
+      operationSelectorTitle: 'Let\'s play!',
       trainingSetupTitle: 'Mixed training',
       trainingSetupWordmarkLabel: 'Training',
       trainingSetupDescription: 'Choose the level, categories, and number of questions for one session.',

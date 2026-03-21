@@ -25,7 +25,7 @@ import type * as React from 'react';
 
 /**
  * The actual UI toast function type used in runtime hooks.
- * Different from ToastFn in @/shared/contracts/ai-paths-runtime which is the
+ * Different from Toast in @/shared/contracts/ai-paths-runtime which is the
  * shadcn-style API used inside NodeHandlerContext by engine handlers.
  */
 export type UiToastFn = Toast;

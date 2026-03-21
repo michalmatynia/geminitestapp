@@ -15,6 +15,7 @@ import {
   type TutorMotionProfile,
   type TutorPanelChromeVariant,
   type TutorQuickAction,
+  type TutorReducedMotionPanelTransitions,
 } from './KangurAiTutorWidget.shared';
 import type {
   GuidedTutorTarget,
@@ -23,7 +24,6 @@ import type {
 } from './KangurAiTutorWidget.types';
 
 type GuidedMode = KangurAiTutorPortalContextValue['guidedCallout']['mode'];
-type ReducedMotionTransitions = KangurAiTutorPortalContextValue['avatar']['reducedMotionTransitions'];
 type TutorSurfaceMode =
   | 'idle_avatar'
   | 'onboarding'
@@ -211,7 +211,7 @@ type UseKangurAiTutorPortalViewModelInput = {
   panelTransition: KangurAiTutorPortalContextValue['panel']['panelTransition'];
   pointerMarkerId: KangurAiTutorPortalContextValue['panel']['pointerMarkerId'];
   prefersReducedMotion: boolean | undefined;
-  reducedMotionTransitions: ReducedMotionTransitions;
+  reducedMotionTransitions: TutorReducedMotionPanelTransitions;
   remainingMessages: KangurAiTutorPanelBodyContextValue['remainingMessages'];
   sectionContextSpotlightStyle: KangurAiTutorPortalContextValue['spotlights']['sectionContextSpotlightStyle'];
   sectionDropHighlightStyle: KangurAiTutorPortalContextValue['spotlights']['sectionDropHighlightStyle'];

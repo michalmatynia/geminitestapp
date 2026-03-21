@@ -174,6 +174,33 @@ export type TutorMotionProfile = {
   mobileBubbleWidth: number;
 };
 
+export type TutorReducedMotionInstantTransition = {
+  duration: number;
+};
+
+export type TutorReducedMotionStableState = {
+  opacity: number;
+  scale: number;
+  y: number;
+};
+
+export type TutorReducedMotionStaticSheetState = {
+  opacity: number;
+  y: number;
+};
+
+export type TutorReducedMotionAvatarTransitions = {
+  instant: TutorReducedMotionInstantTransition;
+};
+
+export type TutorReducedMotionStableTransitions = TutorReducedMotionAvatarTransitions & {
+  stableState: TutorReducedMotionStableState;
+};
+
+export type TutorReducedMotionPanelTransitions = TutorReducedMotionStableTransitions & {
+  staticSheetState: TutorReducedMotionStaticSheetState;
+};
+
 export type TutorMoodAvatarProps = {
   svgContent?: string | null;
   avatarImageUrl?: string | null;

@@ -57,7 +57,6 @@ function CompetitionContent(): React.JSX.Element {
       currentPage: 'Competition' as const,
       guestPlayerName: user ? undefined : guestPlayerName,
       isAuthenticated: Boolean(user),
-      onCreateAccount: () => openLoginModal(null, { authMode: 'create-account' }),
       onGuestPlayerNameChange: user ? undefined : setGuestPlayerName,
       onLogin: openLoginModal,
       onLogout: () => logout(false),

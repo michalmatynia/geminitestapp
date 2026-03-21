@@ -1,4 +1,6 @@
-export type AiPathsCollectionMap = Record<string, string>;
+import type { StringRecordDto } from '@/shared/contracts/base';
+
+export type AiPathsCollectionMap = StringRecordDto;
 
 export const AI_PATHS_RUNTIME_COLLECTION_MAP_INPUT_KEY = '__aiPathsCollectionMap';
 

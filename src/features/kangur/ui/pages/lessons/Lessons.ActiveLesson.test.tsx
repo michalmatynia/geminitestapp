@@ -175,6 +175,8 @@ describe('ActiveLessonView mobile scroll controls', () => {
     expect(scrollContainer.parentElement?.className).toContain(
       'var(--kangur-shell-viewport-height,100dvh)-var(--kangur-top-bar-height,88px)'
     );
+    expect(scrollContainer.className).toContain('touch-pan-y');
+    expect(scrollContainer.className).not.toContain('touch-none');
     Object.defineProperty(scrollContainer, 'clientHeight', { value: 100, configurable: true });
     Object.defineProperty(scrollContainer, 'scrollHeight', { value: 400, configurable: true });
     scrollContainer.scrollTop = 0;

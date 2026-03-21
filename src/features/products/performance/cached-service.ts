@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import type {
   ProductParameter,
   ProductWithImages,
@@ -12,7 +13,7 @@ import { productService } from '@/shared/lib/products/services/productService';
 
 import { withQueryCache, ProductCacheHelpers, queryCache, stableStringify } from './query-cache';
 
-type ProductFilterInput = Record<string, unknown>;
+type ProductFilterInput = UnknownRecordDto;
 
 function toOptionalString(value: unknown): string | undefined {
   if (typeof value === 'string') {

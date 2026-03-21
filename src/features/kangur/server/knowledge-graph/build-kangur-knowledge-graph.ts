@@ -103,7 +103,7 @@ const FLOW_TARGETS: Partial<Record<string, {
   },
   'flow:kangur:create-account': {
     route: KANGUR_HOME_ROUTE,
-    anchorId: 'kangur-primary-nav-create-account',
+    anchorId: 'kangur-primary-nav-login',
   },
 };
 
@@ -411,7 +411,7 @@ const resolveNativeGuideDirectTarget = (entry: {
   if (entry.focusKind === 'create_account_action') {
     return {
       route: KANGUR_HOME_ROUTE,
-      anchorId: 'kangur-primary-nav-create-account',
+      anchorId: 'kangur-primary-nav-login',
     };
   }
 
@@ -496,20 +496,6 @@ export const buildKangurKnowledgeGraph = (
     sourcePath: 'common.signInLabel',
     tags: ['auth', 'login', 'anchor'],
   });
-  createNode(nodes, {
-    id: 'anchor:kangur:create-account',
-    kind: 'anchor',
-    title: tutorContent.common.createAccountLabel,
-    summary: 'Primary navigation create-account anchor used by the AI Tutor guided signup flow.',
-    source: 'kangur_ai_tutor_content',
-    locale,
-    route: KANGUR_HOME_ROUTE,
-    anchorId: 'kangur-primary-nav-create-account',
-    sourceCollection: 'kangur_ai_tutor_content',
-    sourceRecordId: locale,
-    sourcePath: 'common.createAccountLabel',
-    tags: ['auth', 'signup', 'anchor'],
-  });
   createEdge(edges, {
     kind: 'USES_ANCHOR',
     from: 'flow:kangur:sign-in',
@@ -519,8 +505,8 @@ export const buildKangurKnowledgeGraph = (
   createEdge(edges, {
     kind: 'USES_ANCHOR',
     from: 'flow:kangur:create-account',
-    to: 'anchor:kangur:create-account',
-    description: 'Guided signup points the learner to the create-account navigation anchor.',
+    to: 'anchor:kangur:login',
+    description: 'Guided signup starts from the main login navigation anchor.',
   });
 
   createNode(nodes, {
@@ -698,8 +684,8 @@ export const buildKangurKnowledgeGraph = (
       createEdge(edges, {
         kind: 'LEADS_TO',
         from: guideNodeId,
-        to: 'anchor:kangur:create-account',
-        description: `${entry.title} sends learners to the Kangur create-account anchor.`,
+        to: 'anchor:kangur:login',
+        description: `${entry.title} sends learners to the Kangur login anchor before account creation.`,
       });
       createEdge(edges, {
         kind: 'RELATED_TO',

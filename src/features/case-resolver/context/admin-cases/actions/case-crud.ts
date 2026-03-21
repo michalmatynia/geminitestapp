@@ -7,7 +7,7 @@ import {
   persistCaseResolverWorkspaceSnapshot,
 } from '@/features/case-resolver/workspace-persistence';
 import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { isDescendantCaseId } from '../utils';
@@ -27,7 +27,7 @@ export const handleCreateCaseImpl = async (args: {
   setIsCreateCaseModalOpen: (val: boolean) => void;
   setCaseDraft: (val: Partial<CaseResolverFile>) => void;
   setEditingCaseId: (id: string | null) => void;
-  toast: ToastFn;
+  toast: Toast;
   settingsStoreRefetchRef: React.MutableRefObject<() => void>;
 }): Promise<void> => {
   const {
@@ -147,7 +147,7 @@ export const handleSaveCaseDraftImpl = async (args: {
   setIsCreateCaseModalOpen: (val: boolean) => void;
   setCaseDraft: (val: Partial<CaseResolverFile>) => void;
   setEditingCaseId: (id: string | null) => void;
-  toast: ToastFn;
+  toast: Toast;
   settingsStoreRefetchRef: React.MutableRefObject<() => void>;
 }): Promise<void> => {
   const {
@@ -359,7 +359,7 @@ export const handleUpdateCaseImpl = async (args: {
   lastPersistedWorkspaceValueRef: React.MutableRefObject<string>;
   lastPersistedWorkspaceRevisionRef: React.MutableRefObject<number>;
   setEditingCaseId: (id: string | null) => void;
-  toast: ToastFn;
+  toast: Toast;
 }): Promise<void> => {
   const {
     editingCaseId,
@@ -436,7 +436,7 @@ export const handleDeleteCaseImpl = async (args: {
   lastPersistedWorkspaceRevisionRef: React.MutableRefObject<number>;
   editingCaseId: string | null;
   setEditingCaseId: (id: string | null) => void;
-  toast: ToastFn;
+  toast: Toast;
   setConfirmation: React.Dispatch<React.SetStateAction<CaseResolverCaseListConfirmationState>>;
 }): Promise<void> => {
   const {

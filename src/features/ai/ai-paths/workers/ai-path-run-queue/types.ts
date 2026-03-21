@@ -1,19 +1,11 @@
+import type { ManagedQueueStatus } from '@/shared/lib/queue/scheduler-queue-types';
+
 export type AiPathRunJobData = {
   runId: string;
   type?: 'run' | 'recovery';
 };
 
-export type AiInsightsQueueStatus = {
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeJobs: number;
-  waitingJobs: number;
-  failedJobs: number;
-  completedJobs: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-};
+export type AiInsightsQueueStatus = ManagedQueueStatus;
 
 export type AiPathRunQueueHotStatus = {
   running: boolean;

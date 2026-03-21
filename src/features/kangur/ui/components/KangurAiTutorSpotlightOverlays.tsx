@@ -2,27 +2,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
 
+import type { TutorReducedMotionStableTransitions } from './KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX } from 'react';
 
 const LIGHT_MODE_SELECTION_TEXT = 'rgb(120 53 15)';
 const LIGHT_MODE_SELECTION_FILL = 'rgba(245, 158, 11, 0.18)';
 const LIGHT_MODE_SELECTION_SHADOW = 'rgba(217, 119, 6, 0.14)';
 
-type ReducedMotionTransitions = {
-  instant: {
-    duration: number;
-  };
-  stableState: {
-    opacity: number;
-    scale: number;
-    y: number;
-  };
-};
-
 type Props = {
   guidedMode: 'auth' | 'home_onboarding' | 'section' | 'selection' | null;
   prefersReducedMotion: boolean;
-  reducedMotionTransitions: ReducedMotionTransitions;
+  reducedMotionTransitions: TutorReducedMotionStableTransitions;
   sectionContextSpotlightStyle: CSSProperties | null;
   sectionDropHighlightStyle: CSSProperties | null;
   selectionGlowStyles: CSSProperties[];

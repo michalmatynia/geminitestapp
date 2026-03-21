@@ -547,7 +547,7 @@ export function useAiPathTriggerEvent(): {
           const runningRunForCache = mergeEnqueuedAiPathRunForCache({
             fallbackRun: queuedRunForCache,
             runId,
-            runRecord: runningRunCandidate as AiPathRunRecord,
+            runRecord: runningRunCandidate,
           });
           const effectiveRunningEntityId =
             typeof runningRunForCache.entityId === 'string' &&

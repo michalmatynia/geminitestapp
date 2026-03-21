@@ -21,7 +21,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { Toast as ToastFn } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui';
 
 import {
   normalizeRunDetail,
@@ -33,7 +33,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {

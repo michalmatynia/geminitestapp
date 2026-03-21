@@ -605,29 +605,6 @@ function GameContent(): React.JSX.Element {
     };
   }, [shouldUseGameMobileChrome]);
 
-  useEffect(() => {
-    if (!shouldUseGameMobileChrome) {
-      return undefined;
-    }
-
-    const node = gameScrollRef.current;
-    if (!node) {
-      return undefined;
-    }
-
-    const preventScroll = (event: Event): void => {
-      event.preventDefault();
-    };
-
-    node.addEventListener('wheel', preventScroll, { passive: false });
-    node.addEventListener('touchmove', preventScroll, { passive: false });
-
-    return () => {
-      node.removeEventListener('wheel', preventScroll);
-      node.removeEventListener('touchmove', preventScroll);
-    };
-  }, [screen, shouldUseGameMobileChrome]);
-
   const updateScrollButtons = useCallback((): void => {
     const container = gameScrollRef.current;
     if (!container) {
@@ -810,7 +787,7 @@ function GameContent(): React.JSX.Element {
             ref={shouldUseGameMobileChrome ? gameScrollRef : undefined}
             className={cn(
               shouldUseGameMobileChrome
-                ? `flex-1 min-h-0 w-full overflow-y-auto overscroll-contain touch-none ${KANGUR_PANEL_GAP_CLASSNAME}`
+                ? `flex-1 min-h-0 w-full overflow-y-auto overscroll-contain touch-pan-y ${KANGUR_PANEL_GAP_CLASSNAME}`
                 : undefined
             )}
             data-testid={

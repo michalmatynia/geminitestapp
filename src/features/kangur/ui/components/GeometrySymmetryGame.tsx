@@ -249,9 +249,12 @@ export default function GeometrySymmetryGame({
     });
     setKeyboardDrawing(false);
     setKeyboardStatus(
-      translateWithFallback('geometrySymmetry.inRound.keyboard.boardCleared', 'Wyczyszczono planszę.')
+      translateWithFallback(
+        'geometrySymmetry.inRound.keyboard.boardCleared',
+        fallbackCopy.keyboard.boardCleared
+      )
     );
-  }, [currentRound, redrawCanvas, translateWithFallback]);
+  }, [currentRound, fallbackCopy.keyboard.boardCleared, redrawCanvas, translateWithFallback]);
 
   const resolvePoint = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
@@ -323,10 +326,10 @@ export default function GeometrySymmetryGame({
     setKeyboardStatus(
       translateWithFallback(
         'geometrySymmetry.inRound.keyboard.started',
-        'Rozpoczęto rysowanie klawiaturą.'
+        fallbackCopy.keyboard.started
       )
     );
-  }, [keyboardCursor, translateWithFallback, updateStrokes]);
+  }, [fallbackCopy.keyboard.started, keyboardCursor, translateWithFallback, updateStrokes]);
 
   const finishKeyboardStroke = useCallback((): void => {
     if (keyboardDrawing) {
@@ -336,10 +339,16 @@ export default function GeometrySymmetryGame({
     setKeyboardStatus(
       translateWithFallback(
         'geometrySymmetry.inRound.keyboard.finished',
-        'Zakończono rysowanie klawiaturą.'
+        fallbackCopy.keyboard.finished
       )
     );
-  }, [appendKeyboardPoint, keyboardCursor, keyboardDrawing, translateWithFallback]);
+  }, [
+    appendKeyboardPoint,
+    fallbackCopy.keyboard.finished,
+    keyboardCursor,
+    keyboardDrawing,
+    translateWithFallback,
+  ]);
 
   const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>): void => {
     if (done || feedback) return;
@@ -374,7 +383,7 @@ export default function GeometrySymmetryGame({
       setKeyboardStatus(
         translateWithFallback(
           'geometrySymmetry.inRound.keyboard.cleared',
-          'Wyczyszczono planszę i ustawiono kursor na środku.'
+          fallbackCopy.keyboard.cleared
         )
       );
       return;
@@ -453,7 +462,7 @@ export default function GeometrySymmetryGame({
         kind: 'info',
         text: translateWithFallback(
           'geometrySymmetry.inRound.tooShort',
-          'Zrób kilka ruchów, żeby powstała linia do sprawdzenia.'
+          fallbackCopy.tooShort
         ),
       });
       return;
@@ -502,7 +511,7 @@ export default function GeometrySymmetryGame({
     setKeyboardStatus(
       translateWithFallback(
         'geometrySymmetry.inRound.keyboard.restarted',
-        'Rozpoczęto nową rundę symetrii.'
+        fallbackCopy.keyboard.restarted
       )
     );
     sessionStartedAtRef.current = Date.now();
@@ -569,7 +578,7 @@ export default function GeometrySymmetryGame({
       <div aria-live='polite' aria-atomic='true' className='sr-only'>
         {translateWithFallback(
           'geometrySymmetry.inRound.liveRegion',
-          `Runda ${roundIndex + 1} z ${totalRounds}. ${currentRound?.prompt ?? ''}`,
+          fallbackCopy.liveRegion,
           { current: roundIndex + 1, total: totalRounds, prompt: currentRound?.prompt ?? '' }
         )}
       </div>
@@ -587,11 +596,11 @@ export default function GeometrySymmetryGame({
           accent='emerald'
           aria-label={translateWithFallback(
             'geometrySymmetry.progressAriaLabel',
-            'Dokładność w grze o symetrii'
+            fallbackCopy.progressAriaLabel
           )}
           aria-valuetext={translateWithFallback(
             'geometrySymmetry.inRound.progressValueText',
-            `Runda ${roundIndex + 1} z ${totalRounds}`,
+            fallbackCopy.progressValueText,
             { current: roundIndex + 1, total: totalRounds }
           )}
           className='flex-1'
@@ -627,12 +636,18 @@ export default function GeometrySymmetryGame({
             <KangurStatusChip accent='emerald' size='sm'>
               {translateWithFallback(
                 'geometrySymmetry.inRound.modeLabel',
-                `Symetria • ${currentRound?.type === 'axis' ? 'Oś' : 'Odbicie'}`,
+                fallbackCopy.modeLabel,
                 {
                   mode:
                     currentRound?.type === 'axis'
-                      ? translateWithFallback('geometrySymmetry.inRound.mode.axis', 'Oś')
-                      : translateWithFallback('geometrySymmetry.inRound.mode.mirror', 'Odbicie'),
+                      ? translateWithFallback(
+                          'geometrySymmetry.inRound.mode.axis',
+                          fallbackCopy.mode.axis
+                        )
+                      : translateWithFallback(
+                          'geometrySymmetry.inRound.mode.mirror',
+                          fallbackCopy.mode.mirror
+                        ),
                 }
               )}
             </KangurStatusChip>
@@ -648,7 +663,7 @@ export default function GeometrySymmetryGame({
               <p className='text-[11px] text-center text-emerald-700/80'>
                 {translateWithFallback(
                   'geometrySymmetry.inRound.mirror.zoneHint',
-                  'Rysuj tylko w zielonej strefie. Szara strefa jest bez rysowania.'
+                  fallbackCopy.mirror.zoneHint
                 )}
               </p>
             ) : null}
@@ -664,18 +679,18 @@ export default function GeometrySymmetryGame({
                   {showMirrorHint
                     ? translateWithFallback(
                         'geometrySymmetry.inRound.mirror.hideHint',
-                        'Ukryj podpowiedź'
+                        fallbackCopy.mirror.hideHint
                       )
                     : translateWithFallback(
                         'geometrySymmetry.inRound.mirror.showHint',
-                        'Pokaż podpowiedź'
+                        fallbackCopy.mirror.showHint
                       )}
                 </KangurButton>
                 {showMirrorHint ? (
                   <span className='text-[11px] font-semibold text-emerald-700'>
                     {translateWithFallback(
                       'geometrySymmetry.inRound.mirror.ghostHint',
-                      'Przerywana linia pokazuje brakujące odbicie.'
+                      fallbackCopy.mirror.ghostHint
                     )}
                   </span>
                 ) : null}
@@ -697,7 +712,7 @@ export default function GeometrySymmetryGame({
               aria-describedby='geometry-symmetry-input-help'
               aria-label={translateWithFallback(
                 'geometrySymmetry.inRound.canvasAria',
-                'Plansza do rysowania osi i odbić symetrii.'
+                fallbackCopy.canvasAria
               )}
               aria-keyshortcuts='Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape'
               data-testid='geometry-symmetry-canvas'
@@ -734,7 +749,7 @@ export default function GeometrySymmetryGame({
           >
             {translateWithFallback(
               'geometrySymmetry.inRound.inputHelp',
-              'Pole rysowania obsługuje mysz, dotyk lub klawiaturę. Enter albo spacja zaczyna i kończy kreskę, strzałki przesuwają kursor, Escape czyści planszę.'
+              fallbackCopy.inputHelp
             )}
           </p>
 
@@ -766,7 +781,7 @@ export default function GeometrySymmetryGame({
               variant='surface'
             >
               <Eraser aria-hidden='true' className='w-4 h-4' />
-              {translateWithFallback('geometrySymmetry.inRound.clear', 'Wyczyść')}
+              {translateWithFallback('geometrySymmetry.inRound.clear', fallbackCopy.clear)}
             </KangurButton>
             <KangurButton
               className={cn(
@@ -785,7 +800,7 @@ export default function GeometrySymmetryGame({
               size='lg'
               variant='primary'
             >
-              {translateWithFallback('geometrySymmetry.inRound.check', 'Sprawdź')}
+              {translateWithFallback('geometrySymmetry.inRound.check', fallbackCopy.check)}
             </KangurButton>
           </KangurPanelRow>
         </KangurGlassPanel>

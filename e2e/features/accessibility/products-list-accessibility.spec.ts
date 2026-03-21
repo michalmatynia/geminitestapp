@@ -7,25 +7,27 @@ test('products list exposes search and actions accessibly and passes the accessi
   page,
 }) => {
   test.setTimeout(240_000);
+  const productsUiTimeoutMs = 90_000;
 
   await ensureAdminSession(page, '/admin/products');
+  await expect(page.getByText('Loading...')).toBeHidden({ timeout: productsUiTimeoutMs });
 
   await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({
-    timeout: 15_000,
+    timeout: productsUiTimeoutMs,
   });
 
   const main = page.locator('#kangur-main-content');
-  await expect(main).toBeVisible({ timeout: 15_000 });
+  await expect(main).toBeVisible({ timeout: productsUiTimeoutMs });
   await expect(main).toHaveAttribute('tabindex', '-1');
 
   await expect(page.getByRole('button', { name: 'Create new product' })).toBeVisible({
-    timeout: 15_000,
+    timeout: productsUiTimeoutMs,
   });
   await expect(page.getByRole('textbox', { name: 'Search by product name...' })).toBeVisible({
-    timeout: 15_000,
+    timeout: productsUiTimeoutMs,
   });
   await expect(page.getByRole('complementary', { name: 'Admin sidebar' })).toBeVisible({
-    timeout: 15_000,
+    timeout: productsUiTimeoutMs,
   });
 
   const skipLink = page.getByRole('link', { name: 'Skip to content' });

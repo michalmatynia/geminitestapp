@@ -2,8 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface BackfillProjectResult {
@@ -36,7 +36,7 @@ export function useMaintenanceActions({
   backfillProjectId: string;
   backfillDryRun: boolean;
   backfillIncludeHeuristicGenerationLinks: boolean;
-  toast: ReturnType<typeof useToast>['toast'];
+  toast: Toast;
 }) {
   const [backfillRunning, setBackfillRunning] = useState(false);
   const [backfillResultText, setBackfillResultText] = useState('');

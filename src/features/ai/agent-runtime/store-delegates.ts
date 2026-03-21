@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { UnknownRecordDto } from '@/shared/contracts/base';
 import type {
   AgentAuditLogRecord,
   AgentBrowserLogRecord,
@@ -7,7 +8,7 @@ import type {
   AgentRunStatusType,
 } from '@/shared/contracts/agent-runtime';
 
-type StoreDelegateArgs = Record<string, unknown>;
+type StoreDelegateArgs = UnknownRecordDto;
 
 export type AgentRuntimeRunRecord = {
   id: string;
